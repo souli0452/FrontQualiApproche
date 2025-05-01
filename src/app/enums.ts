@@ -1,0 +1,8 @@
+export enum EtapeTraitement {
+    RECEPTION = 'SOUMISSION',
+    VALIDATION = 'VALIDATION',
+    IMPUTATION = 'IMPUTATION',
+    TRAITEMENT='TRAITEMENT',
+    CLOTURE = 'CLOTURE',
+
+}

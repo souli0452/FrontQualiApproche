@@ -1,0 +1,17 @@
+<ng-template [ngIf]="loading">
+    <app-crud-generic
+        [dialogWidth]="'50vw'"
+        [pageLabel]="pageLabel"
+        [tableCols]="tableCols"
+        [listeObject]="dataList"
+        [formGroup]="formGroup"
+        [formCols]="formCols"
+        [closeDialog]="closeDialog"
+        [formHeader]="formHeader"
+        [customButtons]="customButtons"
+        (customActionEvent)="handleCustomAction($event)"
+        (newItemEvent)="onSave($event)"
+        [notDelete]="true">
+    </app-crud-generic>
+
+</ng-template>

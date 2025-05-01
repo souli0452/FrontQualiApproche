@@ -1,0 +1,27 @@
+<!-- <div class="card">
+    <p-toolbar>
+        <ng-template #start>
+            <p-button label="Efficacité" severity="secondary" class="m-1" (onClick)="showDialog()" />
+            <p-button label="Type de non conformité" severity="secondary" class="m-1" (onClick)="showDialog()" />
+            <p-button label="Type de procéssus" severity="secondary" class="m-1" (onClick)="showDialog()" />
+            <p-button label="Niveau de non conformité" severity="secondary" class="m-1" (onClick)="showDialog()" />
+            <p-button label="Action" severity="secondary" class="m-1" (onClick)="showDialog()" />
+        </ng-template>
+        <ng-template #center></ng-template>
+        <ng-template #end></ng-template>
+    </p-toolbar>
+</div> -->
+<div class="flex-component">
+    <div class="flex-component-item">
+        <app-type-non-conformite />
+    </div>
+    <div class="flex-component-item">
+        <app-type-processus />
+    </div>
+    <div class="flex-component-item">
+        <app-niveau-non-conformite />
+    </div>
+    <div class="flex-component-item">
+        <app-action />
+    </div>
+</div>

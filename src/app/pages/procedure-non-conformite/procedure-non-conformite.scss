@@ -1,0 +1,11 @@
+.flex-component {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.flex-component-item {
+    // width: calc(100% / 2);
+    padding: 10px;
+    width: 100%;
+}
+

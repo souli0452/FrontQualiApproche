@@ -1,0 +1,30 @@
+.text-green {
+    color: green;
+    font-weight: bold;
+}
+
+.text-red {
+    color: red;
+    font-weight: bold;
+}
+.ng-badge {
+    padding: 0.2em 0.5em;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.ng-badge.success {
+    background-color: #4caf50;  /* Vert clair */
+    color: white;
+}
+
+.ng-badge.warning {
+    background-color: #ff9800;  /* Orange */
+    color: white;
+}
+
+.ng-badge.info {
+    background-color: #2196f3;  /* Bleu */
+    color: white;
+}

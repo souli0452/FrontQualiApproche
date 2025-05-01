@@ -1,0 +1,28 @@
+<div class="uploader">
+    <label class="custom-upload-btn">
+      📁 Sélectionner des fichiers
+      <input type="file" multiple (change)="onFileSelected($event)" />
+    </label>
+  
+    <div class="file-list" *ngIf="uploadedFiles.length > 0">
+      <div class="file-item" *ngFor="let f of uploadedFiles; let i = index">
+        <div class="file-item-content">
+            <div class="remove-btn" (click)="removeFile(i)">❌</div>
+      
+            <div class="file-icon">
+              <img [src]="f.icon" alt="File icon" width="30" height="30" />
+            </div>
+            <div class="details ml-4">
+              <span class="details-nom">{{ f.name }}</span>
+              <span class="details-taille">{{ f.size }}</span>
+            </div>
+        </div>
+  
+        <div class="loading" *ngIf="f.loading">
+          <div class="progress-bar">
+            <div class="progress-inner"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

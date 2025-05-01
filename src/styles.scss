@@ -1,0 +1,61 @@
+/* You can add global styles to this file, and also import other style files */
+@use './tailwind.css';
+@use './assets/layout/layout.scss';
+@use 'primeicons/primeicons.css';
+@use './assets/demo/demo.scss';
+
+@font-face {
+    font-family: 'Roboto-Regular';
+    src: url('./assets/fonts/Roboto-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+@font-face {
+font-family: 'Roboto-Bold';
+src: url('./assets/fonts/Roboto-Bold.ttf') format('truetype');
+font-weight: normal;
+font-style: normal;
+}
+
+body {
+  font-family: 'Roboto-Regular', sans-serif;
+}
+.font-bold, 
+.layout-menu ul a.active-route, 
+.p-dialog-title,
+.p-fieldset-legend-label,
+.p-step-title{
+  font-family: 'Roboto-Bold', sans-serif;
+}
+
+.page-layout {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.centrer-image {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.p-datepicker:has(.p-datepicker-input-icon-container) {
+  position: relative;
+  width: 100%;
+}
+.conformite p-toolbar{
+  display: none !important;
+}
+
+.p-step-title {
+  text-transform: lowercase !important;
+}
+.flex-component h5 {
+  text-transform: none;
+}
+.p-fieldset-legend {
+  padding-right: 30px !important;
+}

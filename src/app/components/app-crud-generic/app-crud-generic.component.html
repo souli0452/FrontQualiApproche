@@ -1,0 +1,205 @@
+<div class="block">
+    <div class="col-12">
+        <div class="card shadow-3">
+            @if (pageLabel){
+                <p-toolbar styleClass="mb-2">
+                    <ng-template #start>
+                        <h5 class="font-bold uppercase mb-0">{{ pageLabel }}</h5>
+                    </ng-template>
+                    <ng-template #end>
+                        <button *ngIf="!consultation" pButton pRipple label="Ajouter" icon="pi pi-plus"
+                                class="p-button-primary font-bold" (click)="openNew()"></button>
+                    </ng-template>
+                </p-toolbar>
+            }
+            <div class="row p-2">
+                <ng-container *ngIf="addFilter">
+                    <div class="col-sm-3 mb-1" *ngFor="let r of searchField">
+                        <div class="field">
+                            <label class="fw-bold">{{ r['label'] }}</label>
+                            <p-dropdown [options]="r['list']" [style]="{'width': '100%'}"
+                                        [autoDisplayFirst]="false" appendTo="body"
+                                        [placeholder]="r['placeHolder']"
+                                        [filter]="true" [showClear]="true"
+                                        [(ngModel)]="value"
+                                        (ngModelChange)="onFilterChange(r['field'])">
+                            </p-dropdown>
+                        </div>
+                    </div>
+                </ng-container>
+
+                <div class="col-sm-12">
+                    <p-table 
+                    [resizableColumns]="true"
+                    columnResizeMode="expand"
+                    #dt #gFilter 
+                    [size]="'small'"
+                    [columns]="tableCols"
+                    [value]="listeObject" 
+                    selectionMode="single"
+                    dataKey="id" 
+                    [paginator]="true" 
+                    [rows]="10"
+                    styleClass="p-datatable-gridlines p-datatable-sm"
+                    [globalFilterFields]="filterFiels"
+                    paginatorPosition="bottom"
+                    [tableStyle]="{ 'min-width': '50rem' }">
+                        <ng-template #caption>
+                            <div class="flex">
+                                <p-iconfield iconPosition="left" class="ml-auto">
+                                    <p-inputicon>
+                                        <i class="pi pi-search"></i>
+                                    </p-inputicon>
+                                    <input pInputText class="p-fluid w-100"
+                                    #myInput type="text"
+                                    (input)="gFilter.filterGlobal(myInput.value, 'contains')"
+                                    placeholder="Rechercher"/>
+                                </p-iconfield>
+                            </div>
+                        </ng-template>
+                        <ng-template #header let-columns>
+                            <tr>
+                                <th *ngFor="let col of columns" [pSortableColumn]="col.field">
+                                    {{ col.header }}
+                                    <p-sortIcon [field]="col.field"></p-sortIcon>
+                                </th>
+                                <th *ngIf="!consultation" class="text-center font-bold" style="width: 4rem">Action</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template #body let-rowData let-columns="columns" let-ri="rowIndex">
+                            <tr [pSelectableRow]="rowData">
+                                <td *ngFor="let col of columns" [style.width]="col.width">
+                                    <span *ngIf="col.type === 'string'">
+                                        <ng-container *ngIf="col.header == 'Réference'">
+                                          <p-tag severity="info" value="{{ rowData[col.field] }}"></p-tag>
+                                        </ng-container>
+                                        <ng-container *ngIf="col.header == 'Statut'">
+                                            <p-tag severity="warn" value="{{ rowData[col.field] }}"></p-tag>
+                                        </ng-container>
+                                        <ng-container *ngIf="col.header !== 'Réference' && col.header !== 'Statut'">
+                                            {{ rowData[col.field] }}
+                                        </ng-container>
+                                    </span>
+                                    <span
+                                        *ngIf="col.type === 'number'"> {{ rowData[col.field] }}</span>
+                                    <span
+                                        *ngIf="col.type === 'date'"> {{ rowData[col.field] | date: 'dd/MM/yyyy' }}</span>
+                                    <span *ngIf="col.type === 'boolean'">
+                                <span *ngIf="rowData[col.field]">
+                                    <span class="ng-badge success">
+                                        {{ col.labelTrue }}
+                                    </span>
+                                </span>
+                                <span *ngIf="!rowData[col.field]">
+                                    <span class="ng-badge warning">
+                                        {{ col.labelFalse }}
+                                    </span>
+                                </span>
+                            </span>
+                            <span *ngIf="col.type === 'list'">
+                                <span *ngFor="let val of rowData[col.field]">
+                                    <span class="ng-badge info">
+                                        {{ val[col.optionLabel] }}
+                                    </span>
+                                </span>
+                            </span>
+                                </td>
+                                <td style="text-align:center; display: flex; justify-content: space-evenly; align-items: center;" *ngIf="!consultation">
+                                    <p-button [rounded]="true" [text]="true" *ngIf="isAffich" size="small" pButton pRipple icon="pi pi-eye"
+                                            class="me-1 mb-2"
+                                            (click)="affich(rowData)" pTooltip="Détail" [tooltipPosition]="position">
+                                    </p-button>
+
+                                    <p-button [rounded]="true" [text]="true" *ngIf="!notModif" size="small" pButton pRipple icon="pi pi-pencil"
+                                            class="me-1 mb-2"
+                                            (click)="edit(rowData)" pTooltip="Modifier" [tooltipPosition]="position">
+                                    </p-button>
+                                    <p-button [rounded]="true" [text]="true" *ngIf="!notDelete" size="small" pButton pRipple icon="pi pi-trash" severity="danger"
+                                            class=""
+                                            (click)="delele(rowData)" pTooltip="Supprimer" [tooltipPosition]="position">
+                                    </p-button>
+                                    <div *ngFor="let button of customButtons" class="custom-button">
+                                        <button
+                                            type="button"
+                                            pButton
+                                            pRipple
+                                            [icon]="button.icon"
+                                            class="p-button-rounded me-1 mb-2 m-2"
+                                            [ngStyle]="{ 'background-color': button.color}"
+                                            (click)="onCustomAction(button.action, rowData)"
+                                            [pTooltip]="button.tooltip"
+                                            [tooltipPosition]="button.tooltipPosition || 'top'">
+                                        </button>
+                                    </div>
+                                </td>
+
+                            </tr>
+                        </ng-template>
+                        
+                        <ng-template pTemplate="emptymessage">
+                            <div class="h-60">
+                                <div class="centrer-image mt-6">
+                                        <img src="../../../assets/images/empty.svg" alt="Image vide" style="width: 150px; height: auto;">
+                                        <span class="text-red-500 mt-4 flex justify-content-center opacity-35">Aucune données trouvées</span>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </p-table>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<p-dialog (onHide)="hidDialog()" [modal]="true" [(visible)]="display"
+          [style]="{width: dialogWidth}" [maximizable]="true" class="p-fluid" styleClass="ng-dialog">
+    <ng-template pTemplate="header">
+        <div class="inline-flex align-items-center justify-content-center gap-2">
+            <span class="font-bold white-space-nowrap uppercase">{{ formHeader }}</span>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="content">
+        <form [formGroup]="formGroup" autocomplete="off" role="form">
+            <div class="grid p-fluid mt-1">
+                <ng-container *ngFor="let col of formCols">
+                    <div *ngIf="col.visible"
+                         [ngClass]="{'col-6': formCols.length >=10 , 'col-12': formCols.length < 10 }">
+                        <app-form-input-template
+                            [col]="col"
+                            [dropDownObject]="dropDownObject"
+                            [multiSelectObject]="multiselectObject"
+                            [form]="formGroup">
+                        </app-form-input-template>
+                    </div>
+                </ng-container>
+            </div>
+        </form>
+    </ng-template>
+    <ng-template #footer>
+        <button type="button" pRipple pButton icon="pi pi-times" (click)="hidDialog()" label="Annuler"
+                class="p-button-secondary position-left mr-3"></button>
+        <button [disabled]="formGroup.invalid" pRipple pButton type="button" (click)="save()" icon="pi pi-save"
+                label="Enregistrer">
+        </button>
+    </ng-template>
+</p-dialog>
+
+<p-dialog (onHide)="displayDetails = false" [modal]="true" [(visible)]="displayDetails"
+          [style]="{width: '50rem'}" [maximizable]="true" class="p-fluid" styleClass="ng-dialog">
+    <ng-template pTemplate="header">
+        <div class="inline-flex align-items-center justify-content-center gap-2">
+            <span class="font-bold white-space-nowrap uppercase">Détails</span>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="content">
+        <div class="grid p-fluid">
+            <div class="col-12">
+               <detail-template-component [cols]="tableCols" [rowData]="rowData" [title]="detailTitle"></detail-template-component>
+            </div>
+        </div>
+    </ng-template>
+    <p-footer>
+        <button type="button" pRipple pButton icon="pi pi-times" (click)="displayDetails = false" label="Fermer"
+                class="p-button-secondary"></button>
+    </p-footer>
+</p-dialog>

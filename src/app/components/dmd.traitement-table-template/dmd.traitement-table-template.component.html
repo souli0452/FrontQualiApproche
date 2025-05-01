@@ -1,0 +1,244 @@
+<p-table #dt [columns]="cols" [value]="demandeList!" [paginator]="true" dataKey="id"
+         [tableStyle]="{ 'min-width': '50rem' }" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]"
+         [globalFilterFields]="colsFilter" [(selection)]="selectedDemandes">
+
+    <ng-template pTemplate="caption">
+        <div class="flex flex-column md:flex-row md:align-items-center">
+            <div class="col-6 md:col-6 sm:col-12">
+                <h5 class="m-0">{{ title }}</h5>
+            </div>
+
+            <div class="col-6 md:col-6 sm:col-12 p-fluid grid">
+                <div class="col-9 md:col-9 sm:col-12" [ngClass]="{'col-12 md:col-12 sm:col-12': !btnObject}">
+                    <p-inputGroup>
+                        <input type="text" pInputText placeholder="Rechercher demande"
+                               (input)="dt.filterGlobal($event, 'contains')"/>
+                        <button type="button" pButton icon="pi pi-search"></button>
+                    </p-inputGroup>
+                </div>
+                @if (btnObject) {
+                <div class="col-3 md:col-3 sm:col-12">
+                    <button pButton pRipple [label]="btnObject.label" [icon]="btnObject.icon"
+                            [pTooltip]="btnObject.tooltip" tooltipPosition="top"
+                            class="p-button-primary" (click)="doAction()"
+                            [disabled]="selectedDemandes.length === 0">
+                    </button>
+                </div>
+                }
+            </div>
+        </div>
+    </ng-template>
+
+
+    <ng-template pTemplate="header" let-columns>
+        <tr>
+            @if (btnActions === BtnActions.IMPUTATION || btnActions === BtnActions.VALIDATION) {
+            <th [style.width]="'4%'">
+                <p-tableHeaderCheckbox/>
+            </th>
+            }
+            @for (col of columns; track col) {
+            <th [style.width]="col.width"
+                [pSortableColumn]="col.field" class="font-bold"
+                [ngClass]="{'text-center': col.center}">
+            {{ col.header }}
+            <p-sortIcon [field]="col.field"></p-sortIcon>
+        </th>
+            }
+            <th [style.width]="'7%'" class="text-center font-bold"></th>
+
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-rowData let-columns="columns">
+        <tr>
+            @if (btnActions === BtnActions.IMPUTATION || btnActions === BtnActions.VALIDATION) {
+            <td [style.width]="'4%'">
+                <p-tableCheckbox [value]="rowData"/>
+            </td>
+            }
+            @for (col of columns; track col) {
+            <td [style.width]="col.width" [ngClass]="{'text-center': col.centered}" *ngIf="!col.skipField">
+                    <span *ngIf="col.type === 'string'">{{ rowData[col.field] }}</span>
+                    <span *ngIf="col.type === 'number'"> {{ rowData[col.field] }}</span>
+                    <span *ngIf="col.type === 'date'"> {{ rowData[col.field] | date: 'dd/MM/yyyy' }}</span>
+                     <span *ngIf="col.type === 'enum'">
+                           <span *ngIf="rowData[col.field]==='EN_ATTENTE'">
+
+                           <span *ngIf="btnActions==BtnActions.CLOTURE"
+                                 class="p-badge p-badge-warning">En attente de traitement</span>
+                                <span *ngIf="btnActions==BtnActions.VALIDATION" class="p-badge p-badge-warning">En attente de validation</span>
+
+                                   <span *ngIf="btnActions==BtnActions.IMPUTATION" class="p-badge p-badge-warning">En attente d'imputation</span>
+                                   <span *ngIf="btnActions==BtnActions.TRAITEMENT" class="p-badge p-badge-warning">En attente de traitement</span>
+
+                                 </span>
+                                <span *ngIf="rowData[col.field]==='EN_COURS'">
+                                 <span *ngIf="btnActions==BtnActions.TRAITEMENT" class="p-badge p-badge-info">En cours de traitement</span>
+                                   <span *ngIf="btnActions==BtnActions.IMPUTATION" class="p-badge p-badge-warning">En attente d'imputation</span>
+
+
+            <span *ngIf="btnActions==BtnActions.VALIDATION" class="p-badge p-badge-info">En attente de validation</span>
+
+             </span>
+
+              <span *ngIf="rowData[col.field]==='TRAITER'">
+
+         <span class="p-badge p-badge-success">Traitée</span>
+       </span>
+      <span *ngIf="rowData[col.field]==='REJETER'">
+      <span class="p-badge p-badge-danger">Réjetée pour corrections</span>
+     </span>
+    </span>
+    <span *ngIf="col.type === 'boolean'">
+   <span *ngIf="rowData[col.field]">
+   <span class="p-badge p-badge-success">OUI</span>
+  </span>
+     <span *ngIf="!rowData[col.field]">
+   <span class="p-badge p-badge-danger">NON</span>
+   </span>
+   </span>
+</td>
+            }
+            <td [style.width]="'7%'">
+                @if (btnActions === BtnActions.TRAITEMENT) {
+                <button type="button" pButton pRipple pTooltip="Traitement de la demande"
+                        tooltipPosition="left" (click)="displayDetails(rowData)">
+                    <i class="pi pi-wrench text-2xl">&nbsp;</i>
+                    </button>
+                } @else {
+                <button type="button" pButton pRipple pTooltip="Détails de la demande"
+                        tooltipPosition="left" (click)="displayDetails(rowData)">
+                    <i class="pi pi-eye text-2xl">&nbsp;</i>
+                    </button>
+                }
+
+            </td>
+
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+        <tr>
+            <td [colSpan]="cols!.length+2">
+                <span class="text-red-300 flex justify-content-center">Aucune donnée trouvée</span>
+            </td>
+        </tr>
+    </ng-template>
+</p-table>
+<p-dialog (onHide)="display = false" [modal]="true" [maximizable]="true"
+          [(visible)]="display" [style]="{width: '32vw'}">
+    <ng-template pTemplate="header">
+        <div class="inline-flex align-items-center justify-content-center gap-2">
+            <span class="font-bold white-space-nowrap">
+               <b>Rechercher un agent</b>
+            </span>
+        </div>
+
+    </ng-template>
+    <ng-template pTemplate="content">
+        <p-inputGroup>
+            <input type="text" pInputText placeholder="Numéro matricule de l'agent" [(ngModel)]="numerMatricule"/>
+            <button *ngIf="!isAgentSeach" type="button" pButton icon="pi pi-search" class="p-button"
+                    label="Rerchercher" (click)="rechercher()"></button>
+            <p-progressSpinner *ngIf="isAgentSeach"
+                               styleClass="w-2rem h-2rem"
+                               strokeWidth="4"
+                               fill="var(--surface-ground)"
+                               animationDuration=".5s"/>
+        </p-inputGroup>
+        <div class="col-12 mt-5" *ngIf="searchedAgent">
+            <div class="grid grid-nogutter px-2 flex-column md:flex-row" style="column-gap: 2rem; row-gap: 2rem;">
+                <div class="col flex flex-column justify-content-center text-center align-items-center border-1 surface-border py-5 px-4 border-round">
+                    <h4>{{ searchedAgent.nom }} {{ searchedAgent.prenom }}</h4>
+                    <span class="text-500">Matricule : {{ searchedAgent.matricule }}</span>
+                </div>
+            </div>
+        </div>
+        <h5 *ngIf="agentSeachError" class="rejet mt-4">Aucun agent trouvé avec ce matricule </h5>
+    </ng-template>
+
+    <p-footer>
+        <div class="flex justify-content-end flex-wrap">
+            <button type="button" pRipple pButton icon="pi pi-times-circle"
+                    class="p-button-secondary position-left mr-3"
+                    label="Quitter" (click)="onDisplay()">
+            </button>
+            <button pRipple pButton type="button" icon="pi pi-history"
+                    (click)="imputer()" label="imputer" [disabled]="!searchedAgent">
+            </button>
+        </div>
+    </p-footer>
+</p-dialog>
+
+<p-dialog
+
+        (onHide)="displayDetail = false" [modal]="true" [maximizable]="true"
+        [closable]="false"
+        [(visible)]="displayDetail" [style]="{width: '68vw'}">
+    <ng-template pTemplate="header">
+
+        <div class="inline-flex align-items-center justify-content-center gap-2">
+        <span class="font-bold white-space-nowrap">
+          <h4>
+              <b *ngIf="btnActions === BtnActions.IMPUTATION">Details de la demande n°: {{ selectedDemande.numero }}</b>
+              <b *ngIf="btnActions === BtnActions.TRAITEMENT">Traitement de la demande n°: {{ selectedDemande.numero }}
+                  <span class="rejet" *ngIf="selectedDemande.rejeter">(Réjetée pour corrections)</span></b>
+               <b *ngIf="btnActions === BtnActions.VALIDATION">Validation de la demande n°: {{ selectedDemande.numero }}
+                   <span class="rejet" *ngIf="selectedDemande.rejeter">(Réjetée pour corrections)</span></b>
+          </h4>
+        </span>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="content" #detailContainer></ng-template>
+
+    <p-footer>
+        <div class="flex justify-content-end flex-wrap">
+            <button type="button" pRipple pButton icon="pi pi-times-circle"
+                    class="p-button-secondary position-left mr-3"
+                    label="Quitter" (click)="displayDetails()">
+            </button>
+
+            @if (btnActions === BtnActions.TRAITEMENT) {
+
+            <button pRipple pButton type="button" [disabled]="componentRef?.instance.editForm.invalid"
+                    (click)="saveEntity()" icon="pi pi-save" label="Enregistrer">
+            </button>
+            &nbsp;
+            <button pRipple pButton type="button" icon="pi pi-send" [disabled]="componentRef?.instance.editForm.invalid"
+                    (click)="soumettre()" label="Soumettre">
+            </button>
+            }
+
+
+            @if (btnActions === BtnActions.CLOTURE ) {
+            <button  pRipple pButton type="button" icon="pi pi-download"
+                    (click)="editFinalResult()"
+                    label="Editer le résultat final">
+            </button>
+            }
+            @if (btnActions === BtnActions.VALIDATION||btnActions===BtnActions.RECEPTION) {
+            <button pRipple pButton type="button" icon="pi pi-arrow-up"
+                    class="p-button-danger position-left mr-3"
+                    (click)=rejet()
+                    label="Rejeter">
+            </button>
+            <button pRipple pButton type="button" icon="pi pi-check"
+                    (click)="validate()"
+                    label="Valider">
+            </button>
+            }
+
+            @if (btnActions === BtnActions.IMPUTATION) {
+            <button pRipple pButton type="button" icon="pi pi-check"
+                    (click)="onDisplay()" label="Imputer"></button>
+            }
+
+        </div>
+
+    </p-footer>
+</p-dialog>
+<p-confirmDialog header="Confirmation" [key]="imputationKey"
+                 icon="pi pi-exclamation-triangle" [style]="{width: '35vw'}"
+                 acceptButtonStyleClass="p-button-danger" acceptLabel="Oui"
+                 rejectButtonStyleClass="p-button-primary" rejectLabel="Non">
+</p-confirmDialog>
