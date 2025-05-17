@@ -86,6 +86,7 @@ export class AuthService extends QualiCrudService<KcUser, number> {
     public setTokens(accessToken: string, refreshToken: string): void {
         localStorage.setItem('access_token', accessToken);
         localStorage.setItem('refresh_token', refreshToken);
+        console.log(accessToken);
         this.isLoggedIn.next(true);
     }
 
