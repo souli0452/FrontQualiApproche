@@ -97,9 +97,9 @@ export class AppMenu {
                 icon: 'pi pi-fw pi-briefcase',
                 routerLink: ['/page'],
                 items: [
-                    { label: 'Kc-user', icon: 'pi pi-fw pi-users', routerLink: ['/pages/'] },
+                    { label: 'Kc-user', icon: 'pi pi-fw pi-users', routerLink: ['/page/'] },
                     { label: 'Réinitialisation de mot de passe', icon: 'pi pi-fw pi-user-plus', routerLink: ['/pages/'] },
-                    { label: 'Email de vérification', icon: 'pi pi-fw pi-box', routerLink: ['/pages/'] },
+                    { label: 'Email de vérification', icon: 'pi pi-fw pi-box', routerLink: ['/page/'] },
                 ]
             },
             {
@@ -109,6 +109,38 @@ export class AppMenu {
                 items: [
                     { label: 'Catégorie de fichiers', icon: 'pi pi-fw pi-users', routerLink: ['/pages/'] },
                     { label: 'Exigence', icon: 'pi pi-fw pi-user-plus', routerLink: ['/pages/'] },
+                ]
+            },
+            {
+                label: 'TRAITEMENTS DES DEMANDES',
+                icon: 'pi pi-fw pi-envelope',
+                routerLink: ['/page'],
+                items: [
+                    { label: 'Non-conformité', icon: 'pi pi-fw pi-envelope',
+                     items: [
+                         {
+                             label:"Réceptions",
+                             icon: 'pi pi-fw pi-user-plus',
+                             routerLink: ['/page/reception']
+                         },
+                         {
+                             label:"Traitements",
+                             icon: 'pi pi-fw pi-pencil',
+                             routerLink: ['/page/traitement']
+                         },
+                         {
+                             label:"Validations",
+                             icon: 'pi pi-fw pi-check',
+                             routerLink: ['/page/validation']
+                         },
+                         {
+                             label:"Consultations",
+                             icon: 'pi pi-fw pi-eye',
+                             routerLink: ['/page/consultation']
+                         }
+                     ]
+                    },
+
                 ]
             },
             // {

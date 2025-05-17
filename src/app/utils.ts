@@ -175,7 +175,7 @@ export function showToast(severity: StatusEnum, status: number, message: any,
 // Code pour le formatage de la date pour affichage dans le tableau des confirmations
 export function formatDateRange(dates: Date[]): string {
     if (!Array.isArray(dates) || dates.length !== 2) return 'Dates invalides';
-  
+
     const format = (date: Date): string => {
       if (!(date instanceof Date) || isNaN(date.getTime())) return 'Date invalide';
       const day = String(date.getDate()).padStart(2, '0');
@@ -183,10 +183,10 @@ export function formatDateRange(dates: Date[]): string {
       const year = date.getFullYear();
       return `${day}-${month}-${year}`;
     };
-  
+
     const start = format(dates[0]);
     const end = format(dates[1]);
-  
+
     return `${start} - ${end}`;
   }
 // Code pour le formatage de la date pour affichage dans le tableau des confirmations

@@ -1,0 +1,9 @@
+<div class="card shadow-1">
+    <app-dmd-traitement-table-template
+        [btnActions]="BtnActions.TRAITEMENT"
+        [demandeList]="demandeList"
+        (onSaveEntity)="saveEntity($event)"
+        (onSubmission)="submission($event)"
+        [title]="title">
+    </app-dmd-traitement-table-template>
+</div>

@@ -16,6 +16,10 @@ import { reglementationComponent } from './reglementation/reglementation';
 import { CritereEvaluationComponent } from './critere-evaluation/critere-evaluation';
 import { LoginComponent } from './login/login.component';
 import { KcUserComponent } from './kc-user/kc-user.component';
+import { ReceptionComponent } from './proc-non-conformite/reception/reception.component';
+import { ValidationComponent } from './proc-non-conformite/validation/validation.component';
+import { TraitementComponent } from './proc-non-conformite/traitement/traitement.component';
+import { ClotureComponent } from './proc-non-conformite/cloture/cloture.component';
 
 export default [
     { path: 'documentation', component: Documentation },
@@ -34,6 +38,10 @@ export default [
     { path: 'critere-evaluation', component: CritereEvaluationComponent },
     { path: 'users', data: {breadcrumb: 'Utilisateurs'}, component: KcUserComponent },
     { path: 'login', data: {breadcrumb: 'Connexion'}, component: LoginComponent },
+    {path: 'reception', data: {breadcrumb: 'Réception'}, component: ReceptionComponent},
+    {path: 'validation', data: {breadcrumb: 'Validation'}, component: ValidationComponent},
+    {path: 'traitement', data: {breadcrumb: 'Traitement'}, component: TraitementComponent},
+    {path: 'cloture', data: {breadcrumb: 'Cloture'}, component: ClotureComponent},
     { path: 'empty', component: Empty },
-    { path: '**', redirectTo: '/notfound' }
+    { path: '**', redirectTo: '/notfound' },
 ] as Routes;

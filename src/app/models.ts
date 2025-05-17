@@ -8,7 +8,11 @@ export interface Formation extends UserInfos{
     objectif:string;
     competence:string
 }
-
+export interface Message {
+    text: string;
+    ownerId: number,
+    createdAt: number;
+}
 export interface UserInfos {
     createdById?: string;
     createdAt?: Date;
@@ -142,7 +146,7 @@ export interface Fichier extends UserInfos{
     tailleFichier?: number;
   }
 
-  
+
   export interface NonConformite extends UserInfos{
     id?: string;
     numeroReference?: string;

@@ -1,9 +1,9 @@
 import { Component, ComponentRef, EventEmitter, Input, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { DatePipe } from '@angular/common';
-import {EtapeTraitement} from "../../enums";
+import { CommonModule, DatePipe } from '@angular/common';
 import {FeaturesService} from "../../services/feature-service";
-import {TypeDemande} from "../../utils";
+import {  TypeDemande} from "../../utils";
+import { EtapeTraitement, StatusEnum } from '../../enums';
 import { NgPrimeModule } from '../../../prime-ng.module';
 
 @Component({
@@ -12,12 +12,15 @@ import { NgPrimeModule } from '../../../prime-ng.module';
     styleUrl: './dmd.traitement-table-template.component.scss',
     providers: [DatePipe],
     standalone: true,
-    imports: [NgPrimeModule]
+    imports:[
+        CommonModule,
+        NgPrimeModule,
+    ]
 })
 
 export class DmdTraitementTableTemplateComponent {
     @Input() demandeList: Array<any> = [];
-    @Input() btnActions?: EtapeTraitement = EtapeTraitement.IMPUTATION;
+    @Input() btnActions?: EtapeTraitement = EtapeTraitement.RECEPTION;
     @Input() title?: string;
     @Output() onImputation = new EventEmitter<any>();
     @Output() onValidation = new EventEmitter<any>();
@@ -26,8 +29,10 @@ export class DmdTraitementTableTemplateComponent {
     @Output() onSignature = new EventEmitter<any>();
     @Output() onSaveEntity = new EventEmitter<any>();
     @Output() onSubmission = new EventEmitter<any>();
+    @Output() onReceptionner = new EventEmitter<any>();
     @Output() onRejet = new EventEmitter<any>();
     @Output() onEditResult = new EventEmitter<any>();
+    @Output() onCloture = new EventEmitter<any>();
 
     @ViewChild('detailContainer', {read: ViewContainerRef, static: true}) detailContainer?: ViewContainerRef;
 
@@ -52,7 +57,7 @@ export class DmdTraitementTableTemplateComponent {
                 private featureService: FeaturesService, private datePipe: DatePipe) {
         this.cols = [
             {field: 'numero', header: 'Numero', type: 'string', filter: true, width: '10%', centered: false},
-            {field: 'objet', header: 'Objet', type: 'string', filter: true, width: '30%', centered: false},
+            {field: 'intitule', header: 'Libellé', type: 'string', filter: true, width: '30%', centered: false},
             {
                 field: 'currentUserfullName',
                 header: 'Nom & prénom',
@@ -61,7 +66,7 @@ export class DmdTraitementTableTemplateComponent {
                 width: '20%',
                 centered: false
             },
-            {field: 'statut', header: 'Statut', type: 'enum', filter: true, width: '15%', centered: false},
+            {field: 'status', header: 'Statut', type: 'enum', filter: true, width: '15%', centered: false},
             {field: 'createdAt', header: 'Date soumission', type: 'string', filter: true, width: '15%', centered: false}
         ];
 
@@ -98,7 +103,7 @@ export class DmdTraitementTableTemplateComponent {
         if (this.display) {
 
             this.display = false;
-          //  this.searchedAgent = undefined;
+            //  this.searchedAgent = undefined;
             this.numerMatricule = undefined;
         } else {
             this.display = true;
@@ -134,8 +139,8 @@ export class DmdTraitementTableTemplateComponent {
     }
 
     doAction() {
-        if (this.btnActions === EtapeTraitement.IMPUTATION) {
-            this.onDisplay();
+        if (this.btnActions === EtapeTraitement.RECEPTION) {
+            this.receptionner();
         } else {
             this.validate();
         }
@@ -159,17 +164,6 @@ export class DmdTraitementTableTemplateComponent {
         });
     }
 
-    protected structureValidate() {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous valider la sélection ?',
-            key: this.imputationKey,
-            accept: () => {
-
-                this.onStructureValidation.emit(this.selectedDemandes);
-                this.selectedDemandes = [];
-            }
-        });
-    }
 
     imputer() {
         this.confirmationService.confirm({
@@ -204,14 +198,29 @@ export class DmdTraitementTableTemplateComponent {
 
 
 
+    receptionner() {
+        let message = `Voulez-vous soumettre la demande n°: ${this.selectedDemande?.numero} pour validation ?`;
+        this.confirmationService.confirm({
+            message: message,
+            key: this.imputationKey,
+            accept: () => {
+                this.selectedDemandes.map(item => {
+                    item.etapeTraitement=this.BtnActions.RECEPTION
+                });
+                this.onReceptionner.emit(this.selectedDemandes);
+            }
+        });
+    }
     soumettre() {
         let message = `Voulez-vous soumettre la demande n°: ${this.selectedDemande?.numero} pour validation ?`;
         this.confirmationService.confirm({
             message: message,
             key: this.imputationKey,
             accept: () => {
-
-                this.onSubmission.emit(this.selectedDemande);
+                this.selectedDemandes.map(item => {
+                    item.etapeTraitement=this.BtnActions.TRAITEMENT
+                });
+                this.onSubmission.emit(this.selectedDemandes);
             }
         });
     }
@@ -219,14 +228,37 @@ export class DmdTraitementTableTemplateComponent {
 
     saveEntity() {
         this.confirmationService.confirm({
-            message: `Voulez-vous enregistrer la demande n°: ${this.selectedDemande?.numero} ?`,
+            message: `Voulez-vous réceptionner  la demande n°: ${this.selectedDemande?.numero} ?`,
             key: this.imputationKey,
             accept: () => {
+                this.selectedDemande.status=StatusEnum.IN_PROGRESS
                 this.onSaveEntity.emit(this.selectedDemande);
             }
         });
     }
 
+    cloture() {
+        let message=""
+        if(this.selectedDemandes.length>0){
+            message = `Voulez-vous cloturer la sélection?`;
+        }else {
+            message = `Voulez-vous cloturer la demande n°: ${this.selectedDemande?.numero}  ?`;
+        }
 
+        this.confirmationService.confirm({
+            message: message,
+            key: this.imputationKey,
+            accept: () => {
+                if (this.selectedDemande!=null){
+                    this.selectedDemandes.push(this.selectedDemande);
+                }
+                this.selectedDemandes.map(item => {
+                    item.etapeTraitement=this.BtnActions.CLOTURE
+                    item.status=StatusEnum.APPROVED
+                });
+                this.onCloture.emit(this.selectedDemandes);
+            }
+        });
+    }
     protected readonly TypeDemande = TypeDemande;
 }

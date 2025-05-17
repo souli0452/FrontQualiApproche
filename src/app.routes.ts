@@ -8,6 +8,7 @@ import { AuthGuard } from './app/components/auth/auth.guard';
 import { LoginComponent } from './app/pages/login/login.component';
 
 export const appRoutes: Routes = [
+
     {
         path: '',
         component: AppLayout,

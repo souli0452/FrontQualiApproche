@@ -1,8 +1,16 @@
 export enum EtapeTraitement {
+    SOUMISSION = 'SOUMISSION',
     RECEPTION = 'SOUMISSION',
     VALIDATION = 'VALIDATION',
     IMPUTATION = 'IMPUTATION',
     TRAITEMENT='TRAITEMENT',
     CLOTURE = 'CLOTURE',
+
+}
+export enum StatusEnum {
+    PENDIND = 'PENDIND',
+    APPROVED = 'APPROVED',
+    REJECTED = 'REJECTED',
+    IN_PROGRESS = 'IN_PROGRESS',
 
 }

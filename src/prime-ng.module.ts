@@ -213,6 +213,7 @@ import { MessageService } from 'primeng/api';
     ],
     exports: [
         FluidModule,
+
         ProgressSpinnerModule,
         SpeedDialModule,
         Toolbar,
