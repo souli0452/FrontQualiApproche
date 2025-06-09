@@ -1,7 +1,53 @@
 import { HttpErrorResponse, HttpParams } from '@angular/common/http';
 import moment from 'moment';
 import { MessageService } from 'primeng/api';
+import { Structure } from './pages/structure/structure';
+export interface ReportingInput {
+    reportFormat: ReportFormat;
+    reportType: any;
+    entityId?: string;
+    structureId?: string;
+}
 
+export enum ReportFormat {
+    PDF = 'PDF', WORD = 'WORD', EXCEL = 'EXCEL', CSV = 'CSV', XPRINT = 'XPRINT'
+}
+export function printPdfFile(bytes: any) {
+    window.open(URL.createObjectURL(new Blob([bytes], {type: 'application/pdf'})), '_blank');
+}
+
+export function printExcelFile(bytes: any) {
+    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    window.open(URL.createObjectURL(new Blob([bytes], {type: contentType})), '_blank');
+}
+
+export function printWordFile(bytes: any) {
+    const contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    window.open(URL.createObjectURL(new Blob([bytes], {type: contentType})), '_blank');
+}
+
+export function generateReportFile(bytes: any, reporting?: ReportingInput) {
+    if (reporting) {
+        const report = {...reporting};
+        switch (report.reportFormat) {
+            case ReportFormat.PDF:
+                printPdfFile(bytes);
+                break;
+            case ReportFormat.EXCEL:
+                printExcelFile(bytes);
+                break;
+            case ReportFormat.WORD:
+                printWordFile(bytes);
+                break;
+            case ReportFormat.CSV:
+                printExcelFile(bytes);
+                break;
+            default:
+                window.console.log('Aucun format de fichier précisé');
+                break;
+        }
+    }
+}
 export const createRequestOption = (req?: any): HttpParams => {
     let options: HttpParams = new HttpParams();
     if (req) {
@@ -170,7 +216,60 @@ export function showToast(severity: StatusEnum, status: number, message: any,
     messageService.add(buildMessage(severity, status, message, error));
 }
 
+export function formatUrl(url: string, replaceValue?: any): string {
+    if (replaceValue) {
+        const searchValue = url.substring(url.indexOf('$'), url.lastIndexOf('$') + 1);
 
+        return url.replace(searchValue, replaceValue);
+    }
+
+    return url;
+}
+export enum HttpStatusCode {
+    error200 = 200,
+    error201 = 201,
+    error202 = 202,
+    error404 = 404,
+    error400 = 400,
+    error500 = 500,
+    error502 = 502,
+    error503 = 503
+}
+export namespace HttpStatusCode {
+    const status500List = new Array<HttpStatusCode>(HttpStatusCode.error500, HttpStatusCode.error502, HttpStatusCode.error503);
+    const status200List = new Array<HttpStatusCode>(HttpStatusCode.error200, HttpStatusCode.error201, HttpStatusCode.error202);
+
+    export function isError500(statusCode: HttpStatusCode) {
+        return status500List.includes(statusCode);
+    }
+
+    export function isSuccess200(statusCode: HttpStatusCode) {
+        return status200List.includes(statusCode);
+    }
+}
+
+export function handleHttpErrors(response: HttpErrorResponse, severity: string, summary: string, key: string) {
+
+    if (HttpStatusCode.isError500(response?.error?.status)) {
+        return {
+            severity,
+            summary,
+            detail: 'Une erreur inconnue est survenue, merci de contacter l\'administrateur.',
+            key
+        };;
+    } else {
+        if (response.error && response.error.message) {
+            return {severity, summary, detail: response.error.message, key};
+        } else {
+            return {
+                severity,
+                summary,
+                detail: 'Une erreur inconnue est survenue, merci de contacter l\'administrateur.',
+                key
+            };
+        }
+    }
+}
 
 // Code pour le formatage de la date pour affichage dans le tableau des confirmations
 export function formatDateRange(dates: Date[]): string {
@@ -189,4 +288,24 @@ export function formatDateRange(dates: Date[]): string {
 
     return `${start} - ${end}`;
   }
-// Code pour le formatage de la date pour affichage dans le tableau des confirmations
+export const USER_STRUCTURE_KEY = 'current_user_structure';
+export const USER_PROFILE_KEY = 'current_user_profile';
+
+export function getCurrentUserStructure(): Structure {
+    return JSON.parse(localStorage.getItem(USER_STRUCTURE_KEY)!) as Structure;
+}
+export const REGION_LIST = [
+    {value: 'Centre', label: 'Centre'},
+    {value: 'Boucle du Mouhoun', label: 'Boucle du Mouhoun'},
+    {value: 'Cascades', label: 'Cascades'},
+    {value: 'Centre-Est', label: 'Centre-Est'},
+    {value: 'Centre-Nord', label: 'Centre-Nord'},
+    {value: 'Centre-Ouest', label: 'Centre-Ouest'},
+    {value: 'Centre-Sud', label: 'Centre-Sud'},
+    {value: 'Est', label: 'Est'},
+    {value: 'Hauts-Bassins', label: 'Hauts-Bassins'},
+    {value: 'Nord', label: 'Nord'},
+    {value: 'Plateau Central', label: 'Plateau Central'},
+    {value: 'Sahel', label: 'Sahel'},
+    {value: 'Sud-Ouest', label: 'Sud-Ouest'}
+];

@@ -3,6 +3,15 @@
 @use './assets/layout/layout.scss';
 @use 'primeicons/primeicons.css';
 @use './assets/demo/demo.scss';
+/* styles.css ou styles.scss */
+html {
+    font-size: 15px; /* ou la taille que tu veux en px, rem ou % */
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    font-size: 1rem; /* hérite de html, mais tu peux ajuster ici */
+}
 
 @font-face {
     font-family: 'Roboto-Regular';
@@ -20,8 +29,8 @@ font-style: normal;
 body {
   font-family: 'Roboto-Regular', sans-serif;
 }
-.font-bold, 
-.layout-menu ul a.active-route, 
+.font-bold,
+.layout-menu ul a.active-route,
 .p-dialog-title,
 .p-fieldset-legend-label,
 .p-step-title{
@@ -49,7 +58,14 @@ body {
 .conformite p-toolbar{
   display: none !important;
 }
-
+.p-button-warning{
+    background-color: #f8b045 !important;
+    border-color: #f8b045 !important;
+}
+.p-badge-warning{
+    background-color: #f8b045 !important;
+    border-color: #f8b045 !important;
+}
 .p-step-title {
   text-transform: lowercase !important;
 }

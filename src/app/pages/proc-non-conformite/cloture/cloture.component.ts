@@ -15,6 +15,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './cloture.component.html',
   styleUrl: './cloture.component.scss',
     standalone: true,
+    providers: [MessageService],
     imports:[
         CommonModule,
         NgPrimeModule,
@@ -23,7 +24,7 @@ import { CommonModule } from '@angular/common';
 })
 export class ClotureComponent {
     demandeList: any = [];
-    title = 'Cloture des non-conformités';
+    title = 'Suivi des non-conformités';
     constructor(protected messageService: MessageService,private service:ProcNonConformiteService) {
     }
     @ViewChild(DmdTraitementTableTemplateComponent) dmdTraitement!: DmdTraitementTableTemplateComponent;
@@ -33,7 +34,7 @@ export class ClotureComponent {
         this.getDemandeList()
     }
     getDemandeList() {
-        this.service.getNonConformiteByEtape(EtapeTraitement.VALIDATION).subscribe({
+        this.service.getNonConformiteByEtape(EtapeTraitement.SUIVI_RQ).subscribe({
             next: (data) => {
                 this.demandeList = data.body;
             },
@@ -45,16 +46,17 @@ export class ClotureComponent {
     onSuccess(res: HttpResponse<any>) {
         this.getDemandeList()
         showToast(StatusEnum.success, res.status, null, this.messageService);
+        this.messageService.add({ severity: 'success', summary: 'REUSSI', detail: "L'oppération à réussie", life: 3000 });
         this.dmdTraitement.closeDetailsDialog();
     }
 
     cloture(dmd:any) {
-        this.service.updateNomConformite(dmd,dmd.id).subscribe({
+        this.service.updateNomConformites(dmd).subscribe({
             next: (data) => {
                 this.onSuccess(data);
             },
             error: (error) => {
-
+                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
             }
         })
     }

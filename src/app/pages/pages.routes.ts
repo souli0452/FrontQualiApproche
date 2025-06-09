@@ -15,11 +15,16 @@ import { ProcedureNonConformiteComponent } from './procedure-non-conformite/proc
 import { reglementationComponent } from './reglementation/reglementation';
 import { CritereEvaluationComponent } from './critere-evaluation/critere-evaluation';
 import { LoginComponent } from './login/login.component';
-import { KcUserComponent } from './kc-user/kc-user.component';
 import { ReceptionComponent } from './proc-non-conformite/reception/reception.component';
 import { ValidationComponent } from './proc-non-conformite/validation/validation.component';
 import { TraitementComponent } from './proc-non-conformite/traitement/traitement.component';
 import { ClotureComponent } from './proc-non-conformite/cloture/cloture.component';
+import { StructureComponent } from './structure/structure.component';
+import { TypeStructure } from '../enums';
+import { ConsultationsComponent } from './proc-non-conformite/consultations/consultations.component';
+import { ValidationRSComponent } from './proc-non-conformite/validation-rs/validation-rs.component';
+import { ImputationComponent } from './proc-non-conformite/imputation/imputation.component';
+import { KcUserComponent } from './kc-user/kc-user.component';
 
 export default [
     { path: 'documentation', component: Documentation },
@@ -37,11 +42,30 @@ export default [
     { path: 'reglementation', component: reglementationComponent },
     { path: 'critere-evaluation', component: CritereEvaluationComponent },
     { path: 'users', data: {breadcrumb: 'Utilisateurs'}, component: KcUserComponent },
-    { path: 'login', data: {breadcrumb: 'Connexion'}, component: LoginComponent },
+
     {path: 'reception', data: {breadcrumb: 'Réception'}, component: ReceptionComponent},
     {path: 'validation', data: {breadcrumb: 'Validation'}, component: ValidationComponent},
     {path: 'traitement', data: {breadcrumb: 'Traitement'}, component: TraitementComponent},
     {path: 'cloture', data: {breadcrumb: 'Cloture'}, component: ClotureComponent},
+    {path: 'consultation', data: {breadcrumb: 'Consultations'}, component: ConsultationsComponent},
+    {path: 'validation_rs', data: {breadcrumb: 'validation'}, component: ValidationRSComponent},
+    {path: 'imputation', data: {breadcrumb: 'imputations'}, component: ImputationComponent},
+    {
+        path: 'direction',
+        component: StructureComponent,
+        data: {
+            breadcrumb: 'Direction',
+            typeStructure: TypeStructure.DIRECTION
+        }
+    },
+    {
+        path: 'service',
+        component: StructureComponent,
+        data: {
+            breadcrumb: 'service',
+            typeStructure: TypeStructure.SERVICE
+        }
+    },
     { path: 'empty', component: Empty },
     { path: '**', redirectTo: '/notfound' },
 ] as Routes;

@@ -6,6 +6,8 @@ import { Landing } from './app/pages/landing/landing';
 import { Notfound } from './app/pages/notfound/notfound';
 import { AuthGuard } from './app/components/auth/auth.guard';
 import { LoginComponent } from './app/pages/login/login.component';
+import { ResetPasswordComponent } from './app/pages/reset-password/reset-password.component';
+import { EmailVerificationComponent } from './app/pages/email-verification/email-verification.component';
 
 export const appRoutes: Routes = [
 
@@ -22,6 +24,14 @@ export const appRoutes: Routes = [
     },
     { path: 'login', component: LoginComponent },
     { path: '', redirectTo: '/login', pathMatch: 'full' },
+    {
+        path: 'verify-email',
+        component: EmailVerificationComponent
+    },
+    {
+        path: 'reset-password',
+        component: ResetPasswordComponent
+    },
     { path: 'landing', component: Landing },
     { path: 'notfound', component: Notfound },
     { path: 'auth', loadChildren: () => import('./app/pages/auth/auth.routes') },

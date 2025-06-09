@@ -1,7 +1,9 @@
 <div class="card shadow-1">
+    <p-toast />
     <app-dmd-traitement-table-template
         [btnActions]="BtnActions.RECEPTION"
         [demandeList]="demandeList"
+        (onEdition)="edition($event)"
         (onReceptionner)="reception($event)"
         [title]="title">
     </app-dmd-traitement-table-template>

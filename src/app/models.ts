@@ -232,13 +232,13 @@ export interface Exigence extends UserInfos{
 }
 
 
-export interface FormGroupColumn extends UserInfos {
-    field: string;
-    type: string;
-    label: string;
-    header: string;
-    visible: boolean;
-    required: boolean;
+export interface FormGroupColumn  {
+    field?: string;
+    type?: string;
+    label?: string;
+    header?: string;
+    visible?: boolean;
+    required?: boolean;
     optionLabel?: string;
     dropdownList?: any[];
     fileNb?: number;
@@ -294,4 +294,13 @@ export interface KcUser {
     lastName: string;
     email: string;
     password: string;
+    structure:string;
+}
+export interface PlanAction {
+    id?: number;
+    numeroOrdre: number;
+    causesIdentifiees: string;
+    solutionsRetenues: string;
+    responsable: string;
+    echeance: Date;
 }

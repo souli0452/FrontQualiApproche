@@ -1,0 +1,46 @@
+:host::ng-deep {
+  .p-toolbar {
+    padding: 0.5rem !important;
+    gap: 0 !important;
+  }
+
+  .p-toolbar-group-right {
+    width: 48% !important;
+  }
+
+  .p-inputgroup > .p-inputwrapper:last-child > .p-component {
+    width: 130% !important;
+    border-radius: 0 !important;
+  }
+
+  .p-inputgroup {
+    width: 80% !important;
+  }
+
+  .p-inputgroup-addon:first-child {
+    border-radius: 0 !important;
+  }
+
+  .p-fluid .p-fileupload .p-button {
+    width: 3rem !important;
+  }
+
+  .p-dialog .p-dialog-header {
+    padding: 1.5rem 1.5rem 1.5rem 2.4rem;
+  }
+
+  p-confirmDialog {
+    .p-confirm-dialog {
+      .p-dialog-content {
+        font-weight: bold;
+        padding-top: 1.2em;
+        color: #FF0000FF;
+        font-size: 1.3rem;
+      }
+    }
+  }
+}
+
+.w-100 {
+  width: 100% !important;
+}

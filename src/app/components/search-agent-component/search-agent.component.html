@@ -1,0 +1,84 @@
+<ng-container>
+    <!-- Première ligne : Recherche Direction/Service -->
+    <div class="flex flex-wrap align-items-center gap-3 mb-4">
+        <!-- Direction -->
+        <div class="flex-grow-1" style="flex-basis: 40%; min-width: 300px;">
+            <p-dropdown [options]="directions"
+                        id="direction"
+                        [autoDisplayFirst]="false"
+                        emptyMessage="Aucune donnée disponible"
+                        emptyFilterMessage="Aucune direction trouvée"
+                        appendTo="body"
+                        [resetFilterOnHide]="true"
+                        [showClear]="true"
+                        optionLabel="libelleLong"
+                        optionValue="id"
+                        placeholder="Rechercher une direction"
+                        [filter]="true"
+                        [style]="{width: '100%'}"
+                        [(ngModel)]="directionId"
+                        (onChange)="loadServiceByDirection()">
+            </p-dropdown>
+        </div>
+
+        <!-- Service -->
+        <div class="flex-grow-1" style="flex-basis: 40%; min-width: 300px;">
+            <p-dropdown [options]="services"
+                        id="service"
+                        [autoDisplayFirst]="false"
+                        emptyMessage="Aucune donnée disponible"
+                        emptyFilterMessage="Aucun service trouvé"
+                        appendTo="body"
+                        [resetFilterOnHide]="true"
+                        [showClear]="true"
+                        optionLabel="libelleLong"
+                        optionValue="id"
+                        placeholder="Rechercher un service"
+                        [filter]="true"
+                        [style]="{width: '100%'}"
+                        [(ngModel)]="serviceId">
+            </p-dropdown>
+        </div>
+
+        <!-- Bouton Rechercher -->
+        <div>
+            <button type="button" pButton icon="pi pi-search"
+                    (click)="loadAgents()" [disabled]="!(directionId || serviceId)"
+                    style="min-width: 120px;">
+                <span class=" font-bold text-white">&nbsp;Rechercher</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Deuxième ligne : Recherche Agent -->
+    <div class="mb-4">
+        <p-dropdown [options]="agents"
+                    [autoDisplayFirst]="false"
+                    id="agent"
+                    (onChange)="onAgentSelect($event.value)"
+                    emptyMessage="Aucune donnée disponible"
+                    emptyFilterMessage="Aucun agent trouvé"
+                    appendTo="body"
+                    [resetFilterOnHide]="true"
+                    [showClear]="true"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Rechercher un agent"
+                    [filter]="true"
+                    [style]="{width: '100%'}"
+                    [(ngModel)]="searchedAgent">
+        </p-dropdown>
+    </div>
+
+    <!-- Résultats -->
+    <div *ngIf="searchedAgent" class="mt-5">
+        <div class="flex flex-column md:flex-row gap-5 p-2">
+            <div class="flex flex-column justify-content-center align-items-center border-1 surface-border py-5 px-4 border-round" style="flex: 1;">
+                <h4>{{ searchedAgent.lastName }} {{ searchedAgent.firstName }}</h4>
+                <span class="text-500">
+
+        </span>
+            </div>
+        </div>
+    </div>
+</ng-container>

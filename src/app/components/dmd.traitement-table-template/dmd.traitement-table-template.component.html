@@ -6,15 +6,23 @@
     <ng-template pTemplate="caption">
         <p-toolbar styleClass="mb-2">
             <ng-template #start>
-                <h5 class="m-0">{{ title }}</h5>
+                <div class="col-6 md:col-6 sm:col-12">
+                    <h5> {{ title }}</h5>
+                    <h6 class="m-0 flex align-items-center gap-2">
+                        Total des demandes <span *ngIf="btnActions===BtnActions.IMPUTATION"> à imputer</span>
+                        <span *ngIf="btnActions===BtnActions.TRAITEMENT">à traiter</span>
+                        <span *ngIf="btnActions===BtnActions.VALIDATION">à valider</span>
+                        <p-badge [value]="demandeList.length.toString()"  styleClass="ml-2"></p-badge>
+                    </h6>
+
+                </div>
             </ng-template>
             <ng-template #end>
 <span class="p-input-icon-left">
-        <i class="pi pi-search mr-2"></i>
+
         <input pInputText type="text" placeholder="Rechercher..." class="mr-4"
                (input)="dt.filterGlobal($event, 'contains')"
                style="width: 250px"/>
-
     @if (btnObject) {
         <button pButton pRipple
                 [label]="btnObject.label"
@@ -35,7 +43,7 @@
 
     <ng-template pTemplate="header" let-columns>
         <tr>
-            @if (btnActions === BtnActions.RECEPTION || btnActions === BtnActions.VALIDATION) {
+            @if (btnActions === BtnActions.RECEPTION || btnActions === BtnActions.VALIDATION|| btnActions === BtnActions.IMPUTATION) {
                 <th style="width: 4rem">
                     <p-tableHeaderCheckbox/>
                 </th>
@@ -54,7 +62,7 @@
 
     <ng-template pTemplate="body" let-rowData let-columns="columns">
         <tr>
-            @if (btnActions === BtnActions.RECEPTION || btnActions === BtnActions.VALIDATION) {
+            @if (btnActions === BtnActions.RECEPTION || btnActions === BtnActions.VALIDATION|| btnActions === BtnActions.IMPUTATION) {
                 <td>
                     <p-tableCheckbox [value]="rowData"/>
                 </td>
@@ -63,7 +71,38 @@
                 <td [ngClass]="{'text-center': col.centered}">
                     <!-- Contenu des cellules inchangé -->
                     <span *ngIf="col.type === 'string'">{{ rowData[col.field] }}</span>
-                    <!-- ... autres types de données ... -->
+                    <span *ngIf="col.type === 'enum'">
+                           <span *ngIf="rowData[col.field]==='PENDING'">
+  <span *ngIf="btnActions==BtnActions.RECEPTION" class="p-badge p-badge-warning">En attente de reception</span>
+                           <span *ngIf="btnActions==BtnActions.CLOTURE"
+                                 class="p-badge p-badge-warning">En attente de traitement</span>
+                                <span *ngIf="btnActions==BtnActions.VALIDATION" class="p-badge p-badge-warning">En attente de validation</span>
+                                   <span *ngIf="btnActions==BtnActions.IMPUTATION" class="p-badge p-badge-warning">En attente d'imputation</span>
+                                   <span *ngIf="btnActions==BtnActions.TRAITEMENT" class="p-badge p-badge-warning">En attente de traitement</span>
+                                 </span>
+                                <span *ngIf="rowData[col.field]==='IN_PROGRESS'">
+                               <span *ngIf="btnActions==BtnActions.CLOTURE" class="p-badge p-badge-info">En cours de traitement</span>
+                                 <span *ngIf="btnActions==BtnActions.TRAITEMENT" class="p-badge p-badge-info">En cours de traitement</span>
+                                   <span *ngIf="btnActions==BtnActions.IMPUTATION" class="p-badge p-badge-warning">En attente d'imputation</span>
+
+
+
+
+            <span *ngIf="btnActions==BtnActions.VALIDATION || btnActions==BtnActions.VALIDATION_RS" class="p-badge p-badge-info">En attente de validation</span>
+                                       <span *ngIf="btnActions==BtnActions.RECEPTION" class="p-badge p-badge-info">En attente de reception</span>
+
+             </span>
+
+              <span *ngIf="rowData[col.field]==='APPROVED'">
+
+         <span class="p-badge p-badge-success">Traitée</span>
+       </span>
+             <span *ngIf="rowData[col.field]==='IN_PROGRESS'">
+
+                 <span *ngIf="btnActions==BtnActions.SUIVI_RQ" class="p-badge p-badge-info">En attente de cloture</span></span>
+      <span *ngIf="rowData[col.field]==='REJECTED'">
+      <span class="p-badge p-badge-danger">Réjetée pour corrections</span>
+      </span></span>
                 </td>
             }
             <td class="text-center">
@@ -93,3 +132,137 @@
         </tr>
     </ng-template>
 </p-table>
+<p-dialog (onHide)="display = false" [modal]="true" [maximizable]="true"
+          [(visible)]="display" [style]="{width: '48vw'}">
+    <ng-template pTemplate="header">
+        <div class="inline-flex align-items-center justify-content-center gap-2">
+            <span class="font-bold white-space-nowrap">
+               <b>Rechercher un agent</b>
+            </span>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="content">
+        <app-search-agent (searchedAgentChange)="searchedAgent = $event"></app-search-agent>
+    </ng-template>
+
+    <p-footer #footer>
+        <div class="flex justify-content-end flex-wrap">
+            <button type="button" pRipple pButton icon="pi pi-times-circle"
+                    class="p-button-secondary position-left mr-3"
+                    label="Quitter" (click)="onDisplay()">
+            </button>
+            <button pRipple pButton type="button" icon="pi pi-history"
+                    (click)="imputer()" label="imputer" [disabled]="!searchedAgent">
+            </button>
+        </div>
+    </p-footer>
+</p-dialog>
+
+<p-dialog
+
+    (onHide)="displayDetail = false" [modal]="true" [maximizable]="true"
+    [closable]="false"
+    [(visible)]="displayDetail" [style]="{width: '68vw'}">
+    <ng-template pTemplate="header">
+
+        <div class="inline-flex align-items-center justify-content-center gap-2">
+        <span class="font-bold white-space-nowrap">
+          <h4>
+              <b *ngIf="btnActions === BtnActions.RECEPTION || btnActions==BtnActions.CLOTURE">Détails de la demande n°: {{ selectedDemande.numeroReference }}</b>
+                          <b *ngIf="btnActions === BtnActions.RECEPTION || btnActions==BtnActions.SUIVI_RQ">Détails de la demande n°: {{ selectedDemande.numeroReference }}</b>
+                            <b *ngIf="btnActions === BtnActions.IMPUTATION">Imputation de la demande n°: {{ selectedDemande.numeroReference }}</b>
+              <b *ngIf="btnActions === BtnActions.TRAITEMENT">Traitement de la demande n°: {{ selectedDemande.numeroReference }}
+                  <span class="rejet" *ngIf="selectedDemande.rejeter">(Réjetée pour corrections)</span></b>
+               <b *ngIf="btnActions === BtnActions.VALIDATION_RS||btnActions === BtnActions.VALIDATION">Validation de la demande n°: {{ selectedDemande.numeroReference }}
+                   <span class="rejet" *ngIf="selectedDemande.rejeter">(Réjetée pour corrections)</span></b>
+          </h4>
+        </span>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="content" #detailContainer>
+
+
+    </ng-template>
+
+    <p-footer #footer>
+        <div class="flex justify-content-end flex-wrap">
+            <button type="button" pRipple pButton icon="pi pi-times-circle"
+                    class="p-button-secondary position-left mr-3"
+                    label="Quitter" (click)="displayDetails()">
+            </button>
+            <button pRipple pButton type="button" icon="pi pi-check"
+                    class="p-button-warning position-left mr-3"
+                    (click)="editionNew()" label="Editer">
+            </button>
+            @if (btnActions === BtnActions.TRAITEMENT) {
+
+                <button pRipple pButton type="button" [disabled]="componentRef?.instance.editForm.invalid"
+                        (click)="saveEntity()" icon="pi pi-save" label="Enregistrer">
+                </button>
+                &nbsp;
+                <button pRipple pButton type="button" icon="pi pi-send" [disabled]="componentRef?.instance.editForm.invalid"
+                        (click)="soumettre()" label="Soumettre">
+                </button>
+            }
+
+
+
+            @if (btnActions===BtnActions.RECEPTION) {
+                <button pRipple pButton type="button" icon="pi pi-arrow-up"
+                        class="p-button-danger position-left mr-3"
+                        (click)=rejet()
+                        label="Rejeter">
+                </button>
+            }
+            @if (btnActions===BtnActions.SUIVI_RQ) {
+                <button pRipple pButton type="button" icon="pi pi-times"
+                        (click)="cloture()"
+                        label="Cloturer">
+                </button>
+            }
+            @if (btnActions === BtnActions.VALIDATION_RS) {
+                <button pRipple pButton type="button" icon="pi pi-arrow-up"
+                        class="p-button-danger position-left mr-3"
+                        (click)=rejet()
+                        label="Rejeter">
+                </button>}
+            @if (btnActions === BtnActions.VALIDATION) {
+                <button pRipple pButton type="button" icon="pi pi-arrow-up"
+                        class="p-button-danger position-left mr-3"
+                        (click)=rejet()
+                        label="Rejeter">
+                </button>
+                <button pRipple pButton type="button" icon="pi pi-check"
+                        (click)="validate()"
+                        label="Valider">
+                </button>
+            }
+
+            @if (btnActions === BtnActions.RECEPTION) {
+                <button pRipple pButton type="button" icon="pi pi-check"
+                        (click)="receptionner()" label="Réceptionner"></button>
+            }
+            @if (btnActions === BtnActions.VALIDATION_RS) {
+                <button pRipple pButton type="button" icon="pi pi-check"
+                        (click)="validationRS()" label="Valider"></button>
+            }
+            @if (btnActions === BtnActions.IMPUTATION) {
+                <button pRipple pButton type="button" icon="pi pi-check"
+                        (click)="onDisplay()" label="Imputer">
+                </button>
+            }
+
+
+
+
+        </div>
+
+    </p-footer>
+</p-dialog>
+<p-confirmDialog header="Confirmation" [key]="imputationKey"
+                 icon="pi pi-exclamation-triangle" [style]="{width: '35vw'}"
+                 acceptButtonStyleClass="p-button-danger" acceptLabel="Oui"
+                 rejectButtonStyleClass="p-button-primary" rejectLabel="Non">
+</p-confirmDialog>
+

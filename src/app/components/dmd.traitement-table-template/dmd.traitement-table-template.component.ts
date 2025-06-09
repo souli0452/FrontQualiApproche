@@ -5,6 +5,8 @@ import {FeaturesService} from "../../services/feature-service";
 import {  TypeDemande} from "../../utils";
 import { EtapeTraitement, StatusEnum } from '../../enums';
 import { NgPrimeModule } from '../../../prime-ng.module';
+import { BadgeModule } from 'primeng/badge';
+import { SearchAgentComponent } from '../search-agent-component/search-agent.component';
 
 @Component({
     selector: 'app-dmd-traitement-table-template',
@@ -12,12 +14,8 @@ import { NgPrimeModule } from '../../../prime-ng.module';
     styleUrl: './dmd.traitement-table-template.component.scss',
     providers: [DatePipe],
     standalone: true,
-    imports:[
-        CommonModule,
-        NgPrimeModule,
-    ]
+    imports: [CommonModule, NgPrimeModule, SearchAgentComponent]
 })
-
 export class DmdTraitementTableTemplateComponent {
     @Input() demandeList: Array<any> = [];
     @Input() btnActions?: EtapeTraitement = EtapeTraitement.RECEPTION;
@@ -30,18 +28,19 @@ export class DmdTraitementTableTemplateComponent {
     @Output() onSaveEntity = new EventEmitter<any>();
     @Output() onSubmission = new EventEmitter<any>();
     @Output() onReceptionner = new EventEmitter<any>();
+    @Output() onValidationRS = new EventEmitter<any>();
     @Output() onRejet = new EventEmitter<any>();
     @Output() onEditResult = new EventEmitter<any>();
     @Output() onCloture = new EventEmitter<any>();
 
-    @ViewChild('detailContainer', {read: ViewContainerRef, static: true}) detailContainer?: ViewContainerRef;
+    @ViewChild('detailContainer', { read: ViewContainerRef, static: true }) detailContainer?: ViewContainerRef;
 
     protected readonly BtnActions = EtapeTraitement;
 
     imputationKey = 'imputationKey';
     cols: any[] = [];
     colsFilter: any[] = [];
-    searchedAgent:any;
+    searchedAgent: any;
     selectedDemandes: Array<any> = [];
     display: boolean = false;
     agentSeachError: boolean = false;
@@ -52,30 +51,34 @@ export class DmdTraitementTableTemplateComponent {
     componentRef: ComponentRef<any> | undefined;
     afficherBoutonEdit: boolean = true;
 
-    constructor(private messageService: MessageService,
-                private confirmationService: ConfirmationService,
-                private featureService: FeaturesService, private datePipe: DatePipe) {
+    constructor(
+        private messageService: MessageService,
+        private confirmationService: ConfirmationService,
+        private featureService: FeaturesService,
+        private datePipe: DatePipe
+    ) {
         this.cols = [
-            {field: 'numero', header: 'Numero', type: 'string', filter: true, width: '10%', centered: false},
-            {field: 'intitule', header: 'Libellé', type: 'string', filter: true, width: '30%', centered: false},
+            { field: 'numeroReference', header: 'N° ordre', type: 'string', filter: true, width: '10%', centered: false },
+            { field: 'nomProcessus', header: 'Nom processus', type: 'string', filter: true, width: '30%', centered: false },
             {
                 field: 'currentUserfullName',
-                header: 'Nom & prénom',
+                header: 'Responsable',
                 type: 'string',
                 filter: true,
                 width: '20%',
                 centered: false
             },
-            {field: 'status', header: 'Statut', type: 'enum', filter: true, width: '15%', centered: false},
-            {field: 'createdAt', header: 'Date soumission', type: 'string', filter: true, width: '15%', centered: false}
+            { field: 'status', header: 'Statut', type: 'enum', filter: true, width: '15%', centered: false },
+            { field: 'createdAt', header: 'Date soumission', type: 'string', filter: true, width: '15%', centered: false }
         ];
 
-        this.colsFilter = this.cols.map(value => value.field);
+        this.colsFilter = this.cols.map((value) => value.field);
     }
 
     closeDetailsDialog() {
-        this.detailContainer?.clear();
         this.displayDetail = false;
+        this.detailContainer?.clear();
+
         this.selectedDemandes = [];
     }
     displayDetails(rowData?: any) {
@@ -85,12 +88,10 @@ export class DmdTraitementTableTemplateComponent {
             this.selectedDemande = rowData;
             this.displayDetail = true;
             let componentRef: any;
-            if (this.btnActions === EtapeTraitement.TRAITEMENT) {
-                componentRef = this.detailContainer?.createComponent(
-                    this.featureService.getDynamicFormComponent(this.selectedDemande.typeDemande));
+            if (this.btnActions !== EtapeTraitement.CLOTURE&&this.btnActions !== EtapeTraitement.IMPUTATION) {
+                componentRef = this.detailContainer?.createComponent(this.featureService.getDynamicFormComponent(this.selectedDemande.typeDemande));
             } else {
-                componentRef = this.detailContainer?.createComponent(
-                    this.featureService.getDynamicDetailComponent(this.selectedDemande.typeDemande));
+                componentRef = this.detailContainer?.createComponent(this.featureService.getDynamicDetailComponent(this.selectedDemande.typeDemande));
             }
 
             componentRef!.instance.demande = this.selectedDemande;
@@ -99,12 +100,10 @@ export class DmdTraitementTableTemplateComponent {
     }
 
     onDisplay() {
-        this.agentSeachError = false;
         if (this.display) {
 
             this.display = false;
-            //  this.searchedAgent = undefined;
-            this.numerMatricule = undefined;
+            this.searchedAgent = undefined;
         } else {
             this.display = true;
         }
@@ -114,13 +113,13 @@ export class DmdTraitementTableTemplateComponent {
         this.isAgentSeach = true;
         this.agentSeachError = false;
         if (this.numerMatricule) {
-
-
-
         }
     }
 
     get btnObject() {
+        if (this.btnActions === EtapeTraitement.TRAITEMENT||this.btnActions == EtapeTraitement.CLOTURE||this.btnActions == EtapeTraitement.SUIVI_RQ|| this.btnActions === EtapeTraitement.VALIDATION_RS) {
+            return  null;
+        }
         if (this.btnActions === EtapeTraitement.VALIDATION) {
             return {
                 label: 'Valider',
@@ -133,16 +132,24 @@ export class DmdTraitementTableTemplateComponent {
                 icon: 'pi pi-telegram',
                 tooltip: 'Imputer la sélection à un agent'
             };
-        }
+        }else
+            return {
+                label: 'Imputer',
+                icon: 'pi pi-telegram',
+                tooltip: 'Imputer la sélection à un agent'
+            };
 
-        return undefined;
+
+
     }
 
     doAction() {
         if (this.btnActions === EtapeTraitement.RECEPTION) {
             this.receptionner();
-        } else {
+        } else if (this.btnActions === EtapeTraitement.VALIDATION || this.btnActions === EtapeTraitement.VALIDATION_RS) {
             this.validate();
+        }else {
+            this.onDisplay();
         }
     }
 
@@ -151,112 +158,188 @@ export class DmdTraitementTableTemplateComponent {
             message: 'Voulez-vous valider la sélection ?',
             key: this.imputationKey,
             accept: () => {
-                if (this.selectedDemandes.length == 0) {
-                    this.selectedDemande.rejeter = false;
-                    this.selectedDemandes.push(this.selectedDemande);
+                if (this.btnActions==EtapeTraitement.VALIDATION) {
+                    if (this.selectedDemandes.length > 0) {
+                        this.selectedDemandes.map((item) => {
+                            item.etatTraitement = this.BtnActions.SUIVI_RQ;
+                        });
+                    } else {
+                        this.selectedDemande.etatTraitement = this.BtnActions.SUIVI_RQ;
+
+                        this.selectedDemandes.push(this.selectedDemande);
+                    }
+
+                    this.onValidation.emit(this.selectedDemandes);
+                }else {
+                    if (this.selectedDemandes.length > 0) {
+                        this.selectedDemandes.map((item) => {
+                            item.etatTraitement = this.BtnActions.IMPUTATION;
+                        });
+                    } else {
+                        this.selectedDemande.etatTraitement = this.BtnActions.IMPUTATION;
+
+                        this.selectedDemandes.push(this.selectedDemande);}
                 }
-                this.selectedDemandes.map(item => {
-
-                });
-                this.onValidation.emit(this.selectedDemandes);
-                this.selectedDemandes = [];
-            }
-        });
-    }
-
-
-    imputer() {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous imputer la sélection ?',
-            key: this.imputationKey,
-            accept: () => {
-
-                this.onImputation.emit(this.selectedDemandes);
-
             }
         });
     }
 
     rejet() {
         this.confirmationService.confirm({
-            message: `Voulez-vous réjeter la demande n°: ${this.selectedDemande?.numero} ?`,
+            message: `Voulez-vous réjeter la demande n°: ${this.selectedDemande?.numeroReference} ?`,
             key: this.imputationKey,
             accept: () => {
                 this.onRejet.emit(this.selectedDemande);
             }
         });
     }
+    imputer() {
+        this.confirmationService.confirm({
+            message: 'Voulez-vous imputer la sélection ?',
+            key: this.imputationKey,
+            accept: () => {
+                if (this.selectedDemandes.length == 0) {
+                    this.selectedDemandes.push(this.selectedDemande);
+                }
+                this.selectedDemandes.map((item) => {
+                    item.status=StatusEnum.IN_PROGRESS
+                    item.userImputId = this.searchedAgent?.id;
+                    item.userImputFullName = this.searchedAgent.lastName + ' ' + this.searchedAgent.firstName;
+                    item.etatTraitement = EtapeTraitement.TRAITEMENT;
+                });
 
-    editFinalResult() {
-        this.onEditResult.emit(this.selectedDemande);
+                this.onImputation.emit(this.selectedDemandes);
+                this.onDisplay();
+            }
+        });
     }
-
-    edition() {
-        this.selectedDemande.edited = true;
-        this.onEdition.emit(this.selectedDemande);
-    }
-
-
 
     receptionner() {
-        let message = `Voulez-vous soumettre la demande n°: ${this.selectedDemande?.numero} pour validation ?`;
+        let message = `Voulez-vous réceptionner la demande n°: ${this.selectedDemande?.numeroReference} pour validation ?`;
         this.confirmationService.confirm({
             message: message,
             key: this.imputationKey,
             accept: () => {
-                this.selectedDemandes.map(item => {
-                    item.etapeTraitement=this.BtnActions.RECEPTION
-                });
+                if (this.selectedDemandes.length > 0) {
+                    this.selectedDemandes.map((item) => {
+                        item.status=StatusEnum.IN_PROGRESS;
+                        item.etatTraitement = this.BtnActions.VALIDATION_RS;
+                    });
+                } else {
+                    this.selectedDemande.etatTraitement = this.BtnActions.VALIDATION_RS;
+                    this.selectedDemande.status=StatusEnum.IN_PROGRESS;
+                    this.selectedDemandes.push(this.selectedDemande);
+                }
+
                 this.onReceptionner.emit(this.selectedDemandes);
             }
         });
     }
-    soumettre() {
-        let message = `Voulez-vous soumettre la demande n°: ${this.selectedDemande?.numero} pour validation ?`;
+    validationRS() {
+        let message = `Voulez-vous valider la demande n°: ${this.selectedDemande?.numeroReference} pour validation ?`;
         this.confirmationService.confirm({
             message: message,
             key: this.imputationKey,
             accept: () => {
-                this.selectedDemandes.map(item => {
-                    item.etapeTraitement=this.BtnActions.TRAITEMENT
-                });
+                if (this.selectedDemandes.length > 0) {
+                    this.selectedDemandes.map((item) => {
+                        item.etatTraitement = this.BtnActions.IMPUTATION;
+                    });
+                } else {
+                    this.selectedDemande.etatTraitement = this.BtnActions.IMPUTATION;
+
+                    this.selectedDemandes.push(this.selectedDemande);
+                }
+
+                this.onValidationRS.emit(this.selectedDemandes);
+            }
+        });
+    }
+    soumettre() {
+        let message = `Voulez-vous soumettre la demande n°: ${this.selectedDemande?.numeroReference} pour validation ?`;
+        this.confirmationService.confirm({
+            message: message,
+            key: this.imputationKey,
+            accept: () => {
+                if (this.selectedDemandes.length > 0) {
+                    this.selectedDemandes.map((item) => {
+                        item.etatTraitement = this.BtnActions.VALIDATION;
+                    });
+                } else {
+                    this.selectedDemande.etatTraitement = this.BtnActions.VALIDATION;
+
+                    this.selectedDemandes.push(this.selectedDemande);
+                }
                 this.onSubmission.emit(this.selectedDemandes);
             }
         });
     }
 
-
     saveEntity() {
         this.confirmationService.confirm({
-            message: `Voulez-vous réceptionner  la demande n°: ${this.selectedDemande?.numero} ?`,
+            message: `Voulez-vous réceptionner  la demande n°: ${this.selectedDemande?.numeroReference} ?`,
             key: this.imputationKey,
             accept: () => {
-                this.selectedDemande.status=StatusEnum.IN_PROGRESS
-                this.onSaveEntity.emit(this.selectedDemande);
+                if (this.selectedDemandes.length > 0) {
+                    this.selectedDemandes.map((item) => {
+                        item.status = StatusEnum.IN_PROGRESS;
+                    });
+                } else {
+                    this.selectedDemande.status = StatusEnum.IN_PROGRESS;
+
+                    this.selectedDemandes.push(this.selectedDemande);
+                }
+                this.onSaveEntity.emit(this.selectedDemandes);
             }
         });
     }
 
     cloture() {
-        let message=""
-        if(this.selectedDemandes.length>0){
+        let message = '';
+        if (this.selectedDemandes.length > 0) {
             message = `Voulez-vous cloturer la sélection?`;
-        }else {
-            message = `Voulez-vous cloturer la demande n°: ${this.selectedDemande?.numero}  ?`;
+        } else {
+            message = `Voulez-vous cloturer la demande n°: ${this.selectedDemande?.numeroReference}  ?`;
         }
 
         this.confirmationService.confirm({
             message: message,
             key: this.imputationKey,
             accept: () => {
-                if (this.selectedDemande!=null){
+                if (this.selectedDemande != null) {
+                    this.selectedDemande.etatTraitement = this.BtnActions.CLOTURE;
                     this.selectedDemandes.push(this.selectedDemande);
                 }
-                this.selectedDemandes.map(item => {
-                    item.etapeTraitement=this.BtnActions.CLOTURE
-                    item.status=StatusEnum.APPROVED
+                this.selectedDemandes.map((item) => {
+                    item.etapeTraitement = this.BtnActions.CLOTURE;
+                    item.status = StatusEnum.APPROVED;
                 });
                 this.onCloture.emit(this.selectedDemandes);
+            }
+        });
+    }
+    editionNew() {
+        this.selectedDemandes.push(this.selectedDemande);
+        this.onEdition.emit(this.selectedDemandes);
+    }
+
+    validation() {
+        let message = `Voulez-vous valider la demande n°: ${this.selectedDemande?.numeroReference} pour validation ?`;
+        this.confirmationService.confirm({
+            message: message,
+            key: this.imputationKey,
+            accept: () => {
+                if (this.selectedDemandes.length > 0) {
+                    this.selectedDemandes.map((item) => {
+                        item.etatTraitement = this.BtnActions.SUIVI_RQ;
+                    });
+                } else {
+                    this.selectedDemande.etatTraitement = this.BtnActions.SUIVI_RQ;
+
+                    this.selectedDemandes.push(this.selectedDemande);
+                }
+
+                this.onValidation.emit(this.selectedDemandes);
             }
         });
     }

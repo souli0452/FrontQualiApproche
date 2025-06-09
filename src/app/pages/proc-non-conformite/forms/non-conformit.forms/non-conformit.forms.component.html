@@ -1,0 +1,249 @@
+<div>
+    <p-tabView [style]="{ height: '100%' }">
+        <p-tabPanel header="Détails de la  demande">
+            <demande-non_conformite-details [demande]="demande"></demande-non_conformite-details>
+        </p-tabPanel>
+        <p-tabPanel header="Saisie des informations complémentaires de la demande" *ngIf="demande.etatTraitement!=BtnActions.VALIDATION">
+            <div class="m-2">
+                <form [formGroup]="editForm" autocomplete="off" role="form">
+                    <div class="grid p-fluid mb-3">
+                        <div class="formgrid grid">
+                            @if (demande.etatTraitement===BtnActions.RECEPTION){
+                            <div class="flex flex-wrap gap-2">
+                                <label class="font-bold">Pertinence de la non-conformité </label>
+                                <div class="flex items-center">
+                                    <p-radiobutton
+                                        (onClick)="onInputChange()"
+                                        name="pertinancePilote" value="oui" formControlName="pertinancePilote" inputId="pertinancePilote" />
+                                    <label for="pertinancePilote" class="ml-2">OUI</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <p-radiobutton name="pertinancePilote"
+                                                   (onClick)="onInputChange()"
+                                                   value="non" formControlName="pertinancePilote" inputId="pertinancePilote" />
+                                    <label for="pertinancePilote" class="ml-2">NON</label>
+                                </div>
+                            </div>
+                            <label class="mt-8 mb-2 font-bold">JUSTIFICATION</label>
+                            <div class="mb-4">
+
+                                <p-editor [style]="{'height':'250px'}"
+                                        formControlName="justificationPilote"
+                                          (onTextChange)="onInputChange()"
+                                          name="justificationPilote" required>
+                                </p-editor>
+                            </div>
+                            }
+                            @if (demande.etatTraitement===BtnActions.SUIVI_RQ){
+                                <div class="flex flex-wrap gap-2">
+                                    <label class="font-bold">Pertinence de la non-conformité </label>
+                                    <div class="flex items-center">
+                                        <p-radiobutton
+                                            (onClick)="onInputChange()"
+                                            name="pertinanceRsSuivi" value="oui" formControlName="pertinanceRsSuivi" inputId="pertinanceRsSuivi" />
+                                        <label for="pertinanceRsSuivi" class="ml-2">OUI</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <p-radiobutton name="pertinanceRsSuivi"
+                                                       (onClick)="onInputChange()"
+                                                       value="non" formControlName="pertinanceRsSuivi" inputId="pertinanceRsSuivi" />
+                                        <label for="pertinanceRsSuivi" class="ml-2">NON</label>
+                                    </div>
+                                </div>
+                                <label class="font-bold mt-8">Numéro FEDAC </label>
+                                <div class="flex items-center mt-4" >
+                                    <input pInputText class="w-full"  name="numeroFdac" id="numeroFdac" pInputText type="text"
+                                           formControlName="numeroFdac" placeholder="Numéro FEDAC" />
+
+                                </div>
+
+                            }
+                            @if (demande.etatTraitement===BtnActions.VALIDATION_RS){
+                                <div class="flex flex-wrap gap-2">
+                                    <label class="font-bold">Pertinence de la non-conformité </label>
+                                    <div class="flex items-center">
+                                        <p-radiobutton
+                                            (onClick)="onInputChange()"
+                                            name="pertinanceRs" value="oui" formControlName="pertinanceRs" inputId="pertinanceRs" />
+                                        <label for="pertinanceRs" class="ml-2">OUI</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <p-radiobutton name="pertinanceRs"
+                                                       (onClick)="onInputChange()"
+                                                       value="non" formControlName="pertinanceRs" inputId="pertinanceRs" />
+                                        <label for="pertinanceRs" class="ml-2">NON</label>
+                                    </div>
+                                </div>
+                                <label class="mt-8 mb-2 font-bold">JUSTIFICATION</label>
+                                <div class="mb-4">
+
+                                    <p-editor [style]="{'height':'250px'}"
+                                              name="justificationRs"
+                                              formControlName="justificationRs"
+                                              (onTextChange)="onInputChange()"
+                                               required>
+                                    </p-editor>
+                                </div>
+                            }
+                            @if(demande.etatTraitement===BtnActions.TRAITEMENT){
+                                <div class="form-container">
+                                <p-card  class="card">
+                                <p class=" font-bold">PARTICIPANTS
+                                    ( Les noms complets des participants doivent être séparés les uns des autres par une virgule <span
+                                        style="color: red">*</span>)
+                                </p>
+                                <div>
+
+                                    <p-chips formControlName="participants"
+                                             separator=","
+                                             (onAdd)="onInputChange()"
+                                             placeholder="Saisissez les noms des participants"
+                                             required
+                                             autofocus
+                                             [style]="{'width':'100%'}"
+                                             id="participants"
+                                             class="participants-input">
+                                    </p-chips>
+                                </div>
+
+                                <p class="mt-8 mb-2 font-bold">DELAI DE MISE EN OEUVRE</p>
+                                <div>
+                                    <p-inputNumber inputId="delaisMiseOeuvre"
+                                                   [style]="{'width':'100%'}"
+                                                   formControlName="delaisMiseOeuvre"
+                                                   mode="decimal"
+                                                   [showButtons]="true"
+                                                   (onInput)="onInputChange()"
+                                                   class="delai-input"
+                                                   placeholder="Nombre de jours">
+                                    </p-inputNumber>
+                                </div></p-card></div>
+                                <div class="form-container">
+                                    <!-- Ligne Participants + Délai -->
+
+                                    <!-- Plan d'Actions -->
+                                    <p-card header="PLAN D'ACTIONS" class="card">
+                                        <form [formGroup]="planActionForm" class="form">
+                                            <div formArrayName="actions" class="actions-container">
+                                                <div *ngFor="let action of actions.controls; let i = index"
+                                                     [formGroupName]="i"
+                                                     class="action-item">
+
+                                                    <div class="form-row">
+                                                        <!-- N° d'ordre -->
+                                                        <div class="form-group order">
+                                                            <label for="numeroOrdre{{i}}" class="font-bold">N° d'ordre</label>
+                                                            <input
+                                                                pInputText
+                                                                (input)="onInputChange()"
+                                                                id="numeroOrdre{{i}}"
+                                                                formControlName="numeroOrdre"
+                                                                type="number"
+                                                                class="full-width"
+                                                                [class]="{'ng-invalid ng-dirty': submitted && action.get('numeroOrdre')?.invalid}"
+                                                            />
+                                                            <small *ngIf="submitted && action.get('numeroOrdre')?.invalid" class="p-error">Ce champ est requis</small>
+                                                        </div>
+
+                                                        <!-- Responsable -->
+                                                        <div class="form-group responsible">
+                                                            <label class="font-bold" for="responsable{{i}}">Responsable</label>
+                                                            <input
+                                                                pInputText
+                                                                (input)="onInputChange()"
+                                                                id="responsable{{i}}"
+                                                                placeholder="Nom complet"
+                                                                formControlName="responsable"
+                                                                class="full-width"
+                                                                [class]="{'ng-invalid ng-dirty': submitted && action.get('responsable')?.invalid}"
+                                                            />
+                                                            <small *ngIf="submitted && action.get('responsable')?.invalid" class="p-error">Ce champ est requis</small>
+                                                        </div>
+
+                                                        <!-- Échéance -->
+                                                        <div class="form-group deadline">
+                                                            <label class="font-bold" for="dateEcheance{{i}}">Échéance</label>
+                                                            <p-calendar
+                                                                id="dateEcheance{{i}}"
+                                                                formControlName="dateEcheance"
+                                                                [showIcon]="true"
+                                                                (onInput)="onInputChange()"
+                                                                placeholder="Date de l'échéance"
+                                                                dateFormat="dd/mm/yy"
+                                                                class="full-width"
+                                                            ></p-calendar>
+                                                            <small *ngIf="submitted && action.get('dateEcheance')?.invalid" class="p-error">Ce champ est requis</small>
+                                                        </div>
+
+                                                        <!-- Causes identifiées -->
+                                                        <div class="form-group causes">
+                                                            <label class="font-bold" for="causeIdentifiees{{i}}">Causes identifiées</label>
+                                                            <textarea
+                                                                pInputTextarea
+                                                                id="causeIdentifiees{{i}}"
+                                                                placeholder="Causes identifiées"
+                                                                formControlName="causeIdentifiees"
+                                                                rows="3"
+                                                                (input)="onInputChange()"
+                                                                class="full-width"
+                                                            ></textarea>
+                                                            <small *ngIf="submitted && action.get('causeIdentifiees')?.invalid" class="p-error">Ce champ est requis</small>
+                                                        </div>
+
+                                                        <!-- Solutions retenues -->
+                                                        <div class="form-group solutions">
+                                                            <label  class="font-bold"for="solutionRetenues{{i}}">Solutions retenues</label>
+                                                            <textarea
+                                                                pInputTextarea
+                                                                id="solutionRetenues{{i}}"
+                                                                placeholder="Solutions retenues"
+                                                                formControlName="solutionRetenues"
+                                                                rows="3"
+                                                                (input)="onInputChange()"
+                                                                class="full-width"
+
+                                                            ></textarea>
+                                                            <small *ngIf="submitted && action.get('solutionRetenues')?.invalid" class="p-error">Ce champ est requis</small>
+                                                        </div>
+
+                                                        <!-- Bouton Supprimer -->
+                                                        <div class="form-group delete-action">
+                                                            <button
+                                                                pButton
+                                                                pRipple
+                                                                type="button"
+                                                                icon="pi pi-trash"
+                                                                class="p-button-danger full-width"
+                                                                (click)="removeAction(i)"
+                                                                tooltip="Supprimer cette action"
+                                                                tooltipPosition="top"
+                                                            ></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="action-buttons">
+                                                <button
+                                                    pButton
+                                                    pRipple
+                                                    type="button"
+                                                    icon="pi pi-plus"
+                                                    label="Ajouter une action"
+                                                    class="p-button-secondary"
+                                                    (click)="addAction()"
+                                                ></button>
+                                            </div>
+                                        </form>
+                                    </p-card>
+                                </div>
+                            }
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </p-tabPanel>
+    </p-tabView>
+</div>
+

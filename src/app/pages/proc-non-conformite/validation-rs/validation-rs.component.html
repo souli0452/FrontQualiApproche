@@ -1,0 +1,9 @@
+<div class="card shadow-1">
+    <p-toast />
+    <app-dmd-traitement-table-template
+        [btnActions]="BtnActions.VALIDATION_RS"
+        [demandeList]="demandeList"
+        (onValidationRS)="validationRs($event)"
+        [title]="title">
+    </app-dmd-traitement-table-template>
+</div>

@@ -1,10 +1,14 @@
 export enum EtapeTraitement {
     SOUMISSION = 'SOUMISSION',
-    RECEPTION = 'SOUMISSION',
+    RECEPTION = 'RECEPTION',
     VALIDATION = 'VALIDATION',
     IMPUTATION = 'IMPUTATION',
     TRAITEMENT='TRAITEMENT',
     CLOTURE = 'CLOTURE',
+    VALIDATION_PILOTE = 'VALIDATION_PILOTE',
+    VALIDATION_RS = 'VALIDATION_RS',
+    SUIVI_RQ = 'SUIVI_RQ',
+
 
 }
 export enum StatusEnum {
@@ -13,4 +17,8 @@ export enum StatusEnum {
     REJECTED = 'REJECTED',
     IN_PROGRESS = 'IN_PROGRESS',
 
+}
+export enum TypeStructure {
+    DIRECTION = 'DIRECTION',
+    SERVICE = 'SERVICE'
 }

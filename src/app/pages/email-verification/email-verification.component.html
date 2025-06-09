@@ -1,0 +1,42 @@
+<div class="h-screen flex flex-column bg-cover">
+    <div class="align-self-center mt-auto mb-auto">
+        <div class="text-center z-5 flex flex-column border-1 border-round-md surface-border surface-card px-3">
+            <div class="-mt-5 text-white bg-cyan-700 border-round-md mx-auto px-3 py-1 border-1 surface-border">
+                <h2 class="m-0">VÉRIFICATION DE L'E-MAIL</h2>
+            </div>
+            <h4 class="mt-4" *ngIf="emailVerified === true">Adresse e-mail vérifiée avec succès !</h4>
+            <h4 class="mt-4" *ngIf="emailVerified === false || emailVerified === null">
+                Cliquez pour vérifier votre adresse e-mail.
+            </h4>
+            <div class="text-color-secondary mb-6 px-6">
+                <p *ngIf="emailVerified === true" class="succes">
+                    Votre e-mail a été vérifié. Vous pouvez maintenant vous connecter à la plateforme.
+                </p>
+                <p *ngIf="emailVerified === false || emailVerified === null" class="error">
+                    Votre e-mail n'est pas encore vérifié.
+                </p>
+                <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
+            </div>
+            <div class="w-full flex flex-column gap-3 px-3 pb-6">
+                <button
+                    *ngIf="emailVerified === false || emailVerified === null"
+                    type="button"
+                    pButton
+                    pRipple
+                    class="w-full my-3 px-3"
+                    label="VÉRIFIER L'E-MAIL"
+                    (click)="VerifyEmail()"
+                ></button>
+                <button
+                    *ngIf="emailVerified === true"
+                    type="button"
+                    pButton
+                    pRipple
+                    class="w-full my-3 px-3"
+                    label="ALLER À LA CONNEXION"
+                    (click)="goToLogin()"
+                ></button>
+            </div>
+        </div>
+    </div>
+</div>

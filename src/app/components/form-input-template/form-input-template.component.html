@@ -1,5 +1,5 @@
 <ng-container *ngIf="col.visible" [formGroup]="form">
-    
+
     <span *ngIf="col.type == 'string' ">
         <div class="flex flex-col gap-2 mb-3">
             <label [for]="col.field">{{ col.header }}<span class="text-red-500 font-bold" *ngIf="col.required">*</span></label>
@@ -49,7 +49,10 @@
     </span>
 
     <span *ngIf="col.type == 'dropdown' ">
-        <div class="p-float-label">
+        <label [htmlFor]="col.field" class="form-label font-bold">{{ col.header }}
+            <span class="text-red-500 font-bold" *ngIf="col.required">*</span>
+            </label>
+        <div class="flex flex-col gap-2 mb-3">
             <p-dropdown [options]="dropDownObject[col.field]"
                         [name]="col.field" appendTo="body"
                         [optionLabel]=""
@@ -57,9 +60,22 @@
                         [filter]="true" [showClear]="true"
                         [formControlName]="col.field">
             </p-dropdown>
-             <label [htmlFor]="col.field" class="form-label font-bold">{{ col.header }}
-                 <span class="text-red-500 font-bold" *ngIf="col.required">*</span>
+
+        </div>
+    </span>
+    <span *ngIf="col.type == 'dropdownS' ">
+        <label [htmlFor]="col.field" class="form-label font-bold">{{ col.header }}
+            <span class="text-red-500 font-bold" *ngIf="col.required">*</span>
             </label>
+        <div class="flex flex-col gap-2 mb-3">
+            <p-dropdown [options]="dropDownObject[col.field][0]"
+                        [name]="col.field" appendTo="body"
+                        [optionLabel]="'libelleLong'"
+                        [resetFilterOnHide]="true"
+                        [filter]="true" [showClear]="true"
+                        [formControlName]="col.field">
+            </p-dropdown>
+
         </div>
     </span>
     <span *ngIf="col.type == 'date' ">

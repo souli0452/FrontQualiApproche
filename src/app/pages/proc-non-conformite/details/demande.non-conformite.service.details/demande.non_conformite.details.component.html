@@ -1,0 +1,130 @@
+<div class="flex flex-col gap-4 mt-4 ml-2">
+
+    <!-- Ligne 1 -->
+    <div class="flex flex-wrap gap-4">
+        <!-- Colonne gauche -->
+        <div class="flex flex-col gap-4 flex-1 min-w-[300px]">
+            <!-- Détails de la non-conformité -->
+            <div class="card p-4">
+                <span class="text-xl font-bold mb-3 text-900">Détails de la non-conformité</span>
+                <ul class="list-none p-0 m-0 text-600 space-y-3">
+                    <li class="flex items-center"><span class="font-semibold w-28">Référence:</span><span class="flex-1">{{demande.numeroReference }}</span></li>
+                    <li class="flex items-center"><span class="font-semibold w-28">Processus:</span><span class="flex-1">{{demande.nomProcessus }}</span></li>
+                    <li class="flex items-center"><span class="font-semibold w-28">Structure de soumission:</span><span class="flex-1">{{demande.structureSoumissionLibelle }}</span></li>
+                    <li class="flex items-center"><span class="font-semibold w-28">Émetteur:</span><span class="flex-1">{{demande.fonctionEmetteur}}</span></li>
+                    <li class="flex items-center"><span class="font-semibold w-28">Date visa:</span><span class="flex-1">{{demande.dateVisaEmetteur}}</span></li>
+                    <li *ngIf="demande.delaisMiseOeuvre" class="flex items-center"><span class="font-semibold w-28">Délai de mise en oeuvre  :</span><span class="flex-1">{{demande.delaisMiseOeuvre}} jours</span></li>
+                </ul>
+            </div>
+
+            <!-- Structure responsable -->
+            <div class="card p-4">
+                <span class="text-xl font-bold mb-3 text-900">Structure responsable</span>
+                <ul class="list-none p-0 m-0 text-600 space-y-3">
+                    <li class="flex items-center"><span class="font-semibold w-28">Service:</span><span class="flex-1">{{demande.origineService || ''}}</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Colonne droite -->
+        <div class="flex flex-col gap-4 flex-1 min-w-[300px]">
+            <!-- Description -->
+            <div class="card p-4">
+                <span class="text-xl font-bold mb-3 text-900">Description</span>
+                <div class="p-3 bg-gray-100 rounded"><p class="m-0 text-600">{{demande.justification || 'Aucune description fournie'}}</p></div>
+            </div>
+
+            <!-- Validation -->
+            <div class="card p-4">
+                <span class="text-xl font-bold mb-3 text-900">Validation par le pilote processus</span>
+                <ul>
+                    <li *ngIf="demande.pertinancePilote" class="flex items-center"><span class="font-semibold w-28">Pertinance:</span><span class="flex-1">{{demande.pertinancePilote}}</span></li>
+                    <li *ngIf="demande.justificationPilote" class="flex items-center"><span class="font-semibold w-28">Justification:</span><span class="flex-1">{{demande.justificationPilote}}</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ligne 3 -->
+    <div class="flex flex-wrap gap-4">
+        <!-- Documents joints -->
+        <div class="flex flex-col flex-1 min-w-[300px]" *ngIf="demande.fichiers?.length > 0">
+            <div class="card p-4">
+                <span class="text-xl font-bold mb-3 text-900">Documents joints</span>
+                <div class="flex flex-col gap-2">
+                    <div *ngFor="let pj of demande.fichiers" class="flex justify-between items-center border-b pb-2">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-file"></i>
+                            <span>{{pj.nomFichier || 'Document joint'}}</span>
+                        </div>
+                        <a href="javascript:void(0)" (click)="downloadFile(pj.id)" class="text-primary">
+                            <i class="pi pi-download"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Validation RS -->
+        <div class="flex flex-col flex-1 min-w-[300px]">
+            <div class="card p-4">
+                <span class="text-xl font-bold mb-3 text-900" *ngIf="demande.pertinanceRs">Validation RS</span>
+                <ul class="list-none p-0 m-0 text-600 space-y-3">
+                    <li *ngIf="demande.pertinanceRs" class="flex items-center"><span class="font-semibold w-28">Pertinance:</span><span class="flex-1">{{demande.pertinanceRs}}</span></li>
+                    <li *ngIf="demande.justificationRs" class="flex items-center"><span class="font-semibold w-28">Justifications:</span><span class="flex-1" [innerHTML]="demande.justificationRs"></span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Participants et Plans d'actions -->
+    <div class="flex flex-col gap-4">
+        <!-- Participants -->
+        <div class="card p-4" *ngIf="demande.participants?.length > 0">
+            <span class="text-xl font-bold mb-3 text-900">Participants</span>
+            <div class="flex flex-wrap gap-3">
+                <div *ngFor="let participant of demande.participants" class="participant-badge">
+                    <i class="pi pi-user mr-2"></i>
+                    <span>{{participant}}</span>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Plans d'actions -->
+        <div class="card p-4" *ngIf="demande?.planActions">
+            <span class="text-xl font-bold mb-3 text-900">Plans d'actions</span>
+            <p-table [value]="demande.planActions" [rowHover]="true" styleClass="p-datatable-sm"
+                     [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
+                     currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Créé le</th>
+                        <th>Créé par</th>
+                        <th>Email</th>
+                        <th>Cause identifiée</th>
+                        <th>Solution retenue</th>
+                        <th>Responsable</th>
+                        <th>Date échéance</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-plan>
+                    <tr>
+                        <td>{{plan.createdAt }}</td>
+                        <td>{{plan.currentUserfullName}}</td>
+                        <td>{{plan.currentUserEmail}}</td>
+                        <td>{{plan.causeIdentifiees}}</td>
+                        <td>{{plan.solutionRetenues}}</td>
+                        <td>{{plan.responsable}}</td>
+                        <td>{{plan.dateEcheance | date:'dd/MM/yyyy'}}</td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="7" class="text-center">Aucun plan d'action défini</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+</div>

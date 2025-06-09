@@ -15,7 +15,22 @@ export class ProcNonConformiteService {
     getNonConformiteByEtape(etapeTraitement :EtapeTraitement): Observable<HttpResponse<Array<any>>> {
         return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL+etapeTraitement, {observe: 'response'});
     }
+    getNonConformiteByEtapeAndOrigin(etapeTraitement :EtapeTraitement,structureId:string): Observable<HttpResponse<Array<any>>> {
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_ETAPE_ORIGIN+etapeTraitement+`/${structureId}`, {observe: 'response'});
+    }
+    getNonConformiteByEtapeAndSumit(etapeTraitement :EtapeTraitement,structureId:string): Observable<HttpResponse<Array<any>>> {
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_ETAPE_SUMIT+etapeTraitement+`/${structureId}`, {observe: 'response'});
+    }
+    getNonConformiteImputed(userId :string,etapeTraitement :EtapeTraitement): Observable<HttpResponse<Array<any>>> {
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_IMPUTED+userId+`/${etapeTraitement}`, {observe: 'response'});
+    }
+    getNonConformiteAll(): Observable<HttpResponse<Array<any>>> {
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL, {observe: 'response'});
+    }
     updateNomConformite(demande: any, id: string): Observable<HttpResponse<any>> {
-        return this.http.post<any>(NonConformiteUrlConfig.UPDATE_NON_CONFORMITE + id, demande, {observe: 'response'});
+        return this.http.put<any>(NonConformiteUrlConfig.UPDATE_NON_CONFORMITE + id, demande, {observe: 'response'});
+    }
+    updateNomConformites(demandes: any[]): Observable<HttpResponse<any>> {
+        return this.http.put<any>(NonConformiteUrlConfig.UPDATE_NON_CONFORMITE , demandes, {observe: 'response'});
     }
 }
