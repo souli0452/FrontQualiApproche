@@ -209,10 +209,13 @@ import { MessageService } from 'primeng/api';
         InputGroupModule,
         InputGroupAddonModule,
         DatePickerModule,
-        StepperModule
+        StepperModule,
+        BadgeModule,
+
     ],
     exports: [
         FluidModule,
+
         ProgressSpinnerModule,
         SpeedDialModule,
         Toolbar,
@@ -313,7 +316,9 @@ import { MessageService } from 'primeng/api';
         MessagesModule,
         InputGroupModule,
         InputGroupAddonModule,
-        DatePickerModule
+        DatePickerModule,
+        BadgeModule,
+        OverlayBadgeModule
     ]
 })
 export class NgPrimeModule {

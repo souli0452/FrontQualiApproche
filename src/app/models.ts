@@ -8,7 +8,11 @@ export interface Formation extends UserInfos{
     objectif:string;
     competence:string
 }
-
+export interface Message {
+    text: string;
+    ownerId: number,
+    createdAt: number;
+}
 export interface UserInfos {
     createdById?: string;
     createdAt?: Date;
@@ -142,7 +146,7 @@ export interface Fichier extends UserInfos{
     tailleFichier?: number;
   }
 
-  
+
   export interface NonConformite extends UserInfos{
     id?: string;
     numeroReference?: string;
@@ -228,13 +232,13 @@ export interface Exigence extends UserInfos{
 }
 
 
-export interface FormGroupColumn extends UserInfos {
-    field: string;
-    type: string;
-    label: string;
-    header: string;
-    visible: boolean;
-    required: boolean;
+export interface FormGroupColumn  {
+    field?: string;
+    type?: string;
+    label?: string;
+    header?: string;
+    visible?: boolean;
+    required?: boolean;
     optionLabel?: string;
     dropdownList?: any[];
     fileNb?: number;
@@ -290,4 +294,13 @@ export interface KcUser {
     lastName: string;
     email: string;
     password: string;
+    structure:string;
+}
+export interface PlanAction {
+    id?: number;
+    numeroOrdre: number;
+    causesIdentifiees: string;
+    solutionsRetenues: string;
+    responsable: string;
+    echeance: Date;
 }

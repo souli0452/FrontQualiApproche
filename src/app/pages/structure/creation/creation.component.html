@@ -1,0 +1,93 @@
+<div class="shadow-1">
+    <form [formGroup]="editForm!" autocomplete="off" role="form">
+        <div class="grid p-fluid mt-2">
+            <!-- Première section - 2 colonnes -->
+            <div class="col-12">
+                <label class="font-bold uppercase pl-3">Informations {{ typeStructure === TypeStructure.SERVICE ? 'du service' : 'de la direction' }}</label>
+                <hr>
+            </div>
+
+            <div class="grid nested-grid">
+                <!-- Colonne gauche -->
+                <div class="col-6 md:col-6">
+                    <div class="field">
+                        <label for="libelleCourt" class="font-bold text-required block mb-1">Sigle</label>
+                        <input id="libelleCourt" type="text" pInputText formControlName="libelleCourt" class="w-full"/>
+                    </div>
+
+                    <div class="field mt-4">
+                        <label for="region" class="font-bold text-required block mb-1">Région</label>
+                        <p-dropdown [options]="REGION_LIST" id="region"
+                                    emptyMessage="Aucune donnée disponible"
+                                    emptyFilterMessage="Aucun résultat trouvé"
+                                    appendTo="body"
+                                    formControlName="region"
+                                    [resetFilterOnHide]="true"
+                                    [showClear]="true"
+                                    [filter]="true"
+                                    class="w-full">
+                        </p-dropdown>
+                    </div>
+                </div>
+
+                <!-- Colonne droite -->
+                <div class="col-6 md:col-6">
+                    <div class="field">
+                        <label for="libelleLong" class="font-bold text-required block mb-1">Libellé</label>
+                        <input id="libelleLong" type="text" pInputText formControlName="libelleLong" class="w-full"/>
+                    </div>
+
+                    <div class="field mt-4">
+                        <label for="ville" class="font-bold text-required block mb-1">Ville</label>
+                        <input id="ville" type="text" pInputText formControlName="ville" class="w-full"/>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deuxième section - 2 colonnes -->
+            <div class="col-12 mt-5">
+                <div class="col-12 text-center">
+                    <label class="font-bold uppercase pl-3">Autres Informations</label>
+                </div>
+                <hr>
+            </div>
+
+            <div class="grid nested-grid">
+                <!-- Colonne gauche -->
+                <div class="col-6 md:col-6">
+                    <div class="field">
+                        <label for="titreAutoriteSignataire" class="font-bold text-required block mb-1">Titre Autorité Signataire</label>
+                        <input id="titreAutoriteSignataire" type="text" pInputText formControlName="titreAutoriteSignataire" class="w-full"/>
+                    </div>
+
+                    <div class="field mt-4">
+                        <label for="titreHonorifiqueSignataire" class="font-bold block mb-1">Titre Honorifique Signataire</label>
+                        <input id="titreHonorifiqueSignataire" type="text" pInputText formControlName="titreHonorifiqueSignataire" class="w-full"/>
+                    </div>
+                </div>
+
+                <!-- Colonne droite -->
+                <div class="col-6 md:col-6">
+                    <div class="field">
+                        <label for="autoriteSignataire" class="font-bold text-required block mb-1">Autorité Signataire</label>
+                        <input id="autoriteSignataire" type="text" pInputText formControlName="autoriteSignataire" class="w-full"/>
+                    </div>
+
+                    <div class="field mt-4">
+                        <label for="email" class="font-bold text-required block mb-1">Email autorité signataire</label>
+                        <input id="email" type="text" pInputText formControlName="email" class="w-full"/>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zone de texte pleine largeur -->
+            <div class="col-12 mt-4">
+                <div class="field">
+                    <label for="description" class="font-bold block mb-1">Description</label>
+                    <textarea id="description" pInputTextarea formControlName="description"
+                              rows="5" class="w-full"></textarea>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

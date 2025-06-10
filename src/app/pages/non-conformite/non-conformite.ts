@@ -4,7 +4,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { ActionNonConformite, Fichier, FormGroupColumn, NiveauNonConformite, NonConformite, TableColumn, TypeNonConformite, TypeProcessus } from '../../models';
 import { FormArray, FormGroup, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { showToast, StatusEnum } from '../../utils';
+import { getCurrentUserStructure, showToast, StatusEnum } from '../../utils';
 import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
 import { NonConformiteService } from '../../services/non-conformite.service';
@@ -14,6 +14,8 @@ import { ActionNonConformiteService } from '../../services/action-non-conformite
 import { TypeProcessusService } from '../../services/type-processus.service';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { FileUploadComponent } from "../../components/file-upload/file-upload.component";
+import { StructureService } from '../structure/structure-service';
+import { Structure } from '../structure/structure';
 
 
 @Component({
@@ -30,18 +32,18 @@ export class NonConformiteComponent {
     uploadedFiles: any[] = [];
 
     formattedDate: string | any;
-    
+
     handleFileUpload(files: any[]) {
         this.uploadedFiles = files;
         // Tu peux envoyer ces fichiers au serveur ou les manipuler ici
     }
     // Code pour manipuler les fichiers ajoutés
-      
+
     // Code pour afficher le DRAWER de validation des informations
     visibilityDetails: boolean = false;
     // Code pour afficher le DRAWER de validation des informations
 
-
+     structures: Structure[] = [];
     // Code pour afficher le formulaire des non-conformité
     visibilityNonConformiyForm: boolean = false;
     showDialogNonConformity() {
@@ -67,7 +69,7 @@ export class NonConformiteComponent {
     formCols: FormGroupColumn[];
     pageLabel = 'Non-conformité';
     formHeader = 'Création et mise à jour d\'une non-conformité';
-
+    userStructure:Structure={};
     constructor(protected fb: UntypedFormBuilder,
                 protected messageService: MessageService,
                 protected nonConformiteService: NonConformiteService,
@@ -75,8 +77,10 @@ export class NonConformiteComponent {
                 protected niveauNonConformiteService: NiveauNonConformiteService,
                 protected actionNonConformiteService: ActionNonConformiteService,
                 protected typeProcessusService: TypeProcessusService,
-                private datePipe: DatePipe
+                private datePipe: DatePipe,
+                private structureService: StructureService,
             ) {
+        this.loadStuctures();
         this.formCols = [
             {field: 'id', label: "", header: 'Id', type: 'string', visible: false, required: false},
             {field: 'typeNonConformite', label: "", header: 'Type', type: 'dropdown', visible: true, required: false, },
@@ -94,9 +98,8 @@ export class NonConformiteComponent {
         this.tableCols = [
             {field: 'numeroReference', header: 'Réference', type: 'string', filter: true},
             {field: 'nomProcessus', header: 'Nom du processus', type: 'string', filter: true},
-            {field: 'delaisMiseOeuvre', header: 'Délais de mise en oeuvre', type: 'string', filter: true},
             {field: 'origineService', header: 'Origine (Service)', type: 'string', filter: true},
-            {field: 'niveauNonConformiteId', header: 'Niveau', type: 'string', filter: true},
+            {field: 'currentUserfullName', header: 'Nom & Prénom', type: 'string', filter: true},
             {field: 'status', header: 'Statut', type: 'string', filter: true},
 
         ];
@@ -105,63 +108,25 @@ export class NonConformiteComponent {
             id: [null],
             nomProcessus: [null, Validators.required],
             origineService: [null, Validators.required],
+            origineId: [null],
             fonctionEmetteur: [null, Validators.required],
             justification: [null, Validators.required],
+            structureSoumissionId: [null],
+            structureSoumissionLibelle: [null],
             niveauNonConformiteId: [null, Validators.required],
             actionId: [null, Validators.required],
             typeNonConformiteId: [null, Validators.required],
             typeProcessusId: [null, Validators.required],
-            planActions: this.fb.array([])
         });
-        this.addPlanAction();
     }
-
-   // Getter pour accéder au FormArray
-   get planActions(): FormArray {
-    return this.formGroup.get('planActions') as FormArray;
-  }
-  // Fonction pour créer un groupe "Causes - Solutions - Responsables - Échéances"
-  createPlanAction(): FormGroup {
-    return this.fb.group({
-      ordre: [this.planActions.length + 1], // Numéro d'ordre automatique
-      causeIdentifiees: [null, Validators.required],
-      solutionRetenues: [null, Validators.required],
-      responsable: [null, Validators.required],
-      email: [null, Validators.required],
-      numeroTelephone: [null, Validators.required],
-      dateEcheance: [this.formattedDate]
-    });
-  }
-
-    // Appliquer formatDateRange sur la valeur de dateEcheance
-    setDateEcheance(dates: Date[]): void {
-        this.planActions.get('dateEcheance')?.setValue(dates);
-    }
-
-    getFormattedDateRange(): string {
-        const dates = this.planActions.get('dateEcheance')?.value;
-        return this.formatDateRange(dates);
-      }
-  
-  // Ajouter un nouveau groupe
-  addPlanAction() {
-    this.planActions.push(this.createPlanAction());
-  }
-  // Supprimer un groupe (si plus d'un groupe)
-  removePlanAction(index: number) {
-    if (this.planActions.length > 1) {
-      this.planActions.removeAt(index);
-    }
-  }
-
 
     ngOnInit(): void {
         this.fetchNonConformite();
+        this.userStructure = getCurrentUserStructure();
     }
-    // Code pour le formatage de la date pour affichage dans le tableau des confirmations
     formatDateRange(dates: Date[]): string {
         if (!Array.isArray(dates) || dates.length !== 2) return 'Dates invalides';
-      
+
         const format = (date: Date): string => {
           if (!(date instanceof Date) || isNaN(date.getTime())) return 'Date invalide';
           const day = String(date.getDate()).padStart(2, '0');
@@ -169,10 +134,10 @@ export class NonConformiteComponent {
           const year = date.getFullYear();
           return `${day}-${month}-${year}`;
         };
-      
+
         const start = format(dates[0]);
         const end = format(dates[1]);
-      
+
         return `${start} - ${end}`;
     }
     // Code pour le formatage de la date pour affichage dans le tableau des confirmations
@@ -278,22 +243,10 @@ export class NonConformiteComponent {
         this.formattedDate = this.datePipe.transform(event, 'dd-MM-yyyy');
     }
 
-      
+
     soumission() {
-        const formValue = this.formGroup.value;
+        const formData = this.formGroup.value;
         const allDates: Date[] = [];
-        const planActionsFormatted = formValue.planActions.map((action: any) => {
-
-            const [start, end] = action.dateEcheance || [];
-            if (start) allDates.push(new Date(start));
-            if (end) allDates.push(new Date(end));
-
-            return {
-              ...action,
-              dateEcheance: this.formatDateRange(action.dateEcheance)
-            };
-        });
-
         // Trier les dates pour trouver la première et la dernière
         allDates.sort((a, b) => a.getTime() - b.getTime());
         const delaisExecution = allDates.length >= 2
@@ -301,11 +254,15 @@ export class NonConformiteComponent {
         : 'Dates incomplètes';
 
         const files = this.uploadedFiles;
+
+        formData.origineService=this.formGroup.get("origineService")?.value.libelleLong;
+        formData.origineId=this.formGroup.get("origineService")?.value.id;
+        formData.structureSoumissionId=this.userStructure.id;
+        formData.structureSoumissionLibelle=this.userStructure.libelleLong;
         this.convertFilesToBase64(files).then((convertedFiles) => {
             const nonConformite: NonConformite = {
-                ...this.formGroup.value,
+                ...formData,
                 fichiers: convertedFiles,
-                planActions: planActionsFormatted,
                 delaisMiseOeuvre: delaisExecution
             };
             this.nonConformiteService.save(nonConformite).pipe(takeUntil(this.destroy$))
@@ -371,5 +328,16 @@ export class NonConformiteComponent {
         this.destroy$.next(true);
         this.destroy$.unsubscribe();
     }
-    
+    loadStuctures() {
+        this.structureService
+            .getAllStructures()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (resp) => {
+                    this.structures = resp.body || [];
+                },
+                error: (error) => {}
+            });
+
+    }
 }

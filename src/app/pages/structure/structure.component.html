@@ -1,0 +1,135 @@
+<div class="card shadow-1">
+    <p-toolbar styleClass="mb-4">
+        <ng-template pTemplate="left">
+            <div class="pt-3">
+                <h5 class="font-bold">
+                    @if (typeStructure === TypeStructure.SERVICE) {
+                        Liste des services
+                    } @else {
+                        Liste des Directions
+                    }
+                </h5>
+            </div>
+        </ng-template>
+
+        <ng-template pTemplate="right">
+
+            <p-inputGroup>
+                @if (typeStructure === TypeStructure.SERVICE) {
+                    <p-inputGroupAddon class="font-bold">Filter par :</p-inputGroupAddon>
+                    <p-dropdown [options]="directions" #dt
+                                emptyMessage="Aucune donnée disponible"
+                                emptyFilterMessage="Aucun résultat trouvé"
+                                optionLabel="libelleLong"
+                                [filter]="true" appendTo="body"
+                                (onChange)="directionChange(dt.value)"
+                                [resetFilterOnHide]="true" [showClear]="true"
+                                [autoDisplayFirst]="false" placeholder="Direction">
+                    </p-dropdown>
+                }
+            </p-inputGroup>
+            &nbsp;
+            <button pButton pRipple label="Ajouter" icon="pi pi-plus"
+                    pTooltip="Nouvelle structure" tooltipPosition="top"
+                    class="p-button-primary" (click)="onDisplay()"
+                    [disabled]="typeStructure === TypeStructure.SERVICE && !currentStructure">
+            </button>
+        </ng-template>
+    </p-toolbar>
+
+    <p-table #dt [columns]="cols" [value]="structures" selectionMode="single"
+             dataKey="id" [paginator]="true" [rows]="10" styleClass="p-datatable-gridlines p-datatable-sm"
+             [globalFilterFields]="colsFilter"
+             paginatorPosition="bottom">
+        <ng-template pTemplate="caption">
+            <div class="flex justify-content-end">
+                <span class="p-input-icon-left mb-1 w-100">
+
+                    <input pInputText type="text" class="p-fluid w-100" placeholder="Rechercher"
+                           (input)="onGlobalFilter(dt, $event)"/>
+                </span>
+            </div>
+        </ng-template>
+
+        <ng-template pTemplate="header" let-columns>
+            <tr>
+                <th *ngFor="let col of columns" [style.width]="col.width"
+                    [pSortableColumn]="col.field" class="font-bold"
+                    [ngClass]="{'text-center': col.center}">
+                    {{ col.header }}
+                    <p-sortIcon [field]="col.field"></p-sortIcon>
+                </th>
+                <th style="max-width:20%" class="text-center font-bold"></th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-rowData let-columns="columns">
+            <tr [pSelectableRow]="rowData">
+                <td *ngFor="let col of columns" [style.width]="col.width" [ngClass]="{'text-center': col.center}">
+                    <span *ngIf="col.type === 'string'"> {{ rowData[col.field] }}</span>
+                    <span *ngIf="col.type === 'number'"> {{ rowData[col.field] }}</span>
+                    <span *ngIf="col.type === 'date'"> {{ rowData[col.field] | date: 'dd/MM/yyyy' }}</span>
+                    <span *ngIf="col.type === 'boolean'">
+                        <span *ngIf="rowData[col.field]">
+                            <span class="ng-badge success">OUI</span>
+                        </span>
+                        <span *ngIf="!rowData[col.field]">
+                            <span class="ng-badge warning">NON</span>
+                        </span>
+                    </span>
+                </td>
+
+                <td style="text-align:center" [style.width]="'10%'">
+                    <button pButton pRipple type="button" icon="pi pi-pencil"
+                            class="p-button-rounded p-button-info mr-1"
+                            (click)="onDisplay(rowData)" pTooltip="Modifier"
+                            [tooltipPosition]="'top'">
+                    </button>
+                    <button pButton pRipple type="button" icon="pi pi-times"
+                            class="p-button-rounded p-button-danger mr-1"
+                            (click)="onDelete(rowData.id)"
+                            pTooltip="Annuler" [tooltipPosition]="'top'">
+                    </button>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td [colSpan]="cols.length+2">
+                    <span class="text-red-300 flex justify-content-center">Aucune données trouvées</span>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+<p-dialog (onHide)="display = false" [modal]="true" [(visible)]="display"
+          [maximizable]="true" [style]="{width: '80vw'}" class="p-fluid" styleClass="ng-dialog">
+    <ng-template pTemplate="header">
+        <div class="inline-flex align-items-center justify-content-center gap-2">
+            <span class="font-bold white-space-nowrap uppercase">
+                @if (editForm?.value['id']) {
+                    <span>Modification d'une structure</span>
+                } @else {
+                    <span>Création d'une structure</span>
+                }
+            </span>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="content">
+        <app-creation-structure [editForm]="editForm" [typeStructure]="typeStructure"></app-creation-structure>
+    </ng-template>
+    <p-footer #footer>
+        <button type="button" pRipple pButton icon="pi pi-times" (click)="onDisplay()"
+                label="Annuler" class="p-button-secondary position-left mr-3">
+        </button>
+        <button [disabled]="editForm?.invalid" pRipple pButton type="button"
+                (click)="saveEntity()" icon="pi pi-send" label="Enregistrer">
+        </button>
+    </p-footer>
+</p-dialog>
+<p-confirmDialog header="Confirmation" [key]="demandeKey"
+                 icon="pi pi-exclamation-triangle" [style]="{width: '35vw'}"
+                 acceptButtonStyleClass="p-button-danger" acceptLabel="Oui"
+                 rejectButtonStyleClass="p-button-primary" rejectLabel="Non">
+</p-confirmDialog>
+

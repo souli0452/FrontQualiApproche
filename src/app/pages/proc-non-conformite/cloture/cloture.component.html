@@ -1,0 +1,10 @@
+<p-toast />
+<div class="card shadow-1">
+    <app-dmd-traitement-table-template
+        [btnActions]="BtnActions.SUIVI_RQ"
+        [demandeList]="demandeList"
+        (onCloture)="cloture($event)"
+        [title]="title">
+    </app-dmd-traitement-table-template>
+</div>
+

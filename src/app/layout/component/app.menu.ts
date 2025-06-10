@@ -49,6 +49,8 @@ export class AppMenu {
                 icon: 'pi pi-fw pi-briefcase',
                 routerLink: ['/page'],
                 items: [
+                    {label: 'Directions', icon: 'pi pi-building', routerLink: ['/page/direction']},
+                    {label: 'Services', icon: 'pi pi-building', routerLink: ['/page/service']},
                     { label: 'Formation', icon: 'pi pi-fw pi-book', routerLink: ['/page/formation'] },
                     { label: 'Fournisseur', icon: 'pi pi-fw pi-users', routerLink: ['/page/fournisseur'] },
                     { label: 'Prestataire', icon: 'pi pi-fw pi-user-plus', routerLink: ['/page/prestataire'] },
@@ -93,22 +95,69 @@ export class AppMenu {
                 ]
             },
             {
-                label: 'Gestion des Utilisateurs',
-                icon: 'pi pi-fw pi-briefcase',
-                routerLink: ['/page'],
-                items: [
-                    { label: 'Kc-user', icon: 'pi pi-fw pi-users', routerLink: ['/pages/'] },
-                    { label: 'Réinitialisation de mot de passe', icon: 'pi pi-fw pi-user-plus', routerLink: ['/pages/'] },
-                    { label: 'Email de vérification', icon: 'pi pi-fw pi-box', routerLink: ['/pages/'] },
-                ]
-            },
-            {
                 label: 'Gestion Documentaire',
                 icon: 'pi pi-fw pi-briefcase',
                 routerLink: ['/page'],
                 items: [
                     { label: 'Catégorie de fichiers', icon: 'pi pi-fw pi-users', routerLink: ['/pages/'] },
                     { label: 'Exigence', icon: 'pi pi-fw pi-user-plus', routerLink: ['/pages/'] },
+                ]
+            },
+            {
+                label: 'TRAITEMENTS DES DEMANDES',
+                icon: 'pi pi-fw pi-envelope',
+                routerLink: ['/page'],
+                items: [
+                    { label: 'Non-conformité', icon: 'pi pi-fw pi-envelope',
+                     items: [
+                         {
+                             label:"Réceptions chef de service",
+                             icon: 'pi pi-fw pi-user-plus',
+                             routerLink: ['/page/reception']
+                         },
+                         {
+                             label:"Validations par le RS",
+                             icon: 'pi pi-fw pi-check',
+                             routerLink: ['/page/validation_rs']
+                         },
+
+                         {
+                             label:"Imputations ",
+                             icon: 'pi pi-fw pi-check',
+                             routerLink: ['/page/imputation']
+                         },
+                         {
+                             label:"Traitements",
+                             icon: 'pi pi-fw pi-pencil',
+                             routerLink: ['/page/traitement']
+                         },
+                         {
+                             label:"Validations chef de service",
+                             icon: 'pi pi-fw pi-check',
+                             routerLink: ['/page/validation']
+                         },
+                         {
+                             label:"Suivi par RQ",
+                             icon: 'pi pi-fw pi-pencil',
+                             routerLink: ['/page/cloture']
+                         },
+                         {
+                             label:"Consultations",
+                             icon: 'pi pi-fw pi-eye',
+                             routerLink: ['/page/consultation']
+                         }
+                     ]
+                    },
+
+                ]
+            },
+            {
+                label: 'Gestion des utilisateurs',
+                icon: 'pi pi-fw pi-users',
+                routerLink: ['/page'],
+                items: [
+                    { label: 'Comptes utilisateurs', icon: 'pi pi-fw pi-users', routerLink: ['/page/users'] },
+
                 ]
             },
             // {

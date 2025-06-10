@@ -59,7 +59,6 @@ export class LoginComponent implements OnInit{
                 next: (response: any) => {
                     const { data } = response;
                     console.log('Réponse:', response);
-
                     this.authService.setTokens(data.access_token, data.refresh_token);
                     this.router.navigate(['/']);
                     this.isLoading = false;
