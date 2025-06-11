@@ -39,7 +39,7 @@
                 <span class="text-xl font-bold mb-3 text-900">Validation par le pilote processus</span>
                 <ul>
                     <li *ngIf="demande.pertinancePilote" class="flex items-center"><span class="font-semibold w-28">Pertinance:</span><span class="flex-1">{{demande.pertinancePilote}}</span></li>
-                    <li *ngIf="demande.justificationPilote" class="flex items-center"><span class="font-semibold w-28">Justification:</span><span class="flex-1">{{demande.justificationPilote}}</span></li>
+                    <li *ngIf="demande.justificationPilote" class="flex items-center"><span class="font-semibold w-28">Justifications:</span><span class="flex-1" [innerHTML]="demande.justificationPilote"></span></li>
                 </ul>
             </div>
         </div>
@@ -77,6 +77,14 @@
         </div>
     </div>
 
+    <div class="card p-4" *ngIf="demande.numeroFdac">
+        <span class="text-xl font-bold mb-3 text-900">Suivi du Responsable Management Qualité</span>
+        <ul class="list-none p-0 m-0 text-600 space-y-3">
+            <li class="flex items-center"><span class="font-semibold w-28">Pertinance:</span><span class="flex-1">{{demande.pertinanceRsSuivi || ''}}</span></li>
+            <li class="flex items-center"><span class="font-semibold w-28">Numéro FEDAC:</span><span class="flex-1">{{demande.numeroFdac || ''}}</span></li>
+            <li class="flex items-center"><span class="font-semibold w-28">Date:</span><span class="flex-1">{{demande.dateSuivi || ''}}</span></li>
+        </ul>
+    </div>
     <!-- Participants et Plans d'actions -->
     <div class="flex flex-col gap-4">
         <!-- Participants -->
@@ -92,14 +100,14 @@
 
 
         <!-- Plans d'actions -->
-        <div class="card p-4" *ngIf="demande?.planActions">
+        <div class="card p-4" *ngIf="demande?.planActions.length>0">
             <span class="text-xl font-bold mb-3 text-900">Plans d'actions</span>
             <p-table [value]="demande.planActions" [rowHover]="true" styleClass="p-datatable-sm"
                      [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
                      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments">
                 <ng-template pTemplate="header">
                     <tr>
-                        <th>Créé le</th>
+                        <th>N° ordre</th>
                         <th>Créé par</th>
                         <th>Email</th>
                         <th>Cause identifiée</th>
@@ -110,7 +118,7 @@
                 </ng-template>
                 <ng-template pTemplate="body" let-plan>
                     <tr>
-                        <td>{{plan.createdAt }}</td>
+                        <td>{{plan.numeroOdre }}</td>
                         <td>{{plan.currentUserfullName}}</td>
                         <td>{{plan.currentUserEmail}}</td>
                         <td>{{plan.causeIdentifiees}}</td>

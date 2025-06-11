@@ -25,6 +25,7 @@ export class QualiUrlConfig {
     static readonly LOGIN_URL = `${SERVICE_PREFIX}/login`;
     static readonly REFRESH_TOKEN_URL = `${SERVICE_PREFIX}/auth/refresh`;
     static readonly USERS_URL = `${SERVICE_PREFIX}/users`;
+    static readonly ROLE_URL = `${SERVICE_PREFIX}/roles`;
     static readonly USERS_BY_ID_URL = `${SERVICE_PREFIX}/user-by-id`;
     static readonly USERS_BY_STRUCTURE_URL = `${SERVICE_PREFIX}/users/{structureId}`;
     static readonly RESET_PASSWORD_URL = `${SERVICE_PREFIX}/users/reset-password`;

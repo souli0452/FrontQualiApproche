@@ -204,6 +204,7 @@ export class DmdTraitementTableTemplateComponent {
                 this.selectedDemandes.map((item) => {
                     item.status=StatusEnum.IN_PROGRESS
                     item.userImputId = this.searchedAgent?.id;
+                    item.userImputeEmail=this.searchedAgent?.email;
                     item.userImputFullName = this.searchedAgent.lastName + ' ' + this.searchedAgent.firstName;
                     item.etatTraitement = EtapeTraitement.TRAITEMENT;
                 });

@@ -1,0 +1,20 @@
+<div class="profile-container">
+    <div class="profile-header">
+        <p-avatar [style]="{ 'background-color': '#007ad9', color: 'white' }">
+            <span>{{ user?.firstName.charAt(0).toUpperCase()}}{{user?.lastName.charAt(0).toUpperCase() }}</span>
+        </p-avatar>
+        <h2>{{ user?.firstName }} {{ user?.lastName }}</h2>
+        <p>{{ user?.email }}</p>
+    </div>
+
+    <div class="profile-details">
+        <p><strong>Nom d'utilisateur :</strong> {{ user?.username }}</p>
+        <p><strong>Fonction :</strong> </p>
+        <p><strong>Structure : </strong>  </p>
+    </div>
+
+    <div class="profile-actions">
+        <button pButton label="Modifier le Profil" icon="pi pi-user-edit" (click)="editProfile()"></button>
+        <button pButton label="Changer le mot de passe" icon="pi pi-lock" (click)="changePassword()"></button>
+    </div>
+</div>

@@ -25,6 +25,7 @@ import { ConsultationsComponent } from './proc-non-conformite/consultations/cons
 import { ValidationRSComponent } from './proc-non-conformite/validation-rs/validation-rs.component';
 import { ImputationComponent } from './proc-non-conformite/imputation/imputation.component';
 import { KcUserComponent } from './kc-user/kc-user.component';
+import { ProfilComponent } from './profil/profil.component';
 
 export default [
     { path: 'documentation', component: Documentation },
@@ -66,6 +67,7 @@ export default [
             typeStructure: TypeStructure.SERVICE
         }
     },
+    { path: 'profil', component: ProfilComponent },
     { path: 'empty', component: Empty },
     { path: '**', redirectTo: '/notfound' },
 ] as Routes;

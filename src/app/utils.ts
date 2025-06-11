@@ -2,6 +2,9 @@ import { HttpErrorResponse, HttpParams } from '@angular/common/http';
 import moment from 'moment';
 import { MessageService } from 'primeng/api';
 import { Structure } from './pages/structure/structure';
+import { AuthService } from './services/auth-services/auth.service';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 export interface ReportingInput {
     reportFormat: ReportFormat;
     reportType: any;
@@ -290,7 +293,6 @@ export function formatDateRange(dates: Date[]): string {
   }
 export const USER_STRUCTURE_KEY = 'current_user_structure';
 export const USER_PROFILE_KEY = 'current_user_profile';
-
 export function getCurrentUserStructure(): Structure {
     return JSON.parse(localStorage.getItem(USER_STRUCTURE_KEY)!) as Structure;
 }
@@ -309,3 +311,23 @@ export const REGION_LIST = [
     {value: 'Sahel', label: 'Sahel'},
     {value: 'Sud-Ouest', label: 'Sud-Ouest'}
 ];
+export function isUserInRoles(roles: string[]): boolean {
+    const user = JSON.parse(localStorage.getItem('user')!);
+    const rolesUsermap = JSON.parse(localStorage.getItem(USER_PROFILE_KEY)!);
+
+    if (rolesUsermap) {
+        user.roles = [];
+        rolesUsermap.forEach((item: { name: string }) => {
+            user.roles?.push(item.name); // ✅ Ajout avec `push()`
+        });
+    }
+
+    console.log(user.roles);
+
+    return roles.some(role => user.roles.includes(role)); // ✅ Vérification simplifiée
+}
+
+
+
+
+

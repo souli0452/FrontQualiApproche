@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { AppMenuitem } from './app.menuitem';
+import { AuthService } from '../../services/auth-services/auth.service';
+import { isUserInRoles } from '../../utils';
+import { app_roles } from '../../app-roles-utils';
 
 @Component({
     selector: 'app-menu',
@@ -17,7 +20,10 @@ import { AppMenuitem } from './app.menuitem';
 })
 export class AppMenu {
     model: MenuItem[] = [];
+    roles:any[]=[];
+constructor(private  authService: AuthService) {
 
+}
     ngOnInit() {
         this.model = [
             {
@@ -47,6 +53,7 @@ export class AppMenu {
             {
                 label: 'Gestion des Ressources',
                 icon: 'pi pi-fw pi-briefcase',
+                visible:  isUserInRoles(['SUPER_ADMIN']),
                 routerLink: ['/page'],
                 items: [
                     {label: 'Directions', icon: 'pi pi-building', routerLink: ['/page/direction']},
@@ -75,6 +82,7 @@ export class AppMenu {
             {
                 label: 'Gestion des Actions',
                 icon: 'pi pi-fw pi-briefcase',
+                visible:  isUserInRoles(['SUPER_ADMIN']),
                 routerLink: ['/page'],
                 items: [
                     { label: 'Action corrective et préventive', icon: 'pi pi-fw pi-list-check', routerLink: ['/page/action-corrective-preventive'] },
@@ -87,15 +95,26 @@ export class AppMenu {
                 icon: 'pi pi-fw pi-briefcase',
                 routerLink: ['/page'],
                 items: [
-                    { label: 'Audite', icon: 'pi pi-fw pi-eye', routerLink: ['/page/audite'] },
-                    { label: 'Non conformité', icon: 'pi pi-fw pi-times', routerLink: ['/page/non-conformite'] },
-                    { label: 'Procédure de non conformité', icon: 'pi pi-fw pi-book', routerLink: ['/page/procedure-non-conformite'] },
-                    { label: 'Réglementation', icon: 'pi pi-fw pi-file-edit', routerLink: ['/page/reglementation'] },
-                    { label: "Critères d'évaluation", icon: 'pi pi-fw pi-file', routerLink: ['/page/critere-evaluation'] },
+                    { label: 'Audite', icon: 'pi pi-fw pi-eye',
+                        visible:  isUserInRoles(['SUPER_ADMIN']),
+                        routerLink: ['/page/audite'] },
+                    { label: 'Non conformité', icon: 'pi pi-fw pi-times',
+                        visible:  isUserInRoles(['SUBMIT_NC','SUPER_ADMIN']),
+                        routerLink: ['/page/non-conformite'] },
+                    { label: 'Procédure de non conformité',
+                        visible:  isUserInRoles(['SUBMIT_NC','SUPER_ADMIN']),
+                        icon: 'pi pi-fw pi-book', routerLink: ['/page/procedure-non-conformite'] },
+                    { label: 'Réglementation',
+                        visible:  isUserInRoles(['SUPER_ADMIN']),
+                        icon: 'pi pi-fw pi-file-edit', routerLink: ['/page/reglementation'] },
+                    { label: "Critères d'évaluation",
+                        visible:  isUserInRoles(['SUPER_ADMIN']),
+                        icon: 'pi pi-fw pi-file', routerLink: ['/page/critere-evaluation'] },
                 ]
             },
             {
                 label: 'Gestion Documentaire',
+                visible:  isUserInRoles(['SUPER_ADMIN']),
                 icon: 'pi pi-fw pi-briefcase',
                 routerLink: ['/page'],
                 items: [
@@ -106,45 +125,55 @@ export class AppMenu {
             {
                 label: 'TRAITEMENTS DES DEMANDES',
                 icon: 'pi pi-fw pi-envelope',
+                visible:  isUserInRoles(app_roles.NC),
                 routerLink: ['/page'],
                 items: [
                     { label: 'Non-conformité', icon: 'pi pi-fw pi-envelope',
+                        visible:  isUserInRoles(app_roles.NC),
                      items: [
                          {
                              label:"Réceptions chef de service",
                              icon: 'pi pi-fw pi-user-plus',
-                             routerLink: ['/page/reception']
+                             routerLink: ['/page/reception'],
+                             visible:  isUserInRoles(['RECEPTION_NC','SUPER_ADMIN'])
                          },
+
                          {
                              label:"Validations par le RS",
                              icon: 'pi pi-fw pi-check',
-                             routerLink: ['/page/validation_rs']
+                             routerLink: ['/page/validation_rs'],
+                             visible:  isUserInRoles(['VALIDATION_RQ','SUPER_ADMIN'])
                          },
 
                          {
                              label:"Imputations ",
                              icon: 'pi pi-fw pi-check',
-                             routerLink: ['/page/imputation']
+                             routerLink: ['/page/imputation'],
+                             visible:  isUserInRoles(['IMPUTATION_NC','SUPER_ADMIN'])
                          },
                          {
                              label:"Traitements",
                              icon: 'pi pi-fw pi-pencil',
-                             routerLink: ['/page/traitement']
+                             routerLink: ['/page/traitement'],
+                             visible:  isUserInRoles(['TRAITEMENT_NC','SUPER_ADMIN'])
                          },
                          {
                              label:"Validations chef de service",
                              icon: 'pi pi-fw pi-check',
-                             routerLink: ['/page/validation']
+                             routerLink: ['/page/validation'],
+                             visible:  isUserInRoles(['VALIDATION_CHEF','SUPER_ADMIN'])
                          },
                          {
                              label:"Suivi par RQ",
                              icon: 'pi pi-fw pi-pencil',
-                             routerLink: ['/page/cloture']
+                             routerLink: ['/page/cloture'],
+                             visible:  isUserInRoles(['RQ_NC','SUPER_ADMIN'])
                          },
                          {
                              label:"Consultations",
                              icon: 'pi pi-fw pi-eye',
-                             routerLink: ['/page/consultation']
+                             routerLink: ['/page/consultation'],
+                             visible:  isUserInRoles(['CONSULTATION_NC','SUPER_ADMIN'])
                          }
                      ]
                     },
@@ -154,72 +183,14 @@ export class AppMenu {
             {
                 label: 'Gestion des utilisateurs',
                 icon: 'pi pi-fw pi-users',
+                visible:  isUserInRoles(['SUPER_ADMIN']),
                 routerLink: ['/page'],
                 items: [
                     { label: 'Comptes utilisateurs', icon: 'pi pi-fw pi-users', routerLink: ['/page/users'] },
 
                 ]
             },
-            // {
-            //     label: 'Hierarchy',
-            //     items: [
-            //         {
-            //             label: 'Submenu 1',
-            //             icon: 'pi pi-fw pi-bookmark',
-            //             items: [
-            //                 {
-            //                     label: 'Submenu 1.1',
-            //                     icon: 'pi pi-fw pi-bookmark',
-            //                     items: [
-            //                         { label: 'Submenu 1.1.1', icon: 'pi pi-fw pi-bookmark' },
-            //                         { label: 'Submenu 1.1.2', icon: 'pi pi-fw pi-bookmark' },
-            //                         { label: 'Submenu 1.1.3', icon: 'pi pi-fw pi-bookmark' }
-            //                     ]
-            //                 },
-            //                 {
-            //                     label: 'Submenu 1.2',
-            //                     icon: 'pi pi-fw pi-bookmark',
-            //                     items: [{ label: 'Submenu 1.2.1', icon: 'pi pi-fw pi-bookmark' }]
-            //                 }
-            //             ]
-            //         },
-            //         {
-            //             label: 'Submenu 2',
-            //             icon: 'pi pi-fw pi-bookmark',
-            //             items: [
-            //                 {
-            //                     label: 'Submenu 2.1',
-            //                     icon: 'pi pi-fw pi-bookmark',
-            //                     items: [
-            //                         { label: 'Submenu 2.1.1', icon: 'pi pi-fw pi-bookmark' },
-            //                         { label: 'Submenu 2.1.2', icon: 'pi pi-fw pi-bookmark' }
-            //                     ]
-            //                 },
-            //                 {
-            //                     label: 'Submenu 2.2',
-            //                     icon: 'pi pi-fw pi-bookmark',
-            //                     items: [{ label: 'Submenu 2.2.1', icon: 'pi pi-fw pi-bookmark' }]
-            //                 }
-            //             ]
-            //         }
-            //     ]
-            // },
-            // {
-            //     label: 'Get Started',
-            //     items: [
-            //         {
-            //             label: 'Documentation',
-            //             icon: 'pi pi-fw pi-book',
-            //             routerLink: ['/documentation']
-            //         },
-            //         {
-            //             label: 'View Source',
-            //             icon: 'pi pi-fw pi-github',
-            //             url: 'https://github.com/primefaces/sakai-ng',
-            //             target: '_blank'
-            //         }
-            //     ]
-            // }
+
         ];
     }
 }

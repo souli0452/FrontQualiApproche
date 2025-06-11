@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import {AuthService} from "../../services/auth-services/auth.service";
-import {KcLoginRequest} from "../../models";
+import { KcLoginRequest, KcUser } from '../../models';
 import { MessageService } from 'primeng/api';
 import {takeUntil} from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
@@ -10,6 +10,8 @@ import {Subject} from 'rxjs';
 import { ToastModule } from 'primeng/toast';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../prime-ng.module';
+import { USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
+import { StructureService } from '../structure/structure-service';
 
 @Component({
     selector: 'app-login',
@@ -27,17 +29,14 @@ export class LoginComponent implements OnInit{
     isLoading = false;
     isResetScreen = false;
     isConfirmationScreen: boolean = false;
-
-    ngOnInit() {
-        if (this.authService.getAccessToken()) {
-            this.router.navigate(['/']);
-        }
-    }
+    user!: any;
+    userCurrentUser!: KcUser;
 
 
     constructor(private fb: FormBuilder, private authService: AuthService,
                 private router: Router
                 ,private route: ActivatedRoute,
+                private structureService: StructureService,
                 private messageService: MessageService) {
         this.loginForm = this.fb.group({
             username: ['', Validators.required],
@@ -49,6 +48,11 @@ export class LoginComponent implements OnInit{
             email: ['', [Validators.required, Validators.email]],
         });
     }
+    ngOnInit() {
+        if (this.authService.getAccessToken()) {
+            this.router.navigate(['/']);
+        }
+    }
 
     onLogin() {
         if (this.loginForm.valid) {
@@ -58,10 +62,24 @@ export class LoginComponent implements OnInit{
             this.authService.login(credentials).subscribe({
                 next: (response: any) => {
                     const { data } = response;
-                    console.log('Réponse:', response);
+
                     this.authService.setTokens(data.access_token, data.refresh_token);
                     this.router.navigate(['/']);
                     this.isLoading = false;
+                    this.user = this.authService.getUser()!;
+
+                    this.authService.getUserRoles().subscribe((roles) => {
+                        localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(roles.body));
+                    });
+                    this.authService.getUserById(this.user.userId).subscribe((value) => {
+                        this.userCurrentUser = value.body!;
+                        console.log(value.body);
+                        if (this.userCurrentUser.structure) {
+                            this.fetchStucture(this.userCurrentUser.structure);
+                        } else {
+                            this.messageService.add({ severity: 'info', summary: 'AVERTISSEMENT', detail: 'Votre utilisateur est mal configuré', life: 3000 });
+                        }
+                    });
                 },
                 error: (err) => {
                     console.log('Erreur:', err);
@@ -94,7 +112,13 @@ export class LoginComponent implements OnInit{
             this.errorMessage = 'Veuillez remplir tous les champs correctement avant de continuer.';
         }
     }
-
+    fetchStucture(structureId: string) {
+        this.structureService.getByStructureId(structureId).subscribe({
+            next: (structure) => {
+                localStorage.setItem(USER_STRUCTURE_KEY, JSON.stringify(structure));
+            }
+        });
+    }
 
     initiatePasswordReset(): void {
         if (this.resetForm.valid) {

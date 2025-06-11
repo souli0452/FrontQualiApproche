@@ -122,14 +122,12 @@
     </ng-template>
 
     <ng-template pTemplate="emptymessage">
-        <tr>
-            <td [colSpan]="cols!.length + (btnActions === BtnActions.RECEPTION || btnActions === BtnActions.VALIDATION ? 2 : 1)">
-                <div class="flex flex-column align-items-center justify-content-center p-4">
-                    <img src="assets/images/empty.svg" alt="Aucune donnée" style="width: 100px; opacity: 0.5">
-                    <span class="text-500 mt-2">Aucune donnée disponible</span>
-                </div>
-            </td>
-        </tr>
+        <div class="h-60">
+            <div class="centrer-image mt-6">
+                <img src="../../../assets/images/empty.svg" alt="Image vide" style="width: 150px; height: auto;">
+                <span class="text-red-500 mt-4 flex justify-content-center opacity-35">Aucune données trouvées</span>
+            </div>
+        </div>
     </ng-template>
 </p-table>
 <p-dialog (onHide)="display = false" [modal]="true" [maximizable]="true"
@@ -168,7 +166,7 @@
         <div class="inline-flex align-items-center justify-content-center gap-2">
         <span class="font-bold white-space-nowrap">
           <h4>
-              <b *ngIf="btnActions === BtnActions.RECEPTION || btnActions==BtnActions.CLOTURE">Détails de la demande n°: {{ selectedDemande.numeroReference }}</b>
+              <b *ngIf="btnActions==BtnActions.CLOTURE">Détails de la demande n°: {{ selectedDemande.numeroReference }}</b>
                           <b *ngIf="btnActions === BtnActions.RECEPTION || btnActions==BtnActions.SUIVI_RQ">Détails de la demande n°: {{ selectedDemande.numeroReference }}</b>
                             <b *ngIf="btnActions === BtnActions.IMPUTATION">Imputation de la demande n°: {{ selectedDemande.numeroReference }}</b>
               <b *ngIf="btnActions === BtnActions.TRAITEMENT">Traitement de la demande n°: {{ selectedDemande.numeroReference }}

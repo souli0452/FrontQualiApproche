@@ -7,6 +7,7 @@ import {KcLoginRequest, KcUser} from '../../models';
 import { map } from 'rxjs/operators';
 import {QualiCrudService} from "../quali-crud.service";
 import {QualiUrlConfig} from "../quali-url-configs";
+import { USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
 
 interface AuthResponse {
     accessToken: string;
@@ -26,11 +27,12 @@ interface AuthResponse {
 export class AuthService extends QualiCrudService<KcUser, number> {
     private isLoggedIn = new BehaviorSubject<boolean>(false);
     private refreshTokenInProgress = false;
-
+    user:any;
     private currentUser = new BehaviorSubject<KcUser | null>(this.getUser());
 
     constructor(public override http: HttpClient, private router: Router) {
         super(http, QualiUrlConfig.FORMATION_ROOT_URL);
+        this.user = this.getUser()!;
     }
 
     override findAll(): Observable<HttpResponse<Array<KcUser>>> {
@@ -72,6 +74,8 @@ export class AuthService extends QualiCrudService<KcUser, number> {
     logout(): void {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        localStorage.removeItem(USER_PROFILE_KEY);
+        localStorage.removeItem(USER_STRUCTURE_KEY);
         localStorage.removeItem('user');
         this.isLoggedIn.next(false);
         this.currentUser.next(null);
@@ -151,7 +155,9 @@ export class AuthService extends QualiCrudService<KcUser, number> {
     updateUser(user: KcUser): Observable<HttpResponse<void>> {
         return this.http.put<void>(`${QualiUrlConfig.USERS_URL}/update`, user, {observe: 'response'});
     }
-
+    getUserRoles(): Observable<HttpResponse<Array<any>>> {
+        return this.http.get<Array<any>>(`${QualiUrlConfig.ROLE_URL}/user-roles/${this.user.userId}`, {observe: 'response'});
+    }
     resetPassword(userId: string, password: string): Observable<HttpResponse<void>> {
         const params = new HttpParams()
             .set('userId', userId)
@@ -167,7 +173,7 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         const params = new HttpParams()
             .set('userId', userId)
             .set('enabled', enabled.toString());
-        return this.http.patch<void>(QualiUrlConfig.CHANGE_STATUS_URL, null, {
+        return this.http.put<void>(QualiUrlConfig.CHANGE_STATUS_URL, null, {
             params,
             observe: 'response'
         });
@@ -176,7 +182,7 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         const params = new HttpParams()
             .set('token', token)
             .set('userId', userId)
-        return this.http.patch<void>(QualiUrlConfig.VERIFY_EMAIL_URL, null, {
+        return this.http.put<void>(QualiUrlConfig.VERIFY_EMAIL_URL, null, {
             params,
             observe: 'response'
         });
@@ -186,7 +192,7 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         const params = new HttpParams()
             .set('userId', userId)
             .set('token', token);
-        return this.http.patch<void>(QualiUrlConfig.IS_EMAIL_VERIFIED_URL, null, {
+        return this.http.put<void>(QualiUrlConfig.IS_EMAIL_VERIFIED_URL, null, {
             params,
             observe: 'response'
         });
@@ -218,7 +224,7 @@ export class AuthService extends QualiCrudService<KcUser, number> {
             .set('token', token)
             .set('password', password);
 
-        return this.http.patch<void>(QualiUrlConfig.REINITIALIZE_PASSWORD_URL, null, {
+        return this.http.put<void>(QualiUrlConfig.REINITIALIZE_PASSWORD_URL, null, {
             params,
             observe: 'response'
         });
@@ -230,7 +236,7 @@ export class AuthService extends QualiCrudService<KcUser, number> {
             .set('password', password)
             .set('oldPassword', oldPassword);
 
-        return this.http.patch<{ data:any }>(QualiUrlConfig.UPDATE_PASSWORD_URL, null, { params });
+        return this.http.put<{ data:any }>(QualiUrlConfig.UPDATE_PASSWORD_URL, null, { params });
     }
 
 

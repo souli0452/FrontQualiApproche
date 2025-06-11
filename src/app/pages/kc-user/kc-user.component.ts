@@ -161,6 +161,7 @@ export class KcUserComponent implements OnInit, OnDestroy {
             object.password = "password";
         }*/
         if (object.id != null || undefined) {
+            object.structure=object.structure.id;
             this.authService
                 .updateUser(object)
                 .pipe(takeUntil(this.destroy$))
@@ -172,7 +173,7 @@ export class KcUserComponent implements OnInit, OnDestroy {
                 });
         } else {
             object.structure=object.structure.id;
-            console.log(object);
+
 
             this.authService
                 .createUser(object)

@@ -75,10 +75,12 @@ ngOnInit() {
     edition(demandes: any) {
         this.service.updateNomConformites(demandes).subscribe({
             next: (data) => {
-                this.dmdTraitement.closeDetailsDialog();
+
                 this.editer(demandes[0], data);
+                this.dmdTraitement.closeDetailsDialog();
             },
             error: () => {
+                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
             }
             });
     }
