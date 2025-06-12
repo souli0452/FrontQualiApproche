@@ -81,7 +81,16 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         this.currentUser.next(null);
         this.router.navigate(['/login']);
     }
+    removeAll(): void {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem(USER_PROFILE_KEY);
+        localStorage.removeItem(USER_STRUCTURE_KEY);
+        localStorage.removeItem('user');
+        this.isLoggedIn.next(false);
+        this.currentUser.next(null);
 
+    }
     isAuthenticated(): Observable<boolean> {
         return this.isLoggedIn.asObservable();
     }

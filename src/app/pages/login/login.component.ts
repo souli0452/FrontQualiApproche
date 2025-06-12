@@ -62,7 +62,7 @@ export class LoginComponent implements OnInit{
             this.authService.login(credentials).subscribe({
                 next: (response: any) => {
                     const { data } = response;
-
+                     this.authService.removeAll();
                     this.authService.setTokens(data.access_token, data.refresh_token);
                     this.router.navigate(['/']);
                     this.isLoading = false;
@@ -73,7 +73,7 @@ export class LoginComponent implements OnInit{
                     });
                     this.authService.getUserById(this.user.userId).subscribe((value) => {
                         this.userCurrentUser = value.body!;
-                        console.log(value.body);
+
                         if (this.userCurrentUser.structure) {
                             this.fetchStucture(this.userCurrentUser.structure);
                         } else {
