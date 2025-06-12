@@ -28,12 +28,18 @@
                     </p-dropdown>
                 }
             </p-inputGroup>
-            &nbsp;
+            &nbsp;  @if (typeStructure === TypeStructure.SERVICE) {
             <button pButton pRipple label="Ajouter" icon="pi pi-plus"
-                    pTooltip="Nouvelle structure" tooltipPosition="top"
+                    pTooltip="Nouvelle structure"
                     class="p-button-primary" (click)="onDisplay()"
                     [disabled]="typeStructure === TypeStructure.SERVICE && !currentStructure">
-            </button>
+            </button>}
+            @if (typeStructure === TypeStructure.DIRECTION) {
+            <button pButton pRipple label="Ajouter" icon="pi pi-plus"
+                    pTooltip="Nouvelle structure"
+                    class="buttonD" (click)="onDisplay()"
+            >
+            </button>}
         </ng-template>
     </p-toolbar>
 

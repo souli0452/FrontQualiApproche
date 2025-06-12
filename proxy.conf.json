@@ -1,7 +1,7 @@
 {
-    "/api/v1/*": {
-        "target": "http://localhost:8086",
-        "secure": true,
+    "/api/v1": {
+        "target": " https://sgq.horeb.tech",
+        "secure": false,
         "loglevel": "debug",
         "changeOrigin": true
     }
