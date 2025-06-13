@@ -62,8 +62,10 @@ export class LoginComponent implements OnInit{
             this.authService.login(credentials).subscribe({
                 next: (response: any) => {
                     const { data } = response;
-                    this.router.navigate(['/']);
+
                     this.isLoading = false;
+                    this.authService.setTokens(data.access_token, data.refresh_token);
+                    this.authService.setUser(data.user);
                     this.user = this.authService.getUser()!;
 
                     this.authService.getUserRoles().subscribe((roles) => {
@@ -71,13 +73,13 @@ export class LoginComponent implements OnInit{
                     });
                     this.authService.getUserById(this.user.userId).subscribe((value) => {
                         this.userCurrentUser = value.body!;
-
                         if (this.userCurrentUser.structure) {
                             this.fetchStucture(this.userCurrentUser.structure);
                         } else {
                             this.messageService.add({ severity: 'info', summary: 'AVERTISSEMENT', detail: 'Votre utilisateur est mal configuré', life: 3000 });
                         }
                     });
+                    this.router.navigate(['/']);
                 },
                 error: (err) => {
                     console.log('Erreur:', err);

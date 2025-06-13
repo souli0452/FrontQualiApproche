@@ -322,8 +322,6 @@ export function isUserInRoles(roles: string[]): boolean {
         });
     }
 
-    console.log(user.roles);
-
     return roles.some(role => user.roles.includes(role)); // ✅ Vérification simplifiée
 }
 

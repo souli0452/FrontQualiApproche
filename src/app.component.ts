@@ -21,7 +21,8 @@ export class AppComponent implements AfterViewInit {
     user!: any;
     userCurrentUser!: KcUser;
     constructor(
-        protected messageService: MessageService
+        protected messageService: MessageService,
+        private authService: AuthService,
     ) {}
 
     ngAfterViewInit() {
@@ -29,7 +30,6 @@ export class AppComponent implements AfterViewInit {
     }
 
     ngOnInit() {
-
     }
 
 
