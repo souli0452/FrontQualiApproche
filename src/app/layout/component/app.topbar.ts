@@ -8,6 +8,8 @@ import { LayoutService } from '../service/layout.service';
 import { Menu } from 'primeng/menu';
 import { AuthService } from '../../services/auth-services/auth.service';
 import { Avatar } from 'primeng/avatar';
+import { Structure } from '../../pages/structure/structure';
+import { getCurrentUserStructure } from '../../utils';
 
 @Component({
     selector: 'app-topbar',

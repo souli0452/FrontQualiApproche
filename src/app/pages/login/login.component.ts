@@ -66,13 +66,14 @@ export class LoginComponent implements OnInit{
                     this.isLoading = false;
                     this.authService.setTokens(data.access_token, data.refresh_token);
                     this.authService.setUser(data.user);
-                    this.router.navigate(['/']);
+
                     this.user = this.authService.getUser()!;
 
                     this.authService.getUserRoles().subscribe((roles) => {
                         localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(roles.body));
                     });
-                    this.authService.getUserById(data!.user!).subscribe((value) => {
+                    console.log(data.user)
+                    this.authService.getUserById(data!.user.userId!).subscribe((value) => {
                         this.userCurrentUser = value.body!;
                         if (this.userCurrentUser.structure) {
                             this.fetchStucture(this.userCurrentUser.structure);
@@ -80,7 +81,7 @@ export class LoginComponent implements OnInit{
                             this.messageService.add({ severity: 'info', summary: 'AVERTISSEMENT', detail: 'Votre utilisateur est mal configuré', life: 3000 });
                         }
                     });
-
+                    this.router.navigate(['/']);
                 },
                 error: (err) => {
                     console.log('Erreur:', err);
