@@ -23,14 +23,35 @@ export class AppComponent implements AfterViewInit {
     constructor(
         protected messageService: MessageService,
         private authService: AuthService,
+        private structureService: StructureService,
     ) {}
 
     ngAfterViewInit() {
-
+        this.authService.getUserRoles().subscribe((roles) => {
+            localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(roles.body));
+        });
     }
 
     ngOnInit() {
+        this.user = this.authService.getUser();
+        this.authService.getUserRoles().subscribe((roles) => {
+            localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(roles.body));
+        });
+        this.authService.getUserById(this.user!.userId).subscribe((value) => {
+            this.userCurrentUser = value.body!;
+            if (this.userCurrentUser.structure) {
+                this.fetchStucture(this.userCurrentUser.structure);
+            } else {
+                this.messageService.add({ severity: 'info', summary: 'AVERTISSEMENT', detail: 'Votre utilisateur est mal configuré', life: 3000 });
+            }
+        });
     }
 
-
+    fetchStucture(structureId: string) {
+        this.structureService.getByStructureId(structureId).subscribe({
+            next: (structure) => {
+                localStorage.setItem(USER_STRUCTURE_KEY, JSON.stringify(structure));
+            }
+        });
+    }
 }
