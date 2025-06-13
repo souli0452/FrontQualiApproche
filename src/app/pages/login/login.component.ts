@@ -62,8 +62,6 @@ export class LoginComponent implements OnInit{
             this.authService.login(credentials).subscribe({
                 next: (response: any) => {
                     const { data } = response;
-                     this.authService.removeAll();
-                    this.authService.setTokens(data.access_token, data.refresh_token);
                     this.router.navigate(['/']);
                     this.isLoading = false;
                     this.user = this.authService.getUser()!;
