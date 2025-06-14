@@ -161,8 +161,8 @@ export class AuthService extends QualiCrudService<KcUser, number> {
     updateUser(user: KcUser): Observable<HttpResponse<void>> {
         return this.http.put<void>(`${QualiUrlConfig.USERS_URL}/update`, user, {observe: 'response'});
     }
-    getUserRoles(): Observable<HttpResponse<Array<any>>> {
-        return this.http.get<Array<any>>(`${QualiUrlConfig.ROLE_URL}/user-roles/${this.user!.userId!}`, {observe: 'response'});
+    getUserRoles(id :string): Observable<HttpResponse<Array<any>>> {
+        return this.http.get<Array<any>>(`${QualiUrlConfig.ROLE_URL}/user-roles/${id}`, {observe: 'response'});
     }
     resetPassword(userId: string, password: string): Observable<HttpResponse<void>> {
         const params = new HttpParams()

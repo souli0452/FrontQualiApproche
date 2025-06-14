@@ -69,10 +69,9 @@ export class LoginComponent implements OnInit{
 
                     this.user = this.authService.getUser()!;
 
-                    this.authService.getUserRoles().subscribe((roles) => {
+                    this.authService.getUserRoles(data!.user.userId!).subscribe((roles) => {
                         localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(roles.body));
                     });
-                    console.log(data.user)
                     this.authService.getUserById(data!.user.userId!).subscribe((value) => {
                         this.userCurrentUser = value.body!;
                         if (this.userCurrentUser.structure) {
