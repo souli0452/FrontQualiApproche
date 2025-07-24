@@ -23,8 +23,23 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
 })
 export class ConsultationsComponent {
     demandeList: any = [];
-    title = 'Consulatations des non-conformités';
+    title = 'Consultations des non-conformités';
+    cols: any[] = [];
     constructor(protected messageService: MessageService,private service:ProcNonConformiteService) {
+        this.cols = [
+            { field: 'numeroReference', header: 'N° ordre', type: 'string', filter: true, width: '10%', centered: false },
+            { field: 'origineService', header: 'Nom processus', type: 'string', filter: true, width: '30%', centered: false },
+            {
+                field: 'currentUserfullName',
+                header: 'Responsable',
+                type: 'string',
+                filter: true,
+                width: '20%',
+                centered: false
+            },
+            { field: 'status', header: 'Statut', type: 'enum', filter: true, width: '15%', centered: false },
+            { field: 'createdAt', header: 'Date soumission', type: 'string', filter: true, width: '15%', centered: false }
+        ];
     }
     @ViewChild(DmdTraitementTableTemplateComponent) dmdTraitement!: DmdTraitementTableTemplateComponent;
 

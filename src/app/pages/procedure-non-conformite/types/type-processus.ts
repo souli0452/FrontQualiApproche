@@ -39,9 +39,9 @@ export class TypeProcessusComponent {
       formGroup: UntypedFormGroup;
       tableCols: TableColumn[];
       formCols: FormGroupColumn[];
-      pageLabel = 'Liste des types de processus';
+      pageLabel = 'Types de processus';
       formHeader = 'Création et mise à jour d\'un type de processus';
-  
+
       constructor(protected fb: UntypedFormBuilder,
                   protected messageService: MessageService,
                   protected typeProcessusService: TypeProcessusService) {
@@ -50,14 +50,14 @@ export class TypeProcessusComponent {
               {field: 'libelle', label: "Libellé du type de processus (Réalisation - Support)", header: 'Libellé', type: 'string', visible: true, required: true},
               {field: 'description', label: "Description du type de processus", header: 'Description', type: 'string', visible: true, required: false}
           ];
-  
+
           this.tableCols = [
               {field: 'libelle', header: 'Libellé', type: 'string', filter: true},
               {field: 'description', header: 'Description', type: 'string', filter: true},
               {field: 'createdAt', header: 'Date de création', type: 'string', filter: true},
               {field: 'updatedAt', header: 'Date de modification', type: 'string', filter: true}
           ];
-  
+
           this.formGroup = this.fb.group({
               id: [null],
               libelle: [null, Validators.required],
@@ -66,11 +66,11 @@ export class TypeProcessusComponent {
 
           });
       }
-  
+
       ngOnInit(): void {
           this.fetchObject();
       }
-  
+
       fetchObject() {
           this.typeProcessusService.findAll().pipe(takeUntil(this.destroy$))
               .subscribe({
@@ -82,13 +82,13 @@ export class TypeProcessusComponent {
                   }
               });
       }
-  
+
       onSuccess(res: HttpResponse<any>) {
           this.closeDialog = true;
           this.fetchObject();
           showToast(StatusEnum.success, res.status, null, this.messageService);
       }
-  
+
       onSave(object: TypeProcessus) {
           if (object.id != null || undefined) {
               this.typeProcessusService.update(object).pipe(takeUntil(this.destroy$))
@@ -110,7 +110,7 @@ export class TypeProcessusComponent {
                   });
           }
       }
-  
+
       onDelete(processus: TypeProcessus) {
           this.typeProcessusService.delete(processus.id).pipe(takeUntil(this.destroy$))
               .subscribe({
@@ -120,9 +120,9 @@ export class TypeProcessusComponent {
                       showToast(StatusEnum.error, error.status, null, this.messageService, error);
                   }
               });
-  
+
       }
-  
+
       ngOnDestroy(): void {
           this.destroy$.next(true);
           this.destroy$.unsubscribe();

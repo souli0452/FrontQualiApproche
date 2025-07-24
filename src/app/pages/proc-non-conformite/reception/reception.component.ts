@@ -20,16 +20,18 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { FeaturesService } from '../../../services/feature-service';
 import { Structure } from '../../structure/structure';
+import { RejetFormsComponent } from '../forms/rejet.forms/rejet.forms.component';
 
 @Component({
   selector: 'app-reception',
   templateUrl: './reception.component.html',
   styleUrl: './reception.component.scss',
     standalone: true,
-    imports:[
+    imports: [
         CommonModule,
         NgPrimeModule,
-        DmdTraitementTableTemplateComponent
+        DmdTraitementTableTemplateComponent,
+        RejetFormsComponent
     ],
     providers: [MessageService]
 })
@@ -38,13 +40,30 @@ export class ReceptionComponent {
     title = 'Réceptions des non-conformités';
     destroy$ = new Subject<boolean>();
     userStructure:Structure={};
+    cols: any[] = [];
+    protected demande: any;
     constructor(protected messageService: MessageService,
                 private  featureService:FeaturesService,
                 private service:ProcNonConformiteService) {
+        this.cols = [
+            { field: 'numeroReference', header: 'N° ordre', type: 'string', filter: true, width: '10%', centered: false },
+            { field: 'origineService', header: 'Nom processus', type: 'string', filter: true, width: '30%', centered: false },
+            {
+                field: 'currentUserfullName',
+                header: 'Responsable',
+                type: 'string',
+                filter: true,
+                width: '20%',
+                centered: false
+            },
+            { field: 'status', header: 'Statut', type: 'enum', filter: true, width: '15%', centered: false },
+            { field: 'createdAt', header: 'Date soumission', type: 'string', filter: true, width: '15%', centered: false }
+        ];
     }
     @ViewChild(DmdTraitementTableTemplateComponent) dmdTraitement!: DmdTraitementTableTemplateComponent;
 
     protected readonly BtnActions = EtapeTraitement;
+    motifRejetDialog: boolean=false;
 ngOnInit() {
     this.userStructure = getCurrentUserStructure();
     this.getDemandeList()
@@ -62,7 +81,7 @@ ngOnInit() {
                     if (arrayBytes.byteLength) {
                         generateReportFile(arrayBytes, reportingInput);
                         this.dmdTraitement.displayDetails(resp.body);
-                        this.messageService.add({ severity: 'success', summary: 'ERREUR', detail: "L'oppération à réussie !", life: 3000 });
+                        this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'oppération à réussie !", life: 3000 });
                     }
                 },
                 error: () => {
@@ -99,7 +118,10 @@ ngOnInit() {
         showToast(StatusEnum.success, res.status, null, this.messageService);
           this.dmdTraitement.closeDetailsDialog();
     }
-
+    rejet(demande: any) {
+        this.demande = demande;
+        this.motifRejetDialog = true;
+    }
     reception(dmd:any) {
      this.service.updateNomConformites(dmd).subscribe({
          next: (data) => {
@@ -115,5 +137,11 @@ ngOnInit() {
     ngOnDestroy() {
         this.destroy$.next(true);
         this.destroy$.unsubscribe();
+    }
+    hideDialog(event: any) {
+        if (event) {
+            this.dmdTraitement.displayDetails();
+            this.getDemandeList();
+        }
     }
 }

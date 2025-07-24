@@ -39,9 +39,9 @@ export class NiveauNonConformiteComponent {
       formGroup: UntypedFormGroup;
       tableCols: TableColumn[];
       formCols: FormGroupColumn[];
-      pageLabel = 'Liste des niveaux de non conformité';
+      pageLabel = 'Niveaux de non conformité';
       formHeader = 'Création et mise à jour d\'un niveau de non conformité';
-  
+
       constructor(protected fb: UntypedFormBuilder,
                   protected messageService: MessageService,
                   protected niveauNonConformiteService: NiveauNonConformiteService) {
@@ -50,14 +50,14 @@ export class NiveauNonConformiteComponent {
               {field: 'libelle', label: "Libellé du niveau de non conformité (Mineur - Majeur)", header: 'Libellé', type: 'string', visible: true, required: true},
               {field: 'description', label: "Description du niveau de non conformité", header: 'Description', type: 'string', visible: true, required: false}
           ];
-  
+
           this.tableCols = [
               {field: 'libelle', header: 'Libellé', type: 'string', filter: true},
               {field: 'description', header: 'Description', type: 'string', filter: true},
               {field: 'createdAt', header: 'Date de création', type: 'string', filter: true},
               {field: 'updatedAt', header: 'Date de modification', type: 'string', filter: true}
           ];
-  
+
           this.formGroup = this.fb.group({
               id: [null],
               libelle: [null, Validators.required],
@@ -66,11 +66,11 @@ export class NiveauNonConformiteComponent {
 
           });
       }
-  
+
       ngOnInit(): void {
           this.fetchObject();
       }
-  
+
       fetchObject() {
           this.niveauNonConformiteService.findAll().pipe(takeUntil(this.destroy$))
               .subscribe({
@@ -82,13 +82,13 @@ export class NiveauNonConformiteComponent {
                   }
               });
       }
-  
+
       onSuccess(res: HttpResponse<any>) {
           this.closeDialog = true;
           this.fetchObject();
           showToast(StatusEnum.success, res.status, null, this.messageService);
       }
-  
+
       onSave(object: NiveauNonConformite) {
           if (object.id != null || undefined) {
               this.niveauNonConformiteService.update(object).pipe(takeUntil(this.destroy$))
@@ -110,7 +110,7 @@ export class NiveauNonConformiteComponent {
                   });
           }
       }
-  
+
       onDelete(niveau: NiveauNonConformite) {
           this.niveauNonConformiteService.delete(niveau.id).pipe(takeUntil(this.destroy$))
               .subscribe({
@@ -120,9 +120,9 @@ export class NiveauNonConformiteComponent {
                       showToast(StatusEnum.error, error.status, null, this.messageService, error);
                   }
               });
-  
+
       }
-  
+
       ngOnDestroy(): void {
           this.destroy$.next(true);
           this.destroy$.unsubscribe();

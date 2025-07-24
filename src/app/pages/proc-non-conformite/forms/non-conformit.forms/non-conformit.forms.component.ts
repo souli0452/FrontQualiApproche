@@ -11,6 +11,9 @@ import { MessageService } from 'primeng/api';
 import { Chips } from 'primeng/chips';
 import { takeUntil } from 'rxjs';
 import { StructureService } from '../../../structure/structure-service';
+import { AuthService } from '../../../../services/auth-services/auth.service';
+import { formatDate } from '@angular/common';
+import { formatDateToDDMMYYYY } from '../../../../utils';
 
 @Component({
     selector: 'app-non-conformit.forms',
@@ -21,15 +24,20 @@ import { StructureService } from '../../../structure/structure-service';
 export class NonConformitFormsComponent {
     @Input() demande: any;
     editForm!: UntypedFormGroup;
+    responsable:any;
+    planActions:any[]=[];
     protected readonly BtnActions = EtapeTraitement;
     planActionForm: FormGroup;
     actions: FormArray;
     submitted = false;
     participants:any[]=[];
+    users:any=[];
     constructor(
         private fb: FormBuilder,
+        private authService: AuthService,
         private messageService: MessageService,
     ) {
+        this.fetchUsers();
         this.planActionForm = this.fb.group({
             actions: this.fb.array([this.createAction()])
         });
@@ -50,30 +58,56 @@ export class NonConformitFormsComponent {
             this.demande.numeroFdac = this.editForm.get('numeroFdac')?.value;
         }
         if (this.demande.etatTraitement === EtapeTraitement.TRAITEMENT) {
-            this.demande.delaisMiseOeuvre = this.editForm.get('delaisMiseOeuvre')?.value;
             this.demande.participants = this.editForm.get('participants')?.value;
-            this.demande.planActions = this.planActionForm.get('actions')?.value as FormArray;
-        }
-        console.log(this.demande);
-    }
+            const actions = this.planActionForm.get('actions')?.value as any[];  // ou FormArray si besoin
+            this.demande.planActions = actions.map(value => {
+                return {
+                    ...value,
+                    dateEcheance: formatDateToDDMMYYYY(value.dateEcheance),
+                    responsableEmail: value.responsable?.email,
+                    responsableNomComplet: `${value.responsable?.firstName ?? ''} ${value.responsable?.lastName ?? ''}`,
+                    responsableId: value.responsable?.id,
+                    status:"NON_TRAITER"
+                };
+            });
+        }}
+
     createAction(): FormGroup {
         return this.fb.group({
-            numeroOrdre: ['', Validators.required],
-            causeIdentifiees: ['', Validators.required],
-            solutionRetenues: ['', Validators.required],
+            numeroOdre: ['', Validators.required],
+            causeIdentifiees: [''],
+            solutionRetenues: [''],
             responsable: ['', Validators.required],
             dateEcheance: ['', Validators.required],
             mail: [''],
-            numeroTelephone: [''],
+            numeroTelephone: [],
+            responsableId: [''],
+            responsableNomComplet: [''],
+            responsableEmail: [''],
             nonConformiteID:[this.demande?.id]
         });
     }
-
     addAction(): void {
         this.actions.push(this.createAction());
     }
+    fetchUsers() {
+        this.authService
+            .getAllUsers()
+            .pipe()
+            .subscribe({
+                next: (res) => {
+                    this.users = res.body || [];
+                    this.users=this.users.map((user:any) => {
+                      return {
+                          ...user,
+                          fullName: user.firstName + ' ' + user.lastName,
+                      }
 
-
+                    });
+                    console.log(this.users)
+                },
+            });
+    }
     removeAction(index: number): void {
         if (this.actions.length > 1) {
             this.actions.removeAt(index);

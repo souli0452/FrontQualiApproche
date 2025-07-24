@@ -152,6 +152,14 @@ export interface Fichier extends UserInfos{
     numeroReference?: string;
     nomProcessus?: string;
     origineService?: string;
+      origineServiceLibelleCourt?:string;
+   originNonConformiteId?: string;
+  originNonConformiteLibelle?: string;
+      actionLibelle?:string;
+      actionDsc?:string;
+    origineId?: string;
+      structureSoumissionLibelle?:string;
+      structureSoumissionId?:string;
     fonctionEmetteur?: string;
     dateVisaEmetteur?: string;  // Le format de date sera manipulé en chaîne (ex: "dd-MM-yyyy HH:mm")
     justification?: string;

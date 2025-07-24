@@ -19,6 +19,12 @@ export const appRoutes: Routes = [
             { path: '', component: Dashboard },
             { path: 'uikit', loadChildren: () => import('./app/pages/uikit/uikit.routes') },
             { path: 'documentation', component: Documentation },
+            {
+                path: 'nc', loadChildren: () => import('./app/pages/nc/nc.module').then(m => m.NcModule)
+            },
+            {
+                path: 'traitement-action', loadChildren: () => import('./app/pages/proc-non-conformite/traitement-actions/traitement-action.module').then(m => m.TraitementActionModule)
+            },
             { path: 'page', loadChildren: () => import('./app/pages/pages.routes') }
         ]
     },

@@ -33,4 +33,16 @@ export class ProcNonConformiteService {
     updateNomConformites(demandes: any[]): Observable<HttpResponse<any>> {
         return this.http.put<any>(NonConformiteUrlConfig.UPDATE_NON_CONFORMITE , demandes, {observe: 'response'});
     }
+    getPlanActions(email:string,status:any): Observable<HttpResponse<Array<any>>> {
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_PLAN_ACTION+email+`/${status}`, {observe: 'response'});
+    }
+    getPlanActionsAll(email:string): Observable<HttpResponse<Array<any>>> {
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_PLAN_ACTION_ALL+email, {observe: 'response'});
+    }
+    updatePlanAction(demande: any): Observable<HttpResponse<any>> {
+        return this.http.put<any>(NonConformiteUrlConfig.UPDATE_PLAN_ACTION , demande, {observe: 'response'});
+    }
+    rejectNc(demande: any): Observable<HttpResponse<any>> {
+        return this.http.put<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_REJECT , demande, {observe: 'response'});
+    }
 }

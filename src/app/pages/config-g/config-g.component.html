@@ -1,0 +1,39 @@
+<div >
+    <form [formGroup]="configForm" class="form-grid">
+        <h5>CONFIGURATION GLOBALE</h5>
+        <div class="grid p-fluid">
+            <div class="field mt-5 mb-4">
+                <label for="nomCompletRq" class="block font-bold mb-2">
+                    Nom complet du responsable RQ <span class="p-error">*</span>
+                </label>
+                <input id="nomCompletRq" name="nomCompletRq" formControlName="nomCompletRq"
+                       [disabled]="isEditMode"
+                       placeholder="Entrer Nom complet" class="w-full" />
+            </div>
+
+            <div class="field mt-5 mb-4">
+                <label for="EmailRq" class="block font-bold mb-2">
+                    Email du responsable RQ <span class="p-error">*</span>
+                </label>
+                <input id="EmailRq" name="EmailRq" formControlName="emailRq"
+                       placeholder="Entrer l'email" class="w-full"   [disabled]="isEditMode" />
+            </div>
+
+            <div class="field mt-5 mb-4">
+                <label for="rappelEcheance" class="block font-bold mb-2">
+                    Fréquences des rappels (en jours) <span class="p-error">*</span>
+                </label>
+                <input id="rappelEcheance" type="number" name="rappelEcheance"
+                       formControlName="rappelEcheance"   [disabled]="true" class="w-full" />
+            </div>
+
+            <button pButton type="button" label="Enregistrer" icon="pi pi-check" [disabled]="!configForm.valid" (click)="save()" ></button>
+
+        </div>
+    </form>
+</div>
+
+
+
+
+

@@ -28,11 +28,17 @@ export abstract class QualiCrudService<T, ID> implements CrudOperations<T, ID> {
     update(t: T): Observable<HttpResponse<T>> {
         return this.http.put<T>(this.uri + "/update", t, {observe: 'response'});
     }
-
+    updateG(t: T,id:string): Observable<HttpResponse<T>> {
+        return this.http.put<T>(this.uri + `/update/${id}`, t, {observe: 'response'});
+    }
     findAll(): Observable<HttpResponse<Array<T>>> {
         return this.http.get<T[]>(this.uri + "/all", {observe: 'response'});
     }
 
+    findAllNc(status?: string,id?:any): Observable<HttpResponse<Array<T>>> {
+        const params = createRequestOption({status,id});
+        return this.http.get<T[]>(this.uri, {params, observe: 'response'});
+    }
     findById(id:string): Observable<HttpResponse<T>> {
         return this.http.get<T>(this.uri+`/get/${id}`, {observe: 'response'});
     }
@@ -40,5 +46,14 @@ export abstract class QualiCrudService<T, ID> implements CrudOperations<T, ID> {
     delete(id: ID): Observable<HttpResponse<void>> {
         return this.http.delete<void>(this.uri + `/delete/${id}` , {observe: 'response'});
     }
-
+    deleteMany(actualities: T[]): Observable<HttpResponse<void>> {
+        return this.http.put<void>(this.uri + '/delete-multiple' ,actualities , {observe: 'response'});
+    }
+    updateStatus(id: ID, status: string): Observable<HttpResponse<void>> {
+        const params = createRequestOption({id, status});
+        return this.http.patch<void>(this.uri+'/change-status', null, {params, observe: 'response'});
+    }
+    updateManyStatus(actualities:T[], status: string): Observable<HttpResponse<void>> {
+        return this.http.patch<void>(this.uri+'/change-many-status?status='+status, actualities,{observe: 'response'});
+    }
 }

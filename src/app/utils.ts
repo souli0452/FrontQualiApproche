@@ -5,6 +5,7 @@ import { Structure } from './pages/structure/structure';
 import { AuthService } from './services/auth-services/auth.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { NcStats } from './models/statsNc';
 export interface ReportingInput {
     reportFormat: ReportFormat;
     reportType: any;
@@ -213,6 +214,11 @@ export function buildMessage(severity: StatusEnum, status: number, localMessage:
         detail: message
     };
 }
+export enum StatusEnumShow {
+    error = 'error',
+    success = 'success',
+    warning = 'warn'
+}
 
 export function showToast(severity: StatusEnum, status: number, message: any,
                           messageService: MessageService, error?: HttpErrorResponse) {
@@ -327,5 +333,50 @@ export function isUserInRoles(roles: string[]): boolean {
 
 
 
+export  function convertFilesToBase64(files: { file: File; extension: string; name: string; size: string; loading: boolean; icon: string }[]): Promise<any[]> {
+    const filePromises = files.map((fileObj) => {
+        return new Promise((resolve, reject) => {
+            const file = fileObj.file;
+            if (file instanceof File) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64String = reader.result as string;
+                    resolve({
+                        fichierBase64: base64String.split(',')[1],
+                        nomFichier: file.name,
+                        typeFichier: file.type
+                    });
+                };
+                reader.onerror = (error) => reject(error);
+                reader.readAsDataURL(file);
+            } else {
+                reject(new Error('L\'élément n\'est pas un fichier valide'));
+            }
+        });
+    });
+    return Promise.all(filePromises);
+}
 
+export function transformerEnStats(nonConformites: any[]): NcStats[] {
+    const statsMap = new Map<any, number>();
 
+    for (const nc of nonConformites) {
+        statsMap.set(nc.status, (statsMap.get(nc.status) || 0) + 1);
+    }
+
+    return Array.from(statsMap.entries()).map(([status, count]) => ({ status, count }));
+}
+export function formatDateToDDMMYYYY(dateInput: Date | string | number): string {
+    const date = new Date(dateInput);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // mois de 0 à 11
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+}
+export function formatDateTodd(dateInput: Date | string | number): string {
+    const date = new Date(dateInput);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // mois de 0 à 11
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+}

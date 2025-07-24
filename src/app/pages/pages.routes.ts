@@ -26,10 +26,17 @@ import { ValidationRSComponent } from './proc-non-conformite/validation-rs/valid
 import { ImputationComponent } from './proc-non-conformite/imputation/imputation.component';
 import { KcUserComponent } from './kc-user/kc-user.component';
 import { ProfilComponent } from './profil/profil.component';
+import { TypeNonConformiteComponent } from './procedure-non-conformite/types/type-non-conformite';
+import { TypeProcessusComponent } from './procedure-non-conformite/types/type-processus';
+import { NiveauNonConformiteComponent } from './procedure-non-conformite/niveau/niveau';
+import { ActionNonConformiteComponent } from './procedure-non-conformite/action/action';
+import { PlanActionComponent } from './proc-non-conformite/plan-action/plan-action.component';
+import { ConfigGComponent } from './config-g/config-g.component';
 
 export default [
     { path: 'documentation', component: Documentation },
     { path: 'crud', component: Crud },
+    { path: 'config-global', component: ConfigGComponent },
     { path: 'formation', component: FormationComponent },
     { path: 'fournisseur', component: FournisseurComponent },
     { path: 'prestataire', component: PrestataireComponent },
@@ -51,6 +58,8 @@ export default [
     {path: 'consultation', data: {breadcrumb: 'Consultations'}, component: ConsultationsComponent},
     {path: 'validation_rs', data: {breadcrumb: 'validation'}, component: ValidationRSComponent},
     {path: 'imputation', data: {breadcrumb: 'imputations'}, component: ImputationComponent},
+    {path: 'plan-action', data: {breadcrumb: 'Traitements plan action'}, component: PlanActionComponent},
+
     {
         path: 'direction',
         component: StructureComponent,
@@ -68,6 +77,10 @@ export default [
         }
     },
     { path: 'profil', component: ProfilComponent },
+    { path: 'type-nc', component: TypeNonConformiteComponent },
+    { path: 'type-processus', component: TypeProcessusComponent },
+    { path: 'niveau-nc', component: NiveauNonConformiteComponent },
+    { path: 'type-action', component: ActionNonConformiteComponent },
     { path: 'empty', component: Empty },
     { path: '**', redirectTo: '/notfound' },
 ] as Routes;

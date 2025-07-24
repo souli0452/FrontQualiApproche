@@ -1,0 +1,116 @@
+
+<p-table #dt [value]="actualities" responsiveLayout="scroll" [rows]="10"
+          [globalFilterFields]="['nomProcessus','createdAt','createdAt', 'currentUserfullName']" [paginator]="true"
+                                             [(selection)]="selectedActualities"
+          styleClass="p-datatable-sm p-datatable-gridlines"
+                                             selectionMode="multiple" [rowHover]="true" dataKey="id">
+    <ng-template pTemplate="caption">
+        <div class="flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="flex gap-2 align-items-center">
+                <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                <button pButton pRipple type="button" icon="pi pi-ellipsis-v"
+                        class="p-button-rounded p-button-text p-button-plain"
+                        (click)="menu.toggle($event)">
+                </button>
+                <p-menu #menu [model]="menuItems" [appendTo]="dt" [popup]="true"
+                        [style]="{display: selectedActualities.length > 0 ? 'block': 'none'}">
+                </p-menu>
+            </div>
+
+            <span class="p-input-icon-left">
+                <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Rechercher"
+                       class="w-full sm:w-auto"/>
+            </span>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+        <tr>
+            <th [style.width]="'3%'"></th>
+            <th *ngFor="let col of cols" [pSortableColumn]="col.field" class="font-bold" [style.width]="col.width">
+                {{ col.header }}
+                <p-sortIcon [field]="col.field"></p-sortIcon>
+            </th>
+        </tr>
+        <tr>
+            <th [style.width]="'3%'"></th>
+            <th *ngFor="let col of cols" [style.width]="col.width" class="p-fluid">
+
+            </th>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-actuality>
+        <tr (mouseenter)="toggleOptions($event, options, date)" (mouseleave)="toggleOptions($event, options, date)"
+            (click)="onRowSelect(actuality.id)" class="cursor-pointer">
+            <td [style.width]="'3%'">
+                <p-tableCheckbox [value]="actuality" (click)="$event.stopPropagation()"
+                                 (touchend)="$event.stopPropagation()"></p-tableCheckbox>
+            </td>
+            <ng-container *ngFor="let col of cols">
+                <td [style.width]="col.width" *ngIf="!col.skip">
+                    <span class="font-medium white-space-nowrap overflow-hidden text-overflow-ellipsis block">
+                        <span *ngIf="col.type === 'string'"> {{ actuality[col.field] }}</span>
+                        <span *ngIf="col.type === 'number'"> {{ actuality[col.field] }} </span>
+                         <span *ngIf="col.type === 'date'"> {{ actuality[col.field]| date:'dd/MM/yyyy'}} </span>
+                        <span *ngIf="col.type === 'dateTime'"> {{(actuality[col.field]) }}</span>
+                    </span>
+                </td>
+            </ng-container>
+            <td [style.width]="'20%'">
+                <div class="flex justify-content-end w-full px-0">
+                    <span #date class="text-700 font-semibold white-space-nowrap">
+                        <span *ngIf="status === 'NON_TRAITER'">{{ actuality.dateEcheance | date: 'dd/MM/yyyy' }}</span>
+                        <span *ngIf="status === 'PUBLISHED'">{{ actuality.dateEcheance }}</span>
+                        <span *ngIf="status === 'ARCHIVED'">{{ actuality.dateEcheance | date: 'dd/MM/yyyy' }}</span>
+                    </span>
+                    <div style="display: none" #options>
+                        <button pButton pRipple icon="pi pi-cog" class="p-button-primary h-2rem w-2rem mr-2"
+                                (click)="onPublish($event, actuality)" pTooltip="Publier"
+                                tooltipPosition="top" type="button" *ngIf="status === 'NON_TRAITER'">
+                        </button>
+
+                    </div>
+                </div>
+            </td>
+            <p-confirmDialog header="Confirmation" [key]="confirmKey"
+                                  icon="pi pi-exclamation-triangle" [style]="{width: '35vw'}"
+                                  acceptButtonStyleClass="p-button-primary" acceptLabel="Oui"
+                                  rejectButtonStyleClass="p-button-secondary" rejectLabel="Non">
+        </p-confirmDialog>
+        </tr>
+    </ng-template>
+</p-table>
+<p-dialog (onHide)="displayDialog = false" [modal]="true" [(visible)]="displayDialog"
+          [style]="{width: '50rem'}" [maximizable]="true" class="p-fluid" styleClass="ng-dialog">
+    <ng-template pTemplate="header">
+        <div class="inline-flex align-items-center justify-content-center gap-2">
+            <span class="font-bold white-space-nowrap uppercase">Traitement du plan d'action n° {{planAction.numeroOdre}} de la demande N° {{planAction.numeroNc}}</span>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="content">
+        <div class="grid p-fluid">
+            <div class="field mt-5 mb-4">
+                <label for="causes" class="block font-bold  mb-2">Causes identifiées pour la  non-conformité <span class="p-error">*</span></label>
+                <textarea pInputTextarea id="causes" [(ngModel)]="planAction.causeIdentifiees"
+                          name="causes" rows="5" [autoResize]="true"
+                          placeholder="Entrer les causes "
+                          class="w-full"></textarea>
+
+            </div>
+            <div class="field mt-5 mb-4">
+                <label for="solutions" class="block font-bold  mb-2">Solutions réténnues pour la non-conformité <span class="p-error">*</span></label>
+                <textarea pInputTextarea id="solutions" [(ngModel)]="planAction.solutionRetenues"
+                          name="solutions" rows="5" [autoResize]="true"
+                          placeholder="Entrer les solutions"
+                          class="w-full"></textarea>
+
+            </div>
+
+        </div>
+    </ng-template>
+    <p-footer #footer>
+        <button type="button" pRipple pButton icon="pi pi-times" (click)="displayDialog = false" label="Fermer"
+                class="p-button-secondary"></button>
+        <button type="button" pRipple pButton icon="pi pi-send" (click)="soumettre($event)" label="Soumettre"
+                class="p-button-primary" [disabled]="!planAction.causeIdentifiees||!planAction.solutionRetenues"></button>
+    </p-footer>
+</p-dialog>

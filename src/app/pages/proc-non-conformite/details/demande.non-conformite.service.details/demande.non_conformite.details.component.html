@@ -98,7 +98,13 @@
             </div>
         </div>
 
-
+        <div class="flex flex-col flex-1 ">
+            <div class="card p-4">
+                <span class="text-xl font-bold mb-3 text-900" *ngIf="demande.observationRejet" style="color: red">Motif de réjet </span>
+                <ul class="list-none p-0 m-0 text-600 space-y-3">
+                    <p>{{demande.observationRejet}}</p></ul>
+            </div>
+        </div>
         <!-- Plans d'actions -->
         <div class="card p-4" *ngIf="demande?.planActions.length>0">
             <span class="text-xl font-bold mb-3 text-900">Plans d'actions</span>
@@ -108,23 +114,27 @@
                 <ng-template pTemplate="header">
                     <tr>
                         <th>N° ordre</th>
-                        <th>Créé par</th>
-                        <th>Email</th>
+                        <th>Responsable</th>
                         <th>Cause identifiée</th>
                         <th>Solution retenue</th>
-                        <th>Responsable</th>
                         <th>Date échéance</th>
+                        <th>Statut</th>
+                        <th *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION">Actions</th>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-plan>
                     <tr>
                         <td>{{plan.numeroOdre }}</td>
-                        <td>{{plan.currentUserfullName}}</td>
-                        <td>{{plan.currentUserEmail}}</td>
+                        <td>{{plan.responsableNomComplet}}</td>
                         <td>{{plan.causeIdentifiees}}</td>
                         <td>{{plan.solutionRetenues}}</td>
-                        <td>{{plan.responsable}}</td>
-                        <td>{{plan.dateEcheance | date:'dd/MM/yyyy'}}</td>
+                        <td>{{plan.dateEcheance}}</td>
+                        <td>{{plan.status}}</td>
+                        <td *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION">
+                            <button *ngIf="plan.status==='NON_TRAITER'" pRipple pButton type="button" icon="pi pi-pencil"
+                                    (click)="edit(plan)"
+                                     label="Modifier"></button>
+                        </td>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="emptymessage">
@@ -135,4 +145,81 @@
             </p-table>
         </div>
     </div>
-</div>
+</div><p-dialog
+    header="Modification "
+    [modal]="true"
+    [(visible)]="motifRejetDialog"
+    [style]="{ width: '48rem', height: 'auto' }"
+    [maximizable]="false"
+    [contentStyle]="{ padding: '1.5rem 2rem' }"
+    [breakpoints]="{ '960px': '95vw' }"
+    [draggable]="false">
+
+    <ng-template #content>
+        <div class="flex flex-row gap-4 align-items-start flex-wrap">
+            <div class="flex-grow-1 w-full">
+                <label for="numeroOdre" class="font-bold text-required block mb-2">
+                    Numéro d'ordre
+                </label>
+                <input
+                    pInputText
+                    id="numeroOdre"
+                    [(ngModel)]="planAction.numeroOdre"
+                    type="number"
+                    class="my-2 w-full p-2 border-1 surface-border border-round shadow-none"
+                    [style]="{ width: '100%' }"
+
+                />
+            </div>
+            <div class="flex-grow-1 w-full">
+                <label for="motif" class="font-bold text-required block mb-2">
+                    Numéro d'ordre
+                </label>
+                <p-dropdown
+
+                    id="responsable"
+                    [options]="users"
+                    optionLabel="fullName" placeholder="Sélectionnez le responsable"
+                    [filter]="true" [showClear]="true" appendTo="body"
+                    [(ngModel)]="user"
+                    class="my-2 w-full p-2 border-1 surface-border border-round shadow-none"
+                    [style]="{ width: '100%' }" >
+
+                </p-dropdown>
+
+            </div>
+            <div class="flex-grow-1 w-full">
+                <label for="dateEcheance" class="font-bold text-required block mb-2">
+                    Date d'échéance
+                </label>
+                <p-calendar
+                    id="dateEcheance"
+                    [showIcon]="true"
+                    [(ngModel)]="planAction.dateEcheance"
+                    placeholder="Date de l'échéance"
+                    dateFormat="dd/mm/yy"
+                    class="my-2 w-full p-2 border-1 surface-border border-round shadow-none"
+                    [style]="{ width: '100%' }"
+                ></p-calendar>
+
+            </div>
+        </div>
+
+    </ng-template>
+
+    <p-footer #footer>
+        <div class="flex justify-content-end gap-3 pt-3" >
+            <button type="button" pRipple pButton icon="pi pi-times-circle"
+                    class="p-button-secondary position-left mr-3"
+                    label="Quitter" (click)="hideDialog()">
+            </button>
+            <button pRipple pButton type="button" icon="pi pi-check"
+                    class="p-button-primary position-left mr-3"
+                    (click)="modifier()"
+                    label="Modifier">
+            </button>
+
+        </div>
+    </p-footer>
+</p-dialog>
+

@@ -1,0 +1,112 @@
+<div class="card">
+    <div class="flex align-items-center px-4 md:px-0 border-top-1 surface-border md:border-none pt-4 md:pt-0">
+        <button pButton pRipple type="button" icon="pi pi-chevron-left"
+                class="p-button-outlined p-button-secondary surface-border text-900 w-3rem h-3rem mr-3"
+                (click)="goBack()"></button>
+    </div>
+    <div class="surface-section grid mt-4 grid-nogutter formgrid gap-3 md:surface-border">
+        <div class="col-12 lg:col-12">
+            <div class="field mt-5 mb-4">
+                <label for="justification" class="block font-bold  mb-2">Description détaillée de la non-conformité <span class="p-error">*</span></label>
+                <textarea pInputTextarea id="justification" [(ngModel)]="nonConformite.justification"
+                          name="justification" rows="5" [autoResize]="true"
+                          placeholder="Décrivez précisément la non-conformité..."
+                          class="w-full"></textarea>
+
+            </div>
+            <!-- Ligne 2 : Processus & Structure -->
+
+                <div class="flex-1 ">
+                    <div class="field">
+                        <label for="origineService" class="block font-bold  mb-2">Processus destinataire <span class="p-error">*</span></label>
+                        <p-dropdown id="origineService" [(ngModel)]="nc.origineService" [options]="structures"
+                                    optionLabel="libelleLong" placeholder="Sélectionnez le processus"
+                                    [filter]="true" [showClear]="true" appendTo="body" class="w-full"
+                                    [class.p-invalid]="!nc.origineService "></p-dropdown>
+                        <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
+                    </div>
+            </div>
+            <div class="flex flex-wrap gap-4 mt-4">
+                <div class="flex-1 min-w-[300px]">
+                    <div class="field">
+                        <label for="origineService" class="block font-bold  mb-2"> Type de non-conformité <span class="p-error">*</span></label>
+                        <p-dropdown id="reclamation" [(ngModel)]="nc.typeNonformite" [options]="typesNcs"
+                                    optionLabel="libelle" placeholder="Sélectionnez un type"
+                                    [filter]="true" [showClear]="true" appendTo="body" class="w-full"
+                                    [class.p-invalid]="!nc.origineService "></p-dropdown>
+                        <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
+                    </div>
+                </div>
+                <div class="flex-1 min-w-[300px]">
+                    <div class="field">
+                        <label for="origineService" class="block font-bold  mb-2">Niveau de la non-conformité <span class="p-error">*</span></label>
+                        <p-dropdown id="typProcedure" [(ngModel)]="nc.niveauNonConformite" [options]="niveauNcs"
+                                    optionLabel="libelle" placeholder="Sélectionnez un niveau"
+                                    [filter]="true" [showClear]="true" appendTo="body" class="w-full"
+                                    [class.p-invalid]="!nc.origineService "></p-dropdown>
+                        <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-4 mt-4">
+                <div class="flex-1 min-w-[300px]">
+                    <div class="field">
+                        <label for="origineService" class="block font-bold  mb-2"> Origine de la non-conformité <span class="p-error">*</span></label>
+                        <p-dropdown id="reclamation" [(ngModel)]="nc.reclamationClient" [options]="reclamationsClients"
+                                    optionLabel="nomDemendeur" placeholder="Sélectionnez l'origine"
+                                    [filter]="true" [showClear]="true" appendTo="body" class="w-full"
+                                    [class.p-invalid]="!nc.origineService "></p-dropdown>
+                        <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
+                    </div>
+                </div>
+                <div class="flex-1 min-w-[300px]">
+                    <div class="field">
+                        <label for="origineService" class="block font-bold  mb-2">Type de procéssus <span class="p-error">*</span></label>
+                        <p-dropdown id="typProcedure" [(ngModel)]="nc.typeProcedure" [options]="typeProcessus"
+                                    optionLabel="libelle" placeholder="Sélectionnez un type"
+                                    [filter]="true" [showClear]="true" appendTo="body" class="w-full"
+                                    [class.p-invalid]="!nc.origineService "></p-dropdown>
+                        <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
+                    </div>
+                </div>
+            </div>
+            <div class="field mt-4">
+                <label for="origineService" class="block font-bold  mb-2">Type d’action entreprise </label>
+                <p-dropdown id="typProcedure" [(ngModel)]="nc.typeAction" [options]="typesActions"
+                            optionLabel="libelle" placeholder="Sélectionnez un type"
+                            [filter]="true" [showClear]="true" appendTo="body" class="w-full"
+                            [class.p-invalid]="!nc.origineService "></p-dropdown>
+                <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
+            </div>
+            <div class="field mt-5 mb-4">
+                <label for="justification" class="block font-bold  mb-2">Description des actions entreprises </label>
+                <textarea pInputTextarea id="justification" [(ngModel)]="nonConformite.actionDsc"
+                          name="justification" rows="5" [autoResize]="true"
+                          placeholder="Décrivez précisément la non-conformité..."
+                          class="w-full" ></textarea>
+
+            </div>
+
+            <div class="mb-3">
+            <app-file-upload (fileUploaded)="handleFileUpload($event)"></app-file-upload></div>
+            <div class="flex justify-content-end flex-wrap">
+                <div class="flex align-items-center justify-content-center gap-3">
+                    <button pButton pRipple class="p-button-secondary font-bold" label="Annuler"
+                            icon="pi pi-fw pi-times" (click)="goBack()">
+                    </button>
+
+                    <button pButton pRipple class="p-button-primary font-bold" label="Enregistrer"
+                            *ngIf="!nonConformite.id"
+                            [disabled]="!nc.typeAction||!nc.typeProcedure||!nc.reclamationClient||!nc.typeNonformite"
+                            icon="pi pi-fw pi-check" (click)="onSave()">
+                    </button>
+                    <button pButton pRipple class="p-button-primary font-bold" label="Mofifier"
+                            *ngIf="nonConformite.id"
+                            [disabled]="!nc.typeAction||!nc.typeProcedure||!nc.reclamationClient||!nc.typeNonformite||!nonConformite.justification"
+                            icon="pi pi-fw pi-check" (click)="onSave()">
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

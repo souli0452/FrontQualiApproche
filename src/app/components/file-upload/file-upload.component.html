@@ -1,28 +1,36 @@
-<div class="uploader">
-    <label class="custom-upload-btn">
-      📁 Sélectionner des fichiers
-      <input type="file" multiple (change)="onFileSelected($event)" />
+<div class="card surface-card p-4 shadow-3 border-round-xl uploader-container">
+    <!-- Bouton d'import -->
+    <label class="custom-upload-btn p-button p-component p-button-outlined p-button-secondary">
+        <i class="pi pi-upload mr-2"></i> Importer un ou plusieurs  fichiers
+        <input type="file" multiple (change)="onFileSelected($event)" hidden />
     </label>
-  
-    <div class="file-list" *ngIf="uploadedFiles.length > 0">
-      <div class="file-item" *ngFor="let f of uploadedFiles; let i = index">
-        <div class="file-item-content">
-            <div class="remove-btn" (click)="removeFile(i)">❌</div>
-      
-            <div class="file-icon">
-              <img [src]="f.icon" alt="File icon" width="30" height="30" />
+
+    <!-- Liste des fichiers -->
+    <div class="file-list mt-4" *ngIf="uploadedFiles.length > 0">
+        <div class="file-item p-shadow-1 p-p-3 border-round-lg mb-2 flex flex-column md:flex-row align-items-center justify-content-between"
+             *ngFor="let f of uploadedFiles; let i = index">
+
+            <!-- Contenu -->
+            <div class="flex align-items-center gap-3">
+                <div class="file-icon">
+                    <img [src]="f.icon" alt="File icon" width="36" height="36" />
+                </div>
+                <div class="details">
+                    <span class="font-semibold text-lg">{{ f.name }}</span><br />
+                    <small class="text-color-secondary">{{ f.size }}</small>
+                </div>
             </div>
-            <div class="details ml-4">
-              <span class="details-nom">{{ f.name }}</span>
-              <span class="details-taille">{{ f.size }}</span>
+
+            <!-- Supprimer & Progression -->
+            <div class="flex align-items-center gap-2 mt-3 md:mt-0">
+                <p-button [rounded]="true" [text]="true" size="small" pButton pRipple icon="pi pi-trash"
+                          class="me-1 mb-2" severity="danger"
+                          (click)="removeFile(i)" pTooltip="Supprimer" [tooltipPosition]="'left'">
+                </p-button>
+
+
+                <p-progressBar *ngIf="f.loading" mode="indeterminate" styleClass="progress-bar-custom" ></p-progressBar>
             </div>
         </div>
-  
-        <div class="loading" *ngIf="f.loading">
-          <div class="progress-bar">
-            <div class="progress-inner"></div>
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
+</div>

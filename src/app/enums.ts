@@ -5,6 +5,7 @@ export enum EtapeTraitement {
     IMPUTATION = 'IMPUTATION',
     TRAITEMENT='TRAITEMENT',
     CLOTURE = 'CLOTURE',
+    PUBLISHED = 'PUBLISHED',
     VALIDATION_PILOTE = 'VALIDATION_PILOTE',
     VALIDATION_RS = 'VALIDATION_RS',
     SUIVI_RQ = 'SUIVI_RQ',
@@ -21,4 +22,15 @@ export enum StatusEnum {
 export enum TypeStructure {
     DIRECTION = 'DIRECTION',
     SERVICE = 'SERVICE'
+}
+
+export enum NonConformStatus {
+    PENDIND = 'PENDIND',
+    NON_TRAITER = 'NON_TRAITER',
+    ARCHIVED = 'REJECTED',
+    PUBLISHED = 'PUBLISHED',
+    TRAITER = 'TRAITER',
+    DRAFT = 'DRAFT',
+    IN_PROGRESS = 'IN_PROGRESS',
+
 }

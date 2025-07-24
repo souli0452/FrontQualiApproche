@@ -1,0 +1,7 @@
+<app-nc-table [actualities]="actualities"
+                     [cols]="cols"
+                     [colDetails]="colsDetail"
+                     (archive)="archive($event)"
+                     (delete)="delete($event)"
+                     [status]="NonConformStatus.PUBLISHED">
+</app-nc-table>

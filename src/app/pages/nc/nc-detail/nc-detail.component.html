@@ -1,0 +1,158 @@
+<div *ngIf="nc">
+    <div
+        class="flex flex-column md:flex-row md:align-items-start md:justify-content-between mb-5 pt-5 md:pt-0 gap-4 md:border-top-none border-top-1 surface-border">
+        <div class="flex align-items-center md:justify-content-start">
+            <button pButton pRipple type="button" icon="pi pi-chevron-left" class="p-button-text p-button-plain md:mr-3"
+                    (click)="goBack()">Retour</button>
+
+        </div>
+        <div class="flex flex-column w-full">
+
+            <div class="flex flex-col gap-4 mt-4 ml-2">
+
+                <!-- Ligne 1 -->
+                <div class="flex flex-wrap gap-4">
+                    <!-- Colonne gauche -->
+                    <div class="flex flex-col gap-4 flex-1 min-w-[300px]">
+                        <!-- Détails de la non-conformité -->
+                        <div class="card p-4">
+                            <span class="text-xl font-bold mb-3 text-900">Détails de la non-conformité</span>
+                            <ul class="list-none p-0 m-0 text-600 space-y-3">
+                                <li class="flex items-center"><span class="font-semibold w-28">Référence:</span><span class="flex-1">{{nc.numeroReference }}</span></li>
+                                <li class="flex items-center"><span class="font-semibold w-28">Processus:</span><span class="flex-1">{{nc.nomProcessus }}</span></li>
+                                <li class="flex items-center"><span class="font-semibold w-28">Structure de soumission:</span><span class="flex-1">{{nc.structureSoumissionLibelle }}</span></li>
+                                <li class="flex items-center"><span class="font-semibold w-28">Émetteur:</span><span class="flex-1">{{nc.fonctionEmetteur}}</span></li>
+                                <li class="flex items-center"><span class="font-semibold w-28">Date visa:</span><span class="flex-1">{{nc.dateVisaEmetteur}}</span></li>
+                                <li *ngIf="nc.delaisMiseOeuvre" class="flex items-center"><span class="font-semibold w-28">Délai de mise en oeuvre  :</span><span class="flex-1">{{nc.delaisMiseOeuvre}} jours</span></li>
+                            </ul>
+                        </div>
+
+                        <!-- Structure responsable -->
+                        <div class="card p-4">
+                            <span class="text-xl font-bold mb-3 text-900">Structure responsable</span>
+                            <ul class="list-none p-0 m-0 text-600 space-y-3">
+                                <li class="flex items-center"><span class="font-semibold w-28">Service:</span><span class="flex-1">{{nc.origineService || ''}}</span></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Colonne droite -->
+                    <div class="flex flex-col gap-4 flex-1 min-w-[300px]">
+                        <!-- Description -->
+                        <div class="card p-4">
+                            <span class="text-xl font-bold mb-3 text-900">Description</span>
+                            <div class="p-3 bg-gray-100 rounded"><p class="m-0 text-600">{{nc.justification || 'Aucune description fournie'}}</p></div>
+                        </div>
+
+                        <!-- Validation -->
+                        <div class="card p-4">
+                            <span class="text-xl font-bold mb-3 text-900">Validation par le pilote processus</span>
+                            <ul>
+                                <li *ngIf="nc.pertinancePilote" class="flex items-center"><span class="font-semibold w-28">Pertinance:</span><span class="flex-1">{{nc.pertinancePilote}}</span></li>
+                                <li *ngIf="nc.justificationPilote" class="flex items-center"><span class="font-semibold w-28">Justifications:</span><span class="flex-1" [innerHTML]="nc.justificationPilote"></span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ligne 3 -->
+                <div class="flex flex-wrap gap-4">
+                    <!-- Documents joints -->
+                    <div class="flex flex-col flex-1 min-w-[300px]" *ngIf="nc.fichiers?.length > 0">
+                        <div class="card p-4">
+                            <span class="text-xl font-bold mb-3 text-900">Documents joints</span>
+                            <div class="flex flex-col gap-2">
+                                <div *ngFor="let pj of nc.fichiers" class="flex justify-between items-center border-b pb-2">
+                                    <div class="flex items-center gap-2">
+                                        <i class="pi pi-file"></i>
+                                        <span>{{pj.nomFichier || 'Document joint'}}</span>
+                                    </div>
+                                    <a href="javascript:void(0)"  class="text-primary">
+                                        <i class="pi pi-download"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Validation RS -->
+                    <div class="flex flex-col flex-1 min-w-[300px]">
+                        <div class="card p-4">
+                            <span class="text-xl font-bold mb-3 text-900" *ngIf="nc.pertinanceRs">Validation RS</span>
+                            <ul class="list-none p-0 m-0 text-600 space-y-3">
+                                <li *ngIf="nc.pertinanceRs" class="flex items-center"><span class="font-semibold w-28">Pertinance:</span><span class="flex-1">{{nc.pertinanceRs}}</span></li>
+                                <li *ngIf="nc.justificationRs" class="flex items-center"><span class="font-semibold w-28">Justifications:</span><span class="flex-1" [innerHTML]="nc.justificationRs"></span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col flex-1 ">
+                    <div class="card p-4">
+                        <span class="text-xl font-bold mb-3 text-900" *ngIf="nc.observationRejet" style="color: red">Motif de réjet </span>
+                        <ul class="list-none p-0 m-0 text-600 space-y-3">
+                            <p>{{nc.observationRejet}}</p></ul>
+                    </div>
+                </div>
+                <div class="card p-4" *ngIf="nc.numeroFdac">
+                    <span class="text-xl font-bold mb-3 text-900">Suivi du Responsable Management Qualité</span>
+                    <ul class="list-none p-0 m-0 text-600 space-y-3">
+                        <li class="flex items-center"><span class="font-semibold w-28">Pertinance:</span><span class="flex-1">{{nc.pertinanceRsSuivi || ''}}</span></li>
+                        <li class="flex items-center"><span class="font-semibold w-28">Numéro FEDAC:</span><span class="flex-1">{{nc.numeroFdac || ''}}</span></li>
+                        <li class="flex items-center"><span class="font-semibold w-28">Date:</span><span class="flex-1">{{nc.dateSuivi || ''}}</span></li>
+                    </ul>
+                </div>
+                <!-- Participants et Plans d'actions -->
+                <div class="flex flex-col gap-4">
+                    <!-- Participants -->
+                    <div class="card p-4" *ngIf="nc.participants?.length > 0">
+                        <span class="text-xl font-bold mb-3 text-900">Participants</span>
+                        <div class="flex flex-wrap gap-3">
+                            <div *ngFor="let participant of nc.participants" class="participant-badge">
+                                <i class="pi pi-user mr-2"></i>
+                                <span>{{participant}}</span>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Plans d'actions -->
+                    <div class="card p-4" *ngIf="nc?.planActions.length>0">
+                        <span class="text-xl font-bold mb-3 text-900">Plans d'actions</span>
+                        <p-table [value]="nc.planActions" [rowHover]="true" styleClass="p-datatable-sm"
+                                 [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
+                                 currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments">
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <th>N° ordre</th>
+                                    <th>Créé par</th>
+                                    <th>Email</th>
+                                    <th>Cause identifiée</th>
+                                    <th>Solution retenue</th>
+                                    <th>Responsable</th>
+                                    <th>Date échéance</th>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-plan>
+                                <tr>
+                                    <td>{{plan.numeroOdre }}</td>
+                                    <td>{{plan.currentUserfullName}}</td>
+                                    <td>{{plan.currentUserEmail}}</td>
+                                    <td>{{plan.causeIdentifiees}}</td>
+                                    <td>{{plan.solutionRetenues}}</td>
+                                    <td>{{plan.responsable}}</td>
+                                    <td>{{plan.dateEcheance | date:'dd/MM/yyyy'}}</td>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="emptymessage">
+                                <tr>
+                                    <td colspan="7" class="text-center">Aucun plan d'action défini</td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

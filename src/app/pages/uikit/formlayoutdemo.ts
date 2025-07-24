@@ -159,7 +159,7 @@ export class FormLayoutDemo {
         formCols: FormGroupColumn[];
         pageLabel = 'Formations';
         formHeader = 'Création et mise à jour d\'une formation';
-    
+
         constructor(protected fb: UntypedFormBuilder,
                     protected messageService: MessageService,
                     protected formationService: FormationService) {
@@ -171,11 +171,11 @@ export class FormLayoutDemo {
                 {field: 'prerequis', label: "", header: 'Prérequis', type: 'string', visible: true, required: true},
                 {field: 'competence', label: "", header: 'Compétence', type: 'string', visible: true, required: true},
                // {field: 'statut', header: 'Statut', type: 'dropdown', visible: true, required: false},
-    
-    
-    
+
+
+
             ];
-    
+
             this.tableCols = [
                 {field: 'libelle', header: 'Libellé', type: 'string', filter: true},
                 {field: 'description', header: 'Description', type: 'string', filter: true},
@@ -186,7 +186,7 @@ export class FormLayoutDemo {
                 // {field: 'createdAt', header: 'Date de création', type: 'string', filter: true},
                 // {field: 'updatedAt', header: 'Date de modification', type: 'string', filter: true},
             ];
-    
+
             this.formGroup = this.fb.group({
                 id: [null],
                 libelle: [null, Validators.required],
@@ -196,11 +196,11 @@ export class FormLayoutDemo {
                 competence: [null, Validators.required],
             });
         }
-    
+
         ngOnInit(): void {
             this.fetchFormation();
         }
-    
+
         fetchFormation() {
             this.formationService.findAll().pipe(takeUntil(this.destroy$))
                 .subscribe({
@@ -212,13 +212,13 @@ export class FormLayoutDemo {
                     }
                 });
         }
-    
+
         onSuccess(res: HttpResponse<any>) {
             this.closeDialog = true;
             this.fetchFormation();
             showToast(StatusEnum.success, res.status, null, this.messageService);
         }
-    
+
         onSave(object: Formation) {
             if (object.id != null || undefined) {
                 this.formationService.update(object).pipe(takeUntil(this.destroy$))
@@ -240,7 +240,7 @@ export class FormLayoutDemo {
                     });
             }
         }
-    
+
         onDelete(formation: Formation) {
             this.formationService.delete(formation.id!).pipe(takeUntil(this.destroy$))
                 .subscribe({
@@ -250,13 +250,12 @@ export class FormLayoutDemo {
                         showToast(StatusEnum.error, error.status, null, this.messageService, error);
                     }
                 });
-    
+
         }
-    
+
         ngOnDestroy(): void {
             this.destroy$.next(true);
             this.destroy$.unsubscribe();
         }
     }
-    
-    
+

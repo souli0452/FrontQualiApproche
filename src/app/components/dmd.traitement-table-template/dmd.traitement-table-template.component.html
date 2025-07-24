@@ -174,6 +174,7 @@
                <b *ngIf="btnActions === BtnActions.VALIDATION_RS||btnActions === BtnActions.VALIDATION">Validation de la demande n°: {{ selectedDemande.numeroReference }}
                    <span class="rejet" *ngIf="selectedDemande.rejeter">(Réjetée pour corrections)</span></b>
           </h4>
+            <p *ngIf="hasNonTraiter&&totalActions>0" class="text-warn"> En attente de traitements des actions  avec <span style="color: green">{{nombreTraites}}</span> traitées sur <span style="color: green">{{totalActions}}</span> </p>
         </span>
         </div>
     </ng-template>
@@ -189,50 +190,44 @@
                     class="p-button-secondary position-left mr-3"
                     label="Quitter" (click)="displayDetails()">
             </button>
-            <button pRipple pButton type="button" icon="pi pi-check"
+            <!--<button pRipple pButton type="button" icon="pi pi-check"
                     class="p-button-warning position-left mr-3"
                     (click)="editionNew()" label="Editer">
-            </button>
+            </button>-->
             @if (btnActions === BtnActions.TRAITEMENT) {
 
-                <button pRipple pButton type="button" [disabled]="componentRef?.instance.editForm.invalid"
+                <button pRipple pButton type="button"
+                        [disabled]="hasNonTraiter&&totalActions>0"
                         (click)="saveEntity()" icon="pi pi-save" label="Enregistrer">
                 </button>
                 &nbsp;
-                <button pRipple pButton type="button" icon="pi pi-send" [disabled]="componentRef?.instance.editForm.invalid"
+                <button pRipple pButton type="button" icon="pi pi-send"
+                        [disabled]="hasNonTraiter&&totalActions>0"
                         (click)="soumettre()" label="Soumettre">
                 </button>
             }
 
 
 
-            @if (btnActions===BtnActions.RECEPTION) {
+
                 <button pRipple pButton type="button" icon="pi pi-arrow-up"
                         class="p-button-danger position-left mr-3"
                         (click)=rejet()
                         label="Rejeter">
                 </button>
-            }
+
             @if (btnActions===BtnActions.SUIVI_RQ) {
                 <button pRipple pButton type="button" icon="pi pi-times"
                         (click)="cloture()"
                         label="Cloturer">
                 </button>
             }
-            @if (btnActions === BtnActions.VALIDATION_RS) {
-                <button pRipple pButton type="button" icon="pi pi-arrow-up"
-                        class="p-button-danger position-left mr-3"
-                        (click)=rejet()
-                        label="Rejeter">
-                </button>}
+
             @if (btnActions === BtnActions.VALIDATION) {
-                <button pRipple pButton type="button" icon="pi pi-arrow-up"
-                        class="p-button-danger position-left mr-3"
-                        (click)=rejet()
-                        label="Rejeter">
-                </button>
+
                 <button pRipple pButton type="button" icon="pi pi-check"
                         (click)="validate()"
+                        [disabled]="hasNonTraiter"
                         label="Valider">
                 </button>
             }
@@ -260,7 +255,7 @@
 </p-dialog>
 <p-confirmDialog header="Confirmation" [key]="imputationKey"
                  icon="pi pi-exclamation-triangle" [style]="{width: '35vw'}"
-                 acceptButtonStyleClass="p-button-danger" acceptLabel="Oui"
-                 rejectButtonStyleClass="p-button-primary" rejectLabel="Non">
+                 acceptButtonStyleClass="p-button-primary" acceptLabel="Oui"
+                 rejectButtonStyleClass="p-button-secondary" rejectLabel="Non">
 </p-confirmDialog>
 

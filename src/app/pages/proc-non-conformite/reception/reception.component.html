@@ -4,8 +4,12 @@
     <app-dmd-traitement-table-template
         [btnActions]="BtnActions.RECEPTION"
         [demandeList]="demandeList"
+        [cols]="cols"
         (onEdition)="edition($event)"
+        (onRejet)="rejet($event)"
         (onReceptionner)="reception($event)"
         [title]="title">
     </app-dmd-traitement-table-template>
 </div>
+
+<app-rejet  [motifRejetDialog]="motifRejetDialog" [demande]="demande" (onSuccess)="hideDialog($event)"></app-rejet>

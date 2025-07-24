@@ -1,0 +1,99 @@
+
+<p-table #dt [value]="actualities" responsiveLayout="scroll" [rows]="10"
+          [globalFilterFields]="['nomProcessus','createdAt','createdAt', 'currentUserfullName']" [paginator]="true"
+                                             [(selection)]="selectedActualities"
+          styleClass="p-datatable-sm p-datatable-gridlines"
+                                             selectionMode="multiple" [rowHover]="true" dataKey="id">
+    <ng-template pTemplate="caption">
+        <div class="flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="flex gap-2 align-items-center">
+                <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                <button pButton pRipple type="button" icon="pi pi-ellipsis-v"
+                        class="p-button-rounded p-button-text p-button-plain"
+                        (click)="menu.toggle($event)">
+                </button>
+                <p-menu #menu [model]="menuItems" [appendTo]="dt" [popup]="true"
+                        [style]="{display: selectedActualities.length > 0 ? 'block': 'none'}">
+                </p-menu>
+            </div>
+
+            <span class="p-input-icon-left">
+                <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Rechercher"
+                       class="w-full sm:w-auto"/>
+            </span>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+        <tr>
+            <th [style.width]="'3%'"></th>
+            <th *ngFor="let col of cols" [pSortableColumn]="col.field" class="font-bold" [style.width]="col.width">
+                {{ col.header }}
+                <p-sortIcon [field]="col.field"></p-sortIcon>
+            </th>
+        </tr>
+        <tr>
+            <th [style.width]="'3%'"></th>
+            <th *ngFor="let col of cols" [style.width]="col.width" class="p-fluid">
+                <span class="p-input-icon-left p-fluid" *ngIf="col.filter">
+                    <input type="text" pInputText placeholder="Recherche"
+                           style="width: 100%" #myInput2
+                           (input)="dt.filter(myInput2.value, col.field,'contains')"
+                    />
+                </span>
+            </th>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-actuality>
+        <tr (mouseenter)="toggleOptions($event, options, date)" (mouseleave)="toggleOptions($event, options, date)"
+            (click)="onRowSelect(actuality.id)" class="cursor-pointer">
+            <td [style.width]="'3%'">
+                <p-tableCheckbox [value]="actuality" (click)="$event.stopPropagation()"
+                                 (touchend)="$event.stopPropagation()"></p-tableCheckbox>
+            </td>
+            <ng-container *ngFor="let col of cols">
+                <td [style.width]="col.width" *ngIf="!col.skip">
+                    <span class="font-medium white-space-nowrap overflow-hidden text-overflow-ellipsis block">
+                        <span *ngIf="col.type === 'string'"> {{ actuality[col.field] }}</span>
+                        <span *ngIf="col.type === 'number'"> {{ actuality[col.field] }} </span>
+                         <span *ngIf="col.type === 'date'"> {{ actuality[col.field]| date:'dd/MM/yyyy'}} </span>
+                        <span *ngIf="col.type === 'dateTime'"> {{(actuality[col.field]) }}</span>
+                    </span>
+                </td>
+            </ng-container>
+            <td [style.width]="'20%'">
+                <div class="flex justify-content-end w-full px-0">
+                    <span #date class="text-700 font-semibold white-space-nowrap">
+                        <span *ngIf="status === 'DRAFT'">{{ actuality.dueDate | date: 'dd/MM/yyyy' }}</span>
+                        <span *ngIf="status === 'PUBLISHED'">{{ actuality.publicationDate }}</span>
+                        <span *ngIf="status === 'ARCHIVED'">{{ actuality.dueDate | date: 'dd/MM/yyyy' }}</span>
+                    </span>
+                    <div style="display: none" #options>
+                        <button pButton pRipple icon="pi pi-inbox" class="h-2rem w-2rem mr-2"
+                                (click)="onArchive($event, actuality)" pTooltip="Archiver"
+                                tooltipPosition="top" type="button" *ngIf="status === 'PUBLISHED'">
+                        </button>
+                        <button pButton pRipple icon="pi pi-reply" class="p-button-warning h-2rem w-2rem mr-2"
+                                (click)="onPublish($event, actuality)" pTooltip="Publier"
+                                tooltipPosition="top" type="button" *ngIf="status === 'DRAFT'">
+                        </button>
+                        <button pButton pRipple icon="pi pi-pencil" class="p-button-primary h-2rem w-2rem mr-2"
+                                pTooltip="Modifier"
+                                (click)="update(actuality)"
+                                tooltipPosition="top" type="button" *ngIf="status === 'DRAFT'">
+                        </button>
+                        <button pButton pRipple icon="pi pi-trash" class="p-button-danger h-2rem w-2rem"
+                                (click)="onDelete($event, actuality)" pTooltip="Supprimer" tooltipPosition="top"
+                                type="button" *ngIf="status !== 'ARCHIVED'">
+                        </button>
+
+                    </div>
+                </div>
+            </td>
+            <p-confirmDialog header="Confirmation" [key]="confirmKey"
+                                  icon="pi pi-exclamation-triangle" [style]="{width: '35vw'}"
+                                  acceptButtonStyleClass="p-button-primary" acceptLabel="Oui"
+                                  rejectButtonStyleClass="p-button-secondary" rejectLabel="Non">
+        </p-confirmDialog>
+        </tr>
+    </ng-template>
+</p-table>

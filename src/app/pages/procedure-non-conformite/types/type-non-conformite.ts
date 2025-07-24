@@ -39,9 +39,9 @@ export class TypeNonConformiteComponent {
       formGroup: UntypedFormGroup;
       tableCols: TableColumn[];
       formCols: FormGroupColumn[];
-      pageLabel = 'Liste des types de non conformité';
+      pageLabel = 'Types de non conformité';
       formHeader = 'Création et mise à jour d\'un type de non conformité';
-  
+
       constructor(protected fb: UntypedFormBuilder,
                   protected messageService: MessageService,
                   protected typeNonConformiteService: TypeNonConformiteService) {
@@ -50,14 +50,14 @@ export class TypeNonConformiteComponent {
               {field: 'libelle', label: "Libellé du type de non conformité (Système - Service)", header: 'Libellé', type: 'string', visible: true, required: true},
               {field: 'description', label: "Description du type de non conformité", header: 'Description', type: 'string', visible: true, required: false}
           ];
-  
+
           this.tableCols = [
               {field: 'libelle', header: 'Libellé', type: 'string', filter: true},
               {field: 'description', header: 'Description', type: 'string', filter: true},
               {field: 'createdAt', header: 'Date de création', type: 'string', filter: true},
               {field: 'updatedAt', header: 'Date de modification', type: 'string', filter: true}
           ];
-  
+
           this.formGroup = this.fb.group({
               id: [null],
               libelle: [null, Validators.required],
@@ -66,11 +66,11 @@ export class TypeNonConformiteComponent {
 
           });
       }
-  
+
       ngOnInit(): void {
           this.fetchObject();
       }
-  
+
       fetchObject() {
           this.typeNonConformiteService.findAll().pipe(takeUntil(this.destroy$))
               .subscribe({
@@ -82,17 +82,17 @@ export class TypeNonConformiteComponent {
                   }
               });
       }
-  
+
       onSuccess(res: HttpResponse<any>) {
           this.closeDialog = true;
           this.fetchObject();
           showToast(StatusEnum.success, res.status, null, this.messageService);
       }
-  
+
       onSave(object: TypeNonConformite) {
           if (object.id != null || undefined) {
             console.log("TYPE DE NON CONFORMITE ", object);
-            
+
               this.typeNonConformiteService.update(object).pipe(takeUntil(this.destroy$))
                   .subscribe({
                       next: res => {
@@ -112,7 +112,7 @@ export class TypeNonConformiteComponent {
                   });
           }
       }
-  
+
       onDelete(produit: TypeNonConformite) {
           this.typeNonConformiteService.delete(produit.id).pipe(takeUntil(this.destroy$))
               .subscribe({
@@ -122,9 +122,9 @@ export class TypeNonConformiteComponent {
                       showToast(StatusEnum.error, error.status, null, this.messageService, error);
                   }
               });
-  
+
       }
-  
+
       ngOnDestroy(): void {
           this.destroy$.next(true);
           this.destroy$.unsubscribe();

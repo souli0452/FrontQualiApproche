@@ -38,7 +38,7 @@ export class DmdTraitementTableTemplateComponent {
     protected readonly BtnActions = EtapeTraitement;
 
     imputationKey = 'imputationKey';
-    cols: any[] = [];
+    @Input() cols: any[] = [];
     colsFilter: any[] = [];
     searchedAgent: any;
     selectedDemandes: Array<any> = [];
@@ -49,31 +49,21 @@ export class DmdTraitementTableTemplateComponent {
     displayDetail = false;
     selectedDemande: any;
     componentRef: ComponentRef<any> | undefined;
-    afficherBoutonEdit: boolean = true;
-
+    hasNonTraiter: boolean = true;
+    totalActions:number = 0;
+    nombreTraites:number = 0;
     constructor(
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         private featureService: FeaturesService,
         private datePipe: DatePipe
     ) {
-        this.cols = [
-            { field: 'numeroReference', header: 'N° ordre', type: 'string', filter: true, width: '10%', centered: false },
-            { field: 'nomProcessus', header: 'Nom processus', type: 'string', filter: true, width: '30%', centered: false },
-            {
-                field: 'currentUserfullName',
-                header: 'Responsable',
-                type: 'string',
-                filter: true,
-                width: '20%',
-                centered: false
-            },
-            { field: 'status', header: 'Statut', type: 'enum', filter: true, width: '15%', centered: false },
-            { field: 'createdAt', header: 'Date soumission', type: 'string', filter: true, width: '15%', centered: false }
-        ];
+
 
         this.colsFilter = this.cols.map((value) => value.field);
     }
+
+
 
     closeDetailsDialog() {
         this.displayDetail = false;
@@ -86,6 +76,11 @@ export class DmdTraitementTableTemplateComponent {
             this.closeDetailsDialog();
         } else {
             this.selectedDemande = rowData;
+            this.totalActions = this.selectedDemande.planActions.length;
+            this.hasNonTraiter = this.selectedDemande.planActions.some((action: { status: string }) => action.status === 'NON_TRAITER');
+
+            this.nombreTraites = this.selectedDemande.planActions.filter((action: { status: string }) => action.status === 'TRAITER').length;
+
             this.displayDetail = true;
             let componentRef: any;
             if (this.btnActions !== EtapeTraitement.CLOTURE&&this.btnActions !== EtapeTraitement.IMPUTATION) {
@@ -290,6 +285,7 @@ export class DmdTraitementTableTemplateComponent {
 
                     this.selectedDemandes.push(this.selectedDemande);
                 }
+                console.log(this.selectedDemandes);
                 this.onSaveEntity.emit(this.selectedDemandes);
             }
         });
@@ -344,5 +340,6 @@ export class DmdTraitementTableTemplateComponent {
             }
         });
     }
+
     protected readonly TypeDemande = TypeDemande;
 }

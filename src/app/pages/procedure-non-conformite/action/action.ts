@@ -39,9 +39,9 @@ export class ActionNonConformiteComponent {
       formGroup: UntypedFormGroup;
       tableCols: TableColumn[];
       formCols: FormGroupColumn[];
-      pageLabel = 'Liste des actions liées aux non-conformités';
-      formHeader = 'Création et mise à jour d\'une action liée aux non-conformités';
-  
+      pageLabel = 'Types actions entreprises';
+      formHeader = 'Création et mise à jour d\'une action';
+
       constructor(protected fb: UntypedFormBuilder,
                   protected messageService: MessageService,
                   protected actionNonConformiteService: ActionNonConformiteService) {
@@ -50,14 +50,14 @@ export class ActionNonConformiteComponent {
               {field: 'libelle', label: "Libellé de l'action (Action préventive - Action corrective)", header: 'Libellé', type: 'string', visible: true, required: true},
               {field: 'description', label: "Description de l'action", header: 'Description', type: 'string', visible: true, required: false}
           ];
-  
+
           this.tableCols = [
               {field: 'libelle', header: 'Libellé', type: 'string', filter: true},
               {field: 'description', header: 'Description', type: 'string', filter: true},
               {field: 'createdAt', header: 'Date de création', type: 'string', filter: true},
               {field: 'updatedAt', header: 'Date de modification', type: 'string', filter: true}
           ];
-  
+
           this.formGroup = this.fb.group({
               id: [null],
               libelle: [null, Validators.required],
@@ -66,11 +66,11 @@ export class ActionNonConformiteComponent {
 
           });
       }
-  
+
       ngOnInit(): void {
           this.fetchObject();
       }
-  
+
       fetchObject() {
           this.actionNonConformiteService.findAll().pipe(takeUntil(this.destroy$))
               .subscribe({
@@ -82,13 +82,13 @@ export class ActionNonConformiteComponent {
                   }
               });
       }
-  
+
       onSuccess(res: HttpResponse<any>) {
           this.closeDialog = true;
           this.fetchObject();
           showToast(StatusEnum.success, res.status, null, this.messageService);
       }
-  
+
       onSave(object: ActionNonConformite) {
           if (object.id != null || undefined) {
               this.actionNonConformiteService.update(object).pipe(takeUntil(this.destroy$))
@@ -110,7 +110,7 @@ export class ActionNonConformiteComponent {
                   });
           }
       }
-  
+
       onDelete(action: ActionNonConformite) {
           this.actionNonConformiteService.delete(action.id).pipe(takeUntil(this.destroy$))
               .subscribe({
@@ -120,9 +120,9 @@ export class ActionNonConformiteComponent {
                       showToast(StatusEnum.error, error.status, null, this.messageService, error);
                   }
               });
-  
+
       }
-  
+
       ngOnDestroy(): void {
           this.destroy$.next(true);
           this.destroy$.unsubscribe();

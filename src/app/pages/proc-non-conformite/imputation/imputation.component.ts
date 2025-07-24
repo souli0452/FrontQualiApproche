@@ -10,33 +10,49 @@ import { ProcNonConformiteService } from '../proc-non-conformite.service';
 import { HttpResponse } from '@angular/common/http';
 import { getCurrentUserStructure, showToast, StatusEnum } from '../../../utils';
 import { Structure } from '../../structure/structure';
+import { RejetFormsComponent } from '../forms/rejet.forms/rejet.forms.component';
 
 @Component({
-  selector: 'app-imputation',
-    imports:[
-        CommonModule,
-        NgPrimeModule,
-        DmdTraitementTableTemplateComponent
-    ],
+    selector: 'app-imputation',
+    imports: [CommonModule, NgPrimeModule, DmdTraitementTableTemplateComponent, RejetFormsComponent],
     providers: [MessageService],
-  templateUrl: './imputation.component.html',
-  styleUrl: './imputation.component.scss'
+    templateUrl: './imputation.component.html',
+    styleUrl: './imputation.component.scss'
 })
 export class ImputationComponent {
     demandeList: any = [];
+    protected demande: any;
+    motifRejetDialog: boolean=false;
     title = 'Imputations des non-conformités';
     @ViewChild(DmdTraitementTableTemplateComponent) dmdTraitement!: DmdTraitementTableTemplateComponent;
-    userStructure:Structure={};
+    userStructure: Structure = {};
     protected readonly BtnActions = EtapeTraitement;
-
-    constructor(protected messageService: MessageService,private service:ProcNonConformiteService) {
+    cols: any[] = [];
+    constructor(
+        protected messageService: MessageService,
+        private service: ProcNonConformiteService
+    ) {
+        this.cols = [
+            { field: 'numeroReference', header: 'N° ordre', type: 'string', filter: true, width: '10%', centered: false },
+            { field: 'origineService', header: 'Nom processus', type: 'string', filter: true, width: '30%', centered: false },
+            {
+                field: 'currentUserfullName',
+                header: 'Responsable',
+                type: 'string',
+                filter: true,
+                width: '20%',
+                centered: false
+            },
+            { field: 'status', header: 'Statut', type: 'enum', filter: true, width: '15%', centered: false },
+            { field: 'createdAt', header: 'Date soumission', type: 'string', filter: true, width: '15%', centered: false }
+        ];
     }
     ngOnInit() {
         this.userStructure = getCurrentUserStructure();
-        this.getDemandeList()
+        this.getDemandeList();
     }
     getDemandeList() {
-        this.service.getNonConformiteByEtapeAndOrigin(EtapeTraitement.IMPUTATION,this.userStructure.id!).subscribe({
+        this.service.getNonConformiteByEtapeAndOrigin(EtapeTraitement.IMPUTATION, this.userStructure.id!).subscribe({
             next: (data) => {
                 this.demandeList = data.body;
             },
@@ -53,12 +69,21 @@ export class ImputationComponent {
             next: (data) => {
                 this.getDemandeList();
                 this.messageService.add({ severity: 'success', summary: 'Réussi', detail: 'Demandes imputées avec succès', life: 3000 });
-             this.dmdTraitement.closeDetailsDialog();
-
+                this.dmdTraitement.closeDetailsDialog();
             },
             error: () => {
                 this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
             }
         });
+    }
+    hideDialog(event: any) {
+        if (event) {
+            this.dmdTraitement.displayDetails();
+            this.getDemandeList();
+        }
+    }
+    rejet(demande: any) {
+        this.demande = demande;
+        this.motifRejetDialog = true;
     }
 }

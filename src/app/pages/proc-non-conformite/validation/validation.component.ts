@@ -11,48 +11,65 @@ import {
 } from '../../../components/dmd.traitement-table-template/dmd.traitement-table-template.component';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { Structure } from '../../structure/structure';
+import { RejetFormsComponent } from '../forms/rejet.forms/rejet.forms.component';
 
 @Component({
-  selector: 'app-validation',
-  templateUrl: './validation.component.html',
-  styleUrl: './validation.component.scss',
+    selector: 'app-validation',
+    templateUrl: './validation.component.html',
+    styleUrl: './validation.component.scss',
     providers: [MessageService],
     standalone: true,
-    imports:[
-        CommonModule,
-        NgPrimeModule,
-        DmdTraitementTableTemplateComponent
-    ]
+    imports: [CommonModule, NgPrimeModule, DmdTraitementTableTemplateComponent, RejetFormsComponent]
 })
 export class ValidationComponent {
     demandeList: any = [];
+    motifRejetDialog: boolean=false;
+    protected demande: any;
     title = 'Validations des non-conformités';
     @ViewChild(DmdTraitementTableTemplateComponent) dmdTraitement!: DmdTraitementTableTemplateComponent;
-    user!:any;
+    user!: any;
     protected readonly BtnActions = EtapeTraitement;
-    userStructure:Structure={};
-    constructor(private authService:AuthService,protected messageService: MessageService,private service:ProcNonConformiteService) {
+    userStructure: Structure = {};
+    cols: any[] = [];
+    constructor(
+        private authService: AuthService,
+        protected messageService: MessageService,
+        private service: ProcNonConformiteService
+    ) {
+        this.cols = [
+            { field: 'numeroReference', header: 'N° ordre', type: 'string', filter: true, width: '10%', centered: false },
+            { field: 'origineService', header: 'Nom processus', type: 'string', filter: true, width: '30%', centered: false },
+            {
+                field: 'currentUserfullName',
+                header: 'Responsable',
+                type: 'string',
+                filter: true,
+                width: '20%',
+                centered: false
+            },
+            { field: 'status', header: 'Statut', type: 'enum', filter: true, width: '15%', centered: false },
+            { field: 'createdAt', header: 'Date soumission', type: 'string', filter: true, width: '15%', centered: false }
+        ];
     }
     ngOnInit() {
         this.userStructure = getCurrentUserStructure();
-        this.getDemandeList()
+        this.getDemandeList();
     }
     getDemandeList() {
-        this.service.getNonConformiteByEtapeAndOrigin(EtapeTraitement.VALIDATION,this.userStructure.id!).subscribe({
+        this.service.getNonConformiteByEtapeAndOrigin(EtapeTraitement.VALIDATION, this.userStructure.id!).subscribe({
             next: (data) => {
                 this.demandeList = data.body;
-
             },
             error: (error) => {
                 this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: 'Erreur lors de la recupérations des demande', life: 3000 });
-               // showToast(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
+                // showToast(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
             }
         });
     }
     onSuccess(res: HttpResponse<any>) {
         showToast(StatusEnum.success, res.status, null, this.messageService);
     }
-    validation(dmd:any) {
+    validation(dmd: any) {
         this.service.updateNomConformites(dmd).subscribe({
             next: (data) => {
                 this.getDemandeList();
@@ -62,6 +79,16 @@ export class ValidationComponent {
             error: (error) => {
                 this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
             }
-        })
+        });
+    }
+    hideDialog(event: any) {
+        if (event) {
+            this.dmdTraitement.displayDetails();
+            this.getDemandeList();
+        }
+    }
+    rejet(demande: any) {
+        this.demande = demande;
+        this.motifRejetDialog = true;
     }
 }

@@ -1,0 +1,6 @@
+<app-nc-table [actualities]="actualities" [cols]="cols"
+                     [colDetails]="colsDetail"
+                     (publish)="publish($event)"
+                     (delete)="delete($event)"
+                     [status]="NonConformStatus.DRAFT">
+</app-nc-table>

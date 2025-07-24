@@ -3,7 +3,7 @@
         <p-tabPanel header="Détails de la  demande">
             <demande-non_conformite-details [demande]="demande"></demande-non_conformite-details>
         </p-tabPanel>
-        <p-tabPanel header="Saisie des informations complémentaires de la demande" *ngIf="demande.etatTraitement!=BtnActions.VALIDATION">
+        <p-tabPanel header="Saisie des informations complémentaires de la demande" *ngIf="demande.etatTraitement!=BtnActions.VALIDATION && demande.etatTraitement!=BtnActions.SUIVI_RQ ">
             <div class="m-2">
                 <form [formGroup]="editForm" autocomplete="off" role="form">
                     <div class="grid p-fluid mb-3">
@@ -34,7 +34,7 @@
                                 </p-editor>
                             </div>
                             }
-                            @if (demande.etatTraitement===BtnActions.SUIVI_RQ){
+                           <!-- @if (demande.etatTraitement===BtnActions.SUIVI_RQ){
                                 <div class="flex flex-wrap gap-2">
                                     <label class="font-bold">Pertinence de la non-conformité </label>
                                     <div class="flex items-center">
@@ -57,7 +57,7 @@
 
                                 </div>
 
-                            }
+                            }-->
                             @if (demande.etatTraitement===BtnActions.VALIDATION_RS){
                                 <div class="flex flex-wrap gap-2">
                                     <label class="font-bold">Pertinence de la non-conformité </label>
@@ -90,7 +90,7 @@
                                 <p-card  class="card">
                                 <p class=" font-bold">PARTICIPANTS
                                     ( Les noms complets des participants doivent être séparés les uns des autres par une virgule <span
-                                        style="color: red">*</span>)
+                                        style="color: red"></span>)
                                 </p>
                                 <div>
 
@@ -106,18 +106,8 @@
                                     </p-chips>
                                 </div>
 
-                                <p class="mt-8 mb-2 font-bold">DELAI DE MISE EN OEUVRE</p>
-                                <div>
-                                    <p-inputNumber inputId="delaisMiseOeuvre"
-                                                   [style]="{'width':'100%'}"
-                                                   formControlName="delaisMiseOeuvre"
-                                                   mode="decimal"
-                                                   [showButtons]="true"
-                                                   (onInput)="onInputChange()"
-                                                   class="delai-input"
-                                                   placeholder="Nombre de jours">
-                                    </p-inputNumber>
-                                </div></p-card></div>
+
+                              </p-card></div>
                                 <div class="form-container">
                                     <!-- Ligne Participants + Délai -->
 
@@ -132,31 +122,32 @@
                                                     <div class="form-row">
                                                         <!-- N° d'ordre -->
                                                         <div class="form-group order">
-                                                            <label for="numeroOrdre{{i}}" class="font-bold">N° d'ordre</label>
+                                                            <label for="numeroOdre{{i}}" class="font-bold">N° d'ordre</label>
                                                             <input
                                                                 pInputText
                                                                 (input)="onInputChange()"
-                                                                id="numeroOrdre{{i}}"
-                                                                formControlName="numeroOrdre"
+                                                                id="numeroOdre{{i}}"
+                                                                formControlName="numeroOdre"
                                                                 type="number"
                                                                 class="full-width"
-                                                                [class]="{'ng-invalid ng-dirty': submitted && action.get('numeroOrdre')?.invalid}"
+                                                                [class]="{'ng-invalid ng-dirty': submitted && action.get('numeroOdre')?.invalid}"
                                                             />
-                                                            <small *ngIf="submitted && action.get('numeroOrdre')?.invalid" class="p-error">Ce champ est requis</small>
+                                                            <small *ngIf="submitted && action.get('numeroOdre')?.invalid" class="p-error">Ce champ est requis</small>
                                                         </div>
 
                                                         <!-- Responsable -->
                                                         <div class="form-group responsible">
                                                             <label class="font-bold" for="responsable{{i}}">Responsable</label>
-                                                            <input
-                                                                pInputText
+                                                            <p-dropdown
+                                                                (onChange)="onInputChange()"
                                                                 (input)="onInputChange()"
-                                                                id="responsable{{i}}"
-                                                                placeholder="Nom complet"
-                                                                formControlName="responsable"
-                                                                class="full-width"
-                                                                [class]="{'ng-invalid ng-dirty': submitted && action.get('responsable')?.invalid}"
-                                                            />
+                                                                id="reclamation" class="full-width"  formControlName="responsable"
+                                                                       [options]="users"
+                                                                        optionLabel="fullName" placeholder="Sélectionnez le participant"
+                                                                        [filter]="true" [showClear]="true" appendTo="body"
+                                                                        [class]="{'ng-invalid ng-dirty': submitted && action.get('responsable')?.invalid}" >
+
+                                                            </p-dropdown>
                                                             <small *ngIf="submitted && action.get('responsable')?.invalid" class="p-error">Ce champ est requis</small>
                                                         </div>
 
@@ -167,6 +158,7 @@
                                                                 id="dateEcheance{{i}}"
                                                                 formControlName="dateEcheance"
                                                                 [showIcon]="true"
+                                                                (onSelect)="onInputChange()"
                                                                 (onInput)="onInputChange()"
                                                                 placeholder="Date de l'échéance"
                                                                 dateFormat="dd/mm/yy"
@@ -176,7 +168,7 @@
                                                         </div>
 
                                                         <!-- Causes identifiées -->
-                                                        <div class="form-group causes">
+                                                     <!--   <div class="form-group causes">
                                                             <label class="font-bold" for="causeIdentifiees{{i}}">Causes identifiées</label>
                                                             <textarea
                                                                 pInputTextarea
@@ -190,7 +182,7 @@
                                                             <small *ngIf="submitted && action.get('causeIdentifiees')?.invalid" class="p-error">Ce champ est requis</small>
                                                         </div>
 
-                                                        <!-- Solutions retenues -->
+                                                        &lt;!&ndash; Solutions retenues &ndash;&gt;
                                                         <div class="form-group solutions">
                                                             <label  class="font-bold"for="solutionRetenues{{i}}">Solutions retenues</label>
                                                             <textarea
@@ -205,7 +197,7 @@
                                                             ></textarea>
                                                             <small *ngIf="submitted && action.get('solutionRetenues')?.invalid" class="p-error">Ce champ est requis</small>
                                                         </div>
-
+-->
                                                         <!-- Bouton Supprimer -->
                                                         <div class="form-group delete-action">
                                                             <button

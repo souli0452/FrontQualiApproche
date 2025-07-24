@@ -1,0 +1,6 @@
+<app-traitement-action-table [actualities]="actualities" [cols]="cols"
+                     [colDetails]="colsDetail"
+                     (publish)="publish($event)"
+                     (delete)="delete($event)"
+                     [status]="NonConformStatus.TRAITER">
+</app-traitement-action-table>
