@@ -7,7 +7,7 @@ export class NonConformiteUrlConfig {
     static readonly GET_NON_CONFORMITE_ALL = `${SERVICE_PREFIX}/non-conformite/all`;
     static readonly GET_NON_CONFORMITE_BY_ETAPE_ORIGIN = `${SERVICE_PREFIX}/non-conformite/structure/origin/`;
     static readonly GET_NON_CONFORMITE_BY_ETAPE_SUMIT = `${SERVICE_PREFIX}/non-conformite/structure/soumission/`;
-    static readonly GET_PLAN_ACTION = `${SERVICE_PREFIX}/plan-action//all/by-email/`;
+    static readonly GET_PLAN_ACTION = `${SERVICE_PREFIX}/plan-action/all/by-email/`;
     static readonly GET_PLAN_ACTION_ALL = `${SERVICE_PREFIX}/plan-action/all/`;
     static readonly UPDATE_PLAN_ACTION = `${SERVICE_PREFIX}/plan-action/update`;
     static readonly GET_NON_CONFORMITE_REJECT = `${SERVICE_PREFIX}/non-conformite/reject`;
