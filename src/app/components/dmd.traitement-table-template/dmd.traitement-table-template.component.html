@@ -190,6 +190,12 @@
                     class="p-button-secondary position-left mr-3"
                     label="Quitter" (click)="displayDetails()">
             </button>
+            @if (btnActions!==BtnActions.CLOTURE) {
+            <button pRipple pButton type="button" icon="pi pi-arrow-up"
+                    class="p-button-danger position-left mr-3"
+                    (click)=rejet()
+                    label="Rejeter">
+            </button>}
             <!--<button pRipple pButton type="button" icon="pi pi-check"
                     class="p-button-warning position-left mr-3"
                     (click)="editionNew()" label="Editer">
@@ -197,12 +203,12 @@
             @if (btnActions === BtnActions.TRAITEMENT) {
 
                 <button pRipple pButton type="button"
-                        [disabled]="hasNonTraiter&&totalActions>0"
+
                         (click)="saveEntity()" icon="pi pi-save" label="Enregistrer">
                 </button>
                 &nbsp;
                 <button pRipple pButton type="button" icon="pi pi-send"
-                        [disabled]="hasNonTraiter&&totalActions>0"
+                        [disabled]="hasNonTraiter&&totalActions>0||selectedDemande?.planActions.length<=0"
                         (click)="soumettre()" label="Soumettre">
                 </button>
             }
@@ -210,11 +216,7 @@
 
 
 
-                <button pRipple pButton type="button" icon="pi pi-arrow-up"
-                        class="p-button-danger position-left mr-3"
-                        (click)=rejet()
-                        label="Rejeter">
-                </button>
+
 
             @if (btnActions===BtnActions.SUIVI_RQ) {
                 <button pRipple pButton type="button" icon="pi pi-times"

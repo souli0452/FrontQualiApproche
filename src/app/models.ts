@@ -154,6 +154,7 @@ export interface Fichier extends UserInfos{
     origineService?: string;
       origineServiceLibelleCourt?:string;
    originNonConformiteId?: string;
+      typeProcessusLibelle?:string;
   originNonConformiteLibelle?: string;
       actionLibelle?:string;
       actionDsc?:string;
@@ -171,6 +172,8 @@ export interface Fichier extends UserInfos{
     delaisMiseOeuvre?: string;
     etatTraitement?: string;  // Enum ou classe de type Etat
     observationsRq?: string;
+      niveauNonConformiteLibelle?:string;
+      typeNonConformiteLibelle?:string;
     dateObservationsRq?: string;
     observationsCloture?: string;
     dateVerification?: string;

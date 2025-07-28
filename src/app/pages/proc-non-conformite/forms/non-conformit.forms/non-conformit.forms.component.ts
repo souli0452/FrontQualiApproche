@@ -37,6 +37,8 @@ export class NonConformitFormsComponent {
         private authService: AuthService,
         private messageService: MessageService,
     ) {
+
+
         this.fetchUsers();
         this.planActionForm = this.fb.group({
             actions: this.fb.array([this.createAction()])
@@ -44,6 +46,9 @@ export class NonConformitFormsComponent {
         this.actions = this.planActionForm.get('actions') as FormArray;
         this.editForm = this.fb.group(nonConformiteForm);
     }
+
+    ngOnInit() {}
+
     onInputChange() {
         if (this.demande.etatTraitement === EtapeTraitement.VALIDATION_RS) {
             this.demande.pertinanceRs = this.editForm.get('pertinanceRs')?.value;
@@ -58,13 +63,15 @@ export class NonConformitFormsComponent {
             this.demande.numeroFdac = this.editForm.get('numeroFdac')?.value;
         }
         if (this.demande.etatTraitement === EtapeTraitement.TRAITEMENT) {
-            this.demande.participants = this.editForm.get('participants')?.value;
+            this.demande.participants = this.editForm.get('participants')?.value??[];
             const actions = this.planActionForm.get('actions')?.value as any[];  // ou FormArray si besoin
             this.demande.planActions = actions.map(value => {
                 return {
                     ...value,
                     dateEcheance: formatDateToDDMMYYYY(value.dateEcheance),
                     responsableEmail: value.responsable?.email,
+                    causeIdentifiees:value.causeIdentifiees,
+                    solutionRetenues:value.solutionRetenues,
                     responsableNomComplet: `${value.responsable?.firstName ?? ''} ${value.responsable?.lastName ?? ''}`,
                     responsableId: value.responsable?.id,
                     status:"NON_TRAITER"
@@ -104,7 +111,28 @@ export class NonConformitFormsComponent {
                       }
 
                     });
-                    console.log(this.users)
+                     if(this.demande.participants.length > 0) {
+                         this.editForm.patchValue({
+                             participants: this.demande.participants ?? []
+                         });
+                     }
+                    if (this.demande.planActions.length > 0) {
+
+                        this.demande.planActions = this.demande.planActions.map((data: { dateEcheance: string; responsableNomComplet: any }) => {
+                            return {
+                                ...data,
+                                dateEcheance: data.dateEcheance?.replace(/-/g, '/'),
+                                responsable: this.users.find(
+                                    (user: any) => user.fullName === data.responsableNomComplet
+                                ) ?? null,
+                            };
+                        });
+
+                        this.planActionForm.patchValue({
+                            actions: this.demande.planActions,
+                        });
+
+                    }
                 },
             });
     }

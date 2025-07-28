@@ -99,10 +99,13 @@ ngOnInit(): void {
         this.nonConformite.structureSoumissionLibelle = this.userStructure.libelleLong;
         this.nonConformite.structureSoumissionId = this.userStructure.id;
         this.nonConformite.typeProcessusId = this.nc.typeProcedure.id;
+        this.nonConformite.typeProcessusLibelle = this.nc.typeProcedure.libelle;
         this.nonConformite.actionId = this.nc.typeAction.id;
         this.nonConformite.origineServiceLibelleCourt=this.userStructure.libelleCourt;
         this.nonConformite.actionLibelle= this.nc.typeAction.libelle;
         this.nonConformite.fonctionEmetteur = "";
+        this.nonConformite.niveauNonConformiteLibelle=this.nc.niveauNonConformite.libelle;
+            this.nonConformite.typeNonConformiteLibelle = this.nc.typeNonformite.libelle;
         this.nonConformite.originNonConformiteLibelle=this.nc.reclamationClient.nomDemendeur;
         this.nonConformite.originNonConformiteId=this.nc.reclamationClient.id;
         // ✅ Attendre la conversion

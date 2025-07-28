@@ -65,12 +65,24 @@ export class TraitementComponent {
     onSuccess(res: HttpResponse<any>) {
         showToast(StatusEnum.success, res.status, null, this.messageService);
     }
-    saveEntity(demande: any) {
-        this.service.updateNomConformites(demande).subscribe({
+    saveEntity(demandes: any) {
+        const cleanedDemandes = demandes.map((demande: { planActions: { [x: string]: any; responsable: any; dateEcheance: string }[] }) => {
+            const cleanedActions = demande.planActions.map(({ responsable, dateEcheance, ...rest }) => ({
+                ...rest,
+                dateEcheance: dateEcheance?.replace(/\//g, "-")
+            }));
+
+            return {
+                ...demande,
+                planActions: cleanedActions
+            };
+        });
+
+        this.service.updateNomConformites(cleanedDemandes).subscribe({
             next: () => {
                 this.getDemandeList(this.user.userId);
                 this.dmdTraitement.closeDetailsDialog();
-                this.messageService.add({ severity: 'success', summary: 'ERREUR', detail: "L'oppération à réussie !", life: 3000 });
+                this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'oppération à réussie !", life: 3000 });
             },
             error: (error) => {
                 this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
@@ -78,12 +90,24 @@ export class TraitementComponent {
         });
     }
 
-    submission(demande: any) {
-        this.service.updateNomConformites(demande).subscribe({
+    submission(demandes: any) {
+        const cleanedDemandes = demandes.map((demande: { planActions: { [x: string]: any; responsable: any; dateEcheance: string }[] }) => {
+            const cleanedActions = demande.planActions.map(({ responsable, dateEcheance, ...rest }) => ({
+                ...rest,
+                dateEcheance: dateEcheance?.replace(/\//g, "-")
+            }));
+
+            return {
+                ...demande,
+                planActions: cleanedActions
+            };
+        });
+
+        this.service.updateNomConformites(cleanedDemandes).subscribe({
             next: (data) => {
                 this.getDemandeList(this.user.userId);
                 this.dmdTraitement.closeDetailsDialog();
-                this.messageService.add({ severity: 'success', summary: 'ERREUR', detail: "L'oppération à réussie !", life: 3000 });
+                this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'oppération à réussie !", life: 3000 });
             },
             error: (error) => {
                 this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });

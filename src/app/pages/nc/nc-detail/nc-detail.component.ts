@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { DatePipe, Location } from '@angular/common';
 import { NonConformiteService } from '../../../services/non-conformite.service';
 import { Avatar } from 'primeng/avatar';
-import { NonConformStatus } from '../../../enums';
+import { NonConformStatus, StatusEnum } from '../../../enums';
 
 @Component({
     templateUrl: './nc-detail.component.html',
@@ -32,4 +32,7 @@ export class NcDetailComponent {
     }
 
     protected readonly NonConformStatus = NonConformStatus;
+
+
+
 }

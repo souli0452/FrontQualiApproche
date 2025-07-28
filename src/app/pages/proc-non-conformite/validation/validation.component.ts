@@ -69,8 +69,20 @@ export class ValidationComponent {
     onSuccess(res: HttpResponse<any>) {
         showToast(StatusEnum.success, res.status, null, this.messageService);
     }
-    validation(dmd: any) {
-        this.service.updateNomConformites(dmd).subscribe({
+    validation(demandes: any) {
+        const cleanedDemandes = demandes.map((demande: { planActions: { [x: string]: any; responsable: any; dateEcheance: string }[] }) => {
+            const cleanedActions = demande.planActions.map(({ responsable, dateEcheance, ...rest }) => ({
+                ...rest,
+                dateEcheance: dateEcheance?.replace(/\//g, "-")
+            }));
+
+            return {
+                ...demande,
+                planActions: cleanedActions
+            };
+        });
+
+        this.service.updateNomConformites(cleanedDemandes).subscribe({
             next: (data) => {
                 this.getDemandeList();
                 this.dmdTraitement.closeDetailsDialog();

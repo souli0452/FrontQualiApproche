@@ -24,21 +24,7 @@ export class AuthInterceptor implements HttpInterceptor {
         return next.handle(clonedRequest).pipe(
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 401) {
-                    return this.authService.handleExpiredToken().pipe(
-                        switchMap((newToken: string | null) => {
-                            if (newToken) {
-                                clonedRequest = req.clone({
-                                    setHeaders: {
-                                        Authorization: `Bearer ${newToken}`
-                                    }
-                                });
-                                return next.handle(clonedRequest);
-                            }
-
-                            this.authService.logout();
-                            return throwError(() => new Error('Token refresh failed'));
-                        })
-                    );
+                    this.authService.logout();
                 }
                 return throwError(() => error);
             })

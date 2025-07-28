@@ -7,7 +7,7 @@ import { Location } from '@angular/common';
 import { NonConformStatus } from '../../../../enums';
 import { FeaturesService } from '../../../../services/feature-service';
 import { NonConformiteService } from '../../../../services/non-conformite.service';
-import { showToast, StatusEnum } from '../../../../utils';
+import { convertFilesToBase64, showToast, StatusEnum } from '../../../../utils';
 import { ProcNonConformiteService } from '../../proc-non-conformite.service';
 
 
@@ -26,6 +26,7 @@ export class TraitementActionTableComponent implements OnInit {
     @Output() delete = new EventEmitter<any>();
     @Output() archive = new EventEmitter<any>();
     menuItems: MenuItem[] = [];
+    uploadedFiles: any[] = [];
     confirmKey = 'confirmKey';
     selectedActualities: any[] = [];
     planAction:any={};
@@ -193,6 +194,7 @@ export class TraitementActionTableComponent implements OnInit {
             message: `Voulez-vous soummettre le plan d'action N° ${this.planAction.numeroOdre} ? `,
             key: this.confirmKey,
             accept: () => {
+
                 this.publish.emit(this.planAction);
                 event.stopPropagation();
             },
@@ -200,5 +202,11 @@ export class TraitementActionTableComponent implements OnInit {
                 this.goBack();
             }
         });
+    }
+    async handleFileUpload(files: any[]) {
+        this.uploadedFiles = files;
+        this.planAction.fichiers = await convertFilesToBase64(this.uploadedFiles);
+
+
     }
 }

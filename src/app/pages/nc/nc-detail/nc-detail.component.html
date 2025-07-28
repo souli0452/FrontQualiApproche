@@ -13,39 +13,40 @@
                 <!-- Ligne 1 -->
                 <div class="flex flex-wrap gap-4">
                     <!-- Colonne gauche -->
-                    <div class="flex flex-col gap-4 flex-1 min-w-[300px]">
+                    <div class="flex flex-col  ">
                         <!-- Détails de la non-conformité -->
                         <div class="card p-4">
                             <span class="text-xl font-bold mb-3 text-900">Détails de la non-conformité</span>
                             <ul class="list-none p-0 m-0 text-600 space-y-3">
-                                <li class="flex items-center"><span class="font-semibold w-28">Référence:</span><span class="flex-1">{{nc.numeroReference }}</span></li>
-                                <li class="flex items-center"><span class="font-semibold w-28">Processus:</span><span class="flex-1">{{nc.nomProcessus }}</span></li>
-                                <li class="flex items-center"><span class="font-semibold w-28">Structure de soumission:</span><span class="flex-1">{{nc.structureSoumissionLibelle }}</span></li>
-                                <li class="flex items-center"><span class="font-semibold w-28">Émetteur:</span><span class="flex-1">{{nc.fonctionEmetteur}}</span></li>
-                                <li class="flex items-center"><span class="font-semibold w-28">Date visa:</span><span class="flex-1">{{nc.dateVisaEmetteur}}</span></li>
-                                <li *ngIf="nc.delaisMiseOeuvre" class="flex items-center"><span class="font-semibold w-28">Délai de mise en oeuvre  :</span><span class="flex-1">{{nc.delaisMiseOeuvre}} jours</span></li>
+                                <li class="flex items-center mt-4"><span class="font-semibold ">Référence : </span><span class="flex-1" style="padding-left: 25px">{{nc.numeroReference }}</span></li>
+                                <li class="flex items-center"><span class="font-semibold ">Processus Destinataire :</span><span class="flex-1"  style="padding-left: 25px">{{nc.origineService }}({{nc.origineServiceLibelleCourt }}) </span></li>
+                                <li class="flex items-center"><span class="font-semibold ">Processus de soumission :</span><span class="flex-1"  style="padding-left: 25px">{{nc.structureSoumissionLibelle }}</span></li>
+                                <li class="flex items-center"><span class="font-semibold ">Émetteur :</span><span class="flex-1"  style="padding-left: 25px">{{nc.currentUserfullName}}</span></li>
+                                <li class="flex items-center"><span class="font-semibold ">Date de création :</span><span class="flex-1"  style="padding-left: 25px">{{nc.createdAt}}</span></li>
+                                <li class="flex items-center"><span class="font-semibold ">Type de procéssus :</span><span class="flex-1"  style="padding-left: 25px">{{nc.typeProcessusLibelle}}</span></li>
+                                <li class="flex items-center"><span class="font-semibold ">Type de non-conformité :</span><span class="flex-1"  style="padding-left: 25px">{{nc.typeNonConformiteLibelle}}</span></li>
+                                <li class="flex items-center"><span class="font-semibold ">Type d'action :</span><span class="flex-1"  style="padding-left: 25px">{{nc.actionLibelle}}</span></li>
+                                <li class="flex items-center"><span class="font-semibold ">Niveau de non-conformité :</span><span class="flex-1"  style="padding-left: 25px">{{nc.niveauNonConformiteLibelle}}</span></li>
+                                <li class="flex items-center"><span class="font-semibold ">Origine de non-conformité :</span><span class="flex-1"  style="padding-left: 25px">{{nc.originNonConformiteLibelle}}</span></li>
                             </ul>
                         </div>
 
-                        <!-- Structure responsable -->
-                        <div class="card p-4">
-                            <span class="text-xl font-bold mb-3 text-900">Structure responsable</span>
-                            <ul class="list-none p-0 m-0 text-600 space-y-3">
-                                <li class="flex items-center"><span class="font-semibold w-28">Service:</span><span class="flex-1">{{nc.origineService || ''}}</span></li>
-                            </ul>
-                        </div>
                     </div>
 
                     <!-- Colonne droite -->
-                    <div class="flex flex-col gap-4 flex-1 min-w-[300px]">
+                    <div class="flex flex-col  ">
                         <!-- Description -->
                         <div class="card p-4">
-                            <span class="text-xl font-bold mb-3 text-900">Description</span>
+                            <span class="text-xl font-bold mb-3 text-900">Description de la non-conformité</span>
                             <div class="p-3 bg-gray-100 rounded"><p class="m-0 text-600">{{nc.justification || 'Aucune description fournie'}}</p></div>
+                        </div>
+                        <div class="card p-4">
+                            <span class="text-xl font-bold mb-3 text-900"> Description des actions entreprises</span>
+                            <div class="p-3 bg-gray-100 rounded"><p class="m-0 text-600">{{nc.actionDsc || 'Aucune description fournie'}}</p></div>
                         </div>
 
                         <!-- Validation -->
-                        <div class="card p-4">
+                        <div class="card p-4"  *ngIf="nc.pertinancePilote">
                             <span class="text-xl font-bold mb-3 text-900">Validation par le pilote processus</span>
                             <ul>
                                 <li *ngIf="nc.pertinancePilote" class="flex items-center"><span class="font-semibold w-28">Pertinance:</span><span class="flex-1">{{nc.pertinancePilote}}</span></li>
@@ -93,11 +94,10 @@
                             <p>{{nc.observationRejet}}</p></ul>
                     </div>
                 </div>
-                <div class="card p-4" *ngIf="nc.numeroFdac">
+                <div class="card p-4" *ngIf="nc.pertinanceRsSuivi">
                     <span class="text-xl font-bold mb-3 text-900">Suivi du Responsable Management Qualité</span>
                     <ul class="list-none p-0 m-0 text-600 space-y-3">
                         <li class="flex items-center"><span class="font-semibold w-28">Pertinance:</span><span class="flex-1">{{nc.pertinanceRsSuivi || ''}}</span></li>
-                        <li class="flex items-center"><span class="font-semibold w-28">Numéro FEDAC:</span><span class="flex-1">{{nc.numeroFdac || ''}}</span></li>
                         <li class="flex items-center"><span class="font-semibold w-28">Date:</span><span class="flex-1">{{nc.dateSuivi || ''}}</span></li>
                     </ul>
                 </div>

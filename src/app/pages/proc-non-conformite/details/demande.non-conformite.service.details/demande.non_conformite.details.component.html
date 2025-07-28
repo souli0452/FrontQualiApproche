@@ -8,20 +8,24 @@
             <div class="card p-4">
                 <span class="text-xl font-bold mb-3 text-900">Détails de la non-conformité</span>
                 <ul class="list-none p-0 m-0 text-600 space-y-3">
-                    <li class="flex items-center"><span class="font-semibold w-28">Référence:</span><span class="flex-1">{{demande.numeroReference }}</span></li>
-                    <li class="flex items-center"><span class="font-semibold w-28">Processus:</span><span class="flex-1">{{demande.nomProcessus }}</span></li>
-                    <li class="flex items-center"><span class="font-semibold w-28">Structure de soumission:</span><span class="flex-1">{{demande.structureSoumissionLibelle }}</span></li>
-                    <li class="flex items-center"><span class="font-semibold w-28">Émetteur:</span><span class="flex-1">{{demande.fonctionEmetteur}}</span></li>
-                    <li class="flex items-center"><span class="font-semibold w-28">Date visa:</span><span class="flex-1">{{demande.dateVisaEmetteur}}</span></li>
-                    <li *ngIf="demande.delaisMiseOeuvre" class="flex items-center"><span class="font-semibold w-28">Délai de mise en oeuvre  :</span><span class="flex-1">{{demande.delaisMiseOeuvre}} jours</span></li>
+                    <li class="flex items-center mt-4"><span class="font-semibold ">Référence : </span><span class="flex-1" style="padding-left: 25px">{{demande.numeroReference }}</span></li>
+                    <li class="flex items-center"><span class="font-semibold ">Processus Destinataire :</span><span class="flex-1"  style="padding-left: 25px">{{demande.origineService }}({{demande.origineServiceLibelleCourt }}) </span></li>
+                    <li class="flex items-center"><span class="font-semibold ">Processus de soumission :</span><span class="flex-1"  style="padding-left: 25px">{{demande.structureSoumissionLibelle }}</span></li>
+                    <li class="flex items-center"><span class="font-semibold ">Émetteur :</span><span class="flex-1"  style="padding-left: 25px">{{demande.currentUserfullName}}</span></li>
+                    <li class="flex items-center"><span class="font-semibold ">Date de création :</span><span class="flex-1"  style="padding-left: 25px">{{demande.createdAt}}</span></li>
+                    <li class="flex items-center"><span class="font-semibold ">Type de procéssus :</span><span class="flex-1"  style="padding-left: 25px">{{demande.typeProcessusLibelle}}</span></li>
+                    <li class="flex items-center"><span class="font-semibold ">Type de non-conformité :</span><span class="flex-1"  style="padding-left: 25px">{{demande.typeNonConformiteLibelle}}</span></li>
+                    <li class="flex items-center"><span class="font-semibold ">Type d'action :</span><span class="flex-1"  style="padding-left: 25px">{{demande.actionLibelle}}</span></li>
+                    <li class="flex items-center"><span class="font-semibold ">Niveau de non-conformité :</span><span class="flex-1"  style="padding-left: 25px">{{demande.niveauNonConformiteLibelle}}</span></li>
+                    <li class="flex items-center"><span class="font-semibold ">Origine de non-conformité :</span><span class="flex-1"  style="padding-left: 25px">{{demande.originNonConformiteLibelle}}</span></li>
                 </ul>
             </div>
 
-            <!-- Structure responsable -->
             <div class="card p-4">
-                <span class="text-xl font-bold mb-3 text-900">Structure responsable</span>
-                <ul class="list-none p-0 m-0 text-600 space-y-3">
-                    <li class="flex items-center"><span class="font-semibold w-28">Service:</span><span class="flex-1">{{demande.origineService || ''}}</span></li>
+                <span class="text-xl font-bold mb-3 text-900">Validation par le pilote processus</span>
+                <ul>
+                    <li *ngIf="demande.pertinancePilote" class="flex items-center"><span class="font-semibold w-28">Pertinance:</span><span class="flex-1">{{demande.pertinancePilote}}</span></li>
+                    <li *ngIf="demande.justificationPilote" class="flex items-center"><span class="font-semibold w-28">Justifications:</span><span class="flex-1" [innerHTML]="demande.justificationPilote"></span></li>
                 </ul>
             </div>
         </div>
@@ -30,18 +34,16 @@
         <div class="flex flex-col gap-4 flex-1 min-w-[300px]">
             <!-- Description -->
             <div class="card p-4">
-                <span class="text-xl font-bold mb-3 text-900">Description</span>
+                <span class="text-xl font-bold mb-3 text-900">Description de la non-conformité</span>
                 <div class="p-3 bg-gray-100 rounded"><p class="m-0 text-600">{{demande.justification || 'Aucune description fournie'}}</p></div>
             </div>
-
-            <!-- Validation -->
             <div class="card p-4">
-                <span class="text-xl font-bold mb-3 text-900">Validation par le pilote processus</span>
-                <ul>
-                    <li *ngIf="demande.pertinancePilote" class="flex items-center"><span class="font-semibold w-28">Pertinance:</span><span class="flex-1">{{demande.pertinancePilote}}</span></li>
-                    <li *ngIf="demande.justificationPilote" class="flex items-center"><span class="font-semibold w-28">Justifications:</span><span class="flex-1" [innerHTML]="demande.justificationPilote"></span></li>
-                </ul>
+                <span class="text-xl font-bold mb-3 text-900">Description des actions entreprises</span>
+                <div class="p-3 bg-gray-100 rounded"><p class="m-0 text-600">{{demande.actionDsc || 'Aucune description fournie'}}</p></div>
             </div>
+
+
+
         </div>
     </div>
 
@@ -52,15 +54,13 @@
             <div class="card p-4">
                 <span class="text-xl font-bold mb-3 text-900">Documents joints</span>
                 <div class="flex flex-col gap-2">
-                    <div *ngFor="let pj of demande.fichiers" class="flex justify-between items-center border-b pb-2">
-                        <div class="flex items-center gap-2">
-                            <i class="pi pi-file"></i>
-                            <span>{{pj.nomFichier || 'Document joint'}}</span>
-                        </div>
-                        <a href="javascript:void(0)" (click)="downloadFile(pj.id)" class="text-primary">
-                            <i class="pi pi-download"></i>
-                        </a>
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-file"></i>
+                        <span>{{ 'Document joint'}}</span>
                     </div>
+                    <a href="javascript:void(0)" (click)="downloadFile(demande.fichiers)" class="text-primary">
+                        <i class="pi pi-download"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -115,8 +115,6 @@
                     <tr>
                         <th>N° ordre</th>
                         <th>Responsable</th>
-                        <th>Cause identifiée</th>
-                        <th>Solution retenue</th>
                         <th>Date échéance</th>
                         <th>Statut</th>
                         <th *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION">Actions</th>
@@ -126,14 +124,18 @@
                     <tr>
                         <td>{{plan.numeroOdre }}</td>
                         <td>{{plan.responsableNomComplet}}</td>
-                        <td>{{plan.causeIdentifiees}}</td>
-                        <td>{{plan.solutionRetenues}}</td>
                         <td>{{plan.dateEcheance}}</td>
                         <td>{{plan.status}}</td>
-                        <td *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION">
+                        <td >
+                            <span *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT">
                             <button *ngIf="plan.status==='NON_TRAITER'" pRipple pButton type="button" icon="pi pi-pencil"
                                     (click)="edit(plan)"
-                                     label="Modifier"></button>
+                                     label="Modifier"></button></span>
+                            <span>
+                            <button pRipple pButton type="button" icon="pi pi-eye"
+                                    class="p-button-secondary"
+                                    (click)="affich(plan)"
+                                    label="Détails"></button></span>
                         </td>
                     </tr>
                 </ng-template>
@@ -222,4 +224,77 @@
         </div>
     </p-footer>
 </p-dialog>
+<p-dialog
+
+    [header]="'Détails du plan action n°'+planAction.numeroOrdre "
+    [modal]="true"
+    [(visible)]="afficheDialog"
+    [style]="{ width: '48rem', height: 'auto' }"
+    [maximizable]="false"
+    [contentStyle]="{ padding: '1.5rem 2rem' }"
+    [breakpoints]="{ '960px': '95vw' }"
+    [draggable]="false">
+
+    <ng-template #content>
+        <div class="card p-4">
+            <span class="text-xl font-bold mb-3 text-900">Détails de la non-conformité</span>
+            <ul class="list-none p-0 m-0 text-600 space-y-3">
+                <li class="flex items-center mt-4"><span class="font-semibold ">N° Ordre : </span><span class="flex-1" style="padding-left: 25px">{{ planAction.numeroOdre }}</span></li>
+                <li class="flex items-center"><span class="font-semibold ">Responsable :</span><span class="flex-1"  style="padding-left: 25px">{{planAction.responsableNomComplet  }}({{planAction.responsableEmail  }}) </span></li>
+                <li class="flex items-center"><span class="font-semibold ">Date d'échéance :</span><span class="flex-1"  style="padding-left: 25px">{{planAction.dateEcheance | date:'dd-MM-yyyy' }}</span></li>
+
+            </ul></div>
+        <div class="flex flex-col gap-4 flex-1 ">
+            <!-- Description -->
+            <div class="card p-4">
+                <span class="text-xl font-bold mb-3 text-900">Causes identifiées</span>
+                <div class="p-3 "><p class="m-0 text-600">{{planAction.causeIdentifiees}}</p></div>
+            </div>
+            <div class="card p-4">
+                <span class="text-xl font-bold mb-3 text-900">Solutions retenues</span>
+                <div class="p-3 "><p class="m-0 text-600">{{planAction.solutionRetenues }}</p></div>
+            </div>
+
+        </div>
+        <div class="flex flex-row gap-4 justify-content-between flex-wrap text-sm">
+
+            <!-- Ligne 1 : Informations générales -->
+
+
+            <!-- Ligne 3 : Pièces jointes -->
+            <div class="flex flex-row gap-3 overflow-auto">
+                <div class="surface-ground border-1 border-round shadow-sm p-4 min-w-30rem">
+                    <h4 class="text-lg font-bold mb-3 text-primary">📎 Pièces jointes</h4>
+
+                    <div *ngIf="planAction.fichiers?.length > 0" class="mb-3">
+                        <button
+                            type="button"
+                            pButton
+                            icon="pi pi-download"
+                            label="Télécharger tous les fichiers"
+                            class="p-button-success p-button-sm"
+                            (click)="telechargerTout(planAction.fichiers)">
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </ng-template>
+
+
+    <p-footer #footer>
+        <div class="flex justify-content-end gap-3 pt-3" >
+            <button type="button" pRipple pButton icon="pi pi-times-circle"
+                    class="p-button-secondary position-left mr-3"
+                    label="Quitter" (click)="hideDialogAffich()">
+            </button>
+
+
+        </div>
+    </p-footer>
+</p-dialog>
+
 

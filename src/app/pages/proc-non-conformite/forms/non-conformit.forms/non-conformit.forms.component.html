@@ -166,6 +166,32 @@
                                                             ></p-calendar>
                                                             <small *ngIf="submitted && action.get('dateEcheance')?.invalid" class="p-error">Ce champ est requis</small>
                                                         </div>
+                                                        <div >
+                                                            <label for="causeIdentifiees{{i}}" class="font-bold">Causes identifiées </label>
+                                                            <textarea
+                                                                pInputText
+                                                                (input)="onInputChange()"
+                                                                id="causeIdentifiees{{i}}"
+                                                                formControlName="causeIdentifiees"
+                                                                type="text"
+                                                                class="full-width"
+                                                                [class]="{'ng-invalid ng-dirty': submitted && action.get('causeIdentifiees')?.invalid}"
+                                                            ></textarea>
+                                                            <small *ngIf="submitted && action.get('causeIdentifiees')?.invalid" class="p-error">Ce champ est requis</small>
+                                                        </div>
+                                                        <div >
+                                                            <label for="solutionRetenues{{i}}" class="font-bold">Solutions retenues </label>
+                                                            <textarea
+                                                                pInputText
+                                                                (input)="onInputChange()"
+                                                                id="solutionRetenues{{i}}"
+                                                                formControlName="solutionRetenues"
+                                                                type="text"
+                                                                class="full-width"
+                                                                [class]="{'ng-invalid ng-dirty': submitted && action.get('solutionRetenues')?.invalid}"
+                                                            ></textarea>
+                                                            <small *ngIf="submitted && action.get('solutionRetenues')?.invalid" class="p-error">Ce champ est requis</small>
+                                                        </div>
 
                                                         <!-- Causes identifiées -->
                                                      <!--   <div class="form-group causes">

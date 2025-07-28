@@ -83,7 +83,7 @@ export class DmdTraitementTableTemplateComponent {
 
             this.displayDetail = true;
             let componentRef: any;
-            if (this.btnActions !== EtapeTraitement.CLOTURE&&this.btnActions !== EtapeTraitement.IMPUTATION) {
+            if (this.btnActions !== EtapeTraitement.CLOTURE&&this.btnActions !== EtapeTraitement.IMPUTATION&&this.btnActions !== EtapeTraitement.SUIVI_RQ&&this.btnActions !== EtapeTraitement.VALIDATION) {
                 componentRef = this.detailContainer?.createComponent(this.featureService.getDynamicFormComponent(this.selectedDemande.typeDemande));
             } else {
                 componentRef = this.detailContainer?.createComponent(this.featureService.getDynamicDetailComponent(this.selectedDemande.typeDemande));
@@ -285,7 +285,6 @@ export class DmdTraitementTableTemplateComponent {
 
                     this.selectedDemandes.push(this.selectedDemande);
                 }
-                console.log(this.selectedDemandes);
                 this.onSaveEntity.emit(this.selectedDemandes);
             }
         });

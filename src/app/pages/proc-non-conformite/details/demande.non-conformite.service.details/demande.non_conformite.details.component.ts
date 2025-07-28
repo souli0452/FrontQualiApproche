@@ -24,14 +24,16 @@ export class DemandeNon_conformiteDetailsComponent {
 
     ngOnInit() {}
     motifRejetDialog: boolean = false;
+    afficheDialog: boolean = false;
     planAction:any={};
     users:any=[];
     user:any={};
-    downloadFile(fileId: string) {
-        // Implémentez la logique de téléchargement
-    }
+
     hideDialog() {
         this.motifRejetDialog = false;
+    }
+    hideDialogAffich() {
+        this.afficheDialog = false;
     }
     edit(action:any){
         this.planAction=action;
@@ -39,6 +41,11 @@ export class DemandeNon_conformiteDetailsComponent {
           console.log(this.planAction.dateEcheance);
         this.fetchUsers();
         this.motifRejetDialog = true;
+    }
+    affich(action:any){
+        this.planAction=action;
+        this.planAction.dateEcheance=action.dateEcheance.replace(/-/g, "/");
+        this.afficheDialog = true;
     }
     fetchUsers() {
         this.authService
@@ -80,5 +87,26 @@ export class DemandeNon_conformiteDetailsComponent {
             }
         })
     }
+    downloadFile(fichiers:any[]): void {
+       fichiers.forEach(fichier => {
+           const fileUrl = fichier.urlFichier; // Remplace par ton URL
+           const fileName = fichier.nomFichier; // Optionnel : nom personnalisé
+
+           const anchor = document.createElement('a');
+           anchor.href = fileUrl;
+           anchor.download = fileName;
+           anchor.target = '_blank';
+           anchor.click();
+       })
+    }
+    telechargerTout(fichiers: any[]) {
+        fichiers?.forEach(fichier => {
+            const link = document.createElement('a');
+            link.href = fichier.urlFichier;
+            link.download = fichier.nom || 'fichier';
+            link.click();
+        });
+    }
+
     protected readonly EtapeTraitement = EtapeTraitement;
 }
