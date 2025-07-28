@@ -45,10 +45,10 @@ export class ReclamationComponent {
     constructor(protected fb: UntypedFormBuilder,
                 protected messageService: MessageService,
                 protected reclamationService: ReclamationService) {
-        this.formCols = [ 
+        this.formCols = [
             {field: 'id', label: "", header: 'Id', type: 'string', visible: false, required: false},
             {field: 'nomDemendeur', label: "Nom du demandeur", header: 'Nom du demandeur', type: 'string', visible: true, required: true},
-            {field: 'numeroReference', label: "Numéro de référence", header: 'Numéro de réfrence', type: 'string', visible: true, required: true, },
+            {field: 'numeroReference', label: "Numéro de référence", header: 'Numéro de réfrence', type: 'string', visible: true, required: false, },
         ];
         this.tableCols = [
             {field: 'nomDemendeur', header: 'Nom du demandeur', type: 'string', filter: true},
@@ -61,7 +61,7 @@ export class ReclamationComponent {
         this.formGroup = this.fb.group({
             id: [null],
             nomDemendeur: [null, Validators.required],
-            numeroReference: [null, Validators.required],
+            numeroReference: [null],
         });
     }
 

@@ -170,7 +170,7 @@ constructor(private  authService: AuthService) {
                     {
                         label: "Traitement des plans d'actions",
                         icon: 'pi pi-fw pi-cog',
-                        visible:  isUserInRoles(['TRAITEMENT_PLAN']),
+                        visible:  isUserInRoles(['TRAITEMENT_PLAN','SUPER_ADMIN']),
                         routerLink: ['/traitement-action'],
                     },
                 ]

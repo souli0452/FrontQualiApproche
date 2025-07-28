@@ -1,129 +1,67 @@
 <ng-container *ngIf="col.visible" [formGroup]="form">
+    <div class="field-container animate-slide-in">
 
-    <span *ngIf="col.type == 'string' ">
-        <div class="flex flex-col gap-2 mb-3">
-            <label [for]="col.field">{{ col.header }}<span class="text-red-500 font-bold" *ngIf="col.required">*</span></label>
-            <input pInputText class="w-full" [readonly]="col.readonly" [name]="col.field" [id]="col.field" pInputText type="text"
-            [formControlName]="col.field" />
-            <small [id]="col.field">{{ col.label }}</small>
-        </div>
-    </span>
-    <span *ngIf="col.type == 'text' ">
-        <div class="flex flex-col gap-2 mb-3">
-            <label [for]="col.field">{{ col.header }}<span class="text-red-500 font-bold" *ngIf="col.required">*</span></label>
-            <textarea pTextarea class="w-full" [id]="col.field"></textarea>
-            <small [id]="col.field">{{ col.label }}</small>
-        </div>
-    </span>
-    <span *ngIf="col.type == 'number' ">
-        <div class="p-float-label">
-            <p-inputNumber [name]="col.field" [id]="col.field" mode="decimal"
-                           [showButtons]="true"
-                           [readonly]="col.readonly"
-                           [min]="0" [formControlName]="col.field">
+        <!-- Titre et obligatoire -->
+        <label [for]="col.field" class="block text-sm font-bold text-gray-800 mb-1">
+            {{ col.header }}
+            <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+        </label>
+
+        <!-- Input text -->
+        <ng-container *ngIf="col.type === 'string'">
+            <input pInputText
+                   type="text"
+                   [readonly]="col.readonly"
+                   class="premium-input"
+                   [formControlName]="col.field"
+                   [id]="col.field"
+                   [name]="col.field" />
+        </ng-container>
+
+        <!-- Textarea -->
+        <ng-container *ngIf="col.type === 'text'">
+      <textarea pTextarea
+                rows="3"
+                class="premium-input resize-none"
+                [formControlName]="col.field"
+                [id]="col.field"
+                [name]="col.field"></textarea>
+        </ng-container>
+
+        <!-- Number -->
+        <ng-container *ngIf="col.type === 'number' || col.type === 'float'">
+            <p-inputNumber
+                [showButtons]="true"
+                [readonly]="col.readonly"
+                [min]="0"
+                mode="decimal"
+                class="premium-number"
+                [formControlName]="col.field"
+                [id]="col.field"
+                [name]="col.field">
             </p-inputNumber>
-            <small [id]="col.field">{{ col.label }}</small>
-             <label [htmlFor]="col.field" class="form-label font-bold">{{ col.header }}
-                 <span class="text-red-500 font-bold" *ngIf="col.required">*</span>
-            </label>
-        </div>
-    </span>
+        </ng-container>
 
-    <span *ngIf="col.type == 'float' ">
-        <div class="p-float-label">
-            <p-inputNumber [name]="col.field" [id]="col.field" mode="decimal"
-                           [showButtons]="true"
-                           [readonly]="col.readonly"
-                           [min]="0" [formControlName]="col.field">
-            </p-inputNumber>
-             <label [htmlFor]="col.field" class="form-label font-bold">{{ col.header }}
-                 <span class="text-red-500 font-bold" *ngIf="col.required">*</span>
-            </label>
-        </div>
-    </span>
-    <span *ngIf="col.type == 'boolean' ">
-        <div class="form-check mt-3 mb-4">
-                <p-checkbox [name]="col.field" [formControlName]="col.field" [binary]="true" [id]="col.field" />
-                <label for="ny" class="ml-2">{{col.header}}</label>
-        </div>
-    </span>
-
-    <span *ngIf="col.type == 'dropdown' ">
-        <label [htmlFor]="col.field" class="form-label font-bold">{{ col.header }}
-            <span class="text-red-500 font-bold" *ngIf="col.required">*</span>
-            </label>
-        <div class="flex flex-col gap-2 mb-3">
-            <p-dropdown [options]="dropDownObject[col.field]"
-                        [name]="col.field" appendTo="body"
-                        [optionLabel]=""
-                        [resetFilterOnHide]="true"
-                        [filter]="true" [showClear]="true"
-                        [formControlName]="col.field">
+        <!-- Dropdown -->
+        <ng-container *ngIf="col.type === 'dropdown'">
+            <p-dropdown
+                [options]="dropDownObject[col.field]"
+                [filter]="true"
+                [showClear]="true"
+                [formControlName]="col.field"
+                class="w-full premium-dropdown"
+                [name]="col.field">
             </p-dropdown>
+        </ng-container>
 
-        </div>
-    </span>
-    <span *ngIf="col.type == 'dropdownS' ">
-        <label [htmlFor]="col.field" class="form-label font-bold">{{ col.header }}
-            <span class="text-red-500 font-bold" *ngIf="col.required">*</span>
-            </label>
-        <div class="flex flex-col gap-2 mb-3">
-            <p-dropdown [options]="dropDownObject[col.field][0]"
-                        [name]="col.field" appendTo="body"
-                        [optionLabel]="'libelleLong'"
-                        [resetFilterOnHide]="true"
-                        [filter]="true" [showClear]="true"
-                        [formControlName]="col.field">
-            </p-dropdown>
+        <!-- Checkbox -->
+        <ng-container *ngIf="col.type === 'boolean'">
+            <div class="flex items-center mt-2">
+                <p-checkbox [binary]="true" [formControlName]="col.field" [id]="col.field"></p-checkbox>
+                <label [for]="col.field" class="ml-2 text-gray-700">{{ col.header }}</label>
+            </div>
+        </ng-container>
 
-        </div>
-    </span>
-    <span *ngIf="col.type == 'date' ">
-        <div class="p-float-label">
-            <p-calendar [showIcon]="true" [id]="col.field"
-                        [formControlName]="col.field" appendTo="body"
-                        [name]="col.field" dateFormat="dd/mm/yy" inputId="icon">
-            </p-calendar>
-             <label [htmlFor]="col.field" class="form-label font-bold">{{ col.header }}
-                 <span class="text-red-500 font-bold" *ngIf="col.required">*</span>
-            </label>
-        </div>
-    </span>
-    <span *ngIf="col.type=='image'">
-         <p-fileUpload
-             (onSelect)="onFileSelected($event)"
-             [showCancelButton]="false"
-             chooseLabel="{{col.header}}"
-             [showUploadButton]="false"
-             accept="image/*"
-         >
-             <ng-template pTemplate="content">
-             </ng-template>
-         </p-fileUpload>
-    </span>
-    <span *ngIf="col.type=='file'">
-         <p-fileUpload
-             (onSelect)="onFileSelected($event)"
-             [showCancelButton]="false"
-             chooseLabel="{{col.header}}"
-             [showUploadButton]="false"
-             accept="application/*"
-         >
-             <ng-template pTemplate="content">
-             </ng-template>
-         </p-fileUpload>
-    </span>
-    <span *ngIf="col.type == 'multiselect' ">
-        <div class="p-float-label">
-            <p-multiSelect [id]="col.field" [options]="multiSelectObject[col.field]"
-                           [optionLabel]="'label'" [dataKey]="col.key" [resetFilterOnHide]="true"
-                           [formControlName]="col.field"
-                           [appendTo]="'body'" [virtualScroll]="true" [itemSize]="34"
-                           [filter]="true">
-            </p-multiSelect>
-            <label [htmlFor]="col.field" class="form-label font-bold">{{ col.header }}
-                <span class="text-red-500 font-bold" *ngIf="col.required">*</span>
-            </label>
-        </div>
-    </span>
+
+    </div>
 </ng-container>

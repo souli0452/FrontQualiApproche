@@ -48,7 +48,7 @@ export class ActionNonConformiteComponent {
           this.formCols = [
               {field: 'id', label: "", header: 'Id', type: 'number', visible: false, required: false},
               {field: 'libelle', label: "Libellé de l'action (Action préventive - Action corrective)", header: 'Libellé', type: 'string', visible: true, required: true},
-              {field: 'description', label: "Description de l'action", header: 'Description', type: 'string', visible: true, required: false}
+              {field: 'description', label: "Description de l'action", header: 'Description', type: 'text', visible: true, required: false}
           ];
 
           this.tableCols = [
@@ -61,7 +61,7 @@ export class ActionNonConformiteComponent {
           this.formGroup = this.fb.group({
               id: [null],
               libelle: [null, Validators.required],
-              description: [null, Validators.required],
+              description: [null],
             //  audites: [null, Validators.required]
 
           });

@@ -48,7 +48,7 @@ export class NiveauNonConformiteComponent {
           this.formCols = [
               {field: 'id', label: "", header: 'Id', type: 'number', visible: false, required: false},
               {field: 'libelle', label: "Libellé du niveau de non conformité (Mineur - Majeur)", header: 'Libellé', type: 'string', visible: true, required: true},
-              {field: 'description', label: "Description du niveau de non conformité", header: 'Description', type: 'string', visible: true, required: false}
+              {field: 'description', label: "Description du niveau de non conformité", header: 'Description', type: 'text', visible: true, required: false}
           ];
 
           this.tableCols = [
@@ -61,7 +61,7 @@ export class NiveauNonConformiteComponent {
           this.formGroup = this.fb.group({
               id: [null],
               libelle: [null, Validators.required],
-              description: [null, Validators.required],
+              description: [null],
             //  audites: [null, Validators.required]
 
           });
