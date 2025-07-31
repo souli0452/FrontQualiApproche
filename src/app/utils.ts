@@ -380,3 +380,63 @@ export function formatDateTodd(dateInput: Date | string | number): string {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
 }
+export function getStatusSeverity(status: string): string {
+    if (!status) return 'info';
+
+    const statusLower = status.toLowerCase();
+
+    switch (statusLower) {
+        case 'NON_TRAITER':
+        case 'PENDING':
+        case 'DRAFT':
+            return 'warning';  // Jaune/orange
+        case 'TRAITER':
+        case 'IN_PROGRESS':
+        case 'APPROVED':
+        case 'validé':
+        case 'oui':
+            return 'success';  // Vert
+        case 'rejeté':
+        case 'rejected':
+        case 'annulé':
+        case 'non':
+            return 'danger';   // Rouge
+        case 'en attente':
+        case 'on hold':
+            return 'info';      // Bleu
+        case 'en retard':
+        case 'late':
+            return 'danger';    // Rouge
+        default:
+            return 'info';      // Bleu par défaut
+    }
+}
+
+export  function  downloadFile( nom: string, base64: string) {
+    // Extraire le type MIME si la base64 inclut un préfixe de type Data URI
+    const matches = base64.match(/^data:(.+);base64,(.+)$/);
+    let mimeType = 'application/octet-stream';
+    let base64Data = base64;
+
+    if (matches && matches.length === 3) {
+        mimeType = matches[1];
+        base64Data = matches[2];
+    }
+
+    // Convertir la base64 en Blob
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length).fill(0).map((_, i) => byteCharacters.charCodeAt(i));
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mimeType });
+
+    // Créer une URL temporaire et déclencher le téléchargement
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = nom || 'fichier';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+

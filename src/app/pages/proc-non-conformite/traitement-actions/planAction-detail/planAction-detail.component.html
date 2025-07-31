@@ -6,11 +6,89 @@
                 (click)="goBack()">
 
         </button>
-        <span class="nc-reference ml-3 mt-3">Référence : {{nc.numeroReference}}</span>
+        <span class="nc-reference ml-3 mt-3">N° ordre : {{planActionRequest.numeroOdre}}</span>
     </div>
 
     <!-- Grille principale -->
     <div class="grid">
+        <div class="col-12 md:col-6">
+            <div class="card nc-card">
+                <h3 class="nc-card-title">
+                    <i class="pi pi-info-circle mr-2"></i>Détails du plan d'action
+                </h3>
+                <div class="nc-details-grid">
+                    <div class="nc-detail-item">
+                        <span class="block font-bold  nc-detail-label">Causes identifiées :</span>
+                        <span class="nc-detail-value">{{planActionRequest.causeIdentifiees}} </span>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label block font-bold ">Solutions retenues :</span>
+                        <span class="nc-detail-value">{{planActionRequest.solutionRetenues}} </span>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label block font-bold ">Action Correstives :</span>
+                        <span class="nc-detail-value">{{planActionRequest.actionCorrective}}</span>
+                    </div>
+
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label block font-bold ">Status  :</span>
+                        <span class="nc-detail-value">  <p-tag [severity]="getStatusSeverity(planActionRequest.status)"
+                                                               [value]="planActionRequest.status">
+                                </p-tag></span>
+                    </div>
+                    <div class="nc-detail-item" *ngIf="planActionRequest.fichiers!=null&&planActionRequest.fichiers.length>0">
+                        <span class="nc-detail-label block font-bold ">Pièces jointes</span>
+
+
+                        <div *ngFor="let fichier of planActionRequest.fichiers" class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
+                            <div class="flex align-items-center mt-3">
+                                <span class="file-name">{{ fichier.nomFichier }}</span>
+                            </div>
+                            <button pButton pRipple
+                                    type="button"
+                                    icon="pi pi-download"
+                                    class="p-button-text p-button-rounded p-button-plain"
+                                    (click)="downloadFile(fichier)"
+                                    pTooltip="Télécharger"
+                                    tooltipPosition="left">
+                            </button>
+                        </div>
+
+                    </div>
+                    <div class="nc-detail-item" *ngIf="planActionRequest.observation">
+                        <span class="nc-detail-label block font-bold ">Observation lors du traitement</span>
+                        <span class="nc-detail-value">{{planActionRequest.observation}}</span>
+                    </div>
+                    <div class="nc-detail-item" *ngIf="planActionRequest.observationRejet">
+                        <span class="nc-detail-label block font-bold text-warn">Observation réjet</span>
+                        <span class="nc-detail-value">
+                            <p-tag [severity]="getStatusSeverity(StatusEnum.REJECTED)"
+                                   [value]="planActionRequest.observationRejet">
+                                </p-tag>
+              </span>
+                    </div>
+                    <div class="nc-detail-item" *ngIf="planActionRequest.dateRejet">
+                        <span class="nc-detail-label block font-bold text-warn">Date de  réjet</span>
+                        <span class="nc-detail-value">{{planActionRequest.dateRejet}}</span>
+                    </div>
+                    <div class="nc-detail-item" *ngIf="planActionRequest.docRejet">
+                        <span class="nc-detail-label block font-bold text-warn">Document joint lors du rejet</span>
+                        <div class="flex align-items-center mt-3">
+                            <span class="file-name">{{ planActionRequest.docRejet.nomFichier }}</span>
+                        </div>
+                        <button pButton pRipple
+                                type="button"
+                                icon="pi pi-download"
+                                class="p-button-text p-button-rounded p-button-plain"
+                                (click)="downloadFile(planActionRequest.docRejet)"
+                                pTooltip="Télécharger"
+                                tooltipPosition="left">
+                        </button>
+                    </div>
+
+
+                </div>
+            </div>
         <!-- Colonne gauche - Détails -->
         <div class="col-12 md:col-6">
             <div class="card nc-card">
@@ -133,52 +211,33 @@
         <!-- Motif de rejet -->
         <div class="col-12" *ngIf="nc.observationRejet">
             <div class="card nc-card mt-4 nc-rejection">
-                <h3 class="nc-card-title text-red-500" style="color: red">
-                    <i class="pi pi-times-circle mr-2 block font-bold " ></i>Motif de rejet
+                <h3 class="nc-card-title text-red-500">
+                    <i class="pi pi-times-circle mr-2 block font-bold "></i>Motif de rejet
                 </h3>
                 <div class="nc-description">
                     {{nc.observationRejet}}
                 </div>
-                <span *ngIf="nc.docRejet">
-                <h6>Documents joint  lors du réjet</h6>
-                <div class="flex align-items-center mt-3">
-                    <span class="file-name">{{ nc.docRejet.nomFichier }}</span>
-                </div>
-                <button pButton pRipple
-                        type="button"
-                        icon="pi pi-download"
-                        class="p-button-text p-button-rounded p-button-plain"
-                        (click)="downloadFile(nc.docRejet)"
-                        pTooltip="Télécharger"
-                        tooltipPosition="left">
-                </button></span>
             </div>
         </div>
 
         <!-- Documents joints -->
         <div class="col-12" *ngIf="nc.fichiers?.length > 0">
             <div class="card nc-card mt-4">
-                <div class="flex align-items-center justify-content-between mb-3">
-                    <h3 class="nc-card-title m-0">
-                        <i class="pi pi-paperclip mr-2"></i>Documents joints
-                    </h3>
-
-                </div>
-
-                <div class="file-list">
-                    <div *ngFor="let fichier of nc.fichiers" class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
-                        <div class="flex align-items-center mt-3">
-                            <span class="file-name">{{ fichier.nomFichier }}</span>
-                        </div>
-                        <button pButton pRipple
-                                type="button"
-                                icon="pi pi-download"
-                                class="p-button-text p-button-rounded p-button-plain"
-                                (click)="downloadFile(fichier)"
-                                pTooltip="Télécharger"
-                                tooltipPosition="left">
-                        </button>
+                <h3 class="nc-card-title">
+                    <i class="pi pi-paperclip mr-2 block font-bold "></i>Documents joints
+                </h3>
+                <div *ngFor="let fichier of nc.fichiers" class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
+                    <div class="flex align-items-center mt-3">
+                        <span class="file-name">{{ fichier.nomFichier }}</span>
                     </div>
+                    <button pButton pRipple
+                            type="button"
+                            icon="pi pi-download"
+                            class="p-button-text p-button-rounded p-button-plain"
+                            (click)="downloadFile(fichier)"
+                            pTooltip="Télécharger"
+                            tooltipPosition="left">
+                    </button>
                 </div>
             </div>
         </div>
@@ -317,4 +376,5 @@
             </button>
         </ng-template>
     </p-dialog>
+</div>
 </div>

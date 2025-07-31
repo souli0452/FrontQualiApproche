@@ -161,6 +161,7 @@ export class TraitementActionTableComponent implements OnInit {
     onPublish(event: Event, rowdata: any) {
         event.stopPropagation();
         this.planAction=rowdata;
+        console.log( this.planAction);
         this.displayDialog=true;
 
     }
@@ -177,7 +178,7 @@ export class TraitementActionTableComponent implements OnInit {
     }
 
     onRowSelect(id: number) {
-
+        this.router.navigate(['/traitement-action/detail/', id]);
     }
 
 
@@ -209,4 +210,5 @@ export class TraitementActionTableComponent implements OnInit {
 
 
     }
+
 }

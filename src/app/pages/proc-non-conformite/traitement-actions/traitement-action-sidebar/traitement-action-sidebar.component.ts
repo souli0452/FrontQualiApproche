@@ -81,8 +81,11 @@ user: any = {};
         data.forEach(stats => {
             if (stats.status === NonConformStatus.TRAITER) {
                 published = stats.count;
-            } else{
+            } if (stats.status === NonConformStatus.NON_TRAITER) {
                 drafted = stats.count;
+            }
+            if (stats.status === NonConformStatus.ARCHIVED) {
+                archived = stats.count;
             }
         });
 
@@ -92,16 +95,22 @@ user: any = {};
     updateSidebar(published?: number, drafted?: number, archived?: number) {
         this.items = [
             {
-                label: 'Non traitées',
+                label: 'Non traités',
                 icon: 'pi pi-star',
                 badge: '' + drafted,
                 routerLink: '/traitement-action/non-traiter'
             },
             {
-                label: 'Traitées',
+                label: 'Traités',
                 icon: 'pi pi-inbox',
                 badge: '' + published,
                 routerLink: '/traitement-action/traiter'
+            },
+            {
+                label: 'Réjétés',
+                icon: 'pi pi-inbox',
+                badge: '' + archived,
+                routerLink: '/traitement-action/rejeter'
             },
 
         ];

@@ -297,6 +297,7 @@ export interface KcLoginRequest {
 
 export interface KcUser {
     id: string;
+    userId?: string;
     createdTimestamp: number;
     username: string;
     enabled: boolean;

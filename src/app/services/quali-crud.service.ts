@@ -42,6 +42,9 @@ export abstract class QualiCrudService<T, ID> implements CrudOperations<T, ID> {
     findById(id:string): Observable<HttpResponse<T>> {
         return this.http.get<T>(this.uri+`/get/${id}`, {observe: 'response'});
     }
+    findByNumero(id:string): Observable<HttpResponse<T>> {
+        return this.http.get<T>(this.uri+`/get/numero/${id}`, {observe: 'response'});
+    }
 
     delete(id: ID): Observable<HttpResponse<void>> {
         return this.http.delete<void>(this.uri + `/delete/${id}` , {observe: 'response'});

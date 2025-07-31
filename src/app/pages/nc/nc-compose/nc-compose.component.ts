@@ -100,24 +100,25 @@ ngOnInit(): void {
         this.nonConformite.structureSoumissionId = this.userStructure.id;
         this.nonConformite.typeProcessusId = this.nc.typeProcedure.id;
         this.nonConformite.typeProcessusLibelle = this.nc.typeProcedure.libelle;
-        this.nonConformite.actionId = this.nc.typeAction.id;
+        if(this.nc.typeAction){
+            this.nonConformite.actionLibelle= this.nc.typeAction.libelle;
+            this.nonConformite.actionId = this.nc.typeAction.id;
+        }
+
         this.nonConformite.origineServiceLibelleCourt=this.userStructure.libelleCourt;
-        this.nonConformite.actionLibelle= this.nc.typeAction.libelle;
+
         this.nonConformite.fonctionEmetteur = "";
         this.nonConformite.niveauNonConformiteLibelle=this.nc.niveauNonConformite.libelle;
             this.nonConformite.typeNonConformiteLibelle = this.nc.typeNonformite.libelle;
-        this.nonConformite.originNonConformiteLibelle=this.nc.reclamationClient.nomDemendeur;
-        this.nonConformite.originNonConformiteId=this.nc.reclamationClient.id;
         // ✅ Attendre la conversion
         this.nonConformite.fichiers = await convertFilesToBase64(this.uploadedFiles);
-
-        console.log('DEBUG payload:', this.nonConformite);
-
+console.log(this.nonConformite);
         if (this.nonConformite.id != null) {
             this.nonConformiteService.update(this.nonConformite).subscribe(this.onResponse());
         } else {
             this.nonConformiteService.save(this.nonConformite).subscribe(this.onResponse());
         }
+
     }
 
 
@@ -196,8 +197,6 @@ ngOnInit(): void {
     }
     handleFileUpload(files: any[]) {
         this.uploadedFiles = files;
-
-        // Tu peux envoyer ces fichiers au serveur ou les manipuler ici
     }
     fetchActions() {
         this.actionNonConformiteService.findAll().pipe()

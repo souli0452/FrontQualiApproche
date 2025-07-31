@@ -63,15 +63,15 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
                 this.errorMessage = 'Les informations sont incorrectes.';
             }
         } else {
-            const token = this.route.snapshot.queryParamMap.get('token');
-            const userId = this.route.snapshot.queryParamMap.get('userId');
-
-            if (!token || !userId) {
+            const token = this.authService.getAccessToken();
+            const user = this.authService.getUser();
+            console.log(user)
+            if (!token || !user) {
                 console.error('Token ou userId manquant');
                 return;
             }
 
-            this.handleTokenPasswordReset(userId, password, token);
+            this.handleTokenPasswordReset(user.userId!, password, token);
         }
     }
 

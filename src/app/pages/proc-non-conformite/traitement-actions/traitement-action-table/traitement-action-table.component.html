@@ -58,13 +58,11 @@
             <td [style.width]="'20%'">
                 <div class="flex justify-content-end w-full px-0">
                     <span #date class="text-700 font-semibold white-space-nowrap">
-                        <span *ngIf="status === 'NON_TRAITER'">{{ actuality.dateEcheance }}</span>
-                        <span *ngIf="status === 'PUBLISHED'">{{ actuality.dateEcheance }}</span>
-                        <span *ngIf="status === 'REJECTED'">{{ actuality.dateEcheance  }}</span>
+
                     </span>
                     <div style="display: none" #options>
                         <button pButton pRipple icon="pi pi-cog" class="p-button-primary h-2rem w-2rem mr-2"
-                                (click)="onPublish($event, actuality)" pTooltip="Publier"
+                                (click)="onPublish($event, actuality)" pTooltip="Traiter"
                                 tooltipPosition="top" type="button" *ngIf="status === 'NON_TRAITER'">
                         </button>
 
@@ -92,12 +90,12 @@
                 <label for="causes" class="block font-bold  mb-2">Observertions liés à l'exécution de l'action </label>
                 <textarea pInputTextarea id="causes" [(ngModel)]="planAction.observation"
                           name="causes" rows="5" [autoResize]="true"
-                          placeholder="Entrer les causes "
+                          placeholder="Entrer une observation "
                           class="w-full"></textarea>
 
             </div>
             <div class="field mt-5 mb-4">
-                <label class="block font-bold  mb-2">Documents liés à l'exécution de l'action <span class="p-error"> *</span></label>
+                <label class="block font-bold  mb-2">Documents liés à l'exécution de l'action</label>
                 <app-file-upload (fileUploaded)="handleFileUpload($event)"></app-file-upload></div>
 
             </div>
@@ -108,6 +106,6 @@
         <button type="button" pRipple pButton icon="pi pi-times" (click)="displayDialog = false" label="Fermer"
                 class="p-button-secondary"></button>
         <button type="button" pRipple pButton icon="pi pi-send" (click)="soumettre($event)" label="Soumettre"
-                class="p-button-primary" [disabled]="uploadedFiles.length==0"></button>
+                class="p-button-primary" [disabled]="!planAction.observation"></button>
     </p-footer>
 </p-dialog>

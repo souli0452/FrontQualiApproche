@@ -44,3 +44,87 @@
 .border-round {
     border-radius: 6px;
 }
+/* Styles globaux */
+.nc-detail-container {
+    padding: 1.5rem;
+}
+
+/* Cartes */
+.nc-card {
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.nc-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nc-card-header {
+    display: flex;
+    align-items: center;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.nc-card-title {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.nc-icon {
+    color: var(--primary-color);
+    margin-right: 0.5rem;
+    font-size: 1.2rem;
+}
+
+/* Grille de détails */
+.nc-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.nc-detail-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.nc-detail-label {
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.nc-detail-value {
+    color: #111827;
+    margin-top: 0.25rem;
+    word-break: break-word;
+}
+
+/* Description */
+.nc-description {
+    background-color: #f9fafb;
+    padding: 1rem;
+    border-radius: 6px;
+    color: #374151;
+    line-height: 1.5;
+    white-space: pre-line;
+}
+
+/* Rejet */
+.nc-rejection {
+    border-left: 4px solid #ef4444;
+    background-color: rgba(239, 68, 68, 0.05);
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+    .nc-details-grid {
+        grid-template-columns: 1fr;
+    }
+}

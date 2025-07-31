@@ -3,6 +3,7 @@
 
 export class QualiUrlConfig {
     static readonly FORMATION_ROOT_URL = `${SERVICE_PREFIX}/formation`;
+    static readonly PLAN_ACTION_ROOT_URL = `${SERVICE_PREFIX}/plan-action`;
     static readonly CG_ROOT_URL = `${SERVICE_PREFIX}/config-global`;
     static readonly CRITERE_EVALUATION_ROOT_URL = `${SERVICE_PREFIX}/critere-evaluation`;
     static readonly DEPARTEMENT_ROOT_URL = `${SERVICE_PREFIX}/departement`;

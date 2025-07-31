@@ -1,47 +1,37 @@
-import { Component } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, inject, Input, OnInit, PLATFORM_ID } from '@angular/core';
 import { RippleModule } from 'primeng/ripple';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Product, ProductService } from '../../service/product.service';
+import { UIChart } from 'primeng/chart';
+import { ProcNonConformiteService } from '../../proc-non-conformite/proc-non-conformite.service';
+import { data } from 'autoprefixer';
 
 @Component({
     standalone: true,
     selector: 'app-recent-sales-widget',
-    imports: [CommonModule, TableModule, ButtonModule, RippleModule],
-    template: `<div class="card !mb-8">
-        <div class="font-semibold text-xl mb-4">Recent Sales</div>
-        <p-table [value]="products" [paginator]="true" [rows]="5" responsiveLayout="scroll">
-            <ng-template #header>
-                <tr>
-                    <th>Image</th>
-                    <th pSortableColumn="name">Name <p-sortIcon field="name"></p-sortIcon></th>
-                    <th pSortableColumn="price">Price <p-sortIcon field="price"></p-sortIcon></th>
-                    <th>View</th>
-                </tr>
-            </ng-template>
-            <ng-template #body let-product>
-                <tr>
-                    <td style="width: 15%; min-width: 5rem;">
-                        <img src="https://primefaces.org/cdn/primevue/images/product/{{ product.image }}" class="shadow-lg" alt="{{ product.name }}" width="50" />
-                    </td>
-                    <td style="width: 35%; min-width: 7rem;">{{ product.name }}</td>
-                    <td style="width: 35%; min-width: 8rem;">{{ product.price | currency: 'USD' }}</td>
-                    <td style="width: 15%;">
-                        <button pButton pRipple type="button" icon="pi pi-search" class="p-button p-component p-button-text p-button-icon-only"></button>
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
+    imports: [CommonModule, TableModule, ButtonModule, RippleModule, UIChart],
+    template: `<div class="card !mb-8" style="height: 530px">
+        <div class="font-semibold text-xl mb-4">Non-conformité</div>
+        <p-chart type="doughnut"   [data]="data" [options]="options" class="w-full" />
     </div>`,
     providers: [ProductService]
 })
-export class RecentSalesWidget {
+export class RecentSalesWidget implements OnInit {
     products!: Product[];
+   @Input() data: any;
+    @Input() options: any;
+    constructor( private productService: ProductService) {
 
-    constructor(private productService: ProductService) {}
+    }
 
     ngOnInit() {
         this.productService.getProductsSmall().then((data) => (this.products = data));
     }
+
+
+
+
+
 }

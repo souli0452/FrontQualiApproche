@@ -45,4 +45,25 @@ export class ProcNonConformiteService {
     rejectNc(demande: any): Observable<HttpResponse<any>> {
         return this.http.put<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_REJECT , demande, {observe: 'response'});
     }
+    getStatsNfStruct(anne:any): Observable<HttpResponse<any>> {
+        return this.http.get<any>(NonConformiteUrlConfig.GET_Stat_BY_STATUS_ROOT_URL+`/${anne}`, {observe: 'response'});
+    }
+    getStatsMensuel(anne:any): Observable<HttpResponse<any>> {
+        return this.http.get<any>(NonConformiteUrlConfig.GET_Stat_MENSUEL_ROOT_URL+anne, {observe: 'response'});
+    }
+    getStatsMensuelStatus(anne:any): Observable<HttpResponse<any>> {
+        return this.http.get<any>(NonConformiteUrlConfig.GET_Stat_MENSUEL_STATUS_ROOT_URL+anne, {observe: 'response'});
+    }
+    rejetPlanAction(demande: any): Observable<HttpResponse<any>> {
+        return this.http.put<any>(NonConformiteUrlConfig.REJET_PLAN_ACTION , demande, {observe: 'response'});
+    }
+    getStatsMensuelService(anne:any,serviceId:any): Observable<HttpResponse<any>> {
+        return this.http.get<any>(NonConformiteUrlConfig.GET_Stat_MENSUEL_STATUS_ROOT_URL+anne+"/"+serviceId, {observe: 'response'});
+    }
+    getStatsMensuelStatusService(anne:any,id:any): Observable<HttpResponse<any>> {
+        return this.http.get<any>(NonConformiteUrlConfig.GET_Stat_MENSUEL_STATUS_ROOT_URL+anne+"/service/"+id, {observe: 'response'});
+    }
+    getStatsPlanAction(anne:any): Observable<HttpResponse<any>> {
+        return this.http.get<any>(NonConformiteUrlConfig.STAT_PLAN_ACTION_ALL+anne, {observe: 'response'});
+    }
 }

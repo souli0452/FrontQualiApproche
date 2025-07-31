@@ -13,7 +13,8 @@ import { takeUntil } from 'rxjs';
 import { StructureService } from '../../../structure/structure-service';
 import { AuthService } from '../../../../services/auth-services/auth.service';
 import { formatDate } from '@angular/common';
-import { formatDateToDDMMYYYY } from '../../../../utils';
+import { formatDateToDDMMYYYY, getStatusSeverity } from '../../../../utils';
+import { ProcNonConformiteService } from '../../proc-non-conformite.service';
 
 @Component({
     selector: 'app-non-conformit.forms',
@@ -29,25 +30,49 @@ export class NonConformitFormsComponent {
     protected readonly BtnActions = EtapeTraitement;
     planActionForm: FormGroup;
     actions: FormArray;
+    user:any={};
+    isEdit:boolean=false;
     submitted = false;
+    displayDialog:boolean = false;
+    planAction:any={};
     participants:any[]=[];
     users:any=[];
     constructor(
         private fb: FormBuilder,
         private authService: AuthService,
+        private service:ProcNonConformiteService,
         private messageService: MessageService,
     ) {
 
 
         this.fetchUsers();
-        this.planActionForm = this.fb.group({
-            actions: this.fb.array([this.createAction()])
-        });
+        if (this.demande?.planActions?.length > 0) {
+            const actionsArray = this.fb.array([]);
+
+            for (let i = 0; i < this.demande.planActions.length; i++) {
+                // Ajouter un nouveau FormGroup pour chaque plan d'action existant
+                // @ts-ignore
+                actionsArray.push(this.createAction(this.demande.planActions[i]));
+            }
+
+            this.planActionForm = this.fb.group({
+                actions: actionsArray
+            });
+        }else {
+            this.planActionForm = this.fb.group({
+                actions: this.fb.array([this.createAction()])
+            });
+        }
+
         this.actions = this.planActionForm.get('actions') as FormArray;
         this.editForm = this.fb.group(nonConformiteForm);
     }
 
-    ngOnInit() {}
+    ngOnInit() {
+        if (this.demande?.planActions?.length > 0) {
+            this.planActions=this.demande.planActions;
+        }
+    }
 
     onInputChange() {
         if (this.demande.etatTraitement === EtapeTraitement.VALIDATION_RS) {
@@ -105,34 +130,18 @@ export class NonConformitFormsComponent {
                 next: (res) => {
                     this.users = res.body || [];
                     this.users=this.users.map((user:any) => {
-                      return {
-                          ...user,
-                          fullName: user.firstName + ' ' + user.lastName,
-                      }
+                        return {
+                            ...user,
+                            fullName: user.firstName + ' ' + user.lastName,
+                        }
+
 
                     });
-                     if(this.demande.participants.length > 0) {
-                         this.editForm.patchValue({
-                             participants: this.demande.participants ?? []
-                         });
-                     }
-                    if (this.demande.planActions.length > 0) {
+                    this.user = this.users.find((user: any) =>
+                        user.fullName === this.planAction.responsableNomComplet
+                    );
 
-                        this.demande.planActions = this.demande.planActions.map((data: { dateEcheance: string; responsableNomComplet: any }) => {
-                            return {
-                                ...data,
-                                dateEcheance: data.dateEcheance?.replace(/-/g, '/'),
-                                responsable: this.users.find(
-                                    (user: any) => user.fullName === data.responsableNomComplet
-                                ) ?? null,
-                            };
-                        });
 
-                        this.planActionForm.patchValue({
-                            actions: this.demande.planActions,
-                        });
-
-                    }
                 },
             });
     }
@@ -146,5 +155,55 @@ export class NonConformitFormsComponent {
                 detail: 'Vous devez garder au moins une action'
             });
         }
+    }
+
+    protected readonly getStatusSeverity = getStatusSeverity;
+    openDialog(){
+        this.displayDialog=true;
+        this.isEdit=false;
+        this.planAction={}
+    }
+    edit(plan:any){
+        this.planAction=plan;
+        this.planAction.dateEcheance=plan.dateEcheance.replace(/-/g, "/");
+        this.displayDialog=true;
+        this.fetchUsers();
+        this.isEdit=true;
+
+
+    }
+    save() {
+
+        this.planAction.responsableEmail=this.user.email;
+        this.planAction.responsableNomComplet=this.user.firstName + ' ' + this.user.lastName;
+        this.planAction.responsableId=this.user.id;
+        if (!this.isEdit) {
+            this.planAction.dateEcheance=formatDateToDDMMYYYY(this.planAction.dateEcheance);
+            this.planAction.status="NON_TRAITER"
+            this.planActions.push(this.planAction);
+
+            this.demande.planActions=this.planActions;
+            this.displayDialog=false;
+        }else {
+            console.log(this.planAction)
+            this.planAction.dateEcheance=this.planAction.dateEcheance.replace(/\//g, "-");
+            this.service.updatePlanAction(this.planAction).subscribe({
+                next: (data) => {
+                    this.displayDialog = false;
+
+                    this.messageService.add({ severity: 'success', summary: 'Réussi', detail: "L'oppération à réussie !", life: 3000 });
+                },
+                error: (error) => {
+                    this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
+                }
+            })
+        }
+
+    }
+    delete(plan:any) {
+      this.demande.planActions=this.demande.planActions.remove(plan);
+    }
+    hideDialog() {
+       this.displayDialog=false;
     }
 }

@@ -2,26 +2,30 @@ import {Component, EventEmitter, Input, Output} from '@angular/core';
 import { ProcNonConformiteService } from '../../proc-non-conformite.service';
 import { EtapeTraitement } from '../../../../enums';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
+import { FileUploadComponent } from '../../../../components/file-upload/file-upload.component';
+import { convertFilesToBase64 } from '../../../../utils';
 
 @Component({
     selector: 'app-rejet',
     templateUrl: './rejet.forms.component.html',
-    imports: [NgPrimeModule],
+    imports: [NgPrimeModule, FileUploadComponent],
     styleUrl: './rejet.forms.component.scss'
 })
 export class RejetFormsComponent {
     @Input() demande!: any;
     @Input() motifRejetDialog: boolean = false;
     isSummited: boolean = false;
-    rejet: String = "";
-    etape !: EtapeTraitement ;
+    rejet: String = '';
+    etape!: EtapeTraitement;
+    fileRejet:any;
     @Output() onSuccess = new EventEmitter<any>();
+    private uploadedFiles: any[]=[];
 
     constructor(private service: ProcNonConformiteService) {}
 
     rejetDemande() {
         this.isSummited = true;
-        console.log(this.demande)
+        console.log(this.demande);
         if (this.demande.etatTraitement == EtapeTraitement.RECEPTION) {
             this.etape = EtapeTraitement.SOUMISSION;
         }
@@ -37,10 +41,7 @@ export class RejetFormsComponent {
         if (this.demande.etatTraitement == EtapeTraitement.SUIVI_RQ) {
             this.etape = EtapeTraitement.VALIDATION;
         }
-const dmd={ id:this.demande.id,
-    etapeTraitement:this.etape,
-    rejectReason:this.rejet
-}
+        const dmd = { id: this.demande.id, etapeTraitement: this.etape, rejectReason: this.rejet ,docRejet:this.fileRejet!=null?this.fileRejet[0]:null };
         this.service.rejectNc(dmd).subscribe({
             next: (data) => {
                 this.motifRejetDialog = false;
@@ -59,5 +60,10 @@ const dmd={ id:this.demande.id,
 
     hideDialog() {
         this.motifRejetDialog = false;
+    }
+    async handleFileUpload(files: any[]) {
+        this.uploadedFiles = files;
+      const file  =await convertFilesToBase64(files);
+        this.fileRejet=file;
     }
 }

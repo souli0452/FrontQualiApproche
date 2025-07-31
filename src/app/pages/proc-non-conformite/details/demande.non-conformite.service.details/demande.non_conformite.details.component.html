@@ -1,300 +1,501 @@
-<div class="flex flex-col gap-4 mt-4 ml-2">
-
-    <!-- Ligne 1 -->
-    <div class="flex flex-wrap gap-4">
-        <!-- Colonne gauche -->
-        <div class="flex flex-col gap-4 flex-1 min-w-[300px]">
-            <!-- Détails de la non-conformité -->
-            <div class="card p-4">
-                <span class="text-xl font-bold mb-3 text-900">Détails de la non-conformité</span>
-                <ul class="list-none p-0 m-0 text-600 space-y-3">
-                    <li class="flex items-center mt-4"><span class="font-semibold ">Référence : </span><span class="flex-1" style="padding-left: 25px">{{demande.numeroReference }}</span></li>
-                    <li class="flex items-center"><span class="font-semibold ">Processus Destinataire :</span><span class="flex-1"  style="padding-left: 25px">{{demande.origineService }}({{demande.origineServiceLibelleCourt }}) </span></li>
-                    <li class="flex items-center"><span class="font-semibold ">Processus de soumission :</span><span class="flex-1"  style="padding-left: 25px">{{demande.structureSoumissionLibelle }}</span></li>
-                    <li class="flex items-center"><span class="font-semibold ">Émetteur :</span><span class="flex-1"  style="padding-left: 25px">{{demande.currentUserfullName}}</span></li>
-                    <li class="flex items-center"><span class="font-semibold ">Date de création :</span><span class="flex-1"  style="padding-left: 25px">{{demande.createdAt}}</span></li>
-                    <li class="flex items-center"><span class="font-semibold ">Type de procéssus :</span><span class="flex-1"  style="padding-left: 25px">{{demande.typeProcessusLibelle}}</span></li>
-                    <li class="flex items-center"><span class="font-semibold ">Type de non-conformité :</span><span class="flex-1"  style="padding-left: 25px">{{demande.typeNonConformiteLibelle}}</span></li>
-                    <li class="flex items-center"><span class="font-semibold ">Type d'action :</span><span class="flex-1"  style="padding-left: 25px">{{demande.actionLibelle}}</span></li>
-                    <li class="flex items-center"><span class="font-semibold ">Niveau de non-conformité :</span><span class="flex-1"  style="padding-left: 25px">{{demande.niveauNonConformiteLibelle}}</span></li>
-                    <li class="flex items-center"><span class="font-semibold ">Origine de non-conformité :</span><span class="flex-1"  style="padding-left: 25px">{{demande.originNonConformiteLibelle}}</span></li>
-                </ul>
-            </div>
-
-            <div class="card p-4">
-                <span class="text-xl font-bold mb-3 text-900">Validation par le pilote processus</span>
-                <ul>
-                    <li *ngIf="demande.pertinancePilote" class="flex items-center"><span class="font-semibold w-28">Pertinance:</span><span class="flex-1">{{demande.pertinancePilote}}</span></li>
-                    <li *ngIf="demande.justificationPilote" class="flex items-center"><span class="font-semibold w-28">Justifications:</span><span class="flex-1" [innerHTML]="demande.justificationPilote"></span></li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Colonne droite -->
-        <div class="flex flex-col gap-4 flex-1 min-w-[300px]">
-            <!-- Description -->
-            <div class="card p-4">
-                <span class="text-xl font-bold mb-3 text-900">Description de la non-conformité</span>
-                <div class="p-3 bg-gray-100 rounded"><p class="m-0 text-600">{{demande.justification || 'Aucune description fournie'}}</p></div>
-            </div>
-            <div class="card p-4">
-                <span class="text-xl font-bold mb-3 text-900">Description des actions entreprises</span>
-                <div class="p-3 bg-gray-100 rounded"><p class="m-0 text-600">{{demande.actionDsc || 'Aucune description fournie'}}</p></div>
-            </div>
-
-
-
-        </div>
-    </div>
-
-    <!-- Ligne 3 -->
-    <div class="flex flex-wrap gap-4">
-        <!-- Documents joints -->
-        <div class="flex flex-col flex-1 min-w-[300px]" *ngIf="demande.fichiers?.length > 0">
-            <div class="card p-4">
-                <span class="text-xl font-bold mb-3 text-900">Documents joints</span>
-                <div class="flex flex-col gap-2">
-                    <div class="flex items-center gap-2">
-                        <i class="pi pi-file"></i>
-                        <span>{{ 'Document joint'}}</span>
+<div class="nc-detail-container">
+    <!-- Section Principale -->
+    <div class="grid">
+        <!-- Colonne Gauche -->
+        <div class="col-12 lg:col-6">
+            <!-- Carte Détails de la NC -->
+            <div class="card nc-card">
+                <div class="nc-card-header">
+                    <i class="pi pi-info-circle nc-icon"></i>
+                    <h3 class="nc-card-title">Détails de la non-conformité</h3>
+                </div>
+                <div class="nc-details-grid">
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Référence :</span>
+                        <span class="nc-detail-value">{{demande.numeroReference}}</span>
                     </div>
-                    <a href="javascript:void(0)" (click)="downloadFile(demande.fichiers)" class="text-primary">
-                        <i class="pi pi-download"></i>
-                    </a>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Processus Destinataire :</span>
+                        <span class="nc-detail-value">{{demande.origineService}} ({{demande.origineServiceLibelleCourt}})</span>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Processus de soumission :</span>
+                        <span class="nc-detail-value">{{demande.structureSoumissionLibelle}}</span>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Émetteur :</span>
+                        <span class="nc-detail-value">{{demande.currentUserfullName}}</span>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Date de création :</span>
+                        <span class="nc-detail-value">{{demande.createdAt }}</span>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Type de processus :</span>
+                        <span class="nc-detail-value">{{demande.typeProcessusLibelle}}</span>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Type de non-conformité :</span>
+                        <span class="nc-detail-value">{{demande.typeNonConformiteLibelle}}</span>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Type d'action :</span>
+                        <span class="nc-detail-value">{{demande.actionLibelle}}</span>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Niveau :</span>
+                        <span class="nc-detail-value">{{demande.niveauNonConformiteLibelle}}</span>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Origine :</span>
+                        <span class="nc-detail-value">{{demande.originNonConformiteLibelle}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validation Pilote -->
+            <div class="card nc-card mt-4" *ngIf="demande.pertinancePilote">
+                <div class="nc-card-header">
+                    <i class="pi pi-verified nc-icon"></i>
+                    <h3 class="nc-card-title">Validation par le pilote processus</h3>
+                </div>
+                <div class="nc-details-grid">
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Pertinence : <p-tag [severity]="getStatusSeverity(demande.pertinancePilote)"
+                                                                        [value]="demande.pertinancePilote"> </p-tag></span>
+                    </div>
+                    <div class="nc-detail-item" *ngIf="demande.justificationPilote">
+                        <span class="nc-detail-label">Justification :</span>
+                        <span class="nc-detail-value" [innerHTML]="demande.justificationPilote"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne Droite -->
+        <div class="col-12 lg:col-6">
+            <!-- Description NC -->
+            <div class="card nc-card">
+                <div class="nc-card-header">
+                    <i class="pi pi-file nc-icon"></i>
+                    <h3 class="nc-card-title">Description de la non-conformité</h3>
+                </div>
+                <div class="nc-description">
+                    {{demande.justification || 'Aucune description fournie'}}
+                </div>
+            </div>
+
+            <!-- Actions entreprises -->
+            <div class="card nc-card mt-4">
+                <div class="nc-card-header">
+                    <i class="pi pi-list nc-icon"></i>
+                    <h3 class="nc-card-title">Actions entreprises</h3>
+                </div>
+                <div class="nc-description">
+                    {{demande.actionDsc || 'Aucune action entreprise'}}
+                </div>
+            </div>
+
+            <!-- Documents joints -->
+            <div class="card nc-card mt-4" *ngIf="demande.fichiers?.length > 0">
+                <div class="nc-card-header">
+                    <i class="pi pi-paperclip nc-icon"></i>
+                    <h3 class="nc-card-title">Documents joints</h3>
+                </div>
+                <div class="flex flex-column gap-3">
+                    <div *ngFor="let fichier of demande.fichiers" class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
+                        <div class="flex align-items-center mt-3">
+                            <span class="file-name">{{ fichier.nomFichier }}</span>
+                        </div>
+                        <button pButton pRipple
+                                type="button"
+                                icon="pi pi-download"
+                                class="p-button-text p-button-rounded p-button-plain"
+                                (click)="downloadFile(fichier)"
+                                pTooltip="Télécharger"
+                                tooltipPosition="left">
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Validation RS -->
-        <div class="flex flex-col flex-1 min-w-[300px]">
-            <div class="card p-4">
-                <span class="text-xl font-bold mb-3 text-900" *ngIf="demande.pertinanceRs">Validation RS</span>
-                <ul class="list-none p-0 m-0 text-600 space-y-3">
-                    <li *ngIf="demande.pertinanceRs" class="flex items-center"><span class="font-semibold w-28">Pertinance:</span><span class="flex-1">{{demande.pertinanceRs}}</span></li>
-                    <li *ngIf="demande.justificationRs" class="flex items-center"><span class="font-semibold w-28">Justifications:</span><span class="flex-1" [innerHTML]="demande.justificationRs"></span></li>
-                </ul>
-            </div>
-        </div>
-    </div>
+        <div class="col-12 lg:col-6" *ngIf="demande.pertinanceRs">
+            <div class="card nc-card mt-4">
+                <div class="nc-card-header">
+                    <i class="pi pi-shield nc-icon"></i>
+                    <h3 class="nc-card-title">Validation RS</h3>
+                </div>
+                <div class="nc-details-grid">
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Pertinence :  <p-tag [severity]="getStatusSeverity(demande.pertinanceRs)"
+                                                                           [value]="demande.pertinanceRs"> </p-tag></span>
 
-    <div class="card p-4" *ngIf="demande.numeroFdac">
-        <span class="text-xl font-bold mb-3 text-900">Suivi du Responsable Management Qualité</span>
-        <ul class="list-none p-0 m-0 text-600 space-y-3">
-            <li class="flex items-center"><span class="font-semibold w-28">Pertinance:</span><span class="flex-1">{{demande.pertinanceRsSuivi || ''}}</span></li>
-            <li class="flex items-center"><span class="font-semibold w-28">Numéro FEDAC:</span><span class="flex-1">{{demande.numeroFdac || ''}}</span></li>
-            <li class="flex items-center"><span class="font-semibold w-28">Date:</span><span class="flex-1">{{demande.dateSuivi || ''}}</span></li>
-        </ul>
-    </div>
-    <!-- Participants et Plans d'actions -->
-    <div class="flex flex-col gap-4">
-        <!-- Participants -->
-        <div class="card p-4" *ngIf="demande.participants?.length > 0">
-            <span class="text-xl font-bold mb-3 text-900">Participants</span>
-            <div class="flex flex-wrap gap-3">
-                <div *ngFor="let participant of demande.participants" class="participant-badge">
-                    <i class="pi pi-user mr-2"></i>
-                    <span>{{participant}}</span>
+                    </div>
+                    <div class="nc-detail-item" *ngIf="demande.justificationRs">
+                        <span class="nc-detail-label">Justification :</span>
+                        <span class="nc-detail-value" [innerHTML]="demande.justificationRs"></span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="flex flex-col flex-1 ">
-            <div class="card p-4">
-                <span class="text-xl font-bold mb-3 text-900" *ngIf="demande.observationRejet" style="color: red">Motif de réjet </span>
-                <ul class="list-none p-0 m-0 text-600 space-y-3">
-                    <p>{{demande.observationRejet}}</p></ul>
-            </div>
-        </div>
-        <!-- Plans d'actions -->
-        <div class="card p-4" *ngIf="demande?.planActions.length>0">
-            <span class="text-xl font-bold mb-3 text-900">Plans d'actions</span>
-            <p-table [value]="demande.planActions" [rowHover]="true" styleClass="p-datatable-sm"
-                     [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
-                     currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments">
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th>N° ordre</th>
-                        <th>Responsable</th>
-                        <th>Date échéance</th>
-                        <th>Statut</th>
-                        <th *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION">Actions</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-plan>
-                    <tr>
-                        <td>{{plan.numeroOdre }}</td>
-                        <td>{{plan.responsableNomComplet}}</td>
-                        <td>{{plan.dateEcheance}}</td>
-                        <td>{{plan.status}}</td>
-                        <td >
-                            <span *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT">
-                            <button *ngIf="plan.status==='NON_TRAITER'" pRipple pButton type="button" icon="pi pi-pencil"
-                                    (click)="edit(plan)"
-                                     label="Modifier"></button></span>
-                            <span>
-                            <button pRipple pButton type="button" icon="pi pi-eye"
-                                    class="p-button-secondary"
-                                    (click)="affich(plan)"
-                                    label="Détails"></button></span>
-                        </td>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="emptymessage">
-                    <tr>
-                        <td colspan="7" class="text-center">Aucun plan d'action défini</td>
-                    </tr>
-                </ng-template>
-            </p-table>
-        </div>
-    </div>
-</div><p-dialog
-    header="Modification "
-    [modal]="true"
-    [(visible)]="motifRejetDialog"
-    [style]="{ width: '48rem', height: 'auto' }"
-    [maximizable]="false"
-    [contentStyle]="{ padding: '1.5rem 2rem' }"
-    [breakpoints]="{ '960px': '95vw' }"
-    [draggable]="false">
-
-    <ng-template #content>
-        <div class="flex flex-row gap-4 align-items-start flex-wrap">
-            <div class="flex-grow-1 w-full">
-                <label for="numeroOdre" class="font-bold text-required block mb-2">
-                    Numéro d'ordre
-                </label>
-                <input
-                    pInputText
-                    id="numeroOdre"
-                    [(ngModel)]="planAction.numeroOdre"
-                    type="number"
-                    class="my-2 w-full p-2 border-1 surface-border border-round shadow-none"
-                    [style]="{ width: '100%' }"
-
-                />
-            </div>
-            <div class="flex-grow-1 w-full">
-                <label for="motif" class="font-bold text-required block mb-2">
-                    Numéro d'ordre
-                </label>
-                <p-dropdown
-
-                    id="responsable"
-                    [options]="users"
-                    optionLabel="fullName" placeholder="Sélectionnez le responsable"
-                    [filter]="true" [showClear]="true" appendTo="body"
-                    [(ngModel)]="user"
-                    class="my-2 w-full p-2 border-1 surface-border border-round shadow-none"
-                    [style]="{ width: '100%' }" >
-
-                </p-dropdown>
-
-            </div>
-            <div class="flex-grow-1 w-full">
-                <label for="dateEcheance" class="font-bold text-required block mb-2">
-                    Date d'échéance
-                </label>
-                <p-calendar
-                    id="dateEcheance"
-                    [showIcon]="true"
-                    [(ngModel)]="planAction.dateEcheance"
-                    placeholder="Date de l'échéance"
-                    dateFormat="dd/mm/yy"
-                    class="my-2 w-full p-2 border-1 surface-border border-round shadow-none"
-                    [style]="{ width: '100%' }"
-                ></p-calendar>
-
-            </div>
-        </div>
-
-    </ng-template>
-
-    <p-footer #footer>
-        <div class="flex justify-content-end gap-3 pt-3" >
-            <button type="button" pRipple pButton icon="pi pi-times-circle"
-                    class="p-button-secondary position-left mr-3"
-                    label="Quitter" (click)="hideDialog()">
-            </button>
-            <button pRipple pButton type="button" icon="pi pi-check"
-                    class="p-button-primary position-left mr-3"
-                    (click)="modifier()"
-                    label="Modifier">
-            </button>
-
-        </div>
-    </p-footer>
-</p-dialog>
-<p-dialog
-
-    [header]="'Détails du plan action n°'+planAction.numeroOrdre "
-    [modal]="true"
-    [(visible)]="afficheDialog"
-    [style]="{ width: '48rem', height: 'auto' }"
-    [maximizable]="false"
-    [contentStyle]="{ padding: '1.5rem 2rem' }"
-    [breakpoints]="{ '960px': '95vw' }"
-    [draggable]="false">
-
-    <ng-template #content>
-        <div class="card p-4">
-            <span class="text-xl font-bold mb-3 text-900">Détails de la non-conformité</span>
-            <ul class="list-none p-0 m-0 text-600 space-y-3">
-                <li class="flex items-center mt-4"><span class="font-semibold ">N° Ordre : </span><span class="flex-1" style="padding-left: 25px">{{ planAction.numeroOdre }}</span></li>
-                <li class="flex items-center"><span class="font-semibold ">Responsable :</span><span class="flex-1"  style="padding-left: 25px">{{planAction.responsableNomComplet  }}({{planAction.responsableEmail  }}) </span></li>
-                <li class="flex items-center"><span class="font-semibold ">Date d'échéance :</span><span class="flex-1"  style="padding-left: 25px">{{planAction.dateEcheance | date:'dd-MM-yyyy' }}</span></li>
-
-            </ul></div>
-        <div class="flex flex-col gap-4 flex-1 ">
-            <!-- Description -->
-            <div class="card p-4">
-                <span class="text-xl font-bold mb-3 text-900">Causes identifiées</span>
-                <div class="p-3 "><p class="m-0 text-600">{{planAction.causeIdentifiees}}</p></div>
-            </div>
-            <div class="card p-4">
-                <span class="text-xl font-bold mb-3 text-900">Solutions retenues</span>
-                <div class="p-3 "><p class="m-0 text-600">{{planAction.solutionRetenues }}</p></div>
-            </div>
-
-        </div>
-        <div class="flex flex-row gap-4 justify-content-between flex-wrap text-sm">
-
-            <!-- Ligne 1 : Informations générales -->
-
-
-            <!-- Ligne 3 : Pièces jointes -->
-            <div class="flex flex-row gap-3 overflow-auto">
-                <div class="surface-ground border-1 border-round shadow-sm p-4 min-w-30rem">
-                    <h4 class="text-lg font-bold mb-3 text-primary">📎 Pièces jointes</h4>
-
-                    <div *ngIf="planAction.fichiers?.length > 0" class="mb-3">
-                        <button
-                            type="button"
-                            pButton
-                            icon="pi pi-download"
-                            label="Télécharger tous les fichiers"
-                            class="p-button-success p-button-sm"
-                            (click)="telechargerTout(planAction.fichiers)">
-                        </button>
+        <!-- Suivi RMQ -->
+        <div class="col-12 lg:col-6" *ngIf="demande.pertinanceRsSuivi">
+            <div class="card nc-card mt-4">
+                <div class="nc-card-header">
+                    <i class="pi pi-chart-line nc-icon"></i>
+                    <h3 class="nc-card-title">Suivi du Responsable Qualité</h3>
+                </div>
+                <div class="nc-details-grid">
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Pertinence :<p-tag [severity]="getStatusSeverity(demande.pertinanceRsSuivi)"
+                                                                         [value]="demande.pertinanceRsSuivi"> </p-tag></span>
                     </div>
 
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Date :</span>
+                        <span class="nc-detail-value">{{demande.dateSuivi }}</span>
+                    </div>
                 </div>
             </div>
-
         </div>
 
+        <!-- Motif de rejet -->
+        <div class="col-12" *ngIf="demande.observationRejet">
+            <div class="card nc-card mt-4 nc-rejection">
+                <div class="nc-card-header">
+                    <i class="pi pi-exclamation-triangle nc-icon"></i>
+                    <h3 class="nc-card-title">Motif de rejet</h3>
+                </div>
+                <div class="nc-description">
+                    {{demande.observationRejet}}
+                </div>
+                <span *ngIf="demande.docRejet">
+                <p class="mt-4">Documents joint </p>
+                     <div class="nc-description">
+                <div class="flex align-items-center mt-3">
+                    <span class="file-name">{{ demande.docRejet.nomFichier }}</span>
+                </div>
+                <button pButton pRipple
+                        type="button"
+                        icon="pi pi-download"
+                        class="p-button-text p-button-rounded p-button-plain"
+                        (click)="downloadFile(demande.docRejet)"
+                        pTooltip="Télécharger"
+                        tooltipPosition="left">
+                </button></div></span>
+            </div>
+        </div>
+
+        <!-- Participants -->
+        <div class="col-12" *ngIf="demande.participants?.length > 0">
+            <div class="card nc-card mt-4">
+                <div class="nc-card-header">
+                    <i class="pi pi-users nc-icon"></i>
+                    <h3 class="nc-card-title">Participants</h3>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <p-chip *ngFor="let participant of demande.participants"
+                            icon="pi pi-user"
+                            [label]="participant"
+                            class="mr-2 mb-2">
+                    </p-chip>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plans d'actions -->
+        <div class="col-12" *ngIf="demande?.planActions.length > 0">
+            <div class="card nc-card mt-4">
+                <div class="nc-card-header">
+                    <i class="pi pi-bars nc-icon"></i>
+                    <h3 class="nc-card-title">Plans d'actions</h3>
+                </div>
+                <p-table [value]="demande.planActions"
+                         [rowHover]="true"
+                         styleClass="p-datatable-sm p-datatable-gridlines"
+                         [paginator]="true"
+                         [rows]="5"
+                         [showCurrentPageReport]="true"
+                         currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>N° ordre</th>
+                            <th>Causes</th>
+                            <th>Solutions</th>
+                            <th>Actions correctives</th>
+                            <th>Responsable</th>
+                            <th>Date échéance</th>
+                            <th>Statut</th>
+                            <th *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT||demande.etatTraitement===EtapeTraitement.CLOTURE">Actions</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-plan>
+                        <tr>
+                            <td>{{plan.numeroOdre}}</td>
+                            <td>{{plan.causeIdentifiees}}</td>
+                            <td>{{plan.solutionRetenues}}</td>
+                            <td>{{plan.actionCorrective??'N/A'}}</td>
+                            <td>{{plan.responsableNomComplet}}</td>
+                            <td>{{plan.dateEcheance }}</td>
+                            <td>
+                                <p-tag [severity]="getStatusSeverity(plan.status)"
+                                       [value]="plan.status">
+                                </p-tag>
+                            </td>
+                            <td >
+                                <button
+                                        *ngIf="(demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT)&&(plan.status==='NON_TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
+                                        pButton pRipple type="button"
+                                        icon="pi pi-pencil"
+                                        class="p-button-outlined p-button-info p-button-sm mr-2"
+                                        (click)="edit(plan)"
+                                        pTooltip="Modifier" tooltipPosition="top">
+                                </button>
+                                <button pButton pRipple type="button"
+                                        icon="pi pi-eye"
+                                        class="p-button-outlined p-button-secondary p-button-sm"
+                                        (click)="affich(plan)"
+                                        pTooltip="Détails" tooltipPosition="top">
+                                </button>
+                                <button pButton pRipple type="button"
+                                        *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
+                                        icon="pi pi-arrow-up"
+                                        (click)="displayRejet(plan)"
+                                        class="p-button-outlined p-button-danger p-button-sm"
+                                        pTooltip="Réjeter" tooltipPosition="top">
+                                </button>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td [attr.colspan]="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT ? 5 : 4"
+                                class="text-center py-4">
+                                Aucun plan d'action défini
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dialog Modification Plan d'action -->
+<p-dialog header="Modification Plan d'action"
+          [(visible)]="motifRejetDialog"
+          [style]="{ width: '50rem' }"
+          [breakpoints]="{ '960px': '95vw' }">
+    <div class="grid p-fluid">
+        <div class="col-12 field">
+            <label for="causes" class="font-bold block mb-2">
+                Causes identifiées <span class="text-red-500">*</span>
+            </label>
+            <textarea pInputTextarea id="causes" [(ngModel)]="planAction.causeIdentifiees"
+                      name="causes" rows="5" [autoResize]="true"
+                      placeholder="Entrer les causes "
+                      class="w-full"></textarea>
+
+        </div>
+        <div class="col-12 field">
+            <label for="solution" class="font-bold block mb-2">
+                Solutions retenues <span class="text-red-500">*</span>
+            </label>
+            <textarea pInputTextarea id="solution" [(ngModel)]="planAction.solutionRetenues"
+                      name="solution" rows="5" [autoResize]="true"
+                      placeholder="Entrer les solutions  "
+                      class="w-full"></textarea>
+        </div>
+        <div class="col-12 field mt-2">
+            <label for="responsable" class="font-bold block mb-2">
+                Responsable <span class="text-red-500">*</span>
+            </label>
+            <p-dropdown id="responsable"
+                        [options]="users"
+                        optionLabel="fullName"
+                        placeholder="Sélectionnez le responsable"
+                        [filter]="true"
+                        [showClear]="true"
+                        appendTo="body"
+                        [(ngModel)]="user"
+                        class="w-full">
+            </p-dropdown>
+        </div>
+        <p-fluid class="card flex flex-wrap gap-2">
+            <div class="flex-auto">
+                <label for="numeroOdre" class="font-bold block mb-2">
+                    Numéro d'ordre <span class="text-red-500">*</span>
+                </label>
+                <input pInputText id="numeroOdre"
+                       [(ngModel)]="planAction.numeroOdre"
+                       type="number"
+                       class="w-full" />
+            </div>
+            <div class="flex-auto">
+                <label for="dateEcheance" class="font-bold block mb-2">
+                    Date d'échéance <span class="text-red-500">*</span>
+                </label>
+                <p-calendar id="dateEcheance"
+                            [showIcon]="true"
+                            [(ngModel)]="planAction.dateEcheance"
+                            placeholder="Date de l'échéance"
+                            dateFormat="dd/mm/yy"
+                            class="w-full">
+                </p-calendar>
+            </div>
+            <div class="col-12 field">
+                <label for="actionCorrective" class="font-bold block mb-2">
+                    Causes identifiées <span class="text-red-500"></span>
+                </label>
+                <textarea pInputTextarea id="actionCorrective" [(ngModel)]="planAction.actionCorrective"
+                          name="actionCorrective" rows="5" [autoResize]="true"
+                          placeholder="Entrer les  actions correctives "
+                          class="w-full"></textarea>
+
+            </div>
+
+        </p-fluid>
+    </div>
+    <ng-template pTemplate="footer">
+        <button pButton pRipple type="button"
+                icon="pi pi-times"
+                class="p-button-outlined p-button-secondary"
+                label="Annuler"
+                (click)="hideDialog()">
+        </button>
+        <button pButton pRipple type="button"
+                icon="pi pi-check"
+                class="p-button-primary ml-2"
+                (click)="modifier()"
+                label="Enregistrer">
+        </button>
     </ng-template>
-
-
-    <p-footer #footer>
-        <div class="flex justify-content-end gap-3 pt-3" >
-            <button type="button" pRipple pButton icon="pi pi-times-circle"
-                    class="p-button-secondary position-left mr-3"
-                    label="Quitter" (click)="hideDialogAffich()">
-            </button>
-
-
-        </div>
-    </p-footer>
 </p-dialog>
 
+<!-- Dialog Détails Plan d'action -->
+<p-dialog [header]="'Détails  plan action '"
+          [(visible)]="afficheDialog"
+          [style]="{ width: '50rem' }"
+          [breakpoints]="{ '960px': '95vw' }">
+    <div class="grid">
+        <div class="col-12">
+            <div class="card nc-card">
+                <h4 class="nc-card-title">Informations générales</h4>
+                <div class="nc-details-grid">
+                    <div class="nc-detail-item mt-4">
+                        <span class="nc-detail-label">N° Ordre : {{ planAction.numeroOdre }}</span>
 
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label font-bold">Responsable :</span>
+                        <span class="nc-detail-value">{{planAction.responsableNomComplet}} ({{planAction.responsableEmail}})</span>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label font-bold">Date d'échéance : {{planAction.dateEcheance }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 md:col-6">
+            <div class="card nc-card mt-3">
+                <h4 class="nc-card-title">Causes identifiées</h4>
+                <div class="nc-description">
+                    {{planAction.causeIdentifiees || 'Aucune cause identifiée'}}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 md:col-6">
+            <div class="card nc-card mt-3">
+                <h4 class="nc-card-title">Solutions retenues</h4>
+                <div class="nc-description">
+                    {{planAction.solutionRetenues || 'Aucune solution retenue'}}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card nc-card mt-3">
+                <h4 class="nc-card-title">Observations</h4>
+                <div class="nc-description">
+                    {{planAction.observation || 'Aucune observation'}}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12" *ngIf="planAction.fichiers?.length > 0">
+            <div class="card nc-card mt-3">
+                <div class="nc-card-header">
+                    <i class="pi pi-paperclip nc-icon"></i>
+                    <h4 class="nc-card-title">Pièces jointes</h4>
+                </div>
+                <div class="flex flex-column gap-3">
+                    <div *ngFor="let fichier of planAction.fichiers" class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
+                        <div class="flex align-items-center mt-3">
+                            <span class="file-name">{{ fichier.nomFichier }}</span>
+                        </div>
+                        <button pButton pRipple
+                                type="button"
+                                icon="pi pi-download"
+                                class="p-button-text p-button-rounded p-button-plain"
+                                (click)="downloadFile(fichier)"
+                                pTooltip="Télécharger"
+                                tooltipPosition="left">
+                        </button>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <ng-template pTemplate="footer">
+        <button pButton pRipple type="button"
+                icon="pi pi-times"
+                class="p-button-outlined p-button-secondary"
+                label="Fermer"
+                (click)="hideDialogAffich()">
+        </button>
+    </ng-template>
+</p-dialog>
+
+<p-dialog (onHide)="displayDialog = false" [modal]="true" [(visible)]="displayDialog"
+          [style]="{width: '50rem'}" [maximizable]="true" class="p-fluid" styleClass="ng-dialog">
+    <ng-template pTemplate="header">
+        <div class="inline-flex align-items-center justify-content-center gap-2">
+            <span class="font-bold white-space-nowrap uppercase">Réjet du plan d'action n° {{planAction.numeroOdre}} de la demande N° {{planAction.numeroNc}}</span>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="content">
+        <div class="grid p-fluid">
+            <div class="field mt-5 mb-4">
+                <label for="observation" class="block font-bold  mb-2">Observertions pour le réjet  <span class="p-error"> *</span></label>
+                <textarea pInputTextarea id="observation" [(ngModel)]="planAction.observationRejet"
+                          name="observation" rows="5" [autoResize]="true"
+                          placeholder="Entrer une observation "
+                          class="w-full"></textarea>
+
+            </div>
+            <div class="field mt-5 mb-4">
+                <label class="block font-bold  mb-2">Joindre un document</label>
+                <app-file-upload (fileUploaded)="handleFileUpload($event)"></app-file-upload></div>
+
+        </div>
+
+
+    </ng-template>
+    <p-footer #footer>
+        <button type="button" pRipple pButton icon="pi pi-times" (click)="displayDialog = false" label="Fermer"
+                class="p-button-secondary"></button>
+        <button  type="button" pRipple pButton icon="pi pi-send" (click)="rejet()" label="Réjéter"
+                class="p-button-primary" [disabled]="!planAction.observationRejet"></button>
+    </p-footer>
+</p-dialog>
+<p-confirmDialog header="Confirmation" [key]="'1'"
+                 icon="pi pi-exclamation-triangle" [style]="{width: '35vw'}"
+                 acceptButtonStyleClass="p-button-primary" acceptLabel="Oui"
+                 rejectButtonStyleClass="p-button-secondary" rejectLabel="Non">
+</p-confirmDialog>

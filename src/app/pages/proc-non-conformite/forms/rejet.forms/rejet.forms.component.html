@@ -24,6 +24,8 @@
                     [style]="{ width: '100%' }">
         </textarea>
             </div>
+            <div class="mb-3">
+                <app-file-upload (fileUploaded)="handleFileUpload($event)"></app-file-upload></div>
         </div>
 
     </ng-template>

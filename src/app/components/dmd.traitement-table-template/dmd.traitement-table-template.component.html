@@ -72,8 +72,12 @@
                     <!-- Contenu des cellules inchangé -->
                     <span *ngIf="col.type === 'string'">{{ rowData[col.field] }}</span>
                     <span *ngIf="col.type === 'enum'">
+                        <span *ngIf="rowData[col.field]==='PUBLISHED'">
+                            <span *ngIf="btnActions==BtnActions.RECEPTION" class="p-badge p-badge-warning">En attente de reception</span>
+                             <span *ngIf="btnActions==BtnActions.CLOTURE" class="p-badge p-badge-warning">En attente de reception</span>
+                        </span>
                            <span *ngIf="rowData[col.field]==='PENDING'">
-  <span *ngIf="btnActions==BtnActions.RECEPTION" class="p-badge p-badge-warning">En attente de reception</span>
+                           <span *ngIf="btnActions==BtnActions.RECEPTION" class="p-badge p-badge-warning">En attente de reception</span>
                            <span *ngIf="btnActions==BtnActions.CLOTURE"
                                  class="p-badge p-badge-warning">En attente de traitement</span>
                                 <span *ngIf="btnActions==BtnActions.VALIDATION" class="p-badge p-badge-warning">En attente de validation</span>

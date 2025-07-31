@@ -28,7 +28,7 @@ constructor(private  authService: AuthService) {
         this.model = [
             {
                 label: 'Accueil',
-                items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
+                items: [{ label: 'TABLEAU DE BORD', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
             },
             {
                 label: 'Configurations',

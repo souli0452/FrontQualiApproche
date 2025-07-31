@@ -1,0 +1,82 @@
+/* Styles pour le détail de non-conformité */
+.nc-detail-container {
+    padding: 1.5rem;
+}
+
+.nc-header {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.nc-reference {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.nc-card {
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.nc-card-title {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.nc-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.nc-detail-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.nc-detail-label {
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.nc-detail-value {
+    color: #111827;
+    margin-top: 0.25rem;
+    word-break: break-word;
+}
+
+.nc-description {
+    background-color: #f9fafb;
+    padding: 1rem;
+    border-radius: 6px;
+    color: #374151;
+    line-height: 1.5;
+    white-space: pre-line;
+}
+
+.nc-rejection {
+    border-left: 4px solid #ef4444;
+}
+
+/* Responsive adjustments */
+@media (max-width: 960px) {
+    .nc-details-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Animation pour les cartes */
+.nc-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.nc-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}

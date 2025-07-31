@@ -76,6 +76,7 @@ export class DmdTraitementTableTemplateComponent {
             this.closeDetailsDialog();
         } else {
             this.selectedDemande = rowData;
+            this.selectedDemande.btnActions=this.btnActions;
             this.totalActions = this.selectedDemande.planActions.length;
             this.hasNonTraiter = this.selectedDemande.planActions.some((action: { status: string }) => action.status === 'NON_TRAITER');
 
@@ -259,11 +260,12 @@ export class DmdTraitementTableTemplateComponent {
             accept: () => {
                 if (this.selectedDemandes.length > 0) {
                     this.selectedDemandes.map((item) => {
+                        item.status=StatusEnum.IN_PROGRESS;
                         item.etatTraitement = this.BtnActions.VALIDATION;
                     });
                 } else {
                     this.selectedDemande.etatTraitement = this.BtnActions.VALIDATION;
-
+                    this.selectedDemande.status=StatusEnum.IN_PROGRESS;
                     this.selectedDemandes.push(this.selectedDemande);
                 }
                 this.onSubmission.emit(this.selectedDemandes);
