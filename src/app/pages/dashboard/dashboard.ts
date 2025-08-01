@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject, PLATFORM_ID } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, inject, PLATFORM_ID } from '@angular/core';
 import { NotificationsWidget } from './components/notificationswidget';
 import { StatsWidget } from './components/statswidget';
 import { RecentSalesWidget } from './components/recentsaleswidget';
@@ -7,10 +7,13 @@ import { RevenueStreamWidget } from './components/revenuestreamwidget';
 import { AuthService } from '../../services/auth-services/auth.service';
 import { StructureService } from '../structure/structure-service';
 import { ProcNonConformiteService } from '../proc-non-conformite/proc-non-conformite.service';
-import { isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser, Location } from '@angular/common';
 import { DropdownModule } from 'primeng/dropdown';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { getCurrentUserStructure, isUserInRoles } from '../../utils';
+import { Router } from '@angular/router';
+
+
 
 @Component({
     selector: 'app-dashboard',
@@ -34,7 +37,7 @@ import { getCurrentUserStructure, isUserInRoles } from '../../utils';
         </div>
     `
 })
-export class Dashboard {
+export class Dashboard implements AfterViewInit {
     data: any;
     options: any;
     dataTaux: any;
@@ -57,28 +60,25 @@ export class Dashboard {
         private cd: ChangeDetectorRef,
         public authService: AuthService,
         public stuctureService: StructureService,
-        public service: ProcNonConformiteService
-    ) {}
-    ngOnInit() {
+        public service: ProcNonConformiteService,
+        private router: Router,
+
+    ) {
         this.userStructure = getCurrentUserStructure();
-        this.fecthNonConformite();
-
+    }
+    ngOnInit() {
         if(isUserInRoles(['SUPER_ADMIN'])){
+            this.fecthNonConformite();
             this.fetchStatsMensuelStatus();
-        }else {
-            this.fetchStatsMensuelStatusService()
-        }
-
-
-        if (isUserInRoles(['SUPER_ADMIN'])){
             this.fetchStatsMensuel();
-        }else {
-            this.fecthStatMensuelStatusConnect();
-        }
-        if(isUserInRoles(['SUPER_ADMIN'])){
             this.fetchStats();
-        }else {
+        }
+        else {
+            this.fecthNonConformiteConnect();
+            this.fetchStatsMensuelStatusService();
+            this.fecthStatMensuelStatusConnect();
             this.fetchStatsPlanAction();
+
         }
 
 
@@ -86,6 +86,21 @@ export class Dashboard {
 
     fecthNonConformite() {
         this.service.getNonConformiteAll().subscribe({
+            next: (data) => {
+                this.nonConformites = data.body;
+                // @ts-ignore
+                this.nonConformiteTraites = this.nonConformites.filter((nc) => nc.status === 'APPROVED');
+                // @ts-ignore
+                this.nonConformiteRejetes = this.nonConformites.filter((nc) => nc.status === 'REJECTED');
+                this.initChart();
+            },
+            error: (error) => {
+                //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
+            }
+        });
+    }
+    fecthNonConformiteConnect() {
+        this.service.getNonConformiteByStrcuture(this.userStructure.id).subscribe({
             next: (data) => {
                 this.nonConformites = data.body;
                 // @ts-ignore
@@ -193,6 +208,7 @@ export class Dashboard {
                 }
             }
         };
+        this.cd.markForCheck();
     }
 
     initChartBystuct(data: { [key: string]: number }) {
@@ -260,6 +276,7 @@ export class Dashboard {
                 }
             }
         };
+        this.cd.markForCheck();
     }
     initChartAll(stats: Record<string, Record<string, number>>) {
         if (isPlatformBrowser(this.platformId)) {
@@ -588,4 +605,10 @@ export class Dashboard {
             this.cd.markForCheck();
         }
     }
+
+    ngAfterViewInit(): void {
+
+
+    }
+
 }

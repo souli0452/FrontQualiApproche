@@ -16,5 +16,6 @@ export class NonConformiteUrlConfig {
     static readonly GET_Stat_MENSUEL_ROOT_URL = `${SERVICE_PREFIX}/non-conformite/stats/nf/`;
     static readonly GET_Stat_MENSUEL_STATUS_ROOT_URL = `${SERVICE_PREFIX}/non-conformite/stats/nf/status/`;
     static readonly STAT_PLAN_ACTION_ALL = `${SERVICE_PREFIX}/plan-action/stats/status/`;
+    static readonly GET_NON_CONFORMITE_ALL_By_Structure = `${SERVICE_PREFIX}/non-conformite/structure/`;
 
 }

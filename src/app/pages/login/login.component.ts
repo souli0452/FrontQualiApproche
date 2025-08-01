@@ -10,7 +10,7 @@ import {Subject} from 'rxjs';
 import { ToastModule } from 'primeng/toast';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../prime-ng.module';
-import { USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
+import { isUserInRoles, USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
 import { StructureService } from '../structure/structure-service';
 
 @Component({
@@ -50,7 +50,12 @@ export class LoginComponent implements OnInit{
     }
     ngOnInit() {
         if (this.authService.getAccessToken()) {
-            this.router.navigate(['/']);
+            if(isUserInRoles(['SUPER_ADMIN'])){
+                this.router.navigate(['/']);
+            }else {
+                this.router.navigate(['/page/consultation']);
+            }
+
         }
     }
 
@@ -80,7 +85,11 @@ export class LoginComponent implements OnInit{
                             this.messageService.add({ severity: 'info', summary: 'AVERTISSEMENT', detail: 'Votre utilisateur est mal configuré', life: 3000 });
                         }
                     });
-                    this.router.navigate(['/']);
+                    if(isUserInRoles(['SUPER_ADMIN'])){
+                        this.router.navigate(['/']);
+                    }else {
+                        this.router.navigate(['/page/consultation']);
+                    }
                 },
                 error: (err) => {
                     console.log('Erreur:', err);

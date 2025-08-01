@@ -27,6 +27,9 @@ export class ProcNonConformiteService {
     getNonConformiteAll(): Observable<HttpResponse<Array<any>>> {
         return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL, {observe: 'response'});
     }
+    getNonConformiteByStrcuture(id:any): Observable<HttpResponse<Array<any>>> {
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL_By_Structure+id, {observe: 'response'});
+    }
     updateNomConformite(demande: any, id: string): Observable<HttpResponse<any>> {
         return this.http.put<any>(NonConformiteUrlConfig.UPDATE_NON_CONFORMITE + id, demande, {observe: 'response'});
     }
