@@ -14,7 +14,7 @@ import { getCurrentUserStructure, isUserInRoles } from '../../../utils';
             <div class="card mb-0">
                 <div class="flex justify-between mb-4">
                     <div>
-                        <span class="block text-muted-color font-medium mb-4">Nombre total d'utilisateurs</span>
+                        <span class="block text-muted-color font-medium mb-4">Nombre total d'utilisateurs du système</span>
                         <div class="text-surface-900 dark:text-surface-0 font-medium text-xl"
                              style="font-size: 25px">{{ users.length }}
                         </div>
@@ -32,7 +32,7 @@ import { getCurrentUserStructure, isUserInRoles } from '../../../utils';
             <div class="card mb-0">
                 <div class="flex justify-between mb-4">
                     <div>
-                        <span class="block text-muted-color font-medium mb-4">Nombre total d'agents</span>
+                        <span class="block text-muted-color font-medium mb-4">Nombre d'agents sur le système</span>
                         <div class="text-surface-900 dark:text-surface-0 font-medium text-xl"
                              style="font-size: 25px">{{ agents.length }}
                         </div>
@@ -107,9 +107,9 @@ import { getCurrentUserStructure, isUserInRoles } from '../../../utils';
                             class="text-surface-900 dark:text-surface-0 font-medium text-xl">{{ nonConformiteTraites.length }}
                         </div>
                     </div>
-                    <div class="flex items-center justify-center bg-purple-100 dark:bg-purple-400/10 rounded-border"
+                    <div class="flex items-center justify-center bg-green-100 dark:bg-green-400/10 rounded-border"
                          style="width: 2.5rem; height: 2.5rem">
-                        <i class="pi pi-send text-purple-500 !text-xl"></i>
+                        <i class="pi pi-send text-green !text-xl"></i>
                     </div>
                 </div>
 
@@ -125,9 +125,9 @@ import { getCurrentUserStructure, isUserInRoles } from '../../../utils';
                             class="text-surface-900 dark:text-surface-0 font-medium text-xl">{{ nonConformiteRejetes.length }}
                         </div>
                     </div>
-                    <div class="flex items-center justify-center bg-purple-100 dark:bg-purple-400/10 rounded-border"
+                    <div class="flex items-center justify-center bg-red-100 dark:bg-red-400/10 rounded-border"
                          style="width: 2.5rem; height: 2.5rem">
-                        <i class="pi pi-send text-purple-500 !text-xl"></i>
+                        <i class="pi pi-send text-red !text-xl"></i>
                     </div>
                 </div>
 
@@ -141,9 +141,9 @@ import { getCurrentUserStructure, isUserInRoles } from '../../../utils';
                             class="block text-muted-color font-medium mb-4 ">Nombre total de non-conformité traités</span>
                         <div class="text-surface-900 dark:text-surface-0 font-medium text-xl">{{nonConformiteTraites.length}}</div>
                     </div>
-                    <div class="flex items-center justify-center bg-purple-100 dark:bg-purple-400/10 rounded-border"
+                    <div class="flex items-center justify-center bg-green-100 dark:bg-green-400/10 rounded-border"
                          style="width: 2.5rem; height: 2.5rem">
-                        <i class="pi pi-send text-purple-500 !text-xl"></i>
+                        <i class="pi pi-send text-green-500 !text-xl"></i>
                     </div>
                 </div>
 
