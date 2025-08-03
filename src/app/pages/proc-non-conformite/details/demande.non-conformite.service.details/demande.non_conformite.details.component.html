@@ -1,6 +1,14 @@
 <div class="nc-detail-container">
     <!-- Section Principale -->
     <div class="grid">
+        <div class="field mt-5 mb-4" *ngIf="(demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.SUIVI_RQ)&&demande.btnActions!==EtapeTraitement.CLOTURE">
+            <label for="justification" class="block font-bold  mb-2">Action préventive (facultative)</label>
+            <textarea pInputTextarea id="justification" [(ngModel)]="demande.actionPreventive"
+                      name="justification" rows="5" [autoResize]="true"
+                      placeholder="Décrivez précisément la non-conformité..."
+                      class="w-full"></textarea>
+
+        </div>
         <!-- Colonne Gauche -->
         <div class="col-12 lg:col-6">
             <!-- Carte Détails de la NC -->
@@ -30,26 +38,23 @@
                         <span class="nc-detail-label">Date de création :</span>
                         <span class="nc-detail-value">{{demande.createdAt }}</span>
                     </div>
-                    <div class="nc-detail-item">
-                        <span class="nc-detail-label">Type de processus :</span>
+                    <div class="nc-detail-item" *ngIf="demande.typeProcessusLibelle">
+                        <span class="nc-detail-label">Origine:</span>
                         <span class="nc-detail-value">{{demande.typeProcessusLibelle}}</span>
                     </div>
-                    <div class="nc-detail-item">
+                    <div class="nc-detail-item" *ngIf="demande.typeNonConformiteLibelle">
                         <span class="nc-detail-label">Type de non-conformité :</span>
                         <span class="nc-detail-value">{{demande.typeNonConformiteLibelle}}</span>
                     </div>
-                    <div class="nc-detail-item">
+                    <div class="nc-detail-item" *ngIf="demande.actionLibelle">
                         <span class="nc-detail-label">Type d'action :</span>
                         <span class="nc-detail-value">{{demande.actionLibelle}}</span>
                     </div>
-                    <div class="nc-detail-item">
-                        <span class="nc-detail-label">Niveau :</span>
+                    <div class="nc-detail-item" *ngIf="demande.niveauNonConformiteLibelle">
+                        <span class="nc-detail-label">Niveau:</span>
                         <span class="nc-detail-value">{{demande.niveauNonConformiteLibelle}}</span>
                     </div>
-                    <div class="nc-detail-item">
-                        <span class="nc-detail-label">Origine :</span>
-                        <span class="nc-detail-value">{{demande.originNonConformiteLibelle}}</span>
-                    </div>
+
                 </div>
             </div>
 
@@ -86,13 +91,22 @@
             </div>
 
             <!-- Actions entreprises -->
-            <div class="card nc-card mt-4">
+            <div class="card nc-card mt-4" *ngIf="demande.actionDsc ">
                 <div class="nc-card-header">
                     <i class="pi pi-list nc-icon"></i>
                     <h3 class="nc-card-title">Actions entreprises</h3>
                 </div>
                 <div class="nc-description">
                     {{demande.actionDsc || 'Aucune action entreprise'}}
+                </div>
+            </div>
+            <div class="card nc-card mt-4" *ngIf="demande.actionPreventive ">
+                <div class="nc-card-header">
+                    <i class="pi pi-list nc-icon"></i>
+                    <h3 class="nc-card-title">Actions préventives</h3>
+                </div>
+                <div class="nc-description">
+                    {{demande.actionPreventive }}
                 </div>
             </div>
 
@@ -281,6 +295,7 @@
                 </p-table>
             </div>
         </div>
+
     </div>
 </div>
 
@@ -346,16 +361,7 @@
                             class="w-full">
                 </p-calendar>
             </div>
-            <div class="col-12 field">
-                <label for="actionCorrective" class="font-bold block mb-2">
-                    Causes identifiées <span class="text-red-500"></span>
-                </label>
-                <textarea pInputTextarea id="actionCorrective" [(ngModel)]="planAction.actionCorrective"
-                          name="actionCorrective" rows="5" [autoResize]="true"
-                          placeholder="Entrer les  actions correctives "
-                          class="w-full"></textarea>
 
-            </div>
 
         </p-fluid>
     </div>

@@ -3,6 +3,78 @@
         <p-tabPanel header="Détails de la  demande">
             <demande-non_conformite-details [demande]="demande"></demande-non_conformite-details>
         </p-tabPanel>
+        <p-tabPanel header="Validation des plans d'actions définis" *ngIf="demande.etatTraitement==BtnActions.VALIDATION">
+            <div class="col-12">
+                <div class="card nc-card mt-4">
+                    <p-toolbar styleClass="mb-2">
+                        <ng-template #start>
+                            <h5 class="font-bold uppercase mb-0">VALIDATION PLAN ACTION</h5>
+                        </ng-template>
+                        <ng-template #end>
+                            <button pButton pRipple label="Valider" icon="pi pi-check"
+                                    [disabled]="selectedPlans.length === 0"
+                                    class="p-button-primary font-bold"
+                                    (click)="validerPlans()">
+                            </button>
+                        </ng-template>
+                    </p-toolbar>
+
+                    <p-table [value]="demande.planActions"
+                             [(selection)]="selectedPlans"
+                             dataKey="id"
+                             [rowHover]="true"
+                             [paginator]="true"
+                             [rows]="5"
+                             [showCurrentPageReport]="true"
+                             currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments"
+                             styleClass="p-datatable-sm p-datatable-gridlines"
+                             selectionMode="multiple">
+
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th style="width: 40px">
+                                    <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                                </th>
+                                <th>N° ordre</th>
+                                <th>Causes</th>
+                                <th>Solutions</th>
+                                <th>Responsable</th>
+                                <th>Date échéance</th>
+                                <th>Statut</th>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="body" let-plan>
+                            <tr [pSelectableRow]="plan">
+                                <td>
+                                    <p-tableCheckbox [value]="plan" [disabled]="plan.status=='NON_TRAITER'"></p-tableCheckbox>
+                                </td>
+                                <td>{{plan.numeroOdre}}</td>
+                                <td>{{plan.causeIdentifiees}}</td>
+                                <td>{{plan.solutionRetenues}}</td>
+                                <td>{{plan.responsableNomComplet}}</td>
+                                <td>{{plan.dateEcheance}}</td>
+                                <td>
+                                    <p-tag [severity]="getStatusSeverity(plan.status)"
+                                           [value]="plan.status">
+                                    </p-tag>
+                                </td>
+                                <td>
+                                    <button pButton pRipple type="button"
+                                            icon="pi pi-eye"
+                                            class="p-button-outlined p-button-secondary p-button-sm"
+                                            (click)="affich(plan)"
+                                            pTooltip="Détails" tooltipPosition="top">
+                                    </button>
+                                </td>
+                            </tr>
+                        </ng-template>
+
+                    </p-table>
+                </div>
+            </div>
+
+        </p-tabPanel>
         <p-tabPanel header="Saisie des informations complémentaires de la demande" *ngIf="demande.etatTraitement!=BtnActions.VALIDATION && demande.etatTraitement!=BtnActions.SUIVI_RQ ">
             <div class="m-2">
                 <form [formGroup]="editForm" autocomplete="off" role="form">
@@ -136,7 +208,6 @@
                                                         <th>N° ordre</th>
                                                         <th>Causes</th>
                                                         <th>Solutions</th>
-                                                        <th>Actions correctives</th>
                                                         <th>Responsable</th>
                                                         <th>Date échéance</th>
                                                         <th>Statut</th>
@@ -148,7 +219,6 @@
                                                         <td>{{plan.numeroOdre}}</td>
                                                         <td>{{plan.causeIdentifiees}}</td>
                                                         <td>{{plan.solutionRetenues}}</td>
-                                                        <td>{{plan.actionCorrective??'N/A'}}</td>
                                                         <td>{{plan.responsableNomComplet}}</td>
                                                         <td>{{plan.dateEcheance }}</td>
                                                         <td>
@@ -212,15 +282,7 @@
                       placeholder="Entrer les solutions  "
                       class="w-full"></textarea>
         </div>
-        <div class="col-12 field">
-            <label for="actionCorrect" class="font-bold block mb-2">
-                Actions correctives
-            </label>
-            <textarea pInputTextarea id="actionCorrect" [(ngModel)]="planAction.actionCorrective"
-                      name="actionCorrect" rows="5" [autoResize]="true"
-                      placeholder="Entrer les actions correctives  "
-                      class="w-full"></textarea>
-        </div>
+
         <div class="col-12 field mt-2">
             <label for="responsable" class="font-bold block mb-2">
                 Responsable <span class="text-red-500">*</span>
@@ -258,8 +320,6 @@
                             class="w-full">
                 </p-calendar>
             </div>
-
-
         </p-fluid>
 
     </div>
@@ -273,6 +333,7 @@
         @if (isEdit){
             <button pButton pRipple type="button"
                     icon="pi pi-check"
+                    [disabled]="!planAction.solutionRetenues"
                     class="p-button-primary ml-2"
                     (click)="save()"
                     label="Modifier">
@@ -287,5 +348,93 @@
             </button>
         }
 
+    </ng-template>
+</p-dialog>
+
+
+<!-- Dialog Détails Plan d'action -->
+<p-dialog [header]="'Détails  plan action '"
+          [(visible)]="afficheDialog"
+          [style]="{ width: '50rem' }"
+          [breakpoints]="{ '960px': '95vw' }">
+    <div class="grid">
+        <div class="col-12">
+            <div class="card nc-card">
+                <h4 class="nc-card-title">Informations générales</h4>
+                <div class="nc-details-grid">
+                    <div class="nc-detail-item mt-4">
+                        <span class="nc-detail-label">N° Ordre : {{ planAction.numeroOdre }}</span>
+
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label font-bold">Responsable :</span>
+                        <span class="nc-detail-value">{{planAction.responsableNomComplet}} ({{planAction.responsableEmail}})</span>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label font-bold">Date d'échéance : {{planAction.dateEcheance }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 md:col-6">
+            <div class="card nc-card mt-3">
+                <h4 class="nc-card-title">Causes identifiées</h4>
+                <div class="nc-description">
+                    {{planAction.causeIdentifiees || 'Aucune cause identifiée'}}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 md:col-6">
+            <div class="card nc-card mt-3">
+                <h4 class="nc-card-title">Solutions retenues</h4>
+                <div class="nc-description">
+                    {{planAction.solutionRetenues || 'Aucune solution retenue'}}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card nc-card mt-3">
+                <h4 class="nc-card-title">Observations</h4>
+                <div class="nc-description">
+                    {{planAction.observation || 'Aucune observation'}}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12" *ngIf="planAction.fichiers?.length > 0">
+            <div class="card nc-card mt-3">
+                <div class="nc-card-header">
+                    <i class="pi pi-paperclip nc-icon"></i>
+                    <h4 class="nc-card-title">Pièces jointes</h4>
+                </div>
+                <div class="flex flex-column gap-3">
+                    <div *ngFor="let fichier of planAction.fichiers" class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
+                        <div class="flex align-items-center mt-3">
+                            <span class="file-name">{{ fichier.nomFichier }}</span>
+                        </div>
+                        <button pButton pRipple
+                                type="button"
+                                icon="pi pi-download"
+                                class="p-button-text p-button-rounded p-button-plain"
+                                (click)="downloadFile(fichier)"
+                                pTooltip="Télécharger"
+                                tooltipPosition="left">
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <button pButton pRipple type="button"
+                icon="pi pi-times"
+                class="p-button-outlined p-button-secondary"
+                label="Fermer"
+                (click)="hideDialogAffich()">
+        </button>
     </ng-template>
 </p-dialog>

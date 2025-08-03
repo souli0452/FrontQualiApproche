@@ -133,32 +133,63 @@
             </div>
         </div>
     </ng-template>
-</p-table>
-<p-dialog (onHide)="display = false" [modal]="true" [maximizable]="true"
-          [(visible)]="display" [style]="{width: '48vw'}">
+</p-table><p-dialog
+    [(visible)]="display"
+    [modal]="true"
+    [maximizable]="true"
+    [style]="{ width: '65vw', minHeight: '50vh' }"
+    [contentStyle]="{ padding: '2rem' }"
+    [baseZIndex]="10000"
+    [dismissableMask]="true"
+    (onHide)="display = false"
+    [styleClass]="'custom-dialog'">
+
+    <!-- 🧠 Header -->
     <ng-template pTemplate="header">
-        <div class="inline-flex align-items-center justify-content-center gap-2">
-            <span class="font-bold white-space-nowrap">
-               <b>Rechercher un agent</b>
-            </span>
+        <div class="flex align-items-center justify-content-between w-full">
+            <div class="flex align-items-center gap-2">
+
+                <span class="font-bold text-lg text-primary">Rechercher un agent</span>
+            </div>
+
         </div>
-    </ng-template>
-    <ng-template pTemplate="content">
-        <app-search-agent (searchedAgentChange)="searchedAgent = $event"></app-search-agent>
     </ng-template>
 
-    <p-footer #footer>
-        <div class="flex justify-content-end flex-wrap">
-            <button type="button" pRipple pButton icon="pi pi-times-circle"
-                    class="p-button-secondary position-left mr-3"
-                    label="Quitter" (click)="onDisplay()">
+    <!-- 🔍 Content -->
+    <ng-template pTemplate="content">
+        <div class="mb-4">
+            <app-search-agent (searchedAgentChange)="searchedAgent = $event"></app-search-agent>
+        </div>
+        <div *ngIf="searchedAgent" class="p-3 surface-100 border-round">
+            <p class="font-medium text-base text-primary">{{ searchedAgent.nomComplet }}</p>
+        </div>
+    </ng-template>
+
+    <!-- ✅ Footer -->
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2">
+            <button
+                type="button"
+                pButton
+                icon="pi pi-times"
+                label="Annuler"
+                class="p-button-outlined p-button-secondary"
+                (click)="onDisplay()">
             </button>
-            <button pRipple pButton type="button" icon="pi pi-history"
-                    (click)="imputer()" label="imputer" [disabled]="!searchedAgent">
+
+            <button
+                type="button"
+                pButton
+                icon="pi pi-check-circle"
+                label="Imputer"
+                class="p-button-success font-bold"
+                [disabled]="!searchedAgent"
+                (click)="imputer()">
             </button>
         </div>
-    </p-footer>
+    </ng-template>
 </p-dialog>
+
 
 <p-dialog
 
@@ -179,6 +210,7 @@
                    <span class="rejet" *ngIf="selectedDemande.rejeter">(Réjetée pour corrections)</span></b>
           </h4>
             <p *ngIf="hasNonTraiter&&totalActions>0" class="text-warn"> En attente de traitements des actions  avec <span style="color: green">{{nombreTraites}}</span> traitées sur <span style="color: green">{{totalActions}}</span> </p>
+                     <p *ngIf="hasInactive&&totalActions>0" class="text-danger"> Vous devez valider les plans d'actions .On a   <span style="color: green">{{ nombreNonTraites}}</span> validés sur <span style="color: green">{{nbreInactive}}</span> </p>
         </span>
         </div>
     </ng-template>
@@ -232,7 +264,7 @@
 
                 <button pRipple pButton type="button" icon="pi pi-check"
                         (click)="validate()"
-                        [disabled]="hasNonTraiter"
+                        [disabled]="hasNonTraiter||hasInactive"
                         label="Valider">
                 </button>
             }

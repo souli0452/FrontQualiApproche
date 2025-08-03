@@ -27,6 +27,9 @@ export class ProcNonConformiteService {
     getNonConformiteAll(): Observable<HttpResponse<Array<any>>> {
         return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL, {observe: 'response'});
     }
+    getNonConformiteAllStructure(id:any): Observable<HttpResponse<Array<any>>> {
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL+`/structure/${id}`, {observe: 'response'});
+    }
     getNonConformiteByStrcuture(id:any): Observable<HttpResponse<Array<any>>> {
         return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL_By_Structure+id, {observe: 'response'});
     }
@@ -68,5 +71,11 @@ export class ProcNonConformiteService {
     }
     getStatsPlanAction(anne:any): Observable<HttpResponse<any>> {
         return this.http.get<any>(NonConformiteUrlConfig.STAT_PLAN_ACTION_ALL+anne, {observe: 'response'});
+    }
+    validatePlanAction(demande: any): Observable<HttpResponse<any>> {
+        return this.http.put<any>(NonConformiteUrlConfig.VALIDATE_NON_CONFORMITE_ALL , demande, {observe: 'response'});
+    }
+    getStatsByNiveau(anne:any,id:any): Observable<HttpResponse<any>> {
+        return this.http.get<any>(NonConformiteUrlConfig.GET_Stat_MENSUEL_NIVEAU_ROOT_URL+anne+"/service/"+id, {observe: 'response'});
     }
 }

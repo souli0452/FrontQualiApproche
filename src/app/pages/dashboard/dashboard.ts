@@ -10,7 +10,7 @@ import { ProcNonConformiteService } from '../proc-non-conformite/proc-non-confor
 import { isPlatformBrowser, Location } from '@angular/common';
 import { DropdownModule } from 'primeng/dropdown';
 import { NgPrimeModule } from '../../../prime-ng.module';
-import { getCurrentUserStructure, isUserInRoles } from '../../utils';
+import { generateColor, getCurrentUserStructure, isUserInRoles } from '../../utils';
 import { Router } from '@angular/router';
 
 
@@ -27,6 +27,11 @@ import { Router } from '@angular/router';
             <div class="col-span-12 xl:col-span-6">
                 <app-revenue-stream-widget [chartDataTaux]="dataTaux" [chartOptionsTaux]="optionsTaux" [chartData]="chartData" [chartOptions]="chartOptions" (changeYear)="changeForProcessus($event)" />
             </div>
+            <div class="col-span-12 xl:col-span-12" *ngIf="!isUserInRoles(['SUPER_ADMIN'])">
+                <div class="card">
+                <h6>Non conformité par niveau</h6>
+                    <p-chart type="line" [data]="dataNiveau" [options]="optionsNiveau" class="h-[30rem]" /></div>
+            </div>
             <div class="col-span-12 xl:col-span-12">
 
                 <app-best-selling-widget [data]="dataAll" [options]="optionsAll" (changeYear)="change($event)" />
@@ -40,6 +45,8 @@ import { Router } from '@angular/router';
 export class Dashboard implements AfterViewInit {
     data: any;
     options: any;
+    dataNiveau: any;
+    optionsNiveau: any;
     dataTaux: any;
     optionsTaux: any;
     dataChartStructLast: any;
@@ -78,6 +85,7 @@ export class Dashboard implements AfterViewInit {
             this.fetchStatsMensuelStatusService();
             this.fecthStatMensuelStatusConnect();
             this.fetchStatsPlanAction();
+            this.fetchStatsMensuelStatusNiveau();
 
         }
 
@@ -114,6 +122,7 @@ export class Dashboard implements AfterViewInit {
             }
         });
     }
+
     fetchStats() {
         const currentYear = new Date().getFullYear();
         this.service.getStatsNfStruct(currentYear).subscribe({
@@ -174,8 +183,20 @@ export class Dashboard implements AfterViewInit {
         const currentYear = new Date().getFullYear();
         this.service.getStatsMensuelStatusService(currentYear,this.userStructure.id).subscribe({
             next: (data) => {
-                console.log(data.body)
+
                 this.initChartStructMonthLast(data.body);
+            },
+            error: (error) => {
+                //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
+            }
+        });
+    }
+    fetchStatsMensuelStatusNiveau() {
+        const currentYear = new Date().getFullYear();
+        this.service.getStatsByNiveau(currentYear,this.userStructure.id).subscribe({
+            next: (data) => {
+               this.initChartNiveau(data.body)
+
             },
             error: (error) => {
                 //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
@@ -611,4 +632,84 @@ export class Dashboard implements AfterViewInit {
 
     }
 
+    initChartNiveau(stats: any) {
+        if (isPlatformBrowser(this.platformId)) {
+            const documentStyle = getComputedStyle(document.documentElement);
+            const textColor = documentStyle.getPropertyValue('--p-text-color');
+            const textColorSecondary = documentStyle.getPropertyValue('--p-text-muted-color');
+            const surfaceBorder = documentStyle.getPropertyValue('--p-content-border-color');
+
+            const year = Object.keys(stats)[0];
+            const monthlyStats = stats[year];
+
+            const monthLabels = [
+                'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+                'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+            ];
+
+            const categoriesSet = new Set<string>();
+            monthLabels.forEach(month => {
+                const monthData = monthlyStats[month];
+                if (monthData) {
+                    Object.keys(monthData).forEach(cat => categoriesSet.add(cat));
+                }
+            });
+            const categories = Array.from(categoriesSet);
+            const totalCategories = categories.length;
+            const colorMap: Record<string, string> = {};
+            categories.forEach((cat, index) => {
+                colorMap[cat] = generateColor(index, totalCategories);
+            });
+
+            const datasets = categories.map(cat => ({
+                label: cat,
+                data: monthLabels.map(m => monthlyStats[m]?.[cat] ?? 0),
+                fill: false,
+                borderColor: colorMap[cat] || documentStyle.getPropertyValue('--p-gray-500'),
+                tension: 0.4
+            }));
+
+            this.dataNiveau = {
+                labels: monthLabels,
+                datasets: datasets
+            };
+
+            this.optionsNiveau = {
+                maintainAspectRatio: false,
+                aspectRatio: 0.6,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: textColor
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: textColorSecondary
+                        },
+                        grid: {
+                            color: surfaceBorder,
+                            drawBorder: false
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            color: textColorSecondary
+                        },
+                        grid: {
+                            color: surfaceBorder,
+                            drawBorder: false
+                        }
+                    }
+                }
+            };
+
+            this.cd.markForCheck();
+        }
+    }
+
+
+    protected readonly isUserInRoles = isUserInRoles;
 }

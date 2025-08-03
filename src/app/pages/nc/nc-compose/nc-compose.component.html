@@ -51,7 +51,7 @@
             <div class="flex flex-wrap gap-4 mt-4">
                 <div class="flex-1 min-w-[300px]">
                     <div class="field ">
-                        <label for="typeAction" class="block font-bold  mb-2">Type d’action entreprise </label>
+                        <label for="typeAction" class="block font-bold  mb-2">Type d’action entreprise (en cas de besoin)</label>
                         <p-dropdown id="typeAction" [(ngModel)]="nc.typeAction" [options]="typesActions"
                                     optionLabel="libelle" placeholder="Sélectionnez un type"
                                     [filter]="true" [showClear]="true" appendTo="body" class="w-full"
@@ -72,10 +72,10 @@
             </div>
 
             <div class="field mt-5 mb-4">
-                <label for="desAction" class="block font-bold  mb-2">Description des actions entreprises </label>
+                <label for="desAction" class="block font-bold  mb-2">Description de la correction  entreprises (en cas de besoin) </label>
                 <textarea pInputTextarea id="desAction" [(ngModel)]="nonConformite.actionDsc"
                           name="justification" rows="5" [autoResize]="true"
-                          placeholder="Décrivez précisément la non-conformité..."
+                          placeholder="Description de la correction entreprises"
                           class="w-full" ></textarea>
 
             </div>

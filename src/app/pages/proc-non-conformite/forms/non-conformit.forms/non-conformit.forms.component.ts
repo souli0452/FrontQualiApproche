@@ -13,7 +13,7 @@ import { takeUntil } from 'rxjs';
 import { StructureService } from '../../../structure/structure-service';
 import { AuthService } from '../../../../services/auth-services/auth.service';
 import { formatDate } from '@angular/common';
-import { formatDateToDDMMYYYY, getStatusSeverity } from '../../../../utils';
+import { downloadFile, formatDateToDDMMYYYY, getStatusSeverity } from '../../../../utils';
 import { ProcNonConformiteService } from '../../proc-non-conformite.service';
 
 @Component({
@@ -31,12 +31,14 @@ export class NonConformitFormsComponent {
     planActionForm: FormGroup;
     actions: FormArray;
     user:any={};
+    selectedPlans:any=[];
     isEdit:boolean=false;
     submitted = false;
     displayDialog:boolean = false;
     planAction:any={};
     participants:any[]=[];
     users:any=[];
+     afficheDialog: boolean=false;
     constructor(
         private fb: FormBuilder,
         private authService: AuthService,
@@ -99,7 +101,7 @@ export class NonConformitFormsComponent {
                     solutionRetenues:value.solutionRetenues,
                     responsableNomComplet: `${value.responsable?.firstName ?? ''} ${value.responsable?.lastName ?? ''}`,
                     responsableId: value.responsable?.id,
-                    status:"NON_TRAITER"
+                    status:"INACTIF"
                 };
             });
         }}
@@ -179,7 +181,7 @@ export class NonConformitFormsComponent {
         this.planAction.responsableId=this.user.id;
         if (!this.isEdit) {
             this.planAction.dateEcheance=formatDateToDDMMYYYY(this.planAction.dateEcheance);
-            this.planAction.status="NON_TRAITER"
+            this.planAction.status="INACTIF"
             this.planActions.push(this.planAction);
 
             this.demande.planActions=this.planActions;
@@ -205,5 +207,35 @@ export class NonConformitFormsComponent {
     }
     hideDialog() {
        this.displayDialog=false;
+    }
+    affich(action: any) {
+        this.planAction = action;
+        this.planAction.dateEcheance = action.dateEcheance.replace(/-/g, '/');
+        this.afficheDialog = true;
+    }
+    validerPlans() {
+        // Traitement des plans sélectionnés
+        console.log('Plans à valider :', this.selectedPlans);
+        const  dmd={
+            nonConformiteId:this.demande.id,
+            planIds:this.selectedPlans.map((plan: { id: any; }) => plan.id)
+        }
+        this.service.validatePlanAction(dmd).subscribe({
+            next: (data) => {
+                this.messageService.add({ severity: 'success', summary: 'Réussi', detail: "L'oppération à réussie !", life: 3000 });
+                window.location.reload();
+
+            },
+            error: (error) => {
+                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
+            }
+
+        });
+    }
+    downloadFile(fichier: any) {
+        downloadFile(fichier.nomFichier,fichier.fichierBase64);
+    }
+    hideDialogAffich() {
+        this.afficheDialog = false;
     }
 }

@@ -439,4 +439,8 @@ export  function  downloadFile( nom: string, base64: string) {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 }
+export function  generateColor(index: number, total: number): string {
 
+    const hue = Math.round((360 / total) * index);
+    return `hsl(${hue}, 70%, 50%)`;
+}

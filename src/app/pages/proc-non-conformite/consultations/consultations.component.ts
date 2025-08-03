@@ -6,7 +6,7 @@ import { MessageService } from 'primeng/api';
 import { ProcNonConformiteService } from '../proc-non-conformite.service';
 import { EtapeTraitement } from '../../../enums';
 import { HttpResponse } from '@angular/common/http';
-import { showToast, StatusEnum } from '../../../utils';
+import { getCurrentUserStructure, isUserInRoles, showToast, StatusEnum } from '../../../utils';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { FeaturesService } from '../../../services/feature-service';
@@ -26,7 +26,9 @@ export class ConsultationsComponent {
     demandeList: any = [];
     title = 'Consultations des non-conformités';
     cols: any[] = [];
+    userStructure:any={};
     constructor(private  featureService:FeaturesService,protected messageService: MessageService,private service:ProcNonConformiteService) {
+        this.userStructure = getCurrentUserStructure();
         this.cols = [
             { field: 'numeroReference', header: 'N° ordre', type: 'string', filter: true, width: '10%', centered: false },
             { field: 'origineService', header: 'Nom processus', type: 'string', filter: true, width: '30%', centered: false },
@@ -46,10 +48,27 @@ export class ConsultationsComponent {
 
     protected readonly BtnActions = EtapeTraitement;
     ngOnInit() {
-        this.getDemandeList()
+
+        if(isUserInRoles(['SUPER_ADMIN','SUIVI_RQ',"VALIDATION_RQ"])){
+            this.getDemandeList()
+        }else{
+            this.getDemandeListStructure();
+        }
+
     }
     getDemandeList() {
         this.service.getNonConformiteAll().subscribe({
+            next: (data) => {
+                this.demandeList = data.body;
+                this.featureService.onReloadRequested(true);
+            },
+            error: (error) => {
+                //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
+            }
+        });
+    }
+    getDemandeListStructure() {
+        this.service.getNonConformiteAllStructure(this.userStructure.id).subscribe({
             next: (data) => {
                 this.demandeList = data.body;
                 this.featureService.onReloadRequested(true);

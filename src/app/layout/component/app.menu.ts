@@ -38,9 +38,9 @@ constructor(private  authService: AuthService) {
                 items: [
                     {label: 'Directions (Processus)', icon: 'pi pi-building', routerLink: ['/page/direction']},
                     {label: 'Services (Processus)', icon: 'pi pi-building', routerLink: ['/page/service']},
-                    {label: 'Type de non-conformité', icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-nc']},
-                    {label: 'Niveau de non-conformité', icon: 'pi pi-fw pi-cog', routerLink: ['/page/niveau-nc']},
-                    {label: 'Type de processus', icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-processus']},
+                    {label: 'Origine non-conformité', icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-nc']},
+                    {label: 'Niveau  non-conformité', icon: 'pi pi-fw pi-cog', routerLink: ['/page/niveau-nc']},
+                    {label: 'Type  processus', icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-processus']},
                     {label: 'Type action entreprise', icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-action']},
                     {label: 'Config global', icon: 'pi pi-cog', routerLink: ['/page/config-global']},
                 ]
@@ -163,14 +163,14 @@ constructor(private  authService: AuthService) {
                              label:"Consultations",
                              icon: 'pi pi-fw pi-eye',
                              routerLink: ['/page/consultation'],
-                             visible:  isUserInRoles(['CONSULTATION_NC','SUPER_ADMIN'])
+
                          }
                      ]
                     },
                     {
                         label: "Traitement des plans d'actions",
                         icon: 'pi pi-fw pi-cog',
-                        visible:  isUserInRoles(['TRAITEMENT_PLAN','SUPER_ADMIN']),
+                        visible:  isUserInRoles(['TRAITEMENT_PLAN']),
                         routerLink: ['/traitement-action'],
                     },
                 ]

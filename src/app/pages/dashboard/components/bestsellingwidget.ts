@@ -11,6 +11,7 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
     selector: 'app-best-selling-widget',
     imports: [CommonModule, ButtonModule, MenuModule, UIChart, DropdownModule, NgPrimeModule],
     template: ` <div class="card">
+        <h6>Non conformité total par an</h6>
         <div class="flex align-items-center justify-content-end gap-3">
             <div class="flex-auto">
             <h6 class="m-0 text-sm font-medium text-600"></h6></div>

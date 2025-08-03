@@ -10,6 +10,7 @@ import { FormsModule } from '@angular/forms';
     selector: 'app-notifications-widget',
     imports: [ButtonModule, MenuModule, UIChart, DropdownModule, FormsModule],
     template: `<div class="card">
+        <h6>Non conformité total par an et par statut</h6>
         <div class="flex align-items-center justify-content-end gap-3">
             <div class="flex-auto">
                 <h6 class="m-0 text-sm font-medium text-600"></h6>

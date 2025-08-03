@@ -50,8 +50,11 @@ export class DmdTraitementTableTemplateComponent {
     selectedDemande: any;
     componentRef: ComponentRef<any> | undefined;
     hasNonTraiter: boolean = true;
+    hasInactive: boolean = true;
+    nbreInactive: boolean = true;
     totalActions:number = 0;
     nombreTraites:number = 0;
+    nombreNonTraites:number = 0;
     constructor(
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
@@ -79,12 +82,15 @@ export class DmdTraitementTableTemplateComponent {
             this.selectedDemande.btnActions=this.btnActions;
             this.totalActions = this.selectedDemande.planActions.length;
             this.hasNonTraiter = this.selectedDemande.planActions.some((action: { status: string }) => action.status === 'NON_TRAITER');
+            this.hasInactive = this.selectedDemande.planActions.some((action: { status: string }) => action.status === 'INACTIF');
 
             this.nombreTraites = this.selectedDemande.planActions.filter((action: { status: string }) => action.status === 'TRAITER').length;
+            this.nombreNonTraites = this.selectedDemande.planActions.filter((action: { status: string }) => action.status === 'NON_TRAITER').length;
+            this.nbreInactive = this.selectedDemande.planActions.filter((action: { status: string }) => action.status === 'INACTIF').length;
 
             this.displayDetail = true;
             let componentRef: any;
-            if (this.btnActions !== EtapeTraitement.CLOTURE&&this.btnActions !== EtapeTraitement.IMPUTATION&&this.btnActions !== EtapeTraitement.SUIVI_RQ&&this.btnActions !== EtapeTraitement.VALIDATION) {
+            if (this.btnActions !== EtapeTraitement.CLOTURE&&this.btnActions !== EtapeTraitement.IMPUTATION&&this.btnActions !== EtapeTraitement.SUIVI_RQ) {
                 componentRef = this.detailContainer?.createComponent(this.featureService.getDynamicFormComponent(this.selectedDemande.typeDemande));
             } else {
                 componentRef = this.detailContainer?.createComponent(this.featureService.getDynamicDetailComponent(this.selectedDemande.typeDemande));
