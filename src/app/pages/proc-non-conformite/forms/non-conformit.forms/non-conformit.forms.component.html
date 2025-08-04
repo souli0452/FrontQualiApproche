@@ -47,7 +47,7 @@
                         <ng-template pTemplate="body" let-plan>
                             <tr [pSelectableRow]="plan">
                                 <td>
-                                    <p-tableCheckbox [value]="plan" [disabled]="plan.status=='NON_TRAITER'"></p-tableCheckbox>
+                                    <p-tableCheckbox [value]="plan" [disabled]="plan.status=='NON_TRAITER'||plan.status=='TRAITER'"></p-tableCheckbox>
                                 </td>
                                 <td>{{plan.numeroOdre}}</td>
                                 <td>{{plan.causeIdentifiees}}</td>
