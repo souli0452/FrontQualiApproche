@@ -232,10 +232,11 @@
                     (click)=rejet()
                     label="Rejeter">
             </button>}
-            <!--<button pRipple pButton type="button" icon="pi pi-check"
+            @if (btnActions === BtnActions.CLOTURE&&selectedDemande?.etatTraitement===BtnActions.CLOTURE) {
+            <button pRipple pButton type="button" icon="pi pi-print"
                     class="p-button-warning position-left mr-3"
                     (click)="editionNew()" label="Editer">
-            </button>-->
+            </button>}
             @if (btnActions === BtnActions.TRAITEMENT) {
 
                 <button pRipple pButton type="button"

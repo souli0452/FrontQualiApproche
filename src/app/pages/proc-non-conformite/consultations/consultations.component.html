@@ -3,6 +3,7 @@
         [btnActions]="BtnActions.CLOTURE"
         [demandeList]="demandeList"
         [cols]="cols"
+        (onEdition)="edition($event)"
         (onCloture)="cloture($event)"
         [title]="title">
     </app-dmd-traitement-table-template>

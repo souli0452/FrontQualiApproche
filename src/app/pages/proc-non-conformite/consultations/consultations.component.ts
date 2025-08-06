@@ -6,10 +6,19 @@ import { MessageService } from 'primeng/api';
 import { ProcNonConformiteService } from '../proc-non-conformite.service';
 import { EtapeTraitement } from '../../../enums';
 import { HttpResponse } from '@angular/common/http';
-import { getCurrentUserStructure, isUserInRoles, showToast, StatusEnum } from '../../../utils';
+import {
+    generateReportFile,
+    getCurrentUserStructure,
+    isUserInRoles,
+    ReportFormat,
+    ReportingInput,
+    showToast,
+    StatusEnum
+} from '../../../utils';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { FeaturesService } from '../../../services/feature-service';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'app-consultations',
@@ -95,4 +104,28 @@ export class ConsultationsComponent {
         })
     }
 
+    private editer(rowData: any, resp: HttpResponse<any>) {
+        const reportingInput: ReportingInput = {
+            reportFormat: ReportFormat.PDF,
+            reportType: rowData.typeDemande,
+            entityId: rowData.id!,
+        };
+        this.featureService.printReport(reportingInput).pipe()
+            .subscribe({
+                next: arrayBytes => {
+                    if (arrayBytes.byteLength) {
+                        generateReportFile(arrayBytes, reportingInput);
+                        this.dmdTraitement.displayDetails(resp.body);
+                        this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'oppération à réussie !", life: 3000 });
+                    }
+                },
+                error: () => {
+                    this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
+                    //showToast(handleHttpErrors(err, 'error', 'Impression correspondance', 'demandeCodeKey'), this.messageService);
+                }
+            });
+    }
+
+    edition(demandes: any) {
+        this.editer(demandes[0], demandes[0]);}
 }
