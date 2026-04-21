@@ -31,7 +31,7 @@ export class LoginComponent implements OnInit{
     isConfirmationScreen: boolean = false;
     user!: any;
     userCurrentUser!: KcUser;
-
+    showNoStructureDialog: boolean = false;
 
     constructor(private fb: FormBuilder, private authService: AuthService,
                 private router: Router
@@ -76,20 +76,36 @@ export class LoginComponent implements OnInit{
 
                     this.authService.getUserRoles(data!.user.userId!).subscribe((roles) => {
                         localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(roles.body));
+
+                        this.authService.getUserById(data!.user.userId!).subscribe((value) => {
+                            this.userCurrentUser = value.body!;
+
+                            if (isUserInRoles(['SUPER_ADMIN'])) {
+                                if (this.userCurrentUser.structure) {
+                                    this.fetchStucture(this.userCurrentUser.structure);
+                                }
+                                this.navigateUser();
+                            } else {
+                                if (this.userCurrentUser.structure) {
+                                    this.structureService.getByStructureId(this.userCurrentUser.structure).subscribe({
+                                        next: (structure) => {
+                                            if (structure && structure.id) {
+                                                localStorage.setItem(USER_STRUCTURE_KEY, JSON.stringify(structure));
+                                                this.navigateUser();
+                                            } else {
+                                                this.showNoStructurePopup();
+                                            }
+                                        },
+                                        error: () => {
+                                            this.showNoStructurePopup();
+                                        }
+                                    });
+                                } else {
+                                    this.showNoStructurePopup();
+                                }
+                            }
+                        });
                     });
-                    this.authService.getUserById(data!.user.userId!).subscribe((value) => {
-                        this.userCurrentUser = value.body!;
-                        if (this.userCurrentUser.structure) {
-                            this.fetchStucture(this.userCurrentUser.structure);
-                        } else {
-                            this.messageService.add({ severity: 'info', summary: 'AVERTISSEMENT', detail: 'Votre utilisateur est mal configuré', life: 3000 });
-                        }
-                    });
-                    if(isUserInRoles(['SUPER_ADMIN'])){
-                        this.router.navigate(['/']);
-                    }else {
-                        this.router.navigate(['/page/consultation']);
-                    }
                 },
                 error: (err) => {
                     console.log('Erreur:', err);
@@ -122,6 +138,24 @@ export class LoginComponent implements OnInit{
             this.errorMessage = 'Veuillez remplir tous les champs correctement avant de continuer.';
         }
     }
+    navigateUser() {
+        if(isUserInRoles(['SUPER_ADMIN'])){
+            this.router.navigate(['/']);
+        }else {
+            this.router.navigate(['/page/consultation']);
+        }
+    }
+
+    showNoStructurePopup() {
+        this.isLoading = false;
+        this.authService.logout(); // Clear invalid session
+        this.showNoStructureDialog = true;
+    }
+
+    closeNoStructureDialog() {
+        this.showNoStructureDialog = false;
+    }
+
     fetchStucture(structureId: string) {
         this.structureService.getByStructureId(structureId).subscribe({
             next: (structure) => {

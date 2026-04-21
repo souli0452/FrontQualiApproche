@@ -307,6 +307,7 @@ export interface KcUser {
     email: string;
     password: string;
     structure:string;
+    fonction?: string;
 }
 export interface PlanAction {
     id?: number;

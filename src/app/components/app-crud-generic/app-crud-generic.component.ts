@@ -9,7 +9,7 @@ import {
     SimpleChanges
 } from '@angular/core';
 import {UntypedFormGroup} from "@angular/forms";
-import {ConfirmationService, MessageService} from "primeng/api";
+import {ConfirmationService, MenuItem, MessageService} from "primeng/api";
 import {patternToDate, toFormatFromDate} from "../../utils";
 import {DropdownSelector, FormGroupColumn, MultiSelectSelector, TableColumn} from "../../models";
 import { NgPrimeModule } from '../../../prime-ng.module';
@@ -59,6 +59,7 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     rowData:any;
     @Input() customButtons: {label: string; icon: string; action: string; color?: string; tooltip?: string; tooltipPosition?: string; }[] = [];
     @Output() customActionEvent = new EventEmitter<{ action: string; user: any }>();
+    menuItems: MenuItem[] = [];
 
     constructor(protected confirmationService: ConfirmationService, protected changeDet: ChangeDetectorRef) {
     }
@@ -155,4 +156,45 @@ affich(rowData:any){
         this.displayDetails=true;
 this.rowData=rowData;
 }
+
+    toggleMenu(event: any, menu: any, rowData: any) {
+        this.menuItems = [];
+        
+        if (this.isAffich) {
+            this.menuItems.push({
+                label: 'Détail',
+                icon: 'pi pi-eye',
+                command: () => this.affich(rowData)
+            });
+        }
+
+        if (!this.notModif) {
+            this.menuItems.push({
+                label: 'Modifier',
+                icon: 'pi pi-pencil',
+                command: () => this.edit(rowData)
+            });
+        }
+
+        if (this.customButtons && this.customButtons.length > 0) {
+            this.customButtons.forEach(btn => {
+                this.menuItems.push({
+                    label: btn.tooltip || btn.label,
+                    icon: btn.icon,
+                    command: () => this.onCustomAction(btn.action, rowData)
+                });
+            });
+        }
+
+        if (!this.notDelete) {
+            this.menuItems.push({
+                label: 'Supprimer',
+                icon: 'pi pi-trash',
+                className: 'text-red-500',
+                command: () => this.delele(rowData)
+            });
+        }
+
+        menu.toggle(event);
+    }
 }

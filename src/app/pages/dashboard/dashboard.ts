@@ -19,7 +19,13 @@ import { Router } from '@angular/router';
     selector: 'app-dashboard',
     imports: [StatsWidget, RecentSalesWidget, BestSellingWidget, RevenueStreamWidget, NotificationsWidget, DropdownModule, NgPrimeModule],
     template: `
-        <div class="grid grid-cols-12 gap-8">
+        <p-dialog [(visible)]="showNoStructureDialog" header="Accès Refusé" [modal]="true" [closable]="false" [style]="{width: '400px'}">
+            <p class="m-0">Vous n'êtes relié à aucune structure. Vous ne pouvez pas effectuer d'actions sur la plateforme.</p>
+            <ng-template pTemplate="footer">
+                <p-button icon="pi pi-check" (click)="logout()" label="Retour" styleClass="p-button-text"></p-button>
+            </ng-template>
+        </p-dialog>
+        <div class="grid grid-cols-12 gap-8" *ngIf="!showNoStructureDialog">
             <app-stats-widget class="contents" />
             <div class="col-span-12 xl:col-span-6">
                 <app-recent-sales-widget [data]="data" [options]="options" />
@@ -63,6 +69,7 @@ export class Dashboard implements AfterViewInit {
     annees: number[] = [];
     anneeSelectionnee!: number;
     userStructure:any={};
+    showNoStructureDialog: boolean = false;
     constructor(
         private cd: ChangeDetectorRef,
         public authService: AuthService,
@@ -79,17 +86,23 @@ export class Dashboard implements AfterViewInit {
             this.fetchStatsMensuelStatus();
             this.fetchStatsMensuel();
             this.fetchStats();
-        }
-        else {
-            this.fecthNonConformiteConnect();
-            this.fetchStatsMensuelStatusService();
-            this.fecthStatMensuelStatusConnect();
-            this.fetchStatsPlanAction();
-            this.fetchStatsMensuelStatusNiveau();
-
+            return;
         }
 
+        if (!this.userStructure || !this.userStructure.id) {
+            this.showNoStructureDialog = true;
+            return;
+        }
 
+        this.fecthNonConformiteConnect();
+        this.fetchStatsMensuelStatusService();
+        this.fecthStatMensuelStatusConnect();
+        this.fetchStatsPlanAction();
+        this.fetchStatsMensuelStatusNiveau();
+    }
+
+    logout() {
+        this.authService.logout();
     }
 
     fecthNonConformite() {

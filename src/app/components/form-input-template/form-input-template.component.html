@@ -47,13 +47,28 @@
             <p-dropdown
                 [options]="dropDownObject[col.field]"
                 [filter]="true"
+                [optionLabel]="'label'"
+                [optionValue]="'value'"
                 [showClear]="true"
                 [formControlName]="col.field"
                 class="w-full premium-dropdown"
                 [name]="col.field">
             </p-dropdown>
         </ng-container>
-
+        <ng-container *ngIf="col.type === 'multiselect'">
+            <p-multiSelect
+                [options]="multiSelectObject[col.field]"
+                [filter]="true"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+                [formControlName]="col.field"
+                class="w-full premium-multiselect"
+                [name]="col.field"
+                display="chip"
+                placeholder="Sélectionner les options">
+            </p-multiSelect>
+        </ng-container>
         <!-- Checkbox -->
         <ng-container *ngIf="col.type === 'boolean'">
             <div class="flex items-center mt-2">

@@ -38,7 +38,7 @@ import { getCurrentUserStructure } from '../../utils';
                         />
                     </g>
                 </svg>
-                <span>QUALI-APPROCHE</span>
+                <span>QUALI-TACH</span>
             </a>
         </div>
 

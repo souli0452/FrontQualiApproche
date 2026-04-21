@@ -109,5 +109,9 @@
     </div>
 </div>
 
-
-
+<p-dialog [(visible)]="showNoStructureDialog" header="Accès Refusé" [modal]="true" [closable]="false" [style]="{width: '400px'}">
+    <p class="m-0">Vous n'êtes relié à aucune structure. Vous ne pouvez pas effectuer d'actions sur la plateforme.</p>
+    <ng-template pTemplate="footer">
+        <p-button icon="pi pi-check" (click)="closeNoStructureDialog()" label="Compris" styleClass="p-button-text"></p-button>
+    </ng-template>
+</p-dialog>

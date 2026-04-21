@@ -29,16 +29,16 @@
                 </ng-container>
 
                 <div class="col-sm-12">
-                    <p-table 
+                    <p-table
                     [resizableColumns]="true"
                     columnResizeMode="expand"
-                    #dt #gFilter 
+                    #dt #gFilter
                     [size]="'small'"
                     [columns]="tableCols"
-                    [value]="listeObject" 
+                    [value]="listeObject"
                     selectionMode="single"
-                    dataKey="id" 
-                    [paginator]="true" 
+                    dataKey="id"
+                    [paginator]="true"
                     [rows]="10"
                     styleClass="p-datatable-gridlines p-datatable-sm"
                     [globalFilterFields]="filterFiels"
@@ -63,7 +63,7 @@
                                     {{ col.header }}
                                     <p-sortIcon [field]="col.field"></p-sortIcon>
                                 </th>
-                                <th *ngIf="!consultation" class="text-center font-bold" style="width: 4rem">Action</th>
+                                <th *ngIf="!consultation" class="text-center font-bold" style="width: 1rem">Action</th>
                             </tr>
                         </ng-template>
                         <ng-template #body let-rowData let-columns="columns" let-ri="rowIndex">
@@ -104,38 +104,17 @@
                                 </span>
                             </span>
                                 </td>
-                                <td style="text-align:center; display: flex; justify-content: space-evenly; align-items: center;" *ngIf="!consultation">
-                                    <p-button [rounded]="true" [text]="true" *ngIf="isAffich" size="small" pButton pRipple icon="pi pi-eye"
-                                            class="me-1 mb-2"
-                                            (click)="affich(rowData)" pTooltip="Détail" [tooltipPosition]="position">
-                                    </p-button>
-
-                                    <p-button [rounded]="true" [text]="true" *ngIf="!notModif" size="small" pButton pRipple icon="pi pi-pencil"
-                                            class="me-1 mb-2"
-                                            (click)="edit(rowData)" pTooltip="Modifier" [tooltipPosition]="position">
-                                    </p-button>
-                                    <p-button [rounded]="true" [text]="true" *ngIf="!notDelete" size="small" pButton pRipple icon="pi pi-trash" severity="danger"
-                                            class=""
-                                            (click)="delele(rowData)" pTooltip="Supprimer" [tooltipPosition]="position">
-                                    </p-button>
-                                    <div *ngFor="let button of customButtons" class="custom-button">
-                                        <button
-                                            type="button"
-                                            pButton
-                                            pRipple
-                                            [icon]="button.icon"
-                                            class="p-button-rounded me-1 mb-2 m-2"
-                                            [ngStyle]="{ 'background-color': button.color}"
-                                            (click)="onCustomAction(button.action, rowData)"
-                                            [pTooltip]="button.tooltip"
-                                            [tooltipPosition]="button.tooltipPosition || 'top'">
-                                        </button>
-                                    </div>
+                                <td style="text-align:center;" *ngIf="!consultation">
+                                    <p-menu #menu [model]="menuItems" [popup]="true" appendTo="body"></p-menu>
+                                    <button pButton pRipple icon="pi pi-ellipsis-v"
+                                            class="p-button-rounded p-button-text p-button-plain"
+                                            (click)="toggleMenu($event, menu, rowData)">
+                                    </button>
                                 </td>
 
                             </tr>
                         </ng-template>
-                        
+
                         <ng-template pTemplate="emptymessage">
                             <div class="h-60">
                                 <div class="centrer-image mt-6">
@@ -145,7 +124,7 @@
                             </div>
                         </ng-template>
                     </p-table>
-                    
+
                 </div>
             </div>
         </div>

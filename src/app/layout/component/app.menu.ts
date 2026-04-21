@@ -122,7 +122,7 @@ constructor(private  authService: AuthService) {
                         visible:  isUserInRoles(app_roles.NC),
                      items: [
                          {
-                             label:"Réception par le pilote du processus ",
+                             label:"Analyse initiale du pilote ",
                              icon: 'pi pi-fw pi-user-plus',
                              routerLink: ['/page/reception'],
                              visible:  isUserInRoles(['RECEPTION_NC','SUPER_ADMIN'])
@@ -136,19 +136,19 @@ constructor(private  authService: AuthService) {
                          },
 
                          {
-                             label:"Imputations ",
+                             label:"Affectation des responsables ",
                              icon: 'pi pi-fw pi-arrow-up-right',
                              routerLink: ['/page/imputation'],
                              visible:  isUserInRoles(['IMPUTATION_NC','SUPER_ADMIN'])
                          },
                          {
-                             label:"Traitements",
+                             label:"Proposition d’actions correctives",
                              icon: 'pi pi-fw pi-cog',
                              routerLink: ['/page/traitement'],
                              visible:  isUserInRoles(['TRAITEMENT_NC','SUPER_ADMIN'])
                          },
                          {
-                             label:"Validations par le pilote du processus",
+                             label:"Validation des actions",
                              icon: 'pi pi-fw pi-check',
                              routerLink: ['/page/validation'],
                              visible:  isUserInRoles(['VALIDATION_CHEF','SUPER_ADMIN'])
@@ -160,7 +160,7 @@ constructor(private  authService: AuthService) {
                              visible:  isUserInRoles(['RQ_NC','SUPER_ADMIN'])
                          },
                          {
-                             label:"Consultations",
+                             label:"Suivi des non-conformités",
                              icon: 'pi pi-fw pi-eye',
                              routerLink: ['/page/consultation'],
 
@@ -168,7 +168,7 @@ constructor(private  authService: AuthService) {
                      ]
                     },
                     {
-                        label: "Traitement des plans d'actions",
+                        label: "Suivi des plans d’actions",
                         icon: 'pi pi-fw pi-cog',
                         visible:  isUserInRoles(['TRAITEMENT_PLAN']),
                         routerLink: ['/traitement-action'],
