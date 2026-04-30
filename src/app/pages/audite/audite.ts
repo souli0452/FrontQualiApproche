@@ -17,6 +17,7 @@ import { AuditService } from '../../services/audit.service';
         <div class="page-layout">
             <app-crud-generic
                 [dialogWidth]="'50rem'"
+                [loading]="loading"
                 [pageLabel]="pageLabel"
                 [tableCols]="tableCols"
                 [listeObject]="dataList"
@@ -53,13 +54,13 @@ export class AuditeComponent {
                         {field: 'resultatAudite', label: "", header: 'Resultat', type: 'string', visible: true, required: true},
                         {field: 'statutAudite', label: "", header: 'Statut', type: 'string', visible: true, required: false},
                         {field: 'objectifAudite', label: "", header: 'Ojectif', type: 'string', visible: true, required: false},
-                        {field: 'typeAudite', label: "", header: 'Type', type: 'string', visible: true, required: false},
-                        {field: 'FounisseurId', label: "", header: 'Founisseur', type: 'string', visible: true, required: false},
-                        {field: 'produits', label: "", header: 'Produit', type: 'dropdown', visible: true, required: false},
-                        {field: 'risques', label: "", header: 'Risques', type: 'dropdown', visible: true, required: false},
-                        {field: 'exigences', label: "", header: 'Exigences', type: 'dropdown', visible: true, required: false},
-                        {field: 'nonConformites', label: "", header: 'Non Conformite', type: 'dropdown', visible: true, required: false},
-                        {field: 'departements', label: "", header: 'Departement', type: 'dropdown', visible: true, required: false}
+                        // {field: 'typeAudite', label: "", header: 'Type', type: 'string', visible: true, required: false},
+                        // {field: 'FounisseurId', label: "", header: 'Founisseur', type: 'string', visible: true, required: false},
+                        // {field: 'produits', label: "", header: 'Produit', type: 'dropdown', visible: true, required: false},
+                        // {field: 'risques', label: "", header: 'Risques', type: 'dropdown', visible: true, required: false},
+                        // {field: 'exigences', label: "", header: 'Exigences', type: 'dropdown', visible: true, required: false},
+                        // {field: 'nonConformites', label: "", header: 'Non Conformite', type: 'dropdown', visible: true, required: false},
+                        // {field: 'departements', label: "", header: 'Departement', type: 'dropdown', visible: true, required: false}
 
                     ];
             
@@ -93,13 +94,16 @@ export class AuditeComponent {
                     this.fetchAudit();
                 }
             
-                fetchAudit() {
+                fetchAudit() {      
+                    this.loading = true;
                     this.auditService.findAll().pipe(takeUntil(this.destroy$))
                         .subscribe({
                             next: res => {
                                 this.dataList = res.body || [];
+                                this.loading = false;
                             },
                             error: error => {
+                                this.loading = false;  
                                 showToast(StatusEnum.error, error.status, null, this.messageService, error);
                             }
                         });

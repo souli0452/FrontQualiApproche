@@ -26,7 +26,7 @@ import { LayoutService } from '../service/layout.service';
                 [ngClass]="item.styleClass"
                 [routerLink]="item.routerLink"
                 routerLinkActive="active-route"
-                [routerLinkActiveOptions]="item.routerLinkActiveOptions || { paths: 'exact', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored' }"
+                [routerLinkActiveOptions]="item.routerLinkActiveOptions || { paths: item.routerLink[0] === '/' ? 'exact' : 'subset', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored' }"
                 [fragment]="item.fragment"
                 [queryParamsHandling]="item.queryParamsHandling"
                 [preserveFragment]="item.preserveFragment"

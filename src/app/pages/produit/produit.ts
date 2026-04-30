@@ -17,6 +17,7 @@ import { ProduitService } from '../../services/produit.service';
         <div class="page-layout">
             <app-crud-generic
                 [dialogWidth]="'50rem'"
+                [loading]="loading"
                 [pageLabel]="pageLabel"
                 [tableCols]="tableCols"
                 [listeObject]="dataList"
@@ -49,7 +50,7 @@ export class ProduitComponent {
               {field: 'id', label: "", header: 'Id', type: 'number', visible: false, required: false},
               {field: 'libelleProduit', label: "Libellé du produit", header: 'Libellé', type: 'string', visible: true, required: true},
               {field: 'descriptionProduit', label: "Description du produit", header: 'Description', type: 'string', visible: true, required: false},
-              {field: 'audites', label: "Information audite", header: 'Audites', type: 'dropdown', visible: true, required: false}
+              //{field: 'audites', label: "Information audite", header: 'Audites', type: 'dropdown', visible: true, required: false}
 
           ];
   
@@ -74,12 +75,15 @@ export class ProduitComponent {
       }
   
       fetchProduit() {
+         this.loading = true;
           this.produitService.findAll().pipe(takeUntil(this.destroy$))
               .subscribe({
                   next: res => {
                       this.dataList = res.body || [];
+                      this.loading = false;
                   },
                   error: error => {
+                      this.loading = false;
                       showToast(StatusEnum.error, error.status, null, this.messageService, error);
                   }
               });

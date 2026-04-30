@@ -17,6 +17,7 @@ import { TypeProcessusService } from '../../../services/type-processus.service';
         <div class="page-layout">
             <app-crud-generic
                 [dialogWidth]="'50rem'"
+                [loading]="loading"
                 [pageLabel]="pageLabel"
                 [tableCols]="tableCols"
                 [listeObject]="dataList"
@@ -72,12 +73,15 @@ export class TypeProcessusComponent {
       }
 
       fetchObject() {
+        this.loading = true;
           this.typeProcessusService.findAll().pipe(takeUntil(this.destroy$))
               .subscribe({
                   next: res => {
                       this.dataList = res.body || [];
+                      this.loading = false;
                   },
                   error: error => {
+                      this.loading = false;
                       showToast(StatusEnum.error, error.status, null, this.messageService, error);
                   }
               });

@@ -17,6 +17,7 @@ import { showToast, StatusEnum } from '../../../utils';
         <div class="page-layout">
             <app-crud-generic
                 [dialogWidth]="'40rem'"
+                [loading]="loading"
                 [pageLabel]="pageLabel"
                 [tableCols]="tableCols"
                 [listeObject]="dataList"
@@ -72,12 +73,15 @@ export class TypeNonConformiteComponent {
       }
 
       fetchObject() {
+        this.loading = true;
           this.typeNonConformiteService.findAll().pipe(takeUntil(this.destroy$))
               .subscribe({
                   next: res => {
                       this.dataList = res.body || [];
+                      this.loading = false;
                   },
                   error: error => {
+                      this.loading = false;
                       showToast(StatusEnum.error, error.status, null, this.messageService, error);
                   }
               });

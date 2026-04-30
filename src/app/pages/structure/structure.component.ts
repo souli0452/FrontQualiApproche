@@ -1,8 +1,9 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Table } from 'primeng/table';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { StructureService } from './structure-service';
+import { GlobalSearchService } from '../../services/global-search.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ActivatedRoute } from '@angular/router';
 import { Structure } from './structure';
@@ -14,6 +15,8 @@ import {
     DmdTraitementTableTemplateComponent
 } from '../../components/dmd.traitement-table-template/dmd.traitement-table-template.component';
 import { CreationComponent } from './creation/creation.component';
+import { MenuItem } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 @Component({
     selector: 'app-structure',
     templateUrl: './structure.component.html',
@@ -22,10 +25,12 @@ import { CreationComponent } from './creation/creation.component';
     imports:[
         CommonModule,
         NgPrimeModule,
-        CreationComponent
+        CreationComponent,
+        MenuModule
     ]
 })
 export class StructureComponent implements OnInit, OnDestroy {
+    actionMenuItems: MenuItem[] = [];
     cols: any[] = [];
     rowsPerPageOptions = [5, 10, 20];
     editForm?: UntypedFormGroup;
@@ -37,10 +42,14 @@ export class StructureComponent implements OnInit, OnDestroy {
     search: any;
     currentStructure?: Structure;
     demandeKey = 'demandeKey';
+    loading: boolean = false;
     typeStructure: TypeStructure = TypeStructure.SERVICE;
+
+    @ViewChild('dt') table!: Table;
 
     constructor(
         private structureService: StructureService,
+        private globalSearchService: GlobalSearchService,
         private activatedRoute: ActivatedRoute,
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
@@ -52,7 +61,7 @@ export class StructureComponent implements OnInit, OnDestroy {
         this.cols = [
             { field: 'libelleCourt', header: 'Sigle', type: 'string', filter: true, width: '10%', center: false },
             { field: 'libelleLong', header: 'Libellé', type: 'string', filter: true, width: '40%', center: false },
-            { field: 'ville', header: 'Ville', type: 'string', filter: true, width: '20%', center: false },
+            { field: 'ville', header: 'Ville', type: 'string', filter: true, width: '20%', center: false }
         ];
 
         this.colsFilter = this.cols.map((value) => value.field);
@@ -77,6 +86,10 @@ export class StructureComponent implements OnInit, OnDestroy {
             ville: [null, Validators.required],
         });
     }
+    ngOnDestroy(): void {
+        this.destroy$.next(true);
+        this.destroy$.complete();
+    }
 
     ngOnInit() {
         if (this.typeStructure === TypeStructure.DIRECTION) {
@@ -85,14 +98,27 @@ export class StructureComponent implements OnInit, OnDestroy {
             this.directionChange();
             this.loadDirections();
         }
+
+        // Écouter la barre de recherche globale
+        this.globalSearchService.searchQuery$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(query => {
+                if (this.table) {
+                    this.table.filterGlobal(query, 'contains');
+                }
+            });
     }
 
     loadDirections() {
+        this.loading = true;
         this.structureService.getAllDirections(TypeStructure.DIRECTION).subscribe({
             next: (resp) => {
                 this.directions = resp.body || [];
+                this.loading = false;
             },
-            error: (error) => {}
+            error: (error) => {
+                this.loading = false;
+            }
         });
     }
 
@@ -114,14 +140,18 @@ export class StructureComponent implements OnInit, OnDestroy {
 
     loadStuctures() {
         if (this.typeStructure) {
+            this.loading = true;
             this.structureService
                 .getAllStructure(this.typeStructure, this.currentStructure?.id)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe({
                     next: (resp) => {
                         this.structures = resp.body || [];
+                        this.loading = false;
                     },
-                    error: (error) => {}
+                    error: (error) => {
+                        this.loading = false;
+                    }
                 });
         }
     }
@@ -131,31 +161,41 @@ export class StructureComponent implements OnInit, OnDestroy {
             this.display = false;
             this.editForm?.reset();
         } else {
+            // AJOUT: On vide toujours le formulaire avant d'ouvrir le tiroir !
+            this.editForm?.reset(); 
+            
             if (structure) {
                 this.editForm?.patchValue(structure!);
             }
-
             this.display = true;
         }
     }
 
+
     saveEntity() {
         const structure = this.editForm?.getRawValue() as Structure;
         structure.typeStructure = this.typeStructure;
+        console.log("Tentative d'enregistrement de :", structure);
         if (structure.id) {
             this.structureService.updateStructure(structure).subscribe({
                 next: (resp) => {
+                    console.log("Succès de la modification :", resp);
                     this.onSuccess('Modification');
                 },
-                error: (error) => {}
+                error: (error) => {
+                    console.error("ERREUR lors de la modification :", error);
+                }
             });
         } else {
             structure.directionId = this.currentStructure?.id;
             this.structureService.createStructure(structure).subscribe({
                 next: (resp) => {
+                    console.log("Succès de la création :", resp);
                     this.onSuccess('Enregistrement');
                 },
-                error: (error) => {}
+                error: (error) => {
+                    console.error("ERREUR lors de la création :", error);
+                }
             });
         }
     }
@@ -181,13 +221,26 @@ export class StructureComponent implements OnInit, OnDestroy {
 
     onSuccess(summary: string) {
         this.onDisplay();
-        //  showToast(handleHttpSuccess('success', summary, this.demandeKey), this.messageService);
+        //showToast(handleHttpSuccess('success', summary, this.demandeKey), this.messageService);
         this.loadStuctures();
     }
 
-    ngOnDestroy() {
-        this.destroy$.next(true);
-        this.destroy$.unsubscribe();
+    setActionMenu(event: any, menu: any, rowData: any) {
+        this.actionMenuItems = [
+            {
+                label: 'Modifier',
+                icon: 'pi pi-pencil',
+                styleClass: 'text-black-500 menu-style',
+                command: () => this.onDisplay(rowData)
+            },
+            {
+                label: 'Supprimer',
+                icon: 'pi pi-trash',
+                styleClass: 'text-red-500 menu-style',
+                command: () => this.onDelete(rowData.id)
+            }
+        ];
+        menu.toggle(event);
     }
 
     protected readonly TypeStructure = TypeStructure;

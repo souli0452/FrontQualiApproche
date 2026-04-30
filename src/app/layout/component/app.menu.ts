@@ -11,7 +11,17 @@ import { app_roles } from '../../app-roles-utils';
     selector: 'app-menu',
     standalone: true,
     imports: [CommonModule, AppMenuitem, RouterModule],
-    template: `<ul class="layout-menu">
+    template: `
+    <div class="layout-menu-logo">
+        <a routerLink="/">
+            <img src="assets/logo-quali-sira.svg" alt="logo">
+            <div class="logo-text">
+                <span class="app-name">QualiSira</span>
+                <span class="app-subtitle">Gestion Intégrée de la Qualité</span>
+            </div>
+        </a>
+    </div>
+    <ul class="layout-menu">
         <ng-container *ngFor="let item of model; let i = index">
             <li app-menuitem *ngIf="!item.separator" [item]="item" [index]="i" [root]="true"></li>
             <li *ngIf="item.separator" class="menu-separator"></li>
@@ -28,7 +38,7 @@ constructor(private  authService: AuthService) {
         this.model = [
             {
                 label: 'Accueil',
-                items: [{ label: 'TABLEAU DE BORD', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
+                items: [{ label: 'Tableau de bord', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
             },
             {
                 label: 'Configurations',

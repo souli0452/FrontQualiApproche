@@ -12,9 +12,10 @@ import { LayoutService } from '../service/layout.service';
     standalone: true,
     imports: [CommonModule, AppTopbar, AppSidebar, RouterModule, AppFooter],
     template: `<div class="layout-wrapper" [ngClass]="containerClass">
-        <app-topbar></app-topbar>
+
         <app-sidebar></app-sidebar>
         <div class="layout-main-container">
+                <app-topbar></app-topbar>
             <div class="layout-main">
                 <router-outlet></router-outlet>
             </div>

@@ -15,7 +15,7 @@ import { RejeterComponent } from './traitement-action-rejete/rejeter.component';
                 {path: 'detail/:id', data: {breadcrumb: 'Détail'}, component: PlanActionDetailComponent},
                 {path: 'traiter', data: {breadcrumb: 'Brouillons'}, component: TraiterComponent},
                 {path: 'rejeter', data: {breadcrumb: 'Réjétés'}, component: RejeterComponent},
-                {path: 'non-traiter', data: {breadcrumb: 'Publiées'}, component: NonTraiterComponent},
+                {path: 'non-traiter', data: {breadcrumb: 'Publiées'}, component: NonTraiterComponent, title: 'Mise en oeuvre des plans d\'action'},
             ]
         }
     ])],

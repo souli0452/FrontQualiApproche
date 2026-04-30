@@ -30,7 +30,7 @@
                              styleClass="p-datatable-sm p-datatable-gridlines"
                              selectionMode="multiple">
 
-                        <ng-template pTemplate="header">
+                        <ng-template #header>
                             <tr>
                                 <th style="width: 40px">
                                     <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
@@ -44,7 +44,7 @@
                             </tr>
                         </ng-template>
 
-                        <ng-template pTemplate="body" let-plan>
+                        <ng-template #body let-plan>
                             <tr [pSelectableRow]="plan">
                                 <td>
                                     <p-tableCheckbox [value]="plan" [disabled]="plan.status=='NON_TRAITER'||plan.status=='TRAITER'"></p-tableCheckbox>
@@ -203,7 +203,7 @@
                                                      [rows]="5"
                                                      [showCurrentPageReport]="true"
                                                      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments">
-                                                <ng-template pTemplate="header">
+                                                <ng-template #header>
                                                     <tr>
                                                         <th>N° ordre</th>
                                                         <th>Causes</th>
@@ -214,7 +214,7 @@
                                                         <th>Actions</th>
                                                     </tr>
                                                 </ng-template>
-                                                <ng-template pTemplate="body" let-plan>
+                                                <ng-template #body let-plan>
                                                     <tr>
                                                         <td>{{plan.numeroOdre}}</td>
                                                         <td>{{plan.causeIdentifiees}}</td>
@@ -287,7 +287,7 @@
             <label for="responsable" class="font-bold block mb-2">
                 Responsable <span class="text-red-500">*</span>
             </label>
-            <p-dropdown id="responsable"
+            <p-select id="responsable"
                         [options]="users"
                         optionLabel="fullName"
                         placeholder="Sélectionnez le responsable"
@@ -296,7 +296,7 @@
                         appendTo="body"
                         [(ngModel)]="user"
                         class="w-full">
-            </p-dropdown>
+            </p-select>
         </div>
         <p-fluid class="card flex flex-wrap gap-2">
             <div class="flex-auto">
@@ -312,18 +312,19 @@
                 <label for="dateEcheance" class="font-bold block mb-2">
                     Date d'échéance <span class="text-red-500">*</span>
                 </label>
-                <p-calendar id="dateEcheance"
+                <p-datePicker id="dateEcheance"
                             [showIcon]="true"
+                            [showOnFocus]="false"
                             [(ngModel)]="planAction.dateEcheance"
-                            placeholder="Date de l'échéance"
-                            dateFormat="dd/mm/yy"
-                            class="w-full">
-                </p-calendar>
+                            class="w-full"
+                            appendTo="body"
+                            placeholder="DD/MM/YYYY">
+                </p-datePicker>
             </div>
         </p-fluid>
 
     </div>
-    <ng-template pTemplate="footer">
+    <ng-template #footer>
         <button pButton pRipple type="button"
                 icon="pi pi-times"
                 class="p-button-outlined p-button-secondary"
@@ -429,7 +430,7 @@
         </div>
     </div>
 
-    <ng-template pTemplate="footer">
+    <ng-template #footer>
         <button pButton pRipple type="button"
                 icon="pi pi-times"
                 class="p-button-outlined p-button-secondary"

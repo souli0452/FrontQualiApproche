@@ -15,6 +15,7 @@ import { Structure } from '../../structure/structure';
 })
 export class NcArchiveComponent implements OnInit, OnDestroy {
     actualities: any[] = [];
+    loading: boolean = false;
     destroy$: Subject<boolean> = new Subject<boolean>();
     cols: any[] = [
         {field: 'numeroReference', header: 'N° ref', type: 'string', filter: true, width: '28%'},
@@ -38,12 +39,17 @@ export class NcArchiveComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.userStructure = getCurrentUserStructure();
+        this.loading = true;
         this.actualityService
             .findAllNc(NonConformStatus.ARCHIVED,this.userStructure.id)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (data) => {
                     this.actualities = data.body!;
+                    this.loading = false;
+                },
+                error: (error) => {
+                    this.loading = false;
                 }
             });
     }

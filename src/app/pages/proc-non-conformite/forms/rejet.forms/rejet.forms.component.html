@@ -30,7 +30,7 @@
 
     </ng-template>
 
-    <p-footer #footer>
+    <ng-template #footer>
         <div class="flex justify-content-end gap-3 pt-3" *ngIf="!isSummited">
             <button type="button" pRipple pButton icon="pi pi-times-circle"
                     class="p-button-secondary position-left mr-3"
@@ -43,5 +43,5 @@
             </button>
 
         </div>
-    </p-footer>
+    </ng-template>
 </p-dialog>

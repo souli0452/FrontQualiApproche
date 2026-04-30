@@ -17,7 +17,8 @@ import { ActionCorrectivePreventiveService } from '../../services/action-correct
         <div class="page-layout">
             <app-crud-generic
                 [dialogWidth]="'50rem'"
-                [pageLabel]="pageLabel"
+                [pageLabel]="pageLabel" 
+                [loading]="loading"
                 [tableCols]="tableCols"
                 [listeObject]="dataList"
                 [formGroup]="formGroup"
@@ -49,15 +50,15 @@ export class ActionCorrectivePreventiveComponent {
                   this.formCols = [
                       {field: 'id', label: "", header: 'Id', type: 'number', visible: false, required: false},
                       {field: 'libelle', label: "", header: 'Libelle', type: 'string', visible: true, required: true},
-                      {field: 'description', label: "", header: 'Dèscription', type: 'text', visible: true, required: false},
-                      {field: 'responsable', label: "", header: 'Rèsponsable', type: 'string', visible: true, required: true},
-                      {field: 'statut', label: "", header: 'Statut', type: 'dropdown', visible: true, required: false},
-                      {field: 'type', label: "", header: 'Type', type: 'dropdown', visible: true, required: false},
-                      {field: 'dateDebut', label: "", header: 'Date de debut', type: 'date', visible: true, required: false},
-                      {field: 'dateFin', label: "", header: 'Date de fin', type: 'date', visible: true, required: false},
-                      {field: 'reclamation', label: "", header: 'Reclamation', type: 'dropdown', visible: true, required: false},
-                      {field: 'risques', label: "", header: 'Risques', type: 'dropdown', visible: true, required: false},
-                      {field: 'exigences', label: "", header: 'Exigences', type: 'dropdown', visible: true, required: false}
+                    //   {field: 'description', label: "", header: 'Dèscription', type: 'text', visible: true, required: false},
+                    //   {field: 'responsable', label: "", header: 'Rèsponsable', type: 'string', visible: true, required: true},
+                    //   {field: 'statut', label: "", header: 'Statut', type: 'dropdown', visible: true, required: false},
+                    //   {field: 'type', label: "", header: 'Type', type: 'dropdown', visible: true, required: false},
+                    //   {field: 'dateDebut', label: "", header: 'Date de debut', type: 'date', visible: true, required: false},
+                    //   {field: 'dateFin', label: "", header: 'Date de fin', type: 'date', visible: true, required: false},
+                    //   {field: 'reclamation', label: "", header: 'Reclamation', type: 'dropdown', visible: true, required: false},
+                    //   {field: 'risques', label: "", header: 'Risques', type: 'dropdown', visible: true, required: false},
+                    //   {field: 'exigences', label: "", header: 'Exigences', type: 'dropdown', visible: true, required: false}
                   ];
           
                   this.tableCols = [
@@ -89,12 +90,15 @@ export class ActionCorrectivePreventiveComponent {
               }
           
               fetchAction() {
+                this.loading = true;
                   this.actionCorrectivePreventiveService.findAll().pipe(takeUntil(this.destroy$))
                       .subscribe({
                           next: res => {
                               this.dataList = res.body || [];
+                              this.loading = false;
                           },
                           error: error => {
+                            this.loading = false;
                               showToast(StatusEnum.error, error.status, null, this.messageService, error);
                           }
                       });

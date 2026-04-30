@@ -133,12 +133,15 @@ export class ProcedureNonConformiteComponent {
     }
 
     fetchNonConformite() {
+        this.loading = true;
         this.typeNonConformiteService.findAll().pipe(takeUntil(this.destroy$))
         .subscribe({
             next: res => {
                 this.dataListTypeNonConformite = res.body || [];
+                this.loading = false;
             },
             error: error => {
+                this.loading = false;
                 showToast(StatusEnum.error, error.status, null, this.messageService, error);
             }
         });
@@ -146,8 +149,10 @@ export class ProcedureNonConformiteComponent {
             .subscribe({
                 next: res => {
                     this.dataList = res.body || [];
+                    this.loading = false;
                 },
                 error: error => {
+                    this.loading = false;
                     showToast(StatusEnum.error, error.status, null, this.messageService, error);
                 }
             });
@@ -155,8 +160,10 @@ export class ProcedureNonConformiteComponent {
         .subscribe({
             next: res => {
                 this.dataListTypeProcessus = res.body || [];
+                this.loading = false;
             },
             error: error => {
+                this.loading = false;
                 showToast(StatusEnum.error, error.status, null, this.messageService, error);
             }
         });
@@ -164,8 +171,10 @@ export class ProcedureNonConformiteComponent {
         .subscribe({
             next: res => {
                 this.dataListNiveauNonConformite = res.body || [];
+                this.loading = false;
             },
             error: error => {
+                this.loading = false;
                 showToast(StatusEnum.error, error.status, null, this.messageService, error);
             }
         });
@@ -173,8 +182,10 @@ export class ProcedureNonConformiteComponent {
         .subscribe({
             next: res => {
                 this.dataListActionNonConformite = res.body || [];
+                this.loading = false;
             },
             error: error => {
+                this.loading = false;
                 showToast(StatusEnum.error, error.status, null, this.messageService, error);
             }
         });

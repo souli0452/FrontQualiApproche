@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { UIChart } from 'primeng/chart';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 
 @Component({
     standalone: true,
     selector: 'app-best-selling-widget',
-    imports: [CommonModule, ButtonModule, MenuModule, UIChart, DropdownModule, NgPrimeModule],
+    imports: [CommonModule, ButtonModule, MenuModule, UIChart, SelectModule, NgPrimeModule],
     template: ` <div class="card">
         <h6>Non conformité total par an</h6>
         <div class="flex align-items-center justify-content-end gap-3">
@@ -17,13 +17,13 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
             <h6 class="m-0 text-sm font-medium text-600"></h6></div>
             <div class="col">
             <h6 class="m-0 text-sm font-medium text-600">Année</h6>
-            <p-dropdown [options]="annees"
+            <p-select [options]="annees"
                         [(ngModel)]="anneeSelectionnee"
                         placeholder="Année"
                        (onChange)="change()"
                         [style]="{ width: '150px' }"
                         appendTo="body">
-            </p-dropdown></div>
+            </p-select></div>
         </div>
         <p-chart type="bar" [data]="data" [options]="options" class="h-[30rem]" />
     </div>`

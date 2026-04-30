@@ -154,6 +154,7 @@ export class NonConformiteComponent {
 
     // Code pour récupérer les Non-conformités / les Types, Processus et autres
     fetchNonConformite() {
+        this.loading = true;
         this.typeNonConformiteService.findAll().pipe(takeUntil(this.destroy$))
         .subscribe({
             next: res => {
@@ -167,8 +168,10 @@ export class NonConformiteComponent {
             .subscribe({
                 next: res => {
                     this.dataList = res.body || [];
+                    this.loading = false;
                 },
                 error: error => {
+                    this.loading = false;
                     showToast(StatusEnum.error, error.status, null, this.messageService, error);
                 }
             });

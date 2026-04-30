@@ -10,21 +10,20 @@
     </p-toolbar>
 
     <div class="conformite">
-        <ng-template [ngIf]="loading">
-            <app-crud-generic
-                [dialogWidth]="'50vw'"
-                [pageLabel]="pageLabel"
-                [tableCols]="tableCols"
-                [listeObject]="dataList"
-                [formGroup]="formGroup"
-                [formCols]="formCols"
-                [isAffich]="true"
-                [closeDialog]="closeDialog"
-                [formHeader]="formHeader"
-                (newItemEvent)="onSave($event)"
-                (removeEvent)="onDelete($event)">
-            </app-crud-generic>
-        </ng-template>
+        <app-crud-generic
+            [dialogWidth]="'50vw'"
+            [pageLabel]="pageLabel"
+            [tableCols]="tableCols"
+            [listeObject]="dataList"
+            [formGroup]="formGroup"
+            [formCols]="formCols"
+            [loading]="loading"
+            [isAffich]="true"
+            [closeDialog]="closeDialog"
+            [formHeader]="formHeader"
+            (newItemEvent)="onSave($event)"
+            (removeEvent)="onDelete($event)">
+        </app-crud-generic>
     </div>
 
 
@@ -88,14 +87,14 @@
                                          />
                                 </div>
                                 <div class="flex flex-col gap-2 mb-3">
-                                    <p-dropdown [options]="structures"
+                                    <p-select [options]="structures"
                                                 name="origineService" appendTo="body"
                                                 [optionLabel]="'libelleLong'"
                                                 placeholder="Sélectionner le service"
                                                 [resetFilterOnHide]="true"
                                                 [filter]="true" [showClear]="true"
                                                 formControlName="origineService">
-                                    </p-dropdown>
+                                    </p-select>
 
                                 </div>
 

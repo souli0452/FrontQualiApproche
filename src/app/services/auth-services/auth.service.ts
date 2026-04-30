@@ -1,12 +1,12 @@
-import {Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders, HttpParams, HttpResponse} from '@angular/common/http';
-import {Router} from '@angular/router';
-import {BehaviorSubject, Observable, of} from 'rxjs';
-import {catchError, finalize, switchMap} from 'rxjs/operators';
-import {KcLoginRequest, KcUser} from '../../models';
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { catchError, finalize, switchMap } from 'rxjs/operators';
+import { KcLoginRequest, KcUser } from '../../models';
 import { map } from 'rxjs/operators';
-import {QualiCrudService} from "../quali-crud.service";
-import {QualiUrlConfig} from "../quali-url-configs";
+import { QualiCrudService } from '../quali-crud.service';
+import { QualiUrlConfig } from '../quali-url-configs';
 import { USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
 
 interface AuthResponse {
@@ -22,21 +22,24 @@ interface AuthResponse {
 }
 
 @Injectable({
-    providedIn: 'root',
+    providedIn: 'root'
 })
 export class AuthService extends QualiCrudService<KcUser, number> {
     private isLoggedIn = new BehaviorSubject<boolean>(false);
     private refreshTokenInProgress = false;
-    user:any;
+    user: any;
     private currentUser = new BehaviorSubject<KcUser | null>(this.getUser());
 
-    constructor(public override http: HttpClient, private router: Router) {
+    constructor(
+        public override http: HttpClient,
+        private router: Router
+    ) {
         super(http, QualiUrlConfig.FORMATION_ROOT_URL);
         this.user = this.getUser()!;
     }
 
     override findAll(): Observable<HttpResponse<Array<KcUser>>> {
-        return this.http.get<KcUser[]>(QualiUrlConfig.USERS_URL, {observe: 'response'});
+        return this.http.get<KcUser[]>(QualiUrlConfig.USERS_URL, { observe: 'response' });
     }
 
     // Connexion
@@ -44,6 +47,7 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         return this.http.post<AuthResponse>(QualiUrlConfig.LOGIN_URL, credentials).pipe(
             map((response: AuthResponse) => {
                 this.setUser(response.data.user);
+                this.setTokens(response.accessToken, response.refreshToken);
                 return response;
             })
         );
@@ -87,7 +91,6 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         localStorage.removeItem('user');
         this.isLoggedIn.next(false);
         this.currentUser.next(null);
-
     }
     isAuthenticated(): Observable<boolean> {
         return this.isLoggedIn.asObservable();
@@ -112,7 +115,7 @@ export class AuthService extends QualiCrudService<KcUser, number> {
 
         this.refreshTokenInProgress = true;
 
-        return this.http.post<AuthResponse>(QualiUrlConfig.REFRESH_TOKEN_URL, {refreshToken}).pipe(
+        return this.http.post<AuthResponse>(QualiUrlConfig.REFRESH_TOKEN_URL, { refreshToken }).pipe(
             switchMap((response) => {
                 this.setTokens(response.accessToken, response.refreshToken);
                 return of(response.accessToken);
@@ -143,51 +146,42 @@ export class AuthService extends QualiCrudService<KcUser, number> {
 
     // Gestion des utilisateurs
     getAllUsers(): Observable<HttpResponse<KcUser[]>> {
-        return this.http.get<KcUser[]>(QualiUrlConfig.USERS_URL, {observe: 'response'});
+        return this.http.get<KcUser[]>(QualiUrlConfig.USERS_URL, { observe: 'response' });
     }
-    getUserById(id :string): Observable<HttpResponse<KcUser>> {
-        const params = new HttpParams()
-            .set('userId', id);
-        return this.http.get<KcUser>(QualiUrlConfig.USERS_BY_ID_URL, {params,observe: 'response'});
+    getUserById(id: string): Observable<HttpResponse<KcUser>> {
+        const params = new HttpParams().set('userId', id);
+        return this.http.get<KcUser>(QualiUrlConfig.USERS_BY_ID_URL, { params, observe: 'response' });
     }
     loadAgentPublicByService(structureId: string): Observable<Array<KcUser>> {
         return this.http.get<KcUser[]>(this.replaceArgs(new Map().set('structureId', structureId), QualiUrlConfig.USERS_BY_STRUCTURE_URL));
     }
     createUser(user: KcUser): Observable<HttpResponse<KcUser>> {
-        return this.http.post<KcUser>(`${QualiUrlConfig.USERS_URL}/create`, user, {observe: 'response'});
+        return this.http.post<KcUser>(`${QualiUrlConfig.USERS_URL}/create`, user, { observe: 'response' });
     }
-
 
     updateUser(user: KcUser): Observable<HttpResponse<void>> {
-        return this.http.put<void>(`${QualiUrlConfig.USERS_URL}/update`, user, {observe: 'response'});
+        return this.http.put<void>(`${QualiUrlConfig.USERS_URL}/update`, user, { observe: 'response' });
     }
-    getUserRoles(id :string): Observable<HttpResponse<Array<any>>> {
-        return this.http.get<Array<any>>(`${QualiUrlConfig.ROLE_URL}/user-roles/${id}`, {observe: 'response'});
+    getUserRoles(id: string): Observable<HttpResponse<Array<any>>> {
+        return this.http.get<Array<any>>(`${QualiUrlConfig.ROLE_URL}/user-roles/${id}`, { observe: 'response' });
     }
     resetPassword(userId: string, password: string): Observable<HttpResponse<void>> {
-        const params = new HttpParams()
-            .set('userId', userId)
-            .set('password', password);
+        const params = new HttpParams().set('userId', userId).set('password', password);
         return this.http.patch<void>(QualiUrlConfig.RESET_PASSWORD_URL, null, {
             params,
             observe: 'response'
         });
     }
 
-
     changeStatus(userId: string, enabled: boolean): Observable<HttpResponse<void>> {
-        const params = new HttpParams()
-            .set('userId', userId)
-            .set('enabled', enabled.toString());
+        const params = new HttpParams().set('userId', userId).set('enabled', enabled.toString());
         return this.http.put<void>(QualiUrlConfig.CHANGE_STATUS_URL, null, {
             params,
             observe: 'response'
         });
     }
     emailVerifcation(userId: string, token: string): Observable<HttpResponse<void>> {
-        const params = new HttpParams()
-            .set('token', token)
-            .set('userId', userId)
+        const params = new HttpParams().set('token', token).set('userId', userId);
         return this.http.put<void>(QualiUrlConfig.VERIFY_EMAIL_URL, null, {
             params,
             observe: 'response'
@@ -195,9 +189,7 @@ export class AuthService extends QualiCrudService<KcUser, number> {
     }
 
     isEmailVerifiedd(userId: string, token: string): Observable<HttpResponse<void>> {
-        const params = new HttpParams()
-            .set('userId', userId)
-            .set('token', token);
+        const params = new HttpParams().set('userId', userId).set('token', token);
         return this.http.put<void>(QualiUrlConfig.IS_EMAIL_VERIFIED_URL, null, {
             params,
             observe: 'response'
@@ -205,30 +197,23 @@ export class AuthService extends QualiCrudService<KcUser, number> {
     }
 
     isEmailVerified(userId: string): Observable<HttpResponse<boolean>> {
-        const params = new HttpParams()
-            .set('userId', userId)
+        const params = new HttpParams().set('userId', userId);
         return this.http.get<boolean>(QualiUrlConfig.IS_EMAIL_VERIFIED_URL, {
             params,
             observe: 'response'
         });
     }
 
-
-
     initiatePasswordReset(email: string): Observable<HttpResponse<void>> {
-        const params = new HttpParams()
-            .set('email', email)
+        const params = new HttpParams().set('email', email);
         return this.http.post<void>(QualiUrlConfig.INITIATE_RESET_PASSWORD_URL, null, {
             params,
             observe: 'response'
         });
     }
 
-    reinitializePwd(userId: string,password: string, token: string): Observable<HttpResponse<void>> {
-        const params = new HttpParams()
-            .set('userId', userId)
-            .set('token', token)
-            .set('password', password);
+    reinitializePwd(userId: string, password: string, token: string): Observable<HttpResponse<void>> {
+        const params = new HttpParams().set('userId', userId).set('token', token).set('password', password);
 
         return this.http.put<void>(QualiUrlConfig.REINITIALIZE_PASSWORD_URL, null, {
             params,
@@ -236,15 +221,11 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         });
     }
 
-    updateTemporaryPassword(username: string, password: string, oldPassword: string): Observable<{ data:any }> {
-        const params = new HttpParams()
-            .set('username', username)
-            .set('password', password)
-            .set('oldPassword', oldPassword);
+    updateTemporaryPassword(username: string, password: string, oldPassword: string): Observable<{ data: any }> {
+        const params = new HttpParams().set('username', username).set('password', password).set('oldPassword', oldPassword);
 
-        return this.http.put<{ data:any }>(QualiUrlConfig.UPDATE_PASSWORD_URL, null, { params });
+        return this.http.put<{ data: any }>(QualiUrlConfig.UPDATE_PASSWORD_URL, null, { params });
     }
-
 
     private replaceArgs(args: Map<string, any>, url: string): string {
         args.forEach((value, key) => {
@@ -252,5 +233,4 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         });
         return url;
     }
-
 }

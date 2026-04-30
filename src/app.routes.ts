@@ -16,9 +16,9 @@ export const appRoutes: Routes = [
         component: AppLayout,
         canActivate: [AuthGuard],
         children: [
-            { path: '', component: Dashboard },
-            { path: 'uikit', loadChildren: () => import('./app/pages/uikit/uikit.routes') },
-            { path: 'documentation', component: Documentation },
+            { path: '', component: Dashboard, title: 'Tableau de bord' },
+
+            { path: 'documentation', component: Documentation, title: 'Documentation' },
             {
                 path: 'nc', loadChildren: () => import('./app/pages/nc/nc.module').then(m => m.NcModule)
             },

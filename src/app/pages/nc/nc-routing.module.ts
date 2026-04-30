@@ -12,12 +12,12 @@ import { NcDraftComponent } from './nc-draft/nc-draft.component';
         {
             path: '', component: NcComponent, children: [
                 {path: '', redirectTo: 'draft', pathMatch: 'full'},
-                {path: 'draft', data: {breadcrumb: 'Brouillons'}, component: NcDraftComponent},
-                {path: 'published', data: {breadcrumb: 'Publiées'}, component: NcPublishedComponent},
-                {path: 'archived', data: {breadcrumb: 'Réjétées'}, component: NcArchiveComponent},
+                {path: 'draft', data: {breadcrumb: 'Brouillons', title: 'Non conformités' }, component: NcDraftComponent},
+                {path: 'published', data: {breadcrumb: 'Publiées', title: 'Non conformités publiées' }, component: NcPublishedComponent},
+                {path: 'archived', data: {breadcrumb: 'Réjétées', title: 'Non conformités rejetées' }, component: NcArchiveComponent},
 
-                {path: 'compose/:id', data: {breadcrumb: 'Ajout'}, component: NcComposeComponent},
-                {path: 'detail/:id', data: {breadcrumb: 'Détail'}, component: NcDetailComponent}
+                {path: 'compose/:id', data: {breadcrumb: 'Ajout', title: 'Non conformité' }, component: NcComposeComponent},
+                {path: 'detail/:id', data: {breadcrumb: 'Détail', title: 'Non conformité' }, component: NcDetailComponent}
             ]
         }
     ])],

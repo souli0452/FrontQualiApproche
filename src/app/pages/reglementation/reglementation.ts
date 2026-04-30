@@ -64,7 +64,7 @@ export class reglementationComponent {
         this.formGroup = this.fb.group({
             id: [null],
             nomReglementation: [null, Validators.required],
-        //    descriptionReglementation: [null, Validators.required],
+            descriptionReglementation: [null, Validators.required],
             organismeReglementation: [null, Validators.required],
         });
     }
@@ -74,14 +74,16 @@ export class reglementationComponent {
     }
 
     fetchReglementation() {
+        this.loading = true;
         this.reglementationService.findAll().pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: res => {
                     this.dataList = res.body || [];
-
+                    this.loading = false;
                 },
                 error: error => {
                     showToast(StatusEnum.error, error.status, null, this.messageService, error);
+                    this.loading = false;
                 }
             });
     }

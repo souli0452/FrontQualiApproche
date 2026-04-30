@@ -20,6 +20,7 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class PlanActionComponent {
     demandeList: any = [];
+    loading: boolean = false;
     title = "Mise en oeuvres des plans d'actions";
     @ViewChild(DmdTraitementTableTemplateComponent) dmdTraitement!: DmdTraitementTableTemplateComponent;
     userStructure:Structure={};

@@ -19,10 +19,10 @@
                 <div class="flex-1 ">
                     <div class="field">
                         <label for="origineService" class="block font-bold  mb-2">Processus destinataire <span class="p-error">*</span></label>
-                        <p-dropdown id="origineService" [(ngModel)]="nc.origineService" [options]="structures"
+                        <p-select id="origineService" [(ngModel)]="nc.origineService" [options]="structures"
                                     optionLabel="libelleLong" placeholder="Sélectionnez le processus"
                                     [filter]="true" [showClear]="true" appendTo="body" class="w-full"
-                                    [class.p-invalid]="!nc.origineService "></p-dropdown>
+                                    [class.p-invalid]="!nc.origineService "></p-select>
                         <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
                     </div>
             </div>
@@ -30,20 +30,20 @@
                 <div class="flex-1 min-w-[300px]">
                     <div class="field">
                         <label for="origineService" class="block font-bold  mb-2"> Type de processus <span class="p-error">*</span></label>
-                        <p-dropdown id="origineNf" [(ngModel)]="nc.typeProcedure" [options]="typeProcessus"
+                        <p-select id="origineNf" [(ngModel)]="nc.typeProcedure" [options]="typeProcessus"
                                     optionLabel="libelle" placeholder="Sélectionnez un type"
                                     [filter]="true" [showClear]="true" appendTo="body" class="w-full"
-                                    [class.p-invalid]="!nc.origineService "></p-dropdown>
+                                    [class.p-invalid]="!nc.origineService "></p-select>
                         <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
                     </div>
                 </div>
                 <div class="flex-1 min-w-[300px]">
                     <div class="field">
                         <label for="origineService" class="block font-bold  mb-2">Niveau de la non-conformité <span class="p-error">*</span></label>
-                        <p-dropdown id="typProcedure" [(ngModel)]="nc.niveauNonConformite" [options]="niveauNcs"
+                        <p-select id="typProcedure" [(ngModel)]="nc.niveauNonConformite" [options]="niveauNcs"
                                     optionLabel="libelle" placeholder="Sélectionnez un niveau"
                                     [filter]="true" [showClear]="true" appendTo="body" class="w-full"
-                                    [class.p-invalid]="!nc.origineService "></p-dropdown>
+                                    [class.p-invalid]="!nc.origineService "></p-select>
                         <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
                     </div>
                 </div>
@@ -52,20 +52,20 @@
                 <div class="flex-1 min-w-[300px]">
                     <div class="field ">
                         <label for="typeAction" class="block font-bold  mb-2">Type d’action entreprise (en cas de besoin)</label>
-                        <p-dropdown id="typeAction" [(ngModel)]="nc.typeAction" [options]="typesActions"
+                        <p-select id="typeAction" [(ngModel)]="nc.typeAction" [options]="typesActions"
                                     optionLabel="libelle" placeholder="Sélectionnez un type"
                                     [filter]="true" [showClear]="true" appendTo="body" class="w-full"
-                                    [class.p-invalid]="!nc.origineService "></p-dropdown>
+                                    [class.p-invalid]="!nc.origineService "></p-select>
                         <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
                     </div>
                 </div>
                 <div class="flex-1 min-w-[300px]">
                     <div class="field">
                         <label for="origineNf" class="block font-bold  mb-2">Origine de la non-conformité <span class="p-error">*</span></label>
-                        <p-dropdown id="reclamation" [(ngModel)]="nc.typeNonformite" [options]="typesNcs"
+                        <p-select id="reclamation" [(ngModel)]="nc.typeNonformite" [options]="typesNcs"
                                     optionLabel="libelle" placeholder="Sélectionnez l'origine"
                                     [filter]="true" [showClear]="true" appendTo="body" class="w-full"
-                                    [class.p-invalid]="!nc.origineService "></p-dropdown>
+                                    [class.p-invalid]="!nc.origineService "></p-select>
                         <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
                     </div>
                 </div>

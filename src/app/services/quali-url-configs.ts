@@ -1,5 +1,5 @@
- export  const SERVICE_PREFIX = `http://localhost:8086/api/v1/quali-approche`;
-// export  const SERVICE_PREFIX = `https://sgq.horeb.techapi/v1/quali-approche`;
+import { environment } from "../../environments/environment";
+export const SERVICE_PREFIX = environment.apiUrl;
 
 export class QualiUrlConfig {
     static readonly FORMATION_ROOT_URL = `${SERVICE_PREFIX}/formation`;
@@ -22,7 +22,6 @@ export class QualiUrlConfig {
     static readonly AUDIT_ROOT_URL = `${SERVICE_PREFIX}/audite`;
     static readonly NIVEAU_NON_CONFORMITE_ROOT_URL = `${SERVICE_PREFIX}/niveau/non-conformite`;
     static readonly ACTION_NON_CONFORMITE_ROOT_URL = `${SERVICE_PREFIX}/actions`;
-
 
     // URLs liées à l'authentification
     static readonly LOGIN_URL = `${SERVICE_PREFIX}/login`;

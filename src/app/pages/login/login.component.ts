@@ -87,32 +87,32 @@ export class LoginComponent implements OnInit{
                         }
                     });
                 },
+                // Dans onLogin(), au niveau de la gestion d'erreur
                 error: (err) => {
-                    console.log('Erreur:', err);
                     this.isLoading = false;
+                    let detailMessage = '';
 
                     if (err.status === 403) {
                         const { data } = err.error;
-
                         if (data) {
-                            console.log(data.emailVerified, data.enabled, data.temporaryPwd);
                             if (!data.emailVerified) {
-                                this.errorMessage = 'Votre adresse e-mail n\'a pas été vérifiée. Veuillez vérifier votre e-mail avant de continuer.';
+                                detailMessage = "Votre adresse e-mail n'a pas été vérifiée.";
                             } else if (!data.enabled) {
-                                this.errorMessage = 'Votre compte a été désactivé. Veuillez contacter l\'administrateur.';
+                                detailMessage = "Votre compte a été désactivé.";
                             } else if (data.temporaryPwd) {
-                                this.errorMessage = 'Votre mot de passe est temporaire. Veuillez le réinitialiser pour continuer.';
-                                this.router.navigate(['/reset-password'], {
-                                    queryParams: { username: credentials.username, oldpwd:credentials.password },
-                                });
+                                detailMessage = "Mot de passe temporaire. Redirection...";
+                                this.router.navigate(['/reset-password'], { queryParams: { username: credentials.username, oldpwd:credentials.password } });
                             }
                         } else {
-                            this.errorMessage = err.error.message || 'Une erreur est survenue.';
+                            detailMessage = err.error.message || 'Une erreur est survenue.';
                         }
                     } else {
-                        this.errorMessage = 'Nom d’utilisateur ou mot de passe incorrect.';
+                        detailMessage = 'Nom d’utilisateur ou mot de passe incorrect.';
                     }
-                },
+
+                    // Affichage du Toast
+                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: detailMessage, life: 5000 });
+                }
             });
         } else {
             this.errorMessage = 'Veuillez remplir tous les champs correctement avant de continuer.';

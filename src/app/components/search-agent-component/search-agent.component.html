@@ -3,7 +3,7 @@
     <div class="flex flex-wrap align-items-center gap-3 mb-4">
         <!-- Direction -->
         <div class="flex-grow-1" style="flex-basis: 40%; min-width: 300px;">
-            <p-dropdown [options]="directions"
+            <p-select [options]="directions"
                         id="direction"
                         [autoDisplayFirst]="false"
                         emptyMessage="Aucune donnée disponible"
@@ -18,12 +18,12 @@
                         [style]="{width: '100%'}"
                         [(ngModel)]="directionId"
                         (onChange)="loadServiceByDirection()">
-            </p-dropdown>
+            </p-select>
         </div>
 
         <!-- Service -->
         <div class="flex-grow-1" style="flex-basis: 40%; min-width: 300px;">
-            <p-dropdown [options]="services"
+            <p-select [options]="services"
                         id="service"
                         [autoDisplayFirst]="false"
                         emptyMessage="Aucune donnée disponible"
@@ -37,7 +37,7 @@
                         [filter]="true"
                         [style]="{width: '100%'}"
                         [(ngModel)]="serviceId">
-            </p-dropdown>
+            </p-select>
         </div>
 
         <!-- Bouton Rechercher -->
@@ -52,7 +52,7 @@
 
     <!-- Deuxième ligne : Recherche Agent -->
     <div class="mb-4">
-        <p-dropdown [options]="agents"
+        <p-select [options]="agents"
                     [autoDisplayFirst]="false"
                     id="agent"
                     (onChange)="onAgentSelect($event.value)"
@@ -67,7 +67,7 @@
                     [filter]="true"
                     [style]="{width: '100%'}"
                     [(ngModel)]="searchedAgent">
-        </p-dropdown>
+        </p-select>
     </div>
 
     <!-- Résultats -->

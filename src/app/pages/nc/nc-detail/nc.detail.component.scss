@@ -1,17 +1,26 @@
 /* Styles pour le détail de non-conformité */
 .nc-detail-container {
     padding: 1.5rem;
+    padding-top: 0 !important;
 }
+
 
 .nc-header {
     padding-bottom: 1rem;
     border-bottom: 1px solid #e5e7eb;
+    font-size: 14px !important;
 }
 
 .nc-reference {
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--primary-color);
+}
+.nc-card-title {
+    font-size: 14px !important;
+    text-transform: uppercase;
+    color: var(--p-primary-color) !important;
+    font-weight: 600;
 }
 
 .nc-card {

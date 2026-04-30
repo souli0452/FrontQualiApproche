@@ -42,6 +42,7 @@ export class ReceptionComponent {
     userStructure:Structure={};
     cols: any[] = [];
     protected demande: any;
+    loading: boolean = false;
     constructor(protected messageService: MessageService,
                 private  featureService:FeaturesService,
                 private service:ProcNonConformiteService) {
@@ -104,11 +105,14 @@ ngOnInit() {
             });
     }
     getDemandeList() {
+        this.loading = true;
         this.service.getNonConformiteByEtapeAndSumit(EtapeTraitement.RECEPTION,this.userStructure.id!).subscribe({
             next: (data) => {
                 this.demandeList = data.body;
+                this.loading = false;
             },
             error: (error) => {
+                this.loading = false;
                 //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
             }
         });

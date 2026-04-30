@@ -3,15 +3,17 @@
           [globalFilterFields]="['nomProcessus','createdAt','createdAt', 'currentUserfullName']" [paginator]="true"
                                              [(selection)]="selectedActualities"
           styleClass="p-datatable-sm p-datatable-gridlines"
+          [loading]="loading"
+          [showLoader]="false"
                                              selectionMode="multiple" [rowHover]="true" dataKey="id">
-    <ng-template pTemplate="caption">
+    <ng-template #caption>
         <div class="flex flex-wrap align-items-center justify-content-between gap-3">
             <div class="flex gap-2 align-items-center">
                 <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
-                <button pButton pRipple type="button" icon="pi pi-ellipsis-v"
+                <p-button pRipple type="button" size="small" [outlined]="true" icon="pi pi-ellipsis-h"
                         class="p-button-rounded p-button-text p-button-plain"
                         (click)="menu.toggle($event)">
-                </button>
+                </p-button>
                 <p-menu #menu [model]="menuItems" [appendTo]="dt" [popup]="true"
                         [style]="{display: selectedActualities.length > 0 ? 'block': 'none'}">
                 </p-menu>
@@ -23,7 +25,7 @@
             </span>
         </div>
     </ng-template>
-    <ng-template pTemplate="header">
+    <ng-template #header>
         <tr>
             <th [style.width]="'3%'"></th>
             <th *ngFor="let col of cols" [pSortableColumn]="col.field" class="font-bold" [style.width]="col.width">
@@ -43,7 +45,7 @@
             </th>
         </tr>
     </ng-template>
-    <ng-template pTemplate="body" let-actuality>
+    <ng-template #body let-actuality>
         <tr (mouseenter)="toggleOptions($event, options, date)" (mouseleave)="toggleOptions($event, options, date)"
             (click)="onRowSelect(actuality.id)" class="cursor-pointer">
             <td [style.width]="'3%'">
@@ -94,6 +96,21 @@
                                   acceptButtonStyleClass="p-button-primary" acceptLabel="Oui"
                                   rejectButtonStyleClass="p-button-secondary" rejectLabel="Non">
         </p-confirmDialog>
+        </tr>
+    </ng-template>
+    <ng-template #loadingbody>
+        <tr *ngFor="let i of [1,2,3,4,5,6,7,8,9,10]">
+            <td [style.width]="'3%'">
+                <p-skeleton width="2rem" height="1rem"></p-skeleton>
+            </td>
+            @for (col of cols; track col) {
+                <td>
+                    <p-skeleton width="100%" height="1rem"></p-skeleton>
+                </td>
+            }
+            <td [style.width]="'20%'">
+                <p-skeleton width="100%" height="1rem"></p-skeleton>
+            </td>
         </tr>
     </ng-template>
 </p-table>

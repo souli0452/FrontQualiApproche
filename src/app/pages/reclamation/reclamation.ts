@@ -18,6 +18,7 @@ import { ReclamationService } from '../../services/reclamation.service';
             <app-crud-generic
                 [dialogWidth]="'50rem'"
                 [pageLabel]="pageLabel"
+                [loading]="loading"
                 [tableCols]="tableCols"
                 [listeObject]="dataList"
                 [formGroup]="formGroup"
@@ -69,14 +70,17 @@ export class ReclamationComponent {
         this.fetchReclamation();
     }
 
-    fetchReclamation() {
+    fetchReclamation() {    
+        this.loading = true;
         this.reclamationService.findAll().pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: res => {
                     this.dataList = res.body || [];
+                    this.loading = false;
 
                 },
                 error: error => {
+                    this.loading = false;
                     showToast(StatusEnum.error, error.status, null, this.messageService, error);
                 }
             });

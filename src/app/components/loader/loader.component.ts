@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { BlockUI } from 'primeng/blockui';
-import { ProgressSpinner } from 'primeng/progressspinner';
+// Supprimer l'import de ProgressSpinner ici
 import { FeaturesService } from '../../services/feature-service';
 import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'app-loader',
     templateUrl: './loader.component.html',
-    imports: [BlockUI, ProgressSpinner,CommonModule],
+    imports: [BlockUI, CommonModule],
     styleUrl: './loader.component.scss'
 })
 export class LoaderComponent implements OnInit {
