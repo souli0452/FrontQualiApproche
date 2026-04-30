@@ -1,45 +1,29 @@
 import { Injectable } from '@angular/core';
-import { HttpEvent, HttpEventType, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
-import {Observable, Observer, Subscription} from 'rxjs';
+import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { finalize } from 'rxjs/operators'; // Import nécessaire
 import { FeaturesService } from '../services/feature-service';
-
 
 @Injectable()
 export class LoaderInterceptor implements HttpInterceptor {
-
-    constructor(private featuresService: FeaturesService) {
-    }
+    constructor(private featuresService: FeaturesService) {}
 
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+        // On ne déclenche pas le loader global pour les GET (on préfère les skeletons)
+        // ou si le header X-Skip-Loader est explicitement présent
+        if (req.method === 'GET' || req.headers.has('X-Skip-Loader')) {
+            return next.handle(req);
+        }
 
-        return new Observable<HttpEvent<any>>((observer: Observer<any>) => {
-            const subscription: Subscription = next.handle(req).subscribe({
+        // 1. On signale le début de la requête pour afficher le loader (pour POST, PUT, DELETE, etc.)
+        this.featuresService.addRequest(req);
 
-                next: (events) => {
-                    if (events.type === HttpEventType.Sent) {
-                        this.featuresService.addRequest(req);
-                    } else if (events.type === HttpEventType.Response) {
-                        this.featuresService.removeRequest(req);
-                        observer.next(events);
-                    }
-                },
-
-                error: err => {
-                    this.featuresService.removeRequest(req);
-                    observer.error(err);
-                },
-
-                complete: () => {
-                    this.featuresService.removeRequest(req);
-                    observer.complete;
-                }
-            });
-
-            return () => {
+        // 2. On laisse passer la requête
+        return next.handle(req).pipe(
+            // 3. finalize s'exécute à la fin (Succès ou Erreur)
+            finalize(() => {
                 this.featuresService.removeRequest(req);
-                subscription.unsubscribe();
-
-            };
-        });
+            })
+        );
     }
 }

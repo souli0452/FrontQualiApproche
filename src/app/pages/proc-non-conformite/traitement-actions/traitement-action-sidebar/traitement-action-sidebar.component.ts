@@ -22,7 +22,7 @@ import { transformerEnStats } from '../../../../utils';
 export class TraitementActionSidebarComponent implements OnDestroy {
 
     items: MenuItem[] = [];
-
+    loading: boolean = false;
     destroy$: Subject<boolean> = new Subject<boolean>();
 
     url: string = '';
@@ -46,10 +46,9 @@ user: any = {};
 
         this.user = this.authService.getUser();
         this.fetchPlanActions()
-        this.featureService.reaload$.subscribe(reaload => {
+        this.featureService.reaload$.pipe(takeUntil(this.destroy$)).subscribe(reaload => {
             if (reaload) {
-                console.log("reload"+reaload);
-              this.fetchPlanActions()
+                this.fetchPlanActions()
             }
         })
     }
@@ -63,11 +62,13 @@ user: any = {};
     }
 
     fetchPlanActions() {
+        this.loading = true;
         this.actualityService
             .getPlanActionsAll(this.user.email)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (data) => {
+                    this.loading = false;
                     this.getBadgeValues(transformerEnStats(data.body!));
 
                 }

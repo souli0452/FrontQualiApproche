@@ -17,6 +17,7 @@ export class PlanActionDetailComponent {
     nc: any = {};
     planAction: any = {};
     planActionRequest: any = {};
+    loading: boolean = false;
 
     protected afficheDialog: boolean=false;
 
@@ -29,11 +30,23 @@ export class PlanActionDetailComponent {
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
-            this.planActionService.findById(params['id']).subscribe((plan) => {
-                this.planActionRequest = plan.body!;
-                this.nonConformiteService.findByNumero(this.planActionRequest.numeroNc).subscribe((plan) => {
-                    this.nc = plan.body!;
-                });
+            this.loading = true;
+            this.planActionService.findById(params['id']).subscribe({
+                next: (plan) => {
+                    this.planActionRequest = plan.body!;
+                    this.nonConformiteService.findByNumero(this.planActionRequest.numeroNc).subscribe({
+                        next: (plan) => {
+                            this.nc = plan.body!;
+                            this.loading = false;
+                        },
+                        error: (error) => {
+                            this.loading = false;
+                        }
+                    });
+                },
+                error: (error) => {
+                    this.loading = false;
+                }
             });
         });
     }

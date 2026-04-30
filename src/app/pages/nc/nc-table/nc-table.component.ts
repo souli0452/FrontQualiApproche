@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Table } from 'primeng/table';
@@ -7,6 +7,8 @@ import { Location } from '@angular/common';
 import { NonConformStatus } from '../../../enums';
 import { NonConformiteService } from '../../../services/non-conformite.service';
 import { showToast, StatusEnum, StatusEnumShow } from '../../../utils';
+import { Subject, takeUntil } from 'rxjs';
+import { GlobalSearchService } from '../../../services/global-search.service';
 
 @Component({
     selector: 'app-nc-table',
@@ -16,6 +18,7 @@ import { showToast, StatusEnum, StatusEnumShow } from '../../../utils';
 export class NcTableComponent implements OnInit {
 
     @Input() actualities!: any[];
+    @Input() loading: boolean = false;
     @Input() status!: NonConformStatus;
     @Input() cols!: any[];
     @Input() colDetails!: any[];
@@ -26,15 +29,28 @@ export class NcTableComponent implements OnInit {
     confirmKey = 'confirmKey';
     selectedActualities: any[] = [];
 
+    @ViewChild('dt') table!: Table;
+    private destroy$: Subject<boolean> = new Subject<boolean>();
+
     constructor(private router: Router, private messageService: MessageService,
                 private actualityService: NonConformiteService,
                 private featureService: FeaturesService,
                 private confirmationService: ConfirmationService,
-                private location: Location
+                private location: Location,
+                private globalSearchService: GlobalSearchService
     ) {
     }
 
     ngOnInit(): void {
+        // Écouter la barre de recherche globale
+        this.globalSearchService.searchQuery$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(query => {
+                if (this.table) {
+                    this.table.filterGlobal(query, 'contains');
+                }
+            });
+
         this.menuItems = [
             {
                 label: 'Publier', icon: 'pi pi-fw pi-ban',
@@ -196,6 +212,10 @@ export class NcTableComponent implements OnInit {
         table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
     }
 
+    ngOnDestroy(): void {
+        this.destroy$.next(true);
+        this.destroy$.complete();
+    }
 
     protected readonly NonConformStatus = NonConformStatus;
 }

@@ -4,80 +4,185 @@
 @use 'primeicons/primeicons.css';
 @use './assets/demo/demo.scss';
 /* styles.css ou styles.scss */
+:root {
+    --primary-color: #1e3a5f !important;
+}
+
 html {
-    font-size: 15px; /* ou la taille que tu veux en px, rem ou % */
-}
-
-body {
-    font-family: 'Arial', sans-serif;
-    font-size: 1rem; /* hérite de html, mais tu peux ajuster ici */
+    font-size: 14px;
 }
 
 @font-face {
-    font-family: 'Roboto-Regular';
-    src: url('./assets/fonts/Roboto-Regular.ttf') format('truetype');
-    font-weight: normal;
+    font-family: 'Poppins';
+    src: url('./assets/fonts/Poppins-Light.ttf') format('truetype');
+    font-weight: 300;
     font-style: normal;
-  }
+}
+
 @font-face {
-font-family: 'Roboto-Bold';
-src: url('./assets/fonts/Roboto-Bold.ttf') format('truetype');
-font-weight: normal;
-font-style: normal;
+    font-family: 'Poppins';
+    src: url('./assets/fonts/Poppins-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('./assets/fonts/Poppins-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('./assets/fonts/Poppins-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('./assets/fonts/Poppins-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
 }
 
 body {
-  font-family: 'Roboto-Regular', sans-serif;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
 }
+
 .font-bold,
-.layout-menu ul a.active-route,
 .p-dialog-title,
 .p-fieldset-legend-label,
-.p-step-title{
-  font-family: 'Roboto-Bold', sans-serif;
+.p-step-title {
+    font-weight: 700;
 }
 
+.hidden{
+    display: none !important;
+}
+.layout-topbar-title {
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-color) !important; 
+}
+.p-toolbar-end {
+    display: block;
+}
 .page-layout {
-  position: relative;
-  display: block;
-  overflow: hidden;
-  width: 100%;
-  overflow-x: auto;
-  white-space: nowrap;
+    position: relative;
+    display: block;
+    overflow: hidden;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
 }
 .centrer-image {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .p-datepicker:has(.p-datepicker-input-icon-container) {
-  position: relative;
-  width: 100%;
+    position: relative;
+    width: 100%;
 }
-.conformite p-toolbar{
-  display: none !important;
+.conformite p-toolbar {
+    display: none !important;
 }
-.p-button-warning{
+.p-button-warning {
     background-color: #f8b045 !important;
     border-color: #f8b045 !important;
 }
-.p-badge-warning{
+.p-badge-warning {
     background-color: #f8b045 !important;
     border-color: #f8b045 !important;
 }
 .p-step-title {
-  text-transform: lowercase !important;
+    text-transform: lowercase !important;
 }
 .flex-component h5 {
-  text-transform: none;
+    text-transform: none;
 }
 .p-fieldset-legend {
-  padding-right: 30px !important;
+    padding-right: 30px !important;
 }
-.p-error{
+.p-error {
     color: red;
 }
-.text-warn{
+.text-warn {
     color: #f8b045;
+}
+.p-ripple {
+    overflow: initial !important;
+    position: relative;
+}
+
+#password input.p-password-input {
+    padding: 15px;
+    padding-left: 35px;
+}
+
+// Styles globaux pour les menus d'actions (ellipsis)
+.p-menu {
+    border-radius: 8px !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+    padding: 0.5rem 0 !important;
+    border: 1px solid var(--surface-border) !important;
+
+    .p-menuitem-link {
+        padding: 0.75rem 1rem !important;
+        transition: background-color 0.2s !important;
+
+        &:hover {
+            background-color: var(--surface-hover)!important;
+        }
+
+        .p-menuitem-icon {
+            color: var(--text-color) !important;
+            margin-right: 0.75rem !important;
+            font-size: 1.1rem !important;
+        }
+
+        .p-menuitem-text {
+            color: var(--text-color) !important;
+            font-weight: 500 !important;
+        }
+    }
+
+    // Style spécifique pour l'action de suppression
+    .text-red-500 {
+        .p-menuitem-link {
+            .p-menuitem-icon, .p-menuitem-text {
+                color: #ef4444 !important;
+            }
+            &:hover {
+                background-color: var(--surface-hover) !important;
+            }
+        }
+    }
+}
+
+
+
+// Menu style pour les actions
+.menu-style {
+    font-size: 12px !important;
+    padding: 0px !important;
+    border-bottom: var(--surface-border)var(--text-color) !important;
+}
+
+.menu-style:last-child {
+    border: 0 !important;
+}
+// Drawer
+.p-drawer-header {
+    padding-bottom: 0 !important;
+    padding-top: 0 !important;
+}
+.drawer-subtitle-content {
+    font-size: 12px;
+    font-style: italic;
 }

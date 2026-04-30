@@ -22,7 +22,7 @@ import { DataViewModule } from 'primeng/dataview';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DialogModule } from 'primeng/dialog';
 import { DividerModule } from 'primeng/divider';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { FieldsetModule } from 'primeng/fieldset';
 import { FileUploadModule } from 'primeng/fileupload';
 import { FullCalendarModule } from '@fullcalendar/angular';
@@ -147,7 +147,7 @@ import { MessageService } from 'primeng/api';
         DataViewModule,
         DialogModule,
         DividerModule,
-        DropdownModule,
+        SelectModule,
         FieldsetModule,
         FileUploadModule,
         FullCalendarModule,
@@ -255,7 +255,7 @@ import { MessageService } from 'primeng/api';
         DataViewModule,
         DialogModule,
         DividerModule,
-        DropdownModule,
+        SelectModule,
         FieldsetModule,
         FileUploadModule,
         FullCalendarModule,

@@ -2,13 +2,13 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { UIChart } from 'primeng/chart';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
 
 @Component({
     standalone: true,
     selector: 'app-notifications-widget',
-    imports: [ButtonModule, MenuModule, UIChart, DropdownModule, FormsModule],
+    imports: [ButtonModule, MenuModule, UIChart, SelectModule, FormsModule],
     template: `<div class="card">
         <h6>Non conformité total par an et par statut</h6>
         <div class="flex align-items-center justify-content-end gap-3">
@@ -17,7 +17,7 @@ import { FormsModule } from '@angular/forms';
             </div>
             <div class="col">
                 <h6 class="m-0 text-sm font-medium text-600">Année</h6>
-                <p-dropdown [options]="annees" [(ngModel)]="anneeSelectionnee" placeholder="Année" (onChange)="change()" [style]="{ width: '150px' }" appendTo="body"> </p-dropdown>
+                <p-select [options]="annees" [(ngModel)]="anneeSelectionnee" placeholder="Année" (onChange)="change()" [style]="{ width: '150px' }" appendTo="body"> </p-select>
             </div>
         </div>
         <p-chart type="bar" [data]="data" [options]="options" class="h-[30rem]" />

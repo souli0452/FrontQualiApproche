@@ -1,77 +1,72 @@
-<div class="h-screen flex flex-column bg-cover" style="background: url('assets/images/login-bg.jpg'); background-size: cover;">
-    <div class="part-left">
-        <div class="part-left-content">
-            <h1>QualiTech - Gestions de la qualité</h1>
-            <p>
-            Bienvenue sur <strong>QualiTech</strong>, votre plateforme dédiée à la gestion efficace de la qualité.
-            Suivez et pilotez vos audits, non-conformités, actions correctives, fournisseurs, formations, risques
-            et bien plus encore… tout cela dans une seule et même interface intuitive.
-            </p>
-            <p>
-            Simplifiez la conformité, optimisez vos processus, et renforcez l'excellence opérationnelle de votre organisation.
-            </p>
-        </div>
-    </div>
-    <div class="part-right">
-        <div class="part-right-content">
+<div class="h-screen">
+    <div class="authentication-page">
+        <div class="authentication-page-content">
+            <div class="logo-container">
+                <img src="assets/logo-quali-sira.svg" alt="Logo QualiSira">
+                <div class="nom-slogan">
+                    <h1 class="text-[#1e3a5f]">QualiSira</h1>
+                    <div class="slogan">
+                        <p>QUALITÉ <br>SÉCURITÉ <br>CONFORMITÉ <br>AMÉLIORATION CONTINUE</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slogan-texte">
+                <p>Votre plateforme de gestion intégrée de la qualité</p>
+            </div>
             <p-card>
                 <!-- Écran de connexion -->
-                <form *ngIf="!isResetScreen && !isConfirmationScreen" [formGroup]="loginForm" (ngSubmit)="onLogin()" class="text-center z-5 flex flex-column border-1 border-round-md surface-border surface-card px-3">
-                    <div class="-mt-5 text-white bg-custom border-round-md mx-auto px-3 py-1 border-1 surface-border">
-                        <h2 class="m-0">CONNEXION</h2>
-                    </div>
-                    <h4>Bienvenue</h4>
-                    <div class="text-color-secondary mb-6 px-6">
-                        Veuillez utiliser le formulaire pour vous connecter à la plateforme
+                <form *ngIf="!isResetScreen && !isConfirmationScreen" [formGroup]="loginForm" (ngSubmit)="onLogin()" class="flex flex-column border-1 border-round-md surface-border surface-card px-3">
+                    
+                    <div class="text-center text-[#1e3a5f] text-2xl mb-5">
+                        Se connecter
                     </div>
                     <div class="w-96">
                         <div class="flex flex-col gap-2 text-left mb-4">
-                            <label for="username">Adresse e-mail</label>
-                            <input pInputText id="username" type="email" aria-describedby="username-help" placeholder="Email" formControlName="username" />
-                            <small id="username-help">Entrez votre adresse email.</small>
-                            <div *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched" class="error">
-                                Adresse e-mail requise.
-                            </div>
+                            <label for="username">Courriel (Nom d'utilisateur)</label>
+                                <span class="p-input-icon-left w-full relative">
+        <i class="pi pi-user icon-input"></i> <!-- L'icône utilisateur -->
+        <input 
+            [class.p-invalid]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched" 
+            pInputText
+            id="username" 
+            autocomplete="off"
+            class="input-text w-full" 
+            autofocus
+            type="email" 
+            placeholder="Entrez votre nom d'utilisateur" 
+            formControlName="username" />
+    </span>
                         </div>
 
                         <div class="flex flex-col gap-2 text-left">
-                            <label for="username">Mot de passe</label>
-                            <input id="password" type="password" class="w-full" pInputText placeholder="Password" formControlName="password" />
-                            <small id="username-help">Entrez votre mot de passe.</small>
-                            <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="error">
-                                Mot de passe requis.
-                            </div>
-                        </div>
+    <label for="username">Mot de passe</label>
+    <span class="p-input-icon-left w-full relative">
+        <i class="pi pi-lock icon-input" style="z-index: 10;"></i> <!-- On s'assure que le cadenas reste au-dessus -->
+        <p-password 
+            id="password" 
+            autocomplete="new-password"
+            formControlName="password" 
+            [toggleMask]="true" 
+            [feedback]="false" 
+            placeholder="Tapez votre mot de passe"
+            styleClass="w-full"
+            [inputStyle]="{'width': '100%'}"
+            [inputStyleClass]="'input-text w-full ' + (loginForm.get('password')?.invalid && loginForm.get('password')?.touched ? 'p-invalid' : '')">
+        </p-password>
+    </span>
+</div>
 
                         <div class="flex flex-col gap-2 text-left">
-                            <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
-                            <button type="submit" pButton pRipple class="w-full my-3 px-3" label="CONNEXION" [disabled]="loginForm.invalid"></button>
-                            <button type="button" pButton pRipple class="w-full p-button-text text-primary-500" label="Mot de passe oublié?" (click)="toggleScreen()"></button>
+                            <!-- <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div> -->
+                            <button type="submit" pButton pRipple class="w-full my-8 px-5 py-4 font-bold text-lg rounded-full" label="Se connecter" [disabled]="loginForm.invalid"></button>
+                            <button type="button" pButton pRipple class="w-full p-button-text text-primary-500 py-4 font-bold text-lg rounded-full" label="Mot de passe oublié ?" (click)="toggleScreen()"></button>
                         </div>
-
-                        <!-- <span class="p-input-icon-left">
-                            <i class="pi pi-envelope"></i>
-                            <input id="username" type="text" class="w-full" pInputText placeholder="Adresse e-mail" formControlName="username" />
-                        </span>
-                        <div *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched" class="error">
-                            Adresse e-mail requise.
-                        </div>
-                        <span class="p-input-icon-left">
-                            <i class="pi pi-key"></i>
-                            <input id="password" type="password" class="w-full" pInputText placeholder="Mot de passe" formControlName="password" />
-                        </span>
-                        <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="error">
-                            Mot de passe requis.
-                        </div>
-                        <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
-                        <button type="submit" pButton pRipple class="w-full my-3 px-3" label="CONNEXION" [disabled]="loginForm.invalid"></button>
-                        <button type="button" pButton pRipple class="w-full p-button-text text-primary-500" label="Mot de passe oublié?" (click)="toggleScreen()"></button> -->
                     </div>
                 </form>
 
                 <!-- Écran de réinitialisation -->
                 <form *ngIf="isResetScreen" [formGroup]="resetForm" (ngSubmit)="initiatePasswordReset()" class="text-center z-5 flex flex-column border-1 border-round-md surface-border surface-card px-6" style="max-width: 500px; min-width: 400px;">
-                    <div class="-mt-5 text-white bg-cyan-700 border-round-md mx-auto px-3 py-1 border-1 surface-border">
+                    <div class="-mt-5 text-white bg-primary-500 border-round-md mx-auto px-3 py-1 border-1 surface-border">
                         <h2 class="m-0">REINITIALISATION</h2>
                     </div>
                     <div class="text-color-secondary mb-6 px-6">

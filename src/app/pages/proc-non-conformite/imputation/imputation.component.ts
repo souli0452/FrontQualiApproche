@@ -23,6 +23,7 @@ export class ImputationComponent {
     demandeList: any = [];
     protected demande: any;
     motifRejetDialog: boolean=false;
+    loading: boolean = false;
     title = 'Imputations des non-conformités';
     @ViewChild(DmdTraitementTableTemplateComponent) dmdTraitement!: DmdTraitementTableTemplateComponent;
     userStructure: Structure = {};
@@ -52,11 +53,14 @@ export class ImputationComponent {
         this.getDemandeList();
     }
     getDemandeList() {
+        this.loading = true;
         this.service.getNonConformiteByEtapeAndOrigin(EtapeTraitement.IMPUTATION, this.userStructure.id!).subscribe({
             next: (data) => {
                 this.demandeList = data.body;
+                this.loading = false;
             },
             error: (error) => {
+                this.loading = false;
                 // showToast(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
             }
         });

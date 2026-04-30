@@ -13,25 +13,25 @@ export class ProcNonConformiteService {
   constructor(private http: HttpClient) { }
 
     getNonConformiteByEtape(etapeTraitement :EtapeTraitement): Observable<HttpResponse<Array<any>>> {
-        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL+etapeTraitement, {observe: 'response'});
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL+etapeTraitement, {observe: 'response', headers: {'X-Skip-Loader': 'true'}});
     }
     getNonConformiteByEtapeAndOrigin(etapeTraitement :EtapeTraitement,structureId:string): Observable<HttpResponse<Array<any>>> {
-        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_ETAPE_ORIGIN+etapeTraitement+`/${structureId}`, {observe: 'response'});
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_ETAPE_ORIGIN+etapeTraitement+`/${structureId}`, {observe: 'response', headers: {'X-Skip-Loader': 'true'}});
     }
     getNonConformiteByEtapeAndSumit(etapeTraitement :EtapeTraitement,structureId:string): Observable<HttpResponse<Array<any>>> {
-        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_ETAPE_SUMIT+etapeTraitement+`/${structureId}`, {observe: 'response'});
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_ETAPE_SUMIT+etapeTraitement+`/${structureId}`, {observe: 'response', headers: {'X-Skip-Loader': 'true'}});
     }
     getNonConformiteImputed(userId :string,etapeTraitement :EtapeTraitement): Observable<HttpResponse<Array<any>>> {
-        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_IMPUTED+userId+`/${etapeTraitement}`, {observe: 'response'});
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_IMPUTED+userId+`/${etapeTraitement}`, {observe: 'response', headers: {'X-Skip-Loader': 'true'}});
     }
     getNonConformiteAll(): Observable<HttpResponse<Array<any>>> {
-        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL, {observe: 'response'});
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL, {observe: 'response', headers: {'X-Skip-Loader': 'true'}});
     }
     getNonConformiteAllStructure(id:any): Observable<HttpResponse<Array<any>>> {
-        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL+`/structure/${id}`, {observe: 'response'});
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL+`/structure/${id}`, {observe: 'response', headers: {'X-Skip-Loader': 'true'}});
     }
     getNonConformiteByStrcuture(id:any): Observable<HttpResponse<Array<any>>> {
-        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL_By_Structure+id, {observe: 'response'});
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL_By_Structure+id, {observe: 'response', headers: {'X-Skip-Loader': 'true'}});
     }
     updateNomConformite(demande: any, id: string): Observable<HttpResponse<any>> {
         return this.http.put<any>(NonConformiteUrlConfig.UPDATE_NON_CONFORMITE + id, demande, {observe: 'response'});

@@ -66,8 +66,8 @@
                 </div>
                 <div class="nc-details-grid">
                     <div class="nc-detail-item">
-                        <span class="nc-detail-label">Pertinence : <p-tag [severity]="getStatusSeverity(demande.pertinancePilote)"
-                                                                        [value]="demande.pertinancePilote"> </p-tag></span>
+                        <span class="nc-detail-label">Pertinence :</span> 
+                        <p-tag [severity]="getStatusSeverity(demande.pertinancePilote)" [value]="demande.pertinancePilote"> </p-tag>
                     </div>
                     <div class="nc-detail-item" *ngIf="demande.justificationPilote">
                         <span class="nc-detail-label">Justification :</span>
@@ -143,8 +143,8 @@
                 </div>
                 <div class="nc-details-grid">
                     <div class="nc-detail-item">
-                        <span class="nc-detail-label">Pertinence :  <p-tag [severity]="getStatusSeverity(demande.pertinanceRs)"
-                                                                           [value]="demande.pertinanceRs"> </p-tag></span>
+                        <span class="nc-detail-label">Pertinence :</span>  <p-tag [severity]="getStatusSeverity(demande.pertinanceRs)"
+[value]="demande.pertinanceRs"> </p-tag>
 
                     </div>
                     <div class="nc-detail-item" *ngIf="demande.justificationRs">
@@ -164,8 +164,8 @@
                 </div>
                 <div class="nc-details-grid">
                     <div class="nc-detail-item">
-                        <span class="nc-detail-label">Pertinence :<p-tag [severity]="getStatusSeverity(demande.pertinanceRsSuivi)"
-                                                                         [value]="demande.pertinanceRsSuivi"> </p-tag></span>
+                        <span class="nc-detail-label">Pertinence :</span> <p-tag [severity]="getStatusSeverity(demande.pertinanceRsSuivi)"
+[value]="demande.pertinanceRsSuivi"> </p-tag>
                     </div>
 
                     <div class="nc-detail-item">
@@ -328,7 +328,7 @@
             <label for="responsable" class="font-bold block mb-2">
                 Responsable <span class="text-red-500">*</span>
             </label>
-            <p-dropdown id="responsable"
+            <p-select id="responsable"
                         [options]="users"
                         optionLabel="fullName"
                         placeholder="Sélectionnez le responsable"
@@ -337,7 +337,7 @@
                         appendTo="body"
                         [(ngModel)]="user"
                         class="w-full">
-            </p-dropdown>
+            </p-select>
         </div>
         <p-fluid class="card flex flex-wrap gap-2">
             <div class="flex-auto">
@@ -353,13 +353,13 @@
                 <label for="dateEcheance" class="font-bold block mb-2">
                     Date d'échéance <span class="text-red-500">*</span>
                 </label>
-                <p-calendar id="dateEcheance"
+                <p-datePicker id="dateEcheance"
                             [showIcon]="true"
                             [(ngModel)]="planAction.dateEcheance"
                             placeholder="Date de l'échéance"
                             dateFormat="dd/mm/yy"
                             class="w-full">
-                </p-calendar>
+                </p-datePicker>
             </div>
 
 
@@ -493,12 +493,12 @@
 
 
     </ng-template>
-    <p-footer #footer>
+    <ng-template pTemplate="footer">
         <button type="button" pRipple pButton icon="pi pi-times" (click)="displayDialog = false" label="Fermer"
                 class="p-button-secondary"></button>
         <button  type="button" pRipple pButton icon="pi pi-send" (click)="rejet()" label="Réjéter"
                 class="p-button-primary" [disabled]="!planAction.observationRejet"></button>
-    </p-footer>
+    </ng-template>
 </p-dialog>
 <p-confirmDialog header="Confirmation" [key]="'1'"
                  icon="pi pi-exclamation-triangle" [style]="{width: '35vw'}"

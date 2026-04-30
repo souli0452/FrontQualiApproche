@@ -1,18 +1,18 @@
 <p-table #dt [columns]="cols" [value]="demandeList!" [paginator]="true" dataKey="id"
          [tableStyle]="{ 'min-width': '50rem' }" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]"
-         [globalFilterFields]="colsFilter" [(selection)]="selectedDemandes"
-         [resizableColumns]="true" columnResizeMode="expand" styleClass="p-datatable-gridlines">
+         [globalFilterFields]="colsFilter" [(selection)]="selectedDemandes" [loading]="loading"
+         [showLoader]="false"
+         [resizableColumns]="true" columnResizeMode="expand" styleClass="p-datatable-gridlines p-datatable-sm" showGridlines>
 
     <ng-template pTemplate="caption">
         <p-toolbar styleClass="mb-2">
             <ng-template #start>
                 <div class="col-6 md:col-6 sm:col-12">
-                    <h5> {{ title }}</h5>
-                    <h6 class="m-0 flex align-items-center gap-2">
+                    <h6 class="m-0 flex align-items-center titre-content gap-2">
                         Total des demandes <span *ngIf="btnActions===BtnActions.IMPUTATION"> à imputer</span>
                         <span *ngIf="btnActions===BtnActions.TRAITEMENT">à traiter</span>
                         <span *ngIf="btnActions===BtnActions.VALIDATION">à valider</span>
-                        <p-badge [value]="demandeList.length.toString()"  styleClass="ml-2"></p-badge>
+                        <p-badge [value]="demandeList.length.toString()"  styleClass="ml-1"></p-badge>
                     </h6>
 
                 </div>
@@ -125,6 +125,22 @@
         </tr>
     </ng-template>
 
+    <ng-template pTemplate="loadingbody">
+        <tr *ngFor="let i of [1,2,3,4,5,6,7,8,9,10]">
+            <td *ngIf="btnActions === BtnActions.RECEPTION || btnActions === BtnActions.VALIDATION|| btnActions === BtnActions.IMPUTATION">
+                <p-skeleton width="2rem" height="1rem"></p-skeleton>
+            </td>
+            @for (col of cols; track col) {
+                <td>
+                    <p-skeleton width="100%" height="1rem"></p-skeleton>
+                </td>
+            }
+            <td class="text-center">
+                <p-skeleton width="100%" height="1rem"></p-skeleton>
+            </td>
+        </tr>
+    </ng-template>
+
     <ng-template pTemplate="emptymessage">
         <div class="h-60">
             <div class="centrer-image mt-6">
@@ -133,7 +149,8 @@
             </div>
         </div>
     </ng-template>
-</p-table><p-dialog
+</p-table>
+<p-dialog
     [(visible)]="display"
     [modal]="true"
     [maximizable]="true"
@@ -166,7 +183,7 @@
     </ng-template>
 
     <!-- ✅ Footer -->
-    <ng-template pTemplate="footer">
+    <ng-template #footer>
         <div class="flex justify-content-end gap-2">
             <button
                 type="button"
@@ -192,15 +209,14 @@
 
 
 <p-dialog
-
     (onHide)="displayDetail = false" [modal]="true" [maximizable]="true"
     [closable]="false"
     [(visible)]="displayDetail" [style]="{width: '68vw'}">
     <ng-template pTemplate="header">
 
         <div class="inline-flex align-items-center justify-content-center gap-2">
-        <span class="font-bold white-space-nowrap">
-          <h4>
+        <div class="font-bold white-space-nowrap">
+          <h4 class="titre-pop">
               <b *ngIf="btnActions==BtnActions.CLOTURE">Détails de la demande n°: {{ selectedDemande.numeroReference }}</b>
                           <b *ngIf="btnActions === BtnActions.RECEPTION || btnActions==BtnActions.SUIVI_RQ">Détails de la demande n°: {{ selectedDemande.numeroReference }}</b>
                             <b *ngIf="btnActions === BtnActions.IMPUTATION">Imputation de la demande n°: {{ selectedDemande.numeroReference }}</b>
@@ -211,7 +227,7 @@
           </h4>
             <p *ngIf="hasNonTraiter&&totalActions>0" class="text-warn"> En attente de traitements des actions  avec <span style="color: green">{{nombreTraites}}</span> traitées sur <span style="color: green">{{totalActions}}</span> </p>
                      <p *ngIf="hasInactive&&totalActions>0" class="text-danger"> Vous devez valider les plans d'actions .On a   <span style="color: green">{{ nombreNonTraites}}</span> validés sur <span style="color: green">{{nbreInactive}}</span> </p>
-        </span>
+        </div>
         </div>
     </ng-template>
 
@@ -220,7 +236,7 @@
 
     </ng-template>
 
-    <p-footer #footer>
+    <ng-template #footer>
         <div class="flex justify-content-end flex-wrap">
             <button type="button" pRipple pButton icon="pi pi-times-circle"
                     class="p-button-secondary position-left mr-3"
@@ -289,7 +305,7 @@
 
         </div>
 
-    </p-footer>
+    </ng-template>
 </p-dialog>
 <p-confirmDialog header="Confirmation" [key]="imputationKey"
                  icon="pi pi-exclamation-triangle" [style]="{width: '35vw'}"

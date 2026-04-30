@@ -32,37 +32,40 @@ import { NiveauNonConformiteComponent } from './procedure-non-conformite/niveau/
 import { ActionNonConformiteComponent } from './procedure-non-conformite/action/action';
 import { PlanActionComponent } from './proc-non-conformite/plan-action/plan-action.component';
 import { ConfigGComponent } from './config-g/config-g.component';
+import { SearchResultsComponent } from './recherche/search-results';
 
 export default [
+    { path: 'recherche', component: SearchResultsComponent, title: 'Résultats de recherche' },
     { path: 'documentation', component: Documentation },
     { path: 'crud', component: Crud },
-    { path: 'config-global', component: ConfigGComponent },
-    { path: 'formation', component: FormationComponent },
-    { path: 'fournisseur', component: FournisseurComponent },
-    { path: 'prestataire', component: PrestataireComponent },
-    { path: 'produit', component: ProduitComponent },
-    { path: 'action-corrective-preventive', component: ActionCorrectivePreventiveComponent },
-    { path: 'reclamation', component: ReclamationComponent },
-    { path: 'risque', component: RisqueComponent },
-    { path: 'audite', component: AuditeComponent },
-    { path: 'non-conformite', component: NonConformiteComponent },
-    { path: 'procedure-non-conformite', component: ProcedureNonConformiteComponent },
-    { path: 'reglementation', component: reglementationComponent },
-    { path: 'critere-evaluation', component: CritereEvaluationComponent },
-    { path: 'users', data: {breadcrumb: 'Utilisateurs'}, component: KcUserComponent },
+    { path: 'config-global', component: ConfigGComponent, title: 'Configuration Globale' },
+    { path: 'formation', component: FormationComponent, title: 'Formations' },
+    { path: 'fournisseur', component: FournisseurComponent, title: 'Liste des Fournisseurs' },
+    { path: 'prestataire', component: PrestataireComponent, title: 'Liste des Prestataires' },
+    { path: 'produit', component: ProduitComponent, title: 'Liste des Produits' },
+    { path: 'action-corrective-preventive', component: ActionCorrectivePreventiveComponent, title: 'Actions Correctives et Préventives' },
+    { path: 'reclamation', component: ReclamationComponent, title: 'Liste des Réclamations' },
+    { path: 'risque', component: RisqueComponent, title: 'Liste des Risques' },
+    { path: 'audite', component: AuditeComponent, title: 'Liste des Audites' },
+    { path: 'non-conformite', component: NonConformiteComponent, title: 'Liste des Non Conformités' },
+    { path: 'procedure-non-conformite', component: ProcedureNonConformiteComponent, title: 'Liste des Procédures de Non Conformité' },
+    { path: 'reglementation', component: reglementationComponent, title: 'Liste des Réglementations' },
+    { path: 'critere-evaluation', component: CritereEvaluationComponent, title: 'Critères d\'évaluation' },
+    { path: 'users', data: {breadcrumb: 'Utilisateurs'}, component: KcUserComponent, title: 'Gestion des Utilisateurs' },
 
-    {path: 'reception', data: {breadcrumb: 'Réception'}, component: ReceptionComponent},
-    {path: 'validation', data: {breadcrumb: 'Validation'}, component: ValidationComponent},
-    {path: 'traitement', data: {breadcrumb: 'Traitement'}, component: TraitementComponent},
-    {path: 'cloture', data: {breadcrumb: 'Cloture'}, component: ClotureComponent},
-    {path: 'consultation', data: {breadcrumb: 'Consultations'}, component: ConsultationsComponent},
-    {path: 'validation_rs', data: {breadcrumb: 'validation'}, component: ValidationRSComponent},
-    {path: 'imputation', data: {breadcrumb: 'imputations'}, component: ImputationComponent},
-    {path: 'plan-action', data: {breadcrumb: 'Traitements plan action'}, component: PlanActionComponent},
+    {path: 'reception', data: {breadcrumb: 'Réception'}, component: ReceptionComponent, title: 'Réception des non-conformités'},
+    {path: 'validation', data: {breadcrumb: 'Validation'}, component: ValidationComponent, title: 'Validation des non-conformités'},
+    {path: 'traitement', data: {breadcrumb: 'Traitement'}, component: TraitementComponent, title: 'Traitement des non-conformités'},
+    {path: 'cloture', data: {breadcrumb: 'Cloture'}, component: ClotureComponent, title: 'Clôture des non-conformités'},
+    {path: 'consultation', data: {breadcrumb: 'Consultations'}, component: ConsultationsComponent, title: 'Consultations des non-conformités'},
+    {path: 'validation_rs', data: {breadcrumb: 'validation'}, component: ValidationRSComponent, title: 'Validation RS'},
+    {path: 'imputation', data: {breadcrumb: 'imputations'}, component: ImputationComponent, title: 'Imputations'},
+    {path: 'plan-action', data: {breadcrumb: 'Traitements plan action'}, component: PlanActionComponent, title: 'Plan d\'action'},
 
     {
         path: 'direction',
         component: StructureComponent,
+        title: 'Liste des Directions',
         data: {
             breadcrumb: 'Direction',
             typeStructure: TypeStructure.DIRECTION
@@ -71,16 +74,17 @@ export default [
     {
         path: 'service',
         component: StructureComponent,
+        title: 'Liste des Services',
         data: {
             breadcrumb: 'service',
             typeStructure: TypeStructure.SERVICE
         }
     },
-    { path: 'profil', component: ProfilComponent },
-    { path: 'type-nc', component: TypeNonConformiteComponent },
-    { path: 'type-processus', component: TypeProcessusComponent },
-    { path: 'niveau-nc', component: NiveauNonConformiteComponent },
-    { path: 'type-action', component: ActionNonConformiteComponent },
+    { path: 'profil', component: ProfilComponent, title: 'Liste des Profils' },
+    { path: 'type-nc', component: TypeNonConformiteComponent, title: 'Types de non conformité' },
+    { path: 'type-processus', component: TypeProcessusComponent, title: 'Types de processus' },
+    { path: 'niveau-nc', component: NiveauNonConformiteComponent, title: 'Niveaux des non-conformités' },
+    { path: 'type-action', component: ActionNonConformiteComponent, title: 'Types d\'actions' },
     { path: 'empty', component: Empty },
     { path: '**', redirectTo: '/notfound' },
 ] as Routes;

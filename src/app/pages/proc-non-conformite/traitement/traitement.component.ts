@@ -22,6 +22,7 @@ export class TraitementComponent {
     demandeList: any = [];
     protected demande: any;
     motifRejetDialog: boolean=false;
+    loading: boolean = false;
     title = 'Traitements des non-conformités';
     user!: any;
     protected readonly BtnActions = EtapeTraitement;
@@ -52,13 +53,15 @@ export class TraitementComponent {
         this.getDemandeList(this.user.userId);
     }
     getDemandeList(userId: string) {
+        this.loading = true;
         this.service.getNonConformiteImputed(userId, EtapeTraitement.TRAITEMENT).subscribe({
             next: (data) => {
                 this.demandeList = data.body;
+                this.loading = false;
             },
             error: (error) => {
                 this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
-                // showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
+                this.loading = false;
             }
         });
     }

@@ -14,10 +14,11 @@ import { SearchAgentComponent } from '../search-agent-component/search-agent.com
     styleUrl: './dmd.traitement-table-template.component.scss',
     providers: [DatePipe],
     standalone: true,
-    imports: [CommonModule, NgPrimeModule, SearchAgentComponent]
+    imports: [CommonModule, NgPrimeModule,SearchAgentComponent]
 })
 export class DmdTraitementTableTemplateComponent {
     @Input() demandeList: Array<any> = [];
+    @Input() loading: boolean = false;
     @Input() btnActions?: EtapeTraitement = EtapeTraitement.RECEPTION;
     @Input() title?: string;
     @Output() onImputation = new EventEmitter<any>();

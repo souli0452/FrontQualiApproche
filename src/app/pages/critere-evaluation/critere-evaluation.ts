@@ -68,11 +68,11 @@ export class CritereEvaluationComponent {
         this.formGroup = this.fb.group({
             id: [null],
             libelleCrictereEvaluation: [null, Validators.required],
-          //  descriptionCrictereEvaluation: [null, Validators.required],
+            descriptionCrictereEvaluation: [null, Validators.required],
             noteAtribuerCritere: [null, Validators.required],
             delaisLivraison: [null, Validators.required],
             serviceClient: [null, Validators.required],
-          //  commentaireEvaluation: [null, Validators.required],
+            commentaireEvaluation: [null, Validators.required],
         });
     }
 
@@ -81,14 +81,16 @@ export class CritereEvaluationComponent {
     }
 
     fetchcritereEvaluation() {
+        this.loading = true;
         this.critereEvaluationService.findAll().pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: res => {
                     this.dataList = res.body || [];
-
+                    this.loading = false;
                 },
                 error: error => {
                     showToast(StatusEnum.error, error.status, null, this.messageService, error);
+                    this.loading = false;
                 }
             });
     }

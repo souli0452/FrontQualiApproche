@@ -20,6 +20,7 @@ import { AuthService } from '../../../../services/auth-services/auth.service';
 })
 export class NonTraiterComponent implements OnInit, OnDestroy {
     actualities: any[] = [];
+    loading: boolean = false;
     destroy$: Subject<boolean> = new Subject<boolean>();
     cols: any[] = [
         { field: 'numeroOdre', header: 'N° ordre', type: 'string', filter: true, width: '20%', centered: false },
@@ -58,12 +59,17 @@ user: any = {};
     }
 
     fetchPlanActions() {
+        this.loading = true;
         this.actualityService
             .getPlanActions(this.user.email,"NON_TRAITER")
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (data) => {
                     this.actualities = data.body!;
+                    this.loading = false;
+                },
+                error: (error) => {
+                    this.loading = false;
                 }
             });
     }

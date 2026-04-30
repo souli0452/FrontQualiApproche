@@ -1,11 +1,6 @@
 <p-blockUI [blocked]="loader">
-    <div class="bloked align-items-center">
-        <div class="spiner">
-            <p-progress-spinner strokeWidth="8"
-                                fill="transparent"
-                                animationDuration=".5s"
-                                [style]="{ width: '50px', height: '50px' }" />
-        </div>
-        <p>Veuillez patienter ...</p>
+    <div class="bloked">
+        <div class="loader"></div>
+        <p class="text-fin">Veuillez patienter ...</p>
     </div>
 </p-blockUI>

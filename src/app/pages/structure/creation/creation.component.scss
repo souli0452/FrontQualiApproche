@@ -7,3 +7,21 @@
 .w-100 {
   width: 100% !important;
 }
+
+
+.drawer-field {
+    /* Style du label "Flottant" de PrimeNG */
+    p-floatlabel label {
+        color: var(--text-color) ! important; /* Gris un peu doux */
+        font-weight: 400 !important;
+        // font-size: 0.95rem;
+        opacity: .7;
+    }
+
+    /* Optionnel : Changer la couleur quand le champ est ACTIF/Cliqué (le texte monte) */
+    p-floatlabel:focus-within label, 
+    p-floatlabel .p-filled ~ label {
+        color: var(--primary-color) !important; /* Prend la couleur de ton thème */
+        // font-weight: bold !important;
+    }
+}

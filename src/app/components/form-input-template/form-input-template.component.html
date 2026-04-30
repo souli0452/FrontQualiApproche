@@ -44,14 +44,14 @@
 
         <!-- Dropdown -->
         <ng-container *ngIf="col.type === 'dropdown'">
-            <p-dropdown
+            <p-select
                 [options]="dropDownObject[col.field]"
                 [filter]="true"
                 [showClear]="true"
                 [formControlName]="col.field"
                 class="w-full premium-dropdown"
                 [name]="col.field">
-            </p-dropdown>
+            </p-select>
         </ng-container>
 
         <!-- Checkbox -->

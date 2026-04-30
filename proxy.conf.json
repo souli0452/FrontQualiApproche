@@ -1,6 +1,6 @@
 {
     "/api/v1": {
-        "target": " http://localhost:8086",
+        "target": "http://localhost:8086",
         "secure": false,
         "loglevel": "debug",
         "changeOrigin": true

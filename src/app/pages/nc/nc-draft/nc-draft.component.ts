@@ -17,6 +17,7 @@ import { Structure } from '../../structure/structure';
 })
 export class NcDraftComponent implements OnInit, OnDestroy {
     actualities: any[] = [];
+    loading: boolean = false;
     userStructure:Structure={};
     destroy$: Subject<boolean> = new Subject<boolean>();
     cols: any[] = [
@@ -53,12 +54,17 @@ export class NcDraftComponent implements OnInit, OnDestroy {
     }
 
     fetchNc() {
+        this.loading = true;
         this.actualityService
             .findAllNc(NonConformStatus.DRAFT,this.userStructure.id)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (data) => {
                     this.actualities = data.body!;
+                    this.loading = false;
+                },
+                error: (error) => {
+                    this.loading = false;
                 }
             });
     }

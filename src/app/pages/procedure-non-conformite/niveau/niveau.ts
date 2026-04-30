@@ -17,6 +17,7 @@ import { NiveauNonConformiteService } from '../../../services/niveau-non-conform
         <div class="page-layout">
             <app-crud-generic
                 [dialogWidth]="'50rem'"
+                [loading]="loading"
                 [pageLabel]="pageLabel"
                 [tableCols]="tableCols"
                 [listeObject]="dataList"
@@ -72,14 +73,17 @@ export class NiveauNonConformiteComponent {
       }
 
       fetchObject() {
+        this.loading = true;
           this.niveauNonConformiteService.findAll().pipe(takeUntil(this.destroy$))
               .subscribe({
                   next: res => {
                       this.dataList = res.body || [];
+                      this.loading = false;
                   },
                   error: error => {
                       showToast(StatusEnum.error, error.status, null, this.messageService, error);
-                  }
+                      this.loading = false;
+                    }
               });
       }
 

@@ -1,87 +1,70 @@
-/*.login-container {
-    width: 100%;
+.logo-container img {
+    height: 90px;
+}
+
+.authentication-page {
+    width: 400px;
     max-width: 400px;
-    margin: 50px auto;
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-form {
+    min-height: 100vh;
+    height: 100%;
+    margin-inline: auto;
     display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.flex-column {
     flex-direction: column;
 }
-
-label {
-    margin-bottom: 5px;
-    font-weight: bold;
+.justify-center {
+    justify-content: center;
 }
 
-input {
-    margin-bottom: 15px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-button {
-    padding: 10px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-button:disabled {
-    background-color: #aaa;
-}*/
-.part-right {
-    background: white;
-}
-.part-right-content form {
+.logo-container {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
-.part-right-content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-.part-left, .part-right {
-    width: 50%;
-    position: relative;
-}
-.error {
-    color: red;
-    font-size: 12px;
-}
-.part-left-content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-.part-left-content {
-    color: white;
+
+.logo-container h1 {
     font-size: 20px;
-    width: 100%;
-    padding: 5%;
+    letter-spacing: 2px;
+    margin-bottom: 0px;
 }
 
-.part-left-content strong {
-    font-family: 'Roboto-Bold', sans-serif;
+.nom-slogan .slogan {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1px;
 }
-.part-left-content h1 {
-    font-size: 45px;
-    color: white;
+
+.nom-slogan {
+    padding-left: 10px;
+    border-left: 1px solid #000;
+    margin-left: 20px;
 }
-.bg-custom {
-    background: #70d5b3;
-    border-radius: 0 0 10px 10px;
+.slogan-texte {
+    text-align: center;
+    font-size: 14px;
+    margin: 20px 0;
+    font-weight: 100;
+    color: #000;
 }
-.bg-custom  h2 {
-    color: white;
+
+.p-inputtext{
+    padding: 15px;
+    padding-left: 35px;
+}
+.p-inputtext.p-invalid {
+    border-color: #ef4444 !important; /* Rouge Tailwind red-500 */
+}
+
+.icon-input {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 10px;
+}
+
+.rounded-full {
+    border-radius: 9999px !important;
 }

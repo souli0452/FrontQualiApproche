@@ -101,14 +101,17 @@ export class KcUserComponent implements OnInit, OnDestroy {
 
     }
     fetchUsers() {
+        this.loading = true;
         this.authService
             .getAllUsers()
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res) => {
                     this.dataList = res.body || [];
+                    this.loading = false;
                 },
                 error: (error) => {
+                    this.loading = false;
                     showToast(StatusEnum.error, error.status, null, this.messageService, error);
                 }
             });

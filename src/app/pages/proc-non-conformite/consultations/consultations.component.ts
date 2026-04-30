@@ -34,6 +34,7 @@ import { takeUntil } from 'rxjs/operators';
 export class ConsultationsComponent {
     demandeList: any = [];
     title = 'Consultations des non-conformités';
+    loading: boolean = false;
     cols: any[] = [];
     userStructure:any={};
     constructor(private  featureService:FeaturesService,protected messageService: MessageService,private service:ProcNonConformiteService) {
@@ -66,23 +67,29 @@ export class ConsultationsComponent {
 
     }
     getDemandeList() {
+        this.loading = true;
         this.service.getNonConformiteAll().subscribe({
             next: (data) => {
                 this.demandeList = data.body;
                 this.featureService.onReloadRequested(true);
+                this.loading = false;
             },
             error: (error) => {
+                this.loading = false;
                 //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
             }
         });
     }
     getDemandeListStructure() {
+        this.loading = true;
         this.service.getNonConformiteAllStructure(this.userStructure.id).subscribe({
             next: (data) => {
                 this.demandeList = data.body;
                 this.featureService.onReloadRequested(true);
+                this.loading = false;
             },
             error: (error) => {
+                this.loading = false;
                 //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
             }
         });

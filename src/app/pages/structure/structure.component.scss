@@ -39,6 +39,42 @@
       }
     }
   }
+
+  // Styles pour les en-têtes du tableau
+  .p-datatable {
+    .p-datatable-thead > tr > th {
+      background: var(--surface-100);
+      color: var(--text-color) ! important;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      padding: 1rem 1rem;
+      border-bottom: 1px solid var(--surface-border);
+      font-weight: 600 !important;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background: var(--surface-hover);
+      }
+
+      .p-column-title {
+        font-weight: 600;
+      }
+
+      .p-icon{
+          height: 10px !important;
+          width: 10px !important;
+          size: 10px !important;
+      }
+    }
+
+    .p-datatable-tbody > tr {
+      transition: background-color 0.2s;
+      &:hover {
+        background-color: var(--surface-hover)!important;
+      }
+    }
+  }
 }
 
 .w-100 {
@@ -46,3 +82,9 @@
 }
 .buttonD{
     width: 250% !important;}
+
+.p-menu-item {
+    border-bottom: 1px solid var(--surface-border);
+    font-size: 12px;
+    border-radius: 0;
+}

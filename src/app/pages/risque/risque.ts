@@ -19,7 +19,8 @@ import { RisqueService } from '../../services/risque.service';
             <app-crud-generic
                 [dialogWidth]="'50rem'"
                 [pageLabel]="pageLabel"
-                [tableCols]="tableCols"
+                [tableCols]="tableCols" 
+                [loading]="loading"
                 [listeObject]="dataList"
                 [formGroup]="formGroup"
                 [formCols]="formCols"
@@ -69,12 +70,12 @@ export class RisqueComponent {
         this.formGroup = this.fb.group({
             id: [null],
             libelle: [null, Validators.required],
-         //   description: [null, Validators.required],
+            description: [null, Validators.required],
             niveau: [null, Validators.required],
             statut: [null, Validators.required],
             plantAttenuation: [null, Validators.required],
-         //   dateEcheance: [null, Validators.required],
-          //  commentaireRisque: [null, Validators.required],
+            dateEcheance: [null, Validators.required],
+            commentaireRisque: [null, Validators.required],
             evidenceRisque: [null, Validators.required],
           //  actionCorrectivePreventives: [null, Validators.required],
         });
@@ -84,14 +85,17 @@ export class RisqueComponent {
         this.fetchRisque();
     }
 
-    fetchRisque() {
+    fetchRisque() {  
+        this.loading = true;
         this.risqueService.findAll().pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: res => {
                     this.dataList = res.body || [];
+                    this.loading = false;
 
                 },
                 error: error => {
+                    this.loading = false;
                     showToast(StatusEnum.error, error.status, null, this.messageService, error);
                 }
             });

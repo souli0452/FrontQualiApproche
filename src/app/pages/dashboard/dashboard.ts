@@ -8,7 +8,7 @@ import { AuthService } from '../../services/auth-services/auth.service';
 import { StructureService } from '../structure/structure-service';
 import { ProcNonConformiteService } from '../proc-non-conformite/proc-non-conformite.service';
 import { isPlatformBrowser, Location } from '@angular/common';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { generateColor, getCurrentUserStructure, isUserInRoles } from '../../utils';
 import { Router } from '@angular/router';
@@ -17,7 +17,7 @@ import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-dashboard',
-    imports: [StatsWidget, RecentSalesWidget, BestSellingWidget, RevenueStreamWidget, NotificationsWidget, DropdownModule, NgPrimeModule],
+    imports: [StatsWidget, RecentSalesWidget, BestSellingWidget, RevenueStreamWidget, NotificationsWidget, SelectModule, NgPrimeModule],
     template: `
         <div class="grid grid-cols-12 gap-8">
             <app-stats-widget class="contents" />

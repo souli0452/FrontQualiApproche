@@ -2,14 +2,14 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ChartModule } from 'primeng/chart';
 import { debounceTime, Subscription } from 'rxjs';
 import { LayoutService } from '../../../layout/service/layout.service';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { isUserInRoles } from '../../../utils';
 
 @Component({
     standalone: true,
     selector: 'app-revenue-stream-widget',
-    imports: [ChartModule, DropdownModule, NgPrimeModule],
+    imports: [ChartModule, SelectModule, NgPrimeModule],
     template: `<div class="card !mb-8">
         <div class="font-semibold text-xl mb-4"> <span *ngIf="isUserInRoles(['SUPER_ADMIN'])">Non conformité par processus</span>
             <span *ngIf="!isUserInRoles(['SUPER_ADMIN'])">Fréquence de traitement des plans d'action</span>
@@ -20,7 +20,7 @@ import { isUserInRoles } from '../../../utils';
             </div>
             <div class="col">
                 <h6 class="m-0 text-sm font-medium text-600">Année</h6>
-                <p-dropdown [options]="annees" [(ngModel)]="anneeSelectionnee" placeholder="Année" (onChange)="change()" [style]="{ width: '150px' }" appendTo="body"> </p-dropdown>
+                <p-select [options]="annees" [(ngModel)]="anneeSelectionnee" placeholder="Année" (onChange)="change()" [style]="{ width: '150px' }" appendTo="body"> </p-select>
             </div>
         </div>
         <p-chart *ngIf="!isUserInRoles(['SUPER_ADMIN'])" type="line" [data]="chartDataTaux" [options]="chartOptionsTaux" class="h-[30rem]" />

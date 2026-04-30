@@ -25,6 +25,7 @@ export class ValidationComponent {
     demandeList: any = [];
     motifRejetDialog: boolean=false;
     protected demande: any;
+    loading: boolean = false;
     title = 'Validations des non-conformités';
     @ViewChild(DmdTraitementTableTemplateComponent) dmdTraitement!: DmdTraitementTableTemplateComponent;
     user!: any;
@@ -56,11 +57,14 @@ export class ValidationComponent {
         this.getDemandeList();
     }
     getDemandeList() {
+        this.loading = true;
         this.service.getNonConformiteByEtapeAndOrigin(EtapeTraitement.VALIDATION, this.userStructure.id!).subscribe({
             next: (data) => {
                 this.demandeList = data.body;
+                this.loading = false;
             },
             error: (error) => {
+                this.loading = false;
                 this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: 'Erreur lors de la recupérations des demande', life: 3000 });
                 // showToast(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
             }

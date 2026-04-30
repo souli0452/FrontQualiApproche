@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Table } from 'primeng/table';
@@ -9,6 +9,8 @@ import { FeaturesService } from '../../../../services/feature-service';
 import { NonConformiteService } from '../../../../services/non-conformite.service';
 import { convertFilesToBase64, showToast, StatusEnum } from '../../../../utils';
 import { ProcNonConformiteService } from '../../proc-non-conformite.service';
+import { Subject, takeUntil } from 'rxjs';
+import { GlobalSearchService } from '../../../../services/global-search.service';
 
 
 @Component({
@@ -19,6 +21,7 @@ import { ProcNonConformiteService } from '../../proc-non-conformite.service';
 export class TraitementActionTableComponent implements OnInit {
 
     @Input() actualities!: any[];
+    @Input() loading: boolean = false;
     @Input() status!: NonConformStatus;
     @Input() cols!: any[];
     @Input() colDetails!: any[];
@@ -31,16 +34,30 @@ export class TraitementActionTableComponent implements OnInit {
     selectedActualities: any[] = [];
     planAction:any={};
     displayDialog:boolean=false;
+
+    @ViewChild('dt') table!: Table;
+    private destroy$: Subject<boolean> = new Subject<boolean>();
+
     constructor(private router: Router, private messageService: MessageService,
                 private actualityService: NonConformiteService,
                 private featureService: FeaturesService,
                 private nonConformiteService: ProcNonConformiteService,
                 private confirmationService: ConfirmationService,
-                private location: Location
+                private location: Location,
+                private globalSearchService: GlobalSearchService
     ) {
     }
 
     ngOnInit(): void {
+        // Écouter la barre de recherche globale
+        this.globalSearchService.searchQuery$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(query => {
+                if (this.table) {
+                    this.table.filterGlobal(query, 'contains');
+                }
+            });
+
         this.menuItems = [
             {
                 label: 'Soumettre', icon: 'pi pi-fw pi-ban',
@@ -207,8 +224,11 @@ export class TraitementActionTableComponent implements OnInit {
     async handleFileUpload(files: any[]) {
         this.uploadedFiles = files;
         this.planAction.fichiers = await convertFilesToBase64(this.uploadedFiles);
+    }
 
-
+    ngOnDestroy(): void {
+        this.destroy$.next(true);
+        this.destroy$.complete();
     }
 
 }

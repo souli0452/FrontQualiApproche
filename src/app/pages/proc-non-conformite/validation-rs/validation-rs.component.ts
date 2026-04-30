@@ -23,6 +23,7 @@ export class ValidationRSComponent {
     demandeList: any = [];
     protected demande: any;
     motifRejetDialog: boolean=false;
+    loading: boolean = false;
     title = 'Validations des non-conformités';
     @ViewChild(DmdTraitementTableTemplateComponent) dmdTraitement!: DmdTraitementTableTemplateComponent;
 
@@ -51,11 +52,14 @@ export class ValidationRSComponent {
         this.getDemandeList();
     }
     getDemandeList() {
+        this.loading = true;
         this.service.getNonConformiteByEtape(EtapeTraitement.VALIDATION_RS).subscribe({
             next: (data) => {
                 this.demandeList = data.body;
+                this.loading = false;
             },
             error: (error) => {
+                this.loading = false;
                 // showToast(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
             }
         });

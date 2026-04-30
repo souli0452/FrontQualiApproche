@@ -52,11 +52,13 @@
 /* Cartes */
 .nc-card {
     border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     border: 1px solid #e5e7eb;
     transition: transform 0.2s, box-shadow 0.2s;
 }
-
+.nc-detail-container .card.nc-card {
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
 .nc-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -66,7 +68,7 @@
     display: flex;
     align-items: center;
     padding-bottom: 0.75rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0rem;
     border-bottom: 1px solid #f3f4f6;
 }
 
@@ -95,23 +97,25 @@
 }
 
 .nc-detail-label {
-    font-weight: 600;
-    color: #6b7280;
-    font-size: 0.9rem;
+font-weight: 400;
+    color: var(--p-primary-color) ! IMPORTANT;
+    font-size: 0.85rem;
+    text-decoration: underline;
+    padding-bottom: 5px;
 }
 
 .nc-detail-value {
-    color: #111827;
+    color: var(--text-color) ! important;
     margin-top: 0.25rem;
     word-break: break-word;
 }
 
 /* Description */
 .nc-description {
-    background-color: #f9fafb;
+    background-color: var(--surface-100);
     padding: 1rem;
     border-radius: 6px;
-    color: #374151;
+    color: var(--text-color) ! important;
     line-height: 1.5;
     white-space: pre-line;
 }

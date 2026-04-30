@@ -24,6 +24,7 @@ export class ClotureComponent {
     cols: any[] = [];
     protected demande: any;
     motifRejetDialog: boolean=false;
+    loading: boolean = false;
     title = 'Suivi des non-conformités';
     constructor(
         protected messageService: MessageService,
@@ -51,11 +52,14 @@ export class ClotureComponent {
         this.getDemandeList();
     }
     getDemandeList() {
+        this.loading = true;
         this.service.getNonConformiteByEtape(EtapeTraitement.SUIVI_RQ).subscribe({
             next: (data) => {
                 this.demandeList = data.body;
+                this.loading = false;
             },
             error: (error) => {
+                this.loading = false;
                 //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
             }
         });

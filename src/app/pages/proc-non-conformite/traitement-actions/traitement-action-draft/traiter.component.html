@@ -1,5 +1,6 @@
 <app-traitement-action-table [actualities]="actualities" [cols]="cols"
                      [colDetails]="colsDetail"
+                     [loading]="loading"
                      (publish)="publish($event)"
                      (delete)="delete($event)"
                      [status]="NonConformStatus.TRAITER">
