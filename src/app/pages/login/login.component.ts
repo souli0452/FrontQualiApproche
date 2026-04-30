@@ -83,13 +83,9 @@ export class LoginComponent implements OnInit{
                             this.fetchStucture(this.userCurrentUser.structure);
                         } else {
                             this.messageService.add({ severity: 'info', summary: 'AVERTISSEMENT', detail: 'Votre utilisateur est mal configuré', life: 3000 });
+                            this.navigateAfterLogin();
                         }
                     });
-                    if(isUserInRoles(['SUPER_ADMIN'])){
-                        this.router.navigate(['/']);
-                    }else {
-                        this.router.navigate(['/page/consultation']);
-                    }
                 },
                 error: (err) => {
                     console.log('Erreur:', err);
@@ -126,8 +122,21 @@ export class LoginComponent implements OnInit{
         this.structureService.getByStructureId(structureId).subscribe({
             next: (structure) => {
                 localStorage.setItem(USER_STRUCTURE_KEY, JSON.stringify(structure));
+                this.navigateAfterLogin();
+            },
+            error: (err) => {
+                this.messageService.add({ severity: 'warn', summary: 'Avertissement', detail: 'Impossible de charger la structure. Vérifiez votre configuration.', life: 3000 });
+                this.navigateAfterLogin();
             }
         });
+    }
+
+    navigateAfterLogin() {
+        if(isUserInRoles(['SUPER_ADMIN'])){
+            this.router.navigate(['/']);
+        }else {
+            this.router.navigate(['/page/consultation']);
+        }
     }
 
     initiatePasswordReset(): void {

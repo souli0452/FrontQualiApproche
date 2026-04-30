@@ -1,4 +1,4 @@
- export  const SERVICE_PREFIX = `api/v1/quali-approche`;
+ export  const SERVICE_PREFIX = `http://localhost:8086/api/v1/quali-approche`;
 // export  const SERVICE_PREFIX = `https://sgq.horeb.techapi/v1/quali-approche`;
 
 export class QualiUrlConfig {

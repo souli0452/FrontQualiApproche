@@ -77,6 +77,10 @@ export class ConsultationsComponent {
         });
     }
     getDemandeListStructure() {
+        if (!this.userStructure || !this.userStructure.id) {
+            showToast(StatusEnum.error, 400, 'Structure utilisateur non disponible. Veuillez vous reconnecter.', this.messageService);
+            return;
+        }
         this.service.getNonConformiteAllStructure(this.userStructure.id).subscribe({
             next: (data) => {
                 this.demandeList = data.body;
