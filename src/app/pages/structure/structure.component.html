@@ -11,40 +11,12 @@
 
         <ng-template #end>
 
-            <p-inputGroup>
-                @if (typeStructure === TypeStructure.SERVICE) {
-                   
-                        <p-button icon="pi pi-filter" label="Filter par" size="small" />
-                    <p-select 
-                        [options]="directions" 
-                        styleClass="w-full md:w-15rem"
-                        #dt
-                        size="small"
-                        emptyMessage="Aucune donnée disponible"
-                        emptyFilterMessage="Aucun résultat trouvé"
-                        optionLabel="libelleLong"
-                        [filter]="true" appendTo="body"
-                        (onChange)="directionChange(dt.value)"
-                        [resetFilterOnHide]="true" 
-                        [autoDisplayFirst]="false" 
-                        placeholder="Direction">
-                    </p-select>
-                }
-            </p-inputGroup>
             &nbsp;  @if (typeStructure === TypeStructure.SERVICE) {
-            <!-- <button pButton pRipple label="Ajouter" icon="pi pi-plus"
-                    pTooltip="Nouvelle structure"
-                    class="p-button-primary" (click)="onDisplay()"
-                    [disabled]="typeStructure === TypeStructure.SERVICE && !currentStructure">
-            </button> -->
+
             <p-button pRipple label="Ajouter" icon="pi pi-plus"
                     pTooltip="Nouveau service"
                     class="p-button-primary" (click)="onDisplay()" size="small" />
             }
-            @if (typeStructure === TypeStructure.DIRECTION) {
-                <p-button pRipple label="Ajouter" icon="pi pi-plus"
-                    pTooltip="Nouvelle direction"
-                    class="p-button-primary" (click)="onDisplay()" size="small" />}
         </ng-template>
     </p-toolbar>
 
@@ -85,7 +57,7 @@
 
                 <td style="text-align:center" [style.width]="'10%'">
                     <p-button
-                        type="button" 
+                        type="button"
                         size="small"
                         [outlined]="true"
                         icon="pi pi-ellipsis-h"
@@ -144,7 +116,7 @@
 <!-- VERSION 1 : SideBar (ce que tu as actuellement) - Plus moderne, prend toute la largeur de droite -->
 <p-drawer [modal]="true" [(visible)]="display"
            position="right" styleClass="!w-full md:!w-80 lg:!w-[40rem]">
-           
+
     <!-- Ton titre directement ici ou via #header -->
     <ng-template #header>
         <div class="inline-flex align-items-center justify-content-center gap-2">
@@ -167,7 +139,7 @@
     <ng-template #footer>
         <div class="flex items-center gap-2">
             <p-button pRipple label="Annuler" icon="pi pi-times" (click)="onDisplay()" size="small" variant="outlined" />
-            <p-button size="small" [disabled]="editForm!.invalid" pRipple (click)="saveEntity()" 
+            <p-button size="small" [disabled]="editForm!.invalid" pRipple (click)="saveEntity()"
                     icon="pi pi-send" label="Enregistrer">
             </p-button>
         </div>
