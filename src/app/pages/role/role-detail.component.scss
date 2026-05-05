@@ -1,0 +1,60 @@
+:host ::ng-deep {
+    .bg-gray-50 { background-color: #f9fafb; }
+    .bg-white { background-color: #ffffff; }
+    
+    .border-gray-50 { border-color: #f3f4f6; }
+    .border-gray-100 { border-color: #f1f5f9; }
+    .border-gray-200 { border-color: #e5e7eb; }
+    .border-gray-300 { border-color: #d1d5db; }
+    
+    .text-gray-400 { color: #9ca3af; }
+    .text-gray-500 { color: #6b7280; }
+    .text-gray-600 { color: #4b5563; }
+    .text-gray-700 { color: #374151; }
+    .text-gray-800 { color: #1f2937; }
+    .text-gray-900 { color: #111827; }
+
+    .bg-blue-50 { background-color: #eff6ff; }
+    .text-blue-600 { color: #2563eb; }
+
+    .scale-75 { transform: scale(0.75); }
+    
+    .p-inputtext:focus, .p-inputtextarea:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 2px #dbeafe !important;
+    }
+
+    .p-checkbox .p-checkbox-box.p-highlight {
+        background: #2563eb !important;
+        border-color: #2563eb !important;
+    }
+
+    .p-button {
+        &.p-button-secondary {
+            background: #ffffff;
+            border-color: #e5e7eb;
+            color: #374151;
+            &:hover { background: #f9fafb; border-color: #d1d5db; }
+        }
+    }
+}
+
+.field {
+    label {
+        font-size: 0.875rem;
+    }
+}
+
+.resize-none {
+    resize: none;
+}
+
+.tracking-tighter {
+    letter-spacing: -0.025em;
+}
+
+@media screen and (max-width: 991px) {
+    .lg\:col-4, .lg\:col-8 {
+        padding-bottom: 2rem !important;
+    }
+}

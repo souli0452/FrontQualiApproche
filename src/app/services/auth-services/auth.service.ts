@@ -7,7 +7,10 @@ import { KcLoginRequest, KcUser } from '../../models';
 import { map } from 'rxjs/operators';
 import { QualiCrudService } from '../quali-crud.service';
 import { QualiUrlConfig } from '../quali-url-configs';
-import { USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
+import { createRequestOption, USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
+import { TypeStructure } from '../../enums';
+import { Structure } from '../../pages/structure/structure';
+import { StructureEndpoint } from '../../pages/structure/strucuture-url-config';
 
 interface AuthResponse {
     accessToken: string;
@@ -18,6 +21,11 @@ interface AuthResponse {
     scope: string;
     data: {
         user: any;
+        appRoles?: string[];
+        permissions?: string[];
+        licenseActive?: boolean;
+        licenseDaysRemaining?: number;
+        modulesSubscribed?:string[];
     };
 }
 
@@ -46,11 +54,22 @@ export class AuthService extends QualiCrudService<KcUser, number> {
     login(credentials: KcLoginRequest): Observable<AuthResponse> {
         return this.http.post<AuthResponse>(QualiUrlConfig.LOGIN_URL, credentials).pipe(
             map((response: AuthResponse) => {
-                this.setUser(response.data.user);
+                const user = response.data.user;
+                if (user) {
+                    user.appRoles = response.data.appRoles;
+                    user.permissions = response.data.permissions;
+                    user.licenseActive = response.data.licenseActive;
+                    user.licenseDaysRemaining = response.data.licenseDaysRemaining;
+                    user.modulesSubscribed = response.data.modulesSubscribed;
+                    this.setUser(user);
+                }
                 this.setTokens(response.accessToken, response.refreshToken);
                 return response;
             })
         );
+    }
+    getAllRoles(): Observable<HttpResponse<Array<any>>> {
+        return this.http.get<Array<any>>(QualiUrlConfig.ROLE_URL, { observe: 'response' });
     }
 
     // Connexion
@@ -101,6 +120,22 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         localStorage.setItem('access_token', accessToken);
         localStorage.setItem('refresh_token', refreshToken);
         this.isLoggedIn.next(true);
+    }
+
+    hasPermission(permission: string): boolean {
+        const user = this.getUser();
+        if (!user) return false;
+        return user.permissions?.includes(permission) || false;
+    }
+
+    isLicenseActive(): boolean {
+        const user = this.getUser();
+        return user?.licenseActive || false;
+    }
+
+    getLicenseDaysRemaining(): number {
+        const user = JSON.parse(localStorage.getItem('user')!) as KcUser;
+        return user?.licenseDaysRemaining || 0;
     }
 
     // Récupère le token d'accès

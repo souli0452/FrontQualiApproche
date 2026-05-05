@@ -6,6 +6,7 @@ import { AppTopbar } from './app.topbar';
 import { AppSidebar } from './app.sidebar';
 import { AppFooter } from './app.footer';
 import { LayoutService } from '../service/layout.service';
+import { AuthService } from '../../services/auth-services/auth.service';
 
 @Component({
     selector: 'app-layout',
@@ -16,6 +17,16 @@ import { LayoutService } from '../service/layout.service';
         <app-sidebar></app-sidebar>
         <div class="layout-main-container">
                 <app-topbar></app-topbar>
+
+                <!-- Bandeau de licence -->
+                <div *ngIf="daysRemaining !== undefined && daysRemaining <= 10"
+                     [ngClass]="{'license-warning': daysRemaining > 0, 'license-expired': daysRemaining <= 0}"
+                     class="license-banner">
+                    <i class="pi pi-exclamation-triangle mr-2"></i>
+                    <span *ngIf="daysRemaining > 0">Votre licence expire dans <b>{{ daysRemaining }} jours</b>. Pensez à la renouveler pour conserver l'accès à vos services.</span>
+                    <span *ngIf="daysRemaining <= 0">Votre licence est <b>expirée</b>. Vous êtes en période de grâce. Il vous reste <b>{{ 7 + daysRemaining }} jours</b> avant le blocage.</span>
+                </div>
+
             <div class="layout-main">
                 <router-outlet></router-outlet>
             </div>
@@ -26,18 +37,27 @@ import { LayoutService } from '../service/layout.service';
 })
 export class AppLayout {
     overlayMenuOpenSubscription: Subscription;
-
     menuOutsideClickListener: any;
 
-    @ViewChild(AppSidebar) appSidebar!: AppSidebar;
+    daysRemaining: number | undefined;
+    
+    isSuperAdmin(): boolean {
+        const user = JSON.parse(localStorage.getItem('user')!);
+        return user?.appRoles?.includes('SUPER_ADMIN') || 
+               (user?.roles && user.roles.includes('SUPER_ADMIN')) ||
+               (user?.user?.roles && user.user.roles.includes('SUPER_ADMIN'));
+    }
 
+    @ViewChild(AppSidebar) appSidebar!: AppSidebar;
     @ViewChild(AppTopbar) appTopBar!: AppTopbar;
 
     constructor(
         public layoutService: LayoutService,
         public renderer: Renderer2,
-        public router: Router
+        public router: Router,
+        private authService: AuthService
     ) {
+        this.daysRemaining = this.authService.getLicenseDaysRemaining();
         this.overlayMenuOpenSubscription = this.layoutService.overlayOpen$.subscribe(() => {
             if (!this.menuOutsideClickListener) {
                 this.menuOutsideClickListener = this.renderer.listen('document', 'click', (event) => {

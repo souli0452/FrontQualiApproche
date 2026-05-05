@@ -1,0 +1,28 @@
+<div class="card shadow-3 mb-3">
+    <p-toolbar styleClass="mb-2">
+        <ng-template pTemplate="left">
+            <h5 class="font-bold uppercase mb-0">Gestion des Rôles</h5>
+        </ng-template>
+        <ng-template pTemplate="right">
+            <p-button pRipple label="Nouveau Rôle" icon="pi pi-plus"
+                      class="p-button-primary" (click)="goToDetail()" size="small"></p-button>
+        </ng-template>
+    </p-toolbar>
+</div>
+
+<app-crud-generic
+    [tableCols]="tableCols"
+    [formCols]="formCols"
+    [formGroup]="roleForm"
+    [listeObject]="roles"
+    [multiSelectList]="multiSelectList"
+    [customButtons]="customButtons"
+    [notModif]="true"
+    [loading]="loading"
+    [asRoleEdit]="true"
+    (customActionEvent)="handleCustomAction($event)"
+    (removeEvent)="onDelete($event)">
+</app-crud-generic>
+
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>

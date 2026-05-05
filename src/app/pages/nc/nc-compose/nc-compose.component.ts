@@ -71,9 +71,10 @@ userStructure: Structure={};
 ngOnInit(): void {
 
     this.userStructure = getCurrentUserStructure();
-    const id = this.activatedRoute.snapshot.paramMap.get('id') || '';
+        const id = this.activatedRoute.snapshot.paramMap.get('id');
 
-    this.nonConformiteService.findById(id).pipe().subscribe({
+        if (id && id !== '') {
+            this.nonConformiteService.findById(id).pipe().subscribe({
         next: data => {
             if (data.body){
                 this.nonConformite=data.body;
@@ -86,30 +87,38 @@ ngOnInit(): void {
             this.nc.reclamationClient=this.reclamationsClients.find(value => value.id === this.nonConformite.originNonConformiteId);
 
         }
-    });
-}
+            });
+        }
+    }
 
     async onSave() {
         this.formSubmitted = true;
+        
+        // Vérification de base pour éviter les erreurs d'accès à undefined
+        if (!this.nc.niveauNonConformite || !this.nc.typeNonformite || !this.nc.origineService || !this.nc.typeProcedure) {
+            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Veuillez remplir tous les champs obligatoires.' });
+            return;
+        }
+
         // Remplir les champs requis
         this.nonConformite.niveauNonConformiteId = this.nc.niveauNonConformite.id;
         this.nonConformite.typeNonConformiteId = this.nc.typeNonformite.id;
         this.nonConformite.origineService = this.nc.origineService.libelleLong;
         this.nonConformite.origineId = this.nc.origineService.id;
-        this.nonConformite.structureSoumissionLibelle = this.userStructure.libelleLong;
-        this.nonConformite.structureSoumissionId = this.userStructure.id;
+        this.nonConformite.structureSoumissionLibelle = this.userStructure?.libelleLong;
+        this.nonConformite.structureSoumissionId = this.userStructure?.id;
         this.nonConformite.typeProcessusId = this.nc.typeProcedure.id;
         this.nonConformite.typeProcessusLibelle = this.nc.typeProcedure.libelle;
-        if(this.nc.typeAction){
-            this.nonConformite.actionLibelle= this.nc.typeAction.libelle;
+        
+        if (this.nc.typeAction) {
+            this.nonConformite.actionLibelle = this.nc.typeAction.libelle;
             this.nonConformite.actionId = this.nc.typeAction.id;
         }
 
-        this.nonConformite.origineServiceLibelleCourt=this.userStructure.libelleCourt;
-
+        this.nonConformite.origineServiceLibelleCourt = this.userStructure?.libelleCourt;
         this.nonConformite.fonctionEmetteur = "";
-        this.nonConformite.niveauNonConformiteLibelle=this.nc.niveauNonConformite.libelle;
-            this.nonConformite.typeNonConformiteLibelle = this.nc.typeNonformite.libelle;
+        this.nonConformite.niveauNonConformiteLibelle = this.nc.niveauNonConformite.libelle;
+        this.nonConformite.typeNonConformiteLibelle = this.nc.typeNonformite.libelle;
         // ✅ Attendre la conversion
         this.nonConformite.fichiers = await convertFilesToBase64(this.uploadedFiles);
 console.log(this.nonConformite);

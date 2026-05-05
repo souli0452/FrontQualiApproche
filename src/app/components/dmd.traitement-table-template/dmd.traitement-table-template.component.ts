@@ -14,11 +14,12 @@ import { SearchAgentComponent } from '../search-agent-component/search-agent.com
     styleUrl: './dmd.traitement-table-template.component.scss',
     providers: [DatePipe],
     standalone: true,
-    imports: [CommonModule, NgPrimeModule,SearchAgentComponent]
+    imports: [CommonModule, NgPrimeModule, SearchAgentComponent]
 })
 export class DmdTraitementTableTemplateComponent {
     @Input() demandeList: Array<any> = [];
     @Input() loading: boolean = false;
+
     @Input() btnActions?: EtapeTraitement = EtapeTraitement.RECEPTION;
     @Input() title?: string;
     @Output() onImputation = new EventEmitter<any>();
@@ -53,21 +54,17 @@ export class DmdTraitementTableTemplateComponent {
     hasNonTraiter: boolean = true;
     hasInactive: boolean = true;
     nbreInactive: boolean = true;
-    totalActions:number = 0;
-    nombreTraites:number = 0;
-    nombreNonTraites:number = 0;
+    totalActions: number = 0;
+    nombreTraites: number = 0;
+    nombreNonTraites: number = 0;
     constructor(
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         private featureService: FeaturesService,
         private datePipe: DatePipe
     ) {
-
-
         this.colsFilter = this.cols.map((value) => value.field);
     }
-
-
 
     closeDetailsDialog() {
         this.displayDetail = false;
@@ -80,7 +77,7 @@ export class DmdTraitementTableTemplateComponent {
             this.closeDetailsDialog();
         } else {
             this.selectedDemande = rowData;
-            this.selectedDemande.btnActions=this.btnActions;
+            this.selectedDemande.btnActions = this.btnActions;
             this.totalActions = this.selectedDemande.planActions.length;
             this.hasNonTraiter = this.selectedDemande.planActions.some((action: { status: string }) => action.status === 'NON_TRAITER');
             this.hasInactive = this.selectedDemande.planActions.some((action: { status: string }) => action.status === 'INACTIF');
@@ -91,7 +88,7 @@ export class DmdTraitementTableTemplateComponent {
 
             this.displayDetail = true;
             let componentRef: any;
-            if (this.btnActions !== EtapeTraitement.CLOTURE&&this.btnActions !== EtapeTraitement.IMPUTATION&&this.btnActions !== EtapeTraitement.SUIVI_RQ) {
+            if (this.btnActions !== EtapeTraitement.CLOTURE && this.btnActions !== EtapeTraitement.IMPUTATION && this.btnActions !== EtapeTraitement.SUIVI_RQ) {
                 componentRef = this.detailContainer?.createComponent(this.featureService.getDynamicFormComponent(this.selectedDemande.typeDemande));
             } else {
                 componentRef = this.detailContainer?.createComponent(this.featureService.getDynamicDetailComponent(this.selectedDemande.typeDemande));
@@ -104,7 +101,6 @@ export class DmdTraitementTableTemplateComponent {
 
     onDisplay() {
         if (this.display) {
-
             this.display = false;
             this.searchedAgent = undefined;
         } else {
@@ -120,8 +116,8 @@ export class DmdTraitementTableTemplateComponent {
     }
 
     get btnObject() {
-        if (this.btnActions === EtapeTraitement.TRAITEMENT||this.btnActions == EtapeTraitement.CLOTURE||this.btnActions == EtapeTraitement.SUIVI_RQ|| this.btnActions === EtapeTraitement.VALIDATION_RS) {
-            return  null;
+        if (this.btnActions === EtapeTraitement.TRAITEMENT || this.btnActions == EtapeTraitement.CLOTURE || this.btnActions == EtapeTraitement.SUIVI_RQ || this.btnActions === EtapeTraitement.VALIDATION_RS) {
+            return null;
         }
         if (this.btnActions === EtapeTraitement.VALIDATION) {
             return {
@@ -135,15 +131,12 @@ export class DmdTraitementTableTemplateComponent {
                 icon: 'pi pi-telegram',
                 tooltip: 'Imputer la sélection à un agent'
             };
-        }else
+        } else
             return {
                 label: 'Imputer',
                 icon: 'pi pi-telegram',
                 tooltip: 'Imputer la sélection à un agent'
             };
-
-
-
     }
 
     doAction() {
@@ -151,7 +144,7 @@ export class DmdTraitementTableTemplateComponent {
             this.receptionner();
         } else if (this.btnActions === EtapeTraitement.VALIDATION || this.btnActions === EtapeTraitement.VALIDATION_RS) {
             this.validate();
-        }else {
+        } else {
             this.onDisplay();
         }
     }
@@ -161,7 +154,7 @@ export class DmdTraitementTableTemplateComponent {
             message: 'Voulez-vous valider la sélection ?',
             key: this.imputationKey,
             accept: () => {
-                if (this.btnActions==EtapeTraitement.VALIDATION) {
+                if (this.btnActions == EtapeTraitement.VALIDATION) {
                     if (this.selectedDemandes.length > 0) {
                         this.selectedDemandes.map((item) => {
                             item.etatTraitement = this.BtnActions.SUIVI_RQ;
@@ -173,7 +166,7 @@ export class DmdTraitementTableTemplateComponent {
                     }
 
                     this.onValidation.emit(this.selectedDemandes);
-                }else {
+                } else {
                     if (this.selectedDemandes.length > 0) {
                         this.selectedDemandes.map((item) => {
                             item.etatTraitement = this.BtnActions.IMPUTATION;
@@ -181,7 +174,8 @@ export class DmdTraitementTableTemplateComponent {
                     } else {
                         this.selectedDemande.etatTraitement = this.BtnActions.IMPUTATION;
 
-                        this.selectedDemandes.push(this.selectedDemande);}
+                        this.selectedDemandes.push(this.selectedDemande);
+                    }
                 }
             }
         });
@@ -205,9 +199,9 @@ export class DmdTraitementTableTemplateComponent {
                     this.selectedDemandes.push(this.selectedDemande);
                 }
                 this.selectedDemandes.map((item) => {
-                    item.status=StatusEnum.IN_PROGRESS
+                    item.status = StatusEnum.IN_PROGRESS;
                     item.userImputId = this.searchedAgent?.id;
-                    item.userImputeEmail=this.searchedAgent?.email;
+                    item.userImputeEmail = this.searchedAgent?.email;
                     item.userImputFullName = this.searchedAgent.lastName + ' ' + this.searchedAgent.firstName;
                     item.etatTraitement = EtapeTraitement.TRAITEMENT;
                 });
@@ -226,12 +220,12 @@ export class DmdTraitementTableTemplateComponent {
             accept: () => {
                 if (this.selectedDemandes.length > 0) {
                     this.selectedDemandes.map((item) => {
-                        item.status=StatusEnum.IN_PROGRESS;
+                        item.status = StatusEnum.IN_PROGRESS;
                         item.etatTraitement = this.BtnActions.VALIDATION_RS;
                     });
                 } else {
                     this.selectedDemande.etatTraitement = this.BtnActions.VALIDATION_RS;
-                    this.selectedDemande.status=StatusEnum.IN_PROGRESS;
+                    this.selectedDemande.status = StatusEnum.IN_PROGRESS;
                     this.selectedDemandes.push(this.selectedDemande);
                 }
 
@@ -267,12 +261,12 @@ export class DmdTraitementTableTemplateComponent {
             accept: () => {
                 if (this.selectedDemandes.length > 0) {
                     this.selectedDemandes.map((item) => {
-                        item.status=StatusEnum.IN_PROGRESS;
+                        item.status = StatusEnum.IN_PROGRESS;
                         item.etatTraitement = this.BtnActions.VALIDATION;
                     });
                 } else {
                     this.selectedDemande.etatTraitement = this.BtnActions.VALIDATION;
-                    this.selectedDemande.status=StatusEnum.IN_PROGRESS;
+                    this.selectedDemande.status = StatusEnum.IN_PROGRESS;
                     this.selectedDemandes.push(this.selectedDemande);
                 }
                 this.onSubmission.emit(this.selectedDemandes);

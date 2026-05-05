@@ -1,21 +1,21 @@
-import {Component, Input, OnDestroy, OnInit} from '@angular/core';
-import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
-import {Subject} from 'rxjs';
-import {takeUntil} from 'rxjs/operators';
-import {MessageService} from 'primeng/api';
-import {showToast, StatusEnum} from '../../utils';
-import { DropdownSelector, FormGroupColumn, TableColumn } from '../../models';
-import {AuthService} from "../../services/auth-services/auth.service";
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { MessageService } from 'primeng/api';
+import { showToast, StatusEnum } from '../../utils';
+import { DropdownSelector, FormGroupColumn, MultiSelectSelector, TableColumn } from '../../models';
+import { AuthService } from '../../services/auth-services/auth.service';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { StructureService } from '../structure/structure-service';
-import { Structure } from '../structure/structure';
-
+import { TypeStructure } from '../../enums';
+import { RoleService } from '../role/role-service';
 
 @Component({
     selector: 'app-kc-user',
     templateUrl: './kc-user.component.html',
-    imports: [AppCrudGenericComponent,NgPrimeModule],
+    imports: [AppCrudGenericComponent, NgPrimeModule],
     styleUrls: ['./kc-user.component.scss']
 })
 export class KcUserComponent implements OnInit, OnDestroy {
@@ -26,12 +26,15 @@ export class KcUserComponent implements OnInit, OnDestroy {
     dataList: any[] = [];
     closeDialog = false;
     formGroup: UntypedFormGroup;
-    dropdownEntries:any[]=[];
+    dropdownEntries: any[] = [];
     tableCols: TableColumn[];
     formCols: FormGroupColumn[];
-    dropdownList:DropdownSelector[]=[];
-    strcutureDropdown!:DropdownSelector;
-    structures: Array<Structure> = [];
+    dropdownList: DropdownSelector[] = [];
+    strcutureDropdown!: DropdownSelector;
+    structures: { value: any; label: any }[] = [];
+    multiSelectList: MultiSelectSelector[] = [];
+    rolesEntries: any[] = [];
+    rolesDropdown!: MultiSelectSelector;
     pageLabel = 'utilisateurs';
     formHeader = "Création et mise à jour d'un utilisateur";
     customButtons = [
@@ -43,28 +46,29 @@ export class KcUserComponent implements OnInit, OnDestroy {
         private fb: UntypedFormBuilder,
         private messageService: MessageService,
         private authService: AuthService,
-        private  structureService: StructureService,
+        private roleService: RoleService,
+        private structureService: StructureService
     ) {
         this.formCols = [
             { field: 'id', header: 'Id', type: 'string', visible: false, required: false },
-            { field: 'structure', header: 'Direction ou service ', type: 'dropdownS', visible: true, required: true },
+            { field: 'structure', header: 'structure de ratachement ', type: 'dropdown', visible: true, required: true },
+            { field: 'roles', header: 'Rôles', type: 'multiselect', visible: true, required: true },
+            { field: 'fonction', header: 'Fonction', type: 'string', visible: true, required: true },
             { field: 'firstName', header: 'Prénom', type: 'string', visible: true, required: true },
             { field: 'lastName', header: 'Nom', type: 'string', visible: true, required: true },
             { field: 'email', header: 'Email', type: 'string', visible: true, required: true },
             // { field: 'createdTimestamp', header: 'Date de création', type: 'date', visible: true, required: false },
             { field: 'username', header: "Nom d'utilisateur", type: 'string', visible: true, required: true },
-            { field: 'enabled', header: 'Activé', type: 'boolean', visible: true, required: false },
-            { field: 'emailVerified', header: 'Email vérifié', type: 'boolean', visible: true, required: false }
+            { field: 'enabled', header: 'Activé', type: 'boolean', visible: true, required: false }
             //{ field: 'password', header: 'Mot de passe', type: 'string', visible: true, required: true }
         ];
 
         this.tableCols = [
-            { field: 'username', header: "Nom d'utilisateur", type: 'string', filter: true },
             { field: 'email', header: 'Email', type: 'string', filter: true },
             { field: 'firstName', header: 'Prénom', type: 'string', filter: true },
             { field: 'lastName', header: 'Nom', type: 'string', filter: true },
-            { field: 'enabled', header: 'Activé', type: 'boolean', filter: false, labelTrue: 'Oui', labelFalse: 'Non' },
-            { field: 'emailVerified', header: 'Email vérifié', type: 'boolean', filter: false, labelTrue: 'Oui', labelFalse: 'Non' }
+            { field: 'fonction', header: 'Fonction', type: 'string', filter: true },
+            { field: 'enabled', header: 'Activé', type: 'boolean', filter: false, labelTrue: 'Oui', labelFalse: 'Non' }
         ];
 
         this.formGroup = this.fb.group({
@@ -72,9 +76,10 @@ export class KcUserComponent implements OnInit, OnDestroy {
             //createdTimestamp: [null],
             username: [null, Validators.required],
             enabled: [false],
-            emailVerified: [false],
             firstName: [null, Validators.required],
             structure: [null, Validators.required],
+            roles: [[], Validators.required],
+            fonction: [null, Validators.required],
             lastName: [null, Validators.required],
             email: [null, [Validators.required, Validators.email]]
             //password: [null, Validators.required]
@@ -84,34 +89,65 @@ export class KcUserComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.fetchUsers();
         this.loadStuctures();
-        this.strcutureDropdown={field: 'structure', dropdownEntries:this.dropdownEntries}
+        this.loadRoles();
+        this.strcutureDropdown = { field: 'structure', dropdownEntries: this.dropdownEntries };
+        this.rolesDropdown = { field: 'roles', multiselectEntries: this.rolesEntries };
         this.dropdownList.push(this.strcutureDropdown);
+        this.multiSelectList.push(this.rolesDropdown);
+    }
+
+    loadRoles() {
+        this.roleService
+            .getAllRoles()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (resp: any) => {
+                    // RoleService.getAllRoles() renvoie directement le tableau, pas un HttpResponse
+                    const fetchedRoles = (resp || []).map((r: any) => ({ value: r.name, label: r.name }));
+                    this.rolesEntries.length = 0; // Nettoyer avant de remplir
+                    this.rolesEntries.push(...fetchedRoles);
+
+                    // Forcer la mise à jour dans l'objet de multiSelectList si nécessaire
+                    if (this.rolesDropdown) {
+                        this.rolesDropdown.multiselectEntries = [...this.rolesEntries];
+                        this.multiSelectList = [...this.multiSelectList];
+                    }
+                },
+                error: (error: any) => {
+                    console.error('Erreur lors du chargement des rôles', error);
+                }
+            });
     }
     loadStuctures() {
-            this.structureService
-                .getAllStructure()
-                .pipe(takeUntil(this.destroy$))
-                .subscribe({
-                    next: (resp) => {
-                        this.structures = resp.body || [];
-                        this.dropdownEntries.push(this.structures)
-                    },
-                    error: (error) => {}
-                });
+        this.structureService
+            .getAllStructure(TypeStructure.SERVICE)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (resp: any) => {
+                    this.structures = (resp.body || []).map((value: any) => ({
+                        value: value.id,
+                        label: value.libelleLong
+                    }));
+                    this.dropdownEntries.push(...this.structures);
 
+                    // Forcer la mise à jour dans l'objet de dropdownList si nécessaire
+                    if (this.strcutureDropdown) {
+                        this.strcutureDropdown.dropdownEntries = [...this.dropdownEntries];
+                        this.dropdownList = [...this.dropdownList];
+                    }
+                },
+                error: (error: any) => {}
+            });
     }
     fetchUsers() {
-        this.loading = true;
         this.authService
             .getAllUsers()
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-                next: (res) => {
+                next: (res: any) => {
                     this.dataList = res.body || [];
-                    this.loading = false;
                 },
-                error: (error) => {
-                    this.loading = false;
+                error: (error: any) => {
                     showToast(StatusEnum.error, error.status, null, this.messageService, error);
                 }
             });
@@ -164,28 +200,24 @@ export class KcUserComponent implements OnInit, OnDestroy {
             object.password = "password";
         }*/
         if (object.id != null || undefined) {
-            object.structure=object.structure.id;
             this.authService
                 .updateUser(object)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe({
-                    next: (res) => {
+                    next: (res: any) => {
                         this.onSuccess(res);
                     },
-                    error: (error) => showToast(StatusEnum.error, error.status, null, this.messageService, error)
+                    error: (error: any) => showToast(StatusEnum.error, error.status, null, this.messageService, error)
                 });
         } else {
-            object.structure=object.structure.id;
-
-
             this.authService
                 .createUser(object)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe({
-                    next: (res) => {
+                    next: (res: any) => {
                         this.onSuccess(res);
                     },
-                    error: (error) => showToast(StatusEnum.error, error.status, null, this.messageService, error)
+                    error: (error: any) => showToast(StatusEnum.error, error.status, null, this.messageService, error)
                 });
         }
     }

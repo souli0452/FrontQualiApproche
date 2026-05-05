@@ -143,6 +143,12 @@ export class SearchResultsComponent implements OnInit, OnDestroy {
         }
     }
 
+    clearSearch() {
+        this.query = '';
+        this.results = [];
+        this.router.navigate(['/pages/recherche']);
+    }
+
     ngOnDestroy() {
         this.destroy$.next(true);
         this.destroy$.complete();

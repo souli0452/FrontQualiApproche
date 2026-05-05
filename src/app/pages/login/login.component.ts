@@ -132,11 +132,7 @@ export class LoginComponent implements OnInit{
     }
 
     navigateAfterLogin() {
-        if(isUserInRoles(['SUPER_ADMIN'])){
             this.router.navigate(['/']);
-        }else {
-            this.router.navigate(['/page/consultation']);
-        }
     }
 
     initiatePasswordReset(): void {

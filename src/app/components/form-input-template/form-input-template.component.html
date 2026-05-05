@@ -44,13 +44,16 @@
 
         <!-- Dropdown -->
         <ng-container *ngIf="col.type === 'dropdown'">
-            <p-select
-                [options]="dropDownObject[col.field]"
-                [filter]="true"
-                [showClear]="true"
-                [formControlName]="col.field"
-                class="w-full premium-dropdown"
-                [name]="col.field">
+            <p-select [options]="dropDownObject[col.field]"
+                      [filter]="true"
+                      [showClear]="true"
+                      appendTo="body"
+                      [optionLabel]="'label'"
+                      [optionValue]="'value'"
+                      placeholder="Sélectionner une option"
+                      [formControlName]="col.field"
+                      class="w-full premium-dropdown"
+                      [name]="col.field">
             </p-select>
         </ng-container>
 
@@ -61,7 +64,21 @@
                 <label [for]="col.field" class="ml-2 text-gray-700">{{ col.header }}</label>
             </div>
         </ng-container>
-
+        <ng-container *ngIf="col.type === 'multiselect'">
+            <p-multiSelect
+                [options]="multiSelectObject[col.field]"
+                [filter]="true"
+                appendTo="body"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+                [formControlName]="col.field"
+                class="w-full premium-multiselect"
+                [name]="col.field"
+                display="chip"
+                placeholder="Sélectionner les options">
+            </p-multiSelect>
+        </ng-container>
 
     </div>
 </ng-container>

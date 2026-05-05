@@ -23,21 +23,17 @@ import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
 
 @Component({
-  selector: 'app-crud-generic',
-  standalone: true,
-  templateUrl: './app-crud-generic.component.html',
-  styleUrl: './app-crud-generic.component.scss',
-    imports: [
-        NgPrimeModule, 
-        FormInputTemplateComponent,
-        DetailTemplateComponent,
-        MenuModule
-    ]
+    selector: 'app-crud-generic',
+    standalone: true,
+    templateUrl: './app-crud-generic.component.html',
+    styleUrl: './app-crud-generic.component.scss',
+    imports: [NgPrimeModule, FormInputTemplateComponent, DetailTemplateComponent, MenuModule]
 })
 export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnChanges, OnDestroy {
     @Input() pageLabel!: string;
     actionMenuItems: MenuItem[] = [];
     @Input() loading: boolean = false;
+    @Input() asRoleEdit: boolean = false;
     @Input() tableCols!: TableColumn[];
     @Input() formCols!: FormGroupColumn[];
     @Input() formGroup!: UntypedFormGroup;
@@ -65,42 +61,39 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     multiselectObject: any = {};
     position: any = 'top';
     value: any;
-    rowData:any;
-    @Input() customButtons: {label: string; icon: string; action: string; color?: string; tooltip?: string; tooltipPosition?: string; }[] = [];
+    rowData: any;
+    @Input() customButtons: { label: string; icon: string; action: string; color?: string; tooltip?: string; tooltipPosition?: string }[] = [];
     @Output() customActionEvent = new EventEmitter<{ action: string; user: any }>();
 
     @ViewChild('dt') table!: Table;
     private destroy$: Subject<boolean> = new Subject<boolean>();
 
     constructor(
-        protected confirmationService: ConfirmationService, 
+        protected confirmationService: ConfirmationService,
         protected changeDet: ChangeDetectorRef,
         private globalSearchService: GlobalSearchService
-    ) {
-    }
+    ) {}
 
     ngOnInit(): void {
-        this.filterFiels = this.tableCols.map(c => c.field);
+        this.filterFiels = this.tableCols.map((c) => c.field);
         if (this.dropdownList) {
-            this.dropdownList.forEach(v => {
+            this.dropdownList.forEach((v) => {
                 this.dropDownObject[v.field] = v.dropdownEntries;
             });
         }
 
         if (this.multiSelectList) {
-            this.multiSelectList.forEach(v => {
+            this.multiSelectList.forEach((v) => {
                 this.multiselectObject[v.field] = v.multiselectEntries;
             });
         }
 
         // Écouter la barre de recherche globale
-        this.globalSearchService.searchQuery$
-            .pipe(takeUntil(this.destroy$))
-            .subscribe(query => {
-                if (this.table) {
-                    this.table.filterGlobal(query, 'contains');
-                }
-            });
+        this.globalSearchService.searchQuery$.pipe(takeUntil(this.destroy$)).subscribe((query) => {
+            if (this.table) {
+                this.table.filterGlobal(query, 'contains');
+            }
+        });
     }
 
     ngOnDestroy(): void {
@@ -115,6 +108,16 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     }
 
     ngOnChanges(changes: SimpleChanges): void {
+        if (changes['dropdownList'] && this.dropdownList) {
+            this.dropdownList.forEach((v) => {
+                this.dropDownObject[v.field] = v.dropdownEntries;
+            });
+        }
+        if (changes['multiSelectList'] && this.multiSelectList) {
+            this.multiSelectList.forEach((v) => {
+                this.multiselectObject[v.field] = v.multiselectEntries;
+            });
+        }
         if (this.closeDialog) {
             this.hidDialog();
         }
@@ -145,11 +148,10 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
 
     edit(rowData: any) {
         this.formGroup.patchValue(rowData);
-        const cols = this.tableCols.filter(col => col.type === 'date');
+        const cols = this.tableCols.filter((col) => col.type === 'date');
         if (cols?.length > 0) {
-            cols.forEach(col => {
-                const date = rowData[col.field] ? patternToDate(toFormatFromDate(rowData[col.field]),
-                    'DD/MM/YYYY') : null;
+            cols.forEach((col) => {
+                const date = rowData[col.field] ? patternToDate(toFormatFromDate(rowData[col.field]), 'DD/MM/YYYY') : null;
                 this.formGroup.get(col.field)?.setValue(date);
             });
         }
@@ -163,7 +165,7 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
 
     onFilterChange(field: string) {
         if (field) {
-            const elem = this.searchField.find(res => res.field === field);
+            const elem = this.searchField.find((res) => res.field === field);
             if (elem) {
                 elem.value = this.value;
                 this.filterEvent.emit(elem);
@@ -171,24 +173,28 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
         }
     }
     onCustomAction(action: string, user: any): void {
-        this.confirmationService.confirm({
-            header: 'CONFIRMATION',
-            message: 'Voulez-vous vraiment valider cette action ? ',
-            icon: 'pi pi-exclamation-triangle',
-            accept: () => {
-                this.customActionEvent.emit({ action, user });
-            }
-        });
+        if(this.asRoleEdit){
+            this.customActionEvent.emit({ action, user });
+        }else {
+            this.confirmationService.confirm({
+                header: 'CONFIRMATION',
+                message: 'Voulez-vous vraiment valider cette action ? ',
+                icon: 'pi pi-exclamation-triangle',
+                accept: () => {
+                    this.customActionEvent.emit({ action, user });
+                }
+            });
+        }
 
     }
-    affich(rowData:any){
-        this.displayDetails=true;
-        this.rowData=rowData;
+    affich(rowData: any) {
+        this.displayDetails = true;
+        this.rowData = rowData;
     }
 
     setActionMenu(event: any, menu: any, rowData: any) {
         this.actionMenuItems = [];
-        
+
         // Bouton Détails
         if (this.isAffich) {
             this.actionMenuItems.push({
@@ -221,7 +227,7 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
 
         // Actions personnalisées
         if (this.customButtons && this.customButtons.length > 0) {
-            this.customButtons.forEach(btn => {
+            this.customButtons.forEach((btn) => {
                 this.actionMenuItems.push({
                     label: btn.label,
                     icon: btn.icon,

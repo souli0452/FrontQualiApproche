@@ -2,8 +2,16 @@
     @apply w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500 shadow-sm transition-all;
 }
 
-.premium-dropdown .p-select {
-    @apply w-full p-2 border rounded-md shadow-sm;
+.premium-dropdown {
+    ::ng-deep .p-select, ::ng-deep .p-dropdown {
+        @apply w-full border rounded-md shadow-sm;
+        background: white !important;
+    }
+
+    ::ng-deep .p-select-label, ::ng-deep .p-dropdown-label {
+        color: #1f2937 !important;
+        padding: 0.5rem !important;
+    }
 }
 
 .premium-number .p-inputnumber {

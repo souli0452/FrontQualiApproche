@@ -17,22 +17,22 @@ export enum ReportFormat {
     PDF = 'PDF', WORD = 'WORD', EXCEL = 'EXCEL', CSV = 'CSV', XPRINT = 'XPRINT'
 }
 export function printPdfFile(bytes: any) {
-    window.open(URL.createObjectURL(new Blob([bytes], {type: 'application/pdf'})), '_blank');
+    window.open(URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })), '_blank');
 }
 
 export function printExcelFile(bytes: any) {
     const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    window.open(URL.createObjectURL(new Blob([bytes], {type: contentType})), '_blank');
+    window.open(URL.createObjectURL(new Blob([bytes], { type: contentType })), '_blank');
 }
 
 export function printWordFile(bytes: any) {
     const contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    window.open(URL.createObjectURL(new Blob([bytes], {type: contentType})), '_blank');
+    window.open(URL.createObjectURL(new Blob([bytes], { type: contentType })), '_blank');
 }
 
 export function generateReportFile(bytes: any, reporting?: ReportingInput) {
     if (reporting) {
-        const report = {...reporting};
+        const report = { ...reporting };
         switch (report.reportFormat) {
             case ReportFormat.PDF:
                 printPdfFile(bytes);
@@ -89,16 +89,16 @@ export function unixToDate(unixStamp: number): Date {
 }
 
 export function sortArray(objectList: Array<any>, field: string, direction: 'asc' | 'desc', isNumber = false): Array<any> {
-    let array: Array<any> = objectList.map(item => ({...item}));
+    let array: Array<any> = objectList.map(item => ({ ...item }));
     switch (direction) {
         case 'desc': {
             array = array.sort((a, b) => String(a[field]).localeCompare(String(b[field]), undefined,
-                {numeric: isNumber}) > 0 ? -1 : 1);
+                { numeric: isNumber }) > 0 ? -1 : 1);
             break;
         }
         case 'asc': {
             array = array.sort((a, b) => String(a[field]).localeCompare(String(b[field]), undefined,
-                {numeric: isNumber}) < 0 ? -1 : 1);
+                { numeric: isNumber }) < 0 ? -1 : 1);
             break;
         }
     }
@@ -116,18 +116,18 @@ export function sortArray(objectList: Array<any>, field: string, direction: 'asc
  * @return la liste ordonnée
  */
 export function sortWithMultipleCriteria(dataList: Array<any>, fields: Array<string>,
-                                         direction: 'asc' | 'desc', isNumber: boolean): Array<any> {
+    direction: 'asc' | 'desc', isNumber: boolean): Array<any> {
     let sortedData: Array<any> = dataList;
     if (direction === 'desc') {
         fields.forEach((field: string, index: number) => {
             sortedData = sortedData.sort((a: any, b: any) => {
                 if (index === 0) {
-                    return a[field].localeCompare(b[field], undefined, {numeric: isNumber}) > 0 ? -1 : 1;
+                    return a[field].localeCompare(b[field], undefined, { numeric: isNumber }) > 0 ? -1 : 1;
                 } else {
-                    if (a[fields[index - 1]].localeCompare(b[fields[index - 1]], undefined, {numeric: isNumber}) === 0) {
-                        return a[field].localeCompare(b[field], undefined, {numeric: isNumber}) > 0 ? -1 : 1;
+                    if (a[fields[index - 1]].localeCompare(b[fields[index - 1]], undefined, { numeric: isNumber }) === 0) {
+                        return a[field].localeCompare(b[field], undefined, { numeric: isNumber }) > 0 ? -1 : 1;
                     } else {
-                        return a[fields[index - 1]].localeCompare(b[fields[index - 1]], undefined, {numeric: isNumber}) > 0 ? -1 : 1;
+                        return a[fields[index - 1]].localeCompare(b[fields[index - 1]], undefined, { numeric: isNumber }) > 0 ? -1 : 1;
                     }
                 }
             });
@@ -136,12 +136,12 @@ export function sortWithMultipleCriteria(dataList: Array<any>, fields: Array<str
         fields.forEach((field, index) => {
             sortedData = sortedData.sort((a: any, b: any) => {
                 if (index === 0) {
-                    return a[field].localeCompare(b[field], undefined, {numeric: isNumber}) < 0 ? -1 : 1;
+                    return a[field].localeCompare(b[field], undefined, { numeric: isNumber }) < 0 ? -1 : 1;
                 } else {
-                    if (a[fields[index - 1]].localeCompare(b[fields[index - 1]], undefined, {numeric: isNumber}) === 0) {
-                        return a[field].localeCompare(b[field], undefined, {numeric: isNumber}) < 0 ? -1 : 1;
+                    if (a[fields[index - 1]].localeCompare(b[fields[index - 1]], undefined, { numeric: isNumber }) === 0) {
+                        return a[field].localeCompare(b[field], undefined, { numeric: isNumber }) < 0 ? -1 : 1;
                     } else {
-                        return a[fields[index - 1]].localeCompare(b[fields[index - 1]], undefined, {numeric: isNumber}) < 0 ? -1 : 1;
+                        return a[fields[index - 1]].localeCompare(b[fields[index - 1]], undefined, { numeric: isNumber }) < 0 ? -1 : 1;
                     }
                 }
             });
@@ -221,7 +221,7 @@ export enum StatusEnumShow {
 }
 
 export function showToast(severity: StatusEnum, status: number, message: any,
-                          messageService: MessageService, error?: HttpErrorResponse) {
+    messageService: MessageService, error?: HttpErrorResponse) {
     messageService.add(buildMessage(severity, status, message, error));
 }
 
@@ -268,7 +268,7 @@ export function handleHttpErrors(response: HttpErrorResponse, severity: string, 
         };;
     } else {
         if (response.error && response.error.message) {
-            return {severity, summary, detail: response.error.message, key};
+            return { severity, summary, detail: response.error.message, key };
         } else {
             return {
                 severity,
@@ -285,37 +285,37 @@ export function formatDateRange(dates: Date[]): string {
     if (!Array.isArray(dates) || dates.length !== 2) return 'Dates invalides';
 
     const format = (date: Date): string => {
-      if (!(date instanceof Date) || isNaN(date.getTime())) return 'Date invalide';
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}-${month}-${year}`;
+        if (!(date instanceof Date) || isNaN(date.getTime())) return 'Date invalide';
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
     };
 
     const start = format(dates[0]);
     const end = format(dates[1]);
 
     return `${start} - ${end}`;
-  }
+}
 export const USER_STRUCTURE_KEY = 'current_user_structure';
 export const USER_PROFILE_KEY = 'current_user_profile';
 export function getCurrentUserStructure(): Structure {
     return JSON.parse(localStorage.getItem(USER_STRUCTURE_KEY)!) as Structure;
 }
 export const REGION_LIST = [
-    {value: 'Centre', label: 'Centre'},
-    {value: 'Boucle du Mouhoun', label: 'Boucle du Mouhoun'},
-    {value: 'Cascades', label: 'Cascades'},
-    {value: 'Centre-Est', label: 'Centre-Est'},
-    {value: 'Centre-Nord', label: 'Centre-Nord'},
-    {value: 'Centre-Ouest', label: 'Centre-Ouest'},
-    {value: 'Centre-Sud', label: 'Centre-Sud'},
-    {value: 'Est', label: 'Est'},
-    {value: 'Hauts-Bassins', label: 'Hauts-Bassins'},
-    {value: 'Nord', label: 'Nord'},
-    {value: 'Plateau Central', label: 'Plateau Central'},
-    {value: 'Sahel', label: 'Sahel'},
-    {value: 'Sud-Ouest', label: 'Sud-Ouest'}
+    { value: 'Centre', label: 'Centre' },
+    { value: 'Boucle du Mouhoun', label: 'Boucle du Mouhoun' },
+    { value: 'Cascades', label: 'Cascades' },
+    { value: 'Centre-Est', label: 'Centre-Est' },
+    { value: 'Centre-Nord', label: 'Centre-Nord' },
+    { value: 'Centre-Ouest', label: 'Centre-Ouest' },
+    { value: 'Centre-Sud', label: 'Centre-Sud' },
+    { value: 'Est', label: 'Est' },
+    { value: 'Hauts-Bassins', label: 'Hauts-Bassins' },
+    { value: 'Nord', label: 'Nord' },
+    { value: 'Plateau Central', label: 'Plateau Central' },
+    { value: 'Sahel', label: 'Sahel' },
+    { value: 'Sud-Ouest', label: 'Sud-Ouest' }
 ];
 export function isUserInRoles(roles: string[]): boolean {
     const user = JSON.parse(localStorage.getItem('user')!);
@@ -331,9 +331,31 @@ export function isUserInRoles(roles: string[]): boolean {
     return roles.some(role => user.roles.includes(role)); // ✅ Vérification simplifiée
 }
 
+export function hasAnyPermission(permissions: string[]): boolean {
+    const user = JSON.parse(localStorage.getItem('user')!);
+    if (!user) return false;
+
+    // Le SUPER_ADMIN n'a plus de bypass automatique ici, il utilise ses permissions réelles
+    if (!user.permissions) return false;
+    return permissions.some(p => user.permissions.includes(p));
+}
+
+export function isLicenseActive(): boolean {
+    const user = JSON.parse(localStorage.getItem('user')!);
+    if (!user) return false;
+    // Plus de bypass pour le SUPER_ADMIN, il est soumis à la licence globale
+    return user.licenseActive || false;
+}
+
+export function isModuleSubscribed(moduleName: string): boolean {
+    const user = JSON.parse(localStorage.getItem('user')!);
+    if (!user) return false;
+    return user.modulesSubscribed?.includes(moduleName) || false;
+}
 
 
-export  function convertFilesToBase64(files: { file: File; extension: string; name: string; size: string; loading: boolean; icon: string }[]): Promise<any[]> {
+
+export function convertFilesToBase64(files: { file: File; extension: string; name: string; size: string; loading: boolean; icon: string }[]): Promise<any[]> {
     const filePromises = files.map((fileObj) => {
         return new Promise((resolve, reject) => {
             const file = fileObj.file;
@@ -412,7 +434,7 @@ export function getStatusSeverity(status: string): string {
     }
 }
 
-export  function  downloadFile( nom: string, base64: string) {
+export function downloadFile(nom: string, base64: string) {
     // Extraire le type MIME si la base64 inclut un préfixe de type Data URI
     const matches = base64.match(/^data:(.+);base64,(.+)$/);
     let mimeType = 'application/octet-stream';
@@ -439,7 +461,7 @@ export  function  downloadFile( nom: string, base64: string) {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 }
-export function  generateColor(index: number, total: number): string {
+export function generateColor(index: number, total: number): string {
 
     const hue = Math.round((360 / total) * index);
     return `hsl(${hue}, 70%, 50%)`;

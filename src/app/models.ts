@@ -307,6 +307,10 @@ export interface KcUser {
     email: string;
     password: string;
     structure:string;
+    permissions?: string[];
+    appRoles?: string[];
+    licenseActive?: boolean;
+    licenseDaysRemaining: number;
 }
 export interface PlanAction {
     id?: number;
@@ -315,4 +319,23 @@ export interface PlanAction {
     solutionsRetenues: string;
     responsable: string;
     echeance: Date;
+}
+export interface KcRole {
+    id?: string;
+    name?: string;
+    description?: string;
+    composite?: boolean;
+}
+
+export interface AppRole {
+    id?: string;
+    name: string;
+    description?: string;
+    permissions: string[];
+}
+
+export interface Permission {
+    label: string;
+    value: string;
+    module: string;
 }

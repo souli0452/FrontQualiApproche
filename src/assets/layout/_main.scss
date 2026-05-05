@@ -11,3 +11,35 @@
     flex: 1 1 auto;
     padding-bottom: 2rem;
 }
+
+.license-banner {
+    padding: 1rem 1.5rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    animation: slideDown 0.4s ease-out;
+    z-index: 999;
+
+    &.license-warning {
+        background: linear-gradient(to right, #fff9e6, #fff3cd);
+        border-left: 4px solid #f59e0b;
+        color: #92400e;
+        i { color: #f59e0b; }
+    }
+
+    &.license-expired {
+        background: linear-gradient(to right, #fef2f2, #fee2e2);
+        border-left: 4px solid #ef4444;
+        color: #991b1b;
+        i { color: #ef4444; }
+    }
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}

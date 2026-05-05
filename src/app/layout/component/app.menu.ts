@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { AppMenuitem } from './app.menuitem';
 import { AuthService } from '../../services/auth-services/auth.service';
-import { isUserInRoles } from '../../utils';
+import { isUserInRoles, hasAnyPermission, isLicenseActive, isModuleSubscribed } from '../../utils';
 import { app_roles } from '../../app-roles-utils';
 
 @Component({
@@ -43,28 +43,34 @@ constructor(private  authService: AuthService) {
             {
                 label: 'Configurations',
                 icon: 'pi pi-fw pi-briefcase',
-                visible:  isUserInRoles(['SUPER_ADMIN']),
+                visible: isLicenseActive() && hasAnyPermission(['CONFIG_READ']),
                 routerLink: ['/page'],
                 items: [
-                    {label: 'Directions (Processus)', icon: 'pi pi-building', routerLink: ['/page/direction']},
-                    {label: 'Services (Processus)', icon: 'pi pi-building', routerLink: ['/page/service']},
-                    {label: 'Origine non-conformité', icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-nc']},
-                    {label: 'Niveau  non-conformité', icon: 'pi pi-fw pi-cog', routerLink: ['/page/niveau-nc']},
-                    {label: 'Type  processus', icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-processus']},
-                    {label: 'Type action entreprise', icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-action']},
-                    {label: 'Config global', icon: 'pi pi-cog', routerLink: ['/page/config-global']},
+                    { label: 'Services (Processus)', visible: isLicenseActive() && hasAnyPermission(['SERVICE_MANAGE']), icon: 'pi pi-building', routerLink: ['/page/service'] },
+                    { label: 'Type  processus', visible: isLicenseActive() && hasAnyPermission(['TYPE_PROC_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-processus'] },
+                    { label: 'Config global', visible: isLicenseActive() && hasAnyPermission(['CONFIG_GLOBAL_MANAGE']), icon: 'pi pi-cog', routerLink: ['/page/config-global'] }
+                ]
+            },
+            {
+                label: 'Paramétrage Non-Conformité',
+                icon: 'pi pi-fw pi-cog',
+                visible: isLicenseActive() && isModuleSubscribed('NON_CONFORMITE') && hasAnyPermission(['CONFIG_READ']),
+                items: [
+                    { label: 'Origine non-conformité', visible: isLicenseActive() && hasAnyPermission(['NC_ORIGIN_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-nc'] },
+                    { label: 'Niveau  non-conformité', visible: isLicenseActive() && hasAnyPermission(['NC_LEVEL_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/page/niveau-nc'] },
+                    { label: 'Type action entreprise', visible: isLicenseActive() && hasAnyPermission(['ACTION_TYPE_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-action'] }
                 ]
             },
             {
                 label: 'Gestion des Ressources',
                 icon: 'pi pi-fw pi-briefcase',
-                visible:  isUserInRoles(['SUPER_ADMIN']),
+                visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['RESOURCES_READ']),
                 routerLink: ['/page'],
                 items: [
                     { label: 'Formation', icon: 'pi pi-fw pi-book', routerLink: ['/page/formation'] },
                     { label: 'Fournisseur', icon: 'pi pi-fw pi-users', routerLink: ['/page/fournisseur'] },
                     { label: 'Prestataire', icon: 'pi pi-fw pi-user-plus', routerLink: ['/page/prestataire'] },
-                    { label: 'Produit', icon: 'pi pi-fw pi-box', routerLink: ['/page/produit'] },
+                    { label: 'Produit', icon: 'pi pi-fw pi-box', routerLink: ['/page/produit'] }
                     // {
                     //     label: 'Crud',
                     //     icon: 'pi pi-fw pi-pencil',
@@ -85,12 +91,12 @@ constructor(private  authService: AuthService) {
             {
                 label: 'Gestion des Actions',
                 icon: 'pi pi-fw pi-briefcase',
-                visible:  isUserInRoles(['SUPER_ADMIN']),
+                visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['ACTIONS_READ']),
                 routerLink: ['/page'],
                 items: [
                     { label: 'Action corrective et préventive', icon: 'pi pi-fw pi-list-check', routerLink: ['/page/action-corrective-preventive'] },
-                    { label: 'Réclamation', icon: 'pi pi-fw pi-exclamation-triangle', routerLink: ['/page/reclamation'] },
-                    { label: 'Risque', icon: 'pi pi-fw pi-ban', routerLink: ['/page/risque'] },
+                    { label: 'Réclamation', visible: isModuleSubscribed('RECLAMATION'), icon: 'pi pi-fw pi-exclamation-triangle', routerLink: ['/page/reclamation'] },
+                    { label: 'Risque', visible: isModuleSubscribed('RISQUE'), icon: 'pi pi-fw pi-ban', routerLink: ['/page/risque'] }
                 ]
             },
             {
@@ -98,104 +104,97 @@ constructor(private  authService: AuthService) {
                 icon: 'pi pi-fw pi-briefcase',
                 routerLink: ['/page'],
                 items: [
-                    { label: 'Audite', icon: 'pi pi-fw pi-eye',
-                        visible:  isUserInRoles(['SUPER_ADMIN']),
-                        routerLink: ['/page/audite'] },
-                    { label: 'Non conformité', icon: 'pi pi-fw pi-times',
-                        visible:  isUserInRoles(['SUBMIT_NC','SUPER_ADMIN']),
-                        routerLink: ['/nc'] },
-                    { label: 'Réglementation',
-                        visible:  isUserInRoles(['SUPER_ADMIN']),
-                        icon: 'pi pi-fw pi-file-edit', routerLink: ['/page/reglementation'] },
-                    { label: "Critères d'évaluation",
-                        visible:  isUserInRoles(['SUPER_ADMIN']),
-                        icon: 'pi pi-fw pi-file', routerLink: ['/page/critere-evaluation'] },
+                    { label: 'Audite', icon: 'pi pi-fw pi-eye', visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['AUDITE_READ']), routerLink: ['/page/audite'] },
+                    { label: 'Non conformité', icon: 'pi pi-fw pi-times', visible: isLicenseActive() && isModuleSubscribed('NON_CONFORMITE') && hasAnyPermission(['SUBMIT_NC']), routerLink: ['/nc'] },
+                    { label: 'Réglementation', visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['REGLEMENTATION_READ']), icon: 'pi pi-fw pi-file-edit', routerLink: ['/page/reglementation'] },
+                    { label: "Critères d'évaluation", visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['CRITERE_EVAL_READ']), icon: 'pi pi-fw pi-file', routerLink: ['/page/critere-evaluation'] }
                 ]
             },
             {
                 label: 'Gestion Documentaire',
-                visible:  isUserInRoles(['SUPER_ADMIN']),
+                visible: isLicenseActive() && isModuleSubscribed('DOCUMENT') && hasAnyPermission(['DOC_READ']),
                 icon: 'pi pi-fw pi-briefcase',
                 routerLink: ['/page'],
                 items: [
                     { label: 'Catégorie de fichiers', icon: 'pi pi-fw pi-users', routerLink: ['/pages/'] },
-                    { label: 'Exigence', icon: 'pi pi-fw pi-user-plus', routerLink: ['/pages/'] },
+                    { label: 'Exigence', icon: 'pi pi-fw pi-user-plus', routerLink: ['/pages/'] }
                 ]
             },
             {
                 label: 'TRAITEMENTS DES DEMANDES',
                 icon: 'pi pi-fw pi-envelope',
-                visible:  isUserInRoles(app_roles.NC),
+                visible: isLicenseActive() && isModuleSubscribed('NON_CONFORMITE'),
                 routerLink: ['/page'],
                 items: [
-                    { label: 'Non-conformité', icon: 'pi pi-fw pi-envelope',
-                        visible:  isUserInRoles(app_roles.NC),
-                     items: [
-                         {
-                             label:"Réception par le pilote du processus ",
-                             icon: 'pi pi-fw pi-user-plus',
-                             routerLink: ['/page/reception'],
-                             visible:  isUserInRoles(['RECEPTION_NC','SUPER_ADMIN'])
-                         },
+                    {
+                        label: 'Non-conformité',
+                        icon: 'pi pi-fw pi-envelope',
+                        visible: isModuleSubscribed('NON_CONFORMITE') && hasAnyPermission(['TRAITEMENT_NC']),
+                        items: [
+                            {
+                                label: 'Analyse initiale du pilote ',
+                                icon: 'pi pi-fw pi-user-plus',
+                                routerLink: ['/page/reception'],
+                                visible: hasAnyPermission(['RECEPTION_NC'])
+                            },
 
-                         {
-                             label:"Validation par  RQ ",
-                             icon: 'pi pi-fw pi-check',
-                             routerLink: ['/page/validation_rs'],
-                             visible:  isUserInRoles(['VALIDATION_RQ','SUPER_ADMIN'])
-                         },
+                            {
+                                label: 'Validation par  RQ ',
+                                icon: 'pi pi-fw pi-check',
+                                routerLink: ['/page/validation_rs'],
+                                visible: hasAnyPermission(['VALIDATION_RQ'])
+                            },
 
-                         {
-                             label:"Imputations ",
-                             icon: 'pi pi-fw pi-arrow-up-right',
-                             routerLink: ['/page/imputation'],
-                             visible:  isUserInRoles(['IMPUTATION_NC','SUPER_ADMIN'])
-                         },
-                         {
-                             label:"Traitements",
-                             icon: 'pi pi-fw pi-cog',
-                             routerLink: ['/page/traitement'],
-                             visible:  isUserInRoles(['TRAITEMENT_NC','SUPER_ADMIN'])
-                         },
-                         {
-                             label:"Validations par le pilote du processus",
-                             icon: 'pi pi-fw pi-check',
-                             routerLink: ['/page/validation'],
-                             visible:  isUserInRoles(['VALIDATION_CHEF','SUPER_ADMIN'])
-                         },
-                         {
-                             label:"Suivi par RQ",
-                             icon: 'pi pi-fw pi-bullseye',
-                             routerLink: ['/page/cloture'],
-                             visible:  isUserInRoles(['RQ_NC','SUPER_ADMIN'])
-                         },
-                         {
-                             label:"Consultations",
-                             icon: 'pi pi-fw pi-eye',
-                             routerLink: ['/page/consultation'],
-
-                         }
-                     ]
+                            {
+                                label: 'Affectation des responsables ',
+                                icon: 'pi pi-fw pi-arrow-up-right',
+                                routerLink: ['/page/imputation'],
+                                visible: hasAnyPermission(['IMPUTATION_NC'])
+                            },
+                            {
+                                label: 'Proposition d’actions correctives',
+                                icon: 'pi pi-fw pi-cog',
+                                routerLink: ['/page/traitement'],
+                                visible: hasAnyPermission(['TRAITEMENT_NC'])
+                            },
+                            {
+                                label: 'Validation des actions',
+                                icon: 'pi pi-fw pi-check',
+                                routerLink: ['/page/validation'],
+                                visible: isUserInRoles(['VALIDATION_CHEF'])
+                            },
+                            {
+                                label: 'Suivi par RQ',
+                                icon: 'pi pi-fw pi-bullseye',
+                                routerLink: ['/page/cloture'],
+                                visible: hasAnyPermission(['RQ_NC'])
+                            },
+                            {
+                                label: 'Suivi des non-conformités',
+                                icon: 'pi pi-fw pi-eye',
+                                routerLink: ['/page/consultation'],
+                                visible: hasAnyPermission(['CONSULTATION_NC'])
+                            }
+                        ]
                     },
                     {
                         label: "Traitement des plans d'actions",
                         icon: 'pi pi-fw pi-cog',
-                        visible:  isUserInRoles(['TRAITEMENT_PLAN']),
-                        routerLink: ['/traitement-action'],
-                    },
+                        visible: hasAnyPermission(['TRAITEMENT_PLAN']) && isModuleSubscribed('NON_CONFORMITE'),
+                        routerLink: ['/traitement-action']
+                    }
                 ]
             },
             {
                 label: 'Gestion des utilisateurs',
                 icon: 'pi pi-fw pi-users',
-                visible:  isUserInRoles(['SUPER_ADMIN']),
+                visible: isLicenseActive() && hasAnyPermission(['MANAGE_USER']),
                 routerLink: ['/page'],
                 items: [
                     { label: 'Comptes utilisateurs', icon: 'pi pi-fw pi-users', routerLink: ['/page/users'] },
-
+                    { label: 'Gestion des Rôles', icon: 'pi pi-fw pi-lock', routerLink: ['/page/roles'] }
                 ]
-            },
-
+            }
         ];
     }
 }

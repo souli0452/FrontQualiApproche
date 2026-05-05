@@ -33,8 +33,12 @@ import { ActionNonConformiteComponent } from './procedure-non-conformite/action/
 import { PlanActionComponent } from './proc-non-conformite/plan-action/plan-action.component';
 import { ConfigGComponent } from './config-g/config-g.component';
 import { SearchResultsComponent } from './recherche/search-results';
+import { RoleComponent } from './role/role.component';
+import { RoleDetailComponent } from './role/role-detail.component';
 
 export default [
+    { path: 'roles', data: {breadcrumb: 'Rôles'}, component: RoleComponent, title: 'Gestion des Rôles' },
+    { path: 'roles/:id', data: {breadcrumb: 'Détail du Rôle'}, component: RoleDetailComponent, title: 'Gestion des Rôles' },
     { path: 'recherche', component: SearchResultsComponent, title: 'Résultats de recherche' },
     { path: 'documentation', component: Documentation },
     { path: 'crud', component: Crud },
