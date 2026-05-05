@@ -40,65 +40,7 @@ constructor(private  authService: AuthService) {
                 label: 'Accueil',
                 items: [{ label: 'Tableau de bord', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
             },
-            {
-                label: 'Configurations',
-                icon: 'pi pi-fw pi-briefcase',
-                visible: isLicenseActive() && hasAnyPermission(['CONFIG_READ']),
-                routerLink: ['/page'],
-                items: [
-                    { label: 'Services (Processus)', visible: isLicenseActive() && hasAnyPermission(['SERVICE_MANAGE']), icon: 'pi pi-building', routerLink: ['/page/service'] },
-                    { label: 'Type  processus', visible: isLicenseActive() && hasAnyPermission(['TYPE_PROC_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-processus'] },
-                    { label: 'Config global', visible: isLicenseActive() && hasAnyPermission(['CONFIG_GLOBAL_MANAGE']), icon: 'pi pi-cog', routerLink: ['/page/config-global'] }
-                ]
-            },
-            {
-                label: 'Paramétrage Non-Conformité',
-                icon: 'pi pi-fw pi-cog',
-                visible: isLicenseActive() && isModuleSubscribed('NON_CONFORMITE') && hasAnyPermission(['CONFIG_READ']),
-                items: [
-                    { label: 'Origine non-conformité', visible: isLicenseActive() && hasAnyPermission(['NC_ORIGIN_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-nc'] },
-                    { label: 'Niveau  non-conformité', visible: isLicenseActive() && hasAnyPermission(['NC_LEVEL_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/page/niveau-nc'] },
-                    { label: 'Type action entreprise', visible: isLicenseActive() && hasAnyPermission(['ACTION_TYPE_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-action'] }
-                ]
-            },
-            {
-                label: 'Gestion des Ressources',
-                icon: 'pi pi-fw pi-briefcase',
-                visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['RESOURCES_READ']),
-                routerLink: ['/page'],
-                items: [
-                    { label: 'Formation', icon: 'pi pi-fw pi-book', routerLink: ['/page/formation'] },
-                    { label: 'Fournisseur', icon: 'pi pi-fw pi-users', routerLink: ['/page/fournisseur'] },
-                    { label: 'Prestataire', icon: 'pi pi-fw pi-user-plus', routerLink: ['/page/prestataire'] },
-                    { label: 'Produit', icon: 'pi pi-fw pi-box', routerLink: ['/page/produit'] }
-                    // {
-                    //     label: 'Crud',
-                    //     icon: 'pi pi-fw pi-pencil',
-                    //     routerLink: ['/pages/crud']
-                    // },
-                    // {
-                    //     label: 'Not Found',
-                    //     icon: 'pi pi-fw pi-exclamation-circle',
-                    //     routerLink: ['/pages/notfound']
-                    // },
-                    // {
-                    //     label: 'Empty',
-                    //     icon: 'pi pi-fw pi-circle-off',
-                    //     routerLink: ['/pages/empty']
-                    // }
-                ]
-            },
-            {
-                label: 'Gestion des Actions',
-                icon: 'pi pi-fw pi-briefcase',
-                visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['ACTIONS_READ']),
-                routerLink: ['/page'],
-                items: [
-                    { label: 'Action corrective et préventive', icon: 'pi pi-fw pi-list-check', routerLink: ['/page/action-corrective-preventive'] },
-                    { label: 'Réclamation', visible: isModuleSubscribed('RECLAMATION'), icon: 'pi pi-fw pi-exclamation-triangle', routerLink: ['/page/reclamation'] },
-                    { label: 'Risque', visible: isModuleSubscribed('RISQUE'), icon: 'pi pi-fw pi-ban', routerLink: ['/page/risque'] }
-                ]
-            },
+
             {
                 label: 'Qualité & Conformité',
                 icon: 'pi pi-fw pi-briefcase',
@@ -183,6 +125,65 @@ constructor(private  authService: AuthService) {
                         visible: hasAnyPermission(['TRAITEMENT_PLAN']) && isModuleSubscribed('NON_CONFORMITE'),
                         routerLink: ['/traitement-action']
                     }
+                ]
+            },
+            {
+                label: 'Gestion des Ressources',
+                icon: 'pi pi-fw pi-briefcase',
+                visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['RESOURCES_READ']),
+                routerLink: ['/page'],
+                items: [
+                    { label: 'Formation', icon: 'pi pi-fw pi-book', routerLink: ['/page/formation'] },
+                    { label: 'Fournisseur', icon: 'pi pi-fw pi-users', routerLink: ['/page/fournisseur'] },
+                    { label: 'Prestataire', icon: 'pi pi-fw pi-user-plus', routerLink: ['/page/prestataire'] },
+                    { label: 'Produit', icon: 'pi pi-fw pi-box', routerLink: ['/page/produit'] }
+                    // {
+                    //     label: 'Crud',
+                    //     icon: 'pi pi-fw pi-pencil',
+                    //     routerLink: ['/pages/crud']
+                    // },
+                    // {
+                    //     label: 'Not Found',
+                    //     icon: 'pi pi-fw pi-exclamation-circle',
+                    //     routerLink: ['/pages/notfound']
+                    // },
+                    // {
+                    //     label: 'Empty',
+                    //     icon: 'pi pi-fw pi-circle-off',
+                    //     routerLink: ['/pages/empty']
+                    // }
+                ]
+            },
+            {
+                label: 'Gestion des Actions',
+                icon: 'pi pi-fw pi-briefcase',
+                visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['ACTIONS_READ']),
+                routerLink: ['/page'],
+                items: [
+                    { label: 'Action corrective et préventive', icon: 'pi pi-fw pi-list-check', routerLink: ['/page/action-corrective-preventive'] },
+                    { label: 'Réclamation', visible: isModuleSubscribed('RECLAMATION'), icon: 'pi pi-fw pi-exclamation-triangle', routerLink: ['/page/reclamation'] },
+                    { label: 'Risque', visible: isModuleSubscribed('RISQUE'), icon: 'pi pi-fw pi-ban', routerLink: ['/page/risque'] }
+                ]
+            },
+            {
+                label: 'Configurations',
+                icon: 'pi pi-fw pi-briefcase',
+                visible: isLicenseActive() && hasAnyPermission(['CONFIG_READ']),
+                routerLink: ['/page'],
+                items: [
+                    { label: 'Services (Processus)', visible: isLicenseActive() && hasAnyPermission(['SERVICE_MANAGE']), icon: 'pi pi-building', routerLink: ['/page/service'] },
+                    { label: 'Type  processus', visible: isLicenseActive() && hasAnyPermission(['TYPE_PROC_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-processus'] },
+                    { label: 'Config global', visible: isLicenseActive() && hasAnyPermission(['CONFIG_GLOBAL_MANAGE']), icon: 'pi pi-cog', routerLink: ['/page/config-global'] }
+                ]
+            },
+            {
+                label: 'Paramétrage Non-Conformité',
+                icon: 'pi pi-fw pi-cog',
+                visible: isLicenseActive() && isModuleSubscribed('NON_CONFORMITE') && hasAnyPermission(['CONFIG_READ']),
+                items: [
+                    { label: 'Origine non-conformité', visible: isLicenseActive() && hasAnyPermission(['NC_ORIGIN_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-nc'] },
+                    { label: 'Niveau  non-conformité', visible: isLicenseActive() && hasAnyPermission(['NC_LEVEL_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/page/niveau-nc'] },
+                    { label: 'Type action entreprise', visible: isLicenseActive() && hasAnyPermission(['ACTION_TYPE_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/page/type-action'] }
                 ]
             },
             {
