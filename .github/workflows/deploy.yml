@@ -1,0 +1,14 @@
+name: Deploy Frontend to Coolify
+on:
+  push:
+    branches: [ develop ]
+
+jobs:
+  trigger-coolify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Coolify Server
+        run: |
+          echo "🚀 Sending signal for Frontend..."
+          curl -X POST "http://144.126.135.120:8000/webhooks/source/github/events/manual" \
+               -H "Content-Type: application/json"
