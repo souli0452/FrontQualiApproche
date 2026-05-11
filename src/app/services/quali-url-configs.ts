@@ -1,10 +1,10 @@
 import { environment } from "../../environments/environment";
 export const SERVICE_PREFIX = environment.apiUrl;
 
-export const AMELIORATION_SERVICE = `/amelioration-service/api/v1`;
-export const REFERENTIEL_SERVICE = `/referentiel-service/api/v1`;
-export const USER_SERVICE = `/user-service/api/v1`;
-export const EVALUATION_SERVICE = `/evaluation-service/api/v1`;
+export const AMELIORATION_SERVICE = `${SERVICE_PREFIX}/amelioration-service/api/v1`;
+export const REFERENTIEL_SERVICE = `${SERVICE_PREFIX}/referentiel-service/api/v1`;
+export const USER_SERVICE = `${SERVICE_PREFIX}/user-service/api/v1`;
+export const EVALUATION_SERVICE = `${SERVICE_PREFIX}/evaluation-service/api/v1`;
 
 export class QualiUrlConfig {
     // Amelioration Service
