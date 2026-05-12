@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
     standalone: true,
     selector: 'app-footer',
     template: `<div class="layout-footer">
-        <a href="https://primeng.org" target="_blank" rel="noopener noreferrer" class="text-primary font-bold hover:underline">QualiApproche</a>
+        <p class="text-primary font-bold hover:underline">QualiSira © 2026. Tous droits réservés.</p>
     </div>`
 })
 export class AppFooter {}

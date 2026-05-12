@@ -1,3 +1,55 @@
+.logo-container img {
+    height: 90px;
+}
+
+.authentication-page {
+    width: 400px;
+    max-width: 400px;
+    min-height: 100vh;
+    height: 100%;
+    margin-inline: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.flex-column {
+    flex-direction: column;
+}
+.justify-center {
+    justify-content: center;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-container h1 {
+    font-size: 20px;
+    letter-spacing: 2px;
+    margin-bottom: 0px;
+}
+
+.nom-slogan .slogan {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1px;
+}
+
+.nom-slogan {
+    padding-left: 10px;
+    border-left: 1px solid #000;
+    margin-left: 20px;
+}
+.slogan-texte {
+    text-align: center;
+    font-size: 14px;
+    margin: 20px 0;
+    font-weight: 100;
+    color: #000;
+}
+
 .error {
     color: red;
     font-size: 12px;
@@ -6,4 +58,8 @@
 .succes{
     color: green;
     font-size: 12px;
+}
+
+.rounded-full {
+    border-radius: 9999px !important;
 }

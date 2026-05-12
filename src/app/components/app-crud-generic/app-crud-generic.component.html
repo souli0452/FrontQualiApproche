@@ -7,8 +7,8 @@
                         <!-- <h5 class="font-bold uppercase mb-0">{{ pageLabel }}</h5> -->
                     </ng-template>
                     <ng-template #end>
-                        <p-button *ngIf="!consultation" pRipple label="Ajouter" icon="pi pi-plus"
-                                class="p-button-primary" (click)="openNew()" size="small" />
+                        <p-button *ngIf="!consultation" pRipple [label]="addButtonLabel" icon="pi pi-plus"
+                                severity="info" (click)="openNew()" size="small" />
                     </ng-template>
                 </p-toolbar>
             }
@@ -38,14 +38,14 @@
                     [value]="listeObject" 
                     selectionMode="single"
                     dataKey="id" 
-                    [paginator]="true" 
+                    [paginator]="isPagination" 
                     [rows]="10"
                     [loading]="loading"
                     [showLoader]="false"
-                    styleClass="p-datatable-gridlines p-datatable-sm"
+                    styleClass="p-datatable-sm"
                     [globalFilterFields]="filterFiels"
                     paginatorPosition="bottom"
-                    [tableStyle]="{ 'min-width': '50rem' }">
+                    [tableStyle]="{ 'min-width': minWidth }">
                         <!-- <ng-template #caption>
                             <div class="flex">
                                 <p-iconfield iconPosition="left" class="ml-auto">
@@ -79,7 +79,7 @@
                                             <p-tag severity="warn" value="{{ rowData[col.field] }}"></p-tag>
                                         </ng-container>
                                         <ng-container *ngIf="col.header !== 'Réference' && col.header !== 'Statut'">
-                                            {{ rowData[col.field] }}
+                                            <span [innerHTML]="rowData[col.field]"></span>
                                         </ng-container>
                                     </span>
                                     <span
@@ -123,7 +123,7 @@
                         </ng-template>
                         
                         <ng-template #loadingbody>
-                            <tr *ngFor="let i of [1,2,3,4,5,6,7,8,9,10]">
+                            <tr *ngFor="let i of [].constructor(loadingRows)">
                                 <td *ngFor="let col of tableCols">
                                     <p-skeleton width="100%" height="1rem"></p-skeleton>
                                 </td>
@@ -151,11 +151,11 @@
         </div>
     </div>
 </div>
-<p-dialog (onHide)="hidDialog()" [modal]="true" [(visible)]="display"
+<p-dialog (onHide)="hidDialog()" [modal]="true" [(visible)]="display" appendTo="body"
           [style]="{width: dialogWidth}" [maximizable]="true" class="p-fluid" styleClass="ng-dialog">
     <ng-template #header>
         <div class="inline-flex align-items-center justify-content-center gap-2">
-            <span class="font-bold white-space-nowrap uppercase">{{ formHeader }}</span>
+            <span class="layout-topbar-title">{{ formHeader }}</span>
         </div>
     </ng-template>
     <form [formGroup]="formGroup" autocomplete="off" role="form">
@@ -172,17 +172,17 @@
                 </div>
             </ng-container>
         </div>
-    </form>
+    </form> 
     <ng-template #footer>
-        <button type="button" pRipple pButton icon="pi pi-times" (click)="hidDialog()" label="Annuler"
+        <button size="small" type="button" pRipple pButton icon="pi pi-times" (click)="hidDialog()" label="Annuler"
                 class="p-button-secondary position-left mr-3"></button>
-        <button [disabled]="formGroup.invalid" pRipple pButton type="button" (click)="save()" icon="pi pi-save"
+        <button [disabled]="formGroup.invalid" size="small" severity="info" pRipple pButton type="button" (click)="save()" icon="pi pi-save"
                 label="Enregistrer">
         </button>
     </ng-template>
 </p-dialog>
 
-<p-dialog (onHide)="displayDetails = false" [modal]="true" [(visible)]="displayDetails"
+<p-dialog (onHide)="displayDetails = false" [modal]="true" [(visible)]="displayDetails" appendTo="body"
           [style]="{width: '50rem'}" [maximizable]="true" class="p-fluid" styleClass="ng-dialog">
     <ng-template #header>
         <div class="inline-flex align-items-center justify-content-center gap-2">
@@ -202,3 +202,5 @@
                 class="p-button-secondary"></button>
     </ng-template>
 </p-dialog>
+
+<p-confirmPopup key="crudPopup" />

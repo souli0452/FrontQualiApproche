@@ -195,3 +195,53 @@ p-button .p-button-info {
     border-color: var(--info-color) !important;
     color: white !important;
 }
+.p-divider-horizontal {
+    margin: 0 !important;
+}
+
+.drawer-nc {
+    .card {
+        padding: 0 !important;
+    }
+
+    // .p-datatable-sm {
+    //     .p-datatable-thead > tr > th,
+    //     .p-datatable-tbody > tr > td {
+    //         padding: 0.5rem 0.4rem !important;
+    //         font-size: 13px !important;
+    //         white-space: nowrap;
+    //         overflow: hidden;
+    //         text-overflow: ellipsis;
+    //     }
+
+    //     .p-datatable-tbody > tr > td:first-child {
+    //         max-width: 150px;
+    //     }
+        
+    //     th:last-child, td:last-child {
+    //         width: 80px !important;
+    //         text-align: center;
+    //     }
+    // }
+
+    /* On force l'adoucissement des bordures */
+    .p-datatable.p-datatable-gridlines {
+        border: none !important;
+
+        .p-datatable-thead > tr > th,
+        .p-datatable-tbody > tr > td {
+            border-color: #f1f5f9 !important; /* Gris ultra clair */
+            border-width: 0 0 1px 0 !important; /* Uniquement en bas */
+        }
+
+        .p-datatable-thead > tr > th {
+            background-color: transparent !important;
+            color: #64748b !important;
+            border-bottom: 2px solid #f1f5f9 !important;
+        }
+    }
+
+    .p-datatable-tbody > tr:last-child > td {
+        border-bottom: none !important;
+        }
+    }

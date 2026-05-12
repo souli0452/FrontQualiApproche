@@ -101,6 +101,8 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { QuillModule } from 'ngx-quill';
 import { FluidModule } from 'primeng/fluid';
 import { MessageService } from 'primeng/api';
+import { PopoverModule } from 'primeng/popover';
+import { Popover } from 'primeng/popover';
 
 @NgModule({
     providers: [MessageService],
@@ -211,7 +213,8 @@ import { MessageService } from 'primeng/api';
         DatePickerModule,
         StepperModule,
         BadgeModule,
-
+        PopoverModule,
+        Popover
     ],
     exports: [
         FluidModule,
@@ -318,7 +321,9 @@ import { MessageService } from 'primeng/api';
         InputGroupAddonModule,
         DatePickerModule,
         BadgeModule,
-        OverlayBadgeModule
+        OverlayBadgeModule,
+        PopoverModule,
+        Popover
     ]
 })
 export class NgPrimeModule {

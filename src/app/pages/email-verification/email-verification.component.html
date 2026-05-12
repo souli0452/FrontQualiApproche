@@ -1,68 +1,77 @@
-<div class="h-screen flex align-items-center justify-content-center bg-bluegray-50 p-3"
-     style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+<div class="h-screen">
+    <div class="authentication-page">
+        <div class="authentication-page-content">
+            <div class="logo-container">
+                <img src="assets/logo-quali-sira.svg" alt="Logo QualiSira">
+                <div class="nom-slogan">
+                    <h1 class="text-[#1e3a5f]">QualiSira</h1>
+                    <div class="slogan">
+                        <p>QUALITÉ <br>SÉCURITÉ <br>CONFORMITÉ <br>AMÉLIORATION CONTINUE</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slogan-texte">
+                <p>Votre plateforme de gestion intégrée de la qualité</p>
+            </div>
 
-    <div class="surface-card p-5 shadow-8 border-round-xl w-full lg:w-4 flex flex-column align-items-center"
-         style="backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.9);">
+            <p-card>
+                <div class="flex flex-column align-items-center px-3">
+                    <!-- Badge d'en-tête -->
+                    <div class="text-center text-[#1e3a5f] text-2xl mb-4">
+                        Vérification de l'e-mail
+                    </div>
 
-        <!-- Badge d'en-tête stylisé -->
-        <div class="flex align-items-center justify-content-center border-round-md bg-cyan-700 text-white px-4 py-2 shadow-2 -mt-7 mb-4">
-            <i class="pi pi-shield mr-2 text-xl"></i>
-            <span class="font-bold text-sm uppercase tracking-wider">Vérification de l'e-mail</span>
+                    <!-- Illustration ou Icône d'état -->
+                    <div class="my-4 text-center">
+                        <i *ngIf="emailVerified === true" class="pi pi-check-circle text-green-500 text-7xl"></i>
+                        <i *ngIf="emailVerified === false || emailVerified === null" class="pi pi-envelope text-cyan-600 text-7xl"></i>
+                    </div>
+
+                    <!-- Textes principaux -->
+                    <div class="text-center mb-5">
+                        <h2 class="text-900 font-bold mb-2">
+                            {{ emailVerified === true ? 'Félicitations !' : 'Action requise' }}
+                        </h2>
+                        <p class="text-600 line-height-3">
+                            <span *ngIf="emailVerified === true">
+                                Votre adresse e-mail a été vérifiée avec succès. Vous avez désormais accès à toutes les fonctionnalités de la plateforme.
+                            </span>
+                            <span *ngIf="emailVerified === false || emailVerified === null">
+                                Veuillez cliquer sur le bouton ci-dessous pour confirmer votre identité et activer votre compte.
+                            </span>
+                        </p>
+                    </div>
+
+                    <!-- Message d'erreur dynamique -->
+                    <div *ngIf="errorMessage" class="w-full p-3 border-round bg-red-50 text-red-600 border-1 border-red-200 mb-4 flex align-items-center">
+                        <i class="pi pi-exclamation-triangle mr-2"></i>
+                        <small class="font-medium">{{ errorMessage }}</small>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="w-full mt-2">
+                        <button
+                            *ngIf="emailVerified === false || emailVerified === null"
+                            pButton pRipple
+                            type="button"
+                            icon="pi pi-verified"
+                            label="VÉRIFIER MON E-MAIL"
+                            class="w-full px-5 py-4 font-bold text-lg rounded-full"
+                            (click)="VerifyEmail()">
+                        </button>
+
+                        <button
+                            *ngIf="emailVerified === true"
+                            pButton pRipple
+                            type="button"
+                            icon="pi pi-sign-in"
+                            label="ALLER À LA CONNEXION"
+                            class="w-full px-5 py-4 font-bold text-lg rounded-full"
+                            (click)="goToLogin()">
+                        </button>
+                    </div>
+                </div>
+            </p-card>
         </div>
-
-        <!-- Illustration ou Icône d'état -->
-        <div class="my-4">
-            <i *ngIf="emailVerified === true" class="pi pi-check-circle text-green-500 text-7xl"></i>
-            <i *ngIf="emailVerified === false || emailVerified === null" class="pi pi-envelope text-cyan-600 text-7xl"></i>
-        </div>
-
-        <!-- Textes principaux -->
-        <div class="text-center mb-5">
-            <h2 class="text-900 font-bold mb-2">
-                {{ emailVerified === true ? 'Félicitations !' : 'Action requise' }}
-            </h2>
-            <p class="text-600 line-height-3 px-2">
-                <span *ngIf="emailVerified === true">
-                    Votre adresse e-mail a été vérifiée avec succès. Vous avez désormais accès à toutes les fonctionnalités de la plateforme.
-                </span>
-                <span *ngIf="emailVerified === false || emailVerified === null">
-                    Veuillez cliquer sur le bouton ci-dessous pour confirmer votre identité et activer votre compte.
-                </span>
-            </p>
-        </div>
-
-        <!-- Message d'erreur dynamique -->
-        <div *ngIf="errorMessage" class="w-full p-3 border-round bg-red-50 text-red-600 border-1 border-red-200 mb-4 flex align-items-center">
-            <i class="pi pi-exclamation-triangle mr-2"></i>
-            <small class="font-medium">{{ errorMessage }}</small>
-        </div>
-
-        <!-- Actions -->
-        <div class="w-full mt-2">
-            <button
-                *ngIf="emailVerified === false || emailVerified === null"
-                pButton pRipple
-                type="button"
-                icon="pi pi-verified"
-                label="VÉRIFIER MON E-MAIL"
-                class="w-full p-button-lg p-button-raised bg-cyan-700 border-none hover:bg-cyan-800 transition-all duration-200"
-                (click)="VerifyEmail()">
-            </button>
-
-            <button
-                *ngIf="emailVerified === true"
-                pButton pRipple
-                type="button"
-                icon="pi pi-sign-in"
-                label="ALLER À LA CONNEXION"
-                class="w-full p-button-lg p-button-success p-button-raised border-none transition-all duration-200"
-                (click)="goToLogin()">
-            </button>
-        </div>
-
-        <!-- Footer subtil -->
-        <p class="mt-5 text-400 text-sm">
-            Projet e-BDT — Trésor Public
-        </p>
     </div>
 </div>

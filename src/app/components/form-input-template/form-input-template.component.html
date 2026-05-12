@@ -1,84 +1,133 @@
 <ng-container *ngIf="col.visible" [formGroup]="form">
     <div class="field-container animate-slide-in">
 
-        <!-- Titre et obligatoire -->
-        <label [for]="col.field" class="block text-sm font-bold text-gray-800 mb-1">
-            {{ col.header }}
-            <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+        <!-- 1. Label Supérieur (Optionnel) -->
+        <label *ngIf="col.topLabel" [for]="col.field" class="block text-sm font-bold text-gray-700 mb-2">
+            {{ col.topLabel }}
         </label>
 
-        <!-- Input text -->
+        <!-- 2. Zone Input avec FloatLabel (Obligatoire) -->
+        
+        <!-- Type String -->
         <ng-container *ngIf="col.type === 'string'">
-            <input pInputText
-                   type="text"
-                   [readonly]="col.readonly"
-                   class="premium-input"
-                   [formControlName]="col.field"
-                   [id]="col.field"
-                   [name]="col.field" />
+            <p-floatlabel variant="on">
+                <input pInputText
+                       type="text"
+                       [readonly]="col.readonly"
+                       class="w-full"
+                       [formControlName]="col.field"
+                       [id]="col.field"
+                       autocomplete="off"
+                       [attr.aria-describedby]="col.field + '-help'"
+                       [name]="col.field" />
+                <label [for]="col.field">
+                    {{ col.header }}
+                    <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                </label>
+            </p-floatlabel>
         </ng-container>
 
-        <!-- Textarea -->
+        <!-- Type Editeur (Garde son style propre) -->
         <ng-container *ngIf="col.type === 'text'">
-      <textarea pTextarea
-                rows="3"
-                class="premium-input resize-none"
-                [formControlName]="col.field"
-                [id]="col.field"
-                [name]="col.field"></textarea>
-        </ng-container>
-
-        <!-- Number -->
-        <ng-container *ngIf="col.type === 'number' || col.type === 'float'">
-            <p-inputNumber
-                [showButtons]="true"
-                [readonly]="col.readonly"
-                [min]="0"
-                mode="decimal"
-                class="premium-number"
-                [formControlName]="col.field"
-                [id]="col.field"
-                [name]="col.field">
-            </p-inputNumber>
-        </ng-container>
-
-        <!-- Dropdown -->
-        <ng-container *ngIf="col.type === 'dropdown'">
-            <p-select [options]="dropDownObject[col.field]"
-                      [filter]="true"
-                      [showClear]="true"
-                      appendTo="body"
-                      [optionLabel]="'label'"
-                      [optionValue]="'value'"
-                      placeholder="Sélectionner une option"
-                      [formControlName]="col.field"
-                      class="w-full premium-dropdown"
-                      [name]="col.field">
-            </p-select>
-        </ng-container>
-
-        <!-- Checkbox -->
-        <ng-container *ngIf="col.type === 'boolean'">
-            <div class="flex items-center mt-2">
-                <p-checkbox [binary]="true" [formControlName]="col.field" [id]="col.field"></p-checkbox>
-                <label [for]="col.field" class="ml-2 text-gray-700">{{ col.header }}</label>
+            <div class="flex flex-col gap-2">
+                <label [for]="col.field" class="block text-sm text-gray-600">
+                    {{ col.header }}
+                    <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                </label>
+                <p-editor [formControlName]="col.field" 
+                          [id]="col.field" 
+                          [style]="{ height: '70px' }">
+                    <ng-template pTemplate="header">
+                        <span class="ql-formats">
+                            <button type="button" class="ql-bold"></button>
+                            <button type="button" class="ql-italic"></button>
+                            <button type="button" class="ql-underline"></button>
+                        </span>
+                    </ng-template>
+                </p-editor>
             </div>
         </ng-container>
-        <ng-container *ngIf="col.type === 'multiselect'">
-            <p-multiSelect
-                [options]="multiSelectObject[col.field]"
-                [filter]="true"
-                appendTo="body"
-                optionLabel="label"
-                optionValue="value"
-                [showClear]="true"
-                [formControlName]="col.field"
-                class="w-full premium-multiselect"
-                [name]="col.field"
-                display="chip"
-                placeholder="Sélectionner les options">
-            </p-multiSelect>
+
+        <!-- Type Number -->
+        <ng-container *ngIf="col.type === 'number' || col.type === 'float'">
+            <p-floatlabel variant="on">
+                <p-inputNumber
+                    [showButtons]="true"
+                    [readonly]="col.readonly"
+                    [min]="0"
+                    mode="decimal"
+                    class="w-full"
+                    styleClass="w-full"
+                    [formControlName]="col.field"
+                    [id]="col.field"
+                    [name]="col.field">
+                </p-inputNumber>
+                <label [for]="col.field">
+                    {{ col.header }}
+                    <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                </label>
+            </p-floatlabel>
         </ng-container>
+
+        <!-- Type Dropdown -->
+        <ng-container *ngIf="col.type === 'dropdown'">
+            <p-floatlabel variant="on">
+                <p-select [options]="dropDownObject[col.field]"
+                          [filter]="true"
+                          [showClear]="true"
+                          appendTo="body"
+                          [optionLabel]="'label'"
+                          [optionValue]="'value'"
+                          [formControlName]="col.field"
+                          class="w-full"
+                          [id]="col.field"
+                          [name]="col.field">
+                </p-select>
+                <label [for]="col.field">
+                    {{ col.header }}
+                    <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                </label>
+            </p-floatlabel>
+        </ng-container>
+
+        <!-- Type Checkbox -->
+        <ng-container *ngIf="col.type === 'boolean'">
+            <div class="flex items-center p-2">
+                <p-checkbox [binary]="true" [formControlName]="col.field" [id]="col.field"></p-checkbox>
+                <label [for]="col.field" class="ml-2 text-gray-700">
+                    {{ col.header }}
+                    <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                </label>
+            </div>
+        </ng-container>
+
+        <!-- Type MultiSelect -->
+        <ng-container *ngIf="col.type === 'multiselect'">
+            <p-floatlabel variant="on">
+                <p-multiSelect
+                    [options]="multiSelectObject[col.field]"
+                    [filter]="true"
+                    appendTo="body"
+                    optionLabel="label"
+                    optionValue="value"
+                    [showClear]="true"
+                    [formControlName]="col.field"
+                    class="w-full"
+                    [id]="col.field"
+                    [name]="col.field"
+                    display="chip">
+                </p-multiSelect>
+                <label [for]="col.field">
+                    {{ col.header }}
+                    <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                </label>
+            </p-floatlabel>
+        </ng-container>
+
+        <!-- 3. Texte d'aide Inférieur (Optionnel) -->
+        <small *ngIf="col.helpText" [id]="col.field + '-help'" class="block mt-1 text-muted-color">
+            {{ col.helpText }}
+        </small>
 
     </div>
 </ng-container>

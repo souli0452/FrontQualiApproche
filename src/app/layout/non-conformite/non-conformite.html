@@ -1,0 +1,53 @@
+<p-toolbar>
+    <ng-template #start>
+        <p-buttongroup>
+            <!-- Bouton Vue d'ensemble -->
+            <p-button 
+                label="Vue d'ensemble" 
+                icon="pi pi-chart-bar"
+                routerLink="vue-ensemble"
+                routerLinkActive 
+                #rla1="routerLinkActive"
+                [severity]="rla1.isActive ? 'info' : 'secondary'"
+                [variant]="rla1.isActive ? undefined : 'outlined'" />
+
+            <!-- Bouton Analyse et Validation -->
+            <p-button 
+                label="Analyse et Validation" 
+                icon="pi pi-file-edit"
+                routerLink="analyse-validation"
+                routerLinkActive 
+                #rla2="routerLinkActive"
+                [severity]="rla2.isActive ? 'info' : 'secondary'"
+                [variant]="rla2.isActive ? undefined : 'outlined'" />
+
+            <!-- Bouton Affectation -->
+            <p-button 
+                label="Affectation et actions" 
+                icon="pi pi-folder-open"
+                routerLink="affectation-action"
+                routerLinkActive 
+                #rla3="routerLinkActive"
+                [severity]="rla3.isActive ? 'info' : 'secondary'"
+                [variant]="rla3.isActive ? undefined : 'outlined'" />
+
+            <!-- Bouton Suivi -->
+            <p-button 
+                label="Suivi des NC" 
+                icon="pi pi-clock"
+                routerLink="suivi"
+                routerLinkActive 
+                #rla4="routerLinkActive"
+                [severity]="rla4.isActive ? 'info' : 'secondary'"
+                [variant]="rla4.isActive ? undefined : 'outlined'" />
+        </p-buttongroup>
+    </ng-template>
+
+    <ng-template #end>
+        <!-- Vous pouvez garder votre bouton d'ajout ici si besoin -->
+    </ng-template>
+</p-toolbar>
+
+<div class="card mt-4">
+    <router-outlet></router-outlet>
+</div>

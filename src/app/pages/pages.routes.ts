@@ -35,6 +35,12 @@ import { ConfigGComponent } from './config-g/config-g.component';
 import { SearchResultsComponent } from './recherche/search-results';
 import { RoleComponent } from './role/role.component';
 import { RoleDetailComponent } from './role/role-detail.component';
+import { NonConformiteLayoutComponent } from '../layout/non-conformite/non-conformite';
+import { NcVueEnsembleComponent } from './nc/nc-vue-ensemble/vue-ensemble';
+import { NCAffectationActionComponent } from './nc/nc-affectation-action/nc-affectation-action';
+import { NCAnalyseValidationComponent } from './nc/nc-analyse-validation/nc-analyse-validation';
+import { NCSuiviComponent } from './nc/nc-suivi/nc-suivi';
+
 
 export default [
     { path: 'roles', data: {breadcrumb: 'Rôles'}, component: RoleComponent, title: 'Gestion des Rôles' },
@@ -51,7 +57,6 @@ export default [
     { path: 'reclamation', component: ReclamationComponent, title: 'Liste des Réclamations' },
     { path: 'risque', component: RisqueComponent, title: 'Liste des Risques' },
     { path: 'audite', component: AuditeComponent, title: 'Liste des Audites' },
-    { path: 'non-conformite', component: NonConformiteComponent, title: 'Liste des Non Conformités' },
     { path: 'procedure-non-conformite', component: ProcedureNonConformiteComponent, title: 'Liste des Procédures de Non Conformité' },
     { path: 'reglementation', component: reglementationComponent, title: 'Liste des Réglementations' },
     { path: 'critere-evaluation', component: CritereEvaluationComponent, title: 'Critères d\'évaluation' },
@@ -83,6 +88,43 @@ export default [
             breadcrumb: 'service',
             typeStructure: TypeStructure.SERVICE
         }
+    },
+    {
+        path: 'non-conformite',
+        component: NonConformiteLayoutComponent, // C'est ici qu'on utilise le nouveau layout
+        data: { breadcrumb: 'Gestion des non-conformités' },
+        children: [
+            {
+                path: '',
+                redirectTo: 'vue-ensemble',
+                pathMatch: 'full'
+            },
+            {
+                path: 'vue-ensemble',
+                component: NcVueEnsembleComponent, // Ta nouvelle vue d'ensemble propre
+                title: 'Vue d\'ensemble',
+                data: { breadcrumb: 'Vue d\'ensemble' }
+            },
+            {
+                path: 'affectation-action',
+                component: NCAffectationActionComponent,
+                title: 'Affectations et Suivis des Actions',
+                data: { breadcrumb: 'Affectations et Suivis des Actions' }
+            },
+            {
+                path: 'analyse-validation',
+                component: NCAnalyseValidationComponent,
+                title: 'Analyse et Validation des Non-Conformités',
+                data: { breadcrumb: 'Analyse et Validation' }
+            },
+            {
+                path: 'suivi',
+                component: NCSuiviComponent,
+                title: 'Suivi des Non-Conformités',
+                data: { breadcrumb: 'Suivi' }
+            },
+            // Ajoute ici les autres routes (reception, validation, etc.)
+        ]
     },
     { path: 'profil', component: ProfilComponent, title: 'Liste des Profils' },
     { path: 'type-nc', component: TypeNonConformiteComponent, title: 'Types de non conformité' },

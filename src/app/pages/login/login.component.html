@@ -23,38 +23,38 @@
                     <div class="w-96">
                         <div class="flex flex-col gap-2 text-left mb-4">
                             <label for="username">Courriel (Nom d'utilisateur)</label>
-                                <span class="p-input-icon-left w-full relative">
-        <i class="pi pi-user icon-input"></i> <!-- L'icône utilisateur -->
-        <input 
-            [class.p-invalid]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched" 
-            pInputText
-            id="username" 
-            autocomplete="off"
-            class="input-text w-full" 
-            autofocus
-            type="email" 
-            placeholder="Entrez votre nom d'utilisateur" 
-            formControlName="username" />
-    </span>
+                            <span class="p-input-icon-left w-full relative">
+                                <i class="pi pi-user icon-input"></i> <!-- L'icône utilisateur -->
+                                <input 
+                                    [class.p-invalid]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched" 
+                                    pInputText
+                                    id="username" 
+                                    autocomplete="off"
+                                    class="input-text w-full" 
+                                    autofocus
+                                    type="email" 
+                                    placeholder="Entrez votre nom d'utilisateur" 
+                                    formControlName="username" />
+                            </span>
                         </div>
 
                         <div class="flex flex-col gap-2 text-left">
-    <label for="username">Mot de passe</label>
-    <span class="p-input-icon-left w-full relative">
-        <i class="pi pi-lock icon-input" style="z-index: 10;"></i> <!-- On s'assure que le cadenas reste au-dessus -->
-        <p-password 
-            id="password" 
-            autocomplete="new-password"
-            formControlName="password" 
-            [toggleMask]="true" 
-            [feedback]="false" 
-            placeholder="Tapez votre mot de passe"
-            styleClass="w-full"
-            [inputStyle]="{'width': '100%'}"
-            [inputStyleClass]="'input-text w-full ' + (loginForm.get('password')?.invalid && loginForm.get('password')?.touched ? 'p-invalid' : '')">
-        </p-password>
-    </span>
-</div>
+                            <label for="password">Mot de passe</label>
+                            <span class="p-input-icon-left w-full relative">
+                                <i class="pi pi-lock icon-input" style="z-index: 10;"></i> <!-- On s'assure que le cadenas reste au-dessus -->
+                                <p-password 
+                                    id="password" 
+                                    autocomplete="new-password"
+                                    formControlName="password" 
+                                    [toggleMask]="true" 
+                                    [feedback]="false" 
+                                    placeholder="Tapez votre mot de passe"
+                                    styleClass="w-full"
+                                    [inputStyle]="{'width': '100%'}"
+                                    [inputStyleClass]="'input-text w-full ' + (loginForm.get('password')?.invalid && loginForm.get('password')?.touched ? 'p-invalid' : '')">
+                                </p-password>
+                            </span>
+                        </div>
 
                         <div class="flex flex-col gap-2 text-left">
                             <!-- <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div> -->
@@ -65,39 +65,66 @@
                 </form>
 
                 <!-- Écran de réinitialisation -->
-                <form *ngIf="isResetScreen" [formGroup]="resetForm" (ngSubmit)="initiatePasswordReset()" class="text-center z-5 flex flex-column border-1 border-round-md surface-border surface-card px-6" style="max-width: 500px; min-width: 400px;">
-                    <div class="-mt-5 text-white bg-primary-500 border-round-md mx-auto px-3 py-1 border-1 surface-border">
-                        <h2 class="m-0">REINITIALISATION</h2>
+                <form *ngIf="isResetScreen" [formGroup]="resetForm" (ngSubmit)="initiatePasswordReset()" class="flex flex-column border-1 border-round-md surface-border surface-card px-3">
+                    
+                    <div class="text-center text-[#1e3a5f] text-2xl mb-5">
+                        Réinitialisation
                     </div>
-                    <div class="text-color-secondary mb-6 px-6">
-                        Veuillez entrer votre email
-                    </div>
-                    <div class="w-full flex flex-column gap-3 px-3 pb-6">
-                        <span class="p-input-icon-left">
-                            <i class="pi pi-envelope"></i>
-                            <input id="email" type="text" class="w-full" pInputText placeholder="Adresse e-mail" formControlName="email" />
-                        </span>
-                        <div *ngIf="resetForm.get('email')?.invalid && resetForm.get('email')?.touched" class="error">
-                            Adresse e-mail requise.
+
+                    <div class="w-96">
+                        <div class="text-color-secondary mb-4 text-center">
+                            Veuillez entrer votre email pour recevoir les instructions.
                         </div>
-                        <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
-                        <button type="submit" pButton pRipple class="w-full my-3 px-3" label="Envoyer" [disabled]="resetForm.invalid"></button>
-                        <button type="button" pButton pRipple class="w-full p-button-text text-primary-500" label="Retour à la connexion" (click)="retour()"></button>
+
+                        <div class="flex flex-col gap-2 text-left mb-4">
+                            <label for="email">Adresse e-mail</label>
+                            <span class="p-input-icon-left w-full relative">
+                                <i class="pi pi-envelope icon-input"></i>
+                                <input 
+                                [class.p-invalid]="resetForm.get('email')?.invalid && resetForm.get('email')?.touched" 
+                                    id="email" 
+                                    type="email" 
+                                    autocomplete="off"
+                                    autofocus
+                                    pInputText 
+                                    class="input-text w-full" 
+                                    placeholder="Entrez votre adresse e-mail" 
+                                    formControlName="email" />
+                            </span>
+                            <!-- <div *ngIf="resetForm.get('email')?.invalid && resetForm.get('email')?.touched" class="error mt-1">
+                                Adresse e-mail valide requise.
+                            </div> -->
+                        </div>
+
+                        <!-- <div *ngIf="errorMessage" class="error mb-3">{{ errorMessage }}</div> -->
+
+                        <div class="flex flex-col gap-2">
+                            <button type="submit" pButton pRipple class="w-full my-4 px-5 py-4 font-bold text-lg rounded-full" label="Envoyer" [disabled]="resetForm.invalid"></button>
+                            <button type="button" pButton pRipple class="w-full p-button-text text-primary-500 py-4 font-bold text-lg rounded-full" label="Retour à la connexion" (click)="retour()"></button>
+                        </div>
                     </div>
                 </form>
 
-                <form *ngIf="isConfirmationScreen"  class="text-center z-5 flex flex-column border-1 border-round-md surface-border surface-card px-6" style="max-width: 500px; min-width: 400px;">
-                    <div class="-mt-5 text-white bg-cyan-700 border-round-md mx-auto px-3 py-1 border-1 surface-border">
-                        <h2 class="m-0">CONFIRMATION</h2>
-                    </div>
-                    <div class="text-color-secondary mb-6 px-6" style="margin-top: 5px">
-                        Un e-mail de réinitialisation a été envoyé. Veuillez vérifier votre boîte de réception et suivre les instructions pour réinitialiser votre mot de passe.
-                    </div>
-                    <div class="w-full flex flex-column gap-3 px-3 pb-6">
 
-                        <button type="button" pButton pRipple class="w-full p-button-text text-primary-500" label="Retour à la connexion" (click)="retour()"></button>
+                <form *ngIf="isConfirmationScreen" class="flex flex-column border-1 border-round-md surface-border surface-card px-3">
+                    
+                    <div class="text-center text-[#1e3a5f] text-2xl mb-5">
+                        Confirmation
+                    </div>
+
+                    <div class="w-96 text-center">
+                        <div class="my-4">
+                            <i class="pi pi-check-circle text-green-500 text-7xl"></i>
+                        </div>
+                        
+                        <div class="text-color-secondary mb-6 px-2">
+                            Un e-mail de réinitialisation a été envoyé. Veuillez vérifier votre boîte de réception.
+                        </div>
+
+                        <button type="button" pButton pRipple class="w-full mb-4 px-5 py-4 font-bold text-lg rounded-full" label="Retour à la connexion" (click)="retour()"></button>
                     </div>
                 </form>
+
             </p-card>
         </div>
 

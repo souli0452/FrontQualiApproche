@@ -63,6 +63,10 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     value: any;
     rowData: any;
     @Input() customButtons: { label: string; icon: string; action: string; color?: string; tooltip?: string; tooltipPosition?: string }[] = [];
+    @Input() isPagination: boolean = true;
+    @Input() addButtonLabel: string = 'Ajouter';
+    @Input() minWidth: string = '50rem';
+    @Input() loadingRows: number = 10;
     @Output() customActionEvent = new EventEmitter<{ action: string; user: any }>();
 
     @ViewChild('dt') table!: Table;
@@ -130,11 +134,24 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
         }
     }
 
-    delele(data: any) {
+    delele(data: any, event: Event) {
         this.confirmationService.confirm({
+            key: 'crudPopup',
+            target: event.target as EventTarget,
             header: 'CONFIRMATION',
-            message: 'Voulez-vous vraiment supprimer cet enregistrement ',
+            message: 'Voulez-vous vraiment supprimer cet enregistrement ?',
             icon: 'pi pi-exclamation-triangle',
+            rejectButtonProps: {
+                label: 'Annuler',
+                severity: 'secondary',
+                outlined: true,
+                size: 'small'
+            },
+            acceptButtonProps: {
+                label: 'Supprimer',
+                severity: 'danger',
+                size: 'small'
+            },
             accept: () => {
                 this.removeEvent.emit(data);
             }
@@ -147,15 +164,17 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     }
 
     edit(rowData: any) {
-        this.formGroup.patchValue(rowData);
-        const cols = this.tableCols.filter((col) => col.type === 'date');
-        if (cols?.length > 0) {
-            cols.forEach((col) => {
-                const date = rowData[col.field] ? patternToDate(toFormatFromDate(rowData[col.field]), 'DD/MM/YYYY') : null;
-                this.formGroup.get(col.field)?.setValue(date);
-            });
-        }
         this.display = true;
+        setTimeout(() => {
+            this.formGroup.patchValue(rowData);
+            const cols = this.tableCols.filter((col) => col.type === 'date');
+            if (cols?.length > 0) {
+                cols.forEach((col) => {
+                    const date = rowData[col.field] ? patternToDate(toFormatFromDate(rowData[col.field]), 'DD/MM/YYYY') : null;
+                    this.formGroup.get(col.field)?.setValue(date);
+                });
+            }
+        });
     }
 
     hidDialog() {
@@ -172,14 +191,27 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
             }
         }
     }
-    onCustomAction(action: string, user: any): void {
+    onCustomAction(action: string, user: any, event?: Event): void {
         if(this.asRoleEdit){
             this.customActionEvent.emit({ action, user });
         }else {
             this.confirmationService.confirm({
+                key: 'crudPopup',
+                target: event?.target as EventTarget,
                 header: 'CONFIRMATION',
                 message: 'Voulez-vous vraiment valider cette action ? ',
                 icon: 'pi pi-exclamation-triangle',
+                rejectButtonProps: {
+                    label: 'Annuler',
+                    severity: 'secondary',
+                    outlined: true,
+                    size: 'small'
+                },
+                acceptButtonProps: {
+                    label: 'Confirmer',
+                    severity: 'info',
+                    size: 'small'
+                },
                 accept: () => {
                     this.customActionEvent.emit({ action, user });
                 }
@@ -221,7 +253,7 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
                 label: 'Supprimer',
                 icon: 'pi pi-trash',
                 styleClass: 'text-red-500 menu-style',
-                command: () => this.delele(rowData)
+                command: (event: any) => this.delele(rowData, event.originalEvent)
             });
         }
 
@@ -231,7 +263,7 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
                 this.actionMenuItems.push({
                     label: btn.label,
                     icon: btn.icon,
-                    command: () => this.onCustomAction(btn.action, rowData)
+                    command: (event: any) => this.onCustomAction(btn.action, rowData, event.originalEvent)
                 });
             });
         }

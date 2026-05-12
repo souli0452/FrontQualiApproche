@@ -247,6 +247,8 @@ export interface FormGroupColumn  {
     field?: string;
     type?: string;
     label?: string;
+    topLabel?: string;
+    helpText?: string;
     header?: string;
     visible?: boolean;
     required?: boolean;

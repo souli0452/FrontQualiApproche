@@ -10,7 +10,12 @@ import { ResetPasswordComponent } from './app/pages/reset-password/reset-passwor
 import { EmailVerificationComponent } from './app/pages/email-verification/email-verification.component';
 
 export const appRoutes: Routes = [
-
+    { path: 'login', component: LoginComponent },
+    { path: 'landing', component: Landing },
+    { path: 'notfound', component: Notfound },
+    { path: 'verify-email', component: EmailVerificationComponent },
+    { path: 'reset-password', component: ResetPasswordComponent },
+    { path: 'auth', loadChildren: () => import('./app/pages/auth/auth.routes') },
     {
         path: '',
         component: AppLayout,
@@ -25,22 +30,9 @@ export const appRoutes: Routes = [
             {
                 path: 'traitement-action', loadChildren: () => import('./app/pages/proc-non-conformite/traitement-actions/traitement-action.module').then(m => m.TraitementActionModule)
             },
-            { path: 'page', loadChildren: () => import('./app/pages/pages.routes') }
+            { path: '', loadChildren: () => import('./app/pages/pages.routes') }
         ]
     },
-    { path: 'login', component: LoginComponent },
-    { path: '', redirectTo: '/login', pathMatch: 'full' },
-    {
-        path: 'verify-email',
-        component: EmailVerificationComponent
-    },
-    {
-        path: 'reset-password',
-        component: ResetPasswordComponent
-    },
-    { path: 'landing', component: Landing },
-    { path: 'notfound', component: Notfound },
-    { path: 'auth', loadChildren: () => import('./app/pages/auth/auth.routes') },
     { path: '**', redirectTo: '/notfound' },
 
 ];

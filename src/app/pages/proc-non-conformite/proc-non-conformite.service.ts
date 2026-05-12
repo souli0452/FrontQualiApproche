@@ -78,4 +78,7 @@ export class ProcNonConformiteService {
     getStatsByNiveau(anne:any,id:any): Observable<HttpResponse<any>> {
         return this.http.get<any>(NonConformiteUrlConfig.GET_Stat_MENSUEL_NIVEAU_ROOT_URL+anne+"/service/"+id, {observe: 'response'});
     }
+    getDashboardRQ(): Observable<HttpResponse<any>> {
+        return this.http.get<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL+"/dashboard/rq", {observe: 'response'});
+    }
 }

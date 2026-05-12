@@ -22,6 +22,7 @@ constructor(private authService: AuthService,private router: Router,) {
 ngOnInit() {
     this.user = this.authService.getUser();
     this.userStructure=getCurrentUserStructure();
+    console.log(this.user);
 }
 
 
