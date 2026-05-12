@@ -6,6 +6,8 @@
 /* styles.css ou styles.scss */
 :root {
     --primary-color: #1e3a5f !important;
+    --secondary-color: #0084ca !important;
+    --info-color: #0084ca !important;
 }
 
 html {
@@ -185,4 +187,11 @@ body {
 .drawer-subtitle-content {
     font-size: 12px;
     font-style: italic;
+}
+
+
+p-button .p-button-info {
+    background-color: var(--info-color) !important;
+    border-color: var(--info-color) !important;
+    color: white !important;
 }
