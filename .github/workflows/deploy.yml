@@ -16,13 +16,13 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install dependencies
         run: npm install  # <-- Plus de "cd"
 
       - name: Build Angular
-        run: npm run build --configuration production # <-- Plus de "cd"
+        run: npm run build -- --configuration production # <-- Plus de "cd"
 
       - name: Trigger Coolify Deployment
         run: |
