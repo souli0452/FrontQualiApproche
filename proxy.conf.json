@@ -1,18 +1,18 @@
 {
     "/user-service/api/v1": {
-        "target":  "https://api-gateway.horeb.tech",
+        "target": "http://localhost:8088",
         "secure": false,
         "logLevel": "debug",
         "changeOrigin": true
     },
     "/amelioration-service/api/v1": {
-        "target":  "https://api-gateway.horeb.tech",
+        "target": "http://localhost:8088",
         "secure": false,
         "logLevel": "debug",
         "changeOrigin": true
     },
     "/referentiel-service/api/v1": {
-        "target":  "https://api-gateway.horeb.tech",
+        "target": "http://localhost:8088",
         "secure": false,
         "logLevel": "debug",
         "changeOrigin": true

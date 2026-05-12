@@ -5,15 +5,11 @@ on:
     branches:
       - develop
 
-    paths:
-      - 'FrontQualiApproche/**'
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -23,19 +19,14 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: |
-          cd FrontQualiApproche
-          npm install
+        run: npm install  # <-- Plus de "cd"
 
       - name: Build Angular
-        run: |
-          cd FrontQualiApproche
-          npm run build --configuration production
+        run: npm run build --configuration production # <-- Plus de "cd"
 
       - name: Trigger Coolify Deployment
         run: |
           echo "Calling Coolify webhook..."
-          
           response=$(curl -s -o response.txt -w "%{http_code}" \
           -X GET "${{ secrets.FRONTEND_WEBHOOK }}" \
           -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}")
