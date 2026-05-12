@@ -9,6 +9,5 @@ jobs:
     steps:
       - name: Notify Coolify Server
         run: |
-          echo "🚀 Sending signal for Frontend..."
-          curl -X POST "http://144.126.135.120:8000/webhooks/source/github/events/manual" \
-               -H "Content-Type: application/json"
+          echo "🚀 Sending deploy request to Coolify..."
+          curl -i "http://144.126.135.120:8000/api/v1/deploy?uuid=br35fnx2p51sj0lksong6cgx&force=false"
