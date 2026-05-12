@@ -1,13 +1,52 @@
-name: Deploy Frontend to Coolify
+name: Deploy Frontend
+
 on:
   push:
-    branches: [ develop ]
+    branches:
+      - develop
+
+    paths:
+      - 'FrontQualiApproche/**'
 
 jobs:
-  trigger-coolify:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Notify Coolify Server
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
         run: |
-          echo "🚀 Sending deploy request to Coolify..."
-          curl -i "http://144.126.135.120:8000/api/v1/deploy?uuid=br35fnx2p51sj0lksong6cgx&force=false"
+          cd FrontQualiApproche
+          npm install
+
+      - name: Build Angular
+        run: |
+          cd FrontQualiApproche
+          npm run build --configuration production
+
+      - name: Trigger Coolify Deployment
+        run: |
+          echo "Calling Coolify webhook..."
+          
+          response=$(curl -s -o response.txt -w "%{http_code}" \
+          -X GET "${{ secrets.FRONTEND_WEBHOOK }}")
+
+          echo "HTTP Status: $response"
+
+          echo "Response:"
+          cat response.txt
+
+          if [ "$response" -ne 200 ]; then
+            echo "Deployment webhook failed!"
+            exit 1
+          fi
+
+          echo "Deployment triggered successfully!"
