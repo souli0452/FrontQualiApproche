@@ -3,7 +3,8 @@
         <p-tabPanel header="Détails de la  demande">
             <demande-non_conformite-details [demande]="demande"></demande-non_conformite-details>
         </p-tabPanel>
-        <p-tabPanel header="Validation des plans d'actions définis" *ngIf="demande.etatTraitement==BtnActions.VALIDATION">
+        <p-tabPanel header="Validation des plans d'actions définis"
+            *ngIf="demande.etatTraitement==BtnActions.VALIDATION">
             <div class="col-12">
                 <div class="card nc-card mt-4">
                     <p-toolbar styleClass="mb-2">
@@ -12,23 +13,16 @@
                         </ng-template>
                         <ng-template #end>
                             <button pButton pRipple label="Valider" icon="pi pi-check"
-                                    [disabled]="selectedPlans.length === 0"
-                                    class="p-button-primary font-bold"
-                                    (click)="validerPlans()">
+                                [disabled]="selectedPlans.length === 0" class="p-button-primary font-bold"
+                                (click)="validerPlans()">
                             </button>
                         </ng-template>
                     </p-toolbar>
 
-                    <p-table [value]="demande.planActions"
-                             [(selection)]="selectedPlans"
-                             dataKey="id"
-                             [rowHover]="true"
-                             [paginator]="true"
-                             [rows]="5"
-                             [showCurrentPageReport]="true"
-                             currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments"
-                             styleClass="p-datatable-sm p-datatable-gridlines"
-                             selectionMode="multiple">
+                    <p-table [value]="demande.planActions" [(selection)]="selectedPlans" dataKey="id" [rowHover]="true"
+                        [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
+                        currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments"
+                        styleClass="p-datatable-sm p-datatable-gridlines" selectionMode="multiple">
 
                         <ng-template #header>
                             <tr>
@@ -47,7 +41,8 @@
                         <ng-template #body let-plan>
                             <tr [pSelectableRow]="plan">
                                 <td>
-                                    <p-tableCheckbox [value]="plan" [disabled]="plan.status=='NON_TRAITER'||plan.status=='TRAITER'"></p-tableCheckbox>
+                                    <p-tableCheckbox [value]="plan"
+                                        [disabled]="plan.status=='NON_TRAITER'||plan.status=='TRAITER'"></p-tableCheckbox>
                                 </td>
                                 <td>{{plan.numeroOdre}}</td>
                                 <td>{{plan.causeIdentifiees}}</td>
@@ -55,16 +50,13 @@
                                 <td>{{plan.responsableNomComplet}}</td>
                                 <td>{{plan.dateEcheance}}</td>
                                 <td>
-                                    <p-tag [severity]="getStatusSeverity(plan.status)"
-                                           [value]="plan.status">
+                                    <p-tag [severity]="getStatusSeverity(plan.status)" [value]="plan.status">
                                     </p-tag>
                                 </td>
                                 <td>
-                                    <button pButton pRipple type="button"
-                                            icon="pi pi-eye"
-                                            class="p-button-outlined p-button-secondary p-button-sm"
-                                            (click)="affich(plan)"
-                                            pTooltip="Détails" tooltipPosition="top">
+                                    <button pButton pRipple type="button" icon="pi pi-eye"
+                                        class="p-button-outlined p-button-secondary p-button-sm" (click)="affich(plan)"
+                                        pTooltip="Détails" tooltipPosition="top">
                                     </button>
                                 </td>
                             </tr>
@@ -75,7 +67,8 @@
             </div>
 
         </p-tabPanel>
-        <p-tabPanel header="Saisie des informations complémentaires de la demande" *ngIf="demande.etatTraitement!=BtnActions.VALIDATION && demande.etatTraitement!=BtnActions.SUIVI_RQ ">
+        <p-tabPanel header="Saisie des informations complémentaires de la demande"
+            *ngIf="demande.etatTraitement!=BtnActions.VALIDATION && demande.etatTraitement!=BtnActions.SUIVI_RQ ">
             <div class="m-2">
                 <form [formGroup]="editForm" autocomplete="off" role="form">
                     <div class="grid p-fluid mb-3">
@@ -84,29 +77,25 @@
                             <div class="flex flex-wrap gap-2">
                                 <label class="font-bold">Pertinence de la non-conformité </label>
                                 <div class="flex items-center">
-                                    <p-radiobutton
-                                        (onClick)="onInputChange()"
-                                        name="pertinancePilote" value="oui" formControlName="pertinancePilote" inputId="pertinancePilote" />
+                                    <p-radiobutton (onClick)="onInputChange()" name="pertinancePilote" value="oui"
+                                        formControlName="pertinancePilote" inputId="pertinancePilote" />
                                     <label for="pertinancePilote" class="ml-2">OUI</label>
                                 </div>
                                 <div class="flex items-center">
-                                    <p-radiobutton name="pertinancePilote"
-                                                   (onClick)="onInputChange()"
-                                                   value="non" formControlName="pertinancePilote" inputId="pertinancePilote" />
+                                    <p-radiobutton name="pertinancePilote" (onClick)="onInputChange()" value="non"
+                                        formControlName="pertinancePilote" inputId="pertinancePilote" />
                                     <label for="pertinancePilote" class="ml-2">NON</label>
                                 </div>
                             </div>
                             <label class="mt-8 mb-2 font-bold">JUSTIFICATION</label>
                             <div class="mb-4">
 
-                                <p-editor [style]="{'height':'250px'}"
-                                        formControlName="justificationPilote"
-                                          (onTextChange)="onInputChange()"
-                                          name="justificationPilote" required>
+                                <p-editor [style]="{'height':'250px'}" formControlName="justificationPilote"
+                                    (onTextChange)="onInputChange()" name="justificationPilote" required>
                                 </p-editor>
                             </div>
                             }
-                           <!-- @if (demande.etatTraitement===BtnActions.SUIVI_RQ){
+                            <!-- @if (demande.etatTraitement===BtnActions.SUIVI_RQ){
                                 <div class="flex flex-wrap gap-2">
                                     <label class="font-bold">Pertinence de la non-conformité </label>
                                     <div class="flex items-center">
@@ -131,123 +120,106 @@
 
                             }-->
                             @if (demande.etatTraitement===BtnActions.VALIDATION_RS){
-                                <div class="flex flex-wrap gap-2">
-                                    <label class="font-bold">Pertinence de la non-conformité </label>
-                                    <div class="flex items-center">
-                                        <p-radiobutton
-                                            (onClick)="onInputChange()"
-                                            name="pertinanceRs" value="oui" formControlName="pertinanceRs" inputId="pertinanceRs" />
-                                        <label for="pertinanceRs" class="ml-2">OUI</label>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <p-radiobutton name="pertinanceRs"
-                                                       (onClick)="onInputChange()"
-                                                       value="non" formControlName="pertinanceRs" inputId="pertinanceRs" />
-                                        <label for="pertinanceRs" class="ml-2">NON</label>
-                                    </div>
+                            <div class="flex flex-wrap gap-2">
+                                <label class="font-bold">Pertinence de la non-conformité </label>
+                                <div class="flex items-center">
+                                    <p-radiobutton (onClick)="onInputChange()" name="pertinanceRs" value="oui"
+                                        formControlName="pertinanceRs" inputId="pertinanceRs" />
+                                    <label for="pertinanceRs" class="ml-2">OUI</label>
                                 </div>
-                                <label class="mt-8 mb-2 font-bold">JUSTIFICATION</label>
-                                <div class="mb-4">
+                                <div class="flex items-center">
+                                    <p-radiobutton name="pertinanceRs" (onClick)="onInputChange()" value="non"
+                                        formControlName="pertinanceRs" inputId="pertinanceRs" />
+                                    <label for="pertinanceRs" class="ml-2">NON</label>
+                                </div>
+                            </div>
+                            <label class="mt-8 mb-2 font-bold">JUSTIFICATION</label>
+                            <div class="mb-4">
 
-                                    <p-editor [style]="{'height':'250px'}"
-                                              name="justificationRs"
-                                              formControlName="justificationRs"
-                                              (onTextChange)="onInputChange()"
-                                               required>
-                                    </p-editor>
-                                </div>
+                                <p-editor [style]="{'height':'250px'}" name="justificationRs"
+                                    formControlName="justificationRs" (onTextChange)="onInputChange()" required>
+                                </p-editor>
+                            </div>
                             }
                             @if(demande.etatTraitement===BtnActions.TRAITEMENT){
-                                <div class="form-container">
-                                <p-card  class="card">
-                                <p class=" font-bold">PARTICIPANTS
-                                    ( Les noms complets des participants doivent être séparés les uns des autres par une virgule <span
-                                        style="color: red"></span>)
-                                </p>
-                                <div>
+                            <div class="form-container">
+                                <p-card class="card">
+                                    <p class=" font-bold">PARTICIPANTS
+                                        ( Les noms complets des participants doivent être séparés les uns des autres par
+                                        une virgule <span style="color: red"></span>)
+                                    </p>
+                                    <div>
 
-                                    <p-chips formControlName="participants"
-                                             separator=","
-                                             (onAdd)="onInputChange()"
-                                             placeholder="Saisissez les noms des participants"
-                                             required
-                                             autofocus
-                                             [style]="{'width':'100%'}"
-                                             id="participants"
-                                             class="participants-input">
-                                    </p-chips>
-                                </div>
+                                        <p-chips formControlName="participants" separator="," (onAdd)="onInputChange()"
+                                            placeholder="Saisissez les noms des participants" required autofocus
+                                            [style]="{'width':'100%'}" id="participants" class="participants-input">
+                                        </p-chips>
+                                    </div>
 
 
-                              </p-card></div>
-                                <div class="form-container">
-                                    <!-- Ligne Participants + Délai -->
+                                </p-card>
+                            </div>
+                            <div class="form-container">
+                                <!-- Ligne Participants + Délai -->
 
-                                    <!-- Plan d'Actions -->
-                                    <div class="col-12">
-                                        <div class="card nc-card mt-4">
-                                            <p-toolbar styleClass="mb-2">
-                                                <ng-template #start>
-                                                    <h5 class="font-bold uppercase mb-0">Plan d'actions</h5>
-                                                </ng-template>
-                                                <ng-template #end>
-                                                    <button  pButton pRipple label="Ajouter" icon="pi pi-plus"
-                                                             (click)="openDialog()"
-                                                            class="p-button-primary font-bold" ></button>
-                                                </ng-template>
-                                            </p-toolbar>
-                                            <p-table [value]="demande.planActions"
-                                                     [rowHover]="true"
-                                                     styleClass="p-datatable-sm p-datatable-gridlines"
-                                                     [paginator]="true"
-                                                     [rows]="5"
-                                                     [showCurrentPageReport]="true"
-                                                     currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments">
-                                                <ng-template #header>
-                                                    <tr>
-                                                        <th>N° ordre</th>
-                                                        <th>Causes</th>
-                                                        <th>Solutions</th>
-                                                        <th>Responsable</th>
-                                                        <th>Date échéance</th>
-                                                        <th>Statut</th>
-                                                        <th>Actions</th>
-                                                    </tr>
-                                                </ng-template>
-                                                <ng-template #body let-plan>
-                                                    <tr>
-                                                        <td>{{plan.numeroOdre}}</td>
-                                                        <td>{{plan.causeIdentifiees}}</td>
-                                                        <td>{{plan.solutionRetenues}}</td>
-                                                        <td>{{plan.responsableNomComplet}}</td>
-                                                        <td>{{plan.dateEcheance }}</td>
-                                                        <td>
-                                                            <p-tag [severity]="getStatusSeverity(plan.status)"
-                                                                   [value]="plan.status">
-                                                            </p-tag>
-                                                        </td>
-                                                        <td >
-                                                            <button
-                                                                pButton pRipple type="button"
-                                                                icon="pi pi-pencil"
-                                                                class="p-button-outlined p-button-info p-button-sm mr-2"
-                                                                 (click)="edit(plan)"
-                                                                pTooltip="Modifier" tooltipPosition="top">
-                                                            </button>
-                                                            <button pButton pRipple type="button"
-                                                                    icon="pi pi-trash"
-                                                                    (click)="delete(plan)"
-                                                                    class="p-button-outlined p-button-danger p-button-sm"
-                                                                    pTooltip="Suprimer" tooltipPosition="top">
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                </ng-template>
+                                <!-- Plan d'Actions -->
+                                <div class="col-12">
+                                    <div class="card nc-card mt-4">
+                                        <p-toolbar styleClass="mb-2">
+                                            <ng-template #start>
+                                                <h5 class="font-bold uppercase mb-0">Plan d'actions</h5>
+                                            </ng-template>
+                                            <ng-template #end>
+                                                <button pButton pRipple label="Ajouter" icon="pi pi-plus"
+                                                    (click)="openDialog()" class="p-button-primary font-bold"></button>
+                                            </ng-template>
+                                        </p-toolbar>
+                                        <p-table [value]="demande.planActions" [rowHover]="true"
+                                            styleClass="p-datatable-sm p-datatable-gridlines" [paginator]="true"
+                                            [rows]="5" [showCurrentPageReport]="true"
+                                            currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments">
+                                            <ng-template #header>
+                                                <tr>
+                                                    <th>N° ordre</th>
+                                                    <th>Causes</th>
+                                                    <th>Solutions</th>
+                                                    <th>Responsable</th>
+                                                    <th>Date échéance</th>
+                                                    <th>Statut</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </ng-template>
+                                            <ng-template #body let-plan>
+                                                <tr>
+                                                    <td>{{plan.numeroOdre}}</td>
+                                                    <td>{{plan.causeIdentifiees}}</td>
+                                                    <td>{{plan.solutionRetenues}}</td>
+                                                    <td>{{plan.responsableNomComplet}}</td>
+                                                    <td>{{plan.dateEcheance }}</td>
+                                                    <td>
+                                                        <p-tag [severity]="getStatusSeverity(plan.status)"
+                                                            [value]="plan.status">
+                                                        </p-tag>
+                                                    </td>
+                                                    <td>
+                                                        <button pButton pRipple type="button" icon="pi pi-pencil"
+                                                            class="p-button-outlined p-button-info p-button-sm mr-2"
+                                                            (click)="edit(plan)" pTooltip="Modifier"
+                                                            tooltipPosition="top">
+                                                        </button>
+                                                        <button pButton pRipple type="button" icon="pi pi-trash"
+                                                            (click)="delete(plan)"
+                                                            class="p-button-outlined p-button-danger p-button-sm"
+                                                            pTooltip="Suprimer" tooltipPosition="top">
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </ng-template>
 
-                                            </p-table>
-                                        </div>
+                                        </p-table>
                                     </div>
                                 </div>
+                            </div>
                             }
                         </div>
 
@@ -258,44 +230,32 @@
     </p-tabView>
 </div>
 
-<p-dialog [header]="isEdit?'Modification Plan action':'Ajout plan action'"
-          [(visible)]="displayDialog"
-          [style]="{ width: '50rem' }"
-          [breakpoints]="{ '960px': '95vw' }">
+<p-dialog [header]="isEdit?'Modification Plan action':'Ajout plan action'" [(visible)]="displayDialog"
+    [style]="{ width: '50rem' }" [breakpoints]="{ '960px': '95vw' }">
     <div class="grid p-fluid">
         <div class="col-12 field">
             <label for="causes" class="font-bold block mb-2">
                 Causes identifiées <span class="text-red-500">*</span>
             </label>
-            <textarea pInputTextarea id="causes" [(ngModel)]="planAction.causeIdentifiees"
-                      name="causes" rows="5" [autoResize]="true"
-                      placeholder="Entrer les causes "
-                      class="w-full"></textarea>
+            <textarea pInputTextarea id="causes" [(ngModel)]="planAction.causeIdentifiees" name="causes" rows="5"
+                [autoResize]="true" placeholder="Entrer les causes " class="w-full"></textarea>
 
         </div>
         <div class="col-12 field">
             <label for="solution" class="font-bold block mb-2">
                 Solutions retenues <span class="text-red-500">*</span>
             </label>
-            <textarea pInputTextarea id="solution" [(ngModel)]="planAction.solutionRetenues"
-                      name="solution" rows="5" [autoResize]="true"
-                      placeholder="Entrer les solutions  "
-                      class="w-full"></textarea>
+            <textarea pInputTextarea id="solution" [(ngModel)]="planAction.solutionRetenues" name="solution" rows="5"
+                [autoResize]="true" placeholder="Entrer les solutions  " class="w-full"></textarea>
         </div>
 
         <div class="col-12 field mt-2">
             <label for="responsable" class="font-bold block mb-2">
                 Responsable <span class="text-red-500">*</span>
             </label>
-            <p-select id="responsable"
-                        [options]="users"
-                        optionLabel="fullName"
-                        placeholder="Sélectionnez le responsable"
-                        [filter]="true"
-                        [showClear]="true"
-                        appendTo="body"
-                        [(ngModel)]="user"
-                        class="w-full">
+            <p-select id="responsable" [options]="users" optionLabel="fullName"
+                placeholder="Sélectionnez le responsable" [filter]="true" [showClear]="true" appendTo="body"
+                [(ngModel)]="user" class="w-full">
             </p-select>
         </div>
         <p-fluid class="card flex flex-wrap gap-2">
@@ -303,50 +263,32 @@
                 <label for="numeroOdre" class="font-bold block mb-2">
                     Numéro d'ordre <span class="text-red-500">*</span>
                 </label>
-                <input pInputText id="numeroOdre"
-                       [(ngModel)]="planAction.numeroOdre"
-                       type="number"
-                       class="w-full" />
+                <input pInputText id="numeroOdre" [(ngModel)]="planAction.numeroOdre" type="number" class="w-full" />
             </div>
             <div class="flex-auto">
                 <label for="dateEcheance" class="font-bold block mb-2">
                     Date d'échéance <span class="text-red-500">*</span>
                 </label>
-                <p-datePicker id="dateEcheance"
-                            [showIcon]="true"
-                            [showOnFocus]="false"
-                            [(ngModel)]="planAction.dateEcheance"
-                            class="w-full"
-                            appendTo="body"
-                            placeholder="DD/MM/YYYY">
+                <p-datePicker id="dateEcheance" [showIcon]="true" [showOnFocus]="false"
+                    [(ngModel)]="planAction.dateEcheance" class="w-full" appendTo="body" placeholder="DD/MM/YYYY">
                 </p-datePicker>
             </div>
         </p-fluid>
 
     </div>
     <ng-template #footer>
-        <button pButton pRipple type="button"
-                icon="pi pi-times"
-                class="p-button-outlined p-button-secondary"
-                label="Annuler"
-                (click)="hideDialog()">
+        <button pButton pRipple type="button" icon="pi pi-times" class="p-button-outlined p-button-secondary"
+            label="Annuler" (click)="hideDialog()">
         </button>
         @if (isEdit){
-            <button pButton pRipple type="button"
-                    icon="pi pi-check"
-                    [disabled]="!planAction.solutionRetenues"
-                    class="p-button-primary ml-2"
-                    (click)="save()"
-                    label="Modifier">
-            </button>
+        <button pButton pRipple type="button" icon="pi pi-check" [disabled]="!planAction.solutionRetenues"
+            class="p-button-primary ml-2" (click)="save()" label="Modifier">
+        </button>
         }
         @if (!isEdit){
-            <button pButton pRipple type="button"
-                    icon="pi pi-check"
-                    class="p-button-primary ml-2"
-                    (click)="save()"
-                    label="Ajouter">
-            </button>
+        <button pButton pRipple type="button" icon="pi pi-check" class="p-button-primary ml-2" (click)="save()"
+            label="Ajouter">
+        </button>
         }
 
     </ng-template>
@@ -354,10 +296,8 @@
 
 
 <!-- Dialog Détails Plan d'action -->
-<p-dialog [header]="'Détails  plan action '"
-          [(visible)]="afficheDialog"
-          [style]="{ width: '50rem' }"
-          [breakpoints]="{ '960px': '95vw' }">
+<p-dialog [header]="'Détails  plan action '" [(visible)]="afficheDialog" [style]="{ width: '50rem' }"
+    [breakpoints]="{ '960px': '95vw' }">
     <div class="grid">
         <div class="col-12">
             <div class="card nc-card">
@@ -369,7 +309,8 @@
                     </div>
                     <div class="nc-detail-item">
                         <span class="nc-detail-label font-bold">Responsable :</span>
-                        <span class="nc-detail-value">{{planAction.responsableNomComplet}} ({{planAction.responsableEmail}})</span>
+                        <span class="nc-detail-value">{{planAction.responsableNomComplet}}
+                            ({{planAction.responsableEmail}})</span>
                     </div>
                     <div class="nc-detail-item">
                         <span class="nc-detail-label font-bold">Date d'échéance : {{planAction.dateEcheance }}</span>
@@ -412,17 +353,14 @@
                     <h4 class="nc-card-title">Pièces jointes</h4>
                 </div>
                 <div class="flex flex-column gap-3">
-                    <div *ngFor="let fichier of planAction.fichiers" class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
+                    <div *ngFor="let fichier of planAction.fichiers"
+                        class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
                         <div class="flex align-items-center mt-3">
                             <span class="file-name">{{ fichier.nomFichier }}</span>
                         </div>
-                        <button pButton pRipple
-                                type="button"
-                                icon="pi pi-download"
-                                class="p-button-text p-button-rounded p-button-plain"
-                                (click)="downloadFile(fichier)"
-                                pTooltip="Télécharger"
-                                tooltipPosition="left">
+                        <button pButton pRipple type="button" icon="pi pi-download"
+                            class="p-button-text p-button-rounded p-button-plain" (click)="downloadFile(fichier)"
+                            pTooltip="Télécharger" tooltipPosition="left">
                         </button>
                     </div>
                 </div>
@@ -431,11 +369,8 @@
     </div>
 
     <ng-template #footer>
-        <button pButton pRipple type="button"
-                icon="pi pi-times"
-                class="p-button-outlined p-button-secondary"
-                label="Fermer"
-                (click)="hideDialogAffich()">
+        <button pButton pRipple type="button" icon="pi pi-times" class="p-button-outlined p-button-secondary"
+            label="Fermer" (click)="hideDialogAffich()">
         </button>
     </ng-template>
 </p-dialog>

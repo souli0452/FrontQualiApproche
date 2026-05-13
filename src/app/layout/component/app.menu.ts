@@ -30,10 +30,10 @@ import { app_roles } from '../../app-roles-utils';
 })
 export class AppMenu {
     model: MenuItem[] = [];
-    roles:any[]=[];
-constructor(private  authService: AuthService) {
+    roles: any[] = [];
+    constructor(private authService: AuthService) {
 
-}
+    }
     ngOnInit() {
         this.model = [
             {

@@ -1,9 +1,8 @@
 <div *ngIf="nc" class="nc-detail-container">
     <!-- Header avec bouton retour -->
     <div class="nc-header flex align-items-center mb-4">
-        <button pButton pRipple type="button" icon="pi pi-chevron-left"
-                class="p-button-text p-button-plain back-button"
-                (click)="goBack()">
+        <button pButton pRipple type="button" icon="pi pi-chevron-left" class="p-button-text p-button-plain back-button"
+            (click)="goBack()">
 
         </button>
         <span class="nc-reference ml-3 mt-3">N° ordre : {{planActionRequest.numeroOdre}}</span>
@@ -31,26 +30,24 @@
                     </div>
 
                     <div class="nc-detail-item">
-                        <span class="nc-detail-label block font-bold ">Status  :</span>
-                        <span class="nc-detail-value">  <p-tag [severity]="getStatusSeverity(planActionRequest.status)"
-                                                               [value]="planActionRequest.status">
-                                </p-tag></span>
+                        <span class="nc-detail-label block font-bold ">Status :</span>
+                        <span class="nc-detail-value"> <p-tag [severity]="getStatusSeverity(planActionRequest.status)"
+                                [value]="planActionRequest.status">
+                            </p-tag></span>
                     </div>
-                    <div class="nc-detail-item" *ngIf="planActionRequest.fichiers!=null&&planActionRequest.fichiers.length>0">
+                    <div class="nc-detail-item"
+                        *ngIf="planActionRequest.fichiers!=null&&planActionRequest.fichiers.length>0">
                         <span class="nc-detail-label block font-bold ">Pièces jointes</span>
 
 
-                        <div *ngFor="let fichier of planActionRequest.fichiers" class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
+                        <div *ngFor="let fichier of planActionRequest.fichiers"
+                            class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
                             <div class="flex align-items-center mt-3">
                                 <span class="file-name">{{ fichier.nomFichier }}</span>
                             </div>
-                            <button pButton pRipple
-                                    type="button"
-                                    icon="pi pi-download"
-                                    class="p-button-text p-button-rounded p-button-plain"
-                                    (click)="downloadFile(fichier)"
-                                    pTooltip="Télécharger"
-                                    tooltipPosition="left">
+                            <button pButton pRipple type="button" icon="pi pi-download"
+                                class="p-button-text p-button-rounded p-button-plain" (click)="downloadFile(fichier)"
+                                pTooltip="Télécharger" tooltipPosition="left">
                             </button>
                         </div>
 
@@ -63,12 +60,12 @@
                         <span class="nc-detail-label block font-bold text-warn">Observation réjet</span>
                         <span class="nc-detail-value">
                             <p-tag [severity]="getStatusSeverity(StatusEnum.REJECTED)"
-                                   [value]="planActionRequest.observationRejet">
-                                </p-tag>
-              </span>
+                                [value]="planActionRequest.observationRejet">
+                            </p-tag>
+                        </span>
                     </div>
                     <div class="nc-detail-item" *ngIf="planActionRequest.dateRejet">
-                        <span class="nc-detail-label block font-bold text-warn">Date de  réjet</span>
+                        <span class="nc-detail-label block font-bold text-warn">Date de réjet</span>
                         <span class="nc-detail-value">{{planActionRequest.dateRejet}}</span>
                     </div>
                     <div class="nc-detail-item" *ngIf="planActionRequest.docRejet">
@@ -76,316 +73,301 @@
                         <div class="flex align-items-center mt-3">
                             <span class="file-name">{{ planActionRequest.docRejet.nomFichier }}</span>
                         </div>
-                        <button pButton pRipple
-                                type="button"
-                                icon="pi pi-download"
-                                class="p-button-text p-button-rounded p-button-plain"
-                                (click)="downloadFile(planActionRequest.docRejet)"
-                                pTooltip="Télécharger"
-                                tooltipPosition="left">
+                        <button pButton pRipple type="button" icon="pi pi-download"
+                            class="p-button-text p-button-rounded p-button-plain"
+                            (click)="downloadFile(planActionRequest.docRejet)" pTooltip="Télécharger"
+                            tooltipPosition="left">
                         </button>
                     </div>
 
 
                 </div>
             </div>
-        <!-- Colonne gauche - Détails -->
-        <div class="col-12 md:col-6">
-            <div class="card nc-card">
-                <h3 class="nc-card-title">
-                    <i class="pi pi-info-circle mr-2"></i>Détails de la non-conformité
-                </h3>
-                <div class="nc-details-grid">
-                    <div class="nc-detail-item">
-                        <span class="block font-bold  nc-detail-label">Processus Destinataire :</span>
-                        <span class="nc-detail-value">{{nc.origineService}} ({{nc.origineServiceLibelleCourt}})</span>
-                    </div>
-                    <div class="nc-detail-item">
-                        <span class="nc-detail-label block font-bold ">Processus de soumission :</span>
-                        <span class="nc-detail-value">{{nc.structureSoumissionLibelle}} ({{nc.structureSoumissionLibelle}})</span>
-                    </div>
-                    <div class="nc-detail-item">
-                        <span class="nc-detail-label block font-bold ">Émetteur :</span>
-                        <span class="nc-detail-value">{{nc.currentUserfullName}}</span>
-                    </div>
-                    <div class="nc-detail-item block font-bold ">
-                        <span class="nc-detail-label">Date de création :</span>
-                        <span class="nc-detail-value">{{nc.createdAt }}</span>
-                    </div>
-                    <div class="nc-detail-item">
-                        <span class="nc-detail-label block font-bold ">Origine  :</span>
-                        <span class="nc-detail-value">{{nc.typeNonConformiteLibelle}}</span>
-                    </div>
-                    <div class="nc-detail-item">
-                        <span class="nc-detail-label block font-bold ">Type de processus:</span>
-                        <span class="nc-detail-value">{{nc.typeProcessusLibelle}}</span>
-                    </div>
-                    <div class="nc-detail-item" *ngIf="nc.actionLibelle">
-                        <span class="nc-detail-label block font-bold ">Type d'action :</span>
-                        <span class="nc-detail-value">{{nc.actionLibelle}}</span>
-                    </div>
-                    <div class="nc-detail-item">
-                        <span class="nc-detail-label block font-bold ">Niveau :</span>
-                        <span class="nc-detail-value">{{nc.niveauNonConformiteLibelle}}</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Validation Pilote -->
-            <div class="card nc-card mt-4" *ngIf="nc.pertinancePilote">
-                <h3 class="nc-card-title">
-                    <i class="pi pi-check-circle mr-2 block font-bold "></i>Validation par le pilote processus
-                </h3>
-                <div class="nc-details-grid">
-                    <div class="nc-detail-item">
-                        <span class="nc-detail-label block font-bold ">Pertinence :</span>
-                        <span class="nc-detail-value">{{nc.pertinancePilote}}</span>
-                    </div>
-                    <div class="nc-detail-item" *ngIf="nc.justificationPilote">
-                        <span class="nc-detail-label block font-bold ">Justification :</span>
-                        <span class="nc-detail-value" [innerHTML]="nc.justificationPilote"></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Colonne droite - Descriptions -->
-        <div class="col-12 md:col-6">
-            <div class="card nc-card">
-                <h3 class="nc-card-title">
-                    <i class="pi pi-file mr-2 block font-bold "></i>Description de la non-conformité
-                </h3>
-                <div class="nc-description">
-                    {{nc.justification || 'Aucune description fournie'}}
-                </div>
-            </div>
-
-            <div class="card nc-card mt-4">
-                <h3 class="nc-card-title">
-                    <i class="pi pi-list mr-2 block font-bold "></i>Actions entreprises
-                </h3>
-                <div class="nc-description">
-                    {{nc.actionDsc || 'Aucune action entreprise'}}
-                </div>
-            </div>
-        </div>
-
-        <!-- Validation RS -->
-        <div class="col-12 md:col-6" *ngIf="nc.pertinanceRs">
-            <div class="card nc-card mt-4">
-                <h3 class="nc-card-title">
-                    <i class="pi pi-shield mr-2 block font-bold "></i>Validation RS
-                </h3>
-                <div class="nc-details-grid">
-                    <div class="nc-detail-item">
-                        <span class="nc-detail-label">Pertinence :</span>
-                        <span class="nc-detail-value">{{nc.pertinanceRs}}</span>
-                    </div>
-                    <div class="nc-detail-item" *ngIf="nc.justificationRs">
-                        <span class="nc-detail-label block font-bold ">Justification :</span>
-                        <span class="nc-detail-value" [innerHTML]="nc.justificationRs"></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Suivi RMQ -->
-        <div class="col-12 md:col-6" *ngIf="nc.pertinanceRsSuivi">
-            <div class="card nc-card mt-4">
-                <h3 class="nc-card-title">
-                    <i class="pi pi-chart-line mr-2 block font-bold "></i>Suivi du Responsable Qualité
-                </h3>
-                <div class="nc-details-grid">
-                    <div class="nc-detail-item">
-                        <span class="nc-detail-label block font-bold ">Pertinence :</span>
-                        <span class="nc-detail-value">{{nc.pertinanceRsSuivi || '-'}}</span>
-                    </div>
-                    <div class="nc-detail-item">
-                        <span class="nc-detail-label block font-bold ">Date :</span>
-                        <span class="nc-detail-value">{{nc.dateSuivi || '-'}}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Motif de rejet -->
-        <div class="col-12" *ngIf="nc.observationRejet">
-            <div class="card nc-card mt-4 nc-rejection">
-                <h3 class="nc-card-title text-red-500">
-                    <i class="pi pi-times-circle mr-2 block font-bold "></i>Motif de rejet
-                </h3>
-                <div class="nc-description">
-                    {{nc.observationRejet}}
-                </div>
-            </div>
-        </div>
-
-        <!-- Documents joints -->
-        <div class="col-12" *ngIf="nc.fichiers?.length > 0">
-            <div class="card nc-card mt-4">
-                <h3 class="nc-card-title">
-                    <i class="pi pi-paperclip mr-2 block font-bold "></i>Documents joints
-                </h3>
-                <div *ngFor="let fichier of nc.fichiers" class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
-                    <div class="flex align-items-center mt-3">
-                        <span class="file-name">{{ fichier.nomFichier }}</span>
-                    </div>
-                    <button pButton pRipple
-                            type="button"
-                            icon="pi pi-download"
-                            class="p-button-text p-button-rounded p-button-plain"
-                            (click)="downloadFile(fichier)"
-                            pTooltip="Télécharger"
-                            tooltipPosition="left">
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Participants -->
-        <div class="col-12" *ngIf="nc.participants?.length > 0">
-            <div class="card nc-card mt-4">
-                <h3 class="nc-card-title">
-                    <i class="pi pi-users mr-2"></i>Participants
-                </h3>
-                <div class="flex flex-wrap gap-2">
-                    <p-chip *ngFor="let participant of nc.participants"
-                            icon="pi pi-user"
-                            [label]="participant"
-                            class="mr-2 mb-2">
-                    </p-chip>
-                </div>
-            </div>
-        </div>
-
-        <!-- Plans d'actions -->
-        <div class="col-12" *ngIf="nc?.planActions?.length > 0">
-            <div class="card nc-card mt-4">
-                <h3 class="nc-card-title">
-                    <i class="pi pi-bars mr-2"></i>Plans d'actions
-                </h3>
-                <p-table [value]="nc?.planActions" [rowHover]="true" styleClass="p-datatable-sm"
-                         [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
-                         [loading]="loading"
-                         [showLoader]="false"
-                         currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments">
-                    <ng-template pTemplate="header">
-                        <tr>
-                            <th>N° ordre</th>
-                            <th>Responsable</th>
-                            <th>Date échéance</th>
-                            <th>Statut</th>
-                            <th style="width: 120px">Actions</th>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="body" let-plan>
-                        <tr>
-                            <td>{{plan.numeroOdre}}</td>
-                            <td>{{plan.responsableNomComplet}}</td>
-                            <td>{{plan.dateEcheance}}</td>
-                            <td>
-                                <p-tag [severity]="getStatusSeverity(plan.status)" [value]="plan.status"></p-tag>
-                            </td>
-                            <td>
-                                <button pButton pRipple type="button" icon="pi pi-eye"
-                                        class="p-button-outlined p-button-secondary p-button-sm"
-                                        (click)="affich(plan)"
-                                        pTooltip="Voir détails" tooltipPosition="top">
-                                </button>
-                            </td>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="emptymessage">
-                        <tr>
-                            <td colspan="5" class="text-center">Aucun plan d'action défini</td>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="loadingbody">
-                        <tr *ngFor="let i of [1,2,3,4,5]">
-                            <td><p-skeleton width="100%" height="1rem"></p-skeleton></td>
-                            <td><p-skeleton width="100%" height="1rem"></p-skeleton></td>
-                            <td><p-skeleton width="100%" height="1rem"></p-skeleton></td>
-                            <td><p-skeleton width="100%" height="1rem"></p-skeleton></td>
-                            <td><p-skeleton width="100%" height="1rem"></p-skeleton></td>
-                        </tr>
-                    </ng-template>
-                </p-table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Dialog Plan d'action -->
-    <p-dialog [header]="'Détails du plan action n°'+planAction?.numeroOrdre"
-              [(visible)]="afficheDialog"
-              [style]="{ width: '50rem' }"
-              [breakpoints]="{ '960px': '95vw' }">
-        <div class="grid">
-            <div class="col-12">
+            <!-- Colonne gauche - Détails -->
+            <div class="col-12 md:col-6">
                 <div class="card nc-card">
-                    <h4 class="nc-card-title">Informations générales</h4>
+                    <h3 class="nc-card-title">
+                        <i class="pi pi-info-circle mr-2"></i>Détails de la non-conformité
+                    </h3>
                     <div class="nc-details-grid">
                         <div class="nc-detail-item">
-                            <span class="nc-detail-label">N° Ordre :</span>
-                            <span class="nc-detail-value">{{ planAction?.numeroOdre }}</span>
+                            <span class="block font-bold  nc-detail-label">Processus Destinataire :</span>
+                            <span class="nc-detail-value">{{nc.origineService}}
+                                ({{nc.origineServiceLibelleCourt}})</span>
                         </div>
                         <div class="nc-detail-item">
-                            <span class="nc-detail-label">Responsable :</span>
-                            <span class="nc-detail-value">{{planAction?.responsableNomComplet}} ({{planAction?.responsableEmail}})</span>
+                            <span class="nc-detail-label block font-bold ">Processus de soumission :</span>
+                            <span class="nc-detail-value">{{nc.structureSoumissionLibelle}}
+                                ({{nc.structureSoumissionLibelle}})</span>
                         </div>
                         <div class="nc-detail-item">
-                            <span class="nc-detail-label">Date d'échéance :</span>
-                            <span class="nc-detail-value">{{planAction?.dateEcheance }}</span>
+                            <span class="nc-detail-label block font-bold ">Émetteur :</span>
+                            <span class="nc-detail-value">{{nc.currentUserfullName}}</span>
+                        </div>
+                        <div class="nc-detail-item block font-bold ">
+                            <span class="nc-detail-label">Date de création :</span>
+                            <span class="nc-detail-value">{{nc.createdAt }}</span>
+                        </div>
+                        <div class="nc-detail-item">
+                            <span class="nc-detail-label block font-bold ">Origine :</span>
+                            <span class="nc-detail-value">{{nc.typeNonConformiteLibelle}}</span>
+                        </div>
+                        <div class="nc-detail-item">
+                            <span class="nc-detail-label block font-bold ">Type de processus:</span>
+                            <span class="nc-detail-value">{{nc.typeProcessusLibelle}}</span>
+                        </div>
+                        <div class="nc-detail-item" *ngIf="nc.actionLibelle">
+                            <span class="nc-detail-label block font-bold ">Type d'action :</span>
+                            <span class="nc-detail-value">{{nc.actionLibelle}}</span>
+                        </div>
+                        <div class="nc-detail-item">
+                            <span class="nc-detail-label block font-bold ">Niveau :</span>
+                            <span class="nc-detail-value">{{nc.niveauNonConformiteLibelle}}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Validation Pilote -->
+                <div class="card nc-card mt-4" *ngIf="nc.pertinancePilote">
+                    <h3 class="nc-card-title">
+                        <i class="pi pi-check-circle mr-2 block font-bold "></i>Validation par le pilote processus
+                    </h3>
+                    <div class="nc-details-grid">
+                        <div class="nc-detail-item">
+                            <span class="nc-detail-label block font-bold ">Pertinence :</span>
+                            <span class="nc-detail-value">{{nc.pertinancePilote}}</span>
+                        </div>
+                        <div class="nc-detail-item" *ngIf="nc.justificationPilote">
+                            <span class="nc-detail-label block font-bold ">Justification :</span>
+                            <span class="nc-detail-value" [innerHTML]="nc.justificationPilote"></span>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Colonne droite - Descriptions -->
             <div class="col-12 md:col-6">
-                <div class="card nc-card mt-3">
-                    <h4 class="nc-card-title">Causes identifiées</h4>
+                <div class="card nc-card">
+                    <h3 class="nc-card-title">
+                        <i class="pi pi-file mr-2 block font-bold "></i>Description de la non-conformité
+                    </h3>
                     <div class="nc-description">
-                        {{planAction?.causeIdentifiees || 'Aucune cause identifiée'}}
+                        {{nc.justification || 'Aucune description fournie'}}
+                    </div>
+                </div>
+
+                <div class="card nc-card mt-4">
+                    <h3 class="nc-card-title">
+                        <i class="pi pi-list mr-2 block font-bold "></i>Actions entreprises
+                    </h3>
+                    <div class="nc-description">
+                        {{nc.actionDsc || 'Aucune action entreprise'}}
                     </div>
                 </div>
             </div>
 
-            <div class="col-12 md:col-6">
-                <div class="card nc-card mt-3">
-                    <h4 class="nc-card-title">Solutions retenues</h4>
-                    <div class="nc-description">
-                        {{planAction?.solutionRetenues || 'Aucune solution retenue'}}
+            <!-- Validation RS -->
+            <div class="col-12 md:col-6" *ngIf="nc.pertinanceRs">
+                <div class="card nc-card mt-4">
+                    <h3 class="nc-card-title">
+                        <i class="pi pi-shield mr-2 block font-bold "></i>Validation RS
+                    </h3>
+                    <div class="nc-details-grid">
+                        <div class="nc-detail-item">
+                            <span class="nc-detail-label">Pertinence :</span>
+                            <span class="nc-detail-value">{{nc.pertinanceRs}}</span>
+                        </div>
+                        <div class="nc-detail-item" *ngIf="nc.justificationRs">
+                            <span class="nc-detail-label block font-bold ">Justification :</span>
+                            <span class="nc-detail-value" [innerHTML]="nc.justificationRs"></span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-12" *ngIf="planAction?.fichiers?.length > 0">
-                <div class="card nc-card mt-3">
-                    <h4 class="nc-card-title">
-                        <i class="pi pi-paperclip mr-2"></i>Pièces jointes
-                    </h4>
-                    <div *ngFor="let fichier of planAction.fichiers" class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
+            <!-- Suivi RMQ -->
+            <div class="col-12 md:col-6" *ngIf="nc.pertinanceRsSuivi">
+                <div class="card nc-card mt-4">
+                    <h3 class="nc-card-title">
+                        <i class="pi pi-chart-line mr-2 block font-bold "></i>Suivi du Responsable Qualité
+                    </h3>
+                    <div class="nc-details-grid">
+                        <div class="nc-detail-item">
+                            <span class="nc-detail-label block font-bold ">Pertinence :</span>
+                            <span class="nc-detail-value">{{nc.pertinanceRsSuivi || '-'}}</span>
+                        </div>
+                        <div class="nc-detail-item">
+                            <span class="nc-detail-label block font-bold ">Date :</span>
+                            <span class="nc-detail-value">{{nc.dateSuivi || '-'}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Motif de rejet -->
+            <div class="col-12" *ngIf="nc.observationRejet">
+                <div class="card nc-card mt-4 nc-rejection">
+                    <h3 class="nc-card-title text-red-500">
+                        <i class="pi pi-times-circle mr-2 block font-bold "></i>Motif de rejet
+                    </h3>
+                    <div class="nc-description">
+                        {{nc.observationRejet}}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents joints -->
+            <div class="col-12" *ngIf="nc.fichiers?.length > 0">
+                <div class="card nc-card mt-4">
+                    <h3 class="nc-card-title">
+                        <i class="pi pi-paperclip mr-2 block font-bold "></i>Documents joints
+                    </h3>
+                    <div *ngFor="let fichier of nc.fichiers"
+                        class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
                         <div class="flex align-items-center mt-3">
                             <span class="file-name">{{ fichier.nomFichier }}</span>
                         </div>
-                        <button pButton pRipple
-                                type="button"
-                                icon="pi pi-download"
-                                class="p-button-text p-button-rounded p-button-plain"
-                                (click)="downloadFile(fichier)"
-                                pTooltip="Télécharger"
-                                tooltipPosition="left">
+                        <button pButton pRipple type="button" icon="pi pi-download"
+                            class="p-button-text p-button-rounded p-button-plain" (click)="downloadFile(fichier)"
+                            pTooltip="Télécharger" tooltipPosition="left">
                         </button>
                     </div>
                 </div>
             </div>
+
+            <!-- Participants -->
+            <div class="col-12" *ngIf="nc.participants?.length > 0">
+                <div class="card nc-card mt-4">
+                    <h3 class="nc-card-title">
+                        <i class="pi pi-users mr-2"></i>Participants
+                    </h3>
+                    <div class="flex flex-wrap gap-2">
+                        <p-chip *ngFor="let participant of nc.participants" icon="pi pi-user" [label]="participant"
+                            class="mr-2 mb-2">
+                        </p-chip>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plans d'actions -->
+            <div class="col-12" *ngIf="nc?.planActions?.length > 0">
+                <div class="card nc-card mt-4">
+                    <h3 class="nc-card-title">
+                        <i class="pi pi-bars mr-2"></i>Plans d'actions
+                    </h3>
+                    <p-table [value]="nc?.planActions" [rowHover]="true" styleClass="p-datatable-sm" [paginator]="true"
+                        [rows]="5" [showCurrentPageReport]="true" [loading]="loading" [showLoader]="false"
+                        currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th>N° ordre</th>
+                                <th>Responsable</th>
+                                <th>Date échéance</th>
+                                <th>Statut</th>
+                                <th style="width: 120px">Actions</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-plan>
+                            <tr>
+                                <td>{{plan.numeroOdre}}</td>
+                                <td>{{plan.responsableNomComplet}}</td>
+                                <td>{{plan.dateEcheance}}</td>
+                                <td>
+                                    <p-tag [severity]="getStatusSeverity(plan.status)" [value]="plan.status"></p-tag>
+                                </td>
+                                <td>
+                                    <button pButton pRipple type="button" icon="pi pi-eye"
+                                        class="p-button-outlined p-button-secondary p-button-sm" (click)="affich(plan)"
+                                        pTooltip="Voir détails" tooltipPosition="top">
+                                    </button>
+                                </td>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="5" class="text-center">Aucun plan d'action défini</td>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="loadingbody">
+                            <tr *ngFor="let i of [1,2,3,4,5]">
+                                <td><p-skeleton width="100%" height="1rem"></p-skeleton></td>
+                                <td><p-skeleton width="100%" height="1rem"></p-skeleton></td>
+                                <td><p-skeleton width="100%" height="1rem"></p-skeleton></td>
+                                <td><p-skeleton width="100%" height="1rem"></p-skeleton></td>
+                                <td><p-skeleton width="100%" height="1rem"></p-skeleton></td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
+            </div>
         </div>
-        <ng-template pTemplate="footer">
-            <button pButton pRipple type="button"
-                    class="p-button-outlined p-button-secondary"
-                    label="Fermer"
+
+        <!-- Dialog Plan d'action -->
+        <p-dialog [header]="'Détails du plan action n°'+planAction?.numeroOrdre" [(visible)]="afficheDialog"
+            [style]="{ width: '50rem' }" [breakpoints]="{ '960px': '95vw' }">
+            <div class="grid">
+                <div class="col-12">
+                    <div class="card nc-card">
+                        <h4 class="nc-card-title">Informations générales</h4>
+                        <div class="nc-details-grid">
+                            <div class="nc-detail-item">
+                                <span class="nc-detail-label">N° Ordre :</span>
+                                <span class="nc-detail-value">{{ planAction?.numeroOdre }}</span>
+                            </div>
+                            <div class="nc-detail-item">
+                                <span class="nc-detail-label">Responsable :</span>
+                                <span class="nc-detail-value">{{planAction?.responsableNomComplet}}
+                                    ({{planAction?.responsableEmail}})</span>
+                            </div>
+                            <div class="nc-detail-item">
+                                <span class="nc-detail-label">Date d'échéance :</span>
+                                <span class="nc-detail-value">{{planAction?.dateEcheance }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 md:col-6">
+                    <div class="card nc-card mt-3">
+                        <h4 class="nc-card-title">Causes identifiées</h4>
+                        <div class="nc-description">
+                            {{planAction?.causeIdentifiees || 'Aucune cause identifiée'}}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 md:col-6">
+                    <div class="card nc-card mt-3">
+                        <h4 class="nc-card-title">Solutions retenues</h4>
+                        <div class="nc-description">
+                            {{planAction?.solutionRetenues || 'Aucune solution retenue'}}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12" *ngIf="planAction?.fichiers?.length > 0">
+                    <div class="card nc-card mt-3">
+                        <h4 class="nc-card-title">
+                            <i class="pi pi-paperclip mr-2"></i>Pièces jointes
+                        </h4>
+                        <div *ngFor="let fichier of planAction.fichiers"
+                            class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
+                            <div class="flex align-items-center mt-3">
+                                <span class="file-name">{{ fichier.nomFichier }}</span>
+                            </div>
+                            <button pButton pRipple type="button" icon="pi pi-download"
+                                class="p-button-text p-button-rounded p-button-plain" (click)="downloadFile(fichier)"
+                                pTooltip="Télécharger" tooltipPosition="left">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <ng-template pTemplate="footer">
+                <button pButton pRipple type="button" class="p-button-outlined p-button-secondary" label="Fermer"
                     (click)="hideDialogAffich()">
-            </button>
-        </ng-template>
-    </p-dialog>
-</div>
+                </button>
+            </ng-template>
+        </p-dialog>
+    </div>
 </div>

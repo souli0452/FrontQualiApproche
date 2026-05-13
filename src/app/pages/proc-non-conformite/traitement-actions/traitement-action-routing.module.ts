@@ -11,11 +11,11 @@ import { RejeterComponent } from './traitement-action-rejete/rejeter.component';
     imports: [RouterModule.forChild([
         {
             path: '', component: TraitementActionComponent, children: [
-                {path: '', redirectTo: 'non-traiter', pathMatch: 'full'},
-                {path: 'detail/:id', data: {breadcrumb: 'Détail'}, component: PlanActionDetailComponent},
-                {path: 'traiter', data: {breadcrumb: 'Brouillons'}, component: TraiterComponent},
-                {path: 'rejeter', data: {breadcrumb: 'Réjétés'}, component: RejeterComponent},
-                {path: 'non-traiter', data: {breadcrumb: 'Publiées'}, component: NonTraiterComponent, title: 'Mise en oeuvre des plans d\'action'},
+                { path: '', redirectTo: 'non-traiter', pathMatch: 'full' },
+                { path: 'detail/:id', data: { breadcrumb: 'Détail' }, component: PlanActionDetailComponent },
+                { path: 'traiter', data: { breadcrumb: 'Brouillons' }, component: TraiterComponent },
+                { path: 'rejeter', data: { breadcrumb: 'Réjétés' }, component: RejeterComponent },
+                { path: 'non-traiter', data: { breadcrumb: 'Publiées' }, component: NonTraiterComponent, title: 'Mise en oeuvre des plans d\'action' },
             ]
         }
     ])],

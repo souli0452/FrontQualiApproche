@@ -24,24 +24,24 @@ import { ProcNonConformiteService } from '../../proc-non-conformite.service';
 export class NonConformitFormsComponent {
     @Input() demande: any;
     editForm!: UntypedFormGroup;
-    responsable:any;
-    planActions:any[]=[];
+    responsable: any;
+    planActions: any[] = [];
     protected readonly BtnActions = EtapeTraitement;
     planActionForm: FormGroup;
     actions: FormArray;
-    user:any={};
-    selectedPlans:any=[];
-    isEdit:boolean=false;
+    user: any = {};
+    selectedPlans: any = [];
+    isEdit: boolean = false;
     submitted = false;
-    displayDialog:boolean = false;
-    planAction:any={};
-    participants:any[]=[];
-    users:any=[];
-     afficheDialog: boolean=false;
+    displayDialog: boolean = false;
+    planAction: any = {};
+    participants: any[] = [];
+    users: any = [];
+    afficheDialog: boolean = false;
     constructor(
         private fb: FormBuilder,
         private authService: AuthService,
-        private service:ProcNonConformiteService,
+        private service: ProcNonConformiteService,
         private messageService: MessageService,
     ) {
 
@@ -59,7 +59,7 @@ export class NonConformitFormsComponent {
             this.planActionForm = this.fb.group({
                 actions: actionsArray
             });
-        }else {
+        } else {
             this.planActionForm = this.fb.group({
                 actions: this.fb.array([this.createAction()])
             });
@@ -71,7 +71,7 @@ export class NonConformitFormsComponent {
 
     ngOnInit() {
         if (this.demande?.planActions?.length > 0) {
-            this.planActions=this.demande.planActions;
+            this.planActions = this.demande.planActions;
         }
     }
 
@@ -89,21 +89,22 @@ export class NonConformitFormsComponent {
             this.demande.numeroFdac = this.editForm.get('numeroFdac')?.value;
         }
         if (this.demande.etatTraitement === EtapeTraitement.TRAITEMENT) {
-            this.demande.participants = this.editForm.get('participants')?.value??[];
+            this.demande.participants = this.editForm.get('participants')?.value ?? [];
             const actions = this.planActionForm.get('actions')?.value as any[];  // ou FormArray si besoin
             this.demande.planActions = actions.map(value => {
                 return {
                     ...value,
                     dateEcheance: formatDateToDDMMYYYY(value.dateEcheance),
                     responsableEmail: value.responsable?.email,
-                    causeIdentifiees:value.causeIdentifiees,
-                    solutionRetenues:value.solutionRetenues,
+                    causeIdentifiees: value.causeIdentifiees,
+                    solutionRetenues: value.solutionRetenues,
                     responsableNomComplet: `${value.responsable?.firstName ?? ''} ${value.responsable?.lastName ?? ''}`,
                     responsableId: value.responsable?.id,
-                    status:"INACTIF"
+                    status: "INACTIF"
                 };
             });
-        }}
+        }
+    }
 
     createAction(): FormGroup {
         return this.fb.group({
@@ -117,7 +118,7 @@ export class NonConformitFormsComponent {
             responsableId: [''],
             responsableNomComplet: [''],
             responsableEmail: [''],
-            nonConformiteID:[this.demande?.id]
+            nonConformiteID: [this.demande?.id]
         });
     }
     addAction(): void {
@@ -130,7 +131,7 @@ export class NonConformitFormsComponent {
             .subscribe({
                 next: (res) => {
                     this.users = res.body || [];
-                    this.users=this.users.map((user:any) => {
+                    this.users = this.users.map((user: any) => {
                         return {
                             ...user,
                             fullName: user.firstName + ' ' + user.lastName,
@@ -159,35 +160,35 @@ export class NonConformitFormsComponent {
     }
 
     protected readonly getStatusSeverity = getStatusSeverity;
-    openDialog(){
-        this.displayDialog=true;
-        this.isEdit=false;
-        this.planAction={}
+    openDialog() {
+        this.displayDialog = true;
+        this.isEdit = false;
+        this.planAction = {}
     }
-    edit(plan:any){
-        this.planAction=plan;
-        this.planAction.dateEcheance=plan.dateEcheance.replace(/-/g, "/");
-        this.displayDialog=true;
+    edit(plan: any) {
+        this.planAction = plan;
+        this.planAction.dateEcheance = plan.dateEcheance.replace(/-/g, "/");
+        this.displayDialog = true;
         this.fetchUsers();
-        this.isEdit=true;
+        this.isEdit = true;
 
 
     }
     save() {
 
-        this.planAction.responsableEmail=this.user.email;
-        this.planAction.responsableNomComplet=this.user.firstName + ' ' + this.user.lastName;
-        this.planAction.responsableId=this.user.id;
+        this.planAction.responsableEmail = this.user.email;
+        this.planAction.responsableNomComplet = this.user.firstName + ' ' + this.user.lastName;
+        this.planAction.responsableId = this.user.id;
         if (!this.isEdit) {
-            this.planAction.dateEcheance=formatDateToDDMMYYYY(this.planAction.dateEcheance);
-            this.planAction.status="INACTIF"
+            this.planAction.dateEcheance = formatDateToDDMMYYYY(this.planAction.dateEcheance);
+            this.planAction.status = "INACTIF"
             this.planActions.push(this.planAction);
 
-            this.demande.planActions=this.planActions;
-            this.displayDialog=false;
-        }else {
+            this.demande.planActions = this.planActions;
+            this.displayDialog = false;
+        } else {
             console.log(this.planAction)
-            this.planAction.dateEcheance=this.planAction.dateEcheance.replace(/\//g, "-");
+            this.planAction.dateEcheance = this.planAction.dateEcheance.replace(/\//g, "-");
             this.service.updatePlanAction(this.planAction).subscribe({
                 next: (data) => {
                     this.displayDialog = false;
@@ -201,11 +202,11 @@ export class NonConformitFormsComponent {
         }
 
     }
-    delete(plan:any) {
-      this.demande.planActions=this.demande.planActions.remove(plan);
+    delete(plan: any) {
+        this.demande.planActions = this.demande.planActions.remove(plan);
     }
     hideDialog() {
-       this.displayDialog=false;
+        this.displayDialog = false;
     }
     affich(action: any) {
         this.planAction = action;
@@ -215,9 +216,9 @@ export class NonConformitFormsComponent {
     validerPlans() {
         // Traitement des plans sélectionnés
         console.log('Plans à valider :', this.selectedPlans);
-        const  dmd={
-            nonConformiteId:this.demande.id,
-            planIds:this.selectedPlans.map((plan: { id: any; }) => plan.id)
+        const dmd = {
+            nonConformiteId: this.demande.id,
+            planIds: this.selectedPlans.map((plan: { id: any; }) => plan.id)
         }
         this.service.validatePlanAction(dmd).subscribe({
             next: (data) => {
@@ -232,7 +233,7 @@ export class NonConformitFormsComponent {
         });
     }
     downloadFile(fichier: any) {
-        downloadFile(fichier.nomFichier,fichier.fichierBase64);
+        downloadFile(fichier.nomFichier, fichier.fichierBase64);
     }
     hideDialogAffich() {
         this.afficheDialog = false;

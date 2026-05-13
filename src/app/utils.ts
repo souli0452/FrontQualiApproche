@@ -12,7 +12,16 @@ export interface ReportingInput {
     entityId?: string;
     structureId?: string;
 }
-
+export class PieceJointe {
+    id?: number;
+    nom?: string;
+    ext?: string;
+    type?: string;
+    url?: string;
+    entityId?: number;
+    fichier?: string | null;
+    createdDate?: Date;
+}
 export enum ReportFormat {
     PDF = 'PDF', WORD = 'WORD', EXCEL = 'EXCEL', CSV = 'CSV', XPRINT = 'XPRINT'
 }
@@ -353,6 +362,16 @@ export function isModuleSubscribed(moduleName: string): boolean {
     return user.modulesSubscribed?.includes(moduleName) || false;
 }
 
+export function onFileUpload(file: File, rowdata: PieceJointe) {
+    const reader = new FileReader();
+    reader.onload = () => {
+        const result: any = reader.result;
+        rowdata.fichier = result.split(',')[1];
+        rowdata.nom = file.name;
+        rowdata.type = file.type;
+    };
+    reader.readAsDataURL(file);
+}
 
 
 export function convertFilesToBase64(files: { file: File; extension: string; name: string; size: string; loading: boolean; icon: string }[]): Promise<any[]> {

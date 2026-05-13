@@ -1,8 +1,8 @@
 import { Component, ComponentRef, EventEmitter, Input, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CommonModule, DatePipe } from '@angular/common';
-import {FeaturesService} from "../../services/feature-service";
-import {  TypeDemande} from "../../utils";
+import { FeaturesService } from "../../services/feature-service";
+import { TypeDemande } from "../../utils";
 import { EtapeTraitement, StatusEnum } from '../../enums';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { BadgeModule } from 'primeng/badge';

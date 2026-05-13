@@ -1,12 +1,12 @@
 <div class="nc-detail-container">
     <!-- Section Principale -->
     <div class="grid">
-        <div class="field mt-5 mb-4" *ngIf="(demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.SUIVI_RQ)&&demande.btnActions!==EtapeTraitement.CLOTURE">
+        <div class="field mt-5 mb-4"
+            *ngIf="(demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.SUIVI_RQ)&&demande.btnActions!==EtapeTraitement.CLOTURE">
             <label for="justification" class="block font-bold  mb-2">Action préventive (facultative)</label>
-            <textarea pInputTextarea id="justification" [(ngModel)]="demande.actionPreventive"
-                      name="justification" rows="5" [autoResize]="true"
-                      placeholder="Décrivez les actions préventives..."
-                      class="w-full"></textarea>
+            <textarea pInputTextarea id="justification" [(ngModel)]="demande.actionPreventive" name="justification"
+                rows="5" [autoResize]="true" placeholder="Décrivez les actions préventives..."
+                class="w-full"></textarea>
 
         </div>
         <!-- Colonne Gauche -->
@@ -24,7 +24,8 @@
                     </div>
                     <div class="nc-detail-item">
                         <span class="nc-detail-label">Processus Destinataire :</span>
-                        <span class="nc-detail-value">{{demande.origineService}} ({{demande.origineServiceLibelleCourt}})</span>
+                        <span class="nc-detail-value">{{demande.origineService}}
+                            ({{demande.origineServiceLibelleCourt}})</span>
                     </div>
                     <div class="nc-detail-item">
                         <span class="nc-detail-label">Processus de soumission :</span>
@@ -66,8 +67,9 @@
                 </div>
                 <div class="nc-details-grid">
                     <div class="nc-detail-item">
-                        <span class="nc-detail-label">Pertinence :</span> 
-                        <p-tag [severity]="getStatusSeverity(demande.pertinancePilote)" [value]="demande.pertinancePilote"> </p-tag>
+                        <span class="nc-detail-label">Pertinence :</span>
+                        <p-tag [severity]="getStatusSeverity(demande.pertinancePilote)"
+                            [value]="demande.pertinancePilote"> </p-tag>
                     </div>
                     <div class="nc-detail-item" *ngIf="demande.justificationPilote">
                         <span class="nc-detail-label">Justification :</span>
@@ -117,17 +119,14 @@
                     <h3 class="nc-card-title">Documents joints</h3>
                 </div>
                 <div class="flex flex-column gap-3">
-                    <div *ngFor="let fichier of demande.fichiers" class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
+                    <div *ngFor="let fichier of demande.fichiers"
+                        class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
                         <div class="flex align-items-center mt-3">
                             <span class="file-name">{{ fichier.nomFichier }}</span>
                         </div>
-                        <button pButton pRipple
-                                type="button"
-                                icon="pi pi-download"
-                                class="p-button-text p-button-rounded p-button-plain"
-                                (click)="downloadFile(fichier)"
-                                pTooltip="Télécharger"
-                                tooltipPosition="left">
+                        <button pButton pRipple type="button" icon="pi pi-download"
+                            class="p-button-text p-button-rounded p-button-plain" (click)="downloadFile(fichier)"
+                            pTooltip="Télécharger" tooltipPosition="left">
                         </button>
                     </div>
                 </div>
@@ -143,8 +142,9 @@
                 </div>
                 <div class="nc-details-grid">
                     <div class="nc-detail-item">
-                        <span class="nc-detail-label">Pertinence :</span>  <p-tag [severity]="getStatusSeverity(demande.pertinanceRs)"
-[value]="demande.pertinanceRs"> </p-tag>
+                        <span class="nc-detail-label">Pertinence :</span> <p-tag
+                            [severity]="getStatusSeverity(demande.pertinanceRs)" [value]="demande.pertinanceRs">
+                        </p-tag>
 
                     </div>
                     <div class="nc-detail-item" *ngIf="demande.justificationRs">
@@ -164,8 +164,9 @@
                 </div>
                 <div class="nc-details-grid">
                     <div class="nc-detail-item">
-                        <span class="nc-detail-label">Pertinence :</span> <p-tag [severity]="getStatusSeverity(demande.pertinanceRsSuivi)"
-[value]="demande.pertinanceRsSuivi"> </p-tag>
+                        <span class="nc-detail-label">Pertinence :</span> <p-tag
+                            [severity]="getStatusSeverity(demande.pertinanceRsSuivi)"
+                            [value]="demande.pertinanceRsSuivi"> </p-tag>
                     </div>
 
                     <div class="nc-detail-item">
@@ -187,19 +188,17 @@
                     {{demande.observationRejet}}
                 </div>
                 <span *ngIf="demande.docRejet">
-                <p class="mt-4">Documents joint </p>
-                     <div class="nc-description">
-                <div class="flex align-items-center mt-3">
-                    <span class="file-name">{{ demande.docRejet.nomFichier }}</span>
-                </div>
-                <button pButton pRipple
-                        type="button"
-                        icon="pi pi-download"
-                        class="p-button-text p-button-rounded p-button-plain"
-                        (click)="downloadFile(demande.docRejet)"
-                        pTooltip="Télécharger"
-                        tooltipPosition="left">
-                </button></div></span>
+                    <p class="mt-4">Documents joint </p>
+                    <div class="nc-description">
+                        <div class="flex align-items-center mt-3">
+                            <span class="file-name">{{ demande.docRejet.nomFichier }}</span>
+                        </div>
+                        <button pButton pRipple type="button" icon="pi pi-download"
+                            class="p-button-text p-button-rounded p-button-plain"
+                            (click)="downloadFile(demande.docRejet)" pTooltip="Télécharger" tooltipPosition="left">
+                        </button>
+                    </div>
+                </span>
             </div>
         </div>
 
@@ -211,10 +210,8 @@
                     <h3 class="nc-card-title">Participants</h3>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <p-chip *ngFor="let participant of demande.participants"
-                            icon="pi pi-user"
-                            [label]="participant"
-                            class="mr-2 mb-2">
+                    <p-chip *ngFor="let participant of demande.participants" icon="pi pi-user" [label]="participant"
+                        class="mr-2 mb-2">
                     </p-chip>
                 </div>
             </div>
@@ -227,13 +224,10 @@
                     <i class="pi pi-bars nc-icon"></i>
                     <h3 class="nc-card-title">Plans d'actions</h3>
                 </div>
-                <p-table [value]="demande.planActions"
-                         [rowHover]="true"
-                         styleClass="p-datatable-sm p-datatable-gridlines"
-                         [paginator]="true"
-                         [rows]="5"
-                         [showCurrentPageReport]="true"
-                         currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments">
+                <p-table [value]="demande.planActions" [rowHover]="true"
+                    styleClass="p-datatable-sm p-datatable-gridlines" [paginator]="true" [rows]="5"
+                    [showCurrentPageReport]="true"
+                    currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} éléments">
                     <ng-template pTemplate="header">
                         <tr>
                             <th>N° ordre</th>
@@ -243,7 +237,9 @@
                             <th>Responsable</th>
                             <th>Date échéance</th>
                             <th>Statut</th>
-                            <th *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT||demande.etatTraitement===EtapeTraitement.CLOTURE">Actions</th>
+                            <th
+                                *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT||demande.etatTraitement===EtapeTraitement.CLOTURE">
+                                Actions</th>
                         </tr>
                     </ng-template>
                     <ng-template pTemplate="body" let-plan>
@@ -255,31 +251,25 @@
                             <td>{{plan.responsableNomComplet}}</td>
                             <td>{{plan.dateEcheance }}</td>
                             <td>
-                                <p-tag [severity]="getStatusSeverity(plan.status)"
-                                       [value]="plan.status">
+                                <p-tag [severity]="getStatusSeverity(plan.status)" [value]="plan.status">
                                 </p-tag>
                             </td>
-                            <td >
+                            <td>
                                 <button
-                                        *ngIf="(demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT)&&(plan.status==='NON_TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
-                                        pButton pRipple type="button"
-                                        icon="pi pi-pencil"
-                                        class="p-button-outlined p-button-info p-button-sm mr-2"
-                                        (click)="edit(plan)"
-                                        pTooltip="Modifier" tooltipPosition="top">
+                                    *ngIf="(demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT)&&(plan.status==='NON_TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
+                                    pButton pRipple type="button" icon="pi pi-pencil"
+                                    class="p-button-outlined p-button-info p-button-sm mr-2" (click)="edit(plan)"
+                                    pTooltip="Modifier" tooltipPosition="top">
+                                </button>
+                                <button pButton pRipple type="button" icon="pi pi-eye"
+                                    class="p-button-outlined p-button-secondary p-button-sm" (click)="affich(plan)"
+                                    pTooltip="Détails" tooltipPosition="top">
                                 </button>
                                 <button pButton pRipple type="button"
-                                        icon="pi pi-eye"
-                                        class="p-button-outlined p-button-secondary p-button-sm"
-                                        (click)="affich(plan)"
-                                        pTooltip="Détails" tooltipPosition="top">
-                                </button>
-                                <button pButton pRipple type="button"
-                                        *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
-                                        icon="pi pi-arrow-up"
-                                        (click)="displayRejet(plan)"
-                                        class="p-button-outlined p-button-danger p-button-sm"
-                                        pTooltip="Réjeter" tooltipPosition="top">
+                                    *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
+                                    icon="pi pi-arrow-up" (click)="displayRejet(plan)"
+                                    class="p-button-outlined p-button-danger p-button-sm" pTooltip="Réjeter"
+                                    tooltipPosition="top">
                                 </button>
                             </td>
                         </tr>
@@ -300,43 +290,31 @@
 </div>
 
 <!-- Dialog Modification Plan d'action -->
-<p-dialog header="Modification Plan d'action"
-          [(visible)]="motifRejetDialog"
-          [style]="{ width: '50rem' }"
-          [breakpoints]="{ '960px': '95vw' }">
+<p-dialog header="Modification Plan d'action" [(visible)]="motifRejetDialog" [style]="{ width: '50rem' }"
+    [breakpoints]="{ '960px': '95vw' }">
     <div class="grid p-fluid">
         <div class="col-12 field">
             <label for="causes" class="font-bold block mb-2">
                 Causes identifiées <span class="text-red-500">*</span>
             </label>
-            <textarea pInputTextarea id="causes" [(ngModel)]="planAction.causeIdentifiees"
-                      name="causes" rows="5" [autoResize]="true"
-                      placeholder="Entrer les causes "
-                      class="w-full"></textarea>
+            <textarea pInputTextarea id="causes" [(ngModel)]="planAction.causeIdentifiees" name="causes" rows="5"
+                [autoResize]="true" placeholder="Entrer les causes " class="w-full"></textarea>
 
         </div>
         <div class="col-12 field">
             <label for="solution" class="font-bold block mb-2">
                 Solutions retenues <span class="text-red-500">*</span>
             </label>
-            <textarea pInputTextarea id="solution" [(ngModel)]="planAction.solutionRetenues"
-                      name="solution" rows="5" [autoResize]="true"
-                      placeholder="Entrer les solutions  "
-                      class="w-full"></textarea>
+            <textarea pInputTextarea id="solution" [(ngModel)]="planAction.solutionRetenues" name="solution" rows="5"
+                [autoResize]="true" placeholder="Entrer les solutions  " class="w-full"></textarea>
         </div>
         <div class="col-12 field mt-2">
             <label for="responsable" class="font-bold block mb-2">
                 Responsable <span class="text-red-500">*</span>
             </label>
-            <p-select id="responsable"
-                        [options]="users"
-                        optionLabel="fullName"
-                        placeholder="Sélectionnez le responsable"
-                        [filter]="true"
-                        [showClear]="true"
-                        appendTo="body"
-                        [(ngModel)]="user"
-                        class="w-full">
+            <p-select id="responsable" [options]="users" optionLabel="fullName"
+                placeholder="Sélectionnez le responsable" [filter]="true" [showClear]="true" appendTo="body"
+                [(ngModel)]="user" class="w-full">
             </p-select>
         </div>
         <p-fluid class="card flex flex-wrap gap-2">
@@ -344,21 +322,14 @@
                 <label for="numeroOdre" class="font-bold block mb-2">
                     Numéro d'ordre <span class="text-red-500">*</span>
                 </label>
-                <input pInputText id="numeroOdre"
-                       [(ngModel)]="planAction.numeroOdre"
-                       type="number"
-                       class="w-full" />
+                <input pInputText id="numeroOdre" [(ngModel)]="planAction.numeroOdre" type="number" class="w-full" />
             </div>
             <div class="flex-auto">
                 <label for="dateEcheance" class="font-bold block mb-2">
                     Date d'échéance <span class="text-red-500">*</span>
                 </label>
-                <p-datePicker id="dateEcheance"
-                            [showIcon]="true"
-                            [(ngModel)]="planAction.dateEcheance"
-                            placeholder="Date de l'échéance"
-                            dateFormat="dd/mm/yy"
-                            class="w-full">
+                <p-datePicker id="dateEcheance" [showIcon]="true" [(ngModel)]="planAction.dateEcheance"
+                    placeholder="Date de l'échéance" dateFormat="dd/mm/yy" class="w-full">
                 </p-datePicker>
             </div>
 
@@ -366,26 +337,18 @@
         </p-fluid>
     </div>
     <ng-template pTemplate="footer">
-        <button pButton pRipple type="button"
-                icon="pi pi-times"
-                class="p-button-outlined p-button-secondary"
-                label="Annuler"
-                (click)="hideDialog()">
+        <button pButton pRipple type="button" icon="pi pi-times" class="p-button-outlined p-button-secondary"
+            label="Annuler" (click)="hideDialog()">
         </button>
-        <button pButton pRipple type="button"
-                icon="pi pi-check"
-                class="p-button-primary ml-2"
-                (click)="modifier()"
-                label="Enregistrer">
+        <button pButton pRipple type="button" icon="pi pi-check" class="p-button-primary ml-2" (click)="modifier()"
+            label="Enregistrer">
         </button>
     </ng-template>
 </p-dialog>
 
 <!-- Dialog Détails Plan d'action -->
-<p-dialog [header]="'Détails  plan action '"
-          [(visible)]="afficheDialog"
-          [style]="{ width: '50rem' }"
-          [breakpoints]="{ '960px': '95vw' }">
+<p-dialog [header]="'Détails  plan action '" [(visible)]="afficheDialog" [style]="{ width: '50rem' }"
+    [breakpoints]="{ '960px': '95vw' }">
     <div class="grid">
         <div class="col-12">
             <div class="card nc-card">
@@ -397,7 +360,8 @@
                     </div>
                     <div class="nc-detail-item">
                         <span class="nc-detail-label font-bold">Responsable :</span>
-                        <span class="nc-detail-value">{{planAction.responsableNomComplet}} ({{planAction.responsableEmail}})</span>
+                        <span class="nc-detail-value">{{planAction.responsableNomComplet}}
+                            ({{planAction.responsableEmail}})</span>
                     </div>
                     <div class="nc-detail-item">
                         <span class="nc-detail-label font-bold">Date d'échéance : {{planAction.dateEcheance }}</span>
@@ -440,54 +404,49 @@
                     <h4 class="nc-card-title">Pièces jointes</h4>
                 </div>
                 <div class="flex flex-column gap-3">
-                    <div *ngFor="let fichier of planAction.fichiers" class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
+                    <div *ngFor="let fichier of planAction.fichiers"
+                        class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
                         <div class="flex align-items-center mt-3">
                             <span class="file-name">{{ fichier.nomFichier }}</span>
                         </div>
-                        <button pButton pRipple
-                                type="button"
-                                icon="pi pi-download"
-                                class="p-button-text p-button-rounded p-button-plain"
-                                (click)="downloadFile(fichier)"
-                                pTooltip="Télécharger"
-                                tooltipPosition="left">
+                        <button pButton pRipple type="button" icon="pi pi-download"
+                            class="p-button-text p-button-rounded p-button-plain" (click)="downloadFile(fichier)"
+                            pTooltip="Télécharger" tooltipPosition="left">
                         </button>
-                    </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
     <ng-template pTemplate="footer">
-        <button pButton pRipple type="button"
-                icon="pi pi-times"
-                class="p-button-outlined p-button-secondary"
-                label="Fermer"
-                (click)="hideDialogAffich()">
+        <button pButton pRipple type="button" icon="pi pi-times" class="p-button-outlined p-button-secondary"
+            label="Fermer" (click)="hideDialogAffich()">
         </button>
     </ng-template>
 </p-dialog>
 
-<p-dialog (onHide)="displayDialog = false" [modal]="true" [(visible)]="displayDialog"
-          [style]="{width: '50rem'}" [maximizable]="true" class="p-fluid" styleClass="ng-dialog">
+<p-dialog (onHide)="displayDialog = false" [modal]="true" [(visible)]="displayDialog" [style]="{width: '50rem'}"
+    [maximizable]="true" class="p-fluid" styleClass="ng-dialog">
     <ng-template pTemplate="header">
         <div class="inline-flex align-items-center justify-content-center gap-2">
-            <span class="font-bold white-space-nowrap uppercase">Réjet du plan d'action n° {{planAction.numeroOdre}} de la demande N° {{planAction.numeroNc}}</span>
+            <span class="font-bold white-space-nowrap uppercase">Réjet du plan d'action n° {{planAction.numeroOdre}} de
+                la demande N° {{planAction.numeroNc}}</span>
         </div>
     </ng-template>
     <ng-template pTemplate="content">
         <div class="grid p-fluid">
             <div class="field mt-5 mb-4">
-                <label for="observation" class="block font-bold  mb-2">Observertions pour le réjet  <span class="p-error"> *</span></label>
-                <textarea pInputTextarea id="observation" [(ngModel)]="planAction.observationRejet"
-                          name="observation" rows="5" [autoResize]="true"
-                          placeholder="Entrer une observation "
-                          class="w-full"></textarea>
+                <label for="observation" class="block font-bold  mb-2">Observertions pour le réjet <span
+                        class="p-error"> *</span></label>
+                <textarea pInputTextarea id="observation" [(ngModel)]="planAction.observationRejet" name="observation"
+                    rows="5" [autoResize]="true" placeholder="Entrer une observation " class="w-full"></textarea>
 
             </div>
             <div class="field mt-5 mb-4">
                 <label class="block font-bold  mb-2">Joindre un document</label>
-                <app-file-upload (fileUploaded)="handleFileUpload($event)"></app-file-upload></div>
+                <app-file-upload (fileUploaded)="handleFileUpload($event)"></app-file-upload>
+            </div>
 
         </div>
 
@@ -495,13 +454,12 @@
     </ng-template>
     <ng-template pTemplate="footer">
         <button type="button" pRipple pButton icon="pi pi-times" (click)="displayDialog = false" label="Fermer"
-                class="p-button-secondary"></button>
-        <button  type="button" pRipple pButton icon="pi pi-send" (click)="rejet()" label="Réjéter"
-                class="p-button-primary" [disabled]="!planAction.observationRejet"></button>
+            class="p-button-secondary"></button>
+        <button type="button" pRipple pButton icon="pi pi-send" (click)="rejet()" label="Réjéter"
+            class="p-button-primary" [disabled]="!planAction.observationRejet"></button>
     </ng-template>
 </p-dialog>
-<p-confirmDialog header="Confirmation" [key]="'1'"
-                 icon="pi pi-exclamation-triangle" [style]="{width: '35vw'}"
-                 acceptButtonStyleClass="p-button-primary" acceptLabel="Oui"
-                 rejectButtonStyleClass="p-button-secondary" rejectLabel="Non">
+<p-confirmDialog header="Confirmation" [key]="'1'" icon="pi pi-exclamation-triangle" [style]="{width: '35vw'}"
+    acceptButtonStyleClass="p-button-primary" acceptLabel="Oui" rejectButtonStyleClass="p-button-secondary"
+    rejectLabel="Non">
 </p-confirmDialog>
