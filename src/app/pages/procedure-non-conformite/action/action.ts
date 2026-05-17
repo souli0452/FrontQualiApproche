@@ -16,7 +16,8 @@ import { ActionNonConformiteService } from '../../../services/action-non-conform
     template: `
         <div class="page-layout">
             <app-crud-generic
-                [dialogWidth]="'50rem'"
+                [addButtonLabel]="addButtonLabel"
+                [dialogWidth]="'40rem'"
                 [loading]="loading"
                 [pageLabel]="pageLabel"
                 [tableCols]="tableCols"
@@ -42,6 +43,7 @@ export class ActionNonConformiteComponent {
       formCols: FormGroupColumn[];
       pageLabel = 'Types actions entreprises';
       formHeader = 'Création et mise à jour d\'une action';
+      addButtonLabel = "Nouveau type d'action";
 
       constructor(protected fb: UntypedFormBuilder,
                   protected messageService: MessageService,

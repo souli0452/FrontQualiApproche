@@ -5,9 +5,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, finalize, takeUntil } from 'rxjs';
 import { MessageService } from 'primeng/api';
 
-import { RoleService } from './role-service';
-import { AppRole, Permission } from '../../models';
-import { NgPrimeModule } from '../../../prime-ng.module';
+import { AppRole, Permission } from '../../../models';
+import { NgPrimeModule } from '../../../../prime-ng.module';
+import { RoleService } from '../role-service/role-service';
 
 interface GroupedPermission {
     module: string;
@@ -183,14 +183,15 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
                 this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Rôle enregistré' });
                 this.router.navigate(['/roles']);
             },
-            error: () => {
+            error: (error) => {
                 this.loading = false;
-                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'enregistrement" });
+                console.log("l'erreur est :", error);
+                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error.detail || "Échec de l'enregistrement" });
             }
         });
     }
 
     cancel() {
-        this.router.navigate(['/roles']);
+        this.router.navigate(['configurations/roles']);
     }
 }

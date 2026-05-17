@@ -43,7 +43,7 @@ export class ProcedureNonConformiteComponent {
     tableCols: TableColumn[];
     formCols: FormGroupColumn[];
     pageLabel = 'Non-conformité';
-    formHeader = 'Création et mise à jour d\'un non-conformité';
+    formHeader = 'Création et mise à jour d\'une non-conformité';
 
     constructor(protected fb: UntypedFormBuilder,
                 protected messageService: MessageService,

@@ -1,53 +1,58 @@
-<p-toolbar>
-    <ng-template #start>
-        <p-buttongroup>
-            <!-- Bouton Vue d'ensemble -->
+<div class="card-first p-0 overflow-hidden border-none premium-hub bg-surface-0 dark:bg-surface-900 transition-colors duration-300">
+    <!-- Header Premium -->
+    <div class="bg-primary-50 dark:bg-surface-800 p-5 flex justify-between items-center border-b border-surface-border">
+        <div class="flex items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold m-0 tracking-tight text-surface-900 dark:text-surface-50 flex items-center gap-3">
+                    <i class="pi pi-briefcase text-primary dark:text-primary-400"></i>
+                    Gestion des Non-Conformités
+                </h1>
+                <p class="text-surface-500 dark:text-surface-400 mt-1 mb-0">Déclaration, analyse, traitement et suivi des écarts qualité</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-3">
             <p-button 
-                label="Vue d'ensemble" 
-                icon="pi pi-chart-bar"
-                routerLink="vue-ensemble"
-                routerLinkActive 
-                #rla1="routerLinkActive"
-                [severity]="rla1.isActive ? 'info' : 'secondary'"
-                [variant]="rla1.isActive ? undefined : 'outlined'" />
+                label="Soumettre une NC" 
+                icon="pi pi-plus" 
+                severity="info" 
+                (click)="openSubmitNC()"
+                styleClass="shadow-sm font-semibold" />
+        </div>
+    </div>
 
-            <!-- Bouton Analyse et Validation -->
-            <p-button 
-                label="Analyse et Validation" 
-                icon="pi pi-file-edit"
-                routerLink="analyse-validation"
-                routerLinkActive 
-                #rla2="routerLinkActive"
-                [severity]="rla2.isActive ? 'info' : 'secondary'"
-                [variant]="rla2.isActive ? undefined : 'outlined'" />
+    <!-- Navigation Hub (Tabs) -->
+    <div class="pt-2 bg-surface-0 dark:bg-surface-900 border-b border-surface-border">
+        <p-tabMenu [model]="items" [scrollable]="true" styleClass="border-none"></p-tabMenu>
+    </div>
 
-            <!-- Bouton Affectation -->
-            <p-button 
-                label="Affectation et actions" 
-                icon="pi pi-folder-open"
-                routerLink="affectation-action"
-                routerLinkActive 
-                #rla3="routerLinkActive"
-                [severity]="rla3.isActive ? 'info' : 'secondary'"
-                [variant]="rla3.isActive ? undefined : 'outlined'" />
-
-            <!-- Bouton Suivi -->
-            <p-button 
-                label="Suivi des NC" 
-                icon="pi pi-clock"
-                routerLink="suivi"
-                routerLinkActive 
-                #rla4="routerLinkActive"
-                [severity]="rla4.isActive ? 'info' : 'secondary'"
-                [variant]="rla4.isActive ? undefined : 'outlined'" />
-        </p-buttongroup>
-    </ng-template>
-
-    <ng-template #end>
-        <!-- Vous pouvez garder votre bouton d'ajout ici si besoin -->
-    </ng-template>
-</p-toolbar>
-
-<div class="card mt-4">
-    <router-outlet></router-outlet>
+    <!-- Zone de Contenu Dynamique -->
+    <div class="bg-surface-50/50 dark:bg-surface-950/40 min-h-[600px]">
+        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl overflow-hidden card">
+            <router-outlet></router-outlet>
+        </div>
+    </div>
 </div>
+
+<!-- Popup de Soumission d'une NC -->
+<p-dialog [(visible)]="submitNCVisible" 
+          [modal]="true" 
+          [style]="{ width: '50rem' }"
+          [maximizable]="true"
+          appendTo="body"
+          [header]="'Nouvelle Non-Conformité'"
+          styleClass="premium-dialog">
+          
+    <ng-template pTemplate="header">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-info-50 dark:bg-info-900/20 rounded-lg">
+                <i class="pi pi-plus-circle text-info-600 dark:text-info-400"></i>
+            </div>
+            <span class="text-xl font-bold text-surface-900 dark:text-surface-50">Déclarer une Non-Conformité</span>
+        </div>
+    </ng-template>
+
+    <div class="p-1">
+        <app-nc-compose (closeDialog)="submitNCVisible = false"></app-nc-compose>
+    </div>
+</p-dialog>

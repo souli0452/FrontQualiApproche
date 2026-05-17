@@ -1,0 +1,35 @@
+<div class="card shadow-3 toolbar-card">
+    <p-toolbar styleClass="mb-2">
+        <ng-template pTemplate="left">
+            <p-iconfield class="w-full">
+                <p-inputicon styleClass="pi pi-search text-gray-400" />
+                <input type="text" pInputText 
+                       (input)="crud.table.filterGlobal($any($event.target).value, 'contains')" 
+                       placeholder="Rechercher un rôle..." 
+                       class="w-full p-inputtext-sm border-none bg-transparent focus:ring-0" />
+            </p-iconfield>
+        </ng-template>
+        <ng-template pTemplate="right">
+            <p-button pRipple label="Nouveau Rôle" icon="pi pi-plus"
+                      severity="info" (click)="goToDetail()" size="small"></p-button>
+        </ng-template>
+    </p-toolbar>
+</div>
+<div class="card-table shadow-3">
+    <app-crud-generic #crud
+        [tableCols]="tableCols"
+        [formCols]="formCols"
+        [formGroup]="roleForm"
+        [listeObject]="roles"
+        [multiSelectList]="multiSelectList"
+        [customButtons]="customButtons"
+        [notModif]="true"
+        [loading]="loading"
+        [asRoleEdit]="true"
+        (customActionEvent)="handleCustomAction($event)"
+        (removeEvent)="onDelete($event)">
+    </app-crud-generic>
+</div>
+
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>

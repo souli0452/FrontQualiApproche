@@ -2,7 +2,7 @@
     <div class="field-container animate-slide-in">
 
         <!-- 1. Label Supérieur (Optionnel) -->
-        <label *ngIf="col.topLabel" [for]="col.field" class="block text-sm font-bold text-gray-700 mb-2">
+        <label *ngIf="col.topLabel" [for]="col.field" class="block layout-topbar-title font-bold text-gray-700 mb-2">
             {{ col.topLabel }}
         </label>
 
@@ -39,9 +39,22 @@
                           [style]="{ height: '70px' }">
                     <ng-template pTemplate="header">
                         <span class="ql-formats">
-                            <button type="button" class="ql-bold"></button>
-                            <button type="button" class="ql-italic"></button>
-                            <button type="button" class="ql-underline"></button>
+                            <select class="ql-size"></select>
+                            <select class="ql-font"></select>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-bold" aria-label="Bold"></button>
+                            <button class="ql-italic" aria-label="Italic"></button>
+                            <button class="ql-underline" aria-label="Underline"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <select class="ql-color"></select>
+                            <select class="ql-background"></select>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-list" value="ordered" aria-label="Ordered List"></button>
+                            <button class="ql-list" value="bullet" aria-label="Bullet List"></button>
+                            <select class="ql-align"></select>
                         </span>
                     </ng-template>
                 </p-editor>

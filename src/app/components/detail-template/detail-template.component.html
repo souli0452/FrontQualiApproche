@@ -5,13 +5,15 @@
             @for (col of cols; track col) {
                 <div class="grid col-12">
                     <div class="col-4 md:col-4 sm:col-12">
-                        <div class="text-left font-bold">{{ col.header }} :</div>
+                        <div class="text-left font-bold text-[#0084ca] uppercase dark:text-[#ffffff] mb-2">{{ col.header }} :</div>
                     </div>
                     <div class="col-8 md:col-8 sm:col-12">
-                        <div class="text-left">
-                            {{ rowData[col.field] }}
+                        <div class="text-left text-uppercase whitespace-normal break-words max-w-md" [innerHTML]="rowData[col.field]">
                         </div>
                     </div>
+                </div>
+                <div class="my-4">
+                    <p-divider />
                 </div>
             }
         </div>

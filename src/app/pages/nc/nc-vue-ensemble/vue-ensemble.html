@@ -1,7 +1,55 @@
-<div class="card">
-    <div class="flex flex-column align-items-center justify-content-center" style="min-height: 400px;">
-        <i class="pi pi-chart-bar text-600 mb-4" style="font-size: 5rem;"></i>
-        <h2 class="text-900 font-bold">Vue d'ensemble des Non-Conformités</h2>
-        <p class="text-600">Le contenu des statistiques et graphiques sera intégré ici.</p>
+
+    <app-nc-filter-bar (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
+    <p-divider />
+    <app-alerte-traitement [dashboardData]="dashboardData" [loading]="loading"></app-alerte-traitement>
+    <p-divider />
+
+    <!-- 3. Tes KPIs (Indicateurs Clés) -->
+<div class="grid grid-cols-12 gap-4 my-4" *ngIf="isAgent">
+    <div class="col-span-12 md:col-span-6 xl:col-span-3">
+        <app-nc-stats-card 
+            label="TOUTES MES NCs" 
+            [loading]="loading"
+            [value]="stats.total" 
+            icon="pi pi-chart-line" 
+            color="blue"
+            badge="Période"
+            description="NC declarées par vous ou qui vous sont imputées">
+        </app-nc-stats-card>
+    </div>
+    <div class="col-span-12 md:col-span-6 xl:col-span-3">
+        <app-nc-stats-card 
+            label="NC EN COURS" 
+            [loading]="loading"
+            [value]="stats.enCours" 
+            icon="pi pi-sync" 
+            color="orange"
+            badge="Traitement"
+            description="En analyse ou en cours de correction">
+        </app-nc-stats-card>
+    </div>
+    <div class="col-span-12 md:col-span-6 xl:col-span-3">
+        <app-nc-stats-card 
+            label="NC RETARDÉES" 
+            [loading]="loading"
+            [value]="stats.retard" 
+            icon="pi pi-exclamation-triangle" 
+            color="red"
+            badge="Urgent"
+            description="Action requise immédiatement">
+        </app-nc-stats-card>
+    </div>
+    <div class="col-span-12 md:col-span-6 xl:col-span-3">
+        <app-nc-stats-card 
+            label="MES ACTIONS" 
+            [loading]="loading"
+            [value]="stats.imputees" 
+            icon="pi pi-user-edit" 
+            color="purple"
+            badge="À traiter"
+            description="NC qui vous sont directement imputées">
+        </app-nc-stats-card>
     </div>
 </div>
+
+<p-divider />

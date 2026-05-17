@@ -1,12 +1,12 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { StructureService } from '../../pages/structure/structure-service';
-import { Structure } from '../../pages/structure/structure';
 import { TypeStructure } from '../../enums';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { KcUser } from '../../models';
 import { takeUntil } from 'rxjs/operators';
 import { showToast, StatusEnum } from '../../utils';
 import { AuthService } from '../../services/auth-services/auth.service';
+import { Structure } from '../../pages/structure/structure-config/structure';
+import { StructureService } from '../../pages/structure/structure-service/structure-service';
 
 
 @Component({

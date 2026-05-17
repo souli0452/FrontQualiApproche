@@ -1,5 +1,6 @@
-import { TypeStructure } from '../../enums';
-import { UserInfos } from '../../models';
+import { TypeStructure } from "../../../enums";
+import { UserInfos } from "../../../models";
+
 
 export interface Structure extends UserInfos {
   id?: string;

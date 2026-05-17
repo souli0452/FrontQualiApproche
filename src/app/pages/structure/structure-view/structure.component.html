@@ -1,0 +1,111 @@
+<div class="card p-0 overflow-hidden border-none shadow-sm bg-white">
+    <!-- Header Premium (Match Capture) -->
+    <div class="bg-gray-50/30 border-b border-gray-100">
+        <div class="flex justify-between items-start mb-5">
+            <div>
+                <h5 class="m-0 font-bold text-gray-900 text-sm tracking-wider uppercase">Structure Organisationnelle</h5>
+                <p class="text-xs text-gray-500 mt-1 max-w-2xl">
+                    Gérez la hiérarchie de l'organisation (Services, Départements) pour l'assignation des non-conformités.
+                </p>
+            </div>
+            <p-button icon="pi pi-times" [text]="true" severity="secondary" size="small" class="opacity-50 hover:opacity-100"></p-button>
+        </div>
+
+        <!-- Zone d'actions : Recherche et Ajout (Match Capture) -->
+        <div class="flex flex-wrap items-center justify-between gap-3 p-3 bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div class="flex-grow max-w-md">
+                <p-iconfield class="w-full">
+                    <p-inputicon styleClass="pi pi-search text-gray-400" />
+                    <input type="text" pInputText 
+                           (input)="onGlobalFilter(dt, $event)" 
+                           placeholder="Rechercher dans la liste..." 
+                           class="w-full p-inputtext-sm border-none bg-transparent focus:ring-0" />
+                </p-iconfield>
+            </div>
+            <p-button label="Ajouter une structure" 
+                      icon="pi pi-plus" 
+                      severity="info" 
+                      (click)="onDisplay()" 
+                      size="small" 
+                      styleClass="px-4 py-2 font-bold shadow-sm"></p-button>
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    <div>
+        <p-table #dt [columns]="cols" [value]="structures" selectionMode="single"
+                 dataKey="id" [paginator]="true" [rows]="10" 
+                 [loading]="loading"
+                 [globalFilterFields]="colsFilter"
+                 paginatorPosition="bottom"
+                 [tableStyle]="{'min-width': '50rem'}">
+            
+            <ng-template pTemplate="header" let-columns>
+                <tr>
+                    <th *ngFor="let col of columns" [pSortableColumn]="col.field" 
+                        class="text-xs font-bold text-gray-400 uppercase tracking-wider py-4 bg-gray-50/50 border-b border-gray-100 first:rounded-l-lg last:rounded-r-lg">
+                        {{ col.header }} <p-sortIcon [field]="col.field" class="ml-1 opacity-50"></p-sortIcon>
+                    </th>
+                    <th class="text-xs font-bold text-gray-400 uppercase tracking-wider py-4 bg-gray-50/50 border-b border-gray-100 text-center rounded-r-lg">Action</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-rowData let-columns="columns">
+                <tr [pSelectableRow]="rowData" class="hover:bg-gray-50/30 transition-colors border-b border-gray-50">
+                    <td *ngFor="let col of columns" class="py-4 text-gray-600">
+                        {{ rowData[col.field] }}
+                    </td>
+                    <td class="text-center py-4">
+                        <p-button icon="pi pi-ellipsis-h" 
+                                  [text]="true" 
+                                  severity="secondary" 
+                                  size="small"
+                                  styleClass="hover:bg-gray-100 border-circle"
+                                  (click)="setActionMenu($event, menu, rowData)"></p-button>
+                        <p-menu #menu [model]="actionMenuItems" [popup]="true" appendTo="body"></p-menu>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td [colSpan]="cols.length + 1" class="text-center py-8 text-gray-400 text-sm italic">
+                        Aucun service trouvé pour le moment.
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="loadingbody">
+                <tr *ngFor="let i of [1,2,3,4,5]">
+                    <td *ngFor="let col of cols" class="py-4"><p-skeleton width="80%" height="1rem"></p-skeleton></td>
+                    <td class="text-center py-4"><p-skeleton shape="circle" size="2rem" styleClass="mx-auto"></p-skeleton></td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</div>
+
+<!-- Modal de création/édition (Dialog) -->
+<p-dialog [(visible)]="display" [modal]="true" [style]="{ width: '50vw' }" 
+          [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
+          [header]="(editForm?.value['id'] ? 'Modifier' : 'Nouveau') + ' Service'" 
+          [draggable]="false" [resizable]="false">
+    
+    <div class="p-fluid mt-2">
+        <app-creation-structure [editForm]="editForm" [typeStructure]="typeStructure"></app-creation-structure>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex items-center justify-end gap-2 pt-3">
+            <p-button label="Annuler" (click)="onDisplay()" size="small" [text]="true" severity="secondary" />
+            <p-button label="Enregistrer" [disabled]="editForm!.invalid" [loading]="loading"
+                      (click)="saveEntity()" icon="pi pi-check" size="small" severity="info" />
+        </div>
+    </ng-template>
+</p-dialog>
+
+<p-confirmDialog header="Confirmation" [key]="demandeKey"
+                 icon="pi pi-exclamation-triangle" [style]="{width: '450px'}"
+                 acceptButtonStyleClass="p-button-danger" acceptLabel="Oui"
+                 rejectButtonStyleClass="p-button-secondary" rejectLabel="Non">
+</p-confirmDialog>

@@ -8,9 +8,6 @@ import { map } from 'rxjs/operators';
 import { QualiCrudService } from '../quali-crud.service';
 import { QualiUrlConfig } from '../quali-url-configs';
 import { createRequestOption, USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
-import { TypeStructure } from '../../enums';
-import { Structure } from '../../pages/structure/structure';
-import { StructureEndpoint } from '../../pages/structure/strucuture-url-config';
 
 interface AuthResponse {
     accessToken: string;

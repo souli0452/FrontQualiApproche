@@ -78,7 +78,24 @@ export class ProcNonConformiteService {
     getStatsByNiveau(anne:any,id:any): Observable<HttpResponse<any>> {
         return this.http.get<any>(NonConformiteUrlConfig.GET_Stat_MENSUEL_NIVEAU_ROOT_URL+anne+"/service/"+id, {observe: 'response'});
     }
-    getDashboardRQ(): Observable<HttpResponse<any>> {
-        return this.http.get<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL+"/dashboard/rq", {observe: 'response'});
+    getDashboardRQ(filters?: any): Observable<HttpResponse<any>> {
+        let params = this.buildFilterParams(filters);
+        return this.http.get<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL + "/dashboard/rq", { params, observe: 'response' });
+    }
+
+    getUserDashboard(id: string, filters?: any): Observable<HttpResponse<any>> {
+        let params = this.buildFilterParams(filters);
+        return this.http.get<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL + "/dashboard/user/" + id, { params, observe: 'response' });
+    }
+
+    private buildFilterParams(filters?: any) {
+        let params: any = {};
+        if (filters) {
+            if (filters.dateDebut) params.dateDebut = filters.dateDebut.toISOString();
+            if (filters.dateFin) params.dateFin = filters.dateFin.toISOString();
+            if (filters.process?.id) params.processId = filters.process.id;
+            if (filters.gravite?.id) params.graviteId = filters.gravite.id;
+        }
+        return params;
     }
 }

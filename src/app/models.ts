@@ -258,6 +258,7 @@ export interface FormGroupColumn  {
     validators?: Validators;
     key?: string;
     readonly?: boolean;
+    class?: string;
 }
 
 export interface TableColumn {

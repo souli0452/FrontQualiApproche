@@ -16,7 +16,8 @@ import { TypeProcessusService } from '../../../services/type-processus.service';
     template: `
         <div class="page-layout">
             <app-crud-generic
-                [dialogWidth]="'50rem'"
+                [addButtonLabel]="'Nouveau processus'"
+                [dialogWidth]="'40rem'"
                 [loading]="loading"
                 [pageLabel]="pageLabel"
                 [tableCols]="tableCols"

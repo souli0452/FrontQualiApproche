@@ -28,3 +28,35 @@
     background-color: #2196f3;  /* Bleu */
     color: white;
 }
+
+
+::ng-deep {
+    /* On s'assure que le parent autorise le côte à côte */
+    .grid {
+        display: flex !important;
+        flex-wrap: wrap !important;
+    }
+
+    .field-structure, .field-enabled{
+        width: 100%;
+        max-width:100%;
+        flex: 0 0 100% !important; /* Prend 50% de la place */
+        margin-bottom: 0 !important;
+    }
+
+    /* On définit la largeur de vos champs */
+    .field-firstName, .field-lastName, .field-roles, .field-fonction, .field-username, .field-email {
+        flex: 0 0 50% !important; /* Prend 50% de la place */
+        max-width: 50% !important;
+        padding: 0px 0.3rem !important;
+        margin-bottom: 0 !important;
+    }
+
+    /* Mobile : repasse à 100% */
+    @media screen and (max-width: 768px) {
+.field-firstName, .field-lastName, .field-roles, .field-fonction, .field-username, .field-email{
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+        }
+    }
+}

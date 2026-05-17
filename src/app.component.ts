@@ -5,10 +5,10 @@ import { LoaderComponent } from './app/components/loader/loader.component';
 import { AuthService } from './app/services/auth-services/auth.service';
 import { KcUser } from './app/models';
 import { take } from 'rxjs';
-import { StructureService } from './app/pages/structure/structure-service';
 import { USER_PROFILE_KEY, USER_STRUCTURE_KEY } from './app/utils';
 import { MessageService } from 'primeng/api';
 import { Toast } from 'primeng/toast';
+import { StructureService } from './app/pages/structure/structure-service/structure-service';
 
 @Component({
     selector: 'app-root',

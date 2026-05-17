@@ -63,10 +63,10 @@
             font-size: 0.8rem;
             text-transform: uppercase;
             font-weight: 500;
-            color: rgba(255, 255, 255, 0.3);
-            margin: 0.75rem 0 0.75rem 0;
-    background: #1d2d434f;
-    padding: 10px 1.5rem;
+            color: rgba(255, 255, 255, 0.2);
+            margin: 0.5rem 0 0.5rem 0;
+            padding: 10px .5rem;
+            border-top: 1px solid #8080802b;
         }
 
         > a {
@@ -94,7 +94,7 @@
 
     ul {
         margin: 0;
-        padding: 0 1.5rem;
+        // padding: 0 1.5rem;
         list-style-type: none;
 
         a {
@@ -104,8 +104,8 @@
             outline: 0 none;
             color: rgba(255, 255, 255, 1);
             cursor: pointer;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
+            padding: 0.75rem 0.5rem 0.75rem 2rem;
+            // border-radius: 8px;
             transition:
                 background-color var(--element-transition-duration),
                 box-shadow var(--element-transition-duration);
@@ -121,20 +121,20 @@
             }
 
             &.active-route {
-                color: #ffffff !important;
-                background-color: rgba(255, 255, 255, 0.15);
+                color: #00ddff !important;
+                background-color: #75c5ec38;
                 
                 .layout-menuitem-icon {
-                    color: #ffffff;
+                    color: #00ddff;
                 }
 
                 &:hover {
-                    background-color: rgba(255, 255, 255, 0.2);
+                    background-color: #75c5ec38;
                 }
             }
 
             &:hover {
-                background-color: rgba(255, 255, 255, 0.05);
+                background-color: #75c5ec38;
             }
 
             &:focus {

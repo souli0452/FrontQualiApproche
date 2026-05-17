@@ -1,0 +1,65 @@
+:host {
+    display: block;
+    margin-bottom: 1.5rem;
+}
+
+.filter-container {
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 0.25rem;
+
+    ::ng-deep .p-toolbar {
+        background: transparent !important;
+        border: none !important;
+        padding: 0.5rem 1rem !important;
+    }
+}
+
+.filter-item {
+    min-width: 180px;
+    
+    ::ng-deep {
+        .p-floatlabel label {
+            font-size: 0.85rem;
+            color: var(--text-color-secondary);
+        }
+
+        .p-select, .p-datepicker {
+            transition: all 0.2s ease;
+            box-shadow: none !important;
+
+            &:hover, &:focus-within {
+                border-color: var(--primary-color) !important;
+                box-shadow: none !important;
+            }
+        }
+        
+        .p-inputtext {
+            box-shadow: none !important;
+            background: transparent !important;
+            border: none !important;
+            color: var(--text-color) !important;
+        }
+
+        // Fix pour l'icône du datepicker en mode sombre
+        .p-datepicker-trigger {
+            color: var(--text-color-secondary);
+        }
+    }
+}
+
+.btn-reset {
+    ::ng-deep .p-button {
+        border-radius: 8px !important;
+        font-weight: 500;
+        box-shadow: none !important;
+        border-color: var(--surface-border) !important;
+        color: var(--text-color-secondary) !important;
+
+        &:hover {
+            background: var(--surface-hover) !important;
+            border-color: var(--primary-color) !important;
+            color: var(--primary-color) !important;
+        }
+    }
+}

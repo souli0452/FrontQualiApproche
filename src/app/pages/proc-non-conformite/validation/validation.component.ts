@@ -10,8 +10,8 @@ import {
     DmdTraitementTableTemplateComponent
 } from '../../../components/dmd.traitement-table-template/dmd.traitement-table-template.component';
 import { AuthService } from '../../../services/auth-services/auth.service';
-import { Structure } from '../../structure/structure';
 import { RejetFormsComponent } from '../forms/rejet.forms/rejet.forms.component';
+import { Structure } from '../../structure/structure-config/structure';
 
 @Component({
     selector: 'app-validation',

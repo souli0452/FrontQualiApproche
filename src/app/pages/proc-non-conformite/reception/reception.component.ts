@@ -19,8 +19,8 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { FeaturesService } from '../../../services/feature-service';
-import { Structure } from '../../structure/structure';
 import { RejetFormsComponent } from '../forms/rejet.forms/rejet.forms.component';
+import { Structure } from '../../structure/structure-config/structure';
 
 @Component({
   selector: 'app-reception',

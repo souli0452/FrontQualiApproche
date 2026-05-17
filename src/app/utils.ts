@@ -1,11 +1,11 @@
 import { HttpErrorResponse, HttpParams } from '@angular/common/http';
 import moment from 'moment';
 import { MessageService } from 'primeng/api';
-import { Structure } from './pages/structure/structure';
 import { AuthService } from './services/auth-services/auth.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { NcStats } from './models/statsNc';
+import { Structure } from './pages/structure/structure-config/structure';
 export interface ReportingInput {
     reportFormat: ReportFormat;
     reportType: any;

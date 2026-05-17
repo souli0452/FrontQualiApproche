@@ -6,7 +6,7 @@ import { takeUntil } from 'rxjs/operators';
 import { NonConformiteService } from '../../../services/non-conformite.service';
 import { NonConformStatus } from '../../../enums';
 import { getCurrentUserStructure } from '../../../utils';
-import { Structure } from '../../structure/structure';
+import { Structure } from '../../structure/structure-config/structure';
 
 @Component({
     selector: 'app-nc-archive',

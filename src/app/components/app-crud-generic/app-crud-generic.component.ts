@@ -57,11 +57,13 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     displayDetails: boolean = false;
     display!: boolean;
     filterFiels!: any[];
-    dropDownObject: any = {};
-    multiselectObject: any = {};
+    @Input() dropDownObject: any = {};
+    @Input() multiselectObject: any = {};
     position: any = 'top';
     value: any;
     rowData: any;
+    lastTarget: any;
+
     @Input() customButtons: { label: string; icon: string; action: string; color?: string; tooltip?: string; tooltipPosition?: string }[] = [];
     @Input() isPagination: boolean = true;
     @Input() addButtonLabel: string = 'Ajouter';
@@ -134,10 +136,10 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
         }
     }
 
-    delele(data: any, event: Event) {
+    delele(data: any, event: any) {
         this.confirmationService.confirm({
             key: 'crudPopup',
-            target: event.target as EventTarget,
+            target: this.lastTarget || event?.originalEvent?.target || event?.target,
             header: 'CONFIRMATION',
             message: 'Voulez-vous vraiment supprimer cet enregistrement ?',
             icon: 'pi pi-exclamation-triangle',
@@ -159,11 +161,17 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     }
 
     openNew() {
+        this.rowData = null;
         this.formGroup.reset();
+        // On force chaque champ à null pour être certain de vider les éditeurs/sélecteurs
+        Object.keys(this.formGroup.controls).forEach(key => {
+            this.formGroup.get(key)?.setValue(null);
+        });
         this.display = true;
     }
 
     edit(rowData: any) {
+        this.rowData = rowData;
         this.display = true;
         setTimeout(() => {
             this.formGroup.patchValue(rowData);
@@ -178,7 +186,11 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     }
 
     hidDialog() {
+        this.rowData = null;
         this.formGroup.reset();
+        Object.keys(this.formGroup.controls).forEach(key => {
+            this.formGroup.get(key)?.setValue(null);
+        });
         this.display = false;
     }
 
@@ -197,7 +209,7 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
         }else {
             this.confirmationService.confirm({
                 key: 'crudPopup',
-                target: event?.target as EventTarget,
+                target: this.lastTarget || (event?.target as EventTarget),
                 header: 'CONFIRMATION',
                 message: 'Voulez-vous vraiment valider cette action ? ',
                 icon: 'pi pi-exclamation-triangle',
@@ -225,6 +237,7 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     }
 
     setActionMenu(event: any, menu: any, rowData: any) {
+        this.lastTarget = event.currentTarget || event.target;
         this.actionMenuItems = [];
 
         // Bouton Détails

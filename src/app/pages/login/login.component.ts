@@ -11,7 +11,7 @@ import { ToastModule } from 'primeng/toast';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { isUserInRoles, USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
-import { StructureService } from '../structure/structure-service';
+import { StructureService } from '../structure/structure-service/structure-service';
 
 @Component({
     selector: 'app-login',

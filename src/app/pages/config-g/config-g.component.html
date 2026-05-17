@@ -1,39 +1,72 @@
-<div >
-    <form [formGroup]="configForm" class="form-grid">
-        <h5>CONFIGURATION GLOBALE</h5>
-        <div class="grid p-fluid">
-            <div class="field mt-5 mb-4">
-                <label for="nomCompletRq" class="block font-bold mb-2">
-                    Nom complet du responsable RQ <span class="p-error">*</span>
-                </label>
-                <input id="nomCompletRq" name="nomCompletRq" formControlName="nomCompletRq"
-                       [disabled]="isEditMode"
-                       placeholder="Entrer Nom complet" class="w-full" />
+<div class="card p-0 overflow-hidden border-none shadow-sm bg-white">
+    <!-- Header Premium -->
+    <div class="bg-gray-50/30 border-b border-gray-100">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h5 class="m-0 font-bold text-gray-900 text-sm tracking-wider uppercase">Configuration Globale du Système</h5>
+                <p class="text-xs text-gray-500 mt-1 max-w-2xl">
+                    Permet de définir les paramètres généraux du système, notamment les informations du Responsable Qualité et les règles de relance automatique des non-conformités.
+                </p>
             </div>
-
-            <div class="field mt-5 mb-4">
-                <label for="EmailRq" class="block font-bold mb-2">
-                    Email du responsable RQ <span class="p-error">*</span>
-                </label>
-                <input id="EmailRq" name="EmailRq" formControlName="emailRq"
-                       placeholder="Entrer l'email" class="w-full"   [disabled]="isEditMode" />
-            </div>
-
-            <div class="field mt-5 mb-4">
-                <label for="rappelEcheance" class="block font-bold mb-2">
-                    Fréquences des rappels (en jours) <span class="p-error">*</span>
-                </label>
-                <input id="rappelEcheance" type="number" name="rappelEcheance"
-                       formControlName="rappelEcheance"   [disabled]="true" class="w-full" />
-            </div>
-
-            <button pButton type="button" label="Enregistrer" icon="pi pi-check" [disabled]="!configForm.valid" (click)="save()" ></button>
-
+            <p-button icon="pi pi-times" [text]="true" severity="secondary" size="small" class="opacity-50 hover:opacity-100"></p-button>
         </div>
-    </form>
+    </div>
+
+    <!-- Contenu du Formulaire -->
+    <div class="max-w-3xl">
+        <form [formGroup]="configForm">
+            <div class="grid p-fluid gap-6">
+                
+                <!-- Section RQ -->
+                <div class="col-12">
+                    <h6 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Responsable Qualité (RQ)</h6>
+                    <div class="field mb-4">
+                        <p-floatlabel variant="in" class="w-full">
+                            <input pInputText id="nomCompletRq" formControlName="nomCompletRq" autocomplete="off" class="w-full" />
+                            <label for="nomCompletRq">Nom complet <span class="text-red-500">*</span></label>
+                        </p-floatlabel>
+                        <small class="text-gray-400 mt-1 block">Prénom et Nom du responsable actuel</small>
+                    </div>
+
+                    <div class="field mb-4">
+                        <p-floatlabel variant="in" class="w-full">
+                            <input pInputText id="emailRq" formControlName="emailRq" autocomplete="off" class="w-full" />
+                            <label for="emailRq">Adresse email <span class="text-red-500">*</span></label>
+                        </p-floatlabel>
+                        <small class="text-gray-400 mt-1 block">Email utilisé pour l'envoi des alertes système</small>
+                    </div>
+                </div>
+
+                <!-- Section Délais -->
+                <div class="col-12 pt-4 border-t border-gray-100">
+                    <h6 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Paramètres de Rappel</h6>
+                    <div class="field mb-4">
+                        <p-floatlabel variant="in" class="w-full">
+                            <p-inputNumber id="rappelEcheance" formControlName="rappelEcheance" 
+                                          [showButtons]="true" buttonLayout="stacked" 
+                                          spinnerMode="vertical" 
+                                          incrementButtonIcon="pi pi-angle-up" 
+                                          decrementButtonIcon="pi pi-angle-down"
+                                          class="w-full"></p-inputNumber>
+                            <label for="rappelEcheance">Fréquence (en jours) <span class="text-red-500">*</span></label>
+                        </p-floatlabel>
+                        <small class="text-gray-400 mt-1 block">Nombre de jours avant l'échéance pour le premier rappel</small>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="col-12 flex justify-end items-center gap-3 mt-6">
+                    <p-button label="Annuler" severity="secondary" [text]="true" size="small" />
+                    <p-button label="Enregistrer les modifications" 
+                              icon="pi pi-save" 
+                              severity="info"
+                              [disabled]="configForm.invalid" 
+                              [loading]="loading" 
+                              (click)="save()" 
+                              size="small" 
+                              styleClass="px-5 py-2.5 font-bold shadow-sm"></p-button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
-
-
-
-
-

@@ -1,4 +1,4 @@
-import { REFERENTIEL_SERVICE } from '../../services/quali-url-configs';
+import { REFERENTIEL_SERVICE } from "../../../services/quali-url-configs";
 
 
 export class StructureEndpoint {

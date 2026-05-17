@@ -1,20 +1,13 @@
-::ng-deep .nav-tab {
-    // border-bottom: 2px solid transparent !important;
-    transition: all 0.2s ease-in-out;
-    color: var(--text-color-secondary);
-    padding-bottom: 0.5rem;
-    font-weight: 500;
-    background: var(--p-content-background) !important;
-
-    &:hover {
-        // border-bottom: 2px solid #066cbf !important;
-        background-color: var(--primary-color) !important; 
-        color: white !important;
-    }
-
-    &.active-tab {
-        // border-bottom: 2px solid #066cbf !important;
-        color: white !important;
-        background-color: var(--primary-color) !important;
+.premium-dialog {
+    ::ng-deep {
+        .p-dialog-header {
+            border-bottom: 1px solid var(--surface-border);
+            padding: 1.5rem;
+            background: var(--surface-card);
+        }
+        
+        .p-dialog-content {
+            padding: 1.5rem;
+        }
     }
 }

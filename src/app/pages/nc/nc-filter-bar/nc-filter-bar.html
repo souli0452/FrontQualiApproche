@@ -1,0 +1,80 @@
+
+    <p-toolbar>
+        <ng-template #start>
+            <!-- Date de début -->
+            <div class="filter-item">
+                <p-floatlabel variant="on" class="mx-2 w-full md:w-48">
+                    <p-datepicker 
+                        [(ngModel)]="dateDebut" 
+                        (onChange)="applyFilters()"  
+                        inputId="start_label" 
+                        appendTo="body"
+                        showIcon 
+                        iconDisplay="input"
+                        styleClass="w-full border border-surface-border rounded-lg bg-transparent" />
+                    <label for="start_label">Du</label>
+                </p-floatlabel>
+            </div>
+
+            <!-- Date de fin -->
+            <div class="filter-item">
+                <p-floatlabel variant="on" class="mx-2 w-full md:w-48">
+                    <p-datepicker 
+                        [(ngModel)]="dateFin" 
+                        (onChange)="applyFilters()"  
+                        [minDate]="dateDebut"
+                        appendTo="body"
+                        inputId="end_label" 
+                        showIcon 
+                        iconDisplay="input"
+                        styleClass="w-full border border-surface-border rounded-lg bg-transparent" />
+                    <label for="end_label">Au</label>
+                </p-floatlabel>
+            </div>
+
+            <div class="filter-item" *ngIf="showProcessus">
+                <p-floatlabel class="w-full md:w-56 mx-2" variant="on">
+                    <p-select 
+                        [(ngModel)]="selectedProcess" 
+                        (onChange)="applyFilters()" 
+                        inputId="process_label" 
+                        [showClear]="true" 
+                        [options]="processusList" 
+                        [filter]="false" 
+                        appendTo="body"
+                        filterBy="libelle" 
+                        optionLabel="libelle" 
+                        styleClass="w-full border border-surface-border rounded-lg bg-transparent" 
+                        variant="filled" />
+                    <label for="process_label">Processus</label>
+                </p-floatlabel>
+            </div>
+        </ng-template>
+
+        <ng-template #center>
+            <!-- Gravité -->
+            <div class="filter-item" *ngIf="showGravite">
+                <p-floatlabel class="w-full md:w-56 mx-2" variant="on">
+                    <p-select 
+                        [(ngModel)]="selectedGravite" 
+                        (onChange)="applyFilters()" 
+                        inputId="gravite_label" 
+                        [showClear]="true" 
+                        [options]="graviteList" 
+                        [filter]="false" 
+                        appendTo="body"
+                        filterBy="libelle" 
+                        optionLabel="libelle" 
+                        styleClass="w-full border border-surface-border rounded-lg bg-transparent" 
+                        variant="filled" />
+                    <label for="gravite_label">Gravité</label>
+                </p-floatlabel>
+            </div>
+        </ng-template>
+
+        <ng-template #end>
+            <div class="btn-reset">
+                <p-button label="Réinitialiser" icon="pi pi-refresh" variant="outlined" (click)="resetFilters()" />
+            </div>
+        </ng-template>
+    </p-toolbar>

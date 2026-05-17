@@ -91,9 +91,7 @@ body {
     position: relative;
     width: 100%;
 }
-.conformite p-toolbar {
-    display: none !important;
-}
+
 .p-button-warning {
     background-color: #f8b045 !important;
     border-color: #f8b045 !important;
@@ -245,3 +243,156 @@ p-button .p-button-info {
         border-bottom: none !important;
         }
     }
+
+.p-dialog-header {
+    border-bottom: 1px dashed #d2d2d2;
+    margin-bottom: 20px;
+}
+
+
+/* Empêcher les textes longs d'élargir le tableau */
+.p-datatable-tbody > tr > td {
+    max-width: 0; /* Important pour que l'ellipsis fonctionne sur les cellules */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* On laisse quand même le bouton d'action bien visible */
+.p-datatable-tbody > tr > td:last-child {
+    overflow: visible;
+    max-width: none;
+    text-align: center;
+}
+.p-dialog{
+    border: 0 !important;
+}
+.card-main-details {
+    display: flex;
+}
+
+.card-left {
+    width: 160px !important;
+    background-color: var(--primary-color);
+    display: flex;
+    padding: 25px 10px;
+    justify-content: flex-start;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 10px 0 0 10px;
+
+    .logo-popup {
+        height: 40px;
+        width: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50px;
+
+        img {
+            height: auto;
+            width: 30px;
+            filter: brightness(1.5);
+        }
+    }
+
+    .card-info {
+        color: white;
+        text-align: center;
+        margin-top: 25px;
+    }
+    .card-info-body p {
+        color: #24b5e0;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 15px;
+        font-size: 12px !important;
+        line-height: normal;
+    }
+    .p-divider-horizontal {
+        width: 60%;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        margin: auto !important;
+        border-color: #24b5e0 !important;
+        margin-bottom: 15px !important;
+        opacity: .5;
+
+        &:before{
+            border-block-start: 1px solid #24b5e0 !important;
+        }
+    }
+    .card-info-header p {
+        font-size: 12px;
+        font-weight: 100;
+    }
+}
+.card-info-footer {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+    opacity: .1;
+}
+.card-right {
+    width: 80%;
+    padding: 40px 30px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.card-right-footer {
+    text-align: right;
+}
+
+
+
+.card-table .card {
+    padding-top: 0 !important;
+}
+
+/* --- DESIGN SYSTEM: PREMIUM HUB --- */
+.premium-hub {
+    ::ng-deep {
+        .p-tabmenu {
+            .p-tabmenu-nav {
+                background: transparent !important;
+                border: none;
+                gap: 0.5rem;
+                padding: 0 1rem;
+            }
+
+            .p-tabmenu-nav .p-tabmenuitem .p-menuitem-link {
+                background: transparent !important;
+                border: none;
+                border-bottom: 3px solid transparent;
+                border-radius: 0;
+                padding: 1rem 1.5rem;
+                transition: all 0.3s ease;
+                
+                .p-menuitem-text, .p-menuitem-icon {
+                    color: var(--text-color-secondary);
+                    font-weight: 500;
+                }
+
+                &:hover {
+                    background: var(--surface-hover);
+                    border-bottom-color: var(--primary-200);
+
+                    .p-menuitem-text, .p-menuitem-icon {
+                        color: var(--primary-color);
+                    }
+                }
+            }
+
+            .p-tabmenu-nav .p-tabmenuitem.p-highlight .p-menuitem-link {
+                border-bottom-color: var(--primary-color);
+                background: transparent !important;
+
+                .p-menuitem-text, .p-menuitem-icon {
+                    color: var(--primary-color);
+                    font-weight: 700;
+                }
+            }
+        }
+    }
+}

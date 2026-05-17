@@ -7,27 +7,27 @@
 
 .ng-badge.success {
     background-color: #4caf50;
-    color: var(--text-color);
+    color: white;
 }
 
 .ng-badge.warning {
     background-color: #ff9800;
-    color: var(--text-color);
+    color: white;
 }
 
 .ng-badge.info {
     background-color: #2196f3;
-    color: var(--text-color);
+    color: white;
 }
 
-tr {
-    height: 50px;
-}
 
 td {
     vertical-align: middle;
 }
-
+.popup-header {
+font-weight: 200;
+    font-size: 15px;
+}
 .custom-spacing-table td:first-child {
     padding-right: 20px;
     text-align: left;

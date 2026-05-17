@@ -1,0 +1,12 @@
+<div class="stats-card" [ngClass]="color">
+    <div class="card-content">
+        <span class="label">{{ label }}</span>
+        <div class="value-container">
+            <h2 class="value">{{ value }}</h2>
+            <div class="icon-box">
+                <i [class]="icon"></i>
+            </div>
+        </div>
+        <p class="trend" *ngIf="trend">{{ trend }}</p>
+    </div>
+</div>

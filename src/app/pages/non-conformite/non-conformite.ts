@@ -14,8 +14,8 @@ import { ActionNonConformiteService } from '../../services/action-non-conformite
 import { TypeProcessusService } from '../../services/type-processus.service';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { FileUploadComponent } from "../../components/file-upload/file-upload.component";
-import { StructureService } from '../structure/structure-service';
-import { Structure } from '../structure/structure';
+import { Structure } from '../structure/structure-config/structure';
+import { StructureService } from '../structure/structure-service/structure-service';
 
 
 @Component({

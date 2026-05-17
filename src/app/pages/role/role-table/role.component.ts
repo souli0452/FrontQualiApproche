@@ -5,10 +5,10 @@ import { Subject, takeUntil } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { Router } from '@angular/router';
 
-import { RoleService } from './role-service';
-import { AppRole, Permission, TableColumn, FormGroupColumn, MultiSelectSelector } from '../../models';
-import { NgPrimeModule } from '../../../prime-ng.module';
-import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
+import { AppRole, Permission, TableColumn, FormGroupColumn, MultiSelectSelector } from '../../../models';
+import { NgPrimeModule } from '../../../../prime-ng.module';
+import { AppCrudGenericComponent } from '../../../components/app-crud-generic/app-crud-generic.component';
+import { RoleService } from '../role-service/role-service';
 
 @Component({
   selector: 'app-role',
@@ -66,7 +66,7 @@ export class RoleComponent implements OnInit, OnDestroy {
     }
 
     goToDetail(id: string = 'new') {
-        this.router.navigate(['/roles', id]);
+        this.router.navigate(['/configurations/roles', id]);
     }
 
     loadRoles() {

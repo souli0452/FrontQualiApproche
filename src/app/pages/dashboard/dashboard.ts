@@ -5,13 +5,13 @@ import { RecentSalesWidget } from './components/recentsaleswidget';
 import { BestSellingWidget } from './components/bestsellingwidget';
 import { RevenueStreamWidget } from './components/revenuestreamwidget';
 import { AuthService } from '../../services/auth-services/auth.service';
-import { StructureService } from '../structure/structure-service';
 import { ProcNonConformiteService } from '../proc-non-conformite/proc-non-conformite.service';
 import { isPlatformBrowser, Location } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { generateColor, getCurrentUserStructure, isUserInRoles } from '../../utils';
 import { Router } from '@angular/router';
+import { StructureService } from '../structure/structure-service/structure-service';
 
 
 

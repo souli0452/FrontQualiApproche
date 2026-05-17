@@ -3,7 +3,6 @@ import {
     DmdTraitementTableTemplateComponent
 } from '../../../components/dmd.traitement-table-template/dmd.traitement-table-template.component';
 import { Toast } from 'primeng/toast';
-import { Structure } from '../../structure/structure';
 import { EtapeTraitement } from '../../../enums';
 import { MessageService } from 'primeng/api';
 import { ProcNonConformiteService } from '../proc-non-conformite.service';
@@ -11,6 +10,7 @@ import { getCurrentUserStructure, showToast, StatusEnum } from '../../../utils';
 import { HttpResponse } from '@angular/common/http';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { takeUntil } from 'rxjs/operators';
+import { Structure } from '../../structure/structure-config/structure';
 
 @Component({
     selector: 'app-plan-action',

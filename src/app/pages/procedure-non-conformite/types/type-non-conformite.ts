@@ -16,6 +16,7 @@ import { showToast, StatusEnum } from '../../../utils';
     template: `
         <div class="page-layout">
             <app-crud-generic
+                [addButtonLabel]="'Nouveau type de non conformité'"
                 [dialogWidth]="'40rem'"
                 [loading]="loading"
                 [pageLabel]="pageLabel"

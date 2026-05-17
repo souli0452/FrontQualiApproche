@@ -10,7 +10,6 @@ import { EtapeTraitement } from '../../../../enums';
 import { MessageService } from 'primeng/api';
 import { Chips } from 'primeng/chips';
 import { takeUntil } from 'rxjs';
-import { StructureService } from '../../../structure/structure-service';
 import { AuthService } from '../../../../services/auth-services/auth.service';
 import { formatDate } from '@angular/common';
 import { downloadFile, formatDateToDDMMYYYY, getStatusSeverity } from '../../../../utils';

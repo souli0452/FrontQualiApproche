@@ -2,21 +2,21 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Table } from 'primeng/table';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { StructureService } from './structure-service';
-import { GlobalSearchService } from '../../services/global-search.service';
+import { GlobalSearchService } from '../../../services/global-search.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ActivatedRoute } from '@angular/router';
-import { Structure } from './structure';
-import { TypeStructure } from '../../enums';
-import { handleHttpErrors, showToast } from '../../utils';
+import { TypeStructure } from '../../../enums';
+import { handleHttpErrors, showToast } from '../../../utils';
 import { CommonModule } from '@angular/common';
-import { NgPrimeModule } from '../../../prime-ng.module';
+import { NgPrimeModule } from '../../../../prime-ng.module';
 import {
     DmdTraitementTableTemplateComponent
-} from '../../components/dmd.traitement-table-template/dmd.traitement-table-template.component';
-import { CreationComponent } from './creation/creation.component';
+} from '../../../components/dmd.traitement-table-template/dmd.traitement-table-template.component';
+import { CreationComponent } from '../structure-creation/creation.component';
 import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
+import { StructureService } from '../structure-service/structure-service';
+import { Structure } from '../structure-config/structure';
 @Component({
     selector: 'app-structure',
     templateUrl: './structure.component.html',
@@ -60,8 +60,9 @@ export class StructureComponent implements OnInit, OnDestroy {
 
         this.cols = [
             { field: 'libelleCourt', header: 'Sigle', type: 'string', filter: true, width: '10%', center: false },
-            { field: 'libelleLong', header: 'Libellé', type: 'string', filter: true, width: '40%', center: false },
-            { field: 'ville', header: 'Ville', type: 'string', filter: true, width: '20%', center: false }
+            { field: 'libelleLong', header: 'Libellé', type: 'string', filter: true, width: '30%', center: false },
+            { field: 'ville', header: 'Ville', type: 'string', filter: true, width: '15%', center: false },
+            { field: 'email', header: 'Email', type: 'string', filter: true, width: '25%', center: false }
         ];
 
         this.colsFilter = this.cols.map((value) => value.field);
@@ -92,12 +93,7 @@ export class StructureComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        if (this.typeStructure === TypeStructure.DIRECTION) {
-            this.loadStuctures();
-        } else {
-            this.directionChange();
-            this.loadDirections();
-        }
+        this.loadStuctures();
 
         // Écouter la barre de recherche globale
         this.globalSearchService.searchQuery$

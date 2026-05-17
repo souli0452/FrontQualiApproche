@@ -20,9 +20,9 @@
             <ng-template #end>
 <span class="p-input-icon-left">
 
-        <input pInputText type="text" placeholder="Rechercher..." class="mr-4"
+        <input pInputText type="text" placeholder="Rechercher..."
                (input)="dt.filterGlobal($event, 'contains')"
-               style="width: 250px"/>
+               class="w-full p-inputtext-sm border-none bg-transparent focus:ring-0" />
     @if (btnObject) {
         <button pButton pRipple
                 [label]="btnObject.label"

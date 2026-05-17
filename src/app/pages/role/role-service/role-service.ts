@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { QualiUrlConfig } from '../../services/quali-url-configs';
-import { AppRole, Permission } from '../../models';
+import { AppRole, Permission } from '../../../models';
+import { QualiUrlConfig } from '../../../services/quali-url-configs';
 
 @Injectable({
     providedIn: 'root'

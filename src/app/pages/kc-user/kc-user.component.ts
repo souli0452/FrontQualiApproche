@@ -8,9 +8,9 @@ import { DropdownSelector, FormGroupColumn, MultiSelectSelector, TableColumn } f
 import { AuthService } from '../../services/auth-services/auth.service';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
 import { NgPrimeModule } from '../../../prime-ng.module';
-import { StructureService } from '../structure/structure-service';
 import { TypeStructure } from '../../enums';
-import { RoleService } from '../role/role-service';
+import { RoleService } from '../role/role-service/role-service';
+import { StructureService } from '../structure/structure-service/structure-service';
 
 @Component({
     selector: 'app-kc-user',
@@ -38,8 +38,8 @@ export class KcUserComponent implements OnInit, OnDestroy {
     pageLabel = 'utilisateurs';
     formHeader = "Création et mise à jour d'un utilisateur";
     customButtons = [
-        { label: '', icon: 'pi pi-refresh', action: 'resetPassword', color: 'blue', tooltip: 'Réinitialiser le mot de passe', tooltipPosition: 'top' },
-        { label: '', icon: 'pi pi-check', action: 'activateUser', color: 'green', tooltip: "Activer/Désactiver l'utilisateur", tooltipPosition: 'top' }
+        { label: 'Réinitialiser mot de passe', icon: 'pi pi-refresh', action: 'resetPassword', color: 'blue', tooltip: 'Réinitialiser le mot de passe', tooltipPosition: 'top' },
+        { label: 'Activer / Désactiver', icon: 'pi pi-check', action: 'activateUser', color: 'green', tooltip: "Activer/Désactiver l'utilisateur", tooltipPosition: 'top' }
     ];
 
     constructor(
@@ -51,16 +51,14 @@ export class KcUserComponent implements OnInit, OnDestroy {
     ) {
         this.formCols = [
             { field: 'id', header: 'Id', type: 'string', visible: false, required: false },
-            { field: 'structure', header: 'structure de ratachement ', type: 'dropdown', visible: true, required: true },
-            { field: 'roles', header: 'Rôles', type: 'multiselect', visible: true, required: true },
-            { field: 'fonction', header: 'Fonction', type: 'string', visible: true, required: true },
-            { field: 'firstName', header: 'Prénom', type: 'string', visible: true, required: true },
-            { field: 'lastName', header: 'Nom', type: 'string', visible: true, required: true },
-            { field: 'email', header: 'Email', type: 'string', visible: true, required: true },
-            // { field: 'createdTimestamp', header: 'Date de création', type: 'date', visible: true, required: false },
-            { field: 'username', header: "Nom d'utilisateur", type: 'string', visible: true, required: true },
-            { field: 'enabled', header: 'Activé', type: 'boolean', visible: true, required: false }
-            //{ field: 'password', header: 'Mot de passe', type: 'string', visible: true, required: true }
+            { field: 'structure', header: 'Structure de rattachement', type: 'dropdown', visible: true, required: true, topLabel: 'Organisation', class: 'col-12 mb-2' },
+            { field: 'roles', header: 'Rôles', type: 'multiselect', visible: true, required: true, topLabel: 'Rôle de l\'utilisateur', class: 'col-12 mb-2' },
+            { field: 'lastName', header: 'Nom', type: 'string', visible: true, required: true, topLabel: 'Nom de l\'utilisateur', class: 'col-12 sm:col-6 mb-2' },
+            { field: 'firstName', header: 'Prénom', type: 'string', visible: true, required: true, topLabel: 'Prénom de l\'utilisateur', class: 'col-12 sm:col-6 mb-2' },
+            { field: 'fonction', header: 'Fonction', type: 'string', visible: true, required: true, topLabel: 'Profil Professionnel', class: 'col-12 sm:col-6 mb-2' },
+            { field: 'email', header: 'Email', type: 'string', visible: true, required: true, topLabel: 'Adresse e-mail', helpText:'mail@mail.com', class: 'col-12 sm:col-6 mb-2' },
+            { field: 'username', header: "Nom d'utilisateur", type: 'string', visible: true, required: true, topLabel: 'Utilisé pour la connexion', helpText:'mail@mail.com', class: 'col-12 sm:col-6 mb-2' },
+            { field: 'enabled', header: 'Compte activé', type: 'boolean', visible: true, required: false, topLabel: 'Activer le compte de l\'utilisateur', class: 'col-12 sm:col-6 mb-2' }
         ];
 
         this.tableCols = [
@@ -146,9 +144,11 @@ export class KcUserComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (res: any) => {
                     this.dataList = res.body || [];
+                    this.loading = false;
                 },
                 error: (error: any) => {
                     showToast(StatusEnum.error, error.status, null, this.messageService, error);
+                    this.loading = false;
                 }
             });
     }

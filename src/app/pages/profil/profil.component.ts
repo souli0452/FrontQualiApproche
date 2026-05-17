@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Avatar } from 'primeng/avatar';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { AuthService } from '../../services/auth-services/auth.service';
-import { Structure } from '../structure/structure';
+import { Structure } from '../structure/structure-config/structure';
 import { getCurrentUserStructure } from '../../utils';
 import { Router } from '@angular/router';
 

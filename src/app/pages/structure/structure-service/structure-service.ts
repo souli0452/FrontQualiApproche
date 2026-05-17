@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { Structure } from '../structure-config/structure';
+import { StructureEndpoint } from '../structure-config/strucuture-url-config';
+import { createRequestOption, formatUrl } from '../../../utils';
+import { TypeStructure } from '../../../enums';
 
-import { StructureEndpoint } from './strucuture-url-config';
-import { Structure } from './structure';
-import { TypeStructure } from '../../enums';
-import { createRequestOption, formatUrl } from '../../utils';
 
 @Injectable({providedIn: 'root'})
 export class StructureService {

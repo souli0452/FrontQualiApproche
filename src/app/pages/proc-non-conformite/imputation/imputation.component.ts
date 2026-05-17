@@ -9,8 +9,8 @@ import { MessageService } from 'primeng/api';
 import { ProcNonConformiteService } from '../proc-non-conformite.service';
 import { HttpResponse } from '@angular/common/http';
 import { getCurrentUserStructure, showToast, StatusEnum } from '../../../utils';
-import { Structure } from '../../structure/structure';
 import { RejetFormsComponent } from '../forms/rejet.forms/rejet.forms.component';
+import { Structure } from '../../structure/structure-config/structure';
 
 @Component({
     selector: 'app-imputation',
