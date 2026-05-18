@@ -22,6 +22,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'app-non-conformit.forms',
+    standalone:true,
     imports: [NgPrimeModule, TabView, TabPanel, DemandeNon_conformiteDetailsComponent, Chips],
     templateUrl: './non-conformit.forms.component.html',
     styleUrl: './non-conformit.forms.component.scss'
@@ -84,7 +85,7 @@ export class NonConformitFormsComponent {
         if (this.demande) {
             // Préparer les objets pour les sélecteurs
             const patchValues = { ...this.demande };
-            
+
             if (this.demande.origineId) {
                 patchValues.destination = this.structures.find(s => s.id === this.demande.origineId);
             }
@@ -101,7 +102,7 @@ export class NonConformitFormsComponent {
 
     onInputChange() {
         const formValues = this.editForm.value;
-        
+
         // On synchronise les champs de base
         Object.assign(this.demande, {
             pertinanceRs: formValues.pertinanceRs,
