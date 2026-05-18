@@ -104,7 +104,7 @@ export class AppMenu {
                                 label: 'Validation des actions',
                                 icon: 'pi pi-fw pi-check',
                                 routerLink: ['/validation'],
-                                // visible: isUserInRoles(['VALIDATION_CHEF'])
+                                 visible: isUserInRoles(['VALIDATION_CHEF'])
                             },
                             {
                                 label: 'Suivi par RQ',
