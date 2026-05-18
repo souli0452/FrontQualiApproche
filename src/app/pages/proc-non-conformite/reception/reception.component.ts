@@ -86,7 +86,7 @@ ngOnInit() {
                     }
                 },
                 error: () => {
-                    this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
+                    this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 9", life: 3000 });
                     //showToast(handleHttpErrors(err, 'error', 'Impression correspondance', 'demandeCodeKey'), this.messageService);
                 }
             });
@@ -100,7 +100,7 @@ ngOnInit() {
                 this.dmdTraitement.closeDetailsDialog();
             },
             error: () => {
-                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
+                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 10", life: 3000 });
             }
             });
     }
@@ -110,6 +110,8 @@ ngOnInit() {
             next: (data) => {
                 this.demandeList = data.body;
                 this.loading = false;
+                console.log("demandeList : ",this.demandeList);
+                
             },
             error: (error) => {
                 this.loading = false;
@@ -127,14 +129,18 @@ ngOnInit() {
         this.motifRejetDialog = true;
     }
     reception(dmd:any) {
+        console.log("dmd : ",dmd);
+        
      this.service.updateNomConformites(dmd).subscribe({
          next: (data) => {
              this.getDemandeList()
              this.dmdTraitement.closeDetailsDialog();
-             this.messageService.add({ severity: 'success', summary: 'ERREUR', detail: "L'oppération à réussie !", life: 3000 });
+             this.messageService.add({ severity: 'success', summary: 'SUCCES', detail: "L'oppération à réussie !", life: 3000 });
          },
          error: (error) => {
-             this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
+            console.log("ERREUR : ", error);
+            
+             this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 11", life: 3000 });
          }
      })
     }

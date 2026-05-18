@@ -53,9 +53,10 @@ export class KcUserComponent implements OnInit, OnDestroy {
             { field: 'id', header: 'Id', type: 'string', visible: false, required: false },
             { field: 'structure', header: 'Structure de rattachement', type: 'dropdown', visible: true, required: true, topLabel: 'Organisation', class: 'col-12 mb-2' },
             { field: 'roles', header: 'Rôles', type: 'multiselect', visible: true, required: true, topLabel: 'Rôle de l\'utilisateur', class: 'col-12 mb-2' },
+            { field: 'fonction', header: 'Fonction', type: 'string', visible: true, required: true, topLabel: 'Profil Professionnel', class: 'col-12 sm:col-6 mb-2' },
             { field: 'lastName', header: 'Nom', type: 'string', visible: true, required: true, topLabel: 'Nom de l\'utilisateur', class: 'col-12 sm:col-6 mb-2' },
             { field: 'firstName', header: 'Prénom', type: 'string', visible: true, required: true, topLabel: 'Prénom de l\'utilisateur', class: 'col-12 sm:col-6 mb-2' },
-            { field: 'fonction', header: 'Fonction', type: 'string', visible: true, required: true, topLabel: 'Profil Professionnel', class: 'col-12 sm:col-6 mb-2' },
+            
             { field: 'email', header: 'Email', type: 'string', visible: true, required: true, topLabel: 'Adresse e-mail', helpText:'mail@mail.com', class: 'col-12 sm:col-6 mb-2' },
             { field: 'username', header: "Nom d'utilisateur", type: 'string', visible: true, required: true, topLabel: 'Utilisé pour la connexion', helpText:'mail@mail.com', class: 'col-12 sm:col-6 mb-2' },
             { field: 'enabled', header: 'Compte activé', type: 'boolean', visible: true, required: false, topLabel: 'Activer le compte de l\'utilisateur', class: 'col-12 sm:col-6 mb-2' }

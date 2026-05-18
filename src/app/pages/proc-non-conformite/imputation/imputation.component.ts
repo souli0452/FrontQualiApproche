@@ -76,7 +76,7 @@ export class ImputationComponent {
                 this.dmdTraitement.closeDetailsDialog();
             },
             error: () => {
-                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
+                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 7", life: 3000 });
             }
         });
     }

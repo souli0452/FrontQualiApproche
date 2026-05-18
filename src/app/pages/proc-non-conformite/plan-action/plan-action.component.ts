@@ -65,7 +65,7 @@ export class PlanActionComponent {
 
             },
             error: () => {
-                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
+                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 8", life: 3000 });
             }
         });
     }
