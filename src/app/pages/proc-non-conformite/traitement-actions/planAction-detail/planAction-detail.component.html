@@ -46,7 +46,7 @@
                                 <span class="file-name">{{ fichier.nomFichier }}</span>
                             </div>
                             <button pButton pRipple type="button" icon="pi pi-download"
-                                class="p-button-text p-button-rounded p-button-plain" (click)="downloadFile(fichier)"
+                                class="p-button-text p-button-rounded p-button-plain" (click)="downloadAttachment(fichier)"
                                 pTooltip="Télécharger" tooltipPosition="left">
                             </button>
                         </div>
@@ -71,11 +71,11 @@
                     <div class="nc-detail-item" *ngIf="planActionRequest.docRejet">
                         <span class="nc-detail-label block font-bold text-warn">Document joint lors du rejet</span>
                         <div class="flex align-items-center mt-3">
-                            <span class="file-name">{{ planActionRequest.docRejet.nomFichier }}</span>
+                            <span class="file-name">{{ planActionRequest.docRejet.nom }}</span>
                         </div>
                         <button pButton pRipple type="button" icon="pi pi-download"
                             class="p-button-text p-button-rounded p-button-plain"
-                            (click)="downloadFile(planActionRequest.docRejet)" pTooltip="Télécharger"
+                            (click)="downloadAttachment(planActionRequest.docRejet)" pTooltip="Télécharger"
                             tooltipPosition="left">
                         </button>
                     </div>
@@ -225,10 +225,10 @@
                     <div *ngFor="let fichier of nc.fichiers"
                         class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
                         <div class="flex align-items-center mt-3">
-                            <span class="file-name">{{ fichier.nomFichier }}</span>
+                            <span class="file-name">{{ fichier.nom }}</span>
                         </div>
                         <button pButton pRipple type="button" icon="pi pi-download"
-                            class="p-button-text p-button-rounded p-button-plain" (click)="downloadFile(fichier)"
+                            class="p-button-text p-button-rounded p-button-plain" (click)="downloadAttachment(fichier)"
                             pTooltip="Télécharger" tooltipPosition="left">
                         </button>
                     </div>
@@ -356,7 +356,7 @@
                                 <span class="file-name">{{ fichier.nomFichier }}</span>
                             </div>
                             <button pButton pRipple type="button" icon="pi pi-download"
-                                class="p-button-text p-button-rounded p-button-plain" (click)="downloadFile(fichier)"
+                                class="p-button-text p-button-rounded p-button-plain" (click)="downloadAttachment(fichier)"
                                 pTooltip="Télécharger" tooltipPosition="left">
                             </button>
                         </div>

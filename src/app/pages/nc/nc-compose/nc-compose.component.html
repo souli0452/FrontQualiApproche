@@ -1,147 +1,81 @@
 <div class="card">
-
-    <div class="surface-section grid grid-nogutter formgrid gap-3 md:surface-border">
+    <div class="flex align-items-center px-4 md:px-0 border-top-1 surface-border md:border-none pt-4 md:pt-0">
+        <button pButton pRipple type="button" icon="pi pi-chevron-left"
+                class="p-button-outlined p-button-secondary surface-border text-900 w-3rem h-3rem mr-3"
+                (click)="goBack()"></button>
+    </div>
+    <div class="surface-section grid mt-4 grid-nogutter formgrid gap-3 md:surface-border">
         <div class="col-12 lg:col-12">
-            <div class="field mb-4">
-                <label for="justification" class="block font-semibold  uppercase mb-2 text-[12px]">Description détaillée de la non-conformité <span class="p-error">*</span></label>
-                <p-editor id="justification" [(ngModel)]="nonConformite.justification"
-                          name="justification" [style]="{ height: '70px' }"
-                          placeholder="Décrivez précisément la non-conformité...">
-                    <ng-template pTemplate="header">
-                        <span class="ql-formats">
-                            <select class="ql-size"></select>
-                            <select class="ql-font"></select>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-bold" aria-label="Bold"></button>
-                            <button class="ql-italic" aria-label="Italic"></button>
-                            <button class="ql-underline" aria-label="Underline"></button>
-                        </span>
-                        <span class="ql-formats">
-                            <select class="ql-color"></select>
-                            <select class="ql-background"></select>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-list" value="ordered" aria-label="Ordered List"></button>
-                            <button class="ql-list" value="bullet" aria-label="Bullet List"></button>
-                            <select class="ql-align"></select>
-                        </span>
-                    </ng-template>
-                </p-editor>
+            <div class="field mt-5 mb-4">
+                <label for="justification" class="block font-bold  mb-2">Description détaillée de la non-conformité <span class="p-error">*</span></label>
+                <textarea pInputTextarea id="justification" [(ngModel)]="nonConformite.justification"
+                          name="justification" rows="5" [autoResize]="true"
+                          placeholder="Décrivez précisément la non-conformité..."
+                          class="w-full"></textarea>
+
             </div>
             <!-- Ligne 2 : Processus & Structure -->
 
-                <!-- <div class="flex-1 ">
-                    <div class="field">
-                        <label for="origineService" class="block font-semibold  uppercase mb-2 text-[12px]">Processus destinataire <span class="p-error">*</span></label>
-                        <p-select id="origineService" [(ngModel)]="nc.origineService" [options]="structures"
-                                    optionLabel="libelleLong" placeholder="Sélectionnez le processus"
-                                    [filter]="true" [showClear]="true" appendTo="body" class="w-full"
-                                    [class.p-invalid]="!nc.origineService "></p-select>
-                        <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
-                    </div>
-            </div> -->
-            <div class="flex flex-col md:flex-row gap-4 mt-4">
-                <div class="flex-1">
-                    <div class="field">
-                        <label for="processusNC" class="block font-semibold  uppercase mb-2 text-[12px]">Processus concerné par la NC <span class="p-error">*</span></label>
-                        <p-floatlabel variant="on">
-                            <p-select id="processusNC" [(ngModel)]="nc.typeProcedure" [options]="typeProcessus"
-                                        optionLabel="libelle" inputId="processusNC_label"
-                                        [filter]="true" [showClear]="true" appendTo="body" styleClass="w-full"
-                                        [class.p-invalid]="!nc.typeProcedure"></p-select>
-                            <label for="processusNC_label">Processus *</label>
-                        </p-floatlabel>
-                        <small *ngIf="!nc.typeProcedure && formSubmitted" class="p-error">Ce champ est requis</small>
-                    </div>
-                </div>
-                <div class="flex-1">
-                    <div class="field">
-                        <label for="niveauNC" class="block font-semibold  uppercase mb-2 text-[12px]">Criticité de la non-conformité <span class="p-error">*</span></label>
-                        <p-floatlabel variant="on">
-                            <p-select id="niveauNC" [(ngModel)]="nc.niveauNonConformite" [options]="niveauNcs"
-                                        optionLabel="libelle" inputId="niveauNC_label"
-                                        [filter]="true" [showClear]="true" appendTo="body" styleClass="w-full"
-                                        [class.p-invalid]="!nc.niveauNonConformite"></p-select>
-                            <label for="niveauNC_label">Niveau de la non-conformité *</label>
-                        </p-floatlabel>
-                        <small *ngIf="!nc.niveauNonConformite && formSubmitted" class="p-error">Ce champ est requis</small>
-                    </div>
-                </div>
-            </div>
             <div class="flex flex-wrap gap-4 mt-4">
-                <!-- <div class="flex-1 min-w-[300px]">
-                    <div class="field ">
-                        <label for="typeAction" class="block font-semibold  uppercase mb-2 text-[12px]">Type d’action entreprise (en cas de besoin)</label>
-                        <p-select id="typeAction" [(ngModel)]="nc.typeAction" [options]="typesActions"
+                <div class="flex-1 min-w-[300px]">
+                    <div class="field">
+                        <label for="origineService" class="block font-bold  mb-2"> Type de processus <span class="p-error">*</span></label>
+                        <p-select id="origineNf" [(ngModel)]="nc.typeProcedure" [options]="typeProcessus"
                                     optionLabel="libelle" placeholder="Sélectionnez un type"
                                     [filter]="true" [showClear]="true" appendTo="body" class="w-full"
                                     [class.p-invalid]="!nc.origineService "></p-select>
                         <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
                     </div>
-                </div> -->
+                </div>
                 <div class="flex-1 min-w-[300px]">
                     <div class="field">
-                        <label for="justification" class="block font-semibold  uppercase mb-2 text-[12px]">Origine de la non-conformité<span class="p-error">*</span></label>
-                        <p-floatlabel variant="on">
-                            <p-select id="origineNC" [(ngModel)]="nc.typeNonformite" [options]="typesNcs"
-                                        optionLabel="libelle" inputId="origineNC_label"
-                                        [filter]="true" [showClear]="true" appendTo="body" styleClass="w-full"
-                                        [class.p-invalid]="!nc.typeNonformite"></p-select>
-                            <label for="origineNC_label">Origine*</label>
-                        </p-floatlabel>
-                        <small *ngIf="!nc.typeNonformite && formSubmitted" class="p-error">Ce champ est requis</small>
+                        <label for="origineService" class="block font-bold  mb-2">Niveau de la non-conformité <span class="p-error">*</span></label>
+                        <p-select id="typProcedure" [(ngModel)]="nc.niveauNonConformite" [options]="niveauNcs"
+                                    optionLabel="libelle" placeholder="Sélectionnez un niveau"
+                                    [filter]="true" [showClear]="true" appendTo="body" class="w-full"
+                                    [class.p-invalid]="!nc.origineService "></p-select>
+                        <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-4 mt-4">
+                <div class="flex-1 min-w-[600px]">
+                    <div class="field">
+                        <label for="origineNf" class="block font-bold  mb-2">Origine de la non-conformité <span class="p-error">*</span></label>
+                        <p-select id="reclamation" [(ngModel)]="nc.typeNonformite" [options]="typesNcs"
+                                    optionLabel="libelle" placeholder="Sélectionnez l'origine"
+                                    [filter]="true" [showClear]="true" appendTo="body" class="w-full"
+                                    [class.p-invalid]="!nc.origineService "></p-select>
+                        <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
                     </div>
                 </div>
             </div>
 
             <div class="field mt-5 mb-4">
-                <label for="desAction" class="block font-semibold  uppercase mb-2 text-[12px]">Description de la correction  entreprises (si disponible...) </label>
-                <p-editor id="desAction" [(ngModel)]="nonConformite.actionDsc"
-                          name="actionDsc" [style]="{ height: '70px' }"
-                          placeholder="Description de la correction entreprise">
-                    <ng-template pTemplate="header">
-                        <span class="ql-formats">
-                            <select class="ql-size"></select>
-                            <select class="ql-font"></select>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-bold" aria-label="Bold"></button>
-                            <button class="ql-italic" aria-label="Italic"></button>
-                            <button class="ql-underline" aria-label="Underline"></button>
-                        </span>
-                        <span class="ql-formats">
-                            <select class="ql-color"></select>
-                            <select class="ql-background"></select>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-list" value="ordered" aria-label="Ordered List"></button>
-                            <button class="ql-list" value="bullet" aria-label="Bullet List"></button>
-                            <select class="ql-align"></select>
-                        </span>
-                    </ng-template>
-                </p-editor>
+                <label for="desAction" class="block font-bold  mb-2">Description de la correction  entreprises (en cas de besoin) </label>
+                <textarea pInputTextarea id="desAction" [(ngModel)]="nonConformite.actionDsc"
+                          name="justification" rows="5" [autoResize]="true"
+                          placeholder="Description de la correction entreprises"
+                          class="w-full" ></textarea>
 
             </div>
 
             <div class="mb-3">
-                <app-file-upload (fileUploaded)="handleFileUpload($event)"></app-file-upload>
-            </div>
-            
+            <app-file-upload (fileUploaded)="handleFileUpload($event)"></app-file-upload></div>
             <div class="flex justify-content-end flex-wrap">
                 <div class="flex align-items-center justify-content-center gap-3">
-                    <button pButton pRipple class="p-button-secondary" size="small" label="Annuler"
+                    <button pButton pRipple class="p-button-secondary font-bold" label="Annuler"
                             icon="pi pi-fw pi-times" (click)="goBack()">
                     </button>
 
-                    <button pButton pRipple class="p-button-info" size="small" label="Enregistrer"
+                    <button pButton pRipple class="p-button-primary font-bold" label="Enregistrer"
                             *ngIf="!nonConformite.id"
                             [disabled]="!nc.typeProcedure||!nc.typeNonformite"
                             icon="pi pi-fw pi-check" (click)="onSave()">
                     </button>
-                    <button pButton pRipple class="p-button-info" size="small" label="Mofifier"
+                    <button pButton pRipple class="p-button-primary font-bold" label="Mofifier"
                             *ngIf="nonConformite.id"
-                            [disabled]="!nc.typeProcedure||!nc.typeNonformite"
+                            [disabled]="!nc.typeProcedure||!nc.typeNonformite||!nonConformite.justification"
                             icon="pi pi-fw pi-check" (click)="onSave()">
                     </button>
                 </div>

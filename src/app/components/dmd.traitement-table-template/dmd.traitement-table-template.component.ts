@@ -344,4 +344,31 @@ export class DmdTraitementTableTemplateComponent {
     }
 
     protected readonly TypeDemande = TypeDemande;
+
+    private isContentEmpty(content: any): boolean {
+        if (!content) return true;
+        if (typeof content !== 'string') return false;
+        // Supprime les balises HTML et les espaces vides pour voir s'il reste du texte
+        const stripped = content.replace(/<[^>]*>/g, '').trim();
+        return stripped.length === 0;
+    }
+
+    isActionDisabled(): boolean {
+        if (!this.selectedDemande) return false;
+
+        switch (this.btnActions) {
+            case EtapeTraitement.RECEPTION:
+                return !this.selectedDemande.pertinancePilote || this.isContentEmpty(this.selectedDemande.justificationPilote);
+            case EtapeTraitement.VALIDATION_RS:
+                const hasBasicInfo = !this.isContentEmpty(this.selectedDemande.justificationRs) && this.selectedDemande.pertinanceRs;
+                const hasCircuitInfo = this.selectedDemande.circuit && this.selectedDemande.origineId && this.selectedDemande.actionId;
+                return !hasBasicInfo || !hasCircuitInfo;
+            case EtapeTraitement.TRAITEMENT:
+                // Pour le traitement, on veut au moins un plan d'action
+                const hasPlanActions = this.selectedDemande.planActions && this.selectedDemande.planActions.length > 0;
+                return !hasPlanActions;
+            default:
+                return false;
+        }
+    }
 }

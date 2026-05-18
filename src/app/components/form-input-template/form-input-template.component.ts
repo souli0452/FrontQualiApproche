@@ -1,7 +1,6 @@
 import {Component, Input} from '@angular/core';
 import {UntypedFormGroup} from "@angular/forms";
 import { NgPrimeModule } from '../../../prime-ng.module';
-import { DropdownModule } from 'primeng/dropdown';
 
 @Component({
     selector: 'app-form-input-template',
@@ -15,5 +14,7 @@ export class FormInputTemplateComponent {
     @Input() dropDownObject: any;
     @Input() multiSelectObject: any;
     @Input() form!: UntypedFormGroup;
+
     onFileSelected(event: any) {}
 }
+

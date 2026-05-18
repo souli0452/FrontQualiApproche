@@ -72,7 +72,7 @@ export class NcComposeComponent {
         this.userStructure = getCurrentUserStructure();
         const id = this.activatedRoute.snapshot.paramMap.get('id');
 
-        if (id && id !== '') {
+        if (id && id !== '' && id !== 'create') {
             this.nonConformiteService
                 .findById(id)
                 .pipe()
@@ -101,12 +101,10 @@ export class NcComposeComponent {
             return;
         }
 
-        // Remplir les champs requis@
+        // Remplir les champs requis
         this.nonConformite.niveauNonConformiteId = this.nc.niveauNonConformite.id;
         this.nonConformite.typeNonConformiteId = this.nc.typeNonformite.id;
-        this.nonConformite.origineService = this.nc.origineService.libelleLong;
-        this.nonConformite.origineId = this.nc.origineService.id;
-        this.nonConformite.structureSoumissionLibelle = this.userStructure?.libelleLong;
+        this.nonConformite.structureSoumissionLibelle = this.userStructure?.libelleCourt;
         this.nonConformite.structureSoumissionId = this.userStructure?.id;
         this.nonConformite.typeProcessusId = this.nc.typeProcedure.id;
         this.nonConformite.typeProcessusLibelle = this.nc.typeProcedure.libelle;
@@ -116,17 +114,25 @@ export class NcComposeComponent {
             this.nonConformite.actionId = this.nc.typeAction.id;
         }
 
-        this.nonConformite.origineServiceLibelleCourt = this.userStructure?.libelleCourt;
         this.nonConformite.fonctionEmetteur = '';
         this.nonConformite.niveauNonConformiteLibelle = this.nc.niveauNonConformite.libelle;
         this.nonConformite.typeNonConformiteLibelle = this.nc.typeNonformite.libelle;
-        for (const file of this.uploadedFiles) {
-            onFileUpload(file, this.pieceJointe);
-            this.pieceJointes.push(this.pieceJointe);
+        
+        // Gestion des pièces jointes de manière asynchrone
+        if (this.uploadedFiles && this.uploadedFiles.length > 0) {
+            try {
+                const base64Files = await convertFilesToBase64(this.uploadedFiles);
+                this.nonConformite.fichiers = base64Files.map(fileData => ({
+                    fichier: fileData.fichierBase64,
+                    nom: fileData.nomFichier,
+                    type: fileData.typeFichier
+                }));
+            } catch (error) {
+                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la conversion des fichiers.' });
+                return;
+            }
         }
 
-        // ✅ Attendre la conversion
-        this.nonConformite.fichiers = this.pieceJointes;
         console.log(this.nonConformite);
         if (this.nonConformite.id != null) {
             this.nonConformiteService.update(this.nonConformite).subscribe(this.onResponse());

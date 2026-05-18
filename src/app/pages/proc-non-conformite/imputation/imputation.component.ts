@@ -35,7 +35,7 @@ export class ImputationComponent {
     ) {
         this.cols = [
             { field: 'numeroReference', header: 'N° ordre', type: 'string', filter: true, width: '10%', centered: false },
-            { field: 'origineService', header: 'Nom processus', type: 'string', filter: true, width: '30%', centered: false },
+            { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '30%', centered: false },
             {
                 field: 'currentUserfullName',
                 header: 'Responsable',

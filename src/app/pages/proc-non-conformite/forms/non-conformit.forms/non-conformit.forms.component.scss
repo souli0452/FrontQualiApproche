@@ -262,3 +262,107 @@
         grid-template-columns: 1fr;
     }
 }
+/* Circuit Selection Cards */
+.circuit-card {
+    height: 100%;
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    
+    &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+}
+
+.active-circuit {
+    border-color: var(--primary-color) !important;
+    background-color: rgba(var(--primary-rgb), 0.05) !important;
+    
+    .text-lg {
+        color: var(--primary-color);
+    }
+    
+    .pi-check-circle {
+        color: var(--primary-color);
+        font-size: 1.25rem;
+    }
+}
+
+.inactive-circuit {
+    opacity: 0.85;
+    
+    &:hover {
+        opacity: 1;
+        border-color: #d1d5db;
+    }
+}
+
+.text-600 {
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.text-green-500 {
+    color: #10b981;
+}
+
+.bg-primary-reverse {
+    background-color: var(--primary-color);
+    color: white;
+}
+/* Custom Premium Table */
+.custom-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    margin-top: 1rem;
+
+    thead {
+        background-color: #f9fafb;
+        
+        tr th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #e5e7eb;
+            white-space: nowrap;
+        }
+    }
+
+    tbody {
+        tr {
+            transition: all 0.2s;
+            border-bottom: 1px solid #f3f4f6;
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            &:hover {
+                background-color: #f8fafc;
+                transform: scale(1.002);
+            }
+
+            td {
+                padding: 1rem;
+                color: #4b5563;
+                font-size: 0.875rem;
+                vertical-align: middle;
+                line-height: 1.5;
+            }
+        }
+    }
+}
+
+.text-900 {
+    color: #111827;
+}

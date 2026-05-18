@@ -131,7 +131,17 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
 
     save() {
         if (this.formGroup.valid) {
-            const data: any = this.formGroup.value;
+            const data: any = { ...this.formGroup.value };
+            // Extraire la valeur unique pour les dropdowns (gérés via p-multiSelect)
+            if (this.formCols) {
+                const dropdownCols = this.formCols.filter((col) => col.type === 'dropdown');
+                dropdownCols.forEach((col) => {
+                    const field = col.field;
+                    if (field && Array.isArray(data[field])) {
+                        data[field] = data[field].length > 0 ? data[field][0] : null;
+                    }
+                });
+            }
             this.newItemEvent.emit(data);
         }
     }
@@ -175,12 +185,33 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
         this.display = true;
         setTimeout(() => {
             this.formGroup.patchValue(rowData);
+            
+            // Gérer les dates
             const cols = this.tableCols.filter((col) => col.type === 'date');
             if (cols?.length > 0) {
                 cols.forEach((col) => {
                     const date = rowData[col.field] ? patternToDate(toFormatFromDate(rowData[col.field]), 'DD/MM/YYYY') : null;
                     this.formGroup.get(col.field)?.setValue(date);
                 });
+            }
+
+            // Gérer les dropdowns (puisqu'ils sont rendus via p-multiSelect à choix unique, on enveloppe la valeur dans un tableau)
+            if (this.formCols) {
+                const dropdownCols = this.formCols.filter((col) => col.type === 'dropdown');
+                if (dropdownCols?.length > 0) {
+                    dropdownCols.forEach((col) => {
+                        const field = col.field;
+                        if (field) {
+                            const val = rowData[field];
+                            if (val != null && val !== undefined) {
+                                const idValue = typeof val === 'object' ? (val.id || val.value) : val;
+                                this.formGroup.get(field)?.setValue([idValue]);
+                            } else {
+                                this.formGroup.get(field)?.setValue([]);
+                            }
+                        }
+                    });
+                }
             }
         });
     }

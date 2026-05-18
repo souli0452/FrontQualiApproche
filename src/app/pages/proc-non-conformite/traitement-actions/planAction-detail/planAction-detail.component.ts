@@ -4,7 +4,7 @@ import { DatePipe, Location } from '@angular/common';
 
 import { Avatar } from 'primeng/avatar';
 import { NonConformiteService } from '../../../../services/non-conformite.service';
-import { downloadFile, getStatusSeverity } from '../../../../utils';
+import { downloadAttachment, downloadFile, getStatusSeverity } from '../../../../utils';
 import { PlanActionService } from '../../../../services/planAction.service';
 import { StatusEnum } from '../../../../enums';
 
@@ -60,13 +60,12 @@ export class PlanActionDetailComponent {
         this.planAction.dateEcheance=action.dateEcheance.replace(/-/g, "/");
         this.afficheDialog = true;
     }
-    downloadFile(fichier: any) {
-        downloadFile(fichier.nomFichier,fichier.fichierBase64);
-    }
+
     hideDialogAffich() {
         this.afficheDialog = false;
     }
 
     protected readonly getStatusSeverity = getStatusSeverity;
     protected readonly StatusEnum = StatusEnum;
+    protected readonly downloadAttachment = downloadAttachment;
 }

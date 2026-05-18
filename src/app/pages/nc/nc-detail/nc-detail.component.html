@@ -19,7 +19,7 @@
                 </h3>
                 <div class="nc-details-grid">
                     <div class="nc-detail-item">
-                        <span class="block font-bold  nc-detail-label">Processus Destinataire :</span>
+                        <span *ngIf="nc.origineService" class="block font-bold  nc-detail-label">Processus Destinataire :</span>
                         <span class="nc-detail-value">{{nc.origineService}} ({{nc.origineServiceLibelleCourt}})</span>
                     </div>
                     <div class="nc-detail-item">
@@ -142,13 +142,13 @@
                 <span *ngIf="nc.docRejet">
                 <h6>Documents joint  lors du réjet</h6>
                 <div class="flex align-items-center mt-3">
-                    <span class="file-name">{{ nc.docRejet.nomFichier }}</span>
+                    <span class="file-name">{{ nc.docRejet.nom}}</span>
                 </div>
                 <button pButton pRipple
                         type="button"
                         icon="pi pi-download"
                         class="p-button-text p-button-rounded p-button-plain"
-                        (click)="downloadFile(nc.docRejet)"
+                        (click)="downloadAttachment(nc.docRejet)"
                         pTooltip="Télécharger"
                         tooltipPosition="left">
                 </button></span>
@@ -168,13 +168,13 @@
                 <div class="file-list">
                     <div *ngFor="let fichier of nc.fichiers" class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
                         <div class="flex align-items-center mt-3">
-                            <span class="file-name">{{ fichier.nomFichier }}</span>
+                            <span class="file-name">{{ fichier.nom }}</span>
                         </div>
                         <button pButton pRipple
                                 type="button"
                                 icon="pi pi-download"
                                 class="p-button-text p-button-rounded p-button-plain"
-                                (click)="downloadFile(fichier)"
+                                (click)="downloadAttachment(fichier)"
                                 pTooltip="Télécharger"
                                 tooltipPosition="left">
                         </button>

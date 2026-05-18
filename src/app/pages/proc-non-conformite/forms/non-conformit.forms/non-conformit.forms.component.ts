@@ -14,6 +14,9 @@ import { AuthService } from '../../../../services/auth-services/auth.service';
 import { formatDate } from '@angular/common';
 import { downloadFile, formatDateToDDMMYYYY, getStatusSeverity } from '../../../../utils';
 import { ProcNonConformiteService } from '../../proc-non-conformite.service';
+import { ActionNonConformiteService } from '../../../../services/action-non-conformite.service';
+import { Structure } from '../../../structure/structure';
+import { ActionNonConformite } from '../../../../models';
 
 @Component({
     selector: 'app-non-conformit.forms',
@@ -38,15 +41,21 @@ export class NonConformitFormsComponent {
     participants: any[] = [];
     users: any = [];
     afficheDialog: boolean = false;
+    structures: Structure[] = [];
+    typesActions: ActionNonConformite[] = [];
     constructor(
         private fb: FormBuilder,
         private authService: AuthService,
         private service: ProcNonConformiteService,
         private messageService: MessageService,
+        private structureService: StructureService,
+        private actionNonConformiteService: ActionNonConformiteService,
     ) {
 
 
         this.fetchUsers();
+        this.loadStuctures();
+        this.fetchActions();
         if (this.demande?.planActions?.length > 0) {
             const actionsArray = this.fb.array([]);
 
@@ -70,27 +79,54 @@ export class NonConformitFormsComponent {
     }
 
     ngOnInit() {
-        if (this.demande?.planActions?.length > 0) {
-            this.planActions = this.demande.planActions;
+        if (this.demande) {
+            // Préparer les objets pour les sélecteurs
+            const patchValues = { ...this.demande };
+            
+            if (this.demande.origineId) {
+                patchValues.destination = this.structures.find(s => s.id === this.demande.origineId);
+            }
+            if (this.demande.actionId) {
+                patchValues.typeAction = this.typesActions.find(a => a.id === this.demande.actionId);
+            }
+
+            this.editForm.patchValue(patchValues);
+            if (this.demande.planActions?.length > 0) {
+                this.planActions = this.demande.planActions;
+            }
         }
     }
 
     onInputChange() {
-        if (this.demande.etatTraitement === EtapeTraitement.VALIDATION_RS) {
-            this.demande.pertinanceRs = this.editForm.get('pertinanceRs')?.value;
-            this.demande.justificationRs = this.editForm.get('justificationRs')?.value;
+        const formValues = this.editForm.value;
+        
+        // On synchronise les champs de base
+        Object.assign(this.demande, {
+            pertinanceRs: formValues.pertinanceRs,
+            justificationRs: formValues.justificationRs,
+            pertinancePilote: formValues.pertinancePilote,
+            justificationPilote: formValues.justificationPilote,
+            pertinanceRsSuivi: formValues.pertinanceRsSuivi,
+            numeroFdac: formValues.numeroFdac,
+            participants: formValues.participants ?? [],
+            circuit: formValues.circuit
+        });
+
+        // Gestion de la destination
+        if (formValues.destination) {
+            this.demande.origineId = formValues.destination.id;
+            this.demande.origineService = formValues.destination.libelleLong;
+            this.demande.origineServiceLibelleCourt = formValues.destination.libelleCourt;
         }
-        if (this.demande.etatTraitement === EtapeTraitement.RECEPTION) {
-            this.demande.pertinancePilote = this.editForm.get('pertinancePilote')?.value;
-            this.demande.justificationPilote = this.editForm.get('justificationPilote')?.value;
+
+        // Gestion de l'action
+        if (formValues.typeAction) {
+            this.demande.actionId = formValues.typeAction.id;
+            this.demande.actionLibelle = formValues.typeAction.libelle;
         }
-        if (this.demande.etatTraitement === EtapeTraitement.SUIVI_RQ) {
-            this.demande.pertinanceRsSuivi = this.editForm.get('pertinanceRsSuivi')?.value;
-            this.demande.numeroFdac = this.editForm.get('numeroFdac')?.value;
-        }
+
         if (this.demande.etatTraitement === EtapeTraitement.TRAITEMENT) {
-            this.demande.participants = this.editForm.get('participants')?.value ?? [];
-            const actions = this.planActionForm.get('actions')?.value as any[];  // ou FormArray si besoin
+            const actions = this.planActionForm.get('actions')?.value as any[];
             this.demande.planActions = actions.map(value => {
                 return {
                     ...value,
@@ -103,6 +139,19 @@ export class NonConformitFormsComponent {
                     status: "INACTIF"
                 };
             });
+        }
+    }
+
+    setCircuit(value: string) {
+        this.editForm.get('circuit')?.setValue(value);
+        this.onInputChange();
+    }
+
+    toggleAllPlans(checked: boolean) {
+        if (checked) {
+            this.selectedPlans = [...this.demande.planActions];
+        } else {
+            this.selectedPlans = [];
         }
     }
 
@@ -145,6 +194,38 @@ export class NonConformitFormsComponent {
 
 
                 },
+            });
+    }
+
+    loadStuctures() {
+        this.structureService
+            .getAllStructures()
+            .pipe()
+            .subscribe({
+                next: (resp) => {
+                    this.structures = resp.body || [];
+                    // Ré-essayer le patch si les données arrivent après ngOnInit
+                    if (this.demande?.origineId && !this.editForm.get('destination')?.value) {
+                        const dest = this.structures.find(s => s.id === this.demande.origineId);
+                        if (dest) this.editForm.get('destination')?.patchValue(dest);
+                    }
+                }
+            });
+    }
+
+    fetchActions() {
+        this.actionNonConformiteService
+            .findAll()
+            .pipe()
+            .subscribe({
+                next: (res) => {
+                    this.typesActions = res.body || [];
+                    // Ré-essayer le patch si les données arrivent après ngOnInit
+                    if (this.demande?.actionId && !this.editForm.get('typeAction')?.value) {
+                        const act = this.typesActions.find(a => a.id === this.demande.actionId);
+                        if (act) this.editForm.get('typeAction')?.patchValue(act);
+                    }
+                }
             });
     }
     removeAction(index: number): void {

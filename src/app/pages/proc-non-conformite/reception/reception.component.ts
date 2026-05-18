@@ -48,7 +48,7 @@ export class ReceptionComponent {
                 private service:ProcNonConformiteService) {
         this.cols = [
             { field: 'numeroReference', header: 'N° ordre', type: 'string', filter: true, width: '10%', centered: false },
-            { field: 'origineService', header: 'Nom processus', type: 'string', filter: true, width: '30%', centered: false },
+            { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '30%', centered: false },
             {
                 field: 'currentUserfullName',
                 header: 'Responsable',
@@ -131,7 +131,7 @@ ngOnInit() {
          next: (data) => {
              this.getDemandeList()
              this.dmdTraitement.closeDetailsDialog();
-             this.messageService.add({ severity: 'success', summary: 'ERREUR', detail: "L'oppération à réussie !", life: 3000 });
+             this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'oppération à réussie !", life: 3000 });
          },
          error: (error) => {
              this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });

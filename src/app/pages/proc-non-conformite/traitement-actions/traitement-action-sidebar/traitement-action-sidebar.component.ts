@@ -31,7 +31,8 @@ user: any = {};
                 private actualityService: ProcNonConformiteService,
                 private authService: AuthService,
                 private featureService:FeaturesService) {
-
+        
+        this.url = this.router.url;
         this.router.events.pipe(filter((event) => event instanceof NavigationEnd))
             .pipe(takeUntil(this.destroy$))
             .subscribe((params: any) => {
@@ -59,6 +60,13 @@ user: any = {};
         if (item.routerLink) {
             this.router.navigate([item.routerLink]);
         }
+    }
+
+    isActive(item: MenuItem): boolean {
+        if (!this.url || this.url === '/' || this.url.endsWith('/traitement-action') || this.url.endsWith('/traitement-action/')) {
+            return item.routerLink === '/traitement-action/non-traiter';
+        }
+        return this.url.includes(item.routerLink as string);
     }
 
     fetchPlanActions() {

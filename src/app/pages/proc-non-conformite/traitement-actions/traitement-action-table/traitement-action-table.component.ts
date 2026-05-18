@@ -223,7 +223,21 @@ export class TraitementActionTableComponent implements OnInit {
     }
     async handleFileUpload(files: any[]) {
         this.uploadedFiles = files;
-        this.planAction.fichiers = await convertFilesToBase64(this.uploadedFiles);
+        if (this.uploadedFiles && this.uploadedFiles.length > 0) {
+            try {
+                const base64Files = await convertFilesToBase64(this.uploadedFiles);
+                this.planAction.fichiers = base64Files.map(fileData => ({
+                    fichier: fileData.fichierBase64,
+                    nom: fileData.nomFichier,
+                    type: fileData.typeFichier
+                }));
+            } catch (error) {
+                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la conversion des fichiers.' });
+                return;
+            }
+        } else {
+            this.planAction.fichiers = [];
+        }
     }
 
     ngOnDestroy(): void {

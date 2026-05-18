@@ -5,13 +5,7 @@ import { Tag } from 'primeng/tag';
 import { EtapeTraitement, StatusEnum } from '../../../../enums';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { AuthService } from '../../../../services/auth-services/auth.service';
-import {
-    convertFilesToBase64,
-    downloadFile,
-    formatDateTodd,
-    formatDateToDDMMYYYY,
-    getStatusSeverity
-} from '../../../../utils';
+import { convertFilesToBase64, downloadAttachment, downloadFile, formatDateTodd, formatDateToDDMMYYYY, getStatusSeverity } from '../../../../utils';
 import { ProcNonConformiteService } from '../../proc-non-conformite.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { FileUploadComponent } from '../../../../components/file-upload/file-upload.component';
@@ -20,11 +14,12 @@ import { FileUploadComponent } from '../../../../components/file-upload/file-upl
     selector: 'demande-non_conformite-details',
     templateUrl: './demande.non_conformite.details.component.html',
     imports: [NgPrimeModule, FileUploadComponent],
+    standalone: true,
     styleUrl: './demande.non_conformite.details.component.scss'
 })
 export class DemandeNon_conformiteDetailsComponent {
     @Input() demande: any = {};
-    private uploadedFiles: any[]=[];
+    private uploadedFiles: any[] = [];
     constructor(
         private featureService: FeaturesService,
         private confirmationService: ConfirmationService,
@@ -32,7 +27,6 @@ export class DemandeNon_conformiteDetailsComponent {
         private messageService: MessageService,
         private authService: AuthService
     ) {}
-
 
     motifRejetDialog: boolean = false;
     afficheDialog: boolean = false;
@@ -42,9 +36,8 @@ export class DemandeNon_conformiteDetailsComponent {
     user: any = {};
     isConsultation: boolean = false;
 
-
     ngOnInit() {
-      console.log(this.demande);
+        console.log(this.demande);
     }
     hideDialog() {
         this.motifRejetDialog = false;
@@ -98,7 +91,7 @@ export class DemandeNon_conformiteDetailsComponent {
         });
     }
     downloadFile(fichier: any) {
-        downloadFile(fichier.nomFichier,fichier.fichierBase64);
+        downloadFile(fichier.nomFichier, fichier.fichierBase64);
     }
     telechargerTout(fichiers: any[]) {
         fichiers?.forEach((fichier) => {
@@ -129,15 +122,15 @@ export class DemandeNon_conformiteDetailsComponent {
             }
         });
     }
-    displayRejet(plan: any){
+    displayRejet(plan: any) {
         this.planAction = plan;
         this.displayDialog = true;
-
     }
     async handleFileUpload(files: any[]) {
         this.uploadedFiles = files;
-      const fichiers = await convertFilesToBase64(this.uploadedFiles);
-        this.planAction.docRejet=fichiers[0];
+        const fichiers = await convertFilesToBase64(this.uploadedFiles);
+        this.planAction.docRejet = fichiers[0];
     }
 
+    protected readonly downloadAttachment = downloadAttachment;
 }

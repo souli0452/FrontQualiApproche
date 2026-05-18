@@ -38,9 +38,7 @@ export class StructureComponent implements OnInit, OnDestroy {
     destroy$: Subject<boolean> = new Subject<boolean>();
     colsFilter: any[] = [];
     structures: Array<Structure> = [];
-    directions: Array<Structure> = [];
     search: any;
-    currentStructure?: Structure;
     demandeKey = 'demandeKey';
     loading: boolean = false;
     typeStructure: TypeStructure = TypeStructure.SERVICE;
@@ -56,7 +54,7 @@ export class StructureComponent implements OnInit, OnDestroy {
         protected fb: UntypedFormBuilder
     ) {
 
-        this.typeStructure = this.activatedRoute.snapshot.data['typeStructure'];
+        this.typeStructure = TypeStructure.SERVICE;
 
         this.cols = [
             { field: 'libelleCourt', header: 'Sigle', type: 'string', filter: true, width: '10%', center: false },
@@ -105,51 +103,24 @@ export class StructureComponent implements OnInit, OnDestroy {
             });
     }
 
-    loadDirections() {
-        this.loading = true;
-        this.structureService.getAllDirections(TypeStructure.DIRECTION).subscribe({
-            next: (resp) => {
-                this.directions = resp.body || [];
-                this.loading = false;
-            },
-            error: (error) => {
-                this.loading = false;
-            }
-        });
-    }
-
     onGlobalFilter(table: Table, event: Event) {
         table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
     }
 
-    directionChange(structure?: Structure) {
-        if (structure) {
-            this.currentStructure = structure;
-            this.loadStuctures();
-        } else if (this.currentStructure) {
-            this.loadStuctures();
-        } else {
-            this.structures = [];
-            this.editForm?.reset();
-        }
-    }
-
     loadStuctures() {
-        if (this.typeStructure) {
-            this.loading = true;
-            this.structureService
-                .getAllStructure(this.typeStructure, this.currentStructure?.id)
-                .pipe(takeUntil(this.destroy$))
-                .subscribe({
-                    next: (resp) => {
-                        this.structures = resp.body || [];
-                        this.loading = false;
-                    },
-                    error: (error) => {
-                        this.loading = false;
-                    }
-                });
-        }
+        this.loading = true;
+        this.structureService
+            .getAllStructure(TypeStructure.SERVICE)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (resp) => {
+                    this.structures = resp.body || [];
+                    this.loading = false;
+                },
+                error: (error) => {
+                    this.loading = false;
+                }
+            });
     }
 
     onDisplay(structure?: Structure) {
@@ -158,8 +129,8 @@ export class StructureComponent implements OnInit, OnDestroy {
             this.editForm?.reset();
         } else {
             // AJOUT: On vide toujours le formulaire avant d'ouvrir le tiroir !
-            this.editForm?.reset(); 
-            
+            this.editForm?.reset();
+
             if (structure) {
                 this.editForm?.patchValue(structure!);
             }
@@ -170,7 +141,7 @@ export class StructureComponent implements OnInit, OnDestroy {
 
     saveEntity() {
         const structure = this.editForm?.getRawValue() as Structure;
-        structure.typeStructure = this.typeStructure;
+        structure.typeStructure = TypeStructure.SERVICE;
         console.log("Tentative d'enregistrement de :", structure);
         if (structure.id) {
             this.structureService.updateStructure(structure).subscribe({
@@ -183,7 +154,6 @@ export class StructureComponent implements OnInit, OnDestroy {
                 }
             });
         } else {
-            structure.directionId = this.currentStructure?.id;
             this.structureService.createStructure(structure).subscribe({
                 next: (resp) => {
                     console.log("Succès de la création :", resp);
@@ -200,7 +170,7 @@ export class StructureComponent implements OnInit, OnDestroy {
         this.confirmationService.confirm({
             key: this.demandeKey,
             header: 'Confirmation',
-            message: `Voulez-vous supprimer ${this.typeStructure === TypeStructure.DIRECTION ? 'la direction' : 'le service'} ?`,
+            message: `Voulez-vous supprimer le service ?`,
             accept: () => {
                 this.structureService
                     .deleteStructure(id)
