@@ -12,7 +12,16 @@ export interface ReportingInput {
     entityId?: string;
     structureId?: string;
 }
-
+export class PieceJointe {
+    id?: number;
+    nom?: string;
+    ext?: string;
+    type?: string;
+    url?: string;
+    entityId?: number;
+    fichier?: string | null;
+    createdDate?: Date;
+}
 export enum ReportFormat {
     PDF = 'PDF', WORD = 'WORD', EXCEL = 'EXCEL', CSV = 'CSV', XPRINT = 'XPRINT'
 }
@@ -353,8 +362,50 @@ export function isModuleSubscribed(moduleName: string): boolean {
     return user.modulesSubscribed?.includes(moduleName) || false;
 }
 
+export function onFileUpload(file: File, rowdata: PieceJointe) {
+    const reader = new FileReader();
+    reader.onload = () => {
+        const result: any = reader.result;
+        rowdata.fichier = result.split(',')[1];
+        rowdata.nom = file.name;
+        rowdata.type = file.type;
+    };
+    reader.readAsDataURL(file);
+}
 
+export function downloadAttachment(pj: any): void {
+    if (!pj.fichier) {
+        console.error('Aucun contenu de fichier trouvé');
+        return;
+    }
 
+    try {
+        // 1. Convertir la chaîne Base64 en octets
+        const byteCharacters = atob(pj.fichier);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+
+        // 2. Créer un Blob avec le type MIME correct
+        const blob = new Blob([byteArray], {
+            type: pj.type || 'application/octet-stream'
+        });
+
+        // 3. Créer un lien temporaire pour le téléchargement
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = pj.nom; // Utilise le nom du fichier (ex: Audition avec la poste centre.docx)
+
+        // 4. Déclencher le clic et nettoyer
+        link.click();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Erreur lors du décodage du fichier :', error);
+    }
+}
 export function convertFilesToBase64(files: { file: File; extension: string; name: string; size: string; loading: boolean; icon: string }[]): Promise<any[]> {
     const filePromises = files.map((fileObj) => {
         return new Promise((resolve, reject) => {

@@ -4,7 +4,7 @@ import { DatePipe, Location } from '@angular/common';
 import { NonConformiteService } from '../../../services/non-conformite.service';
 import { Avatar } from 'primeng/avatar';
 import { EtapeTraitement, NonConformStatus, StatusEnum } from '../../../enums';
-import { downloadFile, getStatusSeverity } from '../../../utils';
+import { downloadAttachment, downloadFile, getStatusSeverity } from '../../../utils';
 
 @Component({
     templateUrl: './nc-detail.component.html',
@@ -57,4 +57,6 @@ export class NcDetailComponent {
     downloadFile(fichier: any) {
         downloadFile(fichier.nomFichier,fichier.fichierBase64);
     }
+
+    protected readonly downloadAttachment = downloadAttachment;
 }

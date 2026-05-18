@@ -261,6 +261,7 @@
                 </button>
                 &nbsp;
                 <button pRipple pButton type="button" icon="pi pi-send"
+                        [disabled]="isActionDisabled()"
                         (click)="soumettre()" label="Soumettre">
                 </button>
             }
@@ -288,10 +289,12 @@
 
             @if (btnActions === BtnActions.RECEPTION) {
                 <button pRipple pButton type="button" icon="pi pi-check"
+                        [disabled]="isActionDisabled()"
                         (click)="receptionner()" label="Réceptionner"></button>
             }
             @if (btnActions === BtnActions.VALIDATION_RS) {
                 <button pRipple pButton type="button" icon="pi pi-check"
+                        [disabled]="isActionDisabled()"
                         (click)="validationRS()" label="Valider"></button>
             }
             @if (btnActions === BtnActions.IMPUTATION) {

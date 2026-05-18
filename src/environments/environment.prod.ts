@@ -1,5 +1,5 @@
 // src/environments/environment.prod.ts
 export const environment = {
-    production: true,
+    production: false,
     apiUrl: "https://api-gateway.horeb.tech",
 };

@@ -62,7 +62,7 @@ export class Dashboard implements AfterViewInit {
     platformId = inject(PLATFORM_ID);
     annees: number[] = [];
     anneeSelectionnee!: number;
-    userStructure:any={};
+    userStructure: any = {};
     constructor(
         private cd: ChangeDetectorRef,
         public authService: AuthService,
@@ -74,7 +74,7 @@ export class Dashboard implements AfterViewInit {
         this.userStructure = getCurrentUserStructure();
     }
     ngOnInit() {
-        if(isUserInRoles(['SUPER_ADMIN'])){
+        if (isUserInRoles(['SUPER_ADMIN'])) {
             this.fecthNonConformite();
             this.fetchStatsMensuelStatus();
             this.fetchStatsMensuel();
@@ -159,7 +159,7 @@ export class Dashboard implements AfterViewInit {
     }
     fecthStatMensuelStatusConnect() {
         const currentYear = new Date().getFullYear();
-        this.service.getStatsMensuelService(currentYear,this.userStructure.id).subscribe({
+        this.service.getStatsMensuelService(currentYear, this.userStructure.id).subscribe({
             next: (data) => {
                 this.initChartAll(data.body);
             },
@@ -181,7 +181,7 @@ export class Dashboard implements AfterViewInit {
     }
     fetchStatsMensuelStatusService() {
         const currentYear = new Date().getFullYear();
-        this.service.getStatsMensuelStatusService(currentYear,this.userStructure.id).subscribe({
+        this.service.getStatsMensuelStatusService(currentYear, this.userStructure.id).subscribe({
             next: (data) => {
 
                 this.initChartStructMonthLast(data.body);
@@ -193,9 +193,9 @@ export class Dashboard implements AfterViewInit {
     }
     fetchStatsMensuelStatusNiveau() {
         const currentYear = new Date().getFullYear();
-        this.service.getStatsByNiveau(currentYear,this.userStructure.id).subscribe({
+        this.service.getStatsByNiveau(currentYear, this.userStructure.id).subscribe({
             next: (data) => {
-               this.initChartNiveau(data.body)
+                this.initChartNiveau(data.body)
 
             },
             error: (error) => {
@@ -367,7 +367,7 @@ export class Dashboard implements AfterViewInit {
     }
 
     change(year: any) {
-        if (isUserInRoles(['SUPER_ADMIN'])){
+        if (isUserInRoles(['SUPER_ADMIN'])) {
             this.service.getStatsMensuel(year).subscribe({
                 next: (data) => {
                     this.initChartAll(data.body);
@@ -376,8 +376,8 @@ export class Dashboard implements AfterViewInit {
                     //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
                 }
             });
-        }else {
-            this.service.getStatsMensuelService(year,this.userStructure.id).subscribe({
+        } else {
+            this.service.getStatsMensuelService(year, this.userStructure.id).subscribe({
                 next: (data) => {
                     this.initChartAll(data.body);
                 },
@@ -390,7 +390,7 @@ export class Dashboard implements AfterViewInit {
 
     }
     changeForProcessus(year: any) {
-        if (isUserInRoles(['SUPER_ADMIN'])){
+        if (isUserInRoles(['SUPER_ADMIN'])) {
             this.service.getStatsNfStruct(year).subscribe({
                 next: (data) => {
                     this.initChartBystuct(data.body);
@@ -399,7 +399,7 @@ export class Dashboard implements AfterViewInit {
                     //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
                 }
             });
-        }else {
+        } else {
             this.service.getStatsPlanAction(year).subscribe({
                 next: (data) => {
                     this.initChartTaux(data.body);
@@ -504,8 +504,8 @@ export class Dashboard implements AfterViewInit {
                     //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
                 }
             });
-        }else {
-            this.service.getStatsMensuelStatusService(year,this.userStructure.id).subscribe({
+        } else {
+            this.service.getStatsMensuelStatusService(year, this.userStructure.id).subscribe({
                 next: (data) => {
                     this.initChartStructMonthLast(data.body);
                 },
@@ -524,7 +524,7 @@ export class Dashboard implements AfterViewInit {
             const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
 
             // Transformation de vos données
-           const  year=Object.keys(statsData)[0];
+            const year = Object.keys(statsData)[0];
             const yearData = statsData[year]; // Adaptez selon votre structure
             const mois = Object.keys(yearData);
             const tauxTraitement = mois.map(m => yearData[m].taux_traitement);

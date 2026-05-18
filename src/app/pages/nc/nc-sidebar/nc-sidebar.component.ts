@@ -27,6 +27,7 @@ export class NcSidebarComponent implements OnDestroy {
                 private actualityService: NonConformiteService,
                 private featureService:FeaturesService) {
 
+        this.url = this.router.url;
         this.router.events.pipe(filter((event) => event instanceof NavigationEnd))
             .pipe(takeUntil(this.destroy$))
             .subscribe((params: any) => {
@@ -54,6 +55,13 @@ export class NcSidebarComponent implements OnDestroy {
         if (item.routerLink) {
             this.router.navigate([item.routerLink]);
         }
+    }
+
+    isActive(item: MenuItem): boolean {
+        if (!this.url || this.url === '/' || this.url.endsWith('/nc') || this.url.endsWith('/nc/')) {
+            return item.routerLink === '/nc/draft';
+        }
+        return this.url.includes(item.routerLink as string);
     }
 
     getCountStatut(){

@@ -84,23 +84,26 @@
 
         <!-- Type Dropdown -->
         <ng-container *ngIf="col.type === 'dropdown'">
-            <p-floatlabel variant="on">
-                <p-select [options]="dropDownObject[col.field]"
-                          [filter]="true"
-                          [showClear]="true"
-                          appendTo="body"
-                          [optionLabel]="'label'"
-                          [optionValue]="'value'"
-                          [formControlName]="col.field"
-                          class="w-full"
-                          [id]="col.field"
-                          [name]="col.field">
-                </p-select>
-                <label [for]="col.field">
+            <div class="flex flex-col gap-2">
+                <label [for]="col.field" class="block text-sm font-semibold text-gray-700">
                     {{ col.header }}
                     <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
                 </label>
-            </p-floatlabel>
+                <p-multiSelect
+                    [options]="dropDownObject[col.field]"
+                    [filter]="true"
+                    appendTo="body"
+                    [optionLabel]="col.optionLabel || 'label'"
+                    [optionValue]="col.optionValue || 'value'"
+                    [showClear]="true"
+                    [formControlName]="col.field"
+                    class="w-full"
+                    [id]="col.field"
+                    [name]="col.field"
+                    [selectionLimit]="1"
+                    placeholder="Sélectionner...">
+                </p-multiSelect>
+            </div>
         </ng-container>
 
         <!-- Type Checkbox -->
@@ -116,25 +119,26 @@
 
         <!-- Type MultiSelect -->
         <ng-container *ngIf="col.type === 'multiselect'">
-            <p-floatlabel variant="on">
+            <div class="flex flex-col gap-2">
+                <label [for]="col.field" class="block text-sm font-semibold text-gray-700">
+                    {{ col.header }}
+                    <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                </label>
                 <p-multiSelect
                     [options]="multiSelectObject[col.field]"
                     [filter]="true"
                     appendTo="body"
-                    optionLabel="label"
-                    optionValue="value"
+                    [optionLabel]="col.optionLabel || 'label'"
+                    [optionValue]="col.optionValue || 'value'"
                     [showClear]="true"
                     [formControlName]="col.field"
                     class="w-full"
                     [id]="col.field"
                     [name]="col.field"
-                    display="chip">
+                    display="chip"
+                    placeholder="Sélectionner...">
                 </p-multiSelect>
-                <label [for]="col.field">
-                    {{ col.header }}
-                    <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
-                </label>
-            </p-floatlabel>
+            </div>
         </ng-container>
 
         <!-- 3. Texte d'aide Inférieur (Optionnel) -->

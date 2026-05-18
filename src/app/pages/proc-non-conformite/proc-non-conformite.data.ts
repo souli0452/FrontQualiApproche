@@ -6,5 +6,8 @@ export const nonConformiteForm = {
     participants: [''],
     numeroFdac:[''],
     pertinanceRsSuivi:[''],
-    delaisMiseOeuvre:['']
+    delaisMiseOeuvre:[''],
+    circuit: [''],
+    typeAction: [''],
+    destination: ['']
 };

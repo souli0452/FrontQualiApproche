@@ -14,6 +14,7 @@ import { StructureService } from '../structure/structure-service/structure-servi
 
 @Component({
     selector: 'app-kc-user',
+    standalone:true,
     templateUrl: './kc-user.component.html',
     imports: [AppCrudGenericComponent, NgPrimeModule],
     styleUrls: ['./kc-user.component.scss']
