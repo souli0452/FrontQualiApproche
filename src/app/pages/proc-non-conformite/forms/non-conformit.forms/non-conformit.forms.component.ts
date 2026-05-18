@@ -15,8 +15,10 @@ import { formatDate } from '@angular/common';
 import { downloadFile, formatDateToDDMMYYYY, getStatusSeverity } from '../../../../utils';
 import { ProcNonConformiteService } from '../../proc-non-conformite.service';
 import { ActionNonConformiteService } from '../../../../services/action-non-conformite.service';
-import { Structure } from '../../../structure/structure';
+import { Structure } from '../../../structure/structure-config/structure';
+import { StructureService } from '../../../structure/structure-service/structure-service';
 import { ActionNonConformite } from '../../../../models';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'app-non-conformit.forms',
@@ -202,7 +204,7 @@ export class NonConformitFormsComponent {
             .getAllStructures()
             .pipe()
             .subscribe({
-                next: (resp) => {
+                next: (resp: HttpResponse<Structure[]>) => {
                     this.structures = resp.body || [];
                     // Ré-essayer le patch si les données arrivent après ngOnInit
                     if (this.demande?.origineId && !this.editForm.get('destination')?.value) {
@@ -218,7 +220,7 @@ export class NonConformitFormsComponent {
             .findAll()
             .pipe()
             .subscribe({
-                next: (res) => {
+                next: (res: HttpResponse<ActionNonConformite[]>) => {
                     this.typesActions = res.body || [];
                     // Ré-essayer le patch si les données arrivent après ngOnInit
                     if (this.demande?.actionId && !this.editForm.get('typeAction')?.value) {

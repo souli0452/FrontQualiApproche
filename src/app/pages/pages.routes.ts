@@ -19,7 +19,7 @@ import { ReceptionComponent } from './proc-non-conformite/reception/reception.co
 import { ValidationComponent } from './proc-non-conformite/validation/validation.component';
 import { TraitementComponent } from './proc-non-conformite/traitement/traitement.component';
 import { ClotureComponent } from './proc-non-conformite/cloture/cloture.component';
-import { StructureComponent } from './structure/structure.component';
+import { StructureComponent } from './structure/structure-view/structure.component';
 import { TypeStructure } from '../enums';
 import { ConsultationsComponent } from './proc-non-conformite/consultations/consultations.component';
 import { ValidationRSComponent } from './proc-non-conformite/validation-rs/validation-rs.component';
@@ -33,8 +33,8 @@ import { ActionNonConformiteComponent } from './procedure-non-conformite/action/
 import { PlanActionComponent } from './proc-non-conformite/plan-action/plan-action.component';
 import { ConfigGComponent } from './config-g/config-g.component';
 import { SearchResultsComponent } from './recherche/search-results';
-import { RoleComponent } from './role/role.component';
-import { RoleDetailComponent } from './role/role-detail.component';
+import { RoleComponent } from './role/role-table/role.component';
+import { RoleDetailComponent } from './role/role-detail/role-detail.component';
 import { NonConformiteLayoutComponent } from '../layout/non-conformite/non-conformite';
 import { NcVueEnsembleComponent } from './nc/nc-vue-ensemble/vue-ensemble';
 import { NCAffectationActionComponent } from './nc/nc-affectation-action/nc-affectation-action';

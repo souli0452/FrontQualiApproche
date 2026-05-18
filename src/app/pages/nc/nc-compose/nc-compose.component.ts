@@ -6,8 +6,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { FeaturesService } from '../../../services/feature-service';
 import { NonConformiteService } from '../../../services/non-conformite.service';
 import { takeUntil } from 'rxjs';
-import { StructureService } from '../../structure/structure-service';
-import { Structure } from '../../structure/structure';
+import { StructureService } from '../../structure/structure-service/structure-service';
+import { Structure } from '../../structure/structure-config/structure';
 import {
     ActionNonConformite,
     NiveauNonConformite,
@@ -159,10 +159,10 @@ export class NcComposeComponent {
             .getAllStructures()
             .pipe()
             .subscribe({
-                next: (resp) => {
+                next: (resp: HttpResponse<Structure[]>) => {
                     this.structures = resp.body || [];
                 },
-                error: (error) => {}
+                error: (error: HttpErrorResponse) => {}
             });
     }
 
@@ -171,10 +171,10 @@ export class NcComposeComponent {
             .findAll()
             .pipe()
             .subscribe({
-                next: (resp) => {
+                next: (resp: HttpResponse<NiveauNonConformite[]>) => {
                     this.niveauNcs = resp.body || [];
                 },
-                error: (error) => {}
+                error: (error: HttpErrorResponse) => {}
             });
     }
     loadReclamations() {
@@ -182,10 +182,10 @@ export class NcComposeComponent {
             .findAll()
             .pipe()
             .subscribe({
-                next: (resp) => {
+                next: (resp: HttpResponse<Reclamation[]>) => {
                     this.reclamationsClients = resp.body || [];
                 },
-                error: (error) => {}
+                error: (error: HttpErrorResponse) => {}
             });
     }
     loadTypeNonConformite() {
@@ -193,10 +193,10 @@ export class NcComposeComponent {
             .findAll()
             .pipe()
             .subscribe({
-                next: (resp) => {
+                next: (resp: HttpResponse<TypeNonConformite[]>) => {
                     this.typesNcs = resp.body || [];
                 },
-                error: (error) => {}
+                error: (error: HttpErrorResponse) => {}
             });
     }
     loadProcessus() {
@@ -204,10 +204,10 @@ export class NcComposeComponent {
             .findAll()
             .pipe()
             .subscribe({
-                next: (resp) => {
+                next: (resp: HttpResponse<TypeProcessus[]>) => {
                     this.typeProcessus = resp.body || [];
                 },
-                error: (error) => {}
+                error: (error: HttpErrorResponse) => {}
             });
     }
     handleFileUpload(files: any[]) {
@@ -218,10 +218,10 @@ export class NcComposeComponent {
             .findAll()
             .pipe()
             .subscribe({
-                next: (res) => {
+                next: (res: HttpResponse<ActionNonConformite[]>) => {
                     this.typesActions = res.body || [];
                 },
-                error: (error) => {}
+                error: (error: HttpErrorResponse) => {}
             });
     }
 }
