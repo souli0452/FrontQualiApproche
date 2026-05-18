@@ -95,11 +95,6 @@ export class NcComposeComponent {
     async onSave() {
         this.formSubmitted = true;
 
-        // Vérification de base pour éviter les erreurs d'accès à undefined
-        if (!this.nc.niveauNonConformite || !this.nc.typeNonformite || !this.nc.origineService || !this.nc.typeProcedure) {
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Veuillez remplir tous les champs obligatoires.' });
-            return;
-        }
 
         // Remplir les champs requis
         this.nonConformite.niveauNonConformiteId = this.nc.niveauNonConformite.id;
@@ -117,7 +112,7 @@ export class NcComposeComponent {
         this.nonConformite.fonctionEmetteur = '';
         this.nonConformite.niveauNonConformiteLibelle = this.nc.niveauNonConformite.libelle;
         this.nonConformite.typeNonConformiteLibelle = this.nc.typeNonformite.libelle;
-        
+
         // Gestion des pièces jointes de manière asynchrone
         if (this.uploadedFiles && this.uploadedFiles.length > 0) {
             try {

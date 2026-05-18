@@ -11,37 +11,35 @@ import { Structure } from '../../structure/structure-config/structure';
 @Component({
     selector: 'app-nc-archive',
     templateUrl: './nc-archive.component.html',
-    standalone:false
+    standalone: false
 })
 export class NcArchiveComponent implements OnInit, OnDestroy {
     actualities: any[] = [];
     loading: boolean = false;
     destroy$: Subject<boolean> = new Subject<boolean>();
     cols: any[] = [
-        {field: 'numeroReference', header: 'N° ref', type: 'string', filter: true, width: '28%'},
-        {field: 'origineService', header: 'Processus Destinataire', type: 'string', filter: true, width: '30%'},
-        {field: 'currentUserfullName', header: 'Responsable', type: 'string', filter: true, width: '25%'},
-        {field: 'createdAt', header: 'Date de soumission', type: 'string', filter: true, width: '25%'}
+        { field: 'numeroReference', header: 'N° ref', type: 'string', filter: true, width: '28%' },
+        { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '30%' },
+        { field: 'currentUserfullName', header: 'Responsable', type: 'string', filter: true, width: '25%' },
+        { field: 'createdAt', header: 'Date de soumission', type: 'string', filter: true, width: '25%' }
     ];
     colsDetail: any[] = [
-        {field: 'nomProcessus', header: 'Titre', type: 'string'},
-        {field: 'justification', header: 'Description', type: 'string'},
-        {field: 'createdAt', header: 'Date création', type: 'dateTime'},
-        {field: 'dueDate', header: 'Date expiration', type: 'date'},
-        {field: 'publicationDate', header: 'Date publication', type: 'dateTime'},
-        {field: 'archivageDate', header: 'Date archivage', type: 'dateTime'},
-        {field: 'fichiers', header: 'Pièces Jointes', type: 'file'}
-
+        { field: 'nomProcessus', header: 'Titre', type: 'string' },
+        { field: 'justification', header: 'Description', type: 'string' },
+        { field: 'createdAt', header: 'Date création', type: 'dateTime' },
+        { field: 'dueDate', header: 'Date expiration', type: 'date' },
+        { field: 'publicationDate', header: 'Date publication', type: 'dateTime' },
+        { field: 'archivageDate', header: 'Date archivage', type: 'dateTime' },
+        { field: 'fichiers', header: 'Pièces Jointes', type: 'file' }
     ];
-    userStructure:Structure={};
-    constructor(private actualityService: NonConformiteService) {
-    }
+    userStructure: Structure = {};
+    constructor(private actualityService: NonConformiteService) {}
 
     ngOnInit() {
         this.userStructure = getCurrentUserStructure();
         this.loading = true;
         this.actualityService
-            .findAllNc(NonConformStatus.ARCHIVED,this.userStructure.id)
+            .findAllNc(NonConformStatus.ARCHIVED, this.userStructure.id)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (data) => {
@@ -58,7 +56,6 @@ export class NcArchiveComponent implements OnInit, OnDestroy {
         this.destroy$.next(true);
         this.destroy$.unsubscribe();
     }
-
 
     protected readonly NonConformStatus = NonConformStatus;
 }
