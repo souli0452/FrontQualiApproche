@@ -5,6 +5,7 @@ export const AMELIORATION_SERVICE = `${SERVICE_PREFIX}/amelioration-service/api/
 export const REFERENTIEL_SERVICE = `${SERVICE_PREFIX}/referentiel-service/api/v1`;
 export const USER_SERVICE = `${SERVICE_PREFIX}/user-service/api/v1`;
 export const EVALUATION_SERVICE = `${SERVICE_PREFIX}/evaluation-service/api/v1`;
+export const SUPPORT_SERVICE = `${SERVICE_PREFIX}/support-service/api`;
 
 export class QualiUrlConfig {
     // Amelioration Service
@@ -32,6 +33,10 @@ export class QualiUrlConfig {
     // Evaluation Service
     static readonly CRITERE_EVALUATION_ROOT_URL = `${EVALUATION_SERVICE}/critere-evaluation`;
     static readonly AUDIT_ROOT_URL = `${EVALUATION_SERVICE}/audite`;
+
+    // Support Service (Gestion Documentaire QMS)
+    static readonly QMS_DOCUMENT_ROOT_URL = `${SUPPORT_SERVICE}/qms/documents`;
+    static readonly QMS_DOCUMENT_TYPE_ROOT_URL = `${SUPPORT_SERVICE}/qms/document-types`;
 
     // User Service (Authentification et Utilisateurs)
     static readonly LOGIN_URL = `${USER_SERVICE}/login`;

@@ -1,0 +1,419 @@
+<p-toast></p-toast>
+
+<div class="qms-container p-4">
+  <!-- Page Header -->
+  <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 gap-3">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-800 m-0">Gestion Documentaire QMS</h1>
+      <p class="text-sm text-slate-500 mt-1">Gérez le cycle de vie, les versions et la conformité de vos documents qualité.</p>
+    </div>
+    <div class="flex gap-2">
+      <button pButton pRipple label="Nouveau Document" icon="pi pi-plus" class="p-button-primary shadow-sm" (click)="openUploadModal()"></button>
+      <button pButton pRipple label="Actualiser" icon="pi pi-refresh" class="p-button-outlined p-button-secondary" (click)="refreshList()"></button>
+    </div>
+  </div>
+
+  <!-- Search & Filter Card -->
+  <div class="card p-3 mb-4 shadow-sm border border-slate-200 bg-white-alpha-90 backdrop-blur">
+    <div class="grid grid-cols-12 gap-3">
+      <!-- Search Input -->
+      <div class="col-span-12 md:col-span-4 lg:col-span-3">
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Recherche</label>
+        <div class="p-input-icon-left w-full">
+          <i class="pi pi-search"></i>
+          <input pInputText type="text" [(ngModel)]="searchQuery" placeholder="Numéro, rédacteur..." class="w-full" (keyup.enter)="refreshList()" />
+        </div>
+      </div>
+
+      <!-- Type Dropdown -->
+      <div class="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-2">
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Type de Document</label>
+        <p-select [options]="documentTypes" [(ngModel)]="selectedType" optionLabel="libelle" optionValue="code" placeholder="Tous les types" class="w-full" [showClear]="true" (onChange)="refreshList()"></p-select>
+      </div>
+
+      <!-- Service Dropdown -->
+      <div class="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-3">
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Structure / Service</label>
+        <p-select [options]="structures" [(ngModel)]="selectedService" optionLabel="libelleLong" optionValue="id" placeholder="Tous les services" class="w-full" [filter]="true" [showClear]="true" (onChange)="refreshList()"></p-select>
+      </div>
+
+      <!-- Status MultiSelect -->
+      <div class="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-2">
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Statut</label>
+        <p-multiSelect [options]="statusOptions" [(ngModel)]="selectedStatuses" optionLabel="label" optionValue="value" placeholder="Tous les statuts" class="w-full" [maxSelectedLabels]="1" (onChange)="refreshList()"></p-multiSelect>
+      </div>
+
+      <!-- Date Range (Simplified as Date Inputs) -->
+      <div class="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-2 flex align-items-end gap-1">
+        <button pButton pRipple icon="pi pi-filter" label="Filtrer" class="w-full p-button-secondary" (click)="refreshList()"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Documents Grid/Table -->
+  <div class="card shadow-sm border border-slate-200 bg-white overflow-hidden">
+    <p-table [value]="documents" [loading]="loading" [paginator]="true" [rows]="10" [responsiveLayout]="'scroll'" styleClass="p-datatable-striped">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Numéro</th>
+          <th>Type</th>
+          <th>Service / Structure</th>
+          <th>Rédacteur</th>
+          <th>Version</th>
+          <th>Statut</th>
+          <th>Mise en vigueur</th>
+          <th>Prochaine révision</th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-doc>
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="font-bold text-slate-700">{{ doc.documentNumber }}</td>
+          <td>
+            <span class="font-medium px-2 py-1 text-xs rounded bg-slate-100 text-slate-600 border border-slate-200">
+              {{ doc.documentType }}
+            </span>
+          </td>
+          <td>
+            <div class="flex flex-column">
+              <span class="font-semibold text-slate-700">{{ doc.serviceSigle }}</span>
+              <span class="text-xs text-slate-400">{{ doc.serviceLibelle }}</span>
+            </div>
+          </td>
+          <td>{{ doc.redacteur }}</td>
+          <td class="text-center font-mono text-xs">
+            <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100">
+              {{ doc.versionMajeure }}.{{ doc.versionMineure }}
+            </span>
+          </td>
+          <td>
+            <p-tag [value]="getStatusLabel(doc.status)" [severity]="getStatusSeverity(doc.status)"></p-tag>
+          </td>
+          <td>{{ (doc.dateVigueur | date:'dd/MM/yyyy') || '-' }}</td>
+          <td>
+            <span [class.text-red-500]="doc.status === 'en_retard_revision'" [class.font-bold]="doc.status === 'en_retard_revision'">
+              {{ (doc.dateProchRevision | date:'dd/MM/yyyy') || '-' }}
+            </span>
+          </td>
+          <td>
+            <div class="flex justify-content-center gap-1">
+              <!-- View Detail -->
+              <button pButton pRipple icon="pi pi-eye" class="p-button-text p-button-rounded p-button-secondary" pTooltip="Détails" tooltipPosition="top" (click)="viewDetails(doc)"></button>
+              
+              <!-- Download Secure PDF -->
+              <button pButton pRipple icon="pi pi-file-pdf" class="p-button-text p-button-rounded p-button-danger" pTooltip="PDF Sécurisé" tooltipPosition="top" (click)="downloadSecuredPdf(doc)"></button>
+
+              <!-- State Transition -->
+              <button pButton pRipple icon="pi pi-directions" class="p-button-text p-button-rounded p-button-warn" pTooltip="Transition statut" tooltipPosition="top" (click)="openTransitionDialog(doc)"></button>
+
+              <!-- History Timeline -->
+              <button pButton pRipple icon="pi pi-history" class="p-button-text p-button-rounded p-button-info" pTooltip="Historique versions" tooltipPosition="top" (click)="viewVersionHistory(doc)"></button>
+
+              <!-- Audit Trail Logs -->
+              <button pButton pRipple icon="pi pi-list" class="p-button-text p-button-rounded p-button-success" pTooltip="Piste d'audit" tooltipPosition="top" (click)="viewAuditLogs(doc)"></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9" class="text-center py-5 text-slate-400">
+            <i class="pi pi-folder-open text-5xl mb-3 block"></i>
+            Aucun document QMS trouvé.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- 1. CREATION / UPLOAD MODAL -->
+<!-- ========================================================================= -->
+<p-dialog header="Enregistrer un nouveau Document QMS" [(visible)]="showCreateModal" [modal]="true" [style]="{ width: '48rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }" [maximizable]="true">
+  <form [formGroup]="documentForm" class="p-fluid">
+    <div class="grid grid-cols-12 gap-3 mt-2">
+      <!-- File Selector -->
+      <div class="col-span-12 mb-3">
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Fichier du Document (PDF, Word, etc.) *</label>
+        <div class="flex align-items-center gap-3 p-3 border border-dashed border-slate-300 rounded bg-slate-50">
+          <input type="file" id="qmsFileInput" (change)="onFileSelected($event)" style="display: none;" />
+          <button pButton type="button" label="Choisir un fichier" icon="pi pi-upload" class="p-button-outlined p-button-secondary w-auto" onclick="document.getElementById('qmsFileInput').click()"></button>
+          <span class="text-sm text-slate-600 font-medium">
+            {{ selectedFile ? selectedFile.name + ' (' + (selectedFile.size/1024 | number:'1.0-1') + ' Ko)' : 'Aucun fichier sélectionné' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Type Dropdown -->
+      <div class="col-span-12 md:col-span-6">
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Type de document *</label>
+        <p-select [options]="documentTypes" formControlName="documentType" optionLabel="libelle" optionValue="code" placeholder="Sélectionner le type"></p-select>
+      </div>
+
+      <!-- Service Dropdown -->
+      <div class="col-span-12 md:col-span-6">
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Service Émetteur / Structure *</label>
+        <p-select [options]="structures" formControlName="service" optionLabel="libelleLong" placeholder="Sélectionner le service" [filter]="true"></p-select>
+      </div>
+
+      <!-- Rédacteur -->
+      <div class="col-span-12 md:col-span-6">
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Nom du Rédacteur *</label>
+        <input pInputText formControlName="redacteur" placeholder="Ex: Jean Kaboré" />
+      </div>
+
+      <!-- Periodicite de revision -->
+      <div class="col-span-12 md:col-span-6">
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Périodicité de révision (mois) *</label>
+        <p-inputNumber formControlName="periodiciteMois" suffix=" mois" [min]="1"></p-inputNumber>
+      </div>
+
+      <!-- Organisme Emetteur -->
+      <div class="col-span-12 md:col-span-6">
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Organisme Émetteur (externe)</label>
+        <input pInputText formControlName="organismeEmetteur" placeholder="Ex: Bureau de Normalisation" />
+      </div>
+
+      <!-- Reference Officielle -->
+      <div class="col-span-12 md:col-span-6">
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Référence Officielle (externe)</label>
+        <input pInputText formControlName="referenceOfficielle" placeholder="Ex: ISO 9001:2015" />
+      </div>
+
+      <!-- Domaine -->
+      <div class="col-span-12 md:col-span-6">
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Domaine d'application</label>
+        <input pInputText formControlName="domaine" placeholder="Ex: Management Qualité" />
+      </div>
+
+      <!-- Statut Legal -->
+      <div class="col-span-12 md:col-span-6">
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Statut Légal</label>
+        <input pInputText formControlName="statutLegal" placeholder="Ex: Recommandé" />
+      </div>
+
+      <!-- Confidentiel Switch -->
+      <div class="col-span-6 flex align-items-center gap-2 mt-2">
+        <p-inputSwitch formControlName="confidentiel"></p-inputSwitch>
+        <span class="text-sm font-semibold text-slate-700">Document Confidentiel</span>
+      </div>
+
+      <!-- Externe Switch -->
+      <div class="col-span-6 flex align-items-center gap-2 mt-2">
+        <p-inputSwitch formControlName="documentExterne"></p-inputSwitch>
+        <span class="text-sm font-semibold text-slate-700">Document Externe</span>
+      </div>
+    </div>
+  </form>
+  <ng-template pTemplate="footer">
+    <button pButton label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="showCreateModal = false"></button>
+    <button pButton label="Déposer" icon="pi pi-check" class="p-button-primary shadow-sm" [disabled]="documentForm.invalid || !selectedFile" (click)="submitDocument()"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- ========================================================================= -->
+<!-- 2. STATE TRANSITION DIALOG -->
+<!-- ========================================================================= -->
+<p-dialog header="Transitionner le statut du document" [(visible)]="showTransitionModal" [modal]="true" [style]="{ width: '32rem' }">
+  <form [formGroup]="transitionForm" class="p-fluid mt-2" *ngIf="selectedDocument">
+    <div class="flex flex-column gap-3">
+      <div>
+        <span class="text-xs text-slate-500 font-semibold uppercase block">Document</span>
+        <span class="text-sm font-bold text-slate-700">{{ selectedDocument.documentNumber }}</span>
+      </div>
+      <div>
+        <span class="text-xs text-slate-500 font-semibold uppercase block">Statut Actuel</span>
+        <p-tag [value]="getStatusLabel(selectedDocument.status!)" [severity]="getStatusSeverity(selectedDocument.status!)" class="mt-1 inline-block"></p-tag>
+      </div>
+
+      <!-- Next Status Dropdown -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Nouveau Statut *</label>
+        <p-select [options]="getTransitionOptions(selectedDocument.status!)" formControlName="nextStatus" placeholder="Sélectionner le nouveau statut"></p-select>
+      </div>
+
+      <!-- Reason Textarea -->
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Motif / Justification *</label>
+        <textarea pTextarea formControlName="reason" rows="4" placeholder="Ex: Soumission pour validation de la version initiale..."></textarea>
+      </div>
+    </div>
+  </form>
+  <ng-template pTemplate="footer">
+    <button pButton label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="showTransitionModal = false"></button>
+    <button pButton label="Confirmer" icon="pi pi-check" class="p-button-primary" [disabled]="transitionForm.invalid" (click)="submitTransition()"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- ========================================================================= -->
+<!-- 3. DETAILS DRAWER -->
+<!-- ========================================================================= -->
+<p-drawer header="Détails du Document QMS" [(visible)]="showDetailsDrawer" position="right" styleClass="w-full md:w-30rem">
+  <div class="p-3" *ngIf="selectedDocument">
+    <div class="flex align-items-center justify-content-between mb-4 border-bottom border-slate-200 pb-3">
+      <span class="text-lg font-bold text-slate-800">{{ selectedDocument.documentNumber }}</span>
+      <p-tag [value]="getStatusLabel(selectedDocument.status!)" [severity]="getStatusSeverity(selectedDocument.status!)"></p-tag>
+    </div>
+
+    <table class="w-full table-details">
+      <tbody>
+        <tr>
+          <td>Type</td>
+          <td class="font-semibold">{{ selectedDocument.documentType }}</td>
+        </tr>
+        <tr>
+          <td>Service émetteur</td>
+          <td>
+            <div class="font-semibold">{{ selectedDocument.serviceSigle }}</div>
+            <div class="text-xs text-slate-400">{{ selectedDocument.serviceLibelle }}</div>
+          </td>
+        </tr>
+        <tr>
+          <td>Version Courante</td>
+          <td class="font-mono text-sm font-bold text-indigo-600">V{{ selectedDocument.versionMajeure }}.{{ selectedDocument.versionMineure }}</td>
+        </tr>
+        <tr>
+          <td>Rédacteur</td>
+          <td>{{ selectedDocument.redacteur }}</td>
+        </tr>
+        <tr>
+          <td>Périodicité révision</td>
+          <td>{{ selectedDocument.periodiciteMois || 'Non spécifiée' }} mois</td>
+        </tr>
+        <tr>
+          <td>Date de Vigueur</td>
+          <td>{{ (selectedDocument.dateVigueur | date:'dd/MM/yyyy HH:mm') || '-' }}</td>
+        </tr>
+        <tr>
+          <td>Prochaine Révision</td>
+          <td>{{ (selectedDocument.dateProchRevision | date:'dd/MM/yyyy') || '-' }}</td>
+        </tr>
+        <tr>
+          <td>Confidentiel</td>
+          <td>
+            <span class="px-2 py-1 text-xs rounded font-bold" [class.bg-red-50]="selectedDocument.confidentiel" [class.text-red-700]="selectedDocument.confidentiel" [class.bg-slate-50]="!selectedDocument.confidentiel" [class.text-slate-500]="!selectedDocument.confidentiel">
+              {{ selectedDocument.confidentiel ? 'Oui' : 'Non' }}
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td>Document Externe</td>
+          <td>{{ selectedDocument.documentExterne ? 'Oui' : 'Non' }}</td>
+        </tr>
+        <tr *ngIf="selectedDocument.organismeEmetteur">
+          <td>Organisme émetteur</td>
+          <td>{{ selectedDocument.organismeEmetteur }}</td>
+        </tr>
+        <tr *ngIf="selectedDocument.referenceOfficielle">
+          <td>Référence Officielle</td>
+          <td>{{ selectedDocument.referenceOfficielle }}</td>
+        </tr>
+        <tr *ngIf="selectedDocument.domaine">
+          <td>Domaine d'application</td>
+          <td>{{ selectedDocument.domaine }}</td>
+        </tr>
+        <tr *ngIf="selectedDocument.statutLegal">
+          <td>Statut Légal</td>
+          <td>{{ selectedDocument.statutLegal }}</td>
+        </tr>
+        <tr>
+          <td>Alfresco ID Node</td>
+          <td class="text-xs font-mono text-slate-500 overflow-wrap-break">{{ selectedDocument.alfrescoNodeId }}</td>
+        </tr>
+        <tr *ngIf="selectedDocument.ncReference">
+          <td>Non-Conformité Liée</td>
+          <td class="font-bold text-red-600">{{ selectedDocument.ncReference }}</td>
+        </tr>
+        <tr>
+          <td>Créé par</td>
+          <td>
+            <div>{{ selectedDocument.currentUserfullName || 'système' }}</div>
+            <div class="text-xs text-slate-400">{{ selectedDocument.createdAt }}</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="mt-4 flex gap-2">
+      <button pButton label="Fichier PDF" icon="pi pi-download" class="p-button-danger shadow-sm w-full" (click)="downloadSecuredPdf(selectedDocument)"></button>
+      <button pButton label="Transitionner" icon="pi pi-directions" class="p-button-outlined p-button-warn w-full" (click)="openTransitionDialog(selectedDocument)"></button>
+    </div>
+  </div>
+</p-drawer>
+
+<!-- ========================================================================= -->
+<!-- 4. HISTORIQUE VERSION DRAWER -->
+<!-- ========================================================================= -->
+<p-drawer header="Historique des Versions" [(visible)]="showHistoryDrawer" position="right" styleClass="w-full md:w-30rem">
+  <div class="p-3">
+    <div class="mb-4" *ngIf="selectedDocument">
+      <span class="text-xs font-semibold text-slate-400 uppercase">Document</span>
+      <h3 class="text-base font-bold text-slate-800 m-0">{{ selectedDocument.documentNumber }}</h3>
+    </div>
+
+    <p-timeline [value]="versionHistory" styleClass="qms-timeline">
+      <ng-template pTemplate="content" let-ver>
+        <div class="card p-3 shadow-xs border border-slate-200 bg-slate-50 mb-3 rounded">
+          <div class="flex justify-content-between align-items-center mb-2">
+            <span class="font-mono text-sm font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded">
+              Version {{ ver.versionLabel }}
+            </span>
+            <span class="text-xs text-slate-400">{{ ver.dateCreation | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <p class="text-sm text-slate-700 m-0 italic">"{{ ver.comment }}"</p>
+          <div class="text-xs text-slate-400 mt-2">
+            <i class="pi pi-user mr-1 text-xs"></i> Validateur : {{ ver.createdBy }}
+          </div>
+        </div>
+      </ng-template>
+    </p-timeline>
+
+    <div *ngIf="versionHistory.length === 0" class="text-center py-5 text-slate-400">
+      <i class="pi pi-info-circle text-4xl mb-2"></i>
+      <p>Aucune version archivée pour ce document.</p>
+    </div>
+  </div>
+</p-drawer>
+
+<!-- ========================================================================= -->
+<!-- 5. AUDIT TRAIL LOGS DRAWER -->
+<!-- ========================================================================= -->
+<p-drawer header="Piste d'Audit & Activités" [(visible)]="showAuditDrawer" position="right" styleClass="w-full md:w-35rem">
+  <div class="p-3">
+    <div class="mb-4" *ngIf="selectedDocument">
+      <span class="text-xs font-semibold text-slate-400 uppercase">Document</span>
+      <h3 class="text-base font-bold text-slate-800 m-0">{{ selectedDocument.documentNumber }}</h3>
+    </div>
+
+    <p-table [value]="auditLogs" [responsiveLayout]="'scroll'" styleClass="p-datatable-sm p-datatable-striped">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Date</th>
+          <th>Action</th>
+          <th>Utilisateur</th>
+          <th>Détails</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-log>
+        <tr>
+          <td class="text-xs text-slate-400 whitespace-nowrap">{{ log.timestamp | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td>
+            <span class="text-xs px-2 py-0.5 rounded font-bold uppercase" [ngClass]="{
+              'bg-blue-50 text-blue-700 border border-blue-100': log.action === 'CREATION',
+              'bg-orange-50 text-orange-700 border border-orange-100': log.action === 'TRANSITION_STATUT',
+              'bg-red-50 text-red-700 border border-red-100': log.action === 'TELECHARGEMENT_PDF_SECURISE',
+              'bg-purple-50 text-purple-700 border border-purple-100': log.action === 'LINK_NC'
+            }">{{ log.action }}</span>
+          </td>
+          <td class="text-sm font-semibold">{{ log.username }}</td>
+          <td class="text-xs text-slate-600">{{ log.details }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <div *ngIf="auditLogs.length === 0" class="text-center py-5 text-slate-400">
+      <p>Aucun log d'activité enregistré.</p>
+    </div>
+  </div>
+</p-drawer>
