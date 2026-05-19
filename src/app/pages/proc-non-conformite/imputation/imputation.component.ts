@@ -34,17 +34,17 @@ export class ImputationComponent {
         private service: ProcNonConformiteService
     ) {
         this.cols = [
-            { field: 'numeroReference', header: 'N° ordre', type: 'string', filter: true, width: '10%', centered: false },
+            { field: 'numeroReference', header: 'N° ordre', type: 'string', filter: true, width: '20%', centered: false },
             { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '30%', centered: false },
             {
                 field: 'currentUserfullName',
                 header: 'Responsable',
                 type: 'string',
                 filter: true,
-                width: '20%',
+                width: '15%',
                 centered: false
             },
-            { field: 'status', header: 'Statut', type: 'enum', filter: true, width: '15%', centered: false },
+
             { field: 'createdAt', header: 'Date soumission', type: 'string', filter: true, width: '15%', centered: false }
         ];
     }

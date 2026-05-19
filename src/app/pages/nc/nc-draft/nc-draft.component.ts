@@ -13,36 +13,35 @@ import { Structure } from '../../structure/structure-config/structure';
 @Component({
     selector: 'app-nc-draft',
     templateUrl: './nc-draft.component.html',
-    standalone:false
+    standalone: false
 })
 export class NcDraftComponent implements OnInit, OnDestroy {
     actualities: any[] = [];
     loading: boolean = false;
-    userStructure:Structure={};
+    userStructure: Structure = {};
     destroy$: Subject<boolean> = new Subject<boolean>();
     cols: any[] = [
-        {field: 'numeroReference', header: 'N° ref', type: 'string', filter: true, width: '28%'},
-        {field: 'origineService', header: 'Processus Destinataire', type: 'string', filter: true, width: '30%'},
-        {field: 'currentUserfullName', header: 'Responsable', type: 'string', filter: true, width: '25%'},
+        { field: 'numeroReference', header: 'N° ref', type: 'string', filter: true, width: '28%' },
+        { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '20%' },
+        { field: 'currentUserfullName', header: 'Responsable', type: 'string', filter: true, width: '25%' },
 
-        {field: 'createdAt', header: 'Date de soumission', type: 'string', filter: true, width: '25%'}
+        { field: 'createdAt', header: 'Date de soumission', type: 'date', filter: true, width: '15%' }
     ];
     colsDetail: any[] = [
-        {field: 'nomProcessus', header: 'Titre', type: 'string'},
-        {field: 'justification', header: 'Description', type: 'string'},
-        {field: 'createdAt', header: 'Date création', type: 'dateTime'},
-        {field: 'dueDate', header: 'Date expiration', type: 'date'},
-        {field: 'tags', header: 'Tags', type: 'tags'},
-        {field: 'pieceJointes', header: 'Pièces Jointes', type: 'file'}
-
+        { field: 'nomProcessus', header: 'Titre', type: 'string' },
+        { field: 'justification', header: 'Description', type: 'string' },
+        { field: 'createdAt', header: 'Date création', type: 'dateTime' },
+        { field: 'dueDate', header: 'Date expiration', type: 'date' },
+        { field: 'tags', header: 'Tags', type: 'tags' },
+        { field: 'pieceJointes', header: 'Pièces Jointes', type: 'file' }
     ];
 
-    constructor(private actualityService: NonConformiteService,
-                private messageService: MessageService,
-                private location: Location,
-                private featureService: FeaturesService
-    ) {
-    }
+    constructor(
+        private actualityService: NonConformiteService,
+        private messageService: MessageService,
+        private location: Location,
+        private featureService: FeaturesService
+    ) {}
 
     ngOnInit() {
         this.userStructure = getCurrentUserStructure();
@@ -56,7 +55,7 @@ export class NcDraftComponent implements OnInit, OnDestroy {
     fetchNc() {
         this.loading = true;
         this.actualityService
-            .findAllNc(NonConformStatus.DRAFT,this.userStructure.id)
+            .findAllNc(NonConformStatus.DRAFT, this.userStructure.id)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (data) => {
@@ -82,7 +81,7 @@ export class NcDraftComponent implements OnInit, OnDestroy {
                 this.goBack();
                 this.featureService.onReloadRequested(true);
             },
-            error: error => {
+            error: (error) => {
                 showToast(StatusEnum.error, error.status, 'Une erreur est survenue', this.messageService, error);
             }
         });
@@ -97,12 +96,11 @@ export class NcDraftComponent implements OnInit, OnDestroy {
                 showToast(StatusEnum.success, data.status, null, this.messageService);
                 this.goBack();
             },
-            error: error => {
+            error: (error) => {
                 showToast(StatusEnum.error, error.status, null, this.messageService, error);
             }
         });
     }
-
 
     protected readonly NonConformStatus = NonConformStatus;
 }

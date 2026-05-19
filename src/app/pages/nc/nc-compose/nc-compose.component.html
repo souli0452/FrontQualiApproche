@@ -24,7 +24,7 @@
                                     optionLabel="libelle" placeholder="Sélectionnez un type"
                                     [filter]="true" [showClear]="true" appendTo="body" class="w-full"
                                     [class.p-invalid]="!nc.origineService "></p-select>
-                        <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
+
                     </div>
                 </div>
                 <div class="flex-1 min-w-[300px]">
@@ -34,7 +34,7 @@
                                     optionLabel="libelle" placeholder="Sélectionnez un niveau"
                                     [filter]="true" [showClear]="true" appendTo="body" class="w-full"
                                     [class.p-invalid]="!nc.origineService "></p-select>
-                        <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
+
                     </div>
                 </div>
             </div>
@@ -46,7 +46,6 @@
                                     optionLabel="libelle" placeholder="Sélectionnez l'origine"
                                     [filter]="true" [showClear]="true" appendTo="body" class="w-full"
                                     [class.p-invalid]="!nc.origineService "></p-select>
-                        <small *ngIf="!nc.origineService&&formSubmitted" class="p-error">Ce champ est requis</small>
                     </div>
                 </div>
             </div>
@@ -70,12 +69,12 @@
 
                     <button pButton pRipple class="p-button-primary font-bold" label="Enregistrer"
                             *ngIf="!nonConformite.id"
-                            [disabled]="!nc.typeProcedure||!nc.typeNonformite"
+                            [disabled]="!nc.typeProcedure||!nc.typeNonformite||!this.nc.niveauNonConformite"
                             icon="pi pi-fw pi-check" (click)="onSave()">
                     </button>
                     <button pButton pRipple class="p-button-primary font-bold" label="Mofifier"
                             *ngIf="nonConformite.id"
-                            [disabled]="!nc.typeProcedure||!nc.typeNonformite||!nonConformite.justification"
+                            [disabled]="!nc.typeProcedure||!nc.typeNonformite||!this.nc.niveauNonConformite"
                             icon="pi pi-fw pi-check" (click)="onSave()">
                     </button>
                 </div>

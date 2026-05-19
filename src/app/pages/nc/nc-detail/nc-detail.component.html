@@ -20,7 +20,7 @@
                 <div class="nc-details-grid">
                     <div class="nc-detail-item">
                         <span *ngIf="nc.origineService" class="block font-bold  nc-detail-label">Processus Destinataire :</span>
-                        <span class="nc-detail-value">{{nc.origineService}} ({{nc.origineServiceLibelleCourt}})</span>
+                        <span  *ngIf="nc.origineService" class="nc-detail-value">{{nc.origineService}} ({{nc.origineServiceLibelleCourt}})</span>
                     </div>
                     <div class="nc-detail-item">
                         <span class="nc-detail-label block font-bold ">Processus de soumission :</span>

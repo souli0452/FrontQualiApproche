@@ -192,6 +192,6 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
     }
 
     cancel() {
-        this.router.navigate(['configurations/roles']);
+        this.router.navigate(['/roles']);
     }
 }
