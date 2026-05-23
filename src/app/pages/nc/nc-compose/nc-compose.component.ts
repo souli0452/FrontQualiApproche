@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Location } from '@angular/common';
 import { convertFilesToBase64, getCurrentUserStructure, onFileUpload, PieceJointe, showToast, StatusEnum, StatusEnumShow } from '../../../utils';
 import { MessageService } from 'primeng/api';
@@ -26,9 +26,13 @@ import { ActivatedRoute } from '@angular/router';
 @Component({
     selector: 'app-nc-compose',
     templateUrl: './nc-compose.component.html',
+    styleUrl: './nc-compose.component.scss',
     standalone: false
 })
 export class NcComposeComponent {
+    @Input() editId: any;
+    @Output() closeDialog = new EventEmitter<void>();
+
     userStructure: Structure = {};
     nc: any = { pieceJointes: [] };
     hasImage: any;
@@ -66,11 +70,22 @@ export class NcComposeComponent {
     }
 
     goBack() {
-        this.location.back();
+        if (this.editId) {
+            this.closeDialog.emit();
+        } else {
+            this.location.back();
+        }
     }
+    removeExistingFile(index: number) {
+        if (this.nonConformite.fichiers) {
+            this.nonConformite.fichiers.splice(index, 1);
+        }
+    }
+
+
     ngOnInit(): void {
         this.userStructure = getCurrentUserStructure();
-        const id = this.activatedRoute.snapshot.paramMap.get('id');
+        const id = this.editId || this.activatedRoute.snapshot.paramMap.get('id');
 
         if (id && id !== '' && id !== 'create') {
             this.nonConformiteService
@@ -96,7 +111,7 @@ export class NcComposeComponent {
         this.formSubmitted = true;
 
         // Vérification de base pour éviter les erreurs d'accès à undefined
-        if (!this.nc.niveauNonConformite || !this.nc.typeNonformite || !this.nc.origineService || !this.nc.typeProcedure) {
+        if (!this.nc.niveauNonConformite || !this.nc.typeNonformite || !this.nc.typeProcedure) {
             this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Veuillez remplir tous les champs obligatoires.' });
             return;
         }
@@ -144,12 +159,12 @@ export class NcComposeComponent {
     onResponse() {
         return {
             next: (res: HttpResponse<any>) => {
-                showToast(StatusEnum.success, res.status, null, this.messageService);
+                showToast(StatusEnum.success,  res.status, 'Succès', this.messageService);
+                this.closeDialog.emit();
                 this.featureService.onReloadRequested(true);
-                this.goBack();
             },
             error: (error: HttpErrorResponse) => {
-                showToast(StatusEnum.error, error.status, null, this.messageService, error);
+                showToast(StatusEnum.error, error.status, 'Une erreur est survenue', this.messageService, error);
             }
         };
     }

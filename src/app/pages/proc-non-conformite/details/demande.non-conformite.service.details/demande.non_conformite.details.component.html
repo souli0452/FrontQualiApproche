@@ -3,7 +3,7 @@
     <div class="grid">
         <div class="field mt-5 mb-4"
             *ngIf="(demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.SUIVI_RQ)&&demande.btnActions!==EtapeTraitement.CLOTURE">
-            <label for="justification" class="block font-bold  mb-2">Action préventive (facultative)</label>
+            <label for="justification" class="block font-bold  mb-2">Action préventive (facultative) 1</label>
             <textarea pInputTextarea id="justification" [(ngModel)]="demande.actionPreventive" name="justification"
                 rows="5" [autoResize]="true" placeholder="Décrivez les actions préventives..."
                 class="w-full"></textarea>
@@ -207,7 +207,7 @@
             <div class="card nc-card mt-4">
                 <div class="nc-card-header">
                     <i class="pi pi-users nc-icon"></i>
-                    <h3 class="nc-card-title">Participants</h3>
+                    <h3 class="nc-card-title">Participants 1</h3>
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <p-chip *ngFor="let participant of demande.participants" icon="pi pi-user" [label]="participant"

@@ -1,0 +1,13 @@
+<div class="card shadow-1">
+    <p-toast />
+    <app-traitement-table
+        [btnActions]="BtnActions.VALIDATION_RS"
+        [demandeList]="demandeList"
+        (onValidationRS)="validationRs($event)"
+        [cols]="cols"
+        (onRejet)="rejet($event)"
+        [loading]="loading"
+        [title]="title">
+    </app-traitement-table>
+</div>
+<app-rejet  [motifRejetDialog]="motifRejetDialog" [demande]="demande" (onSuccess)="hideDialog($event)"></app-rejet>

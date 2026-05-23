@@ -12,6 +12,7 @@ import {
 } from '../pages/proc-non-conformite/forms/non-conformit.forms/non-conformit.forms.component';
 import { FormsComponent } from '../pages/proc-non-conformite/forms/forms.component';
 import { SERVICE_PREFIX } from './quali-url-configs';
+import { FormTraitementComponent } from '../components/non-conformite/form-traitement/form-traitement';
 
 
 @Injectable({providedIn: 'root'})
@@ -64,6 +65,14 @@ export class FeaturesService {
     }
 
 
+        DynamicFormTraitementComponent(typeDemande: TypeDemande) {
+        switch (typeDemande) {
+            case TypeDemande.NON_CONFORMITE:
+                return FormTraitementComponent;
+            default: return FormTraitementComponent
+
+        }
+    }
 
 
 

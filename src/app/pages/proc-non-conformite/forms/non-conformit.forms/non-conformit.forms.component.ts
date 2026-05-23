@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { TabPanel, TabView } from 'primeng/tabview';
+import { TabViewModule } from 'primeng/tabview';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { FormArray, FormBuilder, FormGroup, UntypedFormGroup, Validators } from '@angular/forms';
 import { nonConformiteForm } from '../../proc-non-conformite.data';
@@ -23,7 +23,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 @Component({
     selector: 'app-non-conformit.forms',
     standalone:true,
-    imports: [NgPrimeModule, TabView, TabPanel, DemandeNon_conformiteDetailsComponent, Chips],
+    imports: [NgPrimeModule, TabViewModule, DemandeNon_conformiteDetailsComponent, Chips],
     templateUrl: './non-conformit.forms.component.html',
     styleUrl: './non-conformit.forms.component.scss'
 })

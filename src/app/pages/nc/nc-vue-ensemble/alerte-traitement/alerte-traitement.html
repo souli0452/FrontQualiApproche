@@ -1,0 +1,134 @@
+<!-- Alerte Brouillons (Agent / Utilisateur) -->
+<div *ngIf="countBrouillon > 0" class="mb-2">
+    <p-message closable severity="warn" size="small">
+        <div class="">
+            <div class="flex align-items-center font-semibold">
+                <i class="pi pi-pencil mr-2"></i>
+                <span>Brouillons en cours</span>
+            </div>
+            <p class="text-sm mt-2">
+                Vous avez {{ countBrouillon }} Non-Conformité(s) en attente de finalisation.
+            </p>
+        </div>
+    </p-message>
+</div>
+
+<!-- Alerte NC de Service (Chef de service) -->
+<div *ngIf="countReception > 0" class="mb-2">
+    <p-message closable severity="warn" size="small">
+        <div class="">
+            <div class="flex align-items-center font-semibold">
+                <i class="pi pi-users mr-2"></i>
+                <span>Non-conformités de votre service</span>
+            </div>
+            <p class="text-sm mt-2">
+                Votre service a {{ countReception }} Non-Conformité(s) publiée(s) en attente de validation.
+            </p>
+        </div>
+    </p-message>
+</div>
+
+<!-- Alerte Imputations (Actions pour l'utilisateur connecté) -->
+<div *ngIf="countImputees > 0" class="mb-2">
+    <p-message closable severity="error" size="small">
+        <div class="">
+            <div class="flex align-items-center font-semibold">
+                <i class="pi pi-exclamation-circle mr-2"></i>
+                <span>Actions à traiter</span>
+            </div>
+            <p class="text-sm mt-2 font-bold">
+                Vous avez {{ countImputees }} Non-Conformité(s) qui vous {{ countImputees > 1 ? 'sont' : 'est' }} imputée(s) pour traitement.
+            </p>
+        </div>
+    </p-message>
+</div>
+
+
+<!-- Alerte Validation RQ (Actions pour l'utilisateur connecté) -->
+<div *ngIf="countValidationRQ > 0" class="mb-2">
+    <p-message closable severity="error" size="small">
+        <div class="">
+            <div class="flex align-items-center font-semibold">
+                <i class="pi pi-shield mr-2"></i>
+                <span>Validation RQ</span>
+            </div>
+            <p class="text-sm mt-2 font-bold">
+                Vous avez {{ countValidationRQ }} Non-Conformité(s) que vous devez valider.
+            </p>
+        </div>
+    </p-message>
+</div>
+
+<!-- Alerte Validation RS (Admin / RQ) -->
+<div *ngIf="countEnAttenteValidation > 0" class="mb-2">
+    <p-message closable severity="error" size="small">
+        <div class="">
+            <div class="flex align-items-center font-semibold">
+                <i class="pi pi-shield mr-2"></i>
+                <span>Validation Globale</span>
+            </div>
+            <p class="text-sm mt-2">
+                Il y a {{ countEnAttenteValidation }} Non-Conformité(s) en attente de validation.
+            </p>
+        </div>
+    </p-message>
+</div>
+
+<!-- Alerte Validation Pilote (Pilote) -->
+<div *ngIf="countValidationPilote > 0" class="mb-2">
+    <p-message closable severity="error" size="small">
+        <div class="">
+            <div class="flex align-items-center font-semibold">
+                <i class="pi pi-shield mr-2"></i>
+                <span>Validation des plans d'actions</span>
+            </div>
+            <p class="text-sm mt-2">
+                Il y a {{ countValidationPilote }} plan d'actions en attente de validation. 
+            </p>
+        </div>
+    </p-message>
+</div>
+
+<div *ngIf="countCloture > 0" class="mb-2">
+    <p-message closable severity="success" size="small">
+        <div class="">
+            <div class="flex align-items-center font-semibold">
+                <i class="pi pi-check-circle mr-2"></i>
+                <span>Clôture des Non-Conformités</span>
+            </div>
+            <p class="text-sm mt-2">
+                Il y a {{ countCloture }} Non-Conformité(s) en attente de clôture.
+            </p>
+        </div>
+    </p-message>
+</div>
+
+<!-- Alerte Affectation (Actions pour l'utilisateur connecté) -->
+<div *ngIf="countAffectation > 0" class="mb-2">
+    <p-message closable severity="error" size="small">
+        <div class="">
+            <div class="flex align-items-center font-semibold">
+                <i class="pi pi-shield mr-2"></i>
+                <span>Affectation</span>
+            </div>
+            <p class="text-sm mt-2 font-bold">
+                Vous avez {{ countAffectation }} Non-Conformité(s) en attente d'affectation.
+            </p>
+        </div>
+    </p-message>
+</div>
+
+<!-- Alerte Plans d'actions à traiter (Actions pour l'utilisateur connecté) -->
+<div *ngIf="countNonTraiter > 0" class="mb-2">
+    <p-message closable severity="error" size="small">
+        <div class="">
+            <div class="flex align-items-center font-semibold">
+                <i class="pi pi-shield mr-2"></i>
+                <span>Traitement</span>
+            </div>
+            <p class="text-sm mt-2 font-bold">
+                Vous avez {{ countNonTraiter }} Plan(s) d'actions en attente de traitement.
+            </p>
+        </div>
+    </p-message>
+</div>

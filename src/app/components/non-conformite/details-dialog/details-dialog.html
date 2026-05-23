@@ -1,0 +1,664 @@
+<div class="nc-detail-container">
+    <!-- Section Principale -->
+    <div class="grid">
+        <div class="field mt-5 mb-4"
+            *ngIf="(demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.SUIVI_RQ)&&demande.btnActions!==EtapeTraitement.CLOTURE">
+            <!-- <label for="justification" class="block font-bold  mb-2">Action préventive (facultative)</label>
+            <textarea pInputTextarea id="justification" [(ngModel)]="demande.actionPreventive" name="justification"
+                rows="5" [autoResize]="true" placeholder="Décrivez les actions préventives..."
+                class="w-full"></textarea> -->
+            <div class="flex mb-2 gap-2">
+                <label for="desAction" class="font-normal m-0 font-semibold">Action préventive (facultative)</label>
+                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="actionsPreventivesPopover.toggle($event)"></i>
+            </div>
+            <p-popover #actionsPreventivesPopover>
+                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                    Indiquez ici les actions à mener pour agir en amont. Contrairement à l'action corrective qui résout le problème constaté, l'action préventive cherche à identifier des situations similaires dans l'organisation afin d'y appliquer des mesures de sécurité avant qu'une non-conformité ne s'y déclare.
+                </div>
+            </p-popover>
+            <p-editor id="actionsPreventives" name="justification" placeholder="Saisissez des actions à mener pour agir en amont" [(ngModel)]="demande.actionPreventive" [style]="{ height: '70px' }">
+                <ng-template pTemplate="header">
+                    <span class="ql-formats">
+                        <select class="ql-size"></select>
+                        <select class="ql-font"></select>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-bold" aria-label="Bold"></button>
+                        <button class="ql-italic" aria-label="Italic"></button>
+                        <button class="ql-underline" aria-label="Underline"></button>
+                    </span>
+                </ng-template>
+            </p-editor>
+
+        </div>
+        <!-- Colonne Gauche -->
+        <div class="col-12 lg:col-6">
+            <!-- Description NC -->
+            <p-fieldset [toggleable]="true" styleClass="mb-4">
+                <ng-template pTemplate="header">
+                    <div class="flex items-center gap-2 text-primary">
+                        <span class="font-bold text-sm">Description de la non-conformité</span>
+                    </div>
+                </ng-template>
+                <div class="nc-description">
+                    <div [innerHTML]="demande.justification || 'Aucune description fournie'"></div>
+                </div>
+            </p-fieldset>
+
+            <div class="mt-4">
+            <!-- Carte Détails de la NC -->
+            <p-fieldset [toggleable]="true">
+                <ng-template pTemplate="header">
+                    <div class="flex items-center gap-2 text-primary">
+                        <span class="font-bold text-sm">Détails de la non-conformité</span>
+                    </div>
+                </ng-template>
+                <div class="nc-details-grid">
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Référence :</span>
+                        <span class="nc-detail-value font-bold bg-surface-100 p-2">{{demande.numeroReference}}</span>
+                    </div>
+                    <div class="nc-detail-item" *ngIf="demande.origineService">
+                        <span class="nc-detail-label">Processus Destinataire :</span>
+                        <span class="nc-detail-value">{{demande.origineService}}
+                            ({{demande.origineServiceLibelleCourt}})</span>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Processus de soumission :</span>
+                        <span class="nc-detail-value">{{demande.structureSoumissionLibelle}}</span>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Émetteur :</span>
+                        <span class="nc-detail-value">{{demande.currentUserfullName}}</span>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Date de création :</span>
+                        <span class="nc-detail-value">{{demande.createdAt | date:'dd/MM/yyyy HH:mm'}}</span>
+                    </div>
+                    <div class="nc-detail-item" *ngIf="demande.typeProcessusLibelle">
+                        <span class="nc-detail-label">Type de processus:</span>
+                        <span class="nc-detail-value">{{demande.typeProcessusLibelle}}</span>
+                    </div>
+                    <div class="nc-detail-item" *ngIf="demande.typeNonConformiteLibelle">
+                        <span class="nc-detail-label">Origine de la non-conformité :</span>
+                        <span class="nc-detail-value">{{demande.typeNonConformiteLibelle}}</span>
+                    </div>
+                    <div class="nc-detail-item" *ngIf="demande.actionLibelle">
+                        <span class="nc-detail-label">Type d'action :</span>
+                        <span class="nc-detail-value">{{demande.actionLibelle}}</span>
+                    </div>
+                    <div class="nc-detail-item" *ngIf="demande.niveauNonConformiteLibelle">
+                        <span class="nc-detail-label">Niveau de la non conformité:</span>
+                        <span class="nc-detail-value">
+                            <p-tag [style]="{'font-weight': 'bold'}" [severity]="getStatusSeverity(demande.niveauNonConformiteLibelle)" [value]="demande.niveauNonConformiteLibelle"> </p-tag>
+                            </span>
+                    </div>
+
+                </div>
+            </p-fieldset>
+            </div>
+
+            <!-- Validation Pilote -->
+            <div class="mt-4" *ngIf="demande.pertinancePilote">
+            <p-fieldset [toggleable]="true" styleClass="mb-4">
+                <ng-template pTemplate="header">
+                    <div class="flex items-center gap-2 text-primary">
+                        <span class="font-bold text-sm">Validation par le pilote processus</span>
+                    </div>
+                </ng-template>
+                <div class="nc-details-grid">
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Pertinence :</span>
+                        <span class="nc-detail-value">
+                            <p-tag [severity]="getStatusSeverity(demande.pertinancePilote)"
+                                [value]="demande.pertinancePilote"> </p-tag>
+                        </span>
+                    </div>
+                    <div class="nc-detail-item" *ngIf="demande.justificationPilote">
+                        <span class="nc-detail-label">Justification :</span>
+                        <span class="nc-detail-value" [innerHTML]="demande.justificationPilote"></span>
+                    </div>
+                </div>
+            </p-fieldset>
+            </div>
+        </div>
+
+        <!-- Colonne Droite -->
+        <div class="col-12 lg:col-6">
+            <!-- Actions entreprises -->
+            <div class="mt-4" *ngIf="demande.actionDsc ">
+            <p-fieldset [toggleable]="true" styleClass="mb-4">
+                <ng-template pTemplate="header">
+                    <div class="flex items-center gap-2 text-primary">
+                        <span class="font-bold text-sm">Actions entreprises</span>
+                    </div>
+                </ng-template>
+                <div class="nc-description">
+                    <div [innerHTML]="demande.actionDsc || 'Aucune action entreprise'"></div>
+                </div>
+            </p-fieldset>
+            </div>
+            
+            <div class="mt-4" *ngIf="demande.actionPreventive ">
+            <p-fieldset [toggleable]="true" styleClass="mb-4">
+                <ng-template pTemplate="header">
+                    <div class="flex items-center gap-2 text-primary">
+                        <span class="font-bold text-sm">Actions préventives</span>
+                    </div>
+                </ng-template>
+                <div class="nc-description">
+                    <div [innerHTML]="demande.actionPreventive || ''"></div>
+                </div>
+            </p-fieldset>
+            </div>
+
+            <!-- Documents joints -->
+            <div class="mt-4" *ngIf="demande.fichiers?.length > 0">
+            <p-fieldset [toggleable]="true" styleClass="mb-4">
+                <ng-template pTemplate="header">
+                    <div class="flex items-center gap-2 text-primary">
+                        <span class="font-bold text-sm">Documents joints</span>
+                    </div>
+                </ng-template>
+                <div class="flex flex-column gap-2">
+                    <div *ngFor="let fichier of demande.fichiers"
+                        class="file-item border-round-lg mb-2 flex items-center justify-between w-full p-2 bg-blue-50 border border-blue-100 border-round-xl">
+                        <div class="flex items-center gap-3">
+                            <div class="file-icon flex items-center justify-center">
+                                <img [src]="getFileIcon(fichier.nom)" alt="File icon" width="24" height="24" />
+                            </div>
+                            <div class="details">
+                                <span class="font-semibold text-sm text-blue-900 block" style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [title]="fichier.nom">
+                                    {{ fichier.nom }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <p-button [rounded]="true" [text]="true" size="small" icon="pi pi-download"
+                                (click)="downloadAttachment(fichier)" pTooltip="Télécharger" [tooltipPosition]="'left'">
+                            </p-button>
+                        </div>
+                    </div>
+                </div>
+            </p-fieldset>
+            </div>
+        </div>
+
+        <!-- Validation RS -->
+        <div class="col-12 lg:col-6" *ngIf="demande.pertinanceRs">
+            <div class="mt-4">
+            <p-fieldset [toggleable]="true" styleClass="mb-4">
+                <ng-template pTemplate="header">
+                    <div class="flex items-center gap-2 text-primary">
+                        <span class="font-bold text-sm">Validation du RQ</span>
+                    </div>
+                </ng-template>
+                <div class="nc-details-grid">
+                    <div class="nc-detail-item">
+                        
+                        <span class="nc-detail-label">Pertinence :</span> 
+                        <span class="nc-detail-value">
+                            <p-tag
+                            [severity]="getStatusSeverity(demande.pertinanceRs)" [value]="demande.pertinanceRs">
+                        </p-tag>
+                        </span>
+
+                    </div>
+                    <div class="nc-detail-item" *ngIf="demande.justificationRs">
+                        <span class="nc-detail-label">Justification :</span>
+                        <span class="nc-detail-value" [innerHTML]="demande.justificationRs"></span>
+                    </div>
+                </div>
+            </p-fieldset>
+            </div>
+        </div>
+
+        <!-- Suivi RMQ -->
+        <div class="col-12 lg:col-6" *ngIf="demande.pertinanceRsSuivi">
+            <div class="mt-4">
+            <p-fieldset [toggleable]="true" styleClass="mb-4">
+                <ng-template pTemplate="header">
+                    <div class="flex items-center gap-2 text-primary">
+                        <span class="font-bold text-sm">Suivi du Responsable Qualité</span>
+                    </div>
+                </ng-template>
+                <div class="nc-details-grid">
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Pertinence :</span> 
+
+                        <span class="nc-detail-value">
+                            <p-tag
+                            [severity]="getStatusSeverity(demande.pertinanceRsSuivi)"
+                            [value]="demande.pertinanceRsSuivi"> </p-tag>
+                        </span>
+                    </div>
+
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label">Date :</span>
+                        <span class="nc-detail-value">{{demande.dateSuivi | date : 'dd/MM/yyyy HH:mm'}}</span>
+                    </div>
+                </div>
+            </p-fieldset>
+            </div>
+        </div>
+
+        <!-- Motif de rejet -->
+        <div class="col-12" *ngIf="demande.observationRejet">
+            <div class="mt-4">
+            <p-fieldset [toggleable]="true" styleClass="nc-rejection mb-4">
+                <ng-template pTemplate="header">
+                    <div class="flex items-center gap-2 text-primary">
+                        <span class="font-bold text-sm">Motif de rejet</span>
+                    </div>
+                </ng-template>
+                <div class="nc-description">
+                    <div [innerHTML]="demande.observationRejet"></div>
+                </div>
+                <span *ngIf="demande.docRejet">
+                    <p class="mt-4 font-bold">Document joint</p>
+                    <div class="file-item border-round-lg mt-2 mb-2 flex items-center justify-between w-full p-2 bg-blue-50 border border-blue-100 border-round-xl">
+                        <div class="flex items-center gap-3">
+                            <div class="file-icon flex items-center justify-content-center">
+                                <img [src]="getFileIcon(demande.docRejet.nomFichier)" alt="File icon" width="24" height="24" />
+                            </div>
+                            <div class="details">
+                                <span class="font-semibold text-sm text-blue-900 block" style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [title]="demande.docRejet.nomFichier">
+                                    {{ demande.docRejet.nomFichier }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <p-button [rounded]="true" [text]="true" size="small" icon="pi pi-download"
+                                (click)="downloadFile(demande.docRejet)" pTooltip="Télécharger" [tooltipPosition]="'left'">
+                            </p-button>
+                        </div>
+                    </div>
+                </span>
+            </p-fieldset>
+            </div>
+        </div>
+
+        <!-- Participants -->
+        <div class="col-12" *ngIf="demande.participants?.length > 0">
+            <div class="mt-4">
+            <p-fieldset [toggleable]="true" styleClass="mb-4">
+                <ng-template pTemplate="header">
+                    <div class="flex items-center gap-2 text-primary">
+                        <span class="font-bold text-sm">Participants</span>
+                    </div>
+                </ng-template>
+                <div class="flex flex-wrap gap-2">
+                    <p-chip *ngFor="let participant of demande.participants" icon="pi pi-user" [label]="participant"
+                        class="mr-2 mb-2">
+                    </p-chip>
+                </div>
+            </p-fieldset>
+            </div>
+        </div>
+
+        <!-- Plans d'actions -->
+        <div class="col-12" *ngIf="demande?.planActions?.length > 0" style="max-width: 100%; overflow: hidden;">
+            <div class="mt-4 mb-2">
+                <div class="flex items-center gap-3 mb-4 px-2">
+                    <div class="flex items-center justify-center bg-primary-50 rounded-full border-1 border-primary-100 shadow-sm" style="width: 3rem; height: 3rem">
+                        <i class="pi pi-list text-primary text-xl"></i>
+                    </div>
+                    <div>
+                        <h5 class="m-0 font-bold text-900 text-lg">Plans d'actions associés</h5>
+                        <p class="text-sm text-500 m-0 mt-1">Liste des actions prévues pour traiter cette non-conformité</p>
+                    </div>
+                </div>
+
+                <div class="bg-white border-1 surface-border shadow-1 border-round-xl w-full" style="max-width: 100%; overflow-x: auto;">
+                    <div class="p-2 w-full" style="min-width: 100%;">
+                        <p-table 
+                            [value]="demande.planActions"
+                            [rowHover]="true"
+                            styleClass="p-datatable-sm"
+                            responsiveLayout="scroll"
+                            [scrollable]="true"
+                            [paginator]="true" [rows]="5"
+                            [showCurrentPageReport]="true"
+                            currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} actions">
+                        
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th pFrozenColumn alignFrozen="left" class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 70px; width: 70px; z-index: 10;">N°</th>
+                                <th class="bg-surface-50 text-700 font-semibold" style="min-width: 250px;">Causes</th>
+                                <th class="bg-surface-50 text-700 font-semibold" style="min-width: 250px;">Solutions</th>
+                                <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 180px;">Responsable</th>
+                                <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 130px;">Échéance</th>
+                                <th class="bg-surface-50 text-700 font-semibold white-space-nowrap text-center" style="min-width: 110px;">Statut</th>
+                                <th pFrozenColumn alignFrozen="right" class="bg-surface-50 text-700 font-semibold white-space-nowrap text-center" style="min-width: 140px; z-index: 10;"
+                                    *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT||demande.etatTraitement===EtapeTraitement.CLOTURE">
+                                    Actions</th>
+                            </tr>
+                        </ng-template>
+                        
+                        <ng-template pTemplate="body" let-plan>
+                            <tr class="text-sm">
+                                <td pFrozenColumn alignFrozen="left" class="font-bold text-600 text-center bg-white" style="z-index: 1;">{{plan.numeroOdre}}</td>
+                                <td>
+                                    <div [innerHTML]="plan.causeIdentifiees" class="line-height-3 text-700 m-0 p-0" style="min-width: 250px; white-space: normal; word-break: break-word;"></div>
+                                </td>
+                                <td>
+                                    <div [innerHTML]="plan.solutionRetenues" class="line-height-3 text-700 m-0 p-0" style="min-width: 250px; white-space: normal; word-break: break-word;"></div>
+                                </td>
+                                <td>
+                                    <div class="flex align-items-center gap-2" style="min-width: 180px">
+                                        <i class="pi pi-user text-primary-400"></i>
+                                        <span class="font-medium text-800">{{plan.responsableNomComplet}}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="flex align-items-center gap-2" style="min-width: 130px">
+                                        <i class="pi pi-calendar text-primary-400"></i>
+                                        <span class="text-700 font-medium">{{plan.dateEcheance}}</span>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <div style="min-width: 110px">
+                                        <p-tag [severity]="getStatusSeverity(plan.status)" [value]="plan.status" [rounded]="true"></p-tag>
+                                    </div>
+                                </td>
+                                <td pFrozenColumn alignFrozen="right" class="text-center bg-white" style="z-index: 1;" *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT||demande.etatTraitement===EtapeTraitement.CLOTURE">
+                                    <div class="flex justify-content-center gap-2" style="min-width: 140px">
+                                        <button
+                                            *ngIf="(demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT)&&(plan.status==='NON_TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
+                                            pButton pRipple type="button" icon="pi pi-pencil"
+                                            class="p-button-rounded p-button-text p-button-info p-button-sm" (click)="edit(plan)"
+                                            pTooltip="Modifier" tooltipPosition="top">
+                                        </button>
+                                        <button pButton pRipple type="button" icon="pi pi-search"
+                                            class="p-button-rounded p-button-text p-button-secondary p-button-sm" (click)="affich(plan)"
+                                            pTooltip="Détails" tooltipPosition="top">
+                                        </button>
+                                        <button pButton pRipple type="button"
+                                            *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
+                                            icon="pi pi-arrow-up" (click)="displayRejet(plan)"
+                                            class="p-button-rounded p-button-text p-button-danger p-button-sm" pTooltip="Réjeter"
+                                            tooltipPosition="top">
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                        
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td [attr.colspan]="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT ? 7 : 6"
+                                    class="text-center p-5">
+                                    <div class="flex flex-column align-items-center text-500">
+                                        <i class="pi pi-inbox text-4xl mb-3 text-300"></i>
+                                        <span class="font-medium text-lg">Aucun plan d'action défini</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Dialog Modification Plan d'action -->
+<p-dialog header="Modification Plan d'action" [(visible)]="motifRejetDialog" [style]="{ width: '50rem' }"
+    [breakpoints]="{ '960px': '95vw' }">
+    <div class="grid p-fluid">
+        <div class="col-12 field">
+            <label for="causes" class="font-bold block mb-2">
+                Causes identifiées <span class="text-red-500">*</span>
+            </label>
+
+            <textarea pInputTextarea id="causes" [(ngModel)]="planAction.causeIdentifiees" name="causes" rows="5"
+                [autoResize]="true" placeholder="Entrer les causes " class="w-full"></textarea>
+
+        </div>
+        <div class="flex flex-col w-full">
+            <div class="flex align-items-center gap-2">
+                <label for="causes" class="font-normal m-0 font-semibold">Causes identifiées <span class="text-red-500">*</span></label>
+            </div>
+            <div>
+                <p-editor [style]="{'height':'70px'}" name="causes"
+                     [(ngModel)]="planAction.causeIdentifiees" placeholder="causes">
+                    <ng-template pTemplate="header">
+                        <span class="ql-formats">
+                            <select class="ql-size"></select>
+                            <select class="ql-font"></select>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-bold" aria-label="Bold"></button>
+                            <button class="ql-italic" aria-label="Italic"></button>
+                            <button class="ql-underline" aria-label="Underline"></button>
+                        </span>
+                    </ng-template>
+                </p-editor>
+            </div>
+        </div>
+        <div class="col-12 field">
+            <div class="flex flex-col w-full">
+            <div class="flex align-items-center gap-2">
+                <label for="solution" class="font-normal m-0 font-semibold">Solutions retenues <span class="text-red-500">*</span></label>
+            </div>
+            <div>
+                <p-editor [style]="{'height':'70px'}" name="solution"
+                     [(ngModel)]="planAction.solutionRetenues" placeholder="solutions">
+                    <ng-template pTemplate="header">
+                        <span class="ql-formats">
+                            <select class="ql-size"></select>
+                            <select class="ql-font"></select>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-bold" aria-label="Bold"></button>
+                            <button class="ql-italic" aria-label="Italic"></button>
+                            <button class="ql-underline" aria-label="Underline"></button>
+                        </span>
+                    </ng-template>
+                </p-editor>
+            </div>
+        </div>
+        </div>
+        <div class="col-12 field mt-2">
+            <label for="responsable" class="font-bold block mb-2">
+                Responsable <span class="text-red-500">*</span>
+            </label>
+            <p-select id="responsable" [options]="users" optionLabel="fullName"
+                placeholder="Sélectionnez le responsable" [filter]="true" [showClear]="true" appendTo="body"
+                [(ngModel)]="user" class="w-full">
+            </p-select>
+            
+        </div>
+        <p-fluid class="card flex flex-wrap gap-2">
+            <div class="flex-auto">
+                <label for="numeroOdre" class="font-bold block mb-2">
+                    Numéro d'ordre <span class="text-red-500">*</span>
+                </label>
+                <input pInputText id="numeroOdre" [(ngModel)]="planAction.numeroOdre" type="number" class="w-full" />
+            </div>
+            <div class="flex-auto">
+                <label for="dateEcheance" class="font-bold block mb-2">
+                    Date d'échéance <span class="text-red-500">*</span>
+                </label>
+                <p-datePicker id="dateEcheance" [showIcon]="true" [(ngModel)]="planAction.dateEcheance"
+                    placeholder="Date de l'échéance" dateFormat="dd/mm/yy" class="w-full">
+                </p-datePicker>
+            </div>
+
+
+        </p-fluid>
+    </div>
+    <ng-template pTemplate="footer">
+        <button pButton pRipple type="button" icon="pi pi-times" class="p-button-outlined p-button-secondary"
+            label="Annuler" (click)="hideDialog()">
+        </button>
+        <button pButton pRipple type="button" icon="pi pi-check" class="p-button-primary ml-2" (click)="modifier()"
+            label="Enregistrer">
+        </button>
+    </ng-template>
+</p-dialog>
+
+<!-- Dialog Détails Plan d'action -->
+<p-dialog [(visible)]="afficheDialog" [style]="{ width: '55rem' }"
+    [breakpoints]="{ '960px': '95vw' }" [modal]="true" [dismissableMask]="true">
+    
+    <ng-template pTemplate="header">
+        <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center bg-blue-50 dark:bg-blue-900 rounded-full shadow-sm" style="width: 3.5rem; height: 3.5rem">
+                <i class="pi pi-info-circle text-blue-500 text-2xl"></i>
+            </div>
+            <div class="flex flex-col">
+                <span class="font-bold text-xl text-900 dark:text-0 mb-1">Détails du plan d'action</span>
+                <span class="text-sm text-500 font-medium">Consultez les informations relatives à ce plan</span>
+            </div>
+        </div>
+    </ng-template>
+
+    <div class="grid mt-2">
+        <!-- Informations générales -->
+        <div class="col-12">
+            <div class="bg-surface-50 dark:bg-surface-900 p-4 rounded-xl border border-surface-200 dark:border-surface-700">
+                <div class="flex items-center gap-2 mb-3 text-primary">
+                    <i class="pi pi-info-circle"></i>
+                    <span class="font-bold">Informations générales</span>
+                </div>
+                <div class="flex flex-wrap gap-4">
+                    <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 shadow-sm flex-1 min-w-max">
+                        <span class="text-500 text-sm block mb-1">N° Ordre</span>
+                        <span class="font-bold text-900 text-lg">{{ planAction.numeroOdre }}</span>
+                    </div>
+                    <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 shadow-sm flex-1 min-w-max">
+                        <span class="text-500 text-sm block mb-1">Responsable</span>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-user text-primary-400"></i>
+                            <span class="font-bold text-900">{{planAction.responsableNomComplet}}</span>
+                        </div>
+                        <span class="text-xs text-500 mt-1 block">{{planAction.responsableEmail}}</span>
+                    </div>
+                    <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 shadow-sm flex-1 min-w-max">
+                        <span class="text-500 text-sm block mb-1">Date d'échéance</span>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-calendar text-primary-400"></i>
+                            <span class="font-bold text-900">{{planAction.dateEcheance | date:'dd/MM/yyyy' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Causes identifiées -->
+        <div class="col-12 md:col-6 flex flex-col">
+            <div class="flex-1 bg-surface-50 dark:bg-surface-900 p-4 rounded-xl border border-surface-200 dark:border-surface-700">
+                <div class="flex items-center gap-2 mb-3 text-red-500">
+                    <i class="pi pi-exclamation-triangle"></i>
+                    <span class="font-bold">Causes identifiées</span>
+                </div>
+                <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 text-700 h-full">
+                    <div [innerHTML]="planAction.causeIdentifiees || '<span class=\'italic text-500\'>Aucune cause identifiée</span>'" class="line-height-3 m-0"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Solutions retenues -->
+        <div class="col-12 md:col-6 flex flex-col">
+            <div class="flex-1 bg-surface-50 dark:bg-surface-900 p-4 rounded-xl border border-surface-200 dark:border-surface-700">
+                <div class="flex items-center gap-2 mb-3 text-green-500">
+                    <i class="pi pi-check-circle"></i>
+                    <span class="font-bold">Solutions retenues</span>
+                </div>
+                <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 text-700 h-full">
+                    <div [innerHTML]="planAction.solutionRetenues || '<span class=\'italic text-500\'>Aucune solution retenue</span>'" class="line-height-3 m-0"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Observations -->
+        <div class="col-12">
+            <div class="bg-surface-50 dark:bg-surface-900 p-4 rounded-xl border border-surface-200 dark:border-surface-700">
+                <div class="flex items-center gap-2 mb-3 text-orange-500">
+                    <i class="pi pi-comment"></i>
+                    <span class="font-bold">Observations</span>
+                </div>
+                <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 text-700">
+                    <div [innerHTML]="planAction.observation || '<span class=\'italic text-500\'>Aucune observation</span>'" class="line-height-3 m-0"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pièces jointes -->
+        <div class="col-12" *ngIf="planAction.fichiers?.length > 0">
+            <div class="bg-surface-50 dark:bg-surface-900 p-4 rounded-xl border border-surface-200 dark:border-surface-700">
+                <div class="flex items-center gap-2 mb-3 text-blue-500">
+                    <i class="pi pi-paperclip"></i>
+                    <span class="font-bold">Pièces jointes</span>
+                </div>
+                <div class="flex flex-column gap-2">
+                    <div *ngFor="let fichier of planAction.fichiers"
+                        class="flex align-items-center justify-content-between w-full p-3 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg hover:shadow-sm transition-shadow">
+                        <div class="flex align-items-center gap-3">
+                            <div class="flex align-items-center justify-content-center bg-blue-50 dark:bg-blue-900/30 rounded-full" style="width: 2.5rem; height: 2.5rem;">
+                                <img [src]="getFileIcon(fichier.nomFichier)" alt="File icon" width="20" height="20" />
+                            </div>
+                            <div class="flex flex-column">
+                                <span class="font-semibold text-sm text-900 dark:text-100 block" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [title]="fichier.nomFichier">
+                                    {{ fichier.nomFichier }}
+                                </span>
+                            </div>
+                        </div>
+                        <p-button [rounded]="true" [text]="true" icon="pi pi-download"
+                            (click)="downloadFile(fichier)" pTooltip="Télécharger" tooltipPosition="left" class="p-button-secondary">
+                        </p-button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-3 border-top-1 surface-border pt-4 mt-2">
+            <button pButton pRipple type="button" icon="pi pi-times" class="p-button-text p-button-secondary font-semibold hover:bg-surface-100 transition-colors"
+                label="Fermer" (click)="hideDialogAffich()">
+            </button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<p-dialog (onHide)="displayDialog = false" [modal]="true" [(visible)]="displayDialog" [style]="{width: '50rem'}"
+    [maximizable]="true" class="p-fluid" styleClass="ng-dialog">
+    <ng-template pTemplate="header">
+        <div class="inline-flex align-items-center justify-content-center gap-2">
+            <span class="font-bold white-space-nowrap uppercase">Réjet du plan d'action n° {{planAction.numeroOdre}} de
+                la demande N° {{planAction.numeroNc}}</span>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="content">
+        <div class="grid p-fluid">
+            <div class="field mt-5 mb-4">
+                <label for="observation" class="block font-bold  mb-2">Observertions pour le réjet <span
+                        class="p-error"> *</span></label>
+                <textarea pInputTextarea id="observation" [(ngModel)]="planAction.observationRejet" name="observation"
+                    rows="5" [autoResize]="true" placeholder="Entrer une observation " class="w-full"></textarea>
+
+            </div>
+            <div class="field mt-5 mb-4">
+                <label class="block font-bold  mb-2">Joindre un document</label>
+                <app-file-upload (fileUploaded)="handleFileUpload($event)"></app-file-upload>
+            </div>
+
+        </div>
+
+
+    </ng-template>
+    <ng-template pTemplate="footer">
+        <button type="button" pRipple pButton icon="pi pi-times" (click)="displayDialog = false" label="Fermer"
+            class="p-button-secondary"></button>
+        <button type="button" pRipple pButton icon="pi pi-send" (click)="rejet()" label="Réjéter"
+            class="p-button-primary" [disabled]="!planAction.observationRejet"></button>
+    </ng-template>
+</p-dialog>
+<p-confirmDialog header="Confirmation" [key]="'1'" icon="pi pi-exclamation-triangle" [style]="{width: '35vw'}"
+    acceptButtonStyleClass="p-button-primary" acceptLabel="Oui" rejectButtonStyleClass="p-button-secondary"
+    rejectLabel="Non">
+</p-confirmDialog>

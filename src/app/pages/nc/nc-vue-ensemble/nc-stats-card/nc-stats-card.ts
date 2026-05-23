@@ -7,7 +7,7 @@ import { SkeletonModule } from 'primeng/skeleton';
     standalone: true,
     imports: [CommonModule, SkeletonModule],
     template: `
-    <div class="card-stats p-5 h-full relative overflow-hidden transition-all duration-300" [ngClass]="'card-' + color">
+    <div class="card-stats p-6 h-full relative overflow-hidden transition-all duration-300 border border-white/50" [ngClass]="'card-' + color">
         <!-- SQUELETTE (Si loading est vrai) -->
         <div *ngIf="loading">
             <div class="flex justify-between mb-3">
@@ -22,32 +22,32 @@ import { SkeletonModule } from 'primeng/skeleton';
         </div>
         <!-- La Vague SVG (fond) -->
         <ng-container *ngIf="!loading">
-        <svg class="absolute bottom-0 left-0 w-full h-20 opacity-[0.08]" 
+        <svg class="absolute bottom-0 left-0 w-full h-20 opacity-[0.05]" 
             [ngClass]="'text-' + color + '-dark'"
             viewBox="0 0 100 30" preserveAspectRatio="none">
             <path d="M0,30 L0,15 C20,20 40,5 60,15 C80,25 90,10 100,5 L100,30 Z" fill="currentColor"/>
         </svg>
 
-        <div class="relative z-10">
+        <div class="relative z-10 flex flex-col h-full">
             <!-- Header: Label + Icon -->
-            <div class="flex justify-between items-start mb-2">
-                <div class="text-sm uppercase tracking-wider font-bold" [ngClass]="'text-' + color + '-dark'">
+            <div class="flex justify-between items-start mb-4">
+                <span class="bg-white text-[11px] font-bold px-2 py-1 rounded-md shadow-sm" [ngClass]="'text-' + color + '-dark'">
                     {{ label }}
-                </div>
+                </span>
                 <i [class]="icon + ' text-sm'" [ngClass]="'text-' + color + '-dark'"></i>
             </div>
 
             <!-- Body: Value -->
-            <div class="text-5xl font-semibold mb-2" [ngClass]="'text-' + color + '-dark'">
+            <div class="text-4xl font-bold text-surface-900 mb-2 leading-none tracking-tight">
                 {{ value }}
             </div>
 
             <!-- Footer: Badge + Description -->
-            <div class="flex items-center gap-2 mt-4">
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" [ngClass]="'bg-' + color + '-badge text-' + color + '-dark'">
-                    {{ badge }}
-                </span>
-                <span class="text-xs leading-tight text-black dark:text-white flex-1">
+            <div class="mt-auto pt-3">
+                <span class="text-xs font-semibold text-surface-700 leading-snug flex items-center gap-2">
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap" [ngClass]="'bg-' + color + '-badge text-' + color + '-dark'">
+                        {{ badge }}
+                    </span>
                     {{ description }}
                 </span>
             </div>
@@ -56,27 +56,30 @@ import { SkeletonModule } from 'primeng/skeleton';
     </div>
     `,
     styles: [`
-        /* Dégradés exacts basés sur ton fichier indicateur-cle */
-        .card-blue { background: linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%); }
-        .text-blue-dark { color: #0e7490; }
-        .bg-blue-badge { background: rgba(6, 182, 212, 0.2); }
+        /* Couleurs SaaS Pastel exactes */
+        .card-blue { background: #EDF4FF; }
+        .text-blue-dark { color: #3B82F6; }
+        .bg-blue-badge { background: rgba(59, 130, 246, 0.2); }
 
-        .card-orange { background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(234, 88, 12, 0.1) 100%); }
-        .text-orange-dark { color: #b45309; }
-        .bg-orange-badge { background: rgba(245, 158, 11, 0.2); }
+        .card-orange { background: #FFF5EB; }
+        .text-orange-dark { color: #D49E5D; }
+        .bg-orange-badge { background: rgba(212, 158, 93, 0.2); }
 
-        .card-red { background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(185, 28, 28, 0.1) 100%); }
-        .text-red-dark { color: #b91c1c; }
+        .card-red { background: #FFF0F0; }
+        .text-red-dark { color: #EF4444; }
         .bg-red-badge { background: rgba(239, 68, 68, 0.2); }
 
-        .card-green { background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(21, 128, 61, 0.1) 100%); }
-        .text-green-dark { color: #15803d; }
-        .bg-green-badge { background: rgba(34, 197, 94, 0.2); }
+        .card-green { background: #EEF7F0; }
+        .text-green-dark { color: #15803D; }
+        .bg-green-badge { background: rgba(21, 128, 61, 0.2); }
+
+        .card-purple { background: #F5EEFF; }
+        .text-purple-dark { color: #A855F7; }
+        .bg-purple-badge { background: rgba(168, 85, 247, 0.2); }
 
         .card-stats {
-            border-radius: 8px;
-            // border: 1px solid var(--surface-border);
-            &:hover { transform: translateY(-3px); }
+            border-radius: 1.5rem;
+            &:hover { transform: translateY(-3px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
         }
     `]
 })

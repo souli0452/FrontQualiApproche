@@ -1,21 +1,22 @@
-import { Component, EventEmitter, Output } from '@angular/core';
-import { FileUpload } from 'primeng/fileupload';
+import { Component, EventEmitter, Output, Input } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { CommonModule } from '@angular/common';
 import { ProgressBar } from 'primeng/progressbar';
-import { Button, ButtonDirective } from 'primeng/button';
-import { Ripple } from 'primeng/ripple';
-import { Tooltip } from 'primeng/tooltip';
+import { NgPrimeModule } from '../../../prime-ng.module';
 
 @Component({
     selector: 'app-file-upload',
     templateUrl: './file-upload.component.html',
     standalone: true,
-    imports: [CommonModule, ProgressBar, Button, ButtonDirective, Ripple, Tooltip],
+    imports: [CommonModule, ProgressBar, NgPrimeModule],
     styleUrls: ['./file-upload.component.scss']
 })
 export class FileUploadComponent {
+    @Input() styleClass: string = '';
+    @Input() existingFiles: any[] = []; // 👈 Les fichiers déjà en base de données
     @Output() fileUploaded = new EventEmitter<any>();
+    @Output() removeExisting = new EventEmitter<number>(); // 👈 Événement de suppression d'un fichier existant
+
     uploadedFiles: {
         file: File;
         extension: string;
@@ -26,22 +27,51 @@ export class FileUploadComponent {
     }[] = [];
 
     allowedExts = ['doc', 'docx', 'xlsx', 'pdf', 'jpeg', 'jpg', 'txt', 'png'];
+    isDragging: boolean = false;
 
     constructor(private messageService: MessageService) {}
+
+
+    onDragOver(event: DragEvent) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.isDragging = true;
+    }
+
+    onDragLeave(event: DragEvent) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.isDragging = false;
+    }
+
+    onDrop(event: DragEvent) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.isDragging = false;
+        if (event.dataTransfer && event.dataTransfer.files) {
+            this.handleFiles(Array.from(event.dataTransfer.files));
+        }
+    }
 
     onFileSelected(event: Event) {
         const input = event.target as HTMLInputElement;
         if (!input.files) return;
 
-        const newFiles = Array.from(input.files);
+        this.handleFiles(Array.from(input.files));
+        input.value = ''; // Reset input
+    }
+
+    private handleFiles(newFiles: File[]) {
+        // Limite max de 5 fichiers au total (existants + nouveaux)
+        const maxAllowedNew = 5 - this.existingFiles.length;
 
         for (const file of newFiles) {
             const ext = file.name.split('.').pop()?.toLowerCase() || '';
-            if (this.allowedExts.includes(ext) && this.uploadedFiles.length < 5) {
+            if (this.allowedExts.includes(ext) && this.uploadedFiles.length < maxAllowedNew) {
                 const fileObj = {
                     file,
                     extension: ext,
-                    name: file.name,
+                    name: this.formatFileName(file.name, ext),
                     size: this.formatBytes(file.size),
                     loading: true,
                     icon: this.getFileIcon(ext)
@@ -49,17 +79,23 @@ export class FileUploadComponent {
 
                 this.uploadedFiles.push(fileObj);
 
-                // Simuler le chargement
                 setTimeout(() => {
                     fileObj.loading = false;
-                    this.fileUploaded.emit(this.uploadedFiles); // Émettre les fichiers téléchargés
+                    this.fileUploaded.emit(this.uploadedFiles);
                 }, 1500);
             } else {
-                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Fichier non autorisé ou nombre maximal atteint.', life: 10000 });
+                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Fichier non autorisé ou nombre maximal de 5 fichiers atteint.', life: 10000 });
             }
         }
+    }
 
-        input.value = ''; // Reset input
+
+    formatFileName(name: string, extension: string): string {
+        const baseName = name.substring(0, name.lastIndexOf('.')) || name;
+        if (baseName.length > 10) {
+            return baseName.substring(0, 10) + '....' + extension;
+        }
+        return name;
     }
 
     getFileIcon(extension: string): string {
@@ -86,5 +122,9 @@ export class FileUploadComponent {
     removeFile(index: number) {
         this.uploadedFiles.splice(index, 1);
         this.fileUploaded.emit(this.uploadedFiles); // Mettre à jour la liste des fichiers dans le parent
+    }
+
+    deleteExisting(index: number) {
+        this.removeExisting.emit(index);
     }
 }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { TypeStructure } from '../../enums';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { KcUser } from '../../models';
@@ -25,21 +25,27 @@ export class SearchAgentComponent implements OnInit {
     searchedAgent: KcUser | undefined;
     users: KcUser[]=[];
     agents: any[] = [];
+    @Input() prefilledStructureId?: string;
     @Output() searchedAgentChange = new EventEmitter<any>();
 
-    constructor(private structureService: StructureService,private authService: AuthService) {
-    }
+    constructor(
+        private structureService: StructureService,
+        private authService: AuthService) {}
 
     ngOnInit() {
-        this.structureService.getAllDirections(TypeStructure.DIRECTION)
-            .subscribe({
-                next: (data) => {
-                    this.directions = data.body || [];
-                },
-                error: (error) => {
-                    console.log(error);
-                }
-            });
+        if (this.prefilledStructureId) {
+            this.loadAgentsForStructure(this.prefilledStructureId);
+        } else {
+            this.structureService.getAllDirections(TypeStructure.DIRECTION)
+                .subscribe({
+                    next: (data) => {
+                        this.directions = data.body || [];
+                    },
+                    error: (error) => {
+                        console.log(error);
+                    }
+                });
+        }
     }
 
     loadServiceByDirection() {
@@ -57,23 +63,26 @@ export class SearchAgentComponent implements OnInit {
     }
     loadAgents() {
         if (this.directionId || this.serviceId) {
-            this.authService.loadAgentPublicByService(this.serviceId ? this.serviceId : this.directionId!)
-                .subscribe({
-                    next: (data) => {
-
-                        this.agents = data.map(a => ({
-                            label:  a.lastName + ' ' + a.firstName,
-                            value: a
-                        }));
-
-                        this.searchedAgent = undefined;
-                        this.searchedAgentChange.emit(this.searchedAgent);
-                    },
-                    error: (error) => {
-                        console.log(error);
-                    }
-                });
+            this.loadAgentsForStructure(this.serviceId ? this.serviceId : this.directionId!);
         }
+    }
+
+    loadAgentsForStructure(structureId: string) {
+        this.authService.loadAgentPublicByService(structureId)
+            .subscribe({
+                next: (data) => {
+                    this.agents = data.map(a => ({
+                        label:  a.lastName + ' ' + a.firstName,
+                        value: a
+                    }));
+
+                    this.searchedAgent = undefined;
+                    this.searchedAgentChange.emit(this.searchedAgent);
+                },
+                error: (error) => {
+                    console.log(error);
+                }
+            });
     }
 
     onAgentSelect(agent: KcUser) {

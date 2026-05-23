@@ -1,0 +1,677 @@
+
+
+<p-stepper [value]="1" class="w-full">
+    <p-step-list>
+        <p-step [value]="1">Détails de la demande</p-step>
+        
+        @if (demande.etatTraitement == BtnActions.VALIDATION) {
+            <p-step [value]="2">Validation des plans d'actions</p-step>
+        }
+        
+        @if (demande.etatTraitement != BtnActions.VALIDATION && demande.etatTraitement != BtnActions.SUIVI_RQ && demande.etatTraitement != BtnActions.IMPUTATION && demande.etatTraitement != BtnActions.CLOTURE) {
+            <p-step [value]="2">Saisie des informations complémentaires</p-step>
+        }
+    </p-step-list>
+    
+    <p-step-panels>
+        <p-step-panel [value]="1">
+            <ng-template #content let-activateCallback="activateCallback">
+                <app-details-dialog [demande]="demande"></app-details-dialog>
+                
+                <div class="flex pt-6 justify-end">
+                    @if (demande.etatTraitement == BtnActions.VALIDATION) {
+                        <p-button label="Suivant" size="small" icon="pi pi-arrow-right" iconPos="right" (onClick)="activateCallback(2)" />
+                    } @else if (demande.etatTraitement != BtnActions.VALIDATION && demande.etatTraitement != BtnActions.SUIVI_RQ && demande.etatTraitement != BtnActions.CLOTURE) {
+                        <p-button label="Suivant" size="small" icon="pi pi-arrow-right" iconPos="right" (onClick)="activateCallback(2)" />
+                    }
+                </div>
+            </ng-template>
+        </p-step-panel>
+        
+        @if (demande.etatTraitement == BtnActions.VALIDATION) {
+        <p-step-panel [value]="2">
+            <ng-template #content let-activateCallback="activateCallback">
+                <div class="col-12">
+                    <div class="bg-white border-1 surface-border shadow-1 border-round-xl overflow-hidden mt-4">
+                        <!-- Premium Header -->
+                        <div class="flex items-center justify-between p-4 border-bottom-1 surface-border bg-surface-50 flex-wrap gap-3">
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center justify-center bg-purple-50 rounded-full border-1 border-purple-100 shadow-sm shrink-0" style="width: 3.5rem; height: 3.5rem">
+                                    <i class="pi pi-check-square text-purple-500 text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h5 class="m-0 font-bold text-900 text-lg">Validation des plans d'action</h5>
+                                    <p class="text-sm text-500 m-0 mt-1">Sélectionnez les plans d'action à valider</p>
+                                </div>
+                            </div>
+                            <div>
+                                <button pButton pRipple label="Valider la sélection" icon="pi pi-check"
+                                    [disabled]="selectedPlans.length === 0" class="p-button-primary font-bold border-round-md shadow-2"
+                                    (click)="validerPlans()">
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="overflow-x-auto p-2">
+                            <p-table [value]="demande.planActions" [scrollable]="true" scrollHeight="400px" styleClass="p-datatable-sm" responsiveLayout="scroll">
+                                <ng-template pTemplate="header">
+                                    <tr>
+                                        <th class="bg-surface-50 text-700 font-semibold" style="width: 50px; text-align: center">
+                                            <p-checkbox (onChange)="toggleAllPlans($event.checked)"></p-checkbox>
+                                        </th>
+                                        <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 80px; text-align: center">N°</th>
+                                        <th class="bg-surface-50 text-700 font-semibold" style="min-width: 300px">Causes</th>
+                                        <th class="bg-surface-50 text-700 font-semibold" style="min-width: 300px">Solutions</th>
+                                        <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 200px">Responsable</th>
+                                        <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 150px">Échéance</th>
+                                        <th class="bg-surface-50 text-700 font-semibold white-space-nowrap text-center" style="min-width: 120px">Statut</th>
+                                        <th class="bg-surface-50 text-700 font-semibold white-space-nowrap text-center" style="min-width: 80px">Action</th>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="body" let-plan>
+                                    <tr class="text-sm">
+                                        <td class="text-center">
+                                            <p-checkbox [value]="plan" [(ngModel)]="selectedPlans"
+                                                [disabled]="plan.status=='NON_TRAITER'||plan.status=='TRAITER'"></p-checkbox>
+                                        </td>
+                                        <td class="font-bold text-600 text-center">{{plan.numeroOdre}}</td>
+                                        <td>
+                                            <div [innerHTML]="plan.causeIdentifiees" class="line-height-3 text-700 m-0 p-0" style="min-width: 300px; white-space: normal; word-break: break-word;"></div>
+                                        </td>
+                                        <td>
+                                            <div [innerHTML]="plan.solutionRetenues" class="line-height-3 text-700 m-0 p-0" style="min-width: 300px; white-space: normal; word-break: break-word;"></div>
+                                        </td>
+                                        <td>
+                                            <div class="flex flex-col gap-1" style="min-width: 200px">
+                                                <div class="flex align-items-center gap-2">
+                                                    <i class="pi pi-user text-primary-400"></i>
+                                                    <span class="font-medium text-900">{{plan.responsableNomComplet}}</span>
+                                                </div>
+                                                <span class="text-xs text-500 ml-4">{{plan.responsableEmail}}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="flex align-items-center gap-2" style="min-width: 150px">
+                                                <i class="pi pi-calendar text-primary-400"></i>
+                                                <span class="text-700 font-medium">{{plan.dateEcheance}}</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <div style="min-width: 120px">
+                                                <p-tag [severity]="getStatusSeverity(plan.status)" [value]="plan.status" [rounded]="true"></p-tag>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <div style="min-width: 80px">
+                                                <button pButton pRipple type="button" icon="pi pi-eye"
+                                                    class="p-button-text p-button-rounded p-button-secondary" (click)="affich(plan)"
+                                                    pTooltip="Détails" tooltipPosition="top">
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="empty">
+                                    <tr>
+                                        <td colspan="8" class="text-center p-5">
+                                            <div class="flex flex-column align-items-center text-500">
+                                                <i class="pi pi-inbox text-4xl mb-3 text-300"></i>
+                                                <span class="font-medium text-lg">Aucun plan d'action défini.</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </ng-template>
+                            </p-table>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex pt-6 justify-start">
+                    <p-button label="Retour" severity="secondary" icon="pi pi-arrow-left" (onClick)="activateCallback(1)" />
+                </div>
+            </ng-template>
+        </p-step-panel>
+        }
+        
+        @if (demande.etatTraitement != BtnActions.VALIDATION && demande.etatTraitement != BtnActions.SUIVI_RQ) {
+        <p-step-panel [value]="2">
+            <ng-template #content let-activateCallback="activateCallback">
+        <div class="m-2">
+            <form [formGroup]="editForm" autocomplete="off" role="form">
+                <div class="grid p-fluid mb-3">
+                    <div class="formgrid grid">
+                        @if (demande.etatTraitement===BtnActions.RECEPTION){
+                        <div class="flex flex-wrap gap-2">
+                            <label class="font-bold">Pertinence de la non-conformité <span class="text-red-500">*</span></label>
+                            <div class="flex items-center">
+                                <p-radiobutton (onClick)="onInputChange()" name="pertinancePilote" value="oui"
+                                    formControlName="pertinancePilote" inputId="pertinancePilote" />
+                                <label for="pertinancePilote" class="ml-2">OUI</label>
+                            </div>
+                            <div class="flex items-center">
+                                <p-radiobutton name="pertinancePilote" (onClick)="onInputChange()" value="non"
+                                    formControlName="pertinancePilote" inputId="pertinancePilote" />
+                                <label for="pertinancePilote" class="ml-2">NON</label>
+                            </div>
+                        </div>
+                        <label class="mt-8 mb-2 font-bold">JUSTIFICATION <span class="text-red-500">*</span></label>
+                        <div class="mb-4">
+
+                            <p-editor [style]="{'height':'250px'}" formControlName="justificationPilote"
+                                (onTextChange)="onInputChange()" name="justificationPilote" required placeholder="Justification">
+                                <ng-template pTemplate="header">
+                                    <span class="ql-formats">
+                                        <select class="ql-size"></select>
+                                        <select class="ql-font"></select>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-bold" aria-label="Bold"></button>
+                                        <button class="ql-italic" aria-label="Italic"></button>
+                                        <button class="ql-underline" aria-label="Underline"></button>
+                                    </span>
+                                </ng-template>
+                            </p-editor>
+                        </div>
+                        }
+                        <!-- @if (demande.etatTraitement===BtnActions.SUIVI_RQ){
+                            <div class="flex flex-wrap gap-2">
+                                <label class="font-bold">Pertinence de la non-conformité </label>
+                                <div class="flex items-center">
+                                    <p-radiobutton
+                                        (onClick)="onInputChange()"
+                                        name="pertinanceRsSuivi" value="oui" formControlName="pertinanceRsSuivi" inputId="pertinanceRsSuivi" />
+                                    <label for="pertinanceRsSuivi" class="ml-2">OUI</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <p-radiobutton name="pertinanceRsSuivi"
+                                                    (onClick)="onInputChange()"
+                                                    value="non" formControlName="pertinanceRsSuivi" inputId="pertinanceRsSuivi" />
+                                    <label for="pertinanceRsSuivi" class="ml-2">NON</label>
+                                </div>
+                            </div>
+                            <label class="font-bold mt-8">Numéro FEDAC </label>
+                            <div class="flex items-center mt-4" >
+                                <input pInputText class="w-full"  name="numeroFdac" id="numeroFdac" pInputText type="text"
+                                        formControlName="numeroFdac" placeholder="Numéro FEDAC" />
+
+                            </div>
+
+                        }-->
+                        @if (demande.etatTraitement===BtnActions.VALIDATION_RS){
+                        <div class="flex flex-col md:flex-row gap-4 mb-4">
+                            <!-- Pertinence de la non-conformité -->
+                            <div class="flex flex-col w-full md:w-2/5">
+                                <div class="flex align-items-center gap-2">
+                                    <label class="font-normal m-0 font-semibold">Pertinence de la non-conformité <span class="text-red-500">*</span></label>
+                                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="pertinenceRQPopover.toggle($event)"></i>
+                                </div>
+                                <span class="text-xs text-500 mt-1 mb-3 line-height-2">
+                                    Indiquez si cet écart est justifié.
+                                </span>
+                                
+                                <p-popover #pertinenceRQPopover appendTo="body">
+                                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                                        Expliquez ici en quoi cet écart est fondé et mérite d’être corrigé. Il s’agit de démontrer l'impact réel ou potentiel de l'anomalie sur le bon fonctionnement du service, la sécurité, ou la satisfaction client, afin de valider la légitimité de l'ouverture de cette non-conformité.
+                                    </div>
+                                </p-popover>
+                                
+                                <div class="flex items-center gap-4">
+                                    <div class="flex items-center">
+                                        <p-radiobutton (onClick)="onInputChange()" name="pertinanceRs" value="oui"
+                                            formControlName="pertinanceRs" inputId="pertinanceRsOui" />
+                                        <label for="pertinanceRsOui" class="ml-2">OUI</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <p-radiobutton name="pertinanceRs" (onClick)="onInputChange()" value="non"
+                                            formControlName="pertinanceRs" inputId="pertinanceRsNon" />
+                                        <label for="pertinanceRsNon" class="ml-2">NON</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Justification -->
+                            <div class="flex flex-col w-full md:w-3/5">
+                                <div class="flex align-items-center gap-2">
+                                    <label for="desAction" class="font-normal m-0 font-semibold">Justification <span class="text-red-500">*</span></label>
+                                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoJustificationRQ.toggle($event)"></i>
+                                </div>
+                                <span class="text-xs text-500 mt-1 mb-2 line-height-2">
+                                    Détaillez les raisons qui justifient votre appréciation.
+                                </span>
+                                
+                                <p-popover #infoJustificationRQ appendTo="body">
+                                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                                        Indiquez ici les raisons qui justifient votre appréciation sur la pertinence de la non-conformité. Soyez précis et clair dans votre justification. 
+                                    </div>
+                                </p-popover>
+                                
+                                <div>
+                                    <p-editor [style]="{'height':'100px'}" name="justificationRs"
+                                        formControlName="justificationRs" (onTextChange)="onInputChange()" required placeholder="Justification">
+                                        <ng-template pTemplate="header">
+                                            <span class="ql-formats">
+                                                <select class="ql-size"></select>
+                                                <select class="ql-font"></select>
+                                            </span>
+                                            <span class="ql-formats">
+                                                <button class="ql-bold" aria-label="Bold"></button>
+                                                <button class="ql-italic" aria-label="Italic"></button>
+                                                <button class="ql-underline" aria-label="Underline"></button>
+                                            </span>
+                                        </ng-template>
+                                    </p-editor>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid p-fluid">
+                            <div class="col-12 md:col-6 field">
+                                <label for="destination" class="font-bold block mb-2">
+                                    Processus de destination <span class="text-red-500">*</span>
+                                </label>
+                                <p-select id="destination" [options]="structures" optionLabel="libelleLong"
+                                    placeholder="Sélectionnez le processus de destination" [filter]="true" [showClear]="true" appendTo="body"
+                                    formControlName="destination" (onChange)="onInputChange()" class="w-full">
+                                </p-select>
+                            </div>
+                            <div class="col-12 md:col-6 field mt-3">
+                                <label for="typeAction" class="font-bold block mb-2">
+                                    Type d'action entreprise <span class="text-red-500">*</span>
+                                </label>
+                                <p-select id="typeAction" [options]="typesActions" optionLabel="libelle"
+                                    placeholder="Sélectionnez le type d'action" [filter]="true" [showClear]="true" appendTo="body"
+                                    formControlName="typeAction" (onChange)="onInputChange()" class="w-full">
+                                </p-select>
+                            </div>
+                            <div class="col-12 field mt-3">
+                                <label class="font-bold block mb-2">Bifurcation après validation — Veuillez sélectionner  le circuit adapté <span class="text-red-500">*</span></label>
+                                <div class="flex flex-row gap-3 mt-2">
+                                    <!-- Circuit A Card -->
+                                    <div class="flex-1">
+                                        <div class="circuit-card p-3 border-round cursor-pointer transition-all border-2 h-full"
+                                            [ngClass]="{'active-circuit': editForm.get('circuit')?.value === 'A', 'inactive-circuit': editForm.get('circuit')?.value !== 'A'}"
+                                            (click)="setCircuit('A')">
+                                            <div class="flex align-items-center justify-content-between mb-2">
+                                                <span class="font-bold text-lg">Circuit A — Correction simple</span>
+                                                <i class="pi pi-check-circle" *ngIf="editForm.get('circuit')?.value === 'A'"></i>
+                                            </div>
+                                            <p class="text-sm text-600 mb-3">
+                                                Pas de cause racine à rechercher. La NC est ponctuelle. Une correction immédiate suffit.
+                                                Transmis directement au pilote de processus pour correction et clôture rapide.
+                                            </p>
+                                            <div class="flex align-items-center gap-2 text-xs font-medium mt-auto">
+                                                <span>Validation RQ</span>
+                                                <i class="pi pi-arrow-right text-400"></i>
+                                                <span>Correction immédiate</span>
+                                                <i class="pi pi-arrow-right text-400"></i>
+                                                <span class="text-green-500">Clôture</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Circuit B Card -->
+                                    <div class="flex-1">
+                                        <div class="circuit-card p-3 border-round cursor-pointer transition-all border-2 h-full"
+                                            [ngClass]="{'active-circuit': editForm.get('circuit')?.value === 'B', 'inactive-circuit': editForm.get('circuit')?.value !== 'B'}"
+                                            (click)="setCircuit('B')">
+                                            <div class="flex align-items-center justify-content-between mb-2">
+                                                <span class="font-bold text-lg">Circuit B — Action corrective</span>
+                                                <i class="pi pi-check-circle" *ngIf="editForm.get('circuit')?.value === 'B'"></i>
+                                            </div>
+                                            <p class="text-sm text-600 mb-3">
+                                                La NC est récurrente ou à fort impact. Une analyse des causes est nécessaire avant de définir des actions correctives.
+                                                Transmis au pilote de processus destinataire pour analyse et traitement complet.
+                                            </p>
+                                            <div class="flex flex-column gap-2 mt-auto">
+                                                <div class="flex align-items-center gap-2 text-xs font-medium">
+                                                    <span>Validation RQ</span>
+                                                    <i class="pi pi-arrow-right text-400"></i>
+                                                    <span>Analyse causes</span>
+                                                    <i class="pi pi-arrow-right text-400"></i>
+                                                </div>
+                                                <div class="flex align-items-center gap-2 text-xs font-medium">
+                                                    <span>Plan d'actions</span>
+                                                    <i class="pi pi-arrow-right text-400"></i>
+                                                    <span class="text-green-500">Clôture</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                        @if(demande.etatTraitement===BtnActions.TRAITEMENT){
+                        <div class="form-container">
+                            <div class="flex-col flex md:flex-row gap-4 mb-4 mt-2">
+                                <!-- Participants Block -->
+                                <div class="w-full md:w-1/2">
+                                    <label for="participants" class="font-bold block mb-2 uppercase text-gray-800">Participants <span class="text-red-500">*</span></label>
+                                    <p class="text-sm text-gray-500 mt-0 mb-3">
+                                        (Les noms complets des participants doivent être séparés les uns des autres par une virgule)
+                                    </p>
+                                    <div class="w-full">
+                                        <p-chips formControlName="participants" separator="," (onAdd)="onInputChange()"
+                                            placeholder="Saisissez les noms des participants" autofocus
+                                            [style]="{'width':'100%'}" id="participants" class="participants-input block w-full">
+                                        </p-chips>
+                                    </div>
+                                </div>
+
+                                <!-- Add Plan d'action Block -->
+                                <div class="w-full md:w-1/2 bg-blue-50 border-1 border-blue-100 shadow-1">
+                                    <div class="flex flex-col border-round-xl p-3 flex items-center justify-between h-full">
+                                        <div class="flex flex-col mr-3 text-center">
+                                            <span class="font-bold text-blue-900 mb-1 text-sm uppercase">Plan d'actions <span class="text-red-500">*</span></span>
+                                            <span class="text-xs text-blue-600 line-height-2">Ajouter une nouvelle action</span>
+                                        </div>
+                                        <button pButton pRipple severity="info" label="Ajouter" icon="pi pi-plus"
+                                            (click)="openDialog()" class="p-button-primary p-button-sm font-bold border-round-lg shadow-2"></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 p-0 mt-4">
+                            <div class="bg-white border-1 surface-border shadow-1 border-round-xl overflow-hidden">
+                                <!-- Premium Header -->
+                                <div class="flex items-center justify-between p-4 border-bottom-1 surface-border bg-surface-50 flex-wrap gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex items-center justify-center bg-blue-50 rounded-full border-1 border-blue-100 shadow-sm shrink-0" style="width: 3.5rem; height: 3.5rem">
+                                            <i class="pi pi-list text-blue-500 text-2xl"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="m-0 font-bold text-900 text-lg">Liste des plans d'action</h5>
+                                            <p class="text-sm text-500 m-0 mt-1">Gérez les actions liées à cette non-conformité</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <button pButton pRipple label="Ajouter" icon="pi pi-plus"
+                                            class="p-button-primary font-bold border-round-md shadow-2"
+                                            (click)="openDialog()">
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Table -->
+                                <div class="overflow-x-auto p-2">
+                                    <p-table [value]="demande.planActions" [scrollable]="true" styleClass="p-datatable-sm" responsiveLayout="scroll">
+                                        <ng-template pTemplate="header">
+                                            <tr>
+                                                <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 80px; text-align: center">N°</th>
+                                                <th class="bg-surface-50 text-700 font-semibold" style="min-width: 300px">Causes</th>
+                                                <th class="bg-surface-50 text-700 font-semibold" style="min-width: 300px">Solutions</th>
+                                                <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 200px">Responsable</th>
+                                                <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 150px">Échéance</th>
+                                                <th class="bg-surface-50 text-700 font-semibold white-space-nowrap text-center" style="min-width: 120px">Statut</th>
+                                                <th class="bg-surface-50 text-700 font-semibold white-space-nowrap text-center" style="min-width: 100px">Actions</th>
+                                            </tr>
+                                        </ng-template>
+                                        <ng-template pTemplate="body" let-plan>
+                                            <tr class="text-sm">
+                                                <td class="font-bold text-600 text-center">{{plan.numeroOdre}}</td>
+                                                <td>
+                                                    <div [innerHTML]="plan.causeIdentifiees" class="line-height-3 text-700 m-0 p-0" style="min-width: 300px; white-space: normal; word-break: break-word;"></div>
+                                                </td>
+                                                <td>
+                                                    <div [innerHTML]="plan.solutionRetenues" class="line-height-3 text-700 m-0 p-0" style="min-width: 300px; white-space: normal; word-break: break-word;"></div>
+                                                </td>
+                                                <td>
+                                                    <div class="flex flex-col" style="min-width: 200px">
+                                                        <div class="flex items-center gap-2">
+                                                            <i class="pi pi-user text-primary-400"></i>
+                                                            <span class="font-medium text-900">{{plan.responsableNomComplet}}</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="flex items-center gap-2" style="min-width: 150px">
+                                                        <i class="pi pi-calendar text-primary-400"></i>
+                                                        <span class="text-700 font-medium">{{plan.dateEcheance}}</span>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div style="min-width: 120px">
+                                                        <p-tag [severity]="getStatusSeverity(plan.status)" [value]="plan.status" [rounded]="true"></p-tag>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="flex justify-center gap-2" style="min-width: 100px">
+                                                        <button pButton pRipple type="button" icon="pi pi-pencil"
+                                                            class="p-button-text p-button-rounded p-button-info p-button-sm"
+                                                            (click)="edit(plan)" pTooltip="Modifier" tooltipPosition="top">
+                                                        </button>
+                                                        <button pButton pRipple type="button" icon="pi pi-trash"
+                                                            class="p-button-text p-button-rounded p-button-danger p-button-sm"
+                                                            (click)="delete(plan)" pTooltip="Supprimer" tooltipPosition="top">
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </ng-template>
+                                        <ng-template pTemplate="empty">
+                                            <tr>
+                                                <td colspan="7" class="text-center p-5">
+                                                    <div class="flex flex-column align-items-center text-500">
+                                                        <img src="../../../assets/images/empty.svg" alt="Vide" class="mb-3" style="width: 100px; opacity: 0.8;">
+                                                        <span class="font-medium text-lg">Aucun plan d'action défini.</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </ng-template>
+                                    </p-table>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                    </div>
+
+                </div>
+            </form>
+        </div>
+                <div class="flex pt-6 justify-start">
+                    <p-button label="Retour" severity="secondary" icon="pi pi-arrow-left" (onClick)="activateCallback(1)" />
+                </div>
+            </ng-template>
+        </p-step-panel>
+        }
+    </p-step-panels>
+</p-stepper>
+
+<p-dialog [(visible)]="displayDialog" [modal]="true"
+    [style]="{ width: '50rem' }" [breakpoints]="{ '960px': '95vw' }">
+    <ng-template pTemplate="header">
+        <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center bg-blue-50 text-blue-500 border-round-xl" style="width: 3.5rem; height: 3.5rem">
+                <i class="pi" [ngClass]="isEdit ? 'pi-pencil' : 'pi-plus-circle'" style="font-size: 1.75rem"></i>
+            </div>
+            <div class="flex flex-col">
+                <span class="font-bold text-xl text-900 mb-1">{{ isEdit ? 'Modification du Plan d\'action' : 'Nouveau plan d\'action' }}</span>
+                <span class="text-500 text-sm">{{ isEdit ? 'Mettez à jour les détails de cette action corrective.' : 'Définissez une nouvelle action corrective pour cette non-conformité.' }}</span>
+            </div>
+        </div>
+    </ng-template>
+    
+    <div class="grid p-fluid mt-2">
+        <div class="col-12 field my-2">
+            <div class="flex mb-2 gap-2">
+                <label for="desAction" class="font-normal m-0 font-semibold">Causes identifiées</label>
+                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCauses.toggle($event)"></i>
+            </div>
+            <p-popover #infoCauses>
+                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                    Expliquez la source du problème pour empêcher qu'il ne se reproduise. Exemples : Absence de procédure, panne d'équipement, défaut de communication, écart de formation
+                </div>
+            </p-popover>
+            <p-editor id="causes" name="causes" placeholder="Entrer les causes" [(ngModel)]="planAction.causeIdentifiees" [style]="{ height: '70px' }">
+                <ng-template pTemplate="header">
+                    <span class="ql-formats">
+                        <select class="ql-size"></select>
+                        <select class="ql-font"></select>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-bold" aria-label="Bold"></button>
+                        <button class="ql-italic" aria-label="Italic"></button>
+                        <button class="ql-underline" aria-label="Underline"></button>
+                    </span>
+                </ng-template>
+            </p-editor>
+        </div>
+        <div class="col-12 field my-2">
+            <div class="flex mb-2 gap-2">
+                <label for="solution" class="font-normal m-0 font-semibold">Solutions retenues</label>
+                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCorrection.toggle($event)"></i>
+            </div>
+            <p-popover #infoCorrection>
+                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                    Indiquez ici l'ensemble des actions correctives retenues pour résoudre cette non-conformité. La solution ne doit pas simplement corriger l'erreur matérielle instantanée (action curative), mais doit apporter une modification concrète à vos processus (mise à jour documentaire, formation, modification technique) afin de garantir que l'anomalie ne se reproduise plus à l'avenir.
+                </div>
+            </p-popover>
+            <p-editor id="solution" name="solution" placeholder="Entrer les solutions" [(ngModel)]="planAction.solutionRetenues" [style]="{ height: '70px' }">
+                <ng-template pTemplate="header">
+                    <span class="ql-formats">
+                        <select class="ql-size"></select>
+                        <select class="ql-font"></select>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-bold" aria-label="Bold"></button>
+                        <button class="ql-italic" aria-label="Italic"></button>
+                        <button class="ql-underline" aria-label="Underline"></button>
+                    </span>
+                </ng-template>
+            </p-editor>
+        </div>
+
+        <div class="col-12 field my-2">
+            <div class="flex mb-2 gap-2">
+                <label for="solution" class="font-normal m-0 font-semibold">Responsable</label>
+                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoResponsable.toggle($event)"></i>
+            </div>
+            <p-popover #infoResponsable>
+                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                    Veuillez désigner la personne physiquement responsable de l'exécution et de la réussite de l'action corrective. Ce responsable sera chargé de coordonner les tâches nécessaires, de respecter le délai imparti et de fournir les pièces justificatives en fin de traitement afin que le dossier puisse être soumis pour validation finale.
+                </div>
+            </p-popover>
+            <p-select id="responsable" [options]="usersByStructure" optionLabel="fullName"
+                placeholder="Sélectionnez le responsable" [filter]="true" [showClear]="true" appendTo="body"
+                [(ngModel)]="user" class="w-full">
+            </p-select>
+        </div>
+        <p-fluid class="flex flex-wrap gap-4 mt-2 pt-2">
+            <div class="flex-auto">
+                <p-floatlabel variant="on">
+                    <input pInputText id="numeroOdre" [(ngModel)]="planAction.numeroOdre" type="number" class="w-full" autocomplete="off" />
+                    <label for="numeroOdre" class="font-bold">Numéro d'ordre <span class="text-red-500">*</span></label>
+                </p-floatlabel>
+            </div>
+            <div class="flex-auto">
+                <p-floatlabel variant="on">
+                    <p-datePicker inputId="dateEcheance" [showIcon]="true" [showOnFocus]="false"
+                        [(ngModel)]="planAction.dateEcheance" class="w-full" appendTo="body" dateFormat="dd/mm/yy">
+                    </p-datePicker>
+                    <label for="dateEcheance" class="font-bold">Date d'échéance <span class="text-red-500">*</span></label>
+                </p-floatlabel>
+            </div>
+        </p-fluid>
+
+    </div>
+    <ng-template #footer>
+        <button pButton pRipple type="button" icon="pi pi-times" class="p-button-outlined p-button-secondary"
+            label="Annuler" (click)="hideDialog()">
+        </button>
+        @if (isEdit){
+        <button pButton pRipple type="button" icon="pi pi-check" [disabled]="!planAction.solutionRetenues"
+            class="p-button-primary ml-2" (click)="save()" label="Modifier">
+        </button>
+        }
+        @if (!isEdit){
+        <button pButton pRipple type="button" icon="pi pi-check" class="p-button-primary ml-2" (click)="save()"
+            label="Ajouter">
+        </button>
+        }
+
+    </ng-template>
+</p-dialog>
+
+
+<!-- Dialog Détails Plan d'action -->
+<p-dialog [header]="'Détails  plan action '" [(visible)]="afficheDialog" [style]="{ width: '50rem' }"
+    [breakpoints]="{ '960px': '95vw' }">
+    <div class="grid">
+        <div class="col-12">
+            <div class="card nc-card">
+                <h4 class="nc-card-title">Informations générales</h4>
+                <div class="nc-details-grid">
+                    <div class="nc-detail-item mt-4">
+                        <span class="nc-detail-label">N° Ordre : {{ planAction.numeroOdre }}</span>
+
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label font-bold">Responsable :</span>
+                        <div class="flex flex-col gap-1">
+                            <span class="font-medium text-900">{{planAction.responsableNomComplet}}</span>
+                            <span class="text-xs text-500">{{planAction.responsableEmail}}</span>
+                        </div>
+                    </div>
+                    <div class="nc-detail-item">
+                        <span class="nc-detail-label font-bold">Date d'échéance : {{planAction.dateEcheance }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 md:col-6">
+            <div class="card nc-card mt-3">
+                <h4 class="nc-card-title">Causes identifiées</h4>
+                <div class="nc-description">
+                    <div [innerHTML]="planAction.causeIdentifiees || 'Aucune cause identifiée'"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 md:col-6">
+            <div class="card nc-card mt-3">
+                <h4 class="nc-card-title">Solutions retenues</h4>
+                <div class="nc-description">
+                    <div [innerHTML]="planAction.solutionRetenues || 'Aucune solution retenue'"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card nc-card mt-3">
+                <h4 class="nc-card-title">Observations</h4>
+                <div class="nc-description">
+                    <div [innerHTML]="planAction.observation || 'Aucune observation'"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12" *ngIf="planAction.fichiers?.length > 0">
+            <div class="card nc-card mt-3">
+                <div class="nc-card-header">
+                    <i class="pi pi-paperclip nc-icon"></i>
+                    <h4 class="nc-card-title">Pièces jointes</h4>
+                </div>
+                <div class="flex flex-column gap-3">
+                    <div *ngFor="let fichier of planAction.fichiers"
+                        class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
+                        <div class="flex align-items-center mt-3">
+                            <span class="file-name">{{ fichier.nomFichier }}</span>
+                        </div>
+                        <button pButton pRipple type="button" icon="pi pi-download"
+                            class="p-button-text p-button-rounded p-button-plain" (click)="downloadFile(fichier)"
+                            pTooltip="Télécharger" tooltipPosition="left">
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ng-template #footer>
+        <button pButton pRipple type="button" icon="pi pi-times" class="p-button-outlined p-button-secondary"
+            label="Fermer" (click)="hideDialogAffich()">
+        </button>
+    </ng-template>
+</p-dialog>

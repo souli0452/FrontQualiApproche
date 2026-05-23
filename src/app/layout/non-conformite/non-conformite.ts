@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { MenuItem } from 'primeng/api';
 import { Subject } from 'rxjs';
@@ -20,12 +20,21 @@ import { NcModule } from '../../pages/nc/nc.module';
 })
 export class NonConformiteLayoutComponent implements OnInit, OnDestroy {
     items: MenuItem[] | undefined;
+    activeTab: string = '';
+    routerSubscription: any;
     submitNCVisible: boolean = false;
     destroy$: Subject<boolean> = new Subject<boolean>();
 
-    constructor() {}
+    constructor(private router: Router) {
+        this.routerSubscription = this.router.events.subscribe((event) => {
+            if (event instanceof NavigationEnd) {
+                this.activeTab = event.urlAfterRedirects.split('?')[0];
+            }
+        });
+    }
 
     ngOnInit() {
+        this.activeTab = this.router.url.split('?')[0];
         this.items = [
             { 
                 label: "Vue d'ensemble", 
@@ -55,6 +64,9 @@ export class NonConformiteLayoutComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        if (this.routerSubscription) {
+            this.routerSubscription.unsubscribe();
+        }
         this.destroy$.next(true);
         this.destroy$.complete();
     }

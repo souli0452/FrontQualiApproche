@@ -51,9 +51,9 @@ export class LoginComponent implements OnInit{
     ngOnInit() {
         if (this.authService.getAccessToken()) {
             if(isUserInRoles(['SUPER_ADMIN'])){
-                this.router.navigate(['/']);
+                this.router.navigate(['/non-conformite/vue-ensemble']);
             }else {
-                this.router.navigate(['/page/consultation']);
+                this.router.navigate(['/non-conformite/vue-ensemble']);
             }
 
         }
@@ -132,7 +132,7 @@ export class LoginComponent implements OnInit{
     }
 
     navigateAfterLogin() {
-            this.router.navigate(['/']);
+            this.router.navigate(['/non-conformite/vue-ensemble']);
     }
 
     initiatePasswordReset(): void {

@@ -1,6 +1,12 @@
 <p-blockUI [blocked]="loader">
-    <div class="bloked">
-        <div class="loader"></div>
-        <p class="text-fin">Veuillez patienter ...</p>
+    <div class="fixed inset-0 z-[9999] bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center">
+        <!-- Conteneur du masque SVG -->
+        <div class="logo-loader">
+            <!-- La vague liquide qui tourne et monte -->
+            <div class="wave" [style.top.px]="160 - (progress * 2.2)"></div>
+            <div class="wave wave-back" [style.top.px]="150 - (progress * 2.2)"></div>
+        </div>
+        <!-- Compteur de pourcentage dynamique -->
+        <p class="text-fin mt-6 font-bold text-4xl text-primary-600 font-mono">{{ progress }}%</p>
     </div>
 </p-blockUI>

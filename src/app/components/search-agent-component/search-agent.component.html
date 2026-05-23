@@ -1,6 +1,7 @@
 <ng-container>
     <!-- Première ligne : Recherche Direction/Service -->
-    <div class="flex flex-wrap align-items-center gap-3 mb-4">
+    <!-- NOTE: Ajoutez *ngIf="!prefilledStructureId" sur la div ci-dessous si la décision finale est de masquer ce bloc -->
+    <div *ngIf="!prefilledStructureId" class="flex flex-wrap align-items-center gap-3 mb-4">
         <!-- Direction -->
         <div class="flex-grow-1" style="flex-basis: 40%; min-width: 300px;">
             <p-select [options]="directions"
@@ -71,13 +72,41 @@
     </div>
 
     <!-- Résultats -->
-    <div *ngIf="searchedAgent" class="mt-5">
-        <div class="flex flex-column md:flex-row gap-5 p-2">
-            <div class="flex flex-column justify-content-center align-items-center border-1 surface-border py-5 px-4 border-round" style="flex: 1;">
-                <h4>{{ searchedAgent.lastName }} {{ searchedAgent.firstName }}</h4>
-                <span class="text-500">
-
-        </span>
+    <div *ngIf="searchedAgent" class="mt-4">
+        <div class="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center gap-5 hover:shadow-md transition-shadow">
+            
+            <!-- Avatar -->
+            <div class="flex items-center justify-center bg-indigo-50 dark:bg-indigo-900/30 rounded-full shrink-0" style="width: 64px; height: 64px;">
+                <i class="pi pi-user text-indigo-600 dark:text-indigo-400" style="font-size: 1.75rem;"></i>
+            </div>
+            
+            <!-- Informations -->
+            <div class="flex-grow text-center md:text-left">
+                <div class="flex items-center justify-center md:justify-start gap-2 mb-1">
+                    <h4 class="m-0 text-slate-800 dark:text-slate-100 font-bold text-lg tracking-tight">{{ searchedAgent.lastName }} {{ searchedAgent.firstName }}</h4>
+                    <i class="pi pi-check-circle text-emerald-500" *ngIf="searchedAgent.enabled" pTooltip="Compte Actif"></i>
+                </div>
+                
+                <div class="flex flex-wrap gap-3 mt-2 items-center justify-center md:justify-start">
+                    <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700">
+                        <i class="pi pi-envelope text-slate-400"></i>
+                        <span class="text-sm font-medium">{{ searchedAgent.email || 'Non renseigné' }}</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700">
+                        <i class="pi pi-id-card text-slate-400"></i>
+                        <span class="text-sm font-medium">{{ searchedAgent.username || 'N/A' }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Statut Badge -->
+            <div class="flex items-center justify-center md:border-l md:border-slate-200 dark:border-slate-700 md:pl-5 mt-4 md:mt-0 shrink-0">
+                <span class="px-3 py-1 text-sm font-semibold rounded-full flex items-center gap-1.5" 
+                      [ngClass]="searchedAgent.enabled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'">
+                    <span class="w-1.5 h-1.5 rounded-full" [ngClass]="searchedAgent.enabled ? 'bg-emerald-500' : 'bg-red-500'"></span>
+                    {{ searchedAgent.enabled ? 'Actif' : 'Inactif' }}
+                </span>
             </div>
         </div>
     </div>

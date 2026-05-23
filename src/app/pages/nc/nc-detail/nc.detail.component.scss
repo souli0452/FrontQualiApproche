@@ -7,26 +7,20 @@
 
 .nc-header {
     padding-bottom: 1rem;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--surface-border);
     font-size: 14px !important;
 }
 
 .nc-reference {
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 13px !important;
+    text-transform: uppercase;
+    font-weight: 900;
     color: var(--primary-color);
 }
-.nc-card-title {
-    font-size: 14px !important;
-    text-transform: uppercase;
-    color: var(--p-primary-color) !important;
-    font-weight: 600;
-}
-
 .nc-card {
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--surface-border);
 }
 
 .nc-card-title {
@@ -34,7 +28,7 @@
     color: var(--primary-color);
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--surface-border);
 }
 
 .nc-details-grid {
@@ -50,21 +44,21 @@
 
 .nc-detail-label {
     font-weight: 600;
-    color: #6b7280;
+    color: var(--text-color-secondary);
     font-size: 0.9rem;
 }
 
 .nc-detail-value {
-    color: #111827;
+    color: var(--text-color);
     margin-top: 0.25rem;
     word-break: break-word;
 }
 
 .nc-description {
-    background-color: #f9fafb;
+    background-color: var(--surface-ground);
     padding: 1rem;
     border-radius: 6px;
-    color: #374151;
+    color: var(--text-color);
     line-height: 1.5;
     white-space: pre-line;
 }

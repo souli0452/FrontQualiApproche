@@ -14,7 +14,7 @@ import { Structure } from '../../structure/structure-config/structure';
     standalone:false
 })
 export class NcArchiveComponent implements OnInit, OnDestroy {
-    actualities: any[] = [];
+    brouillonData: any[] = [];
     loading: boolean = false;
     destroy$: Subject<boolean> = new Subject<boolean>();
     cols: any[] = [
@@ -34,18 +34,18 @@ export class NcArchiveComponent implements OnInit, OnDestroy {
 
     ];
     userStructure:Structure={};
-    constructor(private actualityService: NonConformiteService) {
+    constructor(private nonConformiteService: NonConformiteService) {
     }
 
     ngOnInit() {
         this.userStructure = getCurrentUserStructure();
         this.loading = true;
-        this.actualityService
+        this.nonConformiteService
             .findAllNc(NonConformStatus.ARCHIVED,this.userStructure.id)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (data) => {
-                    this.actualities = data.body!;
+                    this.brouillonData = data.body!;
                     this.loading = false;
                 },
                 error: (error) => {

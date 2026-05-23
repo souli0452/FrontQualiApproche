@@ -1,0 +1,16 @@
+<p-toast />
+<div class="card shadow-1">
+
+    <app-traitement-table
+        [btnActions]="BtnActions.RECEPTION"
+        [demandeList]="demandeList"
+        [cols]="cols"
+        (onEdition)="edition($event)"
+        (onRejet)="rejet($event)"
+        (onReceptionner)="reception($event)"
+        [loading]="loading"
+        [title]="title">
+    </app-traitement-table>
+</div>
+
+<app-rejet  [motifRejetDialog]="motifRejetDialog" [demande]="demande" (onSuccess)="hideDialog($event)"></app-rejet>

@@ -4,13 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { TypeProcessusService } from '../../../services/type-processus.service';
 import { NiveauNonConformiteService } from '../../../services/niveau-non-conformite.service';
-import { NiveauNonConformite, TypeProcessus } from '../../../models';
+import { TypeNonConformiteService } from '../../../services/type-non-conformite.service';
+import { NiveauNonConformite, TypeProcessus, TypeNonConformite } from '../../../models';
 
 export interface NcFilter {
     dateDebut: Date | undefined;
     dateFin: Date | undefined;
     process: any;
     gravite: any;
+    origine: any;
 }
 
 @Component({
@@ -26,18 +28,22 @@ export class NcFilterBarComponent implements OnInit {
 
     @Input() showProcessus: boolean = true; 
     @Input() showGravite: boolean = true; 
+    @Input() showOrigine: boolean = true; 
     
     processusList: TypeProcessus[] = [];
     graviteList: NiveauNonConformite[] = [];
+    origineList: TypeNonConformite[] = [];
 
     dateDebut: Date | undefined;
     dateFin: Date | undefined;
     selectedProcess: any;
     selectedGravite: any;
+    selectedOrigine: any;
 
     constructor(
         protected typeProcessusService: TypeProcessusService,
         protected niveauNonConformiteService: NiveauNonConformiteService,
+        protected typeNonConformiteService: TypeNonConformiteService
     ) {}
 
     ngOnInit() {
@@ -56,6 +62,11 @@ export class NcFilterBarComponent implements OnInit {
             next: (res) => this.graviteList = res.body || [],
             error: (err) => console.error('Erreur chargement gravités', err)
         });
+
+        this.typeNonConformiteService.findAll().subscribe({
+            next: (res) => this.origineList = res.body || [],
+            error: (err) => console.error('Erreur chargement origines', err)
+        });
     }
 
     private setDefaultDates() {
@@ -70,7 +81,8 @@ export class NcFilterBarComponent implements OnInit {
             dateDebut: this.dateDebut,
             dateFin: this.dateFin,
             process: this.selectedProcess,
-            gravite: this.selectedGravite
+            gravite: this.selectedGravite,
+            origine: this.selectedOrigine
         };
         this.onFilterChange.emit(filters);
     }
@@ -78,6 +90,7 @@ export class NcFilterBarComponent implements OnInit {
     resetFilters() {
         this.selectedProcess = undefined;
         this.selectedGravite = undefined;
+        this.selectedOrigine = undefined;
         this.setDefaultDates();
         this.applyFilters();
     }

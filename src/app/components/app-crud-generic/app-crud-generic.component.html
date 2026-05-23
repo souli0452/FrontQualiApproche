@@ -85,10 +85,11 @@
                                 <td *ngFor="let col of columns" [style.width]="col.width">
                                     <span *ngIf="col.type === 'string'">
                                         <ng-container *ngIf="col.header == 'Réference'">
-                                          <p-tag severity="info" value="{{ rowData[col.field] }}"></p-tag>
+                                            
+                                          <p-tag severity="info" value="{{ rowData[col.field] }}" />
                                         </ng-container>
                                         <ng-container *ngIf="col.header == 'Statut'">
-                                            <p-tag severity="warn" value="{{ rowData[col.field] }}"></p-tag>
+                                            <p-tag severity="warn" value="{{ rowData[col.field] }}" />
                                         </ng-container>
                                         <ng-container *ngIf="col.header !== 'Réference' && col.header !== 'Statut'">
                                             <span [innerHTML]="rowData[col.field]"></span>
@@ -100,21 +101,24 @@
                                         *ngIf="col.type === 'date'"> {{ rowData[col.field] | date: 'dd/MM/yyyy' }}</span>
                                     <span *ngIf="col.type === 'boolean'">
                                 <span *ngIf="rowData[col.field]">
-                                    <span class="ng-badge success">
+                                    <p-tag  severity="success" value="{{ col.labelTrue }}" />
+                                    <!-- <span class="ng-badge success">
                                         {{ col.labelTrue }}
-                                    </span>
+                                    </span> -->
                                 </span>
                                 <span *ngIf="!rowData[col.field]">
-                                    <span class="ng-badge warning">
+                                    <p-tag  severity="warning" value="{{ col.labelFalse }}" />
+                                    <!-- <span class="ng-badge warning">
                                         {{ col.labelFalse }}
-                                    </span>
+                                    </span> -->
                                 </span>
                             </span>
                             <span *ngIf="col.type === 'list'">
                                 <span *ngFor="let val of rowData[col.field]">
-                                    <span class="ng-badge info">
+                                    <p-tag  severity="info" value="{{ val[col.optionLabel] }}" />
+                                    <!-- <span class="ng-badge info">
                                         {{ val[col.optionLabel] }}
-                                    </span>
+                                    </span> -->
                                 </span>
                             </span>
                                 </td>

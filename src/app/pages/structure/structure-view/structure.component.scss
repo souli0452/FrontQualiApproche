@@ -25,11 +25,6 @@
         }
     }
 
-    // Styles pour la barre de recherche (sans contour focus agressif)
-    .p-inputtext:focus {
-        box-shadow: none !important;
-        border-color: transparent !important;
-    }
 
     // Paginator plus discret
     .p-paginator {

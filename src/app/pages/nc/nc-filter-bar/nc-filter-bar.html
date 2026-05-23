@@ -70,6 +70,25 @@
                     <label for="gravite_label">Gravité</label>
                 </p-floatlabel>
             </div>
+
+            <!-- Origine NC -->
+            <div class="filter-item" *ngIf="showOrigine">
+                <p-floatlabel class="w-full md:w-56 mx-2" variant="on">
+                    <p-select 
+                        [(ngModel)]="selectedOrigine" 
+                        (onChange)="applyFilters()" 
+                        inputId="origine_label" 
+                        [showClear]="true" 
+                        [options]="origineList" 
+                        [filter]="true" 
+                        appendTo="body"
+                        filterBy="libelle" 
+                        optionLabel="libelle" 
+                        styleClass="w-full border border-surface-border rounded-lg bg-transparent" 
+                        variant="filled" />
+                    <label for="origine_label">Origine des NC</label>
+                </p-floatlabel>
+            </div>
         </ng-template>
 
         <ng-template #end>

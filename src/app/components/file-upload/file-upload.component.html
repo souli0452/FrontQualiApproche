@@ -1,36 +1,86 @@
-<div class="card surface-card p-4 shadow-3 border-round-xl uploader-container">
-    <!-- Bouton d'import -->
-    <label class="custom-upload-btn p-button p-component p-button-outlined p-button-secondary">
-        <i class="pi pi-upload mr-2"></i> Importer un ou plusieurs  fichiers
-        <input type="file" multiple (change)="onFileSelected($event)" hidden />
-    </label>
-
-    <!-- Liste des fichiers -->
-    <div class="file-list mt-4" *ngIf="uploadedFiles.length > 0">
-        <div class="file-item p-shadow-1 p-p-3 border-round-lg mb-2 flex flex-column md:flex-row align-items-center justify-content-between"
-             *ngFor="let f of uploadedFiles; let i = index">
-
-            <!-- Contenu -->
-            <div class="flex align-items-center gap-3">
-                <div class="file-icon">
-                    <img [src]="f.icon" alt="File icon" width="36" height="36" />
-                </div>
-                <div class="details">
-                    <span class="font-semibold text-lg">{{ f.name }}</span><br />
-                    <small class="text-color-secondary">{{ f.size }}</small>
-                </div>
-            </div>
-
-            <!-- Supprimer & Progression -->
-            <div class="flex align-items-center gap-2 mt-3 md:mt-0">
-                <p-button [rounded]="true" [text]="true" size="small" pButton pRipple icon="pi pi-trash"
-                          class="me-1 mb-2" severity="danger"
-                          (click)="removeFile(i)" pTooltip="Supprimer" [tooltipPosition]="'left'">
-                </p-button>
-
-
-                <p-progressBar *ngIf="f.loading" mode="indeterminate" styleClass="progress-bar-custom" ></p-progressBar>
-            </div>
+<div class="card surface-card p-4 shadow-3 border-round-xl uploader-container transition-colors transition-duration-200 flex flex-column h-full justify-content-between" 
+     [ngClass]="styleClass"
+     [class.surface-200]="isDragging"
+     (dragover)="onDragOver($event)"
+     (dragleave)="onDragLeave($event)"
+     (drop)="onDrop($event)">
+    
+    <!-- Liste des fichiers ou Placeholder -->
+    <div class="file-list flex-grow-1 overflow-y-auto mb-4" 
+         [class.flex]="uploadedFiles.length === 0 && existingFiles.length === 0" 
+         [class.align-items-center]="uploadedFiles.length === 0 && existingFiles.length === 0" 
+         [class.justify-content-center]="uploadedFiles.length === 0 && existingFiles.length === 0">
+        
+        <!-- Placeholder si vide -->
+        <div class="text-center text-500 text-content" *ngIf="uploadedFiles.length === 0 && existingFiles.length === 0">
+            <i class="pi pi-cloud-upload text-5xl mb-3 text-300"></i>
+            <p class="m-0">Glissez-déposez vos fichiers ici</p>
         </div>
+
+        <!-- 1. Fichiers déjà enregistrés (style Premium bleu) -->
+        <ng-container *ngIf="existingFiles.length > 0">
+            <div class="file-item border-round-lg mb-2 flex items-center justify-between w-full p-2 bg-blue-50/40 border border-blue-100 rounded-xl"
+                 *ngFor="let f of existingFiles; let i = index">
+                <div class="flex items-center gap-3">
+                    <div class="file-icon">
+                        <i class="pi pi-file text-blue-500 text-xl"></i>
+                    </div>
+                    <div class="details">
+                        <span class="font-semibold text-xs text-blue-900 truncate block" style="max-width: 140px;" [title]="f.nom">
+                            {{ f.nom }}
+                        </span>
+                        <small class="text-blue-500 font-semibold" style="font-size: 10px;">Déjà enregistré</small>
+                    </div>
+                </div>
+                <div class="flex align-items-center">
+                    <p-button [rounded]="true" [text]="true" size="small" icon="pi pi-trash"
+                               severity="danger" (click)="deleteExisting(i)" pTooltip="Supprimer de la base" [tooltipPosition]="'left'">
+                    </p-button>
+                </div>
+            </div>
+        </ng-container>
+
+        <!-- 2. Fichiers nouvellement ajoutés (style Classique gris) -->
+        <ng-container *ngIf="uploadedFiles.length > 0">
+            <div class="file-item border-round-lg mb-2 flex items-center justify-between w-full p-2 border border-gray-100 rounded-xl"
+                 *ngFor="let f of uploadedFiles; let i = index">
+                <div class="flex items-center gap-3">
+                    <div class="file-icon">
+                        <img [src]="f.icon" alt="File icon" width="20" height="20" />
+                    </div>
+                    <div class="details">
+                        <span class="font-medium text-xs text-gray-700 truncate block" style="max-width: 140px;" [title]="f.name">
+                            {{ f.name }}
+                        </span>
+                        <small class="text-color-secondary" style="font-size: 10px;">{{ f.size }}</small>
+                    </div>
+                </div>
+                <div class="flex align-items-center gap-2">
+                    <p-button [rounded]="true" [text]="true" size="small" icon="pi pi-trash"
+                               severity="danger" (click)="removeFile(i)" pTooltip="Supprimer" [tooltipPosition]="'left'">
+                    </p-button>
+                    <p-progressBar *ngIf="f.loading" mode="indeterminate" styleClass="progress-bar-custom" class="w-2rem"></p-progressBar>
+                </div>
+            </div>
+        </ng-container>
     </div>
+</div>
+
+<!-- Bouton d'import au fond -->
+<div class="upload-btn mt-4 flex align-items-center cursor-pointer p-2 border-round-lg hover:surface-100 transition-colors" 
+     (click)="fileInput.click()" 
+     *ngIf="uploadedFiles.length + existingFiles.length < 5">
+    <p-button [raised]="true" icon="pi pi-plus" [rounded]="true" severity="info" styleClass="w-3rem h-3rem mr-3 shadow-2"></p-button>
+    <div class="flex flex-col gap-1">
+        <span class="font-semibold text-900 text-lg">Ajouter vos fichiers</span>
+        <span class="text-sm text-gray-500">Nombre max autorisé : {{ 5 - existingFiles.length }}.</span>
+    </div>
+    <input #fileInput type="file" multiple (change)="onFileSelected($event)" hidden />
+</div>
+
+<!-- Limite globale de 5 fichiers atteinte -->
+<div class="mt-4 flex align-items-center justify-content-center text-sm p-3 bg-blue-50/50 rounded-xl border border-blue-100" 
+     *ngIf="uploadedFiles.length + existingFiles.length >= 5">
+    <i class="pi pi-info-circle text-blue-600 mr-2"></i>
+    <span class="text-blue-700 font-medium text-xs">Limite de 5 fichiers atteinte. Supprimez un fichier pour en ajouter un nouveau.</span>
 </div>

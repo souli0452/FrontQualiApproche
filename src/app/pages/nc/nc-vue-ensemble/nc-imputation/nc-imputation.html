@@ -1,0 +1,14 @@
+<p-toast />
+<div>
+    <app-traitement-table
+        [btnActions]="BtnActions.TRAITEMENT"
+        [demandeList]="demandeList"
+        (onSaveEntity)="saveEntity($event)"
+        [cols]="cols"
+        (onRejet)="rejet($event)"
+        (onSubmission)="submission($event)"
+        [loading]="loading"
+        [title]="title">
+    </app-traitement-table>
+</div>
+<app-rejet  [motifRejetDialog]="motifRejetDialog" [demande]="demande" (onSuccess)="hideDialog($event)"></app-rejet>

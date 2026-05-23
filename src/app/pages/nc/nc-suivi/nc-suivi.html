@@ -1,4 +1,12 @@
-<div class="card">
-    <app-nc-filter-bar (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
-    <p-divider />
+<app-nc-filter-bar (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
+<p-divider />
+<div class=" shadow-1">
+    <app-traitement-table
+        [btnActions]="BtnActions.CLOTURE"
+        [demandeList]="demandeList"
+        [cols]="cols"
+        (onEdition)="edition($event)"
+        [loading]="loading"
+        (onCloture)="cloture($event)">
+    </app-traitement-table>
 </div>

@@ -56,8 +56,7 @@ export class TypeProcessusComponent {
           this.tableCols = [
               {field: 'libelle', header: 'Libellé', type: 'string', filter: true},
               {field: 'description', header: 'Description', type: 'string', filter: true},
-              {field: 'createdAt', header: 'Date de création', type: 'string', filter: true},
-              {field: 'updatedAt', header: 'Date de modification', type: 'string', filter: true}
+              {field: 'createdAt', header: 'Date de création', type: 'date', filter: true}
           ];
 
           this.formGroup = this.fb.group({

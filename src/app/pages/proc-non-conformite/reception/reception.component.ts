@@ -140,7 +140,7 @@ ngOnInit() {
          error: (error) => {
             console.log("ERREUR : ", error);
             
-             this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 11", life: 3000 });
+             this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 11 Receptionner", life: 3000 });
          }
      })
     }

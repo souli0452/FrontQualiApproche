@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { MessageService } from 'primeng/api';
 import { ProcNonConformiteService } from '../proc-non-conformite.service';
@@ -19,7 +19,7 @@ import { RejetFormsComponent } from '../forms/rejet.forms/rejet.forms.component'
     imports: [CommonModule, NgPrimeModule, DmdTraitementTableTemplateComponent, RejetFormsComponent]
 })
 export class TraitementComponent {
-    demandeList: any = [];
+    @Input() demandeList: any = [];
     protected demande: any;
     motifRejetDialog: boolean=false;
     loading: boolean = false;

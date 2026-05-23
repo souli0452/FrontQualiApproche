@@ -349,6 +349,15 @@ export function hasAnyPermission(permissions: string[]): boolean {
     return permissions.some(p => user.permissions.includes(p));
 }
 
+// Renvoie true uniquement si l'utilisateur a TOUTES les permissions demandées (Ce qu'il te faut)
+export function hasAllPermissions(permissions: string[]): boolean {
+    const user = JSON.parse(localStorage.getItem('user')!);
+    if (!user || !user.permissions) return false;
+    
+    // .every() vérifie que CHAQUE permission 'p' est incluse dans les permissions du user
+    return permissions.every(p => user.permissions.includes(p));
+}
+
 export function isLicenseActive(): boolean {
     const user = JSON.parse(localStorage.getItem('user')!);
     if (!user) return false;
@@ -397,13 +406,39 @@ export function downloadAttachment(pj: any): void {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = pj.nom; // Utilise le nom du fichier (ex: Audition avec la poste centre.docx)
+        link.download = pj.nom;
 
-        // 4. Déclencher le clic et nettoyer
         link.click();
-        window.URL.revokeObjectURL(url);
-    } catch (error) {
-        console.error('Erreur lors du décodage du fichier :', error);
+        setTimeout(() => window.URL.revokeObjectURL(url), 100);
+    } catch (e) {
+        console.error('Erreur lors du téléchargement du fichier:', e);
+    }
+}
+
+export function viewAttachment(pj: any): void {
+    if (!pj.fichier) {
+        console.error('Aucun contenu de fichier trouvé');
+        return;
+    }
+
+    try {
+        const byteCharacters = atob(pj.fichier);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+
+        const blob = new Blob([byteArray], {
+            type: pj.type || 'application/octet-stream'
+        });
+
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        
+        // setTimeout(() => window.URL.revokeObjectURL(url), 1000); // Wait a bit before revoking for the new tab to load it
+    } catch (e) {
+        console.error('Erreur lors de la visualisation du fichier:', e);
     }
 }
 export function convertFilesToBase64(files: { file: File; extension: string; name: string; size: string; loading: boolean; icon: string }[]): Promise<any[]> {

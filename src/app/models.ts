@@ -260,6 +260,7 @@ export interface FormGroupColumn {
     key?: string;
     readonly?: boolean;
     class?: string;
+    placeholder?: string;
 }
 
 export interface TableColumn {

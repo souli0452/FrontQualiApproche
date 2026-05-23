@@ -1,11 +1,37 @@
-<div>
-    <p-tabView [style]="{ height: '100%' }">
-        <p-tabPanel header="Détails de la  demande">
-            <demande-non_conformite-details [demande]="demande"></demande-non_conformite-details>
-        </p-tabPanel>
-        <p-tabPanel header="Validation des plans d'actions définis"
-            *ngIf="demande.etatTraitement==BtnActions.VALIDATION">
-            <div class="col-12">
+
+
+    <p-stepper [value]="1" class="w-full">
+        <p-step-list>
+            <p-step [value]="1">Détails de la demande</p-step>
+            
+            @if (demande.etatTraitement == BtnActions.VALIDATION) {
+                <p-step [value]="2">Validation des plans d'actions</p-step>
+            }
+            
+            @if (demande.etatTraitement != BtnActions.VALIDATION && demande.etatTraitement != BtnActions.SUIVI_RQ) {
+                <p-step [value]="2">Saisie des informations complémentaires</p-step>
+            }
+        </p-step-list>
+        
+        <p-step-panels>
+            <p-step-panel [value]="1">
+                <ng-template #content let-activateCallback="activateCallback">
+                    <demande-non_conformite-details [demande]="demande"></demande-non_conformite-details>
+                    
+                    <div class="flex pt-6 justify-end">
+                        @if (demande.etatTraitement == BtnActions.VALIDATION) {
+                            <p-button label="Suivant" size="small" icon="pi pi-arrow-right" iconPos="right" (onClick)="activateCallback(2)" />
+                        } @else if (demande.etatTraitement != BtnActions.VALIDATION && demande.etatTraitement != BtnActions.SUIVI_RQ) {
+                            <p-button label="Suivant" size="small" icon="pi pi-arrow-right" iconPos="right" (onClick)="activateCallback(2)" />
+                        }
+                    </div>
+                </ng-template>
+            </p-step-panel>
+            
+            @if (demande.etatTraitement == BtnActions.VALIDATION) {
+            <p-step-panel [value]="2">
+                <ng-template #content let-activateCallback="activateCallback">
+                    <div class="col-12">
                 <div class="card nc-card mt-4">
                     <p-toolbar styleClass="mb-2">
                         <ng-template #start>
@@ -71,11 +97,17 @@
                         </table>
                     </div>
                 </div>
-            </div>
-
-        </p-tabPanel>
-        <p-tabPanel header="Saisie des informations complémentaires de la demande (action réquise)"
-            *ngIf="demande.etatTraitement!=BtnActions.VALIDATION && demande.etatTraitement!=BtnActions.SUIVI_RQ ">
+                    </div>
+                    <div class="flex pt-6 justify-start">
+                        <p-button label="Retour" severity="secondary" icon="pi pi-arrow-left" (onClick)="activateCallback(1)" />
+                    </div>
+                </ng-template>
+            </p-step-panel>
+            }
+            
+            @if (demande.etatTraitement != BtnActions.VALIDATION && demande.etatTraitement != BtnActions.SUIVI_RQ) {
+            <p-step-panel [value]="2">
+                <ng-template #content let-activateCallback="activateCallback">
             <div class="m-2">
                 <form [formGroup]="editForm" autocomplete="off" role="form">
                     <div class="grid p-fluid mb-3">
@@ -320,9 +352,14 @@
                     </div>
                 </form>
             </div>
-        </p-tabPanel>
-    </p-tabView>
-</div>
+                    <div class="flex pt-6 justify-start">
+                        <p-button label="Retour" severity="secondary" icon="pi pi-arrow-left" (onClick)="activateCallback(1)" />
+                    </div>
+                </ng-template>
+            </p-step-panel>
+            }
+        </p-step-panels>
+    </p-stepper>
 
 <p-dialog [header]="isEdit?'Modification Plan action':'Ajout plan action'" [(visible)]="displayDialog"
     [style]="{ width: '50rem' }" [breakpoints]="{ '960px': '95vw' }">

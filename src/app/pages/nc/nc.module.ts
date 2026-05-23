@@ -18,6 +18,6 @@ import { FileUploadComponent } from '../../components/file-upload/file-upload.co
 @NgModule({
     imports: [CommonModule, FormsModule, NcRoutingModule, NgPrimeModule, FileUploadComponent],
     declarations: [NcComponent, NcPublishedComponent, NcComposeComponent, NcArchiveComponent, NcDetailComponent, NcSidebarComponent, NcTableComponent, NcDraftComponent],
-    exports: [NcComposeComponent]
+    exports: [NcComposeComponent, NcDraftComponent]
 })
 export class NcModule {}

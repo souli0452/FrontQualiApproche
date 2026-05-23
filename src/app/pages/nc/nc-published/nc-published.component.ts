@@ -15,7 +15,7 @@ import { Structure } from '../../structure/structure-config/structure';
     standalone:false
 })
 export class NcPublishedComponent implements OnInit, OnDestroy {
-    actualities: any[] = [];
+    brouillonData: any[] = [];
     loading: boolean = false;
     destroy$: Subject<boolean> = new Subject<boolean>();
     cols: any[] = [
@@ -42,7 +42,7 @@ export class NcPublishedComponent implements OnInit, OnDestroy {
 
     ];
     userStructure:Structure={};
-    constructor(private actualityService: NonConformiteService,
+    constructor(private nonConformiteService: NonConformiteService,
                 private messageService: MessageService,
                 private featureService: FeaturesService,
                 private location: Location) {
@@ -55,12 +55,12 @@ export class NcPublishedComponent implements OnInit, OnDestroy {
 
     fetchActuality() {
         this.loading = true;
-        this.actualityService
+        this.nonConformiteService
             .findAllNc(NonConformStatus.PUBLISHED,this.userStructure.id)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (data) => {
-                    this.actualities = data.body!;
+                    this.brouillonData = data.body!;
                     this.loading = false;
                 },
                 error: (error) => {
@@ -79,7 +79,7 @@ export class NcPublishedComponent implements OnInit, OnDestroy {
     }
 
     archive(rowdata: any): void {
-        this.actualityService.updateStatus(rowdata.id, NonConformStatus.ARCHIVED).subscribe({
+        this.nonConformiteService.updateStatus(rowdata.id, NonConformStatus.ARCHIVED).subscribe({
             next: (data) => {
                 this.fetchActuality();
                 this.featureService.onReloadRequested(true);
@@ -93,7 +93,7 @@ export class NcPublishedComponent implements OnInit, OnDestroy {
     }
 
     delete(rowdata: any) {
-        this.actualityService.delete(rowdata.id!).subscribe({
+        this.nonConformiteService.delete(rowdata.id!).subscribe({
             next: (data) => {
                 this.fetchActuality();
                 this.featureService.onReloadRequested(true);

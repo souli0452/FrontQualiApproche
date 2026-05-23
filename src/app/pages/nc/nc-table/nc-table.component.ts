@@ -17,11 +17,13 @@ import { GlobalSearchService } from '../../../services/global-search.service';
 })
 export class NcTableComponent implements OnInit {
 
-    @Input() actualities!: any[];
+    @Input() brouillonData: any[] = [];
     @Input() loading: boolean = false;
     @Input() status!: NonConformStatus;
     @Input() cols!: any[];
+    @Input() balanceFrozen: boolean = false;
     @Input() colDetails!: any[];
+    @Input() showColumnFilters: boolean = false; 
     @Output() publish = new EventEmitter<any>();
     @Output() delete = new EventEmitter<any>();
     @Output() archive = new EventEmitter<any>();
@@ -74,21 +76,17 @@ export class NcTableComponent implements OnInit {
         if (this.selectedActualities && this.selectedActualities.length > 0) {
             this.confirmationService.confirm({
                 message: `Voulez-vous supprimer la sélection ? `,
-                key: this.confirmKey,
                 accept: () => {
                     this.actualityService.deleteMany(this.selectedActualities).subscribe({
                         next: (data) => {
                             this.featureService.onReloadRequested(true);
                             showToast(StatusEnum.success, data.status, 'Opération succès', this.messageService);
-                            this.goBack();
+                            this.selectedActualities = [];
                         },
                         error: error => {
                             showToast(StatusEnum.error, error.status, 'Une erreur est survenue', this.messageService, error);
                         }
                     });
-                },
-                reject: () => {
-                    this.goBack();
                 }
             });
         }
@@ -98,22 +96,17 @@ export class NcTableComponent implements OnInit {
         if (this.selectedActualities && this.selectedActualities.length > 0) {
             this.confirmationService.confirm({
                 message: `Voulez-vous archiver la sélection ? `,
-                key: this.confirmKey,
                 accept: () => {
                     this.actualityService.updateManyStatus(this.selectedActualities, NonConformStatus.ARCHIVED).subscribe({
                         next: (data) => {
                             this.featureService.onReloadRequested(true);
                             showToast(StatusEnum.success, data.status, 'Opération succès', this.messageService);
-                            this.goBack();
+                            this.selectedActualities = [];
                         },
                         error: error => {
                             showToast(StatusEnum.error, error.status, 'Une erreur est survenue', this.messageService, error);
                         }
                     });
-
-                },
-                reject: () => {
-                    this.goBack();
                 }
             });
         }
@@ -123,21 +116,17 @@ export class NcTableComponent implements OnInit {
         if (this.selectedActualities && this.selectedActualities.length > 0) {
             this.confirmationService.confirm({
                 message: `Voulez-vous publier la sélection ? `,
-                key: this.confirmKey,
                 accept: () => {
                     this.actualityService.updateManyStatus(this.selectedActualities, NonConformStatus.PUBLISHED).subscribe({
                         next: (data) => {
                             this.featureService.onReloadRequested(true);
                             showToast(StatusEnum.success, data.status, 'Opération succès', this.messageService);
-                            this.goBack();
+                            this.selectedActualities = [];
                         },
                         error: error => {
                             showToast(StatusEnum.error, error.status, 'Une erreur est survenue', this.messageService, error);
                         }
                     });
-                },
-                reject: () => {
-                    this.goBack();
                 }
             });
         }
@@ -146,6 +135,7 @@ export class NcTableComponent implements OnInit {
     onArchive(event: Event, rowdata: any) {
         event.stopPropagation();
         this.confirmationService.confirm({
+            target: event.target as EventTarget,
             message: `Voulez-vous archiver la non conformité N° ${rowdata.numeroReference} ? `,
             key: this.confirmKey,
             accept: () => {
@@ -153,8 +143,7 @@ export class NcTableComponent implements OnInit {
                 event.stopPropagation();
             },
             reject:()=>{
-                this.goBack();
-
+            // this.goBack();
             }
         });
     }
@@ -162,6 +151,7 @@ export class NcTableComponent implements OnInit {
     onDelete(event: Event, rowdata: any) {
         event.stopPropagation();
         this.confirmationService.confirm({
+            target: event.target as EventTarget,
             message: `Voulez-vous supprimer la non conformité N° ${rowdata.numeroReference} ? `,
             key: this.confirmKey,
             accept: () => {
@@ -169,7 +159,7 @@ export class NcTableComponent implements OnInit {
                 event.stopPropagation();
             },
             reject:()=>{
-                this.goBack();
+                // this.goBack();
             }
         });
     }
@@ -177,6 +167,7 @@ export class NcTableComponent implements OnInit {
     onPublish(event: Event, rowdata: any) {
         event.stopPropagation();
         this.confirmationService.confirm({
+            target: event.target as EventTarget,
             message: `Voulez-vous publier la non conformité N° ${rowdata.numeroReference} ? `,
             key: this.confirmKey,
             accept: () => {
@@ -184,11 +175,29 @@ export class NcTableComponent implements OnInit {
                 event.stopPropagation();
             },
             reject:()=>{
-                this.goBack();
+                // this.goBack();
             }
         });
-
     }
+
+    // 💡 Retourne le style de couleur adapté selon la gravité de la non-conformité
+    getSeverity(gravity: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
+        if (!gravity) return 'secondary';
+        
+        const val = gravity.toLowerCase().trim();
+        if (val.includes('critique') || val.includes('danger')) {
+            return 'danger';  // 🔴 Rouge pour Critique
+        }
+        if (val.includes('majeur') || val.includes('warn')) {
+            return 'warn'; // 🟡 Orange pour Majeur
+        }
+        if (val.includes('mineur') || val.includes('info')) {
+            return 'info';    // 🔵 Bleu pour Mineur
+        }
+        
+        return 'secondary';   // 🔘 Gris par défaut
+    }
+
 
     toggleOptions(event: Event, opt: HTMLElement, date: HTMLElement) {
         if (event.type === 'mouseenter') {
@@ -201,11 +210,20 @@ export class NcTableComponent implements OnInit {
 
     }
 
+    editDialogVisible: boolean = false;
+    selectedNcId: any = null;
+
+    detailDialogVisible: boolean = false;
+    selectedDetailId: any = null;
+
+
     onRowSelect(id: number) {
-        this.router.navigate(['/nc/detail/', id]);
+        this.selectedDetailId = id;
+        this.detailDialogVisible = true;
     }
     update(nc: any) {
-        this.router.navigate(['/nc/compose/', nc.id]);
+        this.selectedNcId = nc.id;
+        this.editDialogVisible = true;
     }
 
     onGlobalFilter(table: Table, event: Event) {

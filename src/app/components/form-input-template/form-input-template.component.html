@@ -2,7 +2,7 @@
     <div class="field-container animate-slide-in">
 
         <!-- 1. Label Supérieur (Optionnel) -->
-        <label *ngIf="col.topLabel" [for]="col.field" class="block layout-topbar-title font-bold text-gray-700 mb-2">
+        <label *ngIf="col.topLabel" [for]="col.field" class="block text-base font-bold text-gray-900 mb-2">
             {{ col.topLabel }}
         </label>
 
@@ -10,21 +10,25 @@
         
         <!-- Type String -->
         <ng-container *ngIf="col.type === 'string'">
-            <p-floatlabel variant="on">
-                <input pInputText
-                       type="text"
-                       [readonly]="col.readonly"
-                       class="w-full"
-                       [formControlName]="col.field"
-                       [id]="col.field"
-                       autocomplete="off"
-                       [attr.aria-describedby]="col.field + '-help'"
-                       [name]="col.field" />
-                <label [for]="col.field">
-                    {{ col.header }}
-                    <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
-                </label>
-            </p-floatlabel>
+            <div class="mt-2 w-full">
+                <p-floatlabel variant="on" class="w-full block" style="width: 100%;">
+                    <input pInputText
+                           type="text"
+                           [readonly]="col.readonly"
+                           [placeholder]="col.placeholder || ''"
+                           class="w-full"
+                           style="width: 100%;"
+                           [formControlName]="col.field"
+                           [id]="col.field"
+                           autocomplete="off"
+                           [attr.aria-describedby]="col.field + '-help'"
+                           [name]="col.field" />
+                    <label [for]="col.field">
+                        {{ col.header }}
+                        <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                    </label>
+                </p-floatlabel>
+            </div>
         </ng-container>
 
         <!-- Type Editeur (Garde son style propre) -->
@@ -63,46 +67,52 @@
 
         <!-- Type Number -->
         <ng-container *ngIf="col.type === 'number' || col.type === 'float'">
-            <p-floatlabel variant="on">
-                <p-inputNumber
-                    [showButtons]="true"
-                    [readonly]="col.readonly"
-                    [min]="0"
-                    mode="decimal"
-                    class="w-full"
-                    styleClass="w-full"
-                    [formControlName]="col.field"
-                    [id]="col.field"
-                    [name]="col.field">
-                </p-inputNumber>
-                <label [for]="col.field">
-                    {{ col.header }}
-                    <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
-                </label>
-            </p-floatlabel>
+            <div class="mt-2">
+                <p-floatlabel variant="on" class="w-full">
+                    <p-inputNumber
+                        [showButtons]="true"
+                        [readonly]="col.readonly"
+                        [placeholder]="col.placeholder || ''"
+                        [min]="0"
+                        mode="decimal"
+                        class="w-full"
+                        styleClass="w-full"
+                        [formControlName]="col.field"
+                        [id]="col.field"
+                        [name]="col.field">
+                    </p-inputNumber>
+                    <label [for]="col.field">
+                        {{ col.header }}
+                        <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                    </label>
+                </p-floatlabel>
+            </div>
         </ng-container>
 
         <!-- Type Dropdown -->
         <ng-container *ngIf="col.type === 'dropdown'">
-            <div class="flex flex-col gap-2">
-                <label [for]="col.field" class="block text-sm font-semibold text-gray-700">
-                    {{ col.header }}
-                    <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
-                </label>
-                <p-multiSelect
-                    [options]="dropDownObject[col.field]"
-                    [filter]="true"
-                    appendTo="body"
-                    [optionLabel]="col.optionLabel || 'label'"
-                    [optionValue]="col.optionValue || 'value'"
-                    [showClear]="true"
-                    [formControlName]="col.field"
-                    class="w-full"
-                    [id]="col.field"
-                    [name]="col.field"
-                    [selectionLimit]="1"
-                    placeholder="Sélectionner...">
-                </p-multiSelect>
+            <div class="mt-2">
+                <p-floatlabel variant="on" class="w-full">
+                    <p-multiSelect
+                        [options]="dropDownObject[col.field]"
+                        [filter]="true"
+                        appendTo="body"
+                        [optionLabel]="col.optionLabel || 'label'"
+                        [optionValue]="col.optionValue || 'value'"
+                        [showClear]="true"
+                        [formControlName]="col.field"
+                        class="w-full"
+                        styleClass="w-full"
+                        [id]="col.field"
+                        [name]="col.field"
+                        [selectionLimit]="1"
+                        [placeholder]="col.placeholder || ''">
+                    </p-multiSelect>
+                    <label [for]="col.field">
+                        {{ col.header }}
+                        <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                    </label>
+                </p-floatlabel>
             </div>
         </ng-container>
 
@@ -119,25 +129,28 @@
 
         <!-- Type MultiSelect -->
         <ng-container *ngIf="col.type === 'multiselect'">
-            <div class="flex flex-col gap-2">
-                <label [for]="col.field" class="block text-sm font-semibold text-gray-700">
-                    {{ col.header }}
-                    <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
-                </label>
-                <p-multiSelect
-                    [options]="multiSelectObject[col.field]"
-                    [filter]="true"
-                    appendTo="body"
-                    [optionLabel]="col.optionLabel || 'label'"
-                    [optionValue]="col.optionValue || 'value'"
-                    [showClear]="true"
-                    [formControlName]="col.field"
-                    class="w-full"
-                    [id]="col.field"
-                    [name]="col.field"
-                    display="chip"
-                    placeholder="Sélectionner...">
-                </p-multiSelect>
+            <div class="mt-2">
+                <p-floatlabel variant="on" class="w-full">
+                    <p-multiSelect
+                        [options]="multiSelectObject[col.field]"
+                        [filter]="true"
+                        appendTo="body"
+                        [optionLabel]="col.optionLabel || 'label'"
+                        [optionValue]="col.optionValue || 'value'"
+                        [showClear]="true"
+                        [formControlName]="col.field"
+                        class="w-full"
+                        styleClass="w-full"
+                        [id]="col.field"
+                        [name]="col.field"
+                        display="chip"
+                        [placeholder]="col.placeholder || ''">
+                    </p-multiSelect>
+                    <label [for]="col.field">
+                        {{ col.header }}
+                        <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                    </label>
+                </p-floatlabel>
             </div>
         </ng-container>
 
