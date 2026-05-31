@@ -5,7 +5,7 @@ export const AMELIORATION_SERVICE = `${SERVICE_PREFIX}/amelioration-service/api/
 export const REFERENTIEL_SERVICE = `${SERVICE_PREFIX}/referentiel-service/api/v1`;
 export const USER_SERVICE = `${SERVICE_PREFIX}/user-service/api/v1`;
 export const EVALUATION_SERVICE = `${SERVICE_PREFIX}/evaluation-service/api/v1`;
-export const SUPPORT_SERVICE = `${SERVICE_PREFIX}/support-service/api`;
+export const SUPPORT_SERVICE = `${SERVICE_PREFIX}/support-service/api/v1`;
 
 export class QualiUrlConfig {
     // Amelioration Service

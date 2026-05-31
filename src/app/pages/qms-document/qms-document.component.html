@@ -1,15 +1,16 @@
 <p-toast></p-toast>
 
 <div class="qms-container p-4">
-  <!-- Page Header -->
-  <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 gap-3">
+  <div *ngIf="currentView === 'list'">
+    <!-- Page Header -->
+  <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 gap-3 w-full">
     <div>
-      <h1 class="text-3xl font-bold text-slate-800 m-0">Gestion Documentaire QMS</h1>
+      <h1 class="text-2xl font-bold text-slate-800 m-0">Gestion Documentaire </h1>
       <p class="text-sm text-slate-500 mt-1">Gérez le cycle de vie, les versions et la conformité de vos documents qualité.</p>
     </div>
-    <div class="flex gap-2">
-      <button pButton pRipple label="Nouveau Document" icon="pi pi-plus" class="p-button-primary shadow-sm" (click)="openUploadModal()"></button>
-      <button pButton pRipple label="Actualiser" icon="pi pi-refresh" class="p-button-outlined p-button-secondary" (click)="refreshList()"></button>
+    <div class="flex gap-2 ml-auto">
+      <button pButton pRipple label="Nouveau Document" icon="pi pi-plus" class="p-button-primary shadow-sm" (click)="navigateToCreate()"></button>
+      <button pButton pRipple label="Actualiser" icon="pi pi-refresh" class="p-button-outlined p-button-secondary p-button-sm" (click)="refreshList()"></button>
     </div>
   </div>
 
@@ -20,7 +21,6 @@
       <div class="col-span-12 md:col-span-4 lg:col-span-3">
         <label class="block text-xs font-semibold text-slate-600 mb-1">Recherche</label>
         <div class="p-input-icon-left w-full">
-          <i class="pi pi-search"></i>
           <input pInputText type="text" [(ngModel)]="searchQuery" placeholder="Numéro, rédacteur..." class="w-full" (keyup.enter)="refreshList()" />
         </div>
       </div>
@@ -28,19 +28,19 @@
       <!-- Type Dropdown -->
       <div class="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-2">
         <label class="block text-xs font-semibold text-slate-600 mb-1">Type de Document</label>
-        <p-select [options]="documentTypes" [(ngModel)]="selectedType" optionLabel="libelle" optionValue="code" placeholder="Tous les types" class="w-full" [showClear]="true" (onChange)="refreshList()"></p-select>
+        <p-select [options]="documentTypes" [(ngModel)]="selectedType" optionLabel="libelle" [filter]="true"  appendTo="body" optionValue="code" placeholder="Tous les types" class="w-full" [showClear]="true" (onChange)="refreshList()"></p-select>
       </div>
 
       <!-- Service Dropdown -->
       <div class="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-3">
-        <label class="block text-xs font-semibold text-slate-600 mb-1">Structure / Service</label>
-        <p-select [options]="structures" [(ngModel)]="selectedService" optionLabel="libelleLong" optionValue="id" placeholder="Tous les services" class="w-full" [filter]="true" [showClear]="true" (onChange)="refreshList()"></p-select>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Processus emetteur</label>
+        <p-select [options]="structures" [(ngModel)]="selectedService" optionLabel="libelleLong"  appendTo="body" optionValue="id" placeholder="Tous les services" class="w-full" [filter]="true" [showClear]="true" (onChange)="refreshList()"></p-select>
       </div>
 
       <!-- Status MultiSelect -->
       <div class="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-2">
         <label class="block text-xs font-semibold text-slate-600 mb-1">Statut</label>
-        <p-multiSelect [options]="statusOptions" [(ngModel)]="selectedStatuses" optionLabel="label" optionValue="value" placeholder="Tous les statuts" class="w-full" [maxSelectedLabels]="1" (onChange)="refreshList()"></p-multiSelect>
+        <p-multiSelect [options]="statusOptions" [(ngModel)]="selectedStatuses" optionLabel="label" appendTo="body" optionValue="value" placeholder="Tous les statuts" class="w-full" [maxSelectedLabels]="1" (onChange)="refreshList()"></p-multiSelect>
       </div>
 
       <!-- Date Range (Simplified as Date Inputs) -->
@@ -56,28 +56,21 @@
       <ng-template pTemplate="header">
         <tr>
           <th>Numéro</th>
-          <th>Type</th>
-          <th>Service / Structure</th>
+          <th>Processus emetteur</th>
           <th>Rédacteur</th>
           <th>Version</th>
           <th>Statut</th>
-          <th>Mise en vigueur</th>
-          <th>Prochaine révision</th>
+          <th>Date de création</th>
           <th class="text-center">Actions</th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-doc>
         <tr class="hover:bg-slate-50 transition-colors">
           <td class="font-bold text-slate-700">{{ doc.documentNumber }}</td>
-          <td>
-            <span class="font-medium px-2 py-1 text-xs rounded bg-slate-100 text-slate-600 border border-slate-200">
-              {{ doc.documentType }}
-            </span>
-          </td>
+
           <td>
             <div class="flex flex-column">
               <span class="font-semibold text-slate-700">{{ doc.serviceSigle }}</span>
-              <span class="text-xs text-slate-400">{{ doc.serviceLibelle }}</span>
             </div>
           </td>
           <td>{{ doc.redacteur }}</td>
@@ -89,28 +82,11 @@
           <td>
             <p-tag [value]="getStatusLabel(doc.status)" [severity]="getStatusSeverity(doc.status)"></p-tag>
           </td>
-          <td>{{ (doc.dateVigueur | date:'dd/MM/yyyy') || '-' }}</td>
+          <td>{{ doc.createdAt  }}</td>
           <td>
-            <span [class.text-red-500]="doc.status === 'en_retard_revision'" [class.font-bold]="doc.status === 'en_retard_revision'">
-              {{ (doc.dateProchRevision | date:'dd/MM/yyyy') || '-' }}
-            </span>
-          </td>
-          <td>
-            <div class="flex justify-content-center gap-1">
-              <!-- View Detail -->
-              <button pButton pRipple icon="pi pi-eye" class="p-button-text p-button-rounded p-button-secondary" pTooltip="Détails" tooltipPosition="top" (click)="viewDetails(doc)"></button>
-              
-              <!-- Download Secure PDF -->
-              <button pButton pRipple icon="pi pi-file-pdf" class="p-button-text p-button-rounded p-button-danger" pTooltip="PDF Sécurisé" tooltipPosition="top" (click)="downloadSecuredPdf(doc)"></button>
-
-              <!-- State Transition -->
-              <button pButton pRipple icon="pi pi-directions" class="p-button-text p-button-rounded p-button-warn" pTooltip="Transition statut" tooltipPosition="top" (click)="openTransitionDialog(doc)"></button>
-
-              <!-- History Timeline -->
-              <button pButton pRipple icon="pi pi-history" class="p-button-text p-button-rounded p-button-info" pTooltip="Historique versions" tooltipPosition="top" (click)="viewVersionHistory(doc)"></button>
-
-              <!-- Audit Trail Logs -->
-              <button pButton pRipple icon="pi pi-list" class="p-button-text p-button-rounded p-button-success" pTooltip="Piste d'audit" tooltipPosition="top" (click)="viewAuditLogs(doc)"></button>
+            <div class="flex justify-content-center">
+              <button pButton pRipple icon="pi pi-ellipsis-v" class="p-button-text p-button-rounded p-button-secondary" (click)="setActionMenu($event, rowMenu, doc)"></button>
+              <p-menu #rowMenu [model]="actionMenuItems" [popup]="true" appendTo="body"></p-menu>
             </div>
           </td>
         </tr>
@@ -215,205 +191,473 @@
 <!-- ========================================================================= -->
 <!-- 2. STATE TRANSITION DIALOG -->
 <!-- ========================================================================= -->
-<p-dialog header="Transitionner le statut du document" [(visible)]="showTransitionModal" [modal]="true" [style]="{ width: '32rem' }">
+<p-dialog header="Mise à jour du statut du document" [(visible)]="showTransitionModal" [modal]="true" [style]="{ width: '50rem', height: '35rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }">
   <form [formGroup]="transitionForm" class="p-fluid mt-2" *ngIf="selectedDocument">
-    <div class="flex flex-column gap-3">
-      <div>
-        <span class="text-xs text-slate-500 font-semibold uppercase block">Document</span>
-        <span class="text-sm font-bold text-slate-700">{{ selectedDocument.documentNumber }}</span>
-      </div>
-      <div>
-        <span class="text-xs text-slate-500 font-semibold uppercase block">Statut Actuel</span>
-        <p-tag [value]="getStatusLabel(selectedDocument.status!)" [severity]="getStatusSeverity(selectedDocument.status!)" class="mt-1 inline-block"></p-tag>
+    <div class="grid grid-cols-12 gap-4">
+
+      <!-- Current Info Alert Box (Single line layout) -->
+      <div class="col-span-12">
+        <div class="flex align-items-center justify-content-between p-3 bg-slate-50 border border-slate-200 border-round gap-3">
+          <div class="flex align-items-center gap-2">
+            <span class="text-sm font-bold text-slate-500">Document :</span>
+            <span class="text-sm font-bold text-slate-700 flex align-items-center gap-1.5">
+              <i class="pi pi-file text-indigo-500 text-xs"></i>
+              {{ selectedDocument.documentNumber }}
+            </span>
+          </div>
+          <div class="flex align-items-center gap-2">
+            <span class="text-sm font-bold text-slate-500">Statut Actuel :</span>
+            <p-tag [value]="getStatusLabel(selectedDocument.status!)" [severity]="getStatusSeverity(selectedDocument.status!)" styleClass="text-xs"></p-tag>
+          </div>
+        </div>
       </div>
 
       <!-- Next Status Dropdown -->
-      <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1">Nouveau Statut *</label>
-        <p-select [options]="getTransitionOptions(selectedDocument.status!)" formControlName="nextStatus" placeholder="Sélectionner le nouveau statut"></p-select>
+      <div class="col-span-12">
+        <label class="block text-sm font-bold text-slate-700 mb-1.5">Nouveau Statut *</label>
+        <p-select [options]="getTransitionOptions(selectedDocument.status!)" formControlName="nextStatus" placeholder="Sélectionner le nouveau statut" class="w-full"></p-select>
       </div>
 
       <!-- Reason Textarea -->
-      <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1">Motif / Justification *</label>
-        <textarea pTextarea formControlName="reason" rows="4" placeholder="Ex: Soumission pour validation de la version initiale..."></textarea>
+      <div class="col-span-12">
+        <label class="block text-sm font-bold text-slate-700 mb-1.5">Motif / Justification *</label>
+        <textarea pTextarea formControlName="reason" rows="4" placeholder="Veuillez renseigner le motif de ce changement de statut (ex: validation de la version initiale, mise en conformité...)" class="w-full"></textarea>
       </div>
+
     </div>
   </form>
   <ng-template pTemplate="footer">
-    <button pButton label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="showTransitionModal = false"></button>
-    <button pButton label="Confirmer" icon="pi pi-check" class="p-button-primary" [disabled]="transitionForm.invalid" (click)="submitTransition()"></button>
+    <div class="flex justify-content-end gap-2 w-full">
+      <button pButton label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="showTransitionModal = false"></button>
+      <button pButton label="Confirmer la transition" icon="pi pi-check" class="p-button-primary shadow-sm" [disabled]="transitionForm.invalid" (click)="submitTransition()"></button>
+    </div>
   </ng-template>
 </p-dialog>
 
 <!-- ========================================================================= -->
-<!-- 3. DETAILS DRAWER -->
+<!-- 3. DETAIL PAGE VIEW -->
 <!-- ========================================================================= -->
-<p-drawer header="Détails du Document QMS" [(visible)]="showDetailsDrawer" position="right" styleClass="w-full md:w-30rem">
-  <div class="p-3" *ngIf="selectedDocument">
-    <div class="flex align-items-center justify-content-between mb-4 border-bottom border-slate-200 pb-3">
-      <span class="text-lg font-bold text-slate-800">{{ selectedDocument.documentNumber }}</span>
-      <p-tag [value]="getStatusLabel(selectedDocument.status!)" [severity]="getStatusSeverity(selectedDocument.status!)"></p-tag>
+<div *ngIf="currentView === 'detail' && selectedDocument" class="card border-none shadow-sm bg-white overflow-hidden p-0 fadein">
+  <!-- Header -->
+  <div class="p-4 bg-slate-50 border-bottom border-slate-100 flex align-items-center justify-content-between">
+    <div class="flex align-items-center gap-3">
+      <button pButton pRipple icon="pi pi-arrow-left" class="p-button-outlined p-button-secondary p-button-sm mr-2" label="Retour" (click)="currentView = 'list'"></button>
+      <div>
+        <h1 class="text-xl font-bold text-slate-800 m-0">Détails du Document </h1>
+        <p class="text-xs text-slate-400 m-0 mt-1">
+          Visualisez les caractéristiques, le statut actuel et les métadonnées de ce document.
+        </p>
+      </div>
     </div>
-
-    <table class="w-full table-details">
-      <tbody>
-        <tr>
-          <td>Type</td>
-          <td class="font-semibold">{{ selectedDocument.documentType }}</td>
-        </tr>
-        <tr>
-          <td>Service émetteur</td>
-          <td>
-            <div class="font-semibold">{{ selectedDocument.serviceSigle }}</div>
-            <div class="text-xs text-slate-400">{{ selectedDocument.serviceLibelle }}</div>
-          </td>
-        </tr>
-        <tr>
-          <td>Version Courante</td>
-          <td class="font-mono text-sm font-bold text-indigo-600">V{{ selectedDocument.versionMajeure }}.{{ selectedDocument.versionMineure }}</td>
-        </tr>
-        <tr>
-          <td>Rédacteur</td>
-          <td>{{ selectedDocument.redacteur }}</td>
-        </tr>
-        <tr>
-          <td>Périodicité révision</td>
-          <td>{{ selectedDocument.periodiciteMois || 'Non spécifiée' }} mois</td>
-        </tr>
-        <tr>
-          <td>Date de Vigueur</td>
-          <td>{{ (selectedDocument.dateVigueur | date:'dd/MM/yyyy HH:mm') || '-' }}</td>
-        </tr>
-        <tr>
-          <td>Prochaine Révision</td>
-          <td>{{ (selectedDocument.dateProchRevision | date:'dd/MM/yyyy') || '-' }}</td>
-        </tr>
-        <tr>
-          <td>Confidentiel</td>
-          <td>
-            <span class="px-2 py-1 text-xs rounded font-bold" [class.bg-red-50]="selectedDocument.confidentiel" [class.text-red-700]="selectedDocument.confidentiel" [class.bg-slate-50]="!selectedDocument.confidentiel" [class.text-slate-500]="!selectedDocument.confidentiel">
-              {{ selectedDocument.confidentiel ? 'Oui' : 'Non' }}
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td>Document Externe</td>
-          <td>{{ selectedDocument.documentExterne ? 'Oui' : 'Non' }}</td>
-        </tr>
-        <tr *ngIf="selectedDocument.organismeEmetteur">
-          <td>Organisme émetteur</td>
-          <td>{{ selectedDocument.organismeEmetteur }}</td>
-        </tr>
-        <tr *ngIf="selectedDocument.referenceOfficielle">
-          <td>Référence Officielle</td>
-          <td>{{ selectedDocument.referenceOfficielle }}</td>
-        </tr>
-        <tr *ngIf="selectedDocument.domaine">
-          <td>Domaine d'application</td>
-          <td>{{ selectedDocument.domaine }}</td>
-        </tr>
-        <tr *ngIf="selectedDocument.statutLegal">
-          <td>Statut Légal</td>
-          <td>{{ selectedDocument.statutLegal }}</td>
-        </tr>
-        <tr>
-          <td>Alfresco ID Node</td>
-          <td class="text-xs font-mono text-slate-500 overflow-wrap-break">{{ selectedDocument.alfrescoNodeId }}</td>
-        </tr>
-        <tr *ngIf="selectedDocument.ncReference">
-          <td>Non-Conformité Liée</td>
-          <td class="font-bold text-red-600">{{ selectedDocument.ncReference }}</td>
-        </tr>
-        <tr>
-          <td>Créé par</td>
-          <td>
-            <div>{{ selectedDocument.currentUserfullName || 'système' }}</div>
-            <div class="text-xs text-slate-400">{{ selectedDocument.createdAt }}</div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="mt-4 flex gap-2">
-      <button pButton label="Fichier PDF" icon="pi pi-download" class="p-button-danger shadow-sm w-full" (click)="downloadSecuredPdf(selectedDocument)"></button>
-      <button pButton label="Transitionner" icon="pi pi-directions" class="p-button-outlined p-button-warn w-full" (click)="openTransitionDialog(selectedDocument)"></button>
+    <div>
+      <span class="p-tag p-tag-{{ getStatusSeverity(selectedDocument.status) }} text-xs font-semibold px-2 py-1">
+        {{ getStatusLabel(selectedDocument.status) }}
+      </span>
     </div>
   </div>
-</p-drawer>
 
-<!-- ========================================================================= -->
-<!-- 4. HISTORIQUE VERSION DRAWER -->
-<!-- ========================================================================= -->
-<p-drawer header="Historique des Versions" [(visible)]="showHistoryDrawer" position="right" styleClass="w-full md:w-30rem">
-  <div class="p-3">
-    <div class="mb-4" *ngIf="selectedDocument">
-      <span class="text-xs font-semibold text-slate-400 uppercase">Document</span>
-      <h3 class="text-base font-bold text-slate-800 m-0">{{ selectedDocument.documentNumber }}</h3>
-    </div>
+  <div class="p-4">
 
-    <p-timeline [value]="versionHistory" styleClass="qms-timeline">
-      <ng-template pTemplate="content" let-ver>
-        <div class="card p-3 shadow-xs border border-slate-200 bg-slate-50 mb-3 rounded">
-          <div class="flex justify-content-between align-items-center mb-2">
-            <span class="font-mono text-sm font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded">
-              Version {{ ver.versionLabel }}
-            </span>
-            <span class="text-xs text-slate-400">{{ ver.dateCreation | date:'dd/MM/yyyy HH:mm' }}</span>
-          </div>
-          <p class="text-sm text-slate-700 m-0 italic">"{{ ver.comment }}"</p>
-          <div class="text-xs text-slate-400 mt-2">
-            <i class="pi pi-user mr-1 text-xs"></i> Validateur : {{ ver.createdBy }}
+    <!-- Grid Layout for Spacious Details (One section per line) -->
+    <div class="grid grid-cols-12 gap-4">
+
+      <!-- Section 1: Informations Générales -->
+      <div class="col-span-12">
+        <div class="card p-3 border border-slate-200 bg-slate-50-alpha-50">
+          <h3 class="text-sm font-bold text-slate-700 border-bottom border-slate-200 pb-2 mb-3 mt-0 flex align-items-center gap-2">
+            <i class="pi pi-info-circle text-indigo-500"></i>
+            Informations Générales
+          </h3>
+          <div class="grid grid-cols-12 gap-4 mt-2">
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Type de Document</span>
+              <span class="font-semibold text-slate-800 bg-slate-100 px-2.5 py-1 rounded text-xs border border-slate-200 inline-block">{{ selectedDocument.documentType }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Rédacteur</span>
+              <span class="text-sm font-semibold text-slate-800 flex align-items-center gap-1.5">
+                <i class="pi pi-user text-slate-400 text-xs"></i>
+                {{ selectedDocument.redacteur }}
+              </span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Service émetteur</span>
+              <div>
+                <span class="text-sm font-semibold text-slate-800 block">{{ selectedDocument.serviceSigle }}</span>
+                <span class="text-xs text-slate-500 block">{{ selectedDocument.serviceLibelle }}</span>
+              </div>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Confidentialité</span>
+              <div>
+                <span class="px-2.5 py-1 text-xs rounded font-bold inline-block"
+                      [ngClass]="selectedDocument.confidentiel ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-slate-50 text-slate-500 border border-slate-200'">
+                  {{ selectedDocument.confidentiel ? '🔒 Confidentiel' : '🔓 Public / Interne' }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
-      </ng-template>
-    </p-timeline>
+      </div>
 
-    <div *ngIf="versionHistory.length === 0" class="text-center py-5 text-slate-400">
-      <i class="pi pi-info-circle text-4xl mb-2"></i>
-      <p>Aucune version archivée pour ce document.</p>
+      <!-- Section 2: Cycle de vie & Validité -->
+      <div class="col-span-12">
+        <div class="card p-3 border border-slate-200 bg-slate-50-alpha-50">
+          <h3 class="text-sm font-bold text-slate-700 border-bottom border-slate-200 pb-2 mb-3 mt-0 flex align-items-center gap-2">
+            <i class="pi pi-calendar text-indigo-500"></i>
+            Cycle de vie & Validité
+          </h3>
+          <div class="grid grid-cols-12 gap-4 mt-2">
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Version Courante</span>
+              <span class="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded inline-block">
+                V{{ selectedDocument.versionMajeure }}.{{ selectedDocument.versionMineure }}
+              </span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Date de Vigueur</span>
+              <span class="text-sm font-semibold text-slate-800 flex align-items-center gap-1.5">
+                <i class="pi pi-calendar-plus text-slate-400 text-xs"></i>
+                {{ (selectedDocument.dateVigueur | date:'dd/MM/yyyy HH:mm') || '-' }}
+              </span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Périodicité révision</span>
+              <span class="text-sm font-semibold text-slate-800">{{ selectedDocument.periodiciteMois || 'Non spécifiée' }} mois</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Prochaine Révision</span>
+              <span class="text-sm font-semibold flex align-items-center gap-1.5"
+                    [class.text-red-600]="selectedDocument.status === 'en_retard_revision'"
+                    [class.font-bold]="selectedDocument.status === 'en_retard_revision'">
+                <i class="pi pi-calendar-times text-xs" [class.text-red-500]="selectedDocument.status === 'en_retard_revision'" [class.text-slate-400]="selectedDocument.status !== 'en_retard_revision'"></i>
+                {{ (selectedDocument.dateProchRevision | date:'dd/MM/yyyy') || '-' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Métadonnées & Systèmes -->
+      <div class="col-span-12">
+        <div class="card p-3 border border-slate-200 bg-slate-50-alpha-50">
+          <h3 class="text-sm font-bold text-slate-700 border-bottom border-slate-200 pb-2 mb-3 mt-0 flex align-items-center gap-2">
+            <i class="pi pi-cog text-indigo-500"></i>
+            Métadonnées & Systèmes
+          </h3>
+          <div class="grid grid-cols-12 gap-4 mt-2">
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Externe</span>
+              <span class="text-sm font-semibold text-slate-800">{{ selectedDocument.documentExterne ? 'Oui' : 'Non' }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3" *ngIf="selectedDocument.organismeEmetteur">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Organisme émetteur</span>
+              <span class="text-sm font-semibold text-slate-800">{{ selectedDocument.organismeEmetteur }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3" *ngIf="selectedDocument.referenceOfficielle">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Référence Officielle</span>
+              <span class="text-sm font-semibold text-slate-800">{{ selectedDocument.referenceOfficielle }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3" *ngIf="selectedDocument.domaine">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Domaine</span>
+              <span class="text-sm font-semibold text-slate-800">{{ selectedDocument.domaine }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3" *ngIf="selectedDocument.statutLegal">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Statut Légal</span>
+              <span class="text-sm font-semibold text-slate-800">{{ selectedDocument.statutLegal }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3" *ngIf="selectedDocument.ncReference">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">NC Liée</span>
+              <span class="text-sm font-bold text-red-600">{{ selectedDocument.ncReference }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Créé par</span>
+              <div>
+                <span class="text-sm font-semibold text-slate-800 block">{{ selectedDocument.currentUserfullName || 'Système' }}</span>
+                <span class="text-xs text-slate-400 font-normal block">{{ selectedDocument.createdAt }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
+
+    <!-- Alfresco Node Info -->
+
+  </div> <!-- closes p-4 content div -->
+
+  <!-- Footer Action Bar -->
+  <div class="p-4 bg-slate-50 border-top border-slate-100 flex justify-content-end gap-2" *ngIf="selectedDocument">
+    <button pButton label="Fermer" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="currentView = 'list'"></button>
+    <button pButton label="Télécharger PDF" icon="pi pi-file-pdf" class="p-button-danger shadow-sm" (click)="downloadSecuredPdf(selectedDocument)"></button>
+    <button pButton label="Transitionner" icon="pi pi-directions" class="p-button-warn" (click)="openTransitionDialog(selectedDocument)"></button>
   </div>
-</p-drawer>
+</div>
 
 <!-- ========================================================================= -->
-<!-- 5. AUDIT TRAIL LOGS DRAWER -->
+<!-- 4. HISTORIQUE VERSION PAGE VIEW -->
 <!-- ========================================================================= -->
-<p-drawer header="Piste d'Audit & Activités" [(visible)]="showAuditDrawer" position="right" styleClass="w-full md:w-35rem">
-  <div class="p-3">
-    <div class="mb-4" *ngIf="selectedDocument">
-      <span class="text-xs font-semibold text-slate-400 uppercase">Document</span>
-      <h3 class="text-base font-bold text-slate-800 m-0">{{ selectedDocument.documentNumber }}</h3>
+<div *ngIf="currentView === 'history' && selectedDocument" class="card border-none shadow-sm bg-white overflow-hidden p-0 fadein">
+  <!-- Header -->
+  <div class="p-4 bg-slate-50 border-bottom border-slate-100 flex align-items-center justify-content-between">
+    <div class="flex align-items-center gap-3">
+      <button pButton pRipple icon="pi pi-arrow-left" class="p-button-outlined p-button-secondary p-button-sm mr-2" label="Retour" (click)="currentView = 'list'"></button>
+      <div>
+        <h1 class="text-xl font-bold text-slate-800 m-0">Historique des Versions</h1>
+        <p class="text-xs text-slate-400 m-0 mt-1">
+          Consultez toutes les itérations, modifications et motifs de révision de ce document.
+        </p>
+      </div>
     </div>
-
-    <p-table [value]="auditLogs" [responsiveLayout]="'scroll'" styleClass="p-datatable-sm p-datatable-striped">
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Date</th>
-          <th>Action</th>
-          <th>Utilisateur</th>
-          <th>Détails</th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-log>
-        <tr>
-          <td class="text-xs text-slate-400 whitespace-nowrap">{{ log.timestamp | date:'dd/MM/yyyy HH:mm' }}</td>
-          <td>
-            <span class="text-xs px-2 py-0.5 rounded font-bold uppercase" [ngClass]="{
-              'bg-blue-50 text-blue-700 border border-blue-100': log.action === 'CREATION',
-              'bg-orange-50 text-orange-700 border border-orange-100': log.action === 'TRANSITION_STATUT',
-              'bg-red-50 text-red-700 border border-red-100': log.action === 'TELECHARGEMENT_PDF_SECURISE',
-              'bg-purple-50 text-purple-700 border border-purple-100': log.action === 'LINK_NC'
-            }">{{ log.action }}</span>
-          </td>
-          <td class="text-sm font-semibold">{{ log.username }}</td>
-          <td class="text-xs text-slate-600">{{ log.details }}</td>
-        </tr>
-      </ng-template>
-    </p-table>
-
-    <div *ngIf="auditLogs.length === 0" class="text-center py-5 text-slate-400">
-      <p>Aucun log d'activité enregistré.</p>
+    <div>
+      <span class="text-xs font-mono bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-1 border-round font-bold">
+        Ref: {{ selectedDocument.documentNumber }}
+      </span>
     </div>
   </div>
-</p-drawer>
+
+  <!-- Content -->
+  <div class="p-4">
+    <div class="flex align-items-center gap-3 mb-4 p-3 bg-slate-50 border border-slate-200 border-round">
+      <i class="pi pi-history text-3xl text-indigo-600"></i>
+      <div class="text-left">
+        <h4 class="m-0 text-sm font-bold text-slate-700">Document {{ selectedDocument.documentNumber }}</h4>
+        <span class="text-xs text-slate-400">Rédigé par {{ selectedDocument.redacteur }}</span>
+      </div>
+    </div>
+
+    <!-- Timeline styled in a spacious block -->
+    <div class="px-3">
+      <p-timeline [value]="versionHistory" styleClass="qms-timeline" *ngIf="versionHistory.length > 0">
+        <ng-template pTemplate="content" let-ver>
+          <div class="card p-3 shadow-sm border border-slate-200 bg-white mb-3 rounded hover:border-indigo-200 transition-colors">
+            <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center mb-2 gap-2">
+              <span class="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded">
+                Version {{ ver.versionLabel }}
+              </span>
+              <span class="text-xs text-slate-400 flex align-items-center gap-1">
+                <i class="pi pi-calendar text-xs"></i>
+                {{ ver.dateCreation | date:'dd/MM/yyyy HH:mm' }}
+              </span>
+            </div>
+            <p class="text-sm text-slate-700 m-0 font-medium py-1 text-left">
+              {{ ver.comment || 'Aucun commentaire' }}
+            </p>
+            <div class="text-xs text-slate-500 mt-2 pt-2 border-top border-slate-100 flex align-items-center gap-1">
+              <i class="pi pi-user text-xs"></i>
+              <span>Validateur : <strong class="text-slate-700">{{ ver.createdBy }}</strong></span>
+            </div>
+          </div>
+        </ng-template>
+      </p-timeline>
+
+      <div *ngIf="versionHistory.length === 0" class="text-center py-5 text-slate-400">
+        <i class="pi pi-info-circle text-4xl mb-2 block"></i>
+        <p>Aucune version archivée pour ce document.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Action Bar -->
+  <div class="p-4 bg-slate-50 border-top border-slate-100 flex justify-content-end">
+    <button pButton label="Fermer" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="currentView = 'list'"></button>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- 5. PISTE AUDIT PAGE VIEW -->
+<!-- ========================================================================= -->
+<div *ngIf="currentView === 'audit' && selectedDocument" class="card border-none shadow-sm bg-white overflow-hidden p-0 fadein">
+  <!-- Header -->
+  <div class="p-4 bg-slate-50 border-bottom border-slate-100 flex align-items-center justify-content-between">
+    <div class="flex align-items-center gap-3">
+      <button pButton pRipple icon="pi pi-arrow-left" class="p-button-outlined p-button-secondary p-button-sm mr-2" label="Retour" (click)="currentView = 'list'"></button>
+      <div>
+        <h1 class="text-xl font-bold text-slate-800 m-0">Piste d'Audit & Activités</h1>
+        <p class="text-xs text-slate-400 m-0 mt-1">
+          Suivi chronologique et complet de toutes les actions, transitions et téléchargements effectués.
+        </p>
+      </div>
+    </div>
+    <div>
+      <span class="text-xs font-mono bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-1 border-round font-bold">
+        Ref: {{ selectedDocument.documentNumber }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="p-4">
+    <div class="flex align-items-center justify-content-between mb-4 p-3 bg-slate-50 border border-slate-200 border-round">
+      <div class="flex align-items-center gap-3">
+        <i class="pi pi-list text-2xl text-emerald-600"></i>
+        <div class="text-left">
+          <span class="text-xs text-slate-500 font-semibold uppercase block">Piste d'Audit</span>
+          <span class="text-lg font-bold text-slate-800">{{ selectedDocument.documentNumber }}</span>
+        </div>
+      </div>
+      <p-tag value="Log Activités" severity="success" styleClass="text-xs"></p-tag>
+    </div>
+
+    <!-- Audit table wrapped in container with height constraints and scrolling -->
+    <div class="border border-slate-200 border-round overflow-hidden qms-audit-table">
+      <p-table [value]="auditLogs" [responsiveLayout]="'scroll'" styleClass="p-datatable-striped p-datatable-sm" [paginator]="true" [rows]="10">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 22%;">Date & Heure</th>
+            <th style="width: 25%;">Action</th>
+            <th style="width: 23%;">Utilisateur</th>
+            <th style="width: 30%;">Détails & Modifications</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-log>
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="text-xs text-slate-500 whitespace-nowrap">
+              <i class="pi pi-clock mr-1 text-slate-400"></i>
+              {{ log.timestamp | date:'dd/MM/yyyy HH:mm:ss' }}
+            </td>
+            <td>
+              <span class="text-xs px-2 py-1 rounded font-bold uppercase inline-block border" [ngClass]="{
+                'bg-blue-50 text-blue-700 border-blue-100': log.action === 'CREATION',
+                'bg-orange-50 text-orange-700 border-orange-100': log.action === 'TRANSITION_STATUT',
+                'bg-red-50 text-red-700 border-red-100': log.action === 'TELECHARGEMENT_PDF_SECURISE',
+                'bg-purple-50 text-purple-700 border-purple-100': log.action === 'LINK_NC'
+              }">{{ log.action }}</span>
+            </td>
+            <td>
+              <div class="flex align-items-center gap-1.5">
+                <i class="pi pi-user text-slate-400 text-xs"></i>
+                <span class="text-sm font-semibold text-slate-700">{{ log.username }}</span>
+              </div>
+            </td>
+            <td class="text-xs text-slate-600 leading-relaxed font-medium">{{ log.details }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4" class="text-center py-5 text-slate-400">
+              <i class="pi pi-info-circle text-3xl mb-2 block"></i>
+              Aucun log d'activité enregistré pour ce document.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- Footer Action Bar -->
+  <div class="p-4 bg-slate-50 border-top border-slate-100 flex justify-content-end">
+    <button pButton label="Fermer" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="currentView = 'list'"></button>
+  </div>
+</div>
+
+</div>
+
+<!-- ========================================================================= -->
+<!-- 6. SHARE & PERMISSIONS DIALOG -->
+<!-- ========================================================================= -->
+<p-dialog header="Partage & Permissions Alfresco" [(visible)]="showShareModal" [modal]="true" [style]="{ width: '65rem',height: '35rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }">
+  <div class="p-fluid mt-2" *ngIf="selectedDocument">
+
+    <!-- Info Alert Box -->
+    <div class="p-3 bg-slate-50 border border-slate-200 border-round mb-4 flex align-items-center justify-content-between">
+      <div class="flex align-items-center gap-2">
+        <span class="text-sm font-bold text-slate-500">Document :</span>
+        <span class="text-sm font-bold text-slate-700">
+          <i class="pi pi-file text-indigo-500 mr-1"></i>
+          {{ selectedDocument.documentNumber }}
+        </span>
+      </div>
+      <div class="flex align-items-center gap-2 ml-3">
+        <span class="text-sm font-bold text-slate-500">Rédacteur :</span>
+        <span class="text-sm font-bold text-slate-700">{{ selectedDocument.redacteur }}</span>
+      </div>
+    </div>
+
+    <!-- Custom Button Tabs -->
+    <div class="flex border-bottom border-slate-200 mb-4 gap-2">
+      <button pButton type="button" label="Lien de Partage" class="p-button-text p-button-sm mr-2" [ngClass]="{'p-button-primary font-bold border-bottom-2 border-primary': activeTab === 'share'}" (click)="activeTab = 'share'"></button>
+      <button pButton type="button" label="Permissions" class="p-button-text p-button-sm mr-2" [ngClass]="{'p-button-primary font-bold border-bottom-2 border-primary': activeTab === 'permissions'}" (click)="activeTab = 'permissions'"></button>
+      <button pButton type="button" label="Créer Utilisateur" class="p-button-text p-button-sm" [ngClass]="{'p-button-primary font-bold border-bottom-2 border-primary': activeTab === 'user'}" (click)="activeTab = 'user'"></button>
+    </div>
+
+    <!-- Tab Content 1: Share Link -->
+    <div *ngIf="activeTab === 'share'" class="py-2">
+      <p class="text-sm text-slate-500 mb-3">Générez et copiez un lien public pour partager ce document via Alfresco.</p>
+
+      <div class="flex gap-2 align-items-center">
+        <input pInputText type="text" [readonly]="true" [value]="shareUrl" placeholder="Lien de partage non généré" class="w-full font-mono text-xs" style="background-color: #f8fafc;" />
+        <button pButton type="button" label="Générer" icon="pi pi-cog" class="p-button-outlined p-button-secondary w-auto whitespace-nowrap" (click)="generateShareLink()"></button>
+        <button pButton type="button" label="Copier" icon="pi pi-copy" class="p-button-primary w-auto shadow-sm" [disabled]="!shareUrl" (click)="copyShareLink()"></button>
+      </div>
+    </div>
+
+    <!-- Tab Content 2: Permissions -->
+    <div *ngIf="activeTab === 'permissions'" class="py-2">
+      <form [formGroup]="permissionForm" (ngSubmit)="submitPermissions()">
+        <p class="text-sm text-slate-500 mb-3">Attribuez des droits d'accès spécifiques à un utilisateur Alfresco sur ce document.</p>
+
+        <div class="grid grid-cols-12 gap-3">
+          <div class="col-span-12 md:col-span-7">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Utilisateur Alfresco *</label>
+            <p-select [options]="alfrescoUsers" formControlName="username" optionLabel="id" optionValue="id" appendTo="body" placeholder="Sélectionner un utilisateur existant" [filter]="true" filterBy="id,email"></p-select>
+            <small class="text-slate-400 block mt-1">L'utilisateur n'est pas dans la liste ? Créez son compte dans l'onglet <strong>Créer Utilisateur</strong>.</small>
+          </div>
+
+          <div class="col-span-12 md:col-span-5">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Rôle / Droits *</label>
+            <p-select [options]="roleOptions" formControlName="role" optionLabel="label" optionValue="value" [filter]="true" appendTo="body" placeholder="Choisir un rôle"></p-select>
+          </div>
+
+          <div class="col-span-12 flex justify-content-end mt-3">
+            <button pButton type="submit" label="Assigner les Droits" icon="pi pi-check" class="p-button-primary w-auto shadow-sm" [disabled]="permissionForm.invalid"></button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Tab Content 3: Create User -->
+    <div *ngIf="activeTab === 'user'" class="py-2">
+      <form [formGroup]="alfrescoUserForm" (ngSubmit)="submitCreateUser()">
+        <p class="text-sm text-slate-500 mb-3">Créez un nouveau compte utilisateur directement dans le référentiel Alfresco.</p>
+
+        <div class="grid grid-cols-12 gap-3">
+          <div class="col-span-12 md:col-span-6">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Identifiant Alfresco *</label>
+            <input pInputText formControlName="username" placeholder="Ex: jdoe" />
+          </div>
+          <div class="col-span-12 md:col-span-6">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Adresse Email *</label>
+            <input pInputText formControlName="email" type="email" placeholder="Ex: jdoe@example.com" />
+          </div>
+
+          <div class="col-span-12 md:col-span-6">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Prénom *</label>
+            <input pInputText formControlName="firstName" placeholder="Ex: John" />
+          </div>
+          <div class="col-span-12 md:col-span-6">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Nom *</label>
+            <input pInputText formControlName="lastName" placeholder="Ex: Doe" />
+          </div>
+
+          <div class="col-span-12">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Mot de passe *</label>
+            <input pInputText type="password" formControlName="password" placeholder="••••••••" />
+          </div>
+
+          <div class="col-span-12 flex justify-content-end mt-3">
+            <button pButton type="submit" label="Créer le Compte" icon="pi pi-plus" class="p-button-success w-auto shadow-sm" [disabled]="alfrescoUserForm.invalid"></button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="flex justify-content-end">
+      <button pButton label="Fermer" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="showShareModal = false"></button>
+    </div>
+  </ng-template>
+</p-dialog>
+

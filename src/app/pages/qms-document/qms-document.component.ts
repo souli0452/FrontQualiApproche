@@ -1,9 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { MessageService } from 'primeng/api';
+import { MessageService, MenuItem } from 'primeng/api';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { QmsDocumentService, DocumentQms, QmsDocumentType, QmsDocumentVersion, QmsAuditLog } from '../../services/qms-document.service';
 import { StructureService } from '../structure/structure-service/structure-service';
@@ -41,12 +42,21 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     { label: 'En Retard Révision', value: 'en_retard_revision' }
   ];
 
-  // Modals visibility
+  // Modals / View visibility
   showCreateModal = false;
   showTransitionModal = false;
-  showDetailsDrawer = false;
-  showHistoryDrawer = false;
-  showAuditDrawer = false;
+  showShareModal = false;
+  activeTab = 'share';
+  shareUrl = '';
+  alfrescoUsers: any[] = [];
+
+  roleOptions = [
+    { label: 'Lecture Seule ', value: 'READ' },
+    { label: 'Modification ', value: 'WRITE' }
+  ];
+
+  currentView: 'list' | 'detail' | 'history' | 'audit' = 'list';
+  actionMenuItems: MenuItem[] = [];
 
   // Selected object contexts
   selectedDocument?: DocumentQms;
@@ -56,10 +66,13 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   // Form Groups
   documentForm: FormGroup;
   transitionForm: FormGroup;
+  permissionForm: FormGroup;
+  alfrescoUserForm: FormGroup;
   selectedFile?: File;
 
   constructor(
     private fb: FormBuilder,
+    private router: Router,
     private qmsService: QmsDocumentService,
     private structureService: StructureService,
     private messageService: MessageService,
@@ -81,6 +94,19 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     this.transitionForm = this.fb.group({
       nextStatus: [null, Validators.required],
       reason: [null, Validators.required]
+    });
+
+    this.permissionForm = this.fb.group({
+      username: ['', Validators.required],
+      role: ['READ', Validators.required]
+    });
+
+    this.alfrescoUserForm = this.fb.group({
+      username: ['', Validators.required],
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
 
@@ -156,6 +182,10 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     this.showCreateModal = true;
   }
 
+  navigateToCreate(): void {
+    this.router.navigate(['/qms-document-create']);
+  }
+
   submitDocument(): void {
     if (this.documentForm.invalid || !this.selectedFile) {
       this.messageService.add({
@@ -180,7 +210,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     formData.append('periodiciteMois', formVal.periodiciteMois.toString());
     formData.append('confidentiel', formVal.confidentiel.toString());
     formData.append('documentExterne', formVal.documentExterne.toString());
-    
+
     if (formVal.organismeEmetteur) formData.append('organismeEmetteur', formVal.organismeEmetteur);
     if (formVal.referenceOfficielle) formData.append('referenceOfficielle', formVal.referenceOfficielle);
     if (formVal.domaine) formData.append('domaine', formVal.domaine);
@@ -209,7 +239,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   // --- Document Lifecycle Actions ---
   viewDetails(doc: DocumentQms): void {
     this.selectedDocument = doc;
-    this.showDetailsDrawer = true;
+    this.currentView = 'detail';
   }
 
   openTransitionDialog(doc: DocumentQms): void {
@@ -230,7 +260,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
         next: (updatedDoc) => {
           this.loading = false;
           this.showTransitionModal = false;
-          if (this.showDetailsDrawer && this.selectedDocument?.id === updatedDoc.id) {
+          if (this.currentView === 'detail' && this.selectedDocument?.id === updatedDoc.id) {
             this.selectedDocument = updatedDoc;
           }
           this.refreshList();
@@ -247,35 +277,48 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
       });
   }
 
-  // --- Secured PDF Downloader ---
+  // --- Document Downloader ---
   downloadSecuredPdf(doc: DocumentQms): void {
     this.messageService.add({
       severity: 'info',
       summary: 'Téléchargement en cours',
-      detail: 'Préparation du PDF filigrané et sécurisé...'
+      detail: 'Récupération du fichier depuis Alfresco...'
     });
 
     this.qmsService.exportSecuredPdf(doc.id!)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (blob) => {
+        next: (response) => {
+          const blob = response.body!;
+
+          // Extract filename from Content-Disposition header
+          let filename = doc.documentNumber ?? 'document';
+          const contentDisposition = response.headers.get('Content-Disposition');
+          if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
+            if (match && match[1]) {
+              filename = match[1].trim();
+            }
+          }
+
           const url = window.URL.createObjectURL(blob);
           const link = window.document.createElement('a');
           link.href = url;
-          link.download = `${doc.documentNumber}_Secured.pdf`;
+          link.download = filename;
           link.click();
           window.URL.revokeObjectURL(url);
+
           this.messageService.add({
             severity: 'success',
             summary: 'Téléchargement réussi',
-            detail: `Le fichier PDF sécurisé a été généré.`
+            detail: `Le fichier "${filename}" a été téléchargé.`
           });
         },
-        error: (err) => {
+        error: () => {
           this.messageService.add({
             severity: 'error',
             summary: 'Échec du téléchargement',
-            detail: 'Le fichier binaire est introuvable ou inaccessible dans Alfresco.'
+            detail: 'Le fichier est introuvable ou inaccessible dans Alfresco.'
           });
         }
       });
@@ -291,7 +334,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
         next: (history) => {
           this.versionHistory = history;
           this.loading = false;
-          this.showHistoryDrawer = true;
+          this.currentView = 'history';
         },
         error: (err) => {
           this.loading = false;
@@ -310,7 +353,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
         next: (logs) => {
           this.auditLogs = logs;
           this.loading = false;
-          this.showAuditDrawer = true;
+          this.currentView = 'audit';
         },
         error: (err) => {
           this.loading = false;
@@ -319,8 +362,182 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
       });
   }
 
+  // Dynamic Actions Menu Trigger
+  setActionMenu(event: any, menu: any, doc: DocumentQms) {
+    this.selectedDocument = doc;
+    this.actionMenuItems = [
+      {
+        label: 'Détails',
+        icon: 'pi pi-eye',
+        command: () => this.viewDetails(doc)
+      },
+      {
+        label: 'Télécharger le document',
+        icon: 'pi pi-file-pdf',
+        command: () => this.downloadSecuredPdf(doc)
+      },
+      {
+        label: 'Éditer le document directement',
+        icon: 'pi pi-microsoft',
+        command: () => this.editInOffice(doc)
+      },
+      {
+        label: 'Transition Statut',
+        icon: 'pi pi-directions',
+        command: () => this.openTransitionDialog(doc)
+      },
+      {
+        label: 'Historique Versions',
+        icon: 'pi pi-history',
+        command: () => this.viewVersionHistory(doc)
+      },
+      {
+        label: 'Piste d\'Audit',
+        icon: 'pi pi-list',
+        command: () => this.viewAuditLogs(doc)
+      },
+      {
+        label: 'Partage & Permissions',
+        icon: 'pi pi-share-alt',
+        command: () => this.openShareModal(doc)
+      }
+    ];
+    menu.toggle(event);
+  }
+
+  editInOffice(doc: DocumentQms): void {
+    this.qmsService.getAosUrl(doc.id!).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res) => {
+        if (res.aosUrl) {
+          // Decode URL to ensure pipes aren't converted to %7C if possible, though the browser might re-encode it.
+          // Using an anchor tag sometimes helps OS handlers catch the exact href.
+          const a = document.createElement('a');
+          a.href = res.aosUrl;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => document.body.removeChild(a), 100);
+        }
+      },
+      error: (err) => {
+        showToast(StatusEnum.error, err.status, err.error?.error || "Ce document ne supporte pas l'édition en direct.", this.messageService, err);
+      }
+    });
+  }
+
+  // --- Share & Permissions Dialog Logic ---
+  openShareModal(doc: DocumentQms): void {
+    this.selectedDocument = doc;
+    this.shareUrl = '';
+    this.activeTab = 'share';
+    this.permissionForm.reset({ role: 'READ' });
+    this.alfrescoUserForm.reset();
+    this.loadAlfrescoUsers();
+    this.showShareModal = true;
+  }
+
+  loadAlfrescoUsers(): void {
+    this.qmsService.getAlfrescoUsers()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (users) => {
+          this.alfrescoUsers = users || [];
+        },
+        error: (err) => {
+          console.error('Failed to load Alfresco users', err);
+        }
+      });
+  }
+
+  generateShareLink(): void {
+    if (!this.selectedDocument) return;
+    this.loading = true;
+    this.qmsService.getShareLink(this.selectedDocument.id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.loading = false;
+          this.shareUrl = `${window.location.protocol}//${window.location.hostname}:8999/share/s/${res.sharedId}`;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Lien généré',
+            detail: 'Le lien de partage public a été généré avec succès.'
+          });
+        },
+        error: (err) => {
+          this.loading = false;
+          showToast(StatusEnum.error, err.status, 'Échec de génération du lien', this.messageService, err);
+        }
+      });
+  }
+
+  copyShareLink(): void {
+    if (!this.shareUrl) return;
+    navigator.clipboard.writeText(this.shareUrl).then(() => {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Copié',
+        detail: 'Le lien de partage a été copié dans le presse-papiers.'
+      });
+    }).catch(err => {
+      console.error('Failed to copy', err);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Impossible de copier automatiquement le lien.'
+      });
+    });
+  }
+
+  submitPermissions(): void {
+    if (this.permissionForm.invalid || !this.selectedDocument) return;
+    this.loading = true;
+    const formVal = this.permissionForm.value;
+    this.qmsService.assignPermissions(this.selectedDocument.id!, formVal)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.loading = false;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Droits assignés',
+            detail: `Les droits ${formVal.role} ont été accordés à l'utilisateur ${formVal.username}.`
+          });
+        },
+        error: (err) => {
+          this.loading = false;
+          showToast(StatusEnum.error, err.status, 'Échec de l\'affectation', this.messageService, err);
+        }
+      });
+  }
+
+  submitCreateUser(): void {
+    if (this.alfrescoUserForm.invalid) return;
+    this.loading = true;
+    const formVal = this.alfrescoUserForm.value;
+    this.qmsService.createAlfrescoUser(formVal)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.loading = false;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Compte créé',
+            detail: `L'utilisateur Alfresco ${formVal.username} a été créé avec succès.`
+          });
+          this.loadAlfrescoUsers();
+          this.permissionForm.patchValue({ username: formVal.username });
+          this.activeTab = 'permissions';
+        },
+        error: (err) => {
+          this.loading = false;
+          showToast(StatusEnum.error, err.status, 'Échec de création de l\'utilisateur', this.messageService, err);
+        }
+      });
+  }
+
   // Helper mapping tags classes
-  getStatusSeverity(status: string): string {
+  getStatusSeverity(status: string | undefined): string {
     switch (status?.toLowerCase()) {
       case 'brouillon': return 'info';
       case 'en_approbation': return 'warn';
@@ -331,14 +548,14 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     }
   }
 
-  getStatusLabel(status: string): string {
+  getStatusLabel(status: string | undefined): string {
     switch (status?.toLowerCase()) {
       case 'brouillon': return 'Brouillon';
       case 'en_approbation': return 'En Approbation';
       case 'valide': return 'Valide';
       case 'obsolete': return 'Obsolète';
       case 'en_retard_revision': return 'En Retard Révision';
-      default: return status;
+      default: return status || 'Inconnu';
     }
   }
 

@@ -1,84 +1,71 @@
 <ng-container>
-    <!-- Première ligne : Recherche Direction/Service -->
-    <div class="flex flex-wrap align-items-center gap-3 mb-4">
-        <!-- Direction -->
-        <div class="flex-grow-1" style="flex-basis: 40%; min-width: 300px;">
-            <p-select [options]="directions"
-                        id="direction"
-                        [autoDisplayFirst]="false"
-                        emptyMessage="Aucune donnée disponible"
-                        emptyFilterMessage="Aucune direction trouvée"
-                        appendTo="body"
-                        [resetFilterOnHide]="true"
-                        [showClear]="true"
-                        optionLabel="libelleLong"
-                        optionValue="id"
-                        placeholder="Rechercher une direction"
-                        [filter]="true"
-                        [style]="{width: '100%'}"
-                        [(ngModel)]="directionId"
-                        (onChange)="loadServiceByDirection()">
-            </p-select>
-        </div>
+    <div style="background: var(--surface-card); border: 1px solid var(--surface-border); border-radius: 12px; padding: 1.25rem 1.5rem;">
 
-        <!-- Service -->
-        <div class="flex-grow-1" style="flex-basis: 40%; min-width: 300px;">
-            <p-select [options]="services"
-                        id="service"
-                        [autoDisplayFirst]="false"
-                        emptyMessage="Aucune donnée disponible"
-                        emptyFilterMessage="Aucun service trouvé"
-                        appendTo="body"
-                        [resetFilterOnHide]="true"
-                        [showClear]="true"
-                        optionLabel="libelleLong"
-                        optionValue="id"
-                        placeholder="Rechercher un service"
-                        [filter]="true"
-                        [style]="{width: '100%'}"
-                        [(ngModel)]="serviceId">
-            </p-select>
-        </div>
-
-        <!-- Bouton Rechercher -->
-        <div>
-            <button type="button" pButton icon="pi pi-search"
-                    (click)="loadAgents()" [disabled]="!(directionId || serviceId)"
-                    style="min-width: 120px;">
-                <span class=" font-bold text-white">&nbsp;Rechercher</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Deuxième ligne : Recherche Agent -->
-    <div class="mb-4">
-        <p-select [options]="agents"
-                    [autoDisplayFirst]="false"
-                    id="agent"
-                    (onChange)="onAgentSelect($event.value)"
-                    emptyMessage="Aucune donnée disponible"
-                    emptyFilterMessage="Aucun agent trouvé"
-                    appendTo="body"
-                    [resetFilterOnHide]="true"
-                    [showClear]="true"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Rechercher un agent"
-                    [filter]="true"
-                    [style]="{width: '100%'}"
-                    [(ngModel)]="searchedAgent">
-        </p-select>
-    </div>
-
-    <!-- Résultats -->
-    <div *ngIf="searchedAgent" class="mt-5">
-        <div class="flex flex-column md:flex-row gap-5 p-2">
-            <div class="flex flex-column justify-content-center align-items-center border-1 surface-border py-5 px-4 border-round" style="flex: 1;">
-                <h4>{{ searchedAgent.lastName }} {{ searchedAgent.firstName }}</h4>
-                <span class="text-500">
-
-        </span>
+        <!-- Header -->
+        <div class="flex align-items-center gap-3 mb-4">
+            <div class="flex align-items-center justify-content-center border-round-lg bg-primary-50" style="width:36px; height:36px;">
+                <i class="pi pi-users text-primary"></i>
+            </div>
+            <div>
+                <p class="m-0 font-medium text-900">Recherche d'agent</p>
+                <p class="m-0 text-sm text-500">Sélectionnez un agent pour afficher sa fiche</p>
             </div>
         </div>
+
+        <!-- Dropdown -->
+        <p-select
+            [options]="agents"
+            [autoDisplayFirst]="false"
+            id="agent"
+            (onChange)="onAgentSelect($event.value)"
+            emptyMessage="Aucune donnée disponible"
+            emptyFilterMessage="Aucun agent trouvé"
+            appendTo="body"
+            [resetFilterOnHide]="true"
+            [showClear]="true"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Rechercher un agent"
+            [filter]="true"
+            [style]="{width: '100%'}"
+            [(ngModel)]="searchedAgent">
+        </p-select>
+
+        <!-- Fiche agent -->
+        <div *ngIf="searchedAgent" class="mt-4 pt-4 border-top-1 surface-border">
+            <div class="flex align-items-center gap-3 mb-3">
+                <!-- Avatar initiales -->
+                <div class="flex align-items-center justify-content-center border-circle bg-primary-50 text-primary font-medium"
+                     style="width:48px; height:48px; font-size:15px; flex-shrink:0;">
+                    {{ searchedAgent.lastName[0] }}{{ searchedAgent.firstName[0] }}
+                </div>
+                <div class="flex-1">
+                    <p class="m-0 font-medium text-900 text-lg">{{ searchedAgent.lastName }} {{ searchedAgent.firstName }}</p>
+                    <p class="m-0 text-sm text-500">{{ searchedAgent.fonction }}</p>
+                </div>
+                <p-badge value="Actif" severity="success"></p-badge>
+            </div>
+
+            <!-- Infos en grille -->
+            <div class="grid">
+                <div class="col-12 md:col-6">
+                    <div class="surface-100 border-round-lg p-3">
+                        <p class="m-0 mb-1 text-xs text-400 flex align-items-center gap-1">
+                            <i class="pi pi-envelope" style="font-size:13px;"></i> Email
+                        </p>
+                        <p class="m-0 font-medium text-900 text-sm" style="word-break:break-all;">{{ searchedAgent.email }}</p>
+                    </div>
+                </div>
+                <div class="col-12 md:col-6">
+                    <div class="surface-100 border-round-lg p-3">
+                        <p class="m-0 mb-1 text-xs text-400 flex align-items-center gap-1">
+                            <i class="pi pi-briefcase" style="font-size:13px;"></i> Fonction
+                        </p>
+                        <p class="m-0 font-medium text-900 text-sm">{{ searchedAgent.fonction }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </ng-container>
