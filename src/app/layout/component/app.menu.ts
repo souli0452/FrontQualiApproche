@@ -40,7 +40,15 @@ export class AppMenu {
                 label: 'Accueil',
                 items: [{ label: 'Tableau de bord', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
             },
-
+            {
+                label: 'Gestion documentaire',
+                icon: 'pi pi-fw pi-briefcase',
+                routerLink: ['/'],
+                items: [
+                    { label: 'Gestions des documents', icon: 'pi pi-fw pi-eye', routerLink: ['/qms-documents'] },
+                    { label: 'Gestion des types de documents ', icon: 'pi pi-fw pi-briefcase', routerLink: ['/qms-document-types'] }
+                ]
+            },
             {
                 label: 'Qualité & Conformité',
                 icon: 'pi pi-fw pi-briefcase',

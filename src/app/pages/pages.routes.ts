@@ -40,6 +40,9 @@ import { NcVueEnsembleComponent } from './nc/nc-vue-ensemble/vue-ensemble';
 import { NCAffectationActionComponent } from './nc/nc-affectation-action/nc-affectation-action';
 import { NCAnalyseValidationComponent } from './nc/nc-analyse-validation/nc-analyse-validation';
 import { NCSuiviComponent } from './nc/nc-suivi/nc-suivi';
+import { QmsDocumentComponent } from './qms-document/qms-document.component';
+import { QmsDocumentTypeComponent } from './qms-document-type/qms-document-type';
+import { QmsDocumentCreateComponent } from './qms-document-create/qms-document-create.component';
 
 
 export default [
@@ -131,6 +134,9 @@ export default [
     { path: 'type-processus', component: TypeProcessusComponent, title: 'Types de processus' },
     { path: 'niveau-nc', component: NiveauNonConformiteComponent, title: 'Niveaux des non-conformités' },
     { path: 'type-action', component: ActionNonConformiteComponent, title: 'Types d\'actions' },
+    { path: 'qms-documents', data: { breadcrumb: 'Documents QMS' }, component: QmsDocumentComponent, title: 'Gestion Documentaire QMS' },
+    { path: 'qms-document-create', data: { breadcrumb: 'Nouveau Document' }, component: QmsDocumentCreateComponent, title: 'Créer un Document QMS' },
+    { path: 'qms-document-types', data: { breadcrumb: 'Types de Document QMS' }, component: QmsDocumentTypeComponent, title: 'Configuration des Types de Document' },
     { path: 'empty', component: Empty },
     { path: '**', redirectTo: '/notfound' },
 ] as Routes;

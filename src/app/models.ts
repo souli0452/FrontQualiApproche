@@ -308,6 +308,7 @@ export interface KcUser {
     emailVerified: boolean;
     firstName: string;
     lastName: string;
+    fonction?: string;
     email: string;
     password: string;
     structure: string;
@@ -343,3 +344,37 @@ export interface Permission {
     value: string;
     module: string;
 }
+
+export interface QmsDocumentType extends UserInfos {
+    id?: string;
+    code: string;
+    libelle: string;
+    folderName: string;
+}
+
+export interface DocumentQms extends UserInfos {
+    id?: string;
+    documentNumber?: string;
+    documentType: string;
+    serviceId: string;
+    serviceLibelle?: string;
+    serviceSigle?: string;
+    redacteur: string;
+    status?: string;
+    versionMajeure?: number;
+    versionMineure?: number;
+    dateVigueur?: string;
+    dateProchRevision?: string;
+    periodiciteMois?: number;
+    confidentiel?: boolean;
+    documentExterne?: boolean;
+    organismeEmetteur?: string;
+    referenceOfficielle?: string;
+    datePublication?: string;
+    domaine?: string;
+    statutLegal?: string;
+    alfrescoNodeId?: string;
+    ncReference?: string;
+    archived?: boolean;
+}
+

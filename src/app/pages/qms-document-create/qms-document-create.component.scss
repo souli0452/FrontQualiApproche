@@ -1,0 +1,126 @@
+/* ===================================================
+   QMS Document Create - Simple form + Editor Dialog
+   =================================================== */
+
+.qms-container {
+  .card {
+    border-radius: 8px;
+  }
+}
+
+/* --- Mode Cards --- */
+.mode-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #f8fafc;
+  gap: 4px;
+  color: #64748b;
+
+  &:hover {
+    border-color: #6366f1;
+    background: #f5f3ff;
+    color: #6366f1;
+  }
+
+  &.mode-active {
+    border-color: #6366f1;
+    background: #eef2ff;
+    color: #6366f1;
+
+    i { color: #6366f1; }
+    span:first-of-type { color: #4338ca; font-weight: 700; }
+  }
+
+  i { font-size: 22px; color: #94a3b8; transition: color 0.2s; }
+  span { text-align: center; line-height: 1.3; }
+}
+
+/* --- Editor Preview Zone --- */
+.editor-preview-zone {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fafafa;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-preview-content {
+  flex: 1;
+  padding: 16px 20px;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.6;
+  border-bottom: 1px solid #e2e8f0;
+  max-height: 120px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+}
+
+.editor-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: #94a3b8;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #fff;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* --- Editor Dialog --- */
+::ng-deep .editor-dialog {
+  .p-dialog {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .p-dialog-content {
+    flex: 1;
+    overflow: hidden;
+    padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.tinymce-dialog-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: calc(90vh - 130px);
+
+  textarea {
+    display: none;
+  }
+
+  // TinyMCE pleine hauteur
+  ::ng-deep .tox.tox-tinymce {
+    flex: 1 !important;
+    height: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+
+  ::ng-deep .tox-editor-container {
+    height: 100%;
+  }
+}

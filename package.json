@@ -13,6 +13,7 @@
     "private": true,
     "dependencies": {
         "@angular/animations": "^19.0.0",
+        "@angular/cdk": "^19.2.19",
         "@angular/common": "^19.0.0",
         "@angular/compiler": "^19.0.0",
         "@angular/core": "^19.0.0",
@@ -21,6 +22,7 @@
         "@angular/platform-browser-dynamic": "^19.0.0",
         "@angular/router": "^19.0.0",
         "@fullcalendar/angular": "^6.1.16",
+        "@fullcalendar/core": "^6.1.20",
         "@primeng/themes": "^19.0.5",
         "chart.js": "4.4.2",
         "moment": "^2.30.1",
