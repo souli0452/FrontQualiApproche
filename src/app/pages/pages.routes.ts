@@ -43,6 +43,9 @@ import { ParametragesComponent } from './parametrages/parametrages.component';
 import { NcPublieesComponent } from './nc/nc-publiees/nc-publiees';
 import { AnalyseValidationComponent } from './nc/nc-analyse-validation/nc-analyse-validation';
 import { TraitementGlobalComponent } from './nc/nc-traitement/nc-traitement-global';
+import { QmsDocumentComponent } from './qms-document/qms-document.component';
+import { QmsDocumentCreateComponent } from './qms-document-create/qms-document-create.component';
+import { QmsDocumentTypeComponent } from './qms-document-type/qms-document-type';
 
 
 export default [
