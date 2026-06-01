@@ -184,8 +184,8 @@
                     <i class="pi pi-exclamation-triangle nc-icon"></i>
                     <h3 class="nc-card-title">Motif de rejet</h3>
                 </div>
-                <div class="nc-description">
-                    {{demande.observationRejet}}
+                <div class="nc-description !bg-red-100 rounded-md">
+                    <div [innerHTML]="demande.observationRejet"></div>
                 </div>
                 <span *ngIf="demande.docRejet">
                     <p class="mt-4">Documents joint </p>

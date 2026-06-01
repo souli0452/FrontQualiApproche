@@ -21,8 +21,8 @@ export class NcNonTraiterComponent implements OnInit, OnDestroy {
     loading: boolean = false;
     destroy$: Subject<boolean> = new Subject<boolean>();
     cols: any[] = [
-        { field: 'numeroOdre', header: 'N° ordre', type: 'string', filter: true, width: '20%', centered: false },
-        { field: 'numeroNc', header: 'N° Ref', type: 'string', filter: true, width: '30%', centered: false },
+        { field: 'numeroOdre', header: 'N° Ordre', type: 'string', filter: true, centered: false },
+        { field: 'numeroNc', header: 'N° Ref', type: 'string', filter: true, width: '200px', centered: false },
         {field: 'niveauNonConformiteLibelle', header: 'Gravité', type: 'badge', filter: true, width: '20%', centered: false },
         {
             field: 'procEmetteur',

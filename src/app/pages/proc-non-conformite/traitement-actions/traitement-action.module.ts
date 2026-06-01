@@ -10,9 +10,9 @@ import { TraitementActionTableComponent } from './traitement-action-table/traite
 import { TraiterComponent } from './traitement-action-draft/traiter.component';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { DetailTemplateComponent } from '../../../components/detail-template/detail-template.component';
-import { FileUploadComponent } from '../../../components/file-upload/file-upload.component';
 import { PlanActionDetailComponent } from './planAction-detail/planAction-detail.component';
 import { RejeterComponent } from './traitement-action-rejete/rejeter.component';
+import { FileUploadComponent } from '../../../components/non-conformite/file-upload/file-upload.component';
 
 
 

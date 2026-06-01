@@ -210,8 +210,8 @@
                     <h3 class="nc-card-title text-red-500">
                         <i class="pi pi-times-circle mr-2 block font-bold "></i>Motif de rejet
                     </h3>
-                    <div class="nc-description">
-                        {{nc.observationRejet}}
+                    <div class="nc-description !bg-red-100 rounded-md">
+                        <div [innerHTML]="nc.observationRejet"></div>
                     </div>
                 </div>
             </div>

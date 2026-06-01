@@ -57,19 +57,19 @@ export class NCSuiviComponent {
       {
         this.userStructure = getCurrentUserStructure();
         this.cols = [
-            { field: 'numeroReference', header: 'N° Ref', type: 'string', filter: true, width: '150px', centered: false },
-            { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '250px', centered: false },
-            { field: 'status', header: 'Statut', type: 'enum', filter: true, width: '200px', centered: false },
+            { field: 'numeroReference', header: 'N° Ref', type: 'string', filter: true, width: '250px', centered: false },
+            { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '150px', centered: false },
+            { field: 'status', header: 'Statut', type: 'enum', filter: true, width: '250px', centered: false },
             {
                 field: 'typeNonConformiteLibelle',
                 header: 'Source',
                 type: 'string',
                 filter: true,
-                width: '20%',
+                width: '150px',
                 centered: false
             },
             { field: 'niveauNonConformiteLibelle', header: 'Gravité', type: 'badge', filter: false, width: '150px', centered: false },
-            { field: 'createdAt', header: 'Date soumission', type: 'date', filter: true, width: '15%', centered: false }
+            { field: 'createdAt', header: 'Date soumission', type: 'date', filter: true, width: '150px', centered: false }
         ];
     }
     @ViewChild(TraitementTableComponent) dmdTraitement!: TraitementTableComponent;
@@ -100,7 +100,8 @@ export class NCSuiviComponent {
             return;
         }
     
-        const currentUserId = user.userId;
+        const currentUserId = user.id || user.userId;
+        
     
         // 1. Détermination stricte des rôles
         const hasRQ = hasAnyPermission(['VALIDATION_RQ']);
@@ -205,9 +206,11 @@ export class NCSuiviComponent {
     }
 
     getDemandeListUser(userId: string) {
+        console.log('UTILISATEUR ID : ', userId);
         this.loading = true;
         this.service.getNCByUser(userId).subscribe({
             next: (data) => {
+                console.log("Demande list : ", data);
                 this.rawDemandeList = data.body || [];
                 this.applyLocalFilters();
                 this.featureService.onReloadRequested(true);
@@ -218,6 +221,7 @@ export class NCSuiviComponent {
             }
         });
     }
+
     onSuccess(res: HttpResponse<any>) {
         this.getDemandeList()
         showToast(StatusEnum.success, res.status, null, this.messageService);

@@ -11,13 +11,34 @@ import { NcSidebarComponent } from './nc-sidebar/nc-sidebar.component';
 import { NcTableComponent } from './nc-table/nc-table.component';
 import { NcDraftComponent } from './nc-draft/nc-draft.component';
 import { NcArchiveComponent } from './nc-archive/nc-archive.component';
-import { Chips } from 'primeng/chips';
-import { FileUploadComponent } from '../../components/file-upload/file-upload.component';
+import { NcPublieesComponent } from './nc-publiees/nc-publiees';
+import { LightboxComponent } from '../../components/non-conformite/lightbox/lightbox';
+import { FileUploadComponent } from '../../components/non-conformite/file-upload/file-upload.component';
 
 
 @NgModule({
-    imports: [CommonModule, FormsModule, NcRoutingModule, NgPrimeModule, FileUploadComponent],
-    declarations: [NcComponent, NcPublishedComponent, NcComposeComponent, NcArchiveComponent, NcDetailComponent, NcSidebarComponent, NcTableComponent, NcDraftComponent],
-    exports: [NcComposeComponent, NcDraftComponent]
+    imports: [
+        CommonModule, 
+        FormsModule, 
+        NcRoutingModule, 
+        NgPrimeModule, 
+        FileUploadComponent,
+        LightboxComponent
+    ],
+    declarations: [
+        NcComponent, 
+        NcPublishedComponent,
+        NcComposeComponent, 
+        NcArchiveComponent, 
+        NcDetailComponent, 
+        NcSidebarComponent, 
+        NcTableComponent, 
+        NcDraftComponent
+    ],
+    exports: [
+        NcComposeComponent, 
+        NcDraftComponent,
+        NcTableComponent
+    ]
 })
 export class NcModule {}

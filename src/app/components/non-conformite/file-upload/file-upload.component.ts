@@ -2,7 +2,7 @@ import { Component, EventEmitter, Output, Input } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { CommonModule } from '@angular/common';
 import { ProgressBar } from 'primeng/progressbar';
-import { NgPrimeModule } from '../../../prime-ng.module';
+import { NgPrimeModule } from '../../../../prime-ng.module';
 
 @Component({
     selector: 'app-file-upload',

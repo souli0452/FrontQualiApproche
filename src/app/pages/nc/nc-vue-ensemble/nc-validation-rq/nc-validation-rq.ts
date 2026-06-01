@@ -33,7 +33,7 @@ export class ValidationRQComponent {
          private  featureService:FeaturesService,
     ) {
         this.cols = [
-            { field: 'numeroReference', header: 'N° ref', type: 'string', filter: true, width: '220px', centered: false },
+            { field: 'numeroReference', header: 'N° Ref', type: 'string', filter: true, width: '220px', centered: false },
             { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '200px', centered: true },
             { field: 'niveauNonConformiteLibelle', header: 'Gravité', type: 'badge', filter: false, width: '150px', centered: false },
             { field: 'createdAt', header: 'Date soumission', type: 'date', filter: true, width: '150px', centered: false }
@@ -59,29 +59,91 @@ export class ValidationRQComponent {
         showToast(StatusEnum.success, res.status, null, this.messageService);
     }
     validationRs(demandes: any) {
-        const cleanedDemandes = demandes.map((demande: { planActions: { [x: string]: any; responsable: any; dateEcheance: string }[] }) => {
-            const cleanedActions = demande.planActions.map(({ responsable, dateEcheance, ...rest }) => ({
+        const clean = (val: any) => (val === '' ? null : val);
+        const cleanedDemandes = demandes.map((demande: any) => {
+            const { btnActions, ...demandeRest } = demande;
+            const actions = demandeRest.planActions || [];
+            const cleanedActions = actions.map(({ responsable, dateEcheance, ...rest }: any) => ({
                 ...rest,
                 dateEcheance: dateEcheance?.replace(/\//g, "-")
             }));
 
             return {
-                ...demande,
+                ...demandeRest,
+                pertinanceRs: clean(demandeRest.pertinanceRs),
+                justificationRs: clean(demandeRest.justificationRs),
+                pertinancePilote: clean(demandeRest.pertinancePilote),
+                justificationPilote: clean(demandeRest.justificationPilote),
+                pertinanceRsSuivi: clean(demandeRest.pertinanceRsSuivi),
+                numeroFdac: clean(demandeRest.numeroFdac),
+                circuit: clean(demandeRest.circuit),
+                actionId: clean(demandeRest.actionId),
+                origineId: clean(demandeRest.origineId),
+                fonctionEmetteur: clean(demandeRest.fonctionEmetteur),
                 planActions: cleanedActions
             };
         });
+
+        console.log("PAYLOAD VALIDATION RQ: ", cleanedDemandes);
 
         this.service.updateNomConformites(cleanedDemandes).subscribe({
             next: (data) => {
                this.featureService.onReloadRequested(true);
                 this.dmdTraitement.closeDetailsDialog();
-                this.messageService.add({ severity: 'success', summary: 'REUSSI', detail: "L'oppération à réussie !", life: 3000 });
+                this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'oppération à réussie !", life: 5000 });
             },
             error: (error) => {
-                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 16", life: 3000 });
+                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "L'oppération à échouée ! Veuillez réessayer 16", life: 5000 });
+                this.dmdTraitement.closeDetailsDialog();
+                console.log("ERREUR LORS DE LA VALIDATION", error);
+                
             }
         });
     }
+
+    cloture(demandes: any) {
+        const clean = (val: any) => (val === '' ? null : val);
+        const demandesArray = Array.isArray(demandes) ? demandes : [demandes];
+        const cleanedDemandes = demandesArray.map((demande: any) => {
+            const { btnActions, ...demandeRest } = demande;
+            const actions = demandeRest.planActions || [];
+            const cleanedActions = actions.map(({ responsable, dateEcheance, ...rest }: any) => ({
+                ...rest,
+                dateEcheance: typeof dateEcheance === 'string' ? dateEcheance.replace(/\//g, "-") : dateEcheance
+            }));
+
+            return {
+                ...demandeRest,
+                pertinanceRs: clean(demandeRest.pertinanceRs),
+                justificationRs: clean(demandeRest.justificationRs),
+                pertinancePilote: clean(demandeRest.pertinancePilote),
+                justificationPilote: clean(demandeRest.justificationPilote),
+                pertinanceRsSuivi: clean(demandeRest.pertinanceRsSuivi),
+                numeroFdac: clean(demandeRest.numeroFdac),
+                circuit: clean(demandeRest.circuit),
+                actionId: clean(demandeRest.actionId),
+                origineId: clean(demandeRest.origineId),
+                fonctionEmetteur: clean(demandeRest.fonctionEmetteur),
+                planActions: cleanedActions
+            };
+        });
+
+        console.log("PAYLOAD CLOTURE RQ: ", cleanedDemandes);
+
+        this.service.updateNomConformites(cleanedDemandes).subscribe({
+            next: (data) => {
+                this.featureService.onReloadRequested(true);
+                this.dmdTraitement.closeDetailsDialog();
+                this.messageService.add({ severity: 'success', summary: 'Succès', detail: "Clôture de la Non-Conformité réussie", life: 5000 });
+            },
+            error: (error) => {
+                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "La clôture a échoué ! Veuillez réessayer.", life: 5000 });
+                this.dmdTraitement.closeDetailsDialog();
+                console.log("ERREUR LORS DE LA CLOTURE", error);
+            }
+        });
+    }
+    
     hideDialog(event: any) {
         if (event) {
             this.dmdTraitement.displayDetails();

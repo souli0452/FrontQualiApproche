@@ -1,0 +1,43 @@
+    <div *ngIf="roleService.isChef">
+      <div class="bg-surface-100 mb-4 p-2 text-center">
+        <div class="text-xl mb-2 font-bold">Analyse des Non-Conformitées et Réception (Pilote)</div>
+        <p>Espace de pilotage dédié à l'examen de vos dossiers et à la validation des étapes de votre circuit de conformité.</p>
+      </div>
+    </div>
+
+<app-nc-filter-bar (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
+
+<div>
+    
+    <!-- 1. Affichage normal du tableau (s'il y a des données) -->
+    <div *ngIf="roleService.isChef && receptionPiloteData.length > 0">
+        <app-vue-ensemble-reception [demandeList]="receptionPiloteData"></app-vue-ensemble-reception>
+    </div>
+
+    <!-- 2. LE MAGNIFIQUE EMPTY STATE (s'il n'y a aucune donnée) -->
+    <div *ngIf="roleService.isChef && receptionPiloteData.length === 0 && !loading" 
+         class="flex flex-col items-center justify-center py-12 px-4 mt-2 bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl shadow-sm text-center">
+        
+        <!-- Image en noir et blanc (CSS filter: grayscale) -->
+        <img src="assets/images/empty.svg" 
+             alt="Aucune réception" 
+             class="w-[200px] h-auto mb-6 opacity-60 transition-all duration-300 hover:opacity-80 hover:grayscale-0" 
+             style="filter: grayscale(100%);">
+        
+        <!-- Titre accrocheur -->
+        <h3 class="text-2xl font-bold text-surface-900 dark:text-surface-50 mb-3">
+            Aucun dossier en attente de réception
+        </h3>
+        
+        <!-- Texte explicatif long, clair et rassurant -->
+        <p class="text-surface-500 dark:text-surface-400 max-w-2xl leading-relaxed text-lg mb-0 mx-auto">
+            Félicitations, votre espace de travail est parfaitement à jour ! 🎉
+            <br><br>
+            Actuellement, il n'y a aucune nouvelle non-conformité nécessitant votre analyse. 
+            Dès que vos collaborateurs soumettront de nouveaux incidents, ils apparaîtront immédiatement dans cet espace. Vous pourrez alors les examiner, les valider, et les imputer aux responsables adéquats pour traitement.
+        </p>
+
+    </div>
+    
+</div>
+

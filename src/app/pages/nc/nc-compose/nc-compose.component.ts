@@ -22,6 +22,7 @@ import { ReclamationService } from '../../../services/reclamation.service';
 import { NiveauNonConformiteService } from '../../../services/niveau-non-conformite.service';
 import { ActionNonConformiteService } from '../../../services/action-non-conformite.service';
 import { ActivatedRoute } from '@angular/router';
+import { NonConformStatus, EtapeTraitement } from '../../../enums';
 
 @Component({
     selector: 'app-nc-compose',
@@ -107,11 +108,11 @@ export class NcComposeComponent {
         }
     }
 
-    async onSave() {
+    async onSave(publish: boolean = false) {
         this.formSubmitted = true;
 
         // Vérification de base pour éviter les erreurs d'accès à undefined
-        if (!this.nc.niveauNonConformite || !this.nc.typeNonformite || !this.nc.typeProcedure) {
+        if (!this.nc.niveauNonConformite || !this.nc.typeNonformite) {
             this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Veuillez remplir tous les champs obligatoires.' });
             return;
         }
@@ -121,8 +122,9 @@ export class NcComposeComponent {
         this.nonConformite.typeNonConformiteId = this.nc.typeNonformite.id;
         this.nonConformite.structureSoumissionLibelle = this.userStructure?.libelleCourt;
         this.nonConformite.structureSoumissionId = this.userStructure?.id;
-        this.nonConformite.typeProcessusId = this.nc.typeProcedure.id;
-        this.nonConformite.typeProcessusLibelle = this.nc.typeProcedure.libelle;
+        // On récupère directement la structure de l'utilisateur pour le processus
+        this.nonConformite.typeProcessusId = this.userStructure?.id;
+        this.nonConformite.typeProcessusLibelle = this.userStructure?.libelleCourt || this.userStructure?.libelleCourt;
 
         if (this.nc.typeAction) {
             this.nonConformite.actionLibelle = this.nc.typeAction.libelle;
@@ -148,7 +150,13 @@ export class NcComposeComponent {
             }
         }
 
-        console.log(this.nonConformite);
+        if (publish) {
+            this.nonConformite.status = NonConformStatus.PUBLISHED;
+            this.nonConformite.etatTraitement = EtapeTraitement.RECEPTION;
+        } else if (!this.nonConformite.id) {
+            this.nonConformite.status = NonConformStatus.DRAFT;
+        }
+
         if (this.nonConformite.id != null) {
             this.nonConformiteService.update(this.nonConformite).subscribe(this.onResponse());
         } else {
@@ -159,12 +167,12 @@ export class NcComposeComponent {
     onResponse() {
         return {
             next: (res: HttpResponse<any>) => {
-                showToast(StatusEnum.success,  res.status, 'Succès', this.messageService);
+                this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'La non-conformité a été enregistrée avec succès.' });
                 this.closeDialog.emit();
                 this.featureService.onReloadRequested(true);
             },
             error: (error: HttpErrorResponse) => {
-                showToast(StatusEnum.error, error.status, 'Une erreur est survenue', this.messageService, error);
+                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Une erreur est survenue' });
             }
         };
     }

@@ -15,17 +15,24 @@
     [scrollable]="true"
     columnResizeMode="expand" 
     [rowHover]="true"
-    styleClass="p-datatable-sm" 
+    stripedRows
+    [size]="'small'" 
     >
 
     <ng-template pTemplate="caption">
-        <div class="flex flex-wrap items-center justify-between gap-3 bg-surface-0 dark:bg-surface-900 rounded-t-xl py-2 px-3">
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-surface-0 dark:bg-surface-900 rounded-t-xl pb-4">
             <!-- Partie Gauche : Titre et Badge -->
-            <div class="flex gap-2 items-center">
-                <h6 class="m-0 flex align-items-center titre-content gap-2">
-                    Plans d'actions à traiter
-                    <p-badge [value]="nonTraiterData ? nonTraiterData.length.toString() : '0'" styleClass="ml-1"></p-badge>
-                </h6>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-purple-50 dark:bg-purple-500/20 rounded-full flex items-center justify-center">
+                    <i class="pi pi-check text-xl text-purple-600 dark:text-purple-400"></i>
+                </div>
+                <div>
+                    <h5 class="m-0 font-bold text-surface-900 dark:text-surface-0 text-lg flex items-center gap-2">
+                        Plans d'actions à traiter
+                        <p-badge [value]="nonTraiterData ? nonTraiterData.length.toString() : '0'" styleClass="ml-1" severity="info"></p-badge>
+                    </h5>
+                    <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5 m-0">Ces plans d'actions sont en attente de traitement.</p>
+                </div>
             </div>
             
             <!-- Partie Droite : Recherche et Bouton -->
@@ -50,7 +57,7 @@
 
     <ng-template pTemplate="header" let-columns>
         <tr>
-            <th pFrozenColumn alignFrozen="left" class="py-3 first:rounded-l-lg text-center !bg-slate-100 dark:!bg-surface-800 border-b border-surface-200">
+            <th pFrozenColumn alignFrozen="left" class="!py-4 first:rounded-l-lg text-center !bg-slate-100 dark:!bg-surface-800 border-b border-surface-200">
                 <p-tableHeaderCheckbox/>
             </th>
             @for (col of columns; track col) {
@@ -58,14 +65,14 @@
                     [pSortableColumn]="col.field"
                     [style.min-width]="col.width"
                     [ngClass]="{'text-center': col.center}"
-                    class="text-surface-500 dark:text-surface-400 uppercase !bg-slate-100 dark:!bg-surface-800 border-b border-surface-200 dark:border-surface-700 text-center">
+                    class="!py-3 text-surface-500 dark:text-surface-400 uppercase !bg-slate-100 dark:!bg-surface-800 border-b border-surface-200 dark:border-surface-700 text-center">
                     <div class="flex justify-center items-center gap-1.5 w-full">
                         <span class="text-sm font-bold normal-case">{{ col.header }}</span>
                         <p-sortIcon [field]="col.field" class="opacity-50"></p-sortIcon>
                     </div>
                 </th>
             }
-            <th pFrozenColumn alignFrozen="right" class="py-3 last:rounded-r-lg text-sm font-bold !bg-slate-100 dark:!bg-surface-800 border-b border-surface-200 dark:border-surface-700 text-center">
+            <th pFrozenColumn alignFrozen="right" class="!py-3 last:rounded-r-lg text-sm font-bold !bg-slate-100 dark:!bg-surface-800 border-b border-surface-200 dark:border-surface-700 text-center">
                 <div class="flex justify-center items-center font-bold normal-case gap-1.5 w-full">
                     Actions
                 </div>
@@ -75,7 +82,7 @@
 
     <ng-template pTemplate="body" let-nonConformite let-columns="columns">
         <tr class="hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors cursor-pointer" (click)="onRowSelect(nonConformite.id)">
-            <td pFrozenColumn alignFrozen="left" class="py-3 !text-center bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
+            <td pFrozenColumn alignFrozen="left" class="py-3 !text-left bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
                 <p-tableCheckbox [value]="nonConformite" (click)="$event.stopPropagation()"/>
             </td>
             @for (col of columns; track col) {
@@ -90,18 +97,18 @@
                     <span *ngIf="col.field === 'dateEcheance'" 
                           class="flex items-center justify-center gap-2" 
                           style="white-space: nowrap;"
-                          [ngClass]="{'text-red-500 font-bold': isEcheanceProcheOuDepassee(getFieldValue(nonConformite, col.field))}">
-                        <i class="pi pi-calendar" 
+                          [ngClass]="{'text-red-500 font-normal': isEcheanceProcheOuDepassee(getFieldValue(nonConformite, col.field))}">
+                        <i class="pi pi-calendar-clock" 
                            [ngClass]="isEcheanceProcheOuDepassee(getFieldValue(nonConformite, col.field)) ? 'text-red-500' : 'text-primary'"></i>
                         {{ getFieldValue(nonConformite, col.field) }}
                     </span>
-                    <span *ngIf="col.field === 'numeroNc'" class="block text-center text-sm font-bold text-surface-900 dark:text-surface-0" style="text-align: center !important; white-space: nowrap;">
+                    <span *ngIf="col.field === 'numeroNc'" class="block text-center text-sm font-normal text-surface-900 dark:text-surface-0" style="text-align: center !important; white-space: nowrap;">
                         {{ getFieldValue(nonConformite, col.field) }}      
                     </span>
                     <span *ngIf="col.type === 'badge'" class="flex justify-center w-full flex-col items-center">
                         <p-tag 
                             *ngIf="getFieldValue(nonConformite, col.field)"
-                            [style]="{'font-weight': 'bold'}"
+                            [style]="{'font-weight': 'normal', 'text-transform': 'uppercase'}"
                             [severity]="getSeverity(getFieldValue(nonConformite, col.field))" 
                             [value]="getFieldValue(nonConformite, col.field)">
                         </p-tag>
@@ -117,8 +124,8 @@
                     </span>
                 </td>
             }
-            <td pFrozenColumn alignFrozen="right" class="text-center bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
-                <div class="flex gap-1 justify-content-center">
+            <td pFrozenColumn alignFrozen="right" class="text-right bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
+                <div class="flex gap-1 justify-end">
                     <button pButton pRipple icon="pi pi-cog" class="p-button-rounded p-button-text p-button-primary h-2rem w-2rem"
                             (click)="$event.stopPropagation(); onPublish($event, nonConformite)" pTooltip="Traiter"
                             tooltipPosition="top" type="button" *ngIf="status === 'NON_TRAITER'">
@@ -232,7 +239,7 @@
                     </div>
                 </p-popover>
                 <p-floatlabel variant="in">
-                    <textarea pTextarea id="planActionCauses" [(ngModel)]="planAction.observation" rows="8" cols="30" class="w-full"></textarea>
+                    <textarea pTextarea id="planActionCauses" [(ngModel)]="planAction.observation" rows="10" cols="30" class="w-full"></textarea>
                     <label for="planActionCauses">Observations liées à l'exécution de l'action</label>
                 </p-floatlabel>
             </div>

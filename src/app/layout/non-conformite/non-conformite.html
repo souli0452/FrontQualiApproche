@@ -29,6 +29,7 @@
                     <a [routerLink]="tab.routerLink" routerLinkActive="text-primary font-bold" class="flex items-center gap-2 text-inherit no-underline outline-none px-2 py-1">
                         <i [class]="tab.icon"></i>
                         <span class="whitespace-nowrap">{{ tab.label }}</span>
+                        <p-badge *ngIf="tab.badge" [value]="tab.badge" severity="danger"></p-badge>
                     </a>
                 </p-tab>
             </p-tablist>
@@ -70,7 +71,7 @@
         </div>
     </ng-template>
 
-    <div class="p-1">
+    <div class="p-1" *ngIf="submitNCVisible">
         <app-nc-compose (closeDialog)="submitNCVisible = false"></app-nc-compose>
     </div>
 </p-dialog>

@@ -34,7 +34,7 @@ export class VueEnsembleImputationComponent {
         private service: ProcNonConformiteService
     ) {
         this.cols = [
-            { field: 'numeroReference', header: 'N° ref.', type: 'string', filter: false, width: '220px', centered: true },
+            { field: 'numeroReference', header: 'N° Ref.', type: 'string', filter: false, width: '220px', centered: true },
             { field: 'structureSoumissionLibelle', header: 'Processus emetteur', type: 'string', filter: false, width: '300px', centered: false },
             { field: 'niveauNonConformiteLibelle', header: 'Gravité', type: 'badge', filter: false, width: '150px', centered: false },
             { field: 'createdAt', header: 'Date soumission', type: 'date', filter: true, width: '150px', centered: false }

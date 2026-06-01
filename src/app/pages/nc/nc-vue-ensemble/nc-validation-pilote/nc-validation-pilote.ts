@@ -11,13 +11,14 @@ import { TraitementTableComponent } from '../../../../components/non-conformite/
 import { RejetFormsComponent } from '../../../proc-non-conformite/forms/rejet.forms/rejet.forms.component';
 import { EtapeTraitement } from '../../../../enums';
 import { Structure } from '../../../structure/structure-config/structure';
+import { FormRejetComponent } from '../../../../components/non-conformite/form-rejet/form-rejet';
 
 @Component({
     selector: 'app-vue-ensemble-validation-pilote',
     templateUrl: './nc-validation-pilote.html',
     providers: [MessageService],
     standalone: true,
-    imports: [CommonModule, NgPrimeModule, TraitementTableComponent, RejetFormsComponent]
+    imports: [CommonModule, NgPrimeModule, TraitementTableComponent, FormRejetComponent]
 })
 export class ValidationPiloteComponent {
     @Input() demandeList: any[] = [];

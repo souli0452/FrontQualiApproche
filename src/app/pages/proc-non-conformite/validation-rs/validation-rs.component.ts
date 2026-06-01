@@ -68,17 +68,32 @@ export class ValidationRSComponent {
         showToast(StatusEnum.success, res.status, null, this.messageService);
     }
     validationRs(demandes: any) {
-        const cleanedDemandes = demandes.map((demande: { planActions: { [x: string]: any; responsable: any; dateEcheance: string }[] }) => {
-            const cleanedActions = demande.planActions.map(({ responsable, dateEcheance, ...rest }) => ({
+        const clean = (val: any) => (val === '' ? null : val);
+        const cleanedDemandes = demandes.map((demande: any) => {
+            const { btnActions, ...demandeRest } = demande;
+            const actions = demandeRest.planActions || [];
+            const cleanedActions = actions.map(({ responsable, dateEcheance, ...rest }: any) => ({
                 ...rest,
                 dateEcheance: dateEcheance?.replace(/\//g, "-")
             }));
 
             return {
-                ...demande,
+                ...demandeRest,
+                pertinanceRs: clean(demandeRest.pertinanceRs),
+                justificationRs: clean(demandeRest.justificationRs),
+                pertinancePilote: clean(demandeRest.pertinancePilote),
+                justificationPilote: clean(demandeRest.justificationPilote),
+                pertinanceRsSuivi: clean(demandeRest.pertinanceRsSuivi),
+                numeroFdac: clean(demandeRest.numeroFdac),
+                circuit: clean(demandeRest.circuit),
+                actionId: clean(demandeRest.actionId),
+                origineId: clean(demandeRest.origineId),
+                fonctionEmetteur: clean(demandeRest.fonctionEmetteur),
                 planActions: cleanedActions
             };
         });
+
+        console.log("PAYLOAD VALIDATION RS: ", cleanedDemandes);
 
         this.service.updateNomConformites(cleanedDemandes).subscribe({
             next: (data) => {

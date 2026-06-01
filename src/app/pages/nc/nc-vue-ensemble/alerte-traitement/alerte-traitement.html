@@ -6,8 +6,8 @@
                 <i class="pi pi-pencil mr-2"></i>
                 <span>Brouillons en cours</span>
             </div>
-            <p class="text-sm mt-2">
-                Vous avez {{ countBrouillon }} Non-Conformité(s) en attente de finalisation.
+            <p class="text-sm mt-2 flex items-center gap-2">
+                Vous avez <span class="font-bold rounded-full bg-orange-500 h-2 w-2 flex items-center justify-center p-3 text-white">{{ countBrouillon }}</span> Non-Conformité(s) en attente de finalisation.
             </p>
         </div>
     </p-message>
@@ -17,12 +17,12 @@
 <div *ngIf="countReception > 0" class="mb-2">
     <p-message closable severity="warn" size="small">
         <div class="">
-            <div class="flex align-items-center font-semibold">
+            <div class="flex items-center font-bold">
                 <i class="pi pi-users mr-2"></i>
                 <span>Non-conformités de votre service</span>
             </div>
-            <p class="text-sm mt-2">
-                Votre service a {{ countReception }} Non-Conformité(s) publiée(s) en attente de validation.
+            <p class="text-sm mt-2 flex items-center gap-2">
+                Votre service a <span class="font-bold rounded-full bg-orange-500 h-2 w-2 flex items-center justify-center p-3 text-white">{{ countReception }}</span> Non-Conformité(s) publiée(s) en attente de validation.
             </p>
         </div>
     </p-message>
@@ -32,12 +32,12 @@
 <div *ngIf="countImputees > 0" class="mb-2">
     <p-message closable severity="error" size="small">
         <div class="">
-            <div class="flex align-items-center font-semibold">
+            <div class="flex items-center font-bold">
                 <i class="pi pi-exclamation-circle mr-2"></i>
                 <span>Actions à traiter</span>
             </div>
-            <p class="text-sm mt-2 font-bold">
-                Vous avez {{ countImputees }} Non-Conformité(s) qui vous {{ countImputees > 1 ? 'sont' : 'est' }} imputée(s) pour traitement.
+            <p class="text-sm mt-2 flex items-center gap-2">
+                Vous avez <span class="font-bold rounded-full bg-red-500 h-2 w-2 flex items-center justify-center p-3 text-white">{{ countImputees }}</span> Non-Conformité(s) qui vous {{ countImputees > 1 ? 'sont' : 'est' }} imputée(s) pour traitement.
             </p>
         </div>
     </p-message>
@@ -48,12 +48,12 @@
 <div *ngIf="countValidationRQ > 0" class="mb-2">
     <p-message closable severity="error" size="small">
         <div class="">
-            <div class="flex align-items-center font-semibold">
+            <div class="flex items-center font-bold">
                 <i class="pi pi-shield mr-2"></i>
                 <span>Validation RQ</span>
             </div>
-            <p class="text-sm mt-2 font-bold">
-                Vous avez {{ countValidationRQ }} Non-Conformité(s) que vous devez valider.
+            <p class="text-sm mt-2 flex items-center gap-2">
+                Vous avez <span class="font-bold rounded-full bg-red-500 h-2 w-2 flex items-center justify-center p-3 text-white">{{ countValidationRQ }}</span> Non-Conformité(s) que vous devez valider.
             </p>
         </div>
     </p-message>
@@ -63,12 +63,12 @@
 <div *ngIf="countEnAttenteValidation > 0" class="mb-2">
     <p-message closable severity="error" size="small">
         <div class="">
-            <div class="flex align-items-center font-semibold">
+            <div class="flex items-center font-bold">
                 <i class="pi pi-shield mr-2"></i>
                 <span>Validation Globale</span>
             </div>
-            <p class="text-sm mt-2">
-                Il y a {{ countEnAttenteValidation }} Non-Conformité(s) en attente de validation.
+            <p class="text-sm mt-2 flex items-center gap-2">
+                Il y a <span class="font-bold rounded-full bg-red-500 h-2 w-2 flex items-center justify-center p-3 text-white">{{ countEnAttenteValidation }}</span> Non-Conformité(s) en attente de validation.
             </p>
         </div>
     </p-message>
@@ -78,12 +78,12 @@
 <div *ngIf="countValidationPilote > 0" class="mb-2">
     <p-message closable severity="error" size="small">
         <div class="">
-            <div class="flex align-items-center font-semibold">
+            <div class="flex items-center font-bold">
                 <i class="pi pi-shield mr-2"></i>
                 <span>Validation des plans d'actions</span>
             </div>
-            <p class="text-sm mt-2">
-                Il y a {{ countValidationPilote }} plan d'actions en attente de validation. 
+            <p class="text-sm mt-2 flex items-center gap-2">
+                Il y a <span class="font-bold rounded-full bg-red-500 h-2 w-2 flex items-center justify-center p-3 text-white">{{ countValidationPilote }}</span> plan{{ countValidationPilote > 1 ? 's' : '' }} d'actions en attente de validation. 
             </p>
         </div>
     </p-message>
@@ -92,12 +92,12 @@
 <div *ngIf="countCloture > 0" class="mb-2">
     <p-message closable severity="success" size="small">
         <div class="">
-            <div class="flex align-items-center font-semibold">
+            <div class="flex items-center font-bold">
                 <i class="pi pi-check-circle mr-2"></i>
                 <span>Clôture des Non-Conformités</span>
             </div>
-            <p class="text-sm mt-2">
-                Il y a {{ countCloture }} Non-Conformité(s) en attente de clôture.
+            <p class="text-sm mt-2 flex items-center gap-2">
+                Il y a <span class="font-bold rounded-full bg-green-500 h-2 w-2 flex items-center justify-center p-3 text-white">{{ countCloture }}</span> Non-Conformité(s) en attente de clôture.
             </p>
         </div>
     </p-message>
@@ -107,12 +107,12 @@
 <div *ngIf="countAffectation > 0" class="mb-2">
     <p-message closable severity="error" size="small">
         <div class="">
-            <div class="flex align-items-center font-semibold">
+            <div class="flex items-center font-bold">
                 <i class="pi pi-shield mr-2"></i>
                 <span>Affectation</span>
             </div>
-            <p class="text-sm mt-2 font-bold">
-                Vous avez {{ countAffectation }} Non-Conformité(s) en attente d'affectation.
+            <p class="text-sm mt-2 flex items-center gap-2">
+                Vous avez <span class="font-bold rounded-full bg-red-500 h-2 w-2 flex items-center justify-center p-3 text-white">{{ countAffectation }}</span> Non-Conformité(s) en attente d'affectation.
             </p>
         </div>
     </p-message>
@@ -122,12 +122,12 @@
 <div *ngIf="countNonTraiter > 0" class="mb-2">
     <p-message closable severity="error" size="small">
         <div class="">
-            <div class="flex align-items-center font-semibold">
+            <div class="flex items-center font-bold">
                 <i class="pi pi-shield mr-2"></i>
                 <span>Traitement</span>
             </div>
-            <p class="text-sm mt-2 font-bold">
-                Vous avez {{ countNonTraiter }} Plan(s) d'actions en attente de traitement.
+            <p class="text-sm mt-2 flex items-center gap-2">
+                Vous avez <span class="font-bold rounded-full bg-red-500 h-2 w-2 flex items-center justify-center p-3 text-white">{{ countNonTraiter }}</span> Plan{{ countNonTraiter > 1 ? 's' : '' }} d'actions qui doivent être traités par vous.
             </p>
         </div>
     </p-message>

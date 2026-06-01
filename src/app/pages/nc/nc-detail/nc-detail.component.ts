@@ -5,6 +5,9 @@ import { NonConformiteService } from '../../../services/non-conformite.service';
 import { Avatar } from 'primeng/avatar';
 import { EtapeTraitement, NonConformStatus, StatusEnum } from '../../../enums';
 import { downloadAttachment, viewAttachment, downloadFile, getStatusSeverity } from '../../../utils';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { ViewChild } from '@angular/core';
+import { LightboxComponent } from '../../../components/non-conformite/lightbox/lightbox';
 
 @Component({
     selector: 'app-nc-detail',
@@ -16,15 +19,32 @@ export class NcDetailComponent {
     nc: any = {};
     @Input() viewId: any = null;
     @Output() closeDialog = new EventEmitter<void>();
+    @ViewChild('maLightbox') lightbox!: LightboxComponent;
 
     protected planAction: any;
     protected afficheDialog: boolean=false;
 
     constructor(
+        private sanitizer: DomSanitizer,
         private route: ActivatedRoute,
         private nonConformiteService: NonConformiteService,
         private location: Location
     ) {}
+
+    lightboxVisible: boolean = false;
+    lightboxUrl: SafeResourceUrl | null = null;
+    isImage: boolean = false;
+    isPdf: boolean = false;
+
+    openLightbox(fichier: any) {
+        this.lightbox.open(fichier);
+    }
+
+    isViewable(fichier: any): boolean {
+        if (!fichier || !fichier.nom) return false;
+        const nom = fichier.nom.toLowerCase();
+        return nom.endsWith('.pdf') || nom.endsWith('.png') || nom.endsWith('.jpg') || nom.endsWith('.jpeg');
+    }
 
     ngOnInit() {
         if (this.viewId) {

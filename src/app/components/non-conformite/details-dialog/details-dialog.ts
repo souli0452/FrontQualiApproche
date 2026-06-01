@@ -1,24 +1,26 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { DatePipe, formatDate } from '@angular/common';
 import { Tag } from 'primeng/tag';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { FileUploadComponent } from '../../file-upload/file-upload.component';
+import { FileUploadComponent } from '../file-upload/file-upload.component';
 import { FeaturesService } from '../../../services/feature-service';
 import { ProcNonConformiteService } from '../../../pages/proc-non-conformite/proc-non-conformite.service';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { EtapeTraitement } from '../../../enums';
-import { convertFilesToBase64, downloadAttachment, downloadFile } from '../../../utils';
+import { convertFilesToBase64, downloadAttachment, downloadFile, formatDateToDDMMYYYY } from '../../../utils';
+import { LightboxComponent } from '../lightbox/lightbox';
 
 @Component({
     selector: 'app-details-dialog',
     templateUrl: './details-dialog.html',
-    imports: [NgPrimeModule, FileUploadComponent],
+    imports: [NgPrimeModule, FileUploadComponent, LightboxComponent],
     standalone: true,
     styleUrl: './details-dialog.scss'
 })
 export class DetailsDialogComponent {
     @Input() demande: any = {};
+    @ViewChild(LightboxComponent) maLightbox!: LightboxComponent;
     private uploadedFiles: any[] = [];
     constructor(
         private featureService: FeaturesService,
@@ -45,16 +47,31 @@ export class DetailsDialogComponent {
     hideDialogAffich() {
         this.afficheDialog = false;
     }
+
+    openLightbox(file: any) {
+        this.maLightbox.open(file);
+    }
+
+    isViewable(fichier: any): boolean {
+        if (!fichier || !fichier.nom) return false;
+        const nom = fichier.nom.toLowerCase();
+        return nom.endsWith('.pdf') || nom.endsWith('.png') || nom.endsWith('.jpg') || nom.endsWith('.jpeg');
+    }
+
     edit(action: any) {
-        this.planAction = action;
-        this.planAction.dateEcheance = action.dateEcheance.replace(/-/g, '/');
+        this.planAction = { ...action };
+        if (this.planAction.dateEcheance && typeof this.planAction.dateEcheance === 'string') {
+            this.planAction.dateEcheance = this.planAction.dateEcheance.replace(/-/g, '/');
+        }
         console.log(this.planAction.dateEcheance);
         this.fetchUsers();
         this.motifRejetDialog = true;
     }
     affich(action: any) {
-        this.planAction = action;
-        this.planAction.dateEcheance = action.dateEcheance.replace(/-/g, '/');
+        this.planAction = { ...action };
+        if (this.planAction.dateEcheance && typeof this.planAction.dateEcheance === 'string') {
+            this.planAction.dateEcheance = this.planAction.dateEcheance.replace(/-/g, '/');
+        }
         this.afficheDialog = true;
     }
     fetchUsers() {
@@ -75,7 +92,13 @@ export class DetailsDialogComponent {
             });
     }
     modifier() {
-        this.planAction.dateEcheance = this.planAction.dateEcheance.replace(/\//g, '-');
+        if (this.planAction.dateEcheance) {
+            if (this.planAction.dateEcheance instanceof Date) {
+                this.planAction.dateEcheance = formatDateToDDMMYYYY(this.planAction.dateEcheance);
+            } else if (typeof this.planAction.dateEcheance === 'string') {
+                this.planAction.dateEcheance = this.planAction.dateEcheance.replace(/\//g, '-');
+            }
+        }
         this.planAction.responsableEmail = this.user.email;
         this.planAction.responsableNomComplet = this.user.nomComplet;
         this.planAction.responsableId = this.user.id;

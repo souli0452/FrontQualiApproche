@@ -1,10 +1,12 @@
 <p-toast />
-<div class="card shadow-1">
+<div class="shadow-1">
     <app-traitement-table
         [btnActions]="BtnActions.SUIVI_RQ"
         [demandeList]="demandeList"
         (onRejet)="rejet($event)"
         [cols]="cols"
+        [paginator]="false"
+        [showGridlines]="false"
         (onCloture)="cloture($event)"
         [loading]="loading"
         [title]="title">

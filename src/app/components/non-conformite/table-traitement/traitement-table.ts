@@ -1,4 +1,4 @@
-import { Component, ComponentRef, EventEmitter, Input, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, ComponentRef, EventEmitter, Input, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FeaturesService } from "../../../services/feature-service";
@@ -16,9 +16,13 @@ import { SearchAgentComponent } from '../../search-agent-component/search-agent.
     standalone: true,
     imports: [CommonModule, NgPrimeModule, SearchAgentComponent]
 })
-export class TraitementTableComponent {
+export class TraitementTableComponent implements OnInit {
     @Input() demandeList: Array<any> = [];
     @Input() loading: boolean = false;
+    @Input() paginator: boolean = true;
+    @Input() showGridlines: boolean = true;
+    @Input() balanceFrozen: boolean = false;
+
 
     @Input() btnActions?: EtapeTraitement = EtapeTraitement.RECEPTION;
     @Input() title?: string;
@@ -63,6 +67,9 @@ export class TraitementTableComponent {
         private featureService: FeaturesService,
         private datePipe: DatePipe
     ) {
+    }
+
+    ngOnInit() {
         this.colsFilter = this.cols.map((value) => value.field);
     }
 
@@ -89,9 +96,9 @@ export class TraitementTableComponent {
             this.displayDetail = true;
             let componentRef: any;
             if (this.btnActions !== EtapeTraitement.CLOTURE && this.btnActions !== EtapeTraitement.IMPUTATION && this.btnActions !== EtapeTraitement.SUIVI_RQ) {
-                componentRef = this.detailContainer?.createComponent(this.featureService.DynamicFormTraitementComponent(this.selectedDemande.typeDemande));
+                componentRef = this.detailContainer?.createComponent(this.featureService.getDynamicFormTraitementComponent(this.selectedDemande.typeDemande));
             } else {
-                componentRef = this.detailContainer?.createComponent(this.featureService.DynamicFormTraitementComponent(this.selectedDemande.typeDemande));
+                componentRef = this.detailContainer?.createComponent(this.featureService.getDynamicDetailsDialogComponent(this.selectedDemande.typeDemande));
             }
 
             componentRef!.instance.demande = this.selectedDemande;
@@ -281,6 +288,7 @@ export class TraitementTableComponent {
             }
         });
     }
+
     soumettre() {
         let message = `Voulez-vous soumettre la demande n°: ${this.selectedDemande?.numeroReference} pour validation ?`;
         console.log("this.selectedDemande", this.selectedDemande);
@@ -340,10 +348,13 @@ export class TraitementTableComponent {
                         item.etatTraitement = this.BtnActions.CLOTURE;
                         item.status = StatusEnum.APPROVED;
                     });
+                    console.log("ici 1 : ", this.selectedDemandes);
+
                 } else {
                     this.selectedDemande.etatTraitement = this.BtnActions.CLOTURE;
                     this.selectedDemande.status = StatusEnum.APPROVED;
                     this.selectedDemandes.push(this.selectedDemande);
+                    console.log("ici 2 : ", this.selectedDemandes);
                 }
                 this.onCloture.emit(this.selectedDemandes);
             }
@@ -393,12 +404,24 @@ export class TraitementTableComponent {
                 return !this.selectedDemande.pertinancePilote || this.isContentEmpty(this.selectedDemande.justificationPilote);
             case EtapeTraitement.VALIDATION_RS:
                 const hasBasicInfo = !this.isContentEmpty(this.selectedDemande.justificationRs) && this.selectedDemande.pertinanceRs;
-                const hasCircuitInfo = this.selectedDemande.circuit && this.selectedDemande.origineId && this.selectedDemande.actionId;
+                const hasCircuitInfo = this.selectedDemande.circuit && this.selectedDemande.origineId;
                 return !hasBasicInfo || !hasCircuitInfo;
             case EtapeTraitement.TRAITEMENT:
                 // Pour le traitement, on veut au moins un plan d'action
                 const hasPlanActions = this.selectedDemande.planActions && this.selectedDemande.planActions.length > 0;
                 return !hasPlanActions;
+            default:
+                return false;
+        }
+    }
+
+    isActionDisabledClotureRQ(): boolean {
+        if (!this.selectedDemande) return false;
+
+        switch (this.btnActions) {
+            case EtapeTraitement.VALIDATION_RS:
+                const hasBasicInfo = !this.isContentEmpty(this.selectedDemande.justificationRs) && this.selectedDemande.pertinanceRs;
+                return !hasBasicInfo;
             default:
                 return false;
         }

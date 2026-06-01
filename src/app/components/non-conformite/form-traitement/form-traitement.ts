@@ -132,11 +132,27 @@ export class FormTraitementComponent {
             this.demande.origineServiceLibelleCourt = formValues.destination.libelleCourt;
         }
 
-        // Gestion de l'action
+        // Gestion de l'action (Valeur par défaut temporaire)
         if (formValues.typeAction) {
             this.demande.actionId = formValues.typeAction.id;
             this.demande.actionLibelle = formValues.typeAction.libelle;
+        } else {
+            if (this.typesActions && this.typesActions.length > 0) {
+                this.demande.actionId = this.typesActions[0].id;
+                this.demande.actionLibelle = this.typesActions[0].libelle;
+            } else {
+                this.demande.actionId = null;
+                this.demande.actionLibelle = null;
+            }
         }
+
+        // if (formValues.typeAction) {
+        //     this.demande.actionId = formValues.typeAction.id;
+        //     this.demande.actionLibelle = formValues.typeAction.libelle;
+        // } else {
+        //     this.demande.actionId = null;
+        //     this.demande.actionLibelle = null;
+        // }
 
         // Note: We no longer sync from planActionForm.actions because plan actions are managed via the dialog and stored directly in this.demande.planActions
     }
@@ -252,6 +268,7 @@ export class FormTraitementComponent {
                 }
             });
     }
+
     removeAction(index: number): void {
         if (this.actions.length > 1) {
             this.actions.removeAt(index);
@@ -268,11 +285,42 @@ export class FormTraitementComponent {
     openDialog() {
         this.displayDialog = true;
         this.isEdit = false;
-        this.planAction = {}
+        this.user = undefined;
+        
+        let maxNumber = 0;
+        const plans = this.demande.planActions || [];
+        plans.forEach((p: any) => {
+            if (p.numeroOdre && p.numeroOdre.startsWith('P-A-')) {
+                const num = parseInt(p.numeroOdre.substring(4), 10);
+                if (!isNaN(num) && num > maxNumber) {
+                    maxNumber = num;
+                }
+            } else if (p.numeroOdre) {
+                // S'il y a déjà des numéros qui ne sont pas au format P-A-X (ex: 1, 2)
+                const num = parseInt(p.numeroOdre, 10);
+                if (!isNaN(num) && num > maxNumber) {
+                    maxNumber = num;
+                }
+            }
+        });
+        
+        this.planAction = {
+            numeroOdre: `P-A-${maxNumber + 1}`
+        };
     }
     edit(plan: any) {
-        this.planAction = plan;
-        this.planAction.dateEcheance = plan.dateEcheance.replace(/-/g, "/");
+        // Create a copy so we don't mutate the original directly if the user cancels
+        this.planAction = { ...plan }; 
+        
+        // Convert "DD-MM-YYYY" to a real Date object for the p-datePicker
+        if (this.planAction.dateEcheance && typeof this.planAction.dateEcheance === 'string') {
+            const parts = this.planAction.dateEcheance.split(/-|\//); // handles both "-" and "/"
+            if (parts.length === 3) {
+                // Assuming DD-MM-YYYY
+                this.planAction.dateEcheance = new Date(+parts[2], +parts[1] - 1, +parts[0]);
+            }
+        }
+
         this.displayDialog = true;
         this.fetchUsers();
         this.isEdit = true;
@@ -280,22 +328,31 @@ export class FormTraitementComponent {
 
     }
     save() {
+        if (!this.user) {
+            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Veuillez sélectionner un responsable pour ce plan d'action.", life: 3000 });
+            return;
+        }
 
         this.planAction.responsableEmail = this.user.email;
         this.planAction.responsableNomComplet = this.user.firstName + ' ' + this.user.lastName;
         this.planAction.responsableId = this.user.id;
-        if (!this.isEdit) {
-            this.planAction.dateEcheance = formatDateToDDMMYYYY(this.planAction.dateEcheance);
-            this.planAction.status = "INACTIF"
-            this.planActions.push(this.planAction);
+        
+        // Toujours formater la date pour le backend, qu'on soit en création ou en modification
+        this.planAction.dateEcheance = formatDateToDDMMYYYY(this.planAction.dateEcheance);
 
+        if (!this.isEdit) {
+            this.planAction.status = "INACTIF";
+            this.planActions.push(this.planAction);
             this.demande.planActions = this.planActions;
             this.displayDialog = false;
         } else {
-            console.log(this.planAction)
-            this.planAction.dateEcheance = this.planAction.dateEcheance.replace(/\//g, "-");
             this.service.updatePlanAction(this.planAction).subscribe({
                 next: (data) => {
+                    // Update the array with the new value
+                    const index = this.demande.planActions.findIndex((p: any) => p.numeroOdre === this.planAction.numeroOdre);
+                    if (index !== -1) {
+                        this.demande.planActions[index] = this.planAction;
+                    }
                     this.displayDialog = false;
 
                     this.messageService.add({ severity: 'success', summary: 'Réussi', detail: "L'oppération à réussie !", life: 3000 });
@@ -342,5 +399,21 @@ export class FormTraitementComponent {
     }
     hideDialogAffich() {
         this.afficheDialog = false;
+    }
+
+    getFileIcon(filename: string): string {
+        if (!filename) return 'assets/images/unknown-file.png';
+        const extension = filename.split('.').pop()?.toLowerCase() || '';
+        const icons: { [key: string]: string } = {
+            doc: 'assets/images/doc-file.png',
+            docx: 'assets/images/doc-file.png',
+            xlsx: 'assets/images/xls-file.png',
+            pdf: 'assets/images/pdf-file.png',
+            jpeg: 'assets/images/jpeg-file.png',
+            jpg: 'assets/images/jpeg-file.png',
+            png: 'assets/images/jpeg-file.png',
+            txt: 'assets/images/txt-file.png'
+        };
+        return icons[extension] || 'assets/images/unknown-file.png';
     }
 }

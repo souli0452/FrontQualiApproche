@@ -68,18 +68,19 @@ export class NcClotureComponent {
         // this.getDemandeList();
         this.featureService.onReloadRequested(true);
         showToast(StatusEnum.success, res.status, null, this.messageService);
-        this.messageService.add({ severity: 'success', summary: 'REUSSI', detail: "L'oppération à réussie", life: 3000 });
+        this.messageService.add({ severity: 'success', summary: 'Succès', detail: "Clôture de la Non-Conformité réussie", life: 5000 });
         this.dmdTraitement.closeDetailsDialog();
     }
 
     cloture(demandes: any) {
-        const cleanedDemandes = demandes.map((demande: any) => {
+        const demandesArray = Array.isArray(demandes) ? demandes : [demandes];
+        const cleanedDemandes = demandesArray.map((demande: any) => {
             if (demande.planActions && Array.isArray(demande.planActions)) {
                 const cleanedActions = demande.planActions.map((action: any) => {
                     const { responsable, dateEcheance, ...rest } = action;
                     return {
                         ...rest,
-                        dateEcheance: dateEcheance?.replace(/\//g, "-")
+                        dateEcheance: typeof dateEcheance === 'string' ? dateEcheance.replace(/\//g, "-") : dateEcheance
                     };
                 });
                 return {

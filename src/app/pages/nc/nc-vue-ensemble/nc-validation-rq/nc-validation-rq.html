@@ -1,12 +1,15 @@
-<div class="card shadow-1">
+<div class="shadow-1">
     <p-toast />
     <app-traitement-table
         [btnActions]="BtnActions.VALIDATION_RS"
         [demandeList]="demandeList"
         (onValidationRS)="validationRs($event)"
+        (onCloture)="cloture($event)"
         [cols]="cols"
         (onRejet)="rejet($event)"
         [loading]="loading"
+        [paginator]="false" 
+        [showGridlines]="false"
         [title]="title">
     </app-traitement-table>
 </div>

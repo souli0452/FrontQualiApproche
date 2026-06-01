@@ -16,7 +16,7 @@
                     Indiquez ici les actions à mener pour agir en amont. Contrairement à l'action corrective qui résout le problème constaté, l'action préventive cherche à identifier des situations similaires dans l'organisation afin d'y appliquer des mesures de sécurité avant qu'une non-conformité ne s'y déclare.
                 </div>
             </p-popover>
-            <p-editor id="actionsPreventives" name="justification" placeholder="Saisissez des actions à mener pour agir en amont" [(ngModel)]="demande.actionPreventive" [style]="{ height: '70px' }">
+            <p-editor [formats]="[]" id="actionsPreventives" name="justification" placeholder="Saisissez des actions à mener pour agir en amont" [(ngModel)]="demande.actionPreventive" [style]="{ height: '70px' }">
                 <ng-template pTemplate="header">
                     <span class="ql-formats">
                         <select class="ql-size"></select>
@@ -173,7 +173,8 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="flex items-center">
+                        <div class="flex gap-2">
+                            <button *ngIf="isViewable(fichier)" pButton pRipple type="button" icon="pi pi-eye" class="p-button-text p-button-rounded p-button-info" (click)="openLightbox(fichier)" pTooltip="Visualiser" tooltipPosition="top"></button>
                             <p-button [rounded]="true" [text]="true" size="small" icon="pi pi-download"
                                 (click)="downloadAttachment(fichier)" pTooltip="Télécharger" [tooltipPosition]="'left'">
                             </p-button>
@@ -183,6 +184,8 @@
             </p-fieldset>
             </div>
         </div>
+
+        <app-lightbox #maLightbox></app-lightbox>
 
         <!-- Validation RS -->
         <div class="col-12 lg:col-6" *ngIf="demande.pertinanceRs">
@@ -251,10 +254,10 @@
                         <span class="font-bold text-sm">Motif de rejet</span>
                     </div>
                 </ng-template>
-                <div class="nc-description">
+                <div class="nc-description !bg-red-100 rounded-md">
                     <div [innerHTML]="demande.observationRejet"></div>
                 </div>
-                <span *ngIf="demande.docRejet">
+                <span *ngIf="demande.docRejet" class="mt-2 !bg-red-100 rounded-md">
                     <p class="mt-4 font-bold">Document joint</p>
                     <div class="file-item border-round-lg mt-2 mb-2 flex items-center justify-between w-full p-2 bg-blue-50 border border-blue-100 border-round-xl">
                         <div class="flex items-center gap-3">
@@ -317,20 +320,21 @@
                             styleClass="p-datatable-sm"
                             responsiveLayout="scroll"
                             [scrollable]="true"
-                            [paginator]="true" [rows]="5"
+                            [paginator]="true" 
+                            [rows]="10"
                             [showCurrentPageReport]="true"
                             currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} actions">
                         
                         <ng-template pTemplate="header">
                             <tr>
                                 <th pFrozenColumn alignFrozen="left" class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 70px; width: 70px; z-index: 10;">N°</th>
-                                <th class="bg-surface-50 text-700 font-semibold" style="min-width: 250px;">Causes</th>
+                                <th *ngIf="demande.circuit === 'B'" class="bg-surface-50 text-700 font-semibold" style="min-width: 250px;">Causes</th>
                                 <th class="bg-surface-50 text-700 font-semibold" style="min-width: 250px;">Solutions</th>
                                 <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 180px;">Responsable</th>
                                 <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 130px;">Échéance</th>
                                 <th class="bg-surface-50 text-700 font-semibold white-space-nowrap text-center" style="min-width: 110px;">Statut</th>
-                                <th pFrozenColumn alignFrozen="right" class="bg-surface-50 text-700 font-semibold white-space-nowrap text-center" style="min-width: 140px; z-index: 10;"
-                                    *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT||demande.etatTraitement===EtapeTraitement.CLOTURE">
+                                <th pFrozenColumn alignFrozen="right" class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 80px; z-index: 10; text-align: center;"
+                                    *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT||demande.etatTraitement===EtapeTraitement.CLOTURE||demande.etatTraitement===EtapeTraitement.SUIVI_RQ">
                                     Actions</th>
                             </tr>
                         </ng-template>
@@ -338,8 +342,8 @@
                         <ng-template pTemplate="body" let-plan>
                             <tr class="text-sm">
                                 <td pFrozenColumn alignFrozen="left" class="font-bold text-600 text-center bg-white" style="z-index: 1;">{{plan.numeroOdre}}</td>
-                                <td>
-                                    <div [innerHTML]="plan.causeIdentifiees" class="line-height-3 text-700 m-0 p-0" style="min-width: 250px; white-space: normal; word-break: break-word;"></div>
+                                <td *ngIf="demande.circuit === 'B'">
+                                    <div [innerHTML]="plan.causeIdentifiees" class="line-height-3 flex items-center text-center text-700 m-0 p-0" style="min-width: 250px; white-space: normal; word-break: break-word;"></div>
                                 </td>
                                 <td>
                                     <div [innerHTML]="plan.solutionRetenues" class="line-height-3 text-700 m-0 p-0" style="min-width: 250px; white-space: normal; word-break: break-word;"></div>
@@ -361,15 +365,22 @@
                                         <p-tag [severity]="getStatusSeverity(plan.status)" [value]="plan.status" [rounded]="true"></p-tag>
                                     </div>
                                 </td>
+                                <td class="text-center" pFrozenColumn alignFrozen="right" *ngIf="demande.btnActions===EtapeTraitement.SUIVI_RQ">
+                                    <button pButton pRipple type="button" icon="pi pi-eye"
+                                        class="p-button-outlined p-button-secondary p-button-sm" (click)="affich(plan)"
+                                        pTooltip="Voir détails" tooltipPosition="top">
+                                    </button>
+                                </td>
                                 <td pFrozenColumn alignFrozen="right" class="text-center bg-white" style="z-index: 1;" *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT||demande.etatTraitement===EtapeTraitement.CLOTURE">
-                                    <div class="flex justify-content-center gap-2" style="min-width: 140px">
+                                    <div class="flex justify-center gap-2" style="min-width: 140px">
                                         <button
                                             *ngIf="(demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT)&&(plan.status==='NON_TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
                                             pButton pRipple type="button" icon="pi pi-pencil"
                                             class="p-button-rounded p-button-text p-button-info p-button-sm" (click)="edit(plan)"
                                             pTooltip="Modifier" tooltipPosition="top">
                                         </button>
-                                        <button pButton pRipple type="button" icon="pi pi-search"
+                                        <button 
+                                            pButton pRipple type="button" icon="pi pi-search"
                                             class="p-button-rounded p-button-text p-button-secondary p-button-sm" (click)="affich(plan)"
                                             pTooltip="Détails" tooltipPosition="top">
                                         </button>
@@ -405,103 +416,104 @@
 </div>
 
 <!-- Dialog Modification Plan d'action -->
-<p-dialog header="Modification Plan d'action" [(visible)]="motifRejetDialog" [style]="{ width: '50rem' }"
-    [breakpoints]="{ '960px': '95vw' }">
-    <div class="grid p-fluid">
-        <div class="col-12 field">
-            <label for="causes" class="font-bold block mb-2">
-                Causes identifiées <span class="text-red-500">*</span>
-            </label>
+<p-dialog [(visible)]="motifRejetDialog" [modal]="true"
+    [style]="{ width: '40rem' }" [breakpoints]="{ '960px': '95vw' }">
+    <ng-template pTemplate="header">
+        <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center bg-blue-50 text-blue-500 rounded-full" style="width: 3.5rem; height: 3.5rem">
+                <i class="pi pi-pencil text-2xl"></i>
+            </div>
+            <div class="flex flex-col">
+                <span class="font-bold text-xl text-900 mb-1">Modification du Plan d'action</span>
+                <span class="text-500 text-sm">Mettez à jour les détails de cette action corrective.</span>
+            </div>
+        </div>
+    </ng-template>
+    
+    <div class="grid p-fluid mt-2">
+        <div *ngIf="demande.circuit === 'B'" class="col-12 field my-2">
+            <div class="flex mb-2 gap-2">
+                <label for="causes" class="font-normal m-0 font-semibold">Causes identifiées</label>
+                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCauses.toggle($event)"></i>
+            </div>
+            <p-popover #infoCauses>
+                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                    Expliquez la source du problème pour empêcher qu'il ne se reproduise.
+                </div>
+            </p-popover>
+            <p-editor [formats]="[]" id="causes" name="causes" placeholder="Entrer les causes" [(ngModel)]="planAction.causeIdentifiees" [style]="{ height: '70px' }">
+                <ng-template pTemplate="header">
+                    <span class="ql-formats">
+                        <select class="ql-size"></select>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-bold" aria-label="Bold"></button>
+                        <button class="ql-italic" aria-label="Italic"></button>
+                        <button class="ql-underline" aria-label="Underline"></button>
+                    </span>
+                </ng-template>
+            </p-editor>
+        </div>
+        
+        <div class="col-12 field my-2">
+            <div class="flex mb-2 gap-2">
+                <label for="solution" class="font-normal m-0 font-semibold">Solutions retenues</label>
+                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCorrection.toggle($event)"></i>
+            </div>
+            <p-popover #infoCorrection>
+                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                    Indiquez ici l'ensemble des actions correctives retenues pour résoudre cette non-conformité.
+                </div>
+            </p-popover>
+            <p-editor [formats]="[]" id="solution" name="solution" placeholder="Entrer les solutions" [(ngModel)]="planAction.solutionRetenues" [style]="{ height: '70px' }">
+                <ng-template pTemplate="header">
+                    <span class="ql-formats">
+                        <select class="ql-size"></select>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-bold" aria-label="Bold"></button>
+                        <button class="ql-italic" aria-label="Italic"></button>
+                        <button class="ql-underline" aria-label="Underline"></button>
+                    </span>
+                </ng-template>
+            </p-editor>
+        </div>
 
-            <textarea pInputTextarea id="causes" [(ngModel)]="planAction.causeIdentifiees" name="causes" rows="5"
-                [autoResize]="true" placeholder="Entrer les causes " class="w-full"></textarea>
-
-        </div>
-        <div class="flex flex-col w-full">
-            <div class="flex align-items-center gap-2">
-                <label for="causes" class="font-normal m-0 font-semibold">Causes identifiées <span class="text-red-500">*</span></label>
+        <div class="col-12 field my-2">
+            <div class="flex mb-2 gap-2">
+                <label for="responsable" class="font-normal m-0 font-semibold">Responsable</label>
             </div>
-            <div>
-                <p-editor [style]="{'height':'70px'}" name="causes"
-                     [(ngModel)]="planAction.causeIdentifiees" placeholder="causes">
-                    <ng-template pTemplate="header">
-                        <span class="ql-formats">
-                            <select class="ql-size"></select>
-                            <select class="ql-font"></select>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-bold" aria-label="Bold"></button>
-                            <button class="ql-italic" aria-label="Italic"></button>
-                            <button class="ql-underline" aria-label="Underline"></button>
-                        </span>
-                    </ng-template>
-                </p-editor>
-            </div>
-        </div>
-        <div class="col-12 field">
-            <div class="flex flex-col w-full">
-            <div class="flex align-items-center gap-2">
-                <label for="solution" class="font-normal m-0 font-semibold">Solutions retenues <span class="text-red-500">*</span></label>
-            </div>
-            <div>
-                <p-editor [style]="{'height':'70px'}" name="solution"
-                     [(ngModel)]="planAction.solutionRetenues" placeholder="solutions">
-                    <ng-template pTemplate="header">
-                        <span class="ql-formats">
-                            <select class="ql-size"></select>
-                            <select class="ql-font"></select>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-bold" aria-label="Bold"></button>
-                            <button class="ql-italic" aria-label="Italic"></button>
-                            <button class="ql-underline" aria-label="Underline"></button>
-                        </span>
-                    </ng-template>
-                </p-editor>
-            </div>
-        </div>
-        </div>
-        <div class="col-12 field mt-2">
-            <label for="responsable" class="font-bold block mb-2">
-                Responsable <span class="text-red-500">*</span>
-            </label>
             <p-select id="responsable" [options]="users" optionLabel="fullName"
                 placeholder="Sélectionnez le responsable" [filter]="true" [showClear]="true" appendTo="body"
                 [(ngModel)]="user" class="w-full">
             </p-select>
-            
         </div>
-        <p-fluid class="card flex flex-wrap gap-2">
-            <div class="flex-auto">
-                <label for="numeroOdre" class="font-bold block mb-2">
-                    Numéro d'ordre <span class="text-red-500">*</span>
-                </label>
-                <input pInputText id="numeroOdre" [(ngModel)]="planAction.numeroOdre" type="number" class="w-full" />
-            </div>
-            <div class="flex-auto">
-                <label for="dateEcheance" class="font-bold block mb-2">
-                    Date d'échéance <span class="text-red-500">*</span>
-                </label>
-                <p-datePicker id="dateEcheance" [showIcon]="true" [(ngModel)]="planAction.dateEcheance"
-                    placeholder="Date de l'échéance" dateFormat="dd/mm/yy" class="w-full">
-                </p-datePicker>
-            </div>
+        
+        <p-fluid class="flex flex-wrap gap-4 mt-2 pt-2 col-12">
 
-
+            <div class="flex-auto">
+                <p-floatlabel variant="on">
+                    <p-datePicker inputId="dateEcheance" [showIcon]="true" [showOnFocus]="false"
+                        [(ngModel)]="planAction.dateEcheance" class="w-full" appendTo="body" dateFormat="dd/mm/yy">
+                    </p-datePicker>
+                    <label for="dateEcheance" class="font-bold">Date d'échéance <span class="text-red-500">*</span></label>
+                </p-floatlabel>
+            </div>
         </p-fluid>
+
     </div>
     <ng-template pTemplate="footer">
         <button pButton pRipple type="button" icon="pi pi-times" class="p-button-outlined p-button-secondary"
             label="Annuler" (click)="hideDialog()">
         </button>
-        <button pButton pRipple type="button" icon="pi pi-check" class="p-button-primary ml-2" (click)="modifier()"
-            label="Enregistrer">
+        <button pButton pRipple type="button" icon="pi pi-check" [disabled]="!planAction.solutionRetenues"
+            class="p-button-primary ml-2" (click)="modifier()" label="Enregistrer">
         </button>
     </ng-template>
 </p-dialog>
 
 <!-- Dialog Détails Plan d'action -->
-<p-dialog [(visible)]="afficheDialog" [style]="{ width: '55rem' }"
+<p-dialog [(visible)]="afficheDialog" [style]="{ width: '50rem' }"
     [breakpoints]="{ '960px': '95vw' }" [modal]="true" [dismissableMask]="true">
     
     <ng-template pTemplate="header">
@@ -541,7 +553,7 @@
                         <span class="text-500 text-sm block mb-1">Date d'échéance</span>
                         <div class="flex items-center gap-2">
                             <i class="pi pi-calendar text-primary-400"></i>
-                            <span class="font-bold text-900">{{planAction.dateEcheance | date:'dd/MM/yyyy' }}</span>
+                            <span class="font-bold text-900">{{planAction.dateEcheance }}</span>
                         </div>
                     </div>
                 </div>
@@ -592,18 +604,18 @@
             <div class="bg-surface-50 dark:bg-surface-900 p-4 rounded-xl border border-surface-200 dark:border-surface-700">
                 <div class="flex items-center gap-2 mb-3 text-blue-500">
                     <i class="pi pi-paperclip"></i>
-                    <span class="font-bold">Pièces jointes</span>
+                    <span class="font-bold">Pièces jointes 1</span>
                 </div>
-                <div class="flex flex-column gap-2">
+                <div class="flex flex-col gap-2">
                     <div *ngFor="let fichier of planAction.fichiers"
-                        class="flex align-items-center justify-content-between w-full p-3 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg hover:shadow-sm transition-shadow">
-                        <div class="flex align-items-center gap-3">
-                            <div class="flex align-items-center justify-content-center bg-blue-50 dark:bg-blue-900/30 rounded-full" style="width: 2.5rem; height: 2.5rem;">
-                                <img [src]="getFileIcon(fichier.nomFichier)" alt="File icon" width="20" height="20" />
+                        class="flex items-center justify-between w-full p-3 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg hover:shadow-sm transition-shadow">
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center justify-center bg-blue-50 dark:bg-blue-900/30 rounded-full" style="width: 2.5rem; height: 2.5rem;">
+                                <img [src]="getFileIcon(fichier.nom || fichier.nomFichier)" alt="File icon" width="20" height="20" />
                             </div>
-                            <div class="flex flex-column">
-                                <span class="font-semibold text-sm text-900 dark:text-100 block" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [title]="fichier.nomFichier">
-                                    {{ fichier.nomFichier }}
+                            <div class="flex flex-col">
+                                <span class="font-semibold text-sm text-900 dark:text-100 block" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [title]="fichier.nom || fichier.nomFichier">
+                                    {{ fichier.nom || fichier.nomFichier }}
                                 </span>
                             </div>
                         </div>

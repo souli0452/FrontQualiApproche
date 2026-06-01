@@ -4,16 +4,16 @@ import { MessageService } from 'primeng/api';
 import { HttpResponse } from '@angular/common/http';
 import { TraitementTableComponent } from '../../../../components/non-conformite/table-traitement/traitement-table';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
-import { RejetFormsComponent } from '../../../proc-non-conformite/forms/rejet.forms/rejet.forms.component';
 import { EtapeTraitement } from '../../../../enums';
 import { Structure } from '../../../structure/structure-config/structure';
 import { ProcNonConformiteService } from '../../../proc-non-conformite/proc-non-conformite.service';
 import { showToast, StatusEnum } from '../../../../utils';
 import { FeaturesService } from '../../../../services/feature-service';
+import { FormRejetComponent } from '../../../../components/non-conformite/form-rejet/form-rejet';
 
 @Component({
     selector: 'app-nc-affectation',
-    imports: [CommonModule, NgPrimeModule, TraitementTableComponent, RejetFormsComponent],
+    imports: [CommonModule, NgPrimeModule, TraitementTableComponent, FormRejetComponent],
     providers: [MessageService],
     templateUrl: './nc-affectation.html'
 })

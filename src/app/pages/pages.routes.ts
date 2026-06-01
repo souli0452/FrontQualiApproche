@@ -37,9 +37,12 @@ import { RoleDetailComponent } from './role/role-detail/role-detail.component';
 import { NonConformiteLayoutComponent } from '../layout/non-conformite/non-conformite';
 import { NcVueEnsembleComponent } from './nc/nc-vue-ensemble/vue-ensemble';
 import { NCAffectationActionComponent } from './nc/nc-affectation-action/nc-affectation-action';
-import { NCAnalyseValidationComponent } from './nc/nc-analyse-validation/nc-analyse-validation';
+import { AnalyseReceptionComponent } from './nc/nc-analyse-reception/nc-analyse-reception';
 import { NCSuiviComponent } from './nc/nc-suivi/nc-suivi';
 import { ParametragesComponent } from './parametrages/parametrages.component';
+import { NcPublieesComponent } from './nc/nc-publiees/nc-publiees';
+import { AnalyseValidationComponent } from './nc/nc-analyse-validation/nc-analyse-validation';
+import { TraitementGlobalComponent } from './nc/nc-traitement/nc-traitement-global';
 
 
 export default [
@@ -94,8 +97,11 @@ export default [
             { path: '', redirectTo: 'vue-ensemble', pathMatch: 'full' },
             { path: 'vue-ensemble', component: NcVueEnsembleComponent, title: 'Vue d\'ensemble' },
             { path: 'affectation-action', component: NCAffectationActionComponent, title: 'Affectations' },
-            { path: 'analyse-validation', component: NCAnalyseValidationComponent, title: 'Analyse et Validation' },
+            { path: 'analyse-reception', component: AnalyseReceptionComponent, title: 'Analyse et Réception' },
+            { path: 'analyse-validation', component: AnalyseValidationComponent, title: 'Analyse et Validation' },
             { path: 'suivi', component: NCSuiviComponent, title: 'Suivi' },
+            { path: 'publiees', component: NcPublieesComponent, title: 'Mes Non-Conformitées publiées' },
+            { path: 'actions', component: TraitementGlobalComponent, title: 'Mes actions à mener' },
         ]
     },
     { path: 'profil', component: ProfilComponent, title: 'Profil' },

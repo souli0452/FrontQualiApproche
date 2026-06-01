@@ -396,3 +396,90 @@ p-button .p-button-info {
         }
     }
 }
+
+/* Fix for PrimeNG MonthPicker and YearPicker styling */
+// .p-datepicker .p-monthpicker,
+// .p-datepicker .p-yearpicker {
+//     display: grid !important;
+//     grid-template-columns: repeat(2, 1fr) !important;
+//     gap: 0.5rem !important;
+//     padding: 0.5rem !important;
+// }
+
+// /* On override pour le monthpicker à 3 colonnes pour que ce soit plus joli */
+// .p-datepicker .p-monthpicker {
+//     grid-template-columns: repeat(3, 1fr) !important;
+// }
+
+// .p-datepicker .p-monthpicker-month,
+// .p-datepicker .p-yearpicker-year {
+//     padding: 0.5rem !important;
+//     border-radius: 0.5rem !important;
+//     display: flex !important;
+//     align-items: center !important;
+//     justify-content: center !important;
+// }
+
+
+.select-structure {
+    padding: 0 !important;
+    background: transparent !important;
+    border-color: white !important;
+
+    span.p-select-label.p-placeholder {
+        color: white !important;
+        padding-right: 0 !important;
+    }
+
+    span.p-select-label {
+        color: white !important;
+    }
+
+    .p-select-dropdown .p-icon {
+        color: white !important;
+
+        &:hover {
+            color: white !important;
+        }    
+    }
+}
+
+
+.date-select {
+
+    .p-datepicker-clear-icon {
+        right: 25px !important;
+    }
+
+    .p-inputtext::placeholder {
+        color: white;
+    }
+    .p-icon{
+        color: white !important;
+
+        &:hover {
+            color: white !important;
+        } 
+    }
+
+    .p-inputtext {
+        background: transparent !important;
+        border-color: white !important;
+        color: white !important;
+        padding-right: 20px !important;
+
+
+
+        .p-datepicker-input-icon-container {
+            color: white !important;
+
+            .p-icon{
+                color: white !important;
+
+                &:hover {
+                    color: white !important;
+                }    
+            }
+        }
+    }
+}

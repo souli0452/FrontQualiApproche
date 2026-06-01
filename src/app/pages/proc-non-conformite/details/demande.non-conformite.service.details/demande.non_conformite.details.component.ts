@@ -8,7 +8,7 @@ import { AuthService } from '../../../../services/auth-services/auth.service';
 import { convertFilesToBase64, downloadAttachment, downloadFile, formatDateTodd, formatDateToDDMMYYYY, getStatusSeverity } from '../../../../utils';
 import { ProcNonConformiteService } from '../../proc-non-conformite.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { FileUploadComponent } from '../../../../components/file-upload/file-upload.component';
+import { FileUploadComponent } from '../../../../components/non-conformite/file-upload/file-upload.component';
 
 @Component({
     selector: 'demande-non_conformite-details',

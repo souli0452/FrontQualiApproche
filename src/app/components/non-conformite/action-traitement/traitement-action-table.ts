@@ -16,11 +16,12 @@ import { convertFilesToBase64, showToast, StatusEnum } from '../../../utils';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { FileUploadComponent } from '../../file-upload/file-upload.component';
+import { FileUploadComponent } from '../file-upload/file-upload.component';
 
 @Component({
     selector: 'app-traitement-action',
     templateUrl: './traitement-action-table.html',
+    styleUrl: './traitement-action-table.scss',
     standalone: true,
     imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent]
 })
