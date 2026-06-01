@@ -112,7 +112,7 @@ export class NonConformitFormsComponent {
             pertinanceRsSuivi: formValues.pertinanceRsSuivi,
             numeroFdac: formValues.numeroFdac,
             participants: formValues.participants ?? [],
-            circuit: formValues.circuit
+            circuit: formValues.circuit || 'A'
         });
 
         // Gestion de la destination

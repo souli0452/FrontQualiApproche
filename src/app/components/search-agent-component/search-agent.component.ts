@@ -3,7 +3,7 @@ import { TypeStructure } from '../../enums';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { KcUser } from '../../models';
 import { takeUntil } from 'rxjs/operators';
-import { showToast, StatusEnum } from '../../utils';
+import { getCurrentUserStructure, showToast, StatusEnum } from '../../utils';
 import { AuthService } from '../../services/auth-services/auth.service';
 import { Structure } from '../../pages/structure/structure-config/structure';
 import { StructureService } from '../../pages/structure/structure-service/structure-service';
@@ -13,17 +13,17 @@ import { StructureService } from '../../pages/structure/structure-service/struct
     selector: 'app-search-agent',
     templateUrl: './search-agent.component.html',
     styleUrl: './search-agent.component.scss',
-    imports:[NgPrimeModule]
+    standalone: true,
+    imports: [NgPrimeModule]
 })
 export class SearchAgentComponent implements OnInit {
-
     directions: Structure[] = [];
     services: Structure[] = [];
 
     directionId: string | undefined;
     serviceId: string | undefined;
     searchedAgent: KcUser | undefined;
-    users: KcUser[]=[];
+    users: KcUser[] = [];
     agents: any[] = [];
     @Input() prefilledStructureId?: string;
     @Output() searchedAgentChange = new EventEmitter<any>();

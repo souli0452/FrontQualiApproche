@@ -41,16 +41,16 @@
                 </ng-container>
 
                 <div class="col-sm-12">
-                    <p-table 
+                    <p-table
                     [resizableColumns]="true"
                     columnResizeMode="expand"
-                    #dt #gFilter 
+                    #dt #gFilter
                     [size]="'small'"
                     [columns]="tableCols"
-                    [value]="listeObject" 
+                    [value]="listeObject"
                     selectionMode="single"
-                    dataKey="id" 
-                    [paginator]="isPagination" 
+                    dataKey="id"
+                    [paginator]="isPagination"
                     [rows]="10"
                     [loading]="loading"
                     [showLoader]="false"
@@ -98,7 +98,7 @@
                                     <span
                                         *ngIf="col.type === 'number'"> {{ rowData[col.field] }}</span>
                                     <span
-                                        *ngIf="col.type === 'date'"> {{ rowData[col.field] | date: 'dd/MM/yyyy' }}</span>
+                                        *ngIf="col.type === 'date'"> {{ rowData[col.field] | date: 'dd/MM/yyyy HH:mm' }}</span>
                                     <span *ngIf="col.type === 'boolean'">
                                 <span *ngIf="rowData[col.field]">
                                     <p-tag  severity="success" value="{{ col.labelTrue }}" />
@@ -123,7 +123,7 @@
                             </span>
                                 </td>
                                 <td style="text-align:center" *ngIf="!consultation">
-                                    <p-button 
+                                    <p-button
                                         size="small"
                                         icon="pi pi-ellipsis-h"
                                         (click)="setActionMenu($event, menu, rowData)"
@@ -137,7 +137,7 @@
 
                             </tr>
                         </ng-template>
-                        
+
                         <ng-template #loadingbody>
                             <tr *ngFor="let i of [].constructor(loadingRows)">
                                 <td *ngFor="let col of tableCols">
@@ -161,7 +161,7 @@
                             </tr>
                         </ng-template>
                     </p-table>
-                    
+
                 </div>
             </div>
         </div>
@@ -192,7 +192,7 @@
                 </div>
             </ng-container>
         </div>
-    </form> 
+    </form>
     <ng-template #footer>
         <button size="small" type="button" pRipple pButton icon="pi pi-times" (click)="hidDialog()" label="Annuler"
                 class="p-button-secondary position-left mr-3"></button>
@@ -202,15 +202,15 @@
     </ng-template>
 </p-dialog>
 
-<p-dialog 
-    (onHide)="displayDetails = false" 
-    [modal]="true" 
+<p-dialog
+    (onHide)="displayDetails = false"
+    [modal]="true"
     header="Header"
-    [(visible)]="displayDetails" 
+    [(visible)]="displayDetails"
     appendTo="body"
-    [maximizable]="true" 
-    class="p-fluid" 
-    styleClass="ng-dialog" 
+    [maximizable]="true"
+    class="p-fluid"
+    styleClass="ng-dialog"
     [style]="{ width: '50rem' }"
     [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }">
     <ng-template #headless>
@@ -244,7 +244,7 @@
                 <div class="card-right-footer">
                     <button type="button" size="small" pRipple pButton icon="pi pi-times" (click)="displayDetails = false" label="Fermer"
                             class="p-button-secondary"></button>
-                </div> 
+                </div>
             </div>
         </div>
 

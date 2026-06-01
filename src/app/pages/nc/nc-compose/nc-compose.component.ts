@@ -134,7 +134,7 @@ export class NcComposeComponent {
         this.nonConformite.fonctionEmetteur = '';
         this.nonConformite.niveauNonConformiteLibelle = this.nc.niveauNonConformite.libelle;
         this.nonConformite.typeNonConformiteLibelle = this.nc.typeNonformite.libelle;
-        
+
         // Gestion des pièces jointes de manière asynchrone
         if (this.uploadedFiles && this.uploadedFiles.length > 0) {
             try {

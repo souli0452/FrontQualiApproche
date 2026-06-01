@@ -104,7 +104,14 @@ export default [
             { path: 'actions', component: TraitementGlobalComponent, title: 'Mes actions à mener' },
         ]
     },
-    { path: 'profil', component: ProfilComponent, title: 'Profil' },
+    { path: 'profil', component: ProfilComponent, title: 'Liste des Profils' },
+    { path: 'type-nc', component: TypeNonConformiteComponent, title: 'Types de non conformité' },
+    { path: 'type-processus', component: TypeProcessusComponent, title: 'Types de processus' },
+    { path: 'niveau-nc', component: NiveauNonConformiteComponent, title: 'Niveaux des non-conformités' },
+    { path: 'type-action', component: ActionNonConformiteComponent, title: 'Types d\'actions' },
+    { path: 'qms-documents', data: { breadcrumb: 'Documents QMS' }, component: QmsDocumentComponent, title: 'Gestion Documentaire QMS' },
+    { path: 'qms-document-create', data: { breadcrumb: 'Nouveau Document' }, component: QmsDocumentCreateComponent, title: 'Créer un Document QMS' },
+    { path: 'qms-document-types', data: { breadcrumb: 'Types de Document QMS' }, component: QmsDocumentTypeComponent, title: 'Configuration des Types de Document' },
     { path: 'empty', component: Empty },
     { path: '**', redirectTo: '/notfound' },
 ] as Routes;
