@@ -12,18 +12,12 @@
                 <!-- Colonne gauche -->
                  <div class="col-12 md:col-6">
                     <div class="drawer-field flex flex-column gap-4 mb-4">
-                        <!-- <p-floatlabel variant="on">
-                            <input pInputText id="libelleCourt" formControlName="libelleCourt" autocomplete="off" />
-                            <label for="libelleCourt">Sigle</label>
-                        </p-floatlabel> -->
-                        <p-floatlabel variant="in" class="w-full md:w-100">
+                        <p-floatlabel variant="on" class="w-full block">
                             <input pInputText id="libelleCourt" formControlName="libelleCourt" autocomplete="off" class="w-full" />
                             <label for="libelleCourt">Sigle</label>
                         </p-floatlabel>
-                        <!-- <label for="libelleCourt" class="font-bold text-required block mb-1">Sigle</label>
-                        <input id="libelleCourt" type="text" pInputText formControlName="libelleCourt" class="w-full"/> -->
 
-                        <p-floatlabel class="w-full md:w-100" variant="in">
+                        <p-floatlabel variant="on" class="w-full block">
                             <p-select formControlName="region" 
                                     emptyMessage="Aucune donnée disponible"
                                     emptyFilterMessage="Aucun résultat trouvé"
@@ -31,7 +25,7 @@
                                     [resetFilterOnHide]="true"
                                     [showClear]="true"
                                     [filter]="true"
-                            inputId="region" [options]="REGION_LIST" styleClass="w-full" variant="filled" />
+                            inputId="region" [options]="REGION_LIST" styleClass="w-full" class="w-full" variant="filled" />
                             <label for="region">Région</label>
                         </p-floatlabel>
                     </div>
@@ -51,31 +45,23 @@
                     </div> -->
 
                 <!-- Colonne droite -->
-                <div class="drawer-field flex flex-column gap-4">
-                    <!-- <div class="field">
-                        <label for="libelleLong" class="font-bold text-required block mb-1">Libellé</label>
-                        <input id="libelleLong" type="text" pInputText formControlName="libelleLong" class="w-full"/>
-                    </div> -->
+                <div class="col-12 md:col-6">
+                    <div class="drawer-field flex flex-column gap-4 mb-4">
+                        <p-floatlabel variant="on" class="w-full block">
+                            <input pInputText id="libelleLong" formControlName="libelleLong" autocomplete="off" class="w-full" />
+                            <label for="libelleLong">Libellé</label>
+                        </p-floatlabel>
 
-                    <p-floatlabel variant="in" class="w-full md:w-50">
-                        <input pInputText id="libelleLong" formControlName="libelleLong" autocomplete="off" class="w-full" />
-                        <label for="libelleLong">Libellé</label>
-                    </p-floatlabel>
-
-                    <!-- <div class="field mt-4">
-                        <label for="ville" class="font-bold text-required block mb-1">Ville</label>
-                        <input id="ville" type="text" pInputText formControlName="ville" class="w-full"/>
-                    </div> -->
-
-                    <p-floatlabel variant="in" class="w-full md:w-50">
-                        <input pInputText id="ville" formControlName="ville" autocomplete="off" class="w-full" />
-                        <label for="ville">Ville</label>
-                    </p-floatlabel>
+                        <p-floatlabel variant="on" class="w-full block">
+                            <input pInputText id="ville" formControlName="ville" autocomplete="off" class="w-full" />
+                            <label for="ville">Ville</label>
+                        </p-floatlabel>
+                    </div>
                 </div>
             </div>
 
             <!-- Deuxième section - 2 colonnes -->
-            <div class="col-12 mt-5">
+            <div class="col-12 mt-2">
                 <hr>
                 <div class="col-12 text-left">
                     <span class="drawer-subtitle">Autres Informations</span>
@@ -87,13 +73,12 @@
                 <!-- Colonne gauche -->
                  <div class="col-12 md:col-6">
                     <div class="drawer-field flex flex-column gap-4 mb-4">
-                        <p-floatlabel variant="in" class="w-full md:w-100">
+                        <p-floatlabel variant="on" class="w-full block">
                             <input pInputText id="titreAutoriteSignataire" formControlName="titreAutoriteSignataire" autocomplete="off" class="w-full" />
                             <label for="titreAutoriteSignataire">Titre Autorité Signataire</label>
                         </p-floatlabel>
-                        <!-- <label for="titreAutoriteSignataire" class="font-bold text-required block mb-1">Titre Autorité Signataire</label>
-                        <input id="titreAutoriteSignataire" type="text" pInputText formControlName="titreAutoriteSignataire" class="w-full"/> -->
-                        <p-floatlabel variant="in" class="w-full md:w-100">
+                        
+                        <p-floatlabel variant="on" class="w-full block">
                             <input pInputText id="titreHonorifiqueSignataire" formControlName="titreHonorifiqueSignataire" autocomplete="off" class="w-full" />
                             <label for="titreHonorifiqueSignataire">Titre Honorifique Signataire</label>
                         </p-floatlabel>
@@ -111,13 +96,12 @@
                 <!-- Colonne droite -->
                 <div class="col-12 md:col-6">
                     <div class="drawer-field flex flex-column gap-4 mb-4">
-                        <p-floatlabel variant="in" class="w-full md:w-100">
+                        <p-floatlabel variant="on" class="w-full block">
                             <input pInputText id="autoriteSignataire" formControlName="autoriteSignataire" autocomplete="off" class="w-full" />
                             <label for="autoriteSignataire">Autorité Signataire</label>
                         </p-floatlabel>
-                        <!-- <label for="autoriteSignataire" class="font-bold text-required block mb-1">Autorité Signataire</label>
-                        <input id="autoriteSignataire" type="text" pInputText formControlName="autoriteSignataire" class="w-full"/> -->
-                        <p-floatlabel variant="in" class="w-full md:w-100">
+                        
+                        <p-floatlabel variant="on" class="w-full block">
                             <input pInputText id="email" formControlName="email" autocomplete="off" class="w-full" />
                             <label for="email">Email autorité signataire</label>
                         </p-floatlabel>
@@ -146,7 +130,7 @@
                     </div>
                     <!-- <label for="description" class="drawer-subtitle">Description</label> -->
                     
-                    <p-editor id="description" formControlName="description" [style]="{ height: '100px' }">
+                    <p-editor id="description" formControlName="description" [style]="{ height: '70px' }">
                         <!-- <ng-template #header>
                             <span class="ql-formats">
                                 <button type="button" class="ql-bold" aria-label="Gras"></button>

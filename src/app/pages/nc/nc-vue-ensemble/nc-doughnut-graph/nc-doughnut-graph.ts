@@ -34,12 +34,14 @@ import { SkeletonModule } from 'primeng/skeleton';
 
             <div class="grid grid-cols-12 gap-4 items-center">
                 <div class="col-span-12 md:col-span-5 relative flex justify-center items-center">
-                    <p-chart type="doughnut" [data]="chartData" [options]="chartOptions" class="w-full"></p-chart>
-                    <div class="absolute text-center">
-                            <div class="text-[10px] text-slate-400 font-bold uppercase">Total</div>
-                            <div class="text-2xl font-bold text-slate-800">{{ total }}</div>
+                    <div class="w-full max-w-[200px] relative aspect-square">
+                        <p-chart type="doughnut" [data]="chartData" [options]="chartOptions" class="w-full h-full block"></p-chart>
+                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none w-full text-center">
+                            <div class="text-[10px] text-slate-400 font-bold uppercase mb-0.5">Total</div>
+                            <div class="text-3xl font-bold text-slate-800 leading-none" style="margin-top: -2px;">{{ total }}</div>
                         </div>
                     </div>
+                </div>
 
                     <div class="col-span-12 md:col-span-7 pl-4">
                         <div class="flex flex-col gap-4">
@@ -67,6 +69,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 export class NcDoughnutGraphComponent implements OnChanges {
     @Input() title: string = 'Répartition des NC';
     @Input() ncs: any[] = [];
+    @Input() stats: any;
     @Input() loading: boolean = false; 
 
     chartData: any;
@@ -75,31 +78,49 @@ export class NcDoughnutGraphComponent implements OnChanges {
     resolutionRate: number = 0;
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes['ncs'] && this.ncs) {
+        if ((changes['ncs'] && this.ncs) || (changes['stats'] && this.stats)) {
             this.updateChart();
         }
     }
 
     updateChart() {
-        this.total = this.ncs.length;
-        const approved = this.ncs.filter(nc => nc.status === 'APPROVED').length;
-        const rejected = this.ncs.filter(nc => nc.status === 'REJECTED').length;
-        const inProgress = this.total - approved - rejected;
+        let published = 0, inProgress = 0, rejected = 0, closed = 0;
+
+        if (this.stats) {
+            published = this.stats.published || 0;
+            inProgress = this.stats.inProgress || 0;
+            rejected = (this.stats.rejectedByPilot || 0) + (this.stats.rejectedByRq || 0);
+            closed = (this.stats.closed || 0) + (this.stats.archived || 0);
+            this.total = this.stats.total || (published + inProgress + rejected + closed);
+        } else {
+            this.total = this.ncs.length;
+            published = this.ncs.filter(nc => nc.status === 'PUBLISHED').length;
+            inProgress = this.ncs.filter(nc => nc.status === 'IN_PROGRESS').length;
+            rejected = this.ncs.filter(nc => ['REJECTED_BY_PILOT', 'REJECTED_BY_RQ'].includes(nc.status)).length;
+            closed = this.ncs.filter(nc => ['CLOSED', 'ARCHIVED'].includes(nc.status)).length;
+        }
         
-        this.resolutionRate = this.total > 0 ? Math.round((approved / this.total) * 100) : 0;
+        this.resolutionRate = this.total > 0 ? Math.round((closed / this.total) * 100) : 0;
 
         this.chartData = {
-            labels: ['En cours', 'Traités', 'Rejetés'],
+            labels: ['Publiées', 'À traiter', 'Rejetées', 'Clôturées'],
             datasets: [{
-                data: [inProgress, approved, rejected],
-                backgroundColor: ['rgba(100, 149, 197, 0.80)', 'rgba(197, 168, 100, 0.80)', 'rgba(197, 100, 100, 0.80)'],
+                data: [published, inProgress, rejected, closed],
+                backgroundColor: [
+                    'rgba(212, 175, 55, 0.8)',   // Doré pour Publiées
+                    'rgba(100, 149, 197, 0.80)', // Bleu pour À traiter (Imputées)
+                    'rgba(239, 68, 68, 0.8)',    // Rouge pour Rejetées
+                    'rgba(34, 197, 94, 0.8)'     // Vert pour Clôturées
+                ],
                 borderWidth: 0
             }]
         };
 
         this.chartOptions = {
-            cutout: '60%',
-            maintainAspectRatio: false,
+            cutout: '75%',
+            maintainAspectRatio: true,
+            aspectRatio: 1,
+            layout: { padding: 0 },
             plugins: { legend: { display: false } } // On cache la légende car on l'a faite en HTML
         };
     }

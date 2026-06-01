@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { TabPanel, TabView } from 'primeng/tabview';
+import { TabViewModule } from 'primeng/tabview';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { FormArray, FormBuilder, FormGroup, UntypedFormGroup, Validators } from '@angular/forms';
 import { nonConformiteForm } from '../../proc-non-conformite.data';
@@ -23,7 +23,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 @Component({
     selector: 'app-non-conformit.forms',
     standalone:true,
-    imports: [NgPrimeModule, TabView, TabPanel, DemandeNon_conformiteDetailsComponent, Chips],
+    imports: [NgPrimeModule, TabViewModule, DemandeNon_conformiteDetailsComponent, Chips],
     templateUrl: './non-conformit.forms.component.html',
     styleUrl: './non-conformit.forms.component.scss'
 })
@@ -280,7 +280,7 @@ export class NonConformitFormsComponent {
                     this.messageService.add({ severity: 'success', summary: 'Réussi', detail: "L'oppération à réussie !", life: 3000 });
                 },
                 error: (error) => {
-                    this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
+                    this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 5", life: 3000 });
                 }
             })
         }
@@ -311,7 +311,7 @@ export class NonConformitFormsComponent {
 
             },
             error: (error) => {
-                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
+                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 6", life: 3000 });
             }
 
         });

@@ -1,0 +1,21 @@
+::ng-deep .custom-nc-upload {
+    /* Vos styles personnalisés (hauteur, fond gris, bouton personnalisé, etc.) */
+    background-color: var(--surface-ground) !important;
+    border: 2px dashed var(--surface-border) !important;
+}
+
+::ng-deep  .uploader-container {
+    height: 60% !important;
+    padding: 10px !important;
+    display: flex;
+    justify-content: center;
+}
+
+::ng-deep .text-content {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: max-content !important;
+    opacity: .4 !important;
+}

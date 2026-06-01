@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { MenuItem } from 'primeng/api';
 import { ButtonGroupModule } from 'primeng/buttongroup';
@@ -17,10 +17,21 @@ import { ButtonGroupModule } from 'primeng/buttongroup';
   templateUrl: './parametrages.component.html',
   styleUrl: './parametrages.component.scss'
 })
-export class ParametragesComponent implements OnInit {
+export class ParametragesComponent implements OnInit, OnDestroy {
     items: MenuItem[] | undefined;
+    activeTab: string = '';
+    routerSubscription: any;
+
+    constructor(private router: Router) {
+        this.routerSubscription = this.router.events.subscribe((event) => {
+            if (event instanceof NavigationEnd) {
+                this.activeTab = event.urlAfterRedirects.split('?')[0];
+            }
+        });
+    }
 
     ngOnInit() {
+        this.activeTab = this.router.url.split('?')[0];
         this.items = [
             { label: 'Utilisateurs', icon: 'pi pi-users', routerLink: '/configurations/utilisateurs' },
             { label: 'Rôles & Permissions', icon: 'pi pi-lock', routerLink: '/configurations/roles' },
@@ -31,5 +42,11 @@ export class ParametragesComponent implements OnInit {
             { label: 'Services', icon: 'pi pi-map-marker', routerLink: '/configurations/service' },
             { label: 'Configuration globale', icon: 'pi pi-cog', routerLink: '/configurations/config-systeme' }
         ];
+    }
+
+    ngOnDestroy() {
+        if (this.routerSubscription) {
+            this.routerSubscription.unsubscribe();
+        }
     }
 }

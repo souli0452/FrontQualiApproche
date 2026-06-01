@@ -8,7 +8,7 @@ import { AuthService } from '../../../../services/auth-services/auth.service';
 import { convertFilesToBase64, downloadAttachment, downloadFile, formatDateTodd, formatDateToDDMMYYYY, getStatusSeverity } from '../../../../utils';
 import { ProcNonConformiteService } from '../../proc-non-conformite.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { FileUploadComponent } from '../../../../components/file-upload/file-upload.component';
+import { FileUploadComponent } from '../../../../components/non-conformite/file-upload/file-upload.component';
 
 @Component({
     selector: 'demande-non_conformite-details',
@@ -86,7 +86,7 @@ export class DemandeNon_conformiteDetailsComponent {
                 this.messageService.add({ severity: 'success', summary: 'Réussi', detail: "L'oppération à réussie !", life: 3000 });
             },
             error: (error) => {
-                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
+                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 3", life: 3000 });
             }
         });
     }
@@ -116,7 +116,7 @@ export class DemandeNon_conformiteDetailsComponent {
                         this.messageService.add({ severity: 'success', summary: 'Réussi', detail: "L'oppération à réussie !", life: 3000 });
                     },
                     error: (error) => {
-                        this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
+                        this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 4", life: 3000 });
                     }
                 });
             }

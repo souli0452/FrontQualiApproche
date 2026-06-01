@@ -77,7 +77,7 @@ export class ClotureComponent {
                 this.onSuccess(data);
             },
             error: (error) => {
-                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer", life: 3000 });
+                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 1", life: 3000 });
             }
         });
     }

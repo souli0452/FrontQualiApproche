@@ -18,7 +18,16 @@
 
     <!-- Navigation Hub (Topbar) -->
     <div class="pt-2 bg-surface-0 dark:bg-surface-900 border-b border-surface-border">
-        <p-tabMenu [model]="items" [scrollable]="true" styleClass="border-none"></p-tabMenu>
+        <p-tabs [value]="activeTab" [scrollable]="true">
+            <p-tablist>
+                <p-tab *ngFor="let tab of items" [value]="tab.routerLink">
+                    <a [routerLink]="tab.routerLink" routerLinkActive="text-primary font-bold" class="flex items-center gap-2 text-inherit no-underline outline-none px-2 py-1">
+                        <i [class]="tab.icon"></i>
+                        <span class="whitespace-nowrap">{{ tab.label }}</span>
+                    </a>
+                </p-tab>
+            </p-tablist>
+        </p-tabs>
     </div>
 
     <!-- Contenu dynamique (Router Outlet) -->

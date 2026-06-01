@@ -1,0 +1,15 @@
+<p-toast />
+<div class="shadow-1">
+    <app-traitement-table
+        [btnActions]="BtnActions.IMPUTATION"
+        [demandeList]="demandeList"
+        [cols]="cols"
+        (onRejet)="rejet($event)"
+        (onImputation)="imputation($event)"
+        [paginator]="false"
+        [showGridlines]="false"
+        [loading]="loading"
+        [title]="title">
+    </app-traitement-table>
+</div>
+<app-form-rejet  [motifRejetDialog]="motifRejetDialog" [demande]="demande" (onSuccess)="hideDialog($event)"></app-form-rejet>

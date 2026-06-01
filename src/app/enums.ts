@@ -29,7 +29,8 @@ export enum TypeStructure {
 export enum NonConformStatus {
     PENDIND = 'PENDIND',
     NON_TRAITER = 'NON_TRAITER',
-    ARCHIVED = 'REJECTED',
+    ARCHIVED = 'ARCHIVED',
+    REJECTED = 'REJECTED',
     PUBLISHED = 'PUBLISHED',
     TRAITER = 'TRAITER',
     DRAFT = 'DRAFT',

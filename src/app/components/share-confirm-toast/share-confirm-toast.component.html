@@ -1,9 +1,49 @@
 <p-toast key="key" [baseZIndex]="1100999"></p-toast>
-<p-confirmDialog #cd [baseZIndex]="1100999" rejectButtonStyleClass="p-button-text">
-    <ng-template pTemplate="footer" class="text-center">
-        <button type="button" pButton icon="pi pi-times" class="p-button-danger mr-3" label="NON"
-                (click)="cd.onReject()"></button>
-        <button type="button" pButton icon="pi pi-check" class="p-button-success" label="OUI"
-                (click)="cd.onAccept()"></button>
+
+<!-- 👇 Notre boîte de dialogue globale modernisée en mode Headless (sans en-tête standard) -->
+<p-confirmDialog #cd [baseZIndex]="1100999">
+    <ng-template pTemplate="headless" let-message>
+        <div class="p-5 bg-white border border-gray-100 rounded-2xl shadow-xl text-center" 
+             style="display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; max-width: 380px; width: 100% !important; box-sizing: border-box !important; border-radius: 16px !important;">
+            
+            <!-- Badge d'icône d'avertissement circulaire -->
+            <div class="bg-red-50 text-red-500 mb-4" 
+                 style="display: flex !important; align-items: center !important; justify-content: center !important; width: 3.5rem !important; height: 3.5rem !important; border-radius: 50% !important;">
+                <i class="pi pi-exclamation-triangle text-2xl" style="font-size: 1.5rem !important;"></i>
+            </div>
+            
+            <!-- Titre élégant -->
+            <h3 class="text-lg font-bold text-gray-900 mb-2 mt-0" style="font-size: 1.125rem !important; font-weight: 700 !important; color: #111827 !important; margin: 0 0 0.5rem 0 !important;">
+                Confirmation
+            </h3>
+            
+            <!-- Texte du message -->
+            <p class="text-sm text-gray-500 mb-4 px-2" style="font-size: 0.875rem !important; color: #6B7280 !important; margin: 0 0 1rem 0 !important; line-height: 1.5 !important; font-weight: 500 !important;">
+                {{ message.message }}
+            </p>
+            
+            <!-- Ligne de séparation douce -->
+            <div style="width: 100% !important; border-top: 1px solid #F3F4F6 !important; margin: 0.75rem 0 !important;"></div>
+            
+            <!-- Boutons d'actions modernes et équilibrés -->
+            <div style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important; gap: 0.75rem !important; width: 100% !important; pt: 0.5rem !important;">
+                <button 
+                    type="button" 
+                    pButton 
+                    label="Non, annuler" 
+                    class="p-button-outlined p-button-secondary p-button-sm"
+                    style="flex: 1 !important; justify-content: center !important; border-radius: 8px !important; padding: 0.5rem 1rem !important;"
+                    (click)="cd.onReject()">
+                </button>
+                <button 
+                    type="button" 
+                    pButton 
+                    label="Oui, confirmer" 
+                    class="p-button-danger p-button-sm"
+                    style="flex: 1 !important; justify-content: center !important; border-radius: 8px !important; padding: 0.5rem 1rem !important;"
+                    (click)="cd.onAccept()">
+                </button>
+            </div>
+        </div>
     </ng-template>
 </p-confirmDialog>

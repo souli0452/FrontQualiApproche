@@ -311,8 +311,10 @@
     </ng-template>
 </p-dialog>
 <p-confirmDialog header="Confirmation" [key]="imputationKey"
-                 icon="pi pi-exclamation-triangle" [style]="{width: '35vw'}"
-                 acceptButtonStyleClass="p-button-primary" acceptLabel="Oui"
-                 rejectButtonStyleClass="p-button-secondary" rejectLabel="Non">
+                 icon="pi pi-exclamation-circle" [style]="{width: '35vw'}"
+                 [baseZIndex]="10000"
+                 styleClass="custom-dialog"
+                 acceptButtonStyleClass="p-button-primary font-bold" acceptLabel="Oui" acceptIcon="pi pi-check"
+                 rejectButtonStyleClass="p-button-outlined p-button-secondary" rejectLabel="Non" rejectIcon="pi pi-times">
 </p-confirmDialog>
 

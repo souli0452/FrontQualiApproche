@@ -168,30 +168,42 @@ export class StructureComponent implements OnInit, OnDestroy {
 
     onDelete(id: string) {
         this.confirmationService.confirm({
-            key: this.demandeKey,
-            header: 'Confirmation',
-            message: `Voulez-vous supprimer le service ?`,
+            key: 'deleteStructurePopup',
+            target: this.currentMenuTarget,
+            message: `Voulez-vous supprimer ce service ?`,
             accept: () => {
                 this.structureService
                     .deleteStructure(id)
                     .pipe(takeUntil(this.destroy$))
                     .subscribe({
                         next: (res) => {
+                            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Suppression effectuée avec succès', life: 3000 });
                             this.loadStuctures();
                         },
                         error: (error) => {}
                     });
+            },
+            reject: () => {
+                // do nothing
             }
         });
     }
 
     onSuccess(summary: string) {
         this.onDisplay();
-        //showToast(handleHttpSuccess('success', summary, this.demandeKey), this.messageService);
+        this.messageService.add({ 
+            severity: 'success', 
+            summary: 'Succès', 
+            detail: `${summary} effectuée avec succès`, 
+            life: 3000 
+        });
         this.loadStuctures();
     }
 
+    currentMenuTarget: any;
+
     setActionMenu(event: any, menu: any, rowData: any) {
+        this.currentMenuTarget = event.target;
         this.actionMenuItems = [
             {
                 label: 'Modifier',

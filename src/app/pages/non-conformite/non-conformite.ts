@@ -13,9 +13,9 @@ import { NiveauNonConformiteService } from '../../services/niveau-non-conformite
 import { ActionNonConformiteService } from '../../services/action-non-conformite.service';
 import { TypeProcessusService } from '../../services/type-processus.service';
 import { NgPrimeModule } from '../../../prime-ng.module';
-import { FileUploadComponent } from "../../components/file-upload/file-upload.component";
 import { Structure } from '../structure/structure-config/structure';
 import { StructureService } from '../structure/structure-service/structure-service';
+import { FileUploadComponent } from '../../components/non-conformite/file-upload/file-upload.component';
 
 
 @Component({

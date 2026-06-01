@@ -1,8 +1,8 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
-import { isUserInRoles } from '../../../../utils';
 import { SkeletonModule } from 'primeng/skeleton';
+import { isUserInRoles } from '../../../../utils';
 
 @Component({
     selector: 'app-nc-stacked-bar-graph',
@@ -29,8 +29,8 @@ import { SkeletonModule } from 'primeng/skeleton';
                 </div>
             </div>
             <!-- Le graphique -->
-            <div>
-                <p-chart type="bar" [data]="chartData" [options]="chartOptions" class="w-full"></p-chart>
+            <div class="w-full h-[250px]">
+                <p-chart type="bar" [data]="chartData" [options]="chartOptions" class="w-full h-full block"></p-chart>
             </div>
         </ng-container>
     </div>
@@ -39,7 +39,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 export class NcStackedBarGraphComponent implements OnChanges {
     @Input() title: string = 'Analyse par Gravité';
     @Input() loading: boolean = false; 
-    @Input() ncs: any[] = [];
+    @Input() dashboardData: any;
 
     chartData: any;
     chartOptions: any;
@@ -47,34 +47,53 @@ export class NcStackedBarGraphComponent implements OnChanges {
     protected readonly isUserInRoles = isUserInRoles;
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes['ncs'] && this.ncs) {
+        if (changes['dashboardData'] && this.dashboardData) {
             this.updateChart();
         }
     }
 
     updateChart() {
+        if (!this.dashboardData || !this.dashboardData.statsByStatusAndGravity) return;
+
         const documentStyle = getComputedStyle(document.documentElement);
         const textColor = documentStyle.getPropertyValue('--p-text-color');
         const surfaceBorder = documentStyle.getPropertyValue('--p-content-border-color');
 
-        const labels = ['En attente', 'En cours', 'Clôturées'];
-        const countsCritique = [0, 0, 0];
-        const countsMajeure = [0, 0, 0];
-        const countsMineure = [0, 0, 0];
+        const gravityData = this.dashboardData.statsByStatusAndGravity;
+        
+        // Traduction des statuts pour l'affichage
+        const statusMap: { [key: string]: string } = {
+            'DRAFT': 'Brouillon',
+            'PUBLISHED': 'Publiées',
+            'PENDING_PILOT': 'Attente Pilote',
+            'IN_PROGRESS': 'À traiter',
+            'REJECTED_BY_PILOT': 'Rejet Pilote',
+            'REJECTED_BY_RQ': 'Rejet RQ',
+            'CLOSED': 'Clôturées',
+            'ARCHIVED': 'Archivées'
+        };
 
-        this.ncs.forEach(nc => {
-            // 1. On détermine l'index (En attente, En cours, Clôturé)
-            let idx = nc.status === 'VALIDATION_RS' ? 0 : (nc.status === 'APPROVED' ? 2 : 1);
+        const rawLabels = Object.keys(gravityData);
+        const labels = rawLabels.map(k => statusMap[k] || k);
+        
+        const countsCritique: number[] = [];
+        const countsMajeure: number[] = [];
+        const countsMineure: number[] = [];
+
+        rawLabels.forEach(status => {
+            const gravities = gravityData[status];
+            let crit = 0, maj = 0, min = 0;
             
-            // 2. On utilise le bon champ et on passe en minuscule pour éviter les surprises
-            const g = nc.niveauNonConformiteLibelle?.toLowerCase(); 
-            if (g === 'critique') {
-                countsCritique[idx]++;
-            } else if (g === 'majeur' || g === 'majeure') {
-                countsMajeure[idx]++;
-            } else if (g === 'mineur' || g === 'mineure') {
-                countsMineure[idx]++;
+            for (const [g, count] of Object.entries(gravities)) {
+                const lowerG = g.toLowerCase();
+                if (lowerG.includes('critique')) crit += (count as number);
+                else if (lowerG.includes('majeur')) maj += (count as number);
+                else if (lowerG.includes('mineur')) min += (count as number);
             }
+            
+            countsCritique.push(crit);
+            countsMajeure.push(maj);
+            countsMineure.push(min);
         });
 
         this.chartData = {
@@ -84,19 +103,22 @@ export class NcStackedBarGraphComponent implements OnChanges {
                     label: 'Critique',
                     backgroundColor: 'rgba(197, 100, 100, 0.85)',
                     data: countsCritique,
-                    borderRadius: 4
+                    borderRadius: 4,
+                    maxBarThickness: 32
                 },
                 {
                     label: 'Majeure',
                     backgroundColor: 'rgba(197, 168, 100, 0.85)',
                     data: countsMajeure,
-                    borderRadius: 4
+                    borderRadius: 4,
+                    maxBarThickness: 32
                 },
                 {
                     label: 'Mineure',
                     backgroundColor: 'rgba(100, 149, 197, 0.85)',
                     data: countsMineure,
-                    borderRadius: 4
+                    borderRadius: 4,
+                    maxBarThickness: 32
                 }
             ]
         };

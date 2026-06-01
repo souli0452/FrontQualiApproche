@@ -3,8 +3,8 @@
     <div class="bg-gray-50/30 border-b border-gray-100">
         <div class="flex justify-between items-start mb-5">
             <div>
-                <h5 class="m-0 font-bold text-gray-900 text-sm tracking-wider uppercase">Structure Organisationnelle</h5>
-                <p class="text-xs text-gray-500 mt-1 max-w-2xl">
+                <h5 class="m-0 font-bold text-gray-900 text-base tracking-wider uppercase">Structure Organisationnelle</h5>
+                <p class="text-sm text-gray-500 mt-1 max-w-2xl">
                     Gérez la hiérarchie de l'organisation (Services, Départements) pour l'assignation des non-conformités.
                 </p>
             </div>
@@ -43,25 +43,27 @@
             <ng-template pTemplate="header" let-columns>
                 <tr>
                     <th *ngFor="let col of columns" [pSortableColumn]="col.field" 
-                        class="text-xs font-bold text-gray-400 uppercase tracking-wider py-4 bg-gray-50/50 border-b border-gray-100 first:rounded-l-lg last:rounded-r-lg">
+                        class="text-sm font-bold text-gray-600 uppercase tracking-wider py-4 bg-gray-50/50 border-b border-gray-100 first:rounded-l-lg last:rounded-r-lg">
                         {{ col.header }} <p-sortIcon [field]="col.field" class="ml-1 opacity-50"></p-sortIcon>
                     </th>
-                    <th class="text-xs font-bold text-gray-400 uppercase tracking-wider py-4 bg-gray-50/50 border-b border-gray-100 text-center rounded-r-lg">Action</th>
+                    <th class="text-sm font-bold text-gray-600 uppercase tracking-wider py-4 bg-gray-50/50 border-b border-gray-100 text-center rounded-r-lg">Action</th>
                 </tr>
             </ng-template>
 
             <ng-template pTemplate="body" let-rowData let-columns="columns">
                 <tr [pSelectableRow]="rowData" class="hover:bg-gray-50/30 transition-colors border-b border-gray-50">
-                    <td *ngFor="let col of columns" class="py-4 text-gray-600">
+                    <td *ngFor="let col of columns" class="py-4 text-base text-gray-800">
                         {{ rowData[col.field] }}
                     </td>
                     <td class="text-center py-4">
-                        <p-button icon="pi pi-ellipsis-h" 
-                                  [text]="true" 
-                                  severity="secondary" 
-                                  size="small"
-                                  styleClass="hover:bg-gray-100 border-circle"
-                                  (click)="setActionMenu($event, menu, rowData)"></p-button>
+                        <p-button 
+                        size="small"
+                        icon="pi pi-ellipsis-h"
+                        (click)="setActionMenu($event, menu, rowData)"
+                        pTooltip="Actions"
+                        tooltipPosition="bottom"
+                        severity="secondary"
+                        />
                         <p-menu #menu [model]="actionMenuItems" [popup]="true" appendTo="body"></p-menu>
                     </td>
                 </tr>
@@ -86,10 +88,33 @@
 </div>
 
 <!-- Modal de création/édition (Dialog) -->
-<p-dialog [(visible)]="display" [modal]="true" [style]="{ width: '50vw' }" 
-          [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
-          [header]="(editForm?.value['id'] ? 'Modifier' : 'Nouveau') + ' Service'" 
-          [draggable]="false" [resizable]="false">
+<p-dialog 
+    [(visible)]="display" 
+    [modal]="true" 
+    [style]="{ width: '50rem' }" 
+    [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
+    [header]="(editForm?.value['id'] ? 'Modifier' : 'Nouveau') + ' Service'" 
+    [draggable]="false" 
+    [resizable]="false"
+    [styleClass]="'drawer'">
+    <ng-template pTemplate="header">
+        <div class="flex items-center justify-between w-full">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
+                    <i class="pi pi-building text-xl text-blue-600"></i>
+                </div>
+                <div>
+                    <h5 class="m-0 font-bold text-gray-900 text-lg">
+                        {{ editForm?.value['id'] ? 'Modifier' : 'Nouvelle' }} Structure
+                    </h5>
+                    <p class="text-xs text-gray-500 mt-0.5">
+                        {{ editForm?.value['id'] ? 'Modifier les informations' : 'Ajouter une nouvelle structure' }}
+                    </p>
+                </div>
+            </div>
+            <!-- <p-button icon="pi pi-times" [text]="true" severity="secondary" size="small" class="opacity-50 hover:opacity-100" (click)="onDisplay()"></p-button> -->
+        </div>
+    </ng-template>
     
     <div class="p-fluid mt-2">
         <app-creation-structure [editForm]="editForm" [typeStructure]="typeStructure"></app-creation-structure>
@@ -97,15 +122,38 @@
 
     <ng-template pTemplate="footer">
         <div class="flex items-center justify-end gap-2 pt-3">
-            <p-button label="Annuler" (click)="onDisplay()" size="small" [text]="true" severity="secondary" />
-            <p-button label="Enregistrer" [disabled]="editForm!.invalid" [loading]="loading"
-                      (click)="saveEntity()" icon="pi pi-check" size="small" severity="info" />
+            <p-button 
+                label="Annuler" 
+                (click)="onDisplay()" 
+                size="small" 
+                [text]="true" 
+                severity="secondary" 
+            />
+            <p-button 
+                label="Enregistrer" 
+                [disabled]="editForm!.invalid" 
+                [loading]="loading"
+                (click)="saveEntity()" 
+                icon="pi pi-check" 
+                size="small" 
+                severity="info" 
+            />
         </div>
     </ng-template>
 </p-dialog>
 
-<p-confirmDialog header="Confirmation" [key]="demandeKey"
-                 icon="pi pi-exclamation-triangle" [style]="{width: '450px'}"
-                 acceptButtonStyleClass="p-button-danger" acceptLabel="Oui"
-                 rejectButtonStyleClass="p-button-secondary" rejectLabel="Non">
-</p-confirmDialog>
+<p-confirmpopup #cp key="deleteStructurePopup">
+    <ng-template pTemplate="headless" let-message>
+        <div class="border-round p-4 bg-white shadow-2">
+            <div class="flex items-center gap-2 mb-3 text-red-600 font-bold">
+                <i class="pi pi-exclamation-triangle text-xl"></i>
+                <span>Confirmation</span>
+            </div>
+            <span class="text-gray-700">{{ message.message }}</span>
+            <div class="flex items-center justify-end gap-2 mt-4">
+                <p-button (onClick)="cp.onReject()" label="Non" [text]="true" size="small" severity="secondary" />
+                <p-button (onClick)="cp.onAccept()" label="Oui, supprimer" size="small" severity="danger" />
+            </div>
+        </div>
+    </ng-template>
+</p-confirmpopup>

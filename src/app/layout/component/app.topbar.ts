@@ -13,6 +13,7 @@ import { NgPrimeModule } from '../../../prime-ng.module';
 import { Popover } from 'primeng/popover';
 import { showToast, StatusEnum, hasAnyPermission, isLicenseActive } from '../../utils';
 import { Subject } from 'rxjs';
+import { ProcNonConformiteService } from '../../pages/proc-non-conformite/proc-non-conformite.service';
 
 
 @Component({
@@ -55,10 +56,14 @@ import { Subject } from 'rxjs';
                 <button type="button" pTooltip="Notifications" tooltipPosition="bottom" (click)="notificationPopover.toggle($event)" class="relative px-3 py-2 p-button-secondary rounded-full transition-colors hover:bg-surface-100 dark:hover:bg-surface-800">
                     <i class="pi pi-bell" style="font-size: 1.2rem"></i>
                     
-                    <!-- Le badge rouge qui s'affiche uniquement si notificationCount > 0 -->
-                    <span *ngIf="notificationCount > 0" 
-                          class="absolute top-0 right-0 bg-red-500 text-white rounded-full text-[10px] w-4 h-4 flex items-center justify-center border border-white dark:border-surface-900">
-                        {{ notificationCount }}
+                    <!-- Le badge rouge qui clignote uniquement si notificationCount > 0 -->
+                    <span *ngIf="notificationCount > 0" class="absolute top-0 right-0 flex h-4 w-4 items-center justify-center">
+                        <!-- L'effet radar (ping) derrière le badge -->
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <!-- Le badge rouge au premier plan -->
+                        <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-white text-[10px] items-center justify-center border border-white dark:border-surface-900 font-bold">
+                            {{ notificationCount }}
+                        </span>
                     </span>
                 </button>
 
@@ -127,8 +132,8 @@ import { Subject } from 'rxjs';
                         
                         <!-- Contenu -->
                         <div class="flex flex-col flex-1">
-                            <span class="font-medium text-sm text-surface-900 dark:text-surface-0">{{ notif.title }}</span>
-                            <span class="text-xs text-surface-600 dark:text-surface-400 mt-1 leading-normal">{{ notif.detail }}</span>
+                            <span class="font-medium text-sm mb-2 text-surface-900 dark:text-surface-0">{{ notif.title }}</span>
+                            <p class="text-xs line-height text-surface-600 dark:text-surface-400 mt-1 leading-normal">{{ notif.detail }}</p>
                             <span class="text-[10px] text-surface-500 mt-2 font-medium">{{ notif.time }}</span>
                         </div>
                         
@@ -169,6 +174,11 @@ import { Subject } from 'rxjs';
             border-radius: 10px 10px 0 0 !important;
             border: none !important;
             overflow: hidden !important;
+        }
+
+        .line-height {
+            margin: 0 !important;
+            line-height: 0px !important;
         }
 
         @media screen and (max-width: 600px) {
@@ -223,36 +233,8 @@ export class AppTopbar implements OnInit {
     notificationCount: number = 3;
     notificationVisible: boolean = false;
 
-    // FAUSSES DONNÉES DE TEST POUR LES NOTIFICATIONS
-    notifications = [
-        {
-            id: 1,
-            title: "Nouveau formulaire d'audit",
-            detail: "Un nouveau formulaire d'audit a été assigné à votre structure.",
-            time: "2 min ago",
-            icon: "pi pi-file-edit",
-            colorClass: "bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
-            read: false
-        },
-        {
-            id: 2,
-            title: "Validation requise",
-            detail: "La direction a besoin de votre validation pour le rapport trimestriel.",
-            time: "1h ago",
-            icon: "pi pi-check-circle",
-            colorClass: "bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400",
-            read: false
-        },
-        {
-            id: 3,
-            title: "Mise à jour du système",
-            detail: "La maintenance du système est prévue pour ce weekend.",
-            time: "3 days ago",
-            icon: "pi pi-cog",
-            colorClass: "bg-gray-100 dark:bg-gray-900/20 text-gray-600 dark:text-gray-400",
-            read: true
-        }
-    ];
+    // Liste dynamique des notifications
+    notifications: any[] = [];
 
     constructor(
         public layoutService: LayoutService,
@@ -262,7 +244,8 @@ export class AppTopbar implements OnInit {
         private activatedRoute: ActivatedRoute,
         private globalSearchService: GlobalSearchService,
         protected fb: UntypedFormBuilder,
-        protected messageService: MessageService
+        protected messageService: MessageService,
+        private procService: ProcNonConformiteService
     ) {
     }
 
@@ -282,6 +265,103 @@ export class AppTopbar implements OnInit {
             { id: 'profile-header' },
             { id: 'logout', label: 'Se déconnecter', icon: 'pi pi-sign-out', command: () => this.authService.logout() }
         ];
+
+        // Souscription aux notifications globales de NC
+        this.procService.notificationsNC$.pipe(takeUntil(this.destroy$)).subscribe((notifs: any) => {
+            this.notificationCount = notifs.total || 0;
+            this.notifications = [];
+
+            if (notifs.brouillons > 0) {
+                this.notifications.push({
+                    title: "Brouillons en cours",
+                    detail: `Vous avez ${notifs.brouillons} Non-Conformité(s) en attente de finalisation.`,
+                    time: "À l'instant",
+                    icon: "pi pi-pencil",
+                    colorClass: "bg-orange-100 text-orange-600",
+                    read: false
+                });
+            }
+            if (notifs.reception > 0) {
+                this.notifications.push({
+                    title: "Non-conformités de votre service",
+                    detail: `Votre service a ${notifs.reception} Non-Conformité(s) publiée(s) en attente de validation.`,
+                    time: "À l'instant",
+                    icon: "pi pi-users",
+                    colorClass: "bg-orange-100 text-orange-600",
+                    read: false
+                });
+            }
+            if (notifs.imputees > 0) {
+                this.notifications.push({
+                    title: "Actions à traiter",
+                    detail: `Vous avez ${notifs.imputees} Non-Conformité(s) imputée(s) pour traitement.`,
+                    time: "Urgent",
+                    icon: "pi pi-exclamation-circle",
+                    colorClass: "bg-red-100 text-red-600",
+                    read: false
+                });
+            }
+            if (notifs.validationRQ > 0) {
+                this.notifications.push({
+                    title: "Validation RQ",
+                    detail: `Vous avez ${notifs.validationRQ} Non-Conformité(s) que vous devez valider.`,
+                    time: "Urgent",
+                    icon: "pi pi-shield",
+                    colorClass: "bg-red-100 text-red-600",
+                    read: false
+                });
+            }
+            if (notifs.enAttenteValidation > 0) {
+                this.notifications.push({
+                    title: "Validation Globale",
+                    detail: `Il y a ${notifs.enAttenteValidation} Non-Conformité(s) en attente de validation.`,
+                    time: "Urgent",
+                    icon: "pi pi-shield",
+                    colorClass: "bg-red-100 text-red-600",
+                    read: false
+                });
+            }
+            if (notifs.validationPilote > 0) {
+                this.notifications.push({
+                    title: "Validation des plans d'actions",
+                    detail: `Il y a ${notifs.validationPilote} plan(s) d'actions en attente de validation.`,
+                    time: "Urgent",
+                    icon: "pi pi-shield",
+                    colorClass: "bg-red-100 text-red-600",
+                    read: false
+                });
+            }
+            if (notifs.cloture > 0) {
+                this.notifications.push({
+                    title: "Clôture des Non-Conformités",
+                    detail: `Il y a ${notifs.cloture} Non-Conformité(s) en attente de clôture.`,
+                    time: "À traiter",
+                    icon: "pi pi-check-circle",
+                    colorClass: "bg-green-100 text-green-600",
+                    read: false
+                });
+            }
+            if (notifs.affectation > 0) {
+                this.notifications.push({
+                    title: "Affectation",
+                    detail: `Vous avez ${notifs.affectation} Non-Conformité(s) en attente d'affectation.`,
+                    time: "Urgent",
+                    icon: "pi pi-shield",
+                    colorClass: "bg-red-100 text-red-600",
+                    read: false
+                });
+            }
+            if (notifs.nonTraiter > 0) {
+                this.notifications.push({
+                    title: "Traitement",
+                    detail: `Vous avez ${notifs.nonTraiter} Plan(s) d'actions en attente de traitement.`,
+                    time: "Urgent",
+                    icon: "pi pi-shield",
+                    colorClass: "bg-red-100 text-red-600",
+                    read: false
+                });
+            }
+        });
     }
 
     toggleDarkMode() {

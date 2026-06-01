@@ -17,7 +17,7 @@ import { NiveauNonConformiteService } from '../../../services/niveau-non-conform
         <div class="page-layout">
             <app-crud-generic
                 [addButtonLabel]="'Niveau de gravité'"
-                [dialogWidth]="'50rem'"
+                [dialogWidth]="'40rem'"
                 [loading]="loading"
                 [pageLabel]="pageLabel"
                 [tableCols]="tableCols"
