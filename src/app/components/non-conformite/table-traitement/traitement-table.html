@@ -244,7 +244,7 @@
         <div class="mt-4 mb-2">
             <!-- NOTE: Décommentez la ligne [prefilledStructureId]="selectedDemande?.origineId" ci-dessous si la décision finale est de préfiltrer les agents -->
             <app-search-agent 
-                [prefilledStructureId]="selectedDemande?.origineId"
+                [prefilledStructureId]="selectedDemande?.origineId || selectedDemandes[0]?.origineId"
                 (searchedAgentChange)="searchedAgent = $event">
             </app-search-agent>
         </div>
