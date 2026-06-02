@@ -4,7 +4,6 @@ import { convertFilesToBase64, getCurrentUserStructure, onFileUpload, PieceJoint
 import { MessageService } from 'primeng/api';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { FeaturesService } from '../../../services/feature-service';
-import { NonConformiteService } from '../../../services/non-conformite.service';
 import { takeUntil } from 'rxjs';
 import { StructureService } from '../../structure/structure-service/structure-service';
 import { Structure } from '../../structure/structure-config/structure';
@@ -16,13 +15,14 @@ import {
     TypeNonConformite,
     TypeProcessus
 } from '../../../models';
-import { TypeProcessusService } from '../../../services/type-processus.service';
-import { TypeNonConformiteService } from '../../../services/type-non-conformite.service';
+import { TypeProcessusService } from '../../../services/non-conformite/type-processus.service';
 import { ReclamationService } from '../../../services/reclamation.service';
-import { NiveauNonConformiteService } from '../../../services/niveau-non-conformite.service';
-import { ActionNonConformiteService } from '../../../services/action-non-conformite.service';
+import { ActionNonConformiteService } from '../../../services/non-conformite/action-non-conformite.service';
 import { ActivatedRoute } from '@angular/router';
 import { NonConformStatus, EtapeTraitement } from '../../../enums';
+import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
+import { TypeNonConformiteService } from '../../../services/non-conformite/type-non-conformite.service';
+import { NiveauNonConformiteService } from '../../../services/non-conformite/niveau-non-conformite.service';
 
 @Component({
     selector: 'app-nc-compose',

@@ -3,10 +3,10 @@ import { ActivatedRoute } from '@angular/router';
 import { DatePipe, Location } from '@angular/common';
 
 import { Avatar } from 'primeng/avatar';
-import { NonConformiteService } from '../../../../services/non-conformite.service';
 import { downloadAttachment, downloadFile, getStatusSeverity } from '../../../../utils';
-import { PlanActionService } from '../../../../services/planAction.service';
 import { StatusEnum } from '../../../../enums';
+import { NonConformiteService } from '../../../../services/non-conformite/non-conformite.service';
+import { PlanActionService } from '../../../../services/non-conformite/planAction.service';
 
 @Component({
     templateUrl: './planAction-detail.component.html',

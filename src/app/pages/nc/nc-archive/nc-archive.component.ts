@@ -3,10 +3,10 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 
 import { takeUntil } from 'rxjs/operators';
-import { NonConformiteService } from '../../../services/non-conformite.service';
 import { NonConformStatus } from '../../../enums';
 import { getCurrentUserStructure } from '../../../utils';
 import { Structure } from '../../structure/structure-config/structure';
+import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 
 @Component({
     selector: 'app-nc-archive',

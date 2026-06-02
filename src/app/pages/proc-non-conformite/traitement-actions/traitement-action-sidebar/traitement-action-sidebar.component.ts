@@ -1,9 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { filter, Subject } from 'rxjs';
-
 import { takeUntil } from 'rxjs/operators';
-
-import { NonConformiteService } from '../../../../services/non-conformite.service';
 import { FeaturesService } from '../../../../services/feature-service';
 import { NonConformStatus } from '../../../../enums';
 import { MenuItem } from 'primeng/api';

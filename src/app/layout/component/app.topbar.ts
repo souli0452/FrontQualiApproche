@@ -7,13 +7,12 @@ import { MenuItem, MessageService } from 'primeng/api';
 import { Title } from '@angular/platform-browser';
 import { filter, map, takeUntil } from 'rxjs/operators';
 import { FormsModule, ReactiveFormsModule, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-
-import { GlobalSearchService } from '../../services/global-search.service';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { Popover } from 'primeng/popover';
 import { showToast, StatusEnum, hasAnyPermission, isLicenseActive } from '../../utils';
 import { Subject } from 'rxjs';
 import { ProcNonConformiteService } from '../../pages/proc-non-conformite/proc-non-conformite.service';
+import { GlobalSearchService } from '../../services/non-conformite/global-search.service';
 
 
 @Component({

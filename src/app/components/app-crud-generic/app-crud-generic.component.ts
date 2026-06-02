@@ -12,7 +12,6 @@ import {
 import {UntypedFormGroup} from "@angular/forms";
 import { Table } from 'primeng/table';
 import { Subject, takeUntil } from 'rxjs';
-import { GlobalSearchService } from '../../services/global-search.service';
 import {ConfirmationService, MessageService} from "primeng/api";
 import {patternToDate, toFormatFromDate} from "../../utils";
 import { DropdownSelector, FormGroupColumn, MultiSelectSelector, TableColumn} from "../../models";
@@ -21,6 +20,7 @@ import { FormInputTemplateComponent } from '../form-input-template/form-input-te
 import { DetailTemplateComponent } from '../detail-template/detail-template.component';
 import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
+import { GlobalSearchService } from '../../services/non-conformite/global-search.service';
 
 @Component({
     selector: 'app-crud-generic',

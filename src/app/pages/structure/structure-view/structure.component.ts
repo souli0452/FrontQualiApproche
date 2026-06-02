@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Table } from 'primeng/table';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { GlobalSearchService } from '../../../services/global-search.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ActivatedRoute } from '@angular/router';
 import { TypeStructure } from '../../../enums';
@@ -17,6 +16,7 @@ import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
 import { StructureService } from '../structure-service/structure-service';
 import { Structure } from '../structure-config/structure';
+import { GlobalSearchService } from '../../../services/non-conformite/global-search.service';
 @Component({
     selector: 'app-structure',
     templateUrl: './structure.component.html',

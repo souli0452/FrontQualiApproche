@@ -6,11 +6,11 @@ import { Table } from 'primeng/table';
 import { Location } from '@angular/common';
 import { NonConformStatus } from '../../../../enums';
 import { FeaturesService } from '../../../../services/feature-service';
-import { NonConformiteService } from '../../../../services/non-conformite.service';
 import { convertFilesToBase64, showToast, StatusEnum } from '../../../../utils';
 import { ProcNonConformiteService } from '../../proc-non-conformite.service';
 import { Subject, takeUntil } from 'rxjs';
-import { GlobalSearchService } from '../../../../services/global-search.service';
+import { NonConformiteService } from '../../../../services/non-conformite/non-conformite.service';
+import { GlobalSearchService } from '../../../../services/non-conformite/global-search.service';
 
 
 @Component({

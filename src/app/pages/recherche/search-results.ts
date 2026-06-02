@@ -9,7 +9,7 @@ import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { BadgeModule } from 'primeng/badge';
-import { GlobalSearchService, SearchResult } from '../../services/global-search.service';
+import { GlobalSearchService, SearchResult } from '../../services/non-conformite/global-search.service';
 
 @Component({
     selector: 'app-search-results',

@@ -7,7 +7,7 @@ import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../../components/app-crud-generic/app-crud-generic.component';
 import { FormGroupColumn, NiveauNonConformite, TableColumn } from '../../../models';
 import { showToast, StatusEnum } from '../../../utils';
-import { NiveauNonConformiteService } from '../../../services/niveau-non-conformite.service';
+import { NiveauNonConformiteService } from '../../../services/non-conformite/niveau-non-conformite.service';
 
 @Component({
     selector: 'app-niveau-non-conformite',

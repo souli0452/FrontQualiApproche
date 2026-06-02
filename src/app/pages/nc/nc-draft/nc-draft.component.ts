@@ -4,11 +4,11 @@ import { showToast, StatusEnum } from '../../../utils';
 import { MessageService } from 'primeng/api';
 import { FeaturesService } from '../../../services/feature-service';
 import { Location } from '@angular/common';
-import { NonConformiteService } from '../../../services/non-conformite.service';
 import { NonConformStatus } from '../../../enums';
 import { Structure } from '../../structure/structure-config/structure';
 import { ProcNonConformiteService } from '../../proc-non-conformite/proc-non-conformite.service';
 import { AuthService } from '../../../services/auth-services/auth.service';
+import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 
 @Component({
     selector: 'app-nc-draft',

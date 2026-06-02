@@ -7,7 +7,7 @@ import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../../components/app-crud-generic/app-crud-generic.component';
 import { ActionNonConformite, FormGroupColumn, TableColumn } from '../../../models';
 import { showToast, StatusEnum } from '../../../utils';
-import { ActionNonConformiteService } from '../../../services/action-non-conformite.service';
+import { ActionNonConformiteService } from '../../../services/non-conformite/action-non-conformite.service';
 
 @Component({
     selector: 'app-action',

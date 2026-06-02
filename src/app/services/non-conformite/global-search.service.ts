@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin, Observable, of, BehaviorSubject } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
+import { StructureService } from '../../pages/structure/structure-service/structure-service';
 import { NonConformiteService } from './non-conformite.service';
-import { StructureService } from '../pages/structure/structure-service/structure-service';
 
 export interface SearchResult {
     title: string;

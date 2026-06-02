@@ -14,7 +14,7 @@ import { AuthService } from '../../../../services/auth-services/auth.service';
 import { formatDate } from '@angular/common';
 import { downloadFile, formatDateToDDMMYYYY, getStatusSeverity } from '../../../../utils';
 import { ProcNonConformiteService } from '../../proc-non-conformite.service';
-import { ActionNonConformiteService } from '../../../../services/action-non-conformite.service';
+import { ActionNonConformiteService } from '../../../../services/non-conformite/action-non-conformite.service';
 import { Structure } from '../../../structure/structure-config/structure';
 import { StructureService } from '../../../structure/structure-service/structure-service';
 import { ActionNonConformite } from '../../../../models';

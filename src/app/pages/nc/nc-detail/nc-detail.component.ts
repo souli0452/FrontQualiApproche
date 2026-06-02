@@ -1,13 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DatePipe, Location } from '@angular/common';
-import { NonConformiteService } from '../../../services/non-conformite.service';
-import { Avatar } from 'primeng/avatar';
 import { EtapeTraitement, NonConformStatus, StatusEnum } from '../../../enums';
 import { downloadAttachment, viewAttachment, downloadFile, getStatusSeverity } from '../../../utils';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ViewChild } from '@angular/core';
 import { LightboxComponent } from '../../../components/non-conformite/lightbox/lightbox';
+import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 
 @Component({
     selector: 'app-nc-detail',

@@ -1,5 +1,5 @@
 // src/environments/environment.ts
 export const environment = {
     production: false,
-    apiUrl: '' // Utilise le proxy
+    apiUrl: 'https://api-gateway.horeb.tech' // Utilise le proxy
 };

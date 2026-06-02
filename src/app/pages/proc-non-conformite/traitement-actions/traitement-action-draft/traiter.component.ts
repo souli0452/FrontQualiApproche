@@ -6,7 +6,6 @@ import { takeUntil } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 
 import { Location } from '@angular/common';
-import { NonConformiteService } from '../../../../services/non-conformite.service';
 import { FeaturesService } from '../../../../services/feature-service';
 import { NonConformStatus } from '../../../../enums';
 import { showToast, StatusEnum } from '../../../../utils';

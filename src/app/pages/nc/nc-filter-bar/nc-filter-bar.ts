@@ -2,10 +2,10 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { TypeProcessusService } from '../../../services/type-processus.service';
-import { NiveauNonConformiteService } from '../../../services/niveau-non-conformite.service';
-import { TypeNonConformiteService } from '../../../services/type-non-conformite.service';
+import { TypeProcessusService } from '../../../services/non-conformite/type-processus.service';
 import { NiveauNonConformite, TypeProcessus, TypeNonConformite } from '../../../models';
+import { NiveauNonConformiteService } from '../../../services/non-conformite/niveau-non-conformite.service';
+import { TypeNonConformiteService } from '../../../services/non-conformite/type-non-conformite.service';
 
 export interface NcFilter {
     dateDebut: Date | undefined;
@@ -17,7 +17,6 @@ export interface NcFilter {
 
 @Component({
     selector: 'app-nc-filter-bar',
-    standalone: true,
     imports: [CommonModule, FormsModule, NgPrimeModule],
     templateUrl: './nc-filter-bar.html',
     styleUrl: './nc-filter-bar.scss'

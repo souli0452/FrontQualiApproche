@@ -7,15 +7,15 @@ import { MessageService } from 'primeng/api';
 import { getCurrentUserStructure, showToast, StatusEnum } from '../../utils';
 import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
-import { NonConformiteService } from '../../services/non-conformite.service';
-import { TypeNonConformiteService } from '../../services/type-non-conformite.service';
-import { NiveauNonConformiteService } from '../../services/niveau-non-conformite.service';
-import { ActionNonConformiteService } from '../../services/action-non-conformite.service';
-import { TypeProcessusService } from '../../services/type-processus.service';
+import { ActionNonConformiteService } from '../../services/non-conformite/action-non-conformite.service';
+import { TypeProcessusService } from '../../services/non-conformite/type-processus.service';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { Structure } from '../structure/structure-config/structure';
 import { StructureService } from '../structure/structure-service/structure-service';
 import { FileUploadComponent } from '../../components/non-conformite/file-upload/file-upload.component';
+import { NonConformiteService } from '../../services/non-conformite/non-conformite.service';
+import { TypeNonConformiteService } from '../../services/non-conformite/type-non-conformite.service';
+import { NiveauNonConformiteService } from '../../services/non-conformite/niveau-non-conformite.service';
 
 
 @Component({

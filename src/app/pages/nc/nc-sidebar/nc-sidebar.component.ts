@@ -4,11 +4,11 @@ import { NavigationEnd, Router } from '@angular/router';
 import { filter, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {FeaturesService} from "../../../services/feature-service";
-import { NonConformiteService } from '../../../services/non-conformite.service';
 import { NcStats } from '../../../models/statsNc';
 import { NonConformStatus } from '../../../enums';
 import { Structure } from '../../structure/structure-config/structure';
 import { getCurrentUserStructure } from '../../../utils';
+import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 
 @Component({
     selector: 'app-nc-sidebar',

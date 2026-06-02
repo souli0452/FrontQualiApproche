@@ -10,7 +10,7 @@ import { ActionNonConformite } from '../../../models';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { ProcNonConformiteService } from '../../../pages/proc-non-conformite/proc-non-conformite.service';
 import { StructureService } from '../../../pages/structure/structure-service/structure-service';
-import { ActionNonConformiteService } from '../../../services/action-non-conformite.service';
+import { ActionNonConformiteService } from '../../../services/non-conformite/action-non-conformite.service';
 import { nonConformiteForm } from '../../../pages/proc-non-conformite/proc-non-conformite.data';
 import { downloadFile, formatDateToDDMMYYYY, getStatusSeverity } from '../../../utils';
 import { DetailsDialogComponent } from '../details-dialog/details-dialog';

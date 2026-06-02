@@ -6,23 +6,30 @@ import { FormArray, FormGroup, UntypedFormBuilder, UntypedFormGroup, Validators 
 import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils';
 import { HttpResponse } from '@angular/common/http';
-import { NonConformiteService } from '../../services/non-conformite.service';
-import { TypeNonConformiteService } from '../../services/type-non-conformite.service';
-import { NiveauNonConformiteService } from '../../services/niveau-non-conformite.service';
-import { ActionNonConformiteService } from '../../services/action-non-conformite.service';
-import { TypeProcessusService } from '../../services/type-processus.service';
+import { ActionNonConformiteService } from '../../services/non-conformite/action-non-conformite.service';
+import { TypeProcessusService } from '../../services/non-conformite/type-processus.service';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { TypeNonConformiteComponent } from "./types/type-non-conformite";
 import { TypeProcessusComponent } from "./types/type-processus";
 import { NiveauNonConformiteComponent } from "./niveau/niveau";
 import { ActionNonConformiteComponent } from "./action/action";
+import { NonConformiteService } from '../../services/non-conformite/non-conformite.service';
+import { TypeNonConformiteService } from '../../services/non-conformite/type-non-conformite.service';
+import { NiveauNonConformiteService } from '../../services/non-conformite/niveau-non-conformite.service';
 
 @Component({
     selector: 'app-procedure-non-conformite',
     standalone: true,
-    imports: [CommonModule, NgPrimeModule, TypeNonConformiteComponent, TypeProcessusComponent, NiveauNonConformiteComponent, ActionNonConformiteComponent],
-  templateUrl: './procedure-non-conformite.html',
-  styleUrl: './procedure-non-conformite.scss'
+    imports: [
+        CommonModule, 
+        NgPrimeModule, 
+        TypeNonConformiteComponent, 
+        TypeProcessusComponent, 
+        NiveauNonConformiteComponent, 
+        ActionNonConformiteComponent
+    ],
+    templateUrl: './procedure-non-conformite.html',
+    styleUrl: './procedure-non-conformite.scss'
 })
 export class ProcedureNonConformiteComponent {
     visible: boolean = false;

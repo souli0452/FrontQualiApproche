@@ -7,7 +7,7 @@ import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils';
 import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
-import { ActionCorrectivePreventiveService } from '../../services/action-corrective-preventive.service';
+import { ActionCorrectivePreventiveService } from '../../services/non-conformite/action-corrective-preventive.service';
 
 @Component({
     selector: 'app-action-corrective-preventive',

@@ -7,7 +7,7 @@ import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../../components/app-crud-generic/app-crud-generic.component';
 import { FormGroupColumn, TableColumn, TypeNonConformite, TypeProcessus } from '../../../models';
 import { showToast, StatusEnum } from '../../../utils';
-import { TypeProcessusService } from '../../../services/type-processus.service';
+import { TypeProcessusService } from '../../../services/non-conformite/type-processus.service';
 
 @Component({
     selector: 'app-type-processus',

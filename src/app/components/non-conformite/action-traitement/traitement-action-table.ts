@@ -6,10 +6,8 @@ import { Table } from 'primeng/table';
 import { Location } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { NonConformStatus } from '../../../enums';
-import { NonConformiteService } from '../../../services/non-conformite.service';
 import { FeaturesService } from '../../../services/feature-service';
 import { ProcNonConformiteService } from '../../../pages/proc-non-conformite/proc-non-conformite.service';
-import { GlobalSearchService } from '../../../services/global-search.service';
 import { convertFilesToBase64, showToast, StatusEnum } from '../../../utils';
 
 
@@ -17,6 +15,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
+import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
+import { GlobalSearchService } from '../../../services/non-conformite/global-search.service';
 
 @Component({
     selector: 'app-traitement-action',

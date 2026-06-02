@@ -1,7 +1,7 @@
 <ng-container>
     <!-- Première ligne : Recherche Direction/Service -->
     <!-- NOTE: Ajoutez *ngIf="!prefilledStructureId" sur la div ci-dessous si la décision finale est de masquer ce bloc -->
-    <div *ngIf="!prefilledStructureId" class="flex flex-wrap align-items-center gap-3 mb-4">
+    <div *ngIf="!prefilledStructureId" class="flex flex-wrap align-center gap-3 mb-4">
         <!-- Direction -->
         <div class="flex-grow-1" style="flex-basis: 40%; min-width: 300px;">
             <p-select [options]="directions"
@@ -18,40 +18,40 @@
                         [filter]="true"
                         [style]="{width: '100%'}"
                         [(ngModel)]="directionId"
-                        (onChange)="loadServiceByDirection()">
+                        (onChange)="loadAgents()">
             </p-select>
         </div>
+    </div>
 
-        <!-- Header -->
-        <div class="flex align-items-center gap-3 mb-4">
-            <div class="flex align-items-center justify-content-center border-round-lg bg-primary-50" style="width:36px; height:36px;">
-                <i class="pi pi-users text-primary"></i>
-            </div>
-            <div>
-                <p class="m-0 font-medium text-900">Recherche d'agent</p>
-                <p class="m-0 text-sm text-500">Sélectionnez un agent pour afficher sa fiche</p>
-            </div>
+    <!-- Header -->
+    <div class="flex items-center gap-3 mb-4">
+        <div class="flex items-center justify-center rounded-full bg-primary-50" style="width:36px; height:36px;">
+            <i class="pi pi-users text-primary"></i>
         </div>
+        <div>
+            <p class="m-0 font-medium text-900">Recherche d'agent</p>
+            <p class="m-0 text-sm text-500">Sélectionnez un agent pour afficher sa fiche</p>
+        </div>
+    </div>
 
-        <!-- Dropdown -->
-        <p-select
-            [options]="agents"
-            [autoDisplayFirst]="false"
-            id="agent"
-            (onChange)="onAgentSelect($event.value)"
-            emptyMessage="Aucune donnée disponible"
-            emptyFilterMessage="Aucun agent trouvé"
-            appendTo="body"
-            [resetFilterOnHide]="true"
-            [showClear]="true"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Rechercher un agent"
-            [filter]="true"
-            [style]="{width: '100%'}"
-            [(ngModel)]="searchedAgent">
-        </p-select>
-        </div>
+    <!-- Dropdown -->
+    <p-select
+        [options]="agents"
+        [autoDisplayFirst]="false"
+        id="agent"
+        (onChange)="onAgentSelect($event.value)"
+        emptyMessage="Aucune donnée disponible"
+        emptyFilterMessage="Aucun agent trouvé"
+        appendTo="body"
+        [resetFilterOnHide]="true"
+        [showClear]="true"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Rechercher un agent"
+        [filter]="true"
+        [style]="{width: '100%'}"
+        [(ngModel)]="searchedAgent">
+    </p-select>
 
     <!-- Résultats -->
     <div *ngIf="searchedAgent" class="mt-4">

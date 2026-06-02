@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {QualiCrudService} from "./quali-crud.service";
-import {QualiUrlConfig} from "./quali-url-configs";
-import {NiveauNonConformite} from "../models";
+import { QualiCrudService } from '../quali-crud.service';
+import { NiveauNonConformite } from '../../models';
+import { QualiUrlConfig } from '../quali-url-configs';
 
 
 

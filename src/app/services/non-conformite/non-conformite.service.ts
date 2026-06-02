@@ -1,11 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import {QualiCrudService} from "./quali-crud.service";
-import {QualiUrlConfig} from "./quali-url-configs";
-import {NonConformite} from "../models";
+import {NonConformite} from "../../models";
 import { Observable } from 'rxjs';
-import { NonConformStatus } from '../enums';
-import { NcStats } from '../models/statsNc';
+import { NcStats } from '../../models/statsNc';
+import { QualiCrudService } from '../quali-crud.service';
+import { QualiUrlConfig } from '../quali-url-configs';
 
 
 

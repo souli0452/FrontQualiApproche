@@ -5,10 +5,10 @@ import { Table } from 'primeng/table';
 import { FeaturesService } from '../../../services/feature-service';
 import { Location } from '@angular/common';
 import { NonConformStatus } from '../../../enums';
-import { NonConformiteService } from '../../../services/non-conformite.service';
 import { showToast, StatusEnum, StatusEnumShow } from '../../../utils';
 import { Subject, takeUntil } from 'rxjs';
-import { GlobalSearchService } from '../../../services/global-search.service';
+import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
+import { GlobalSearchService } from '../../../services/non-conformite/global-search.service';
 
 @Component({
     selector: 'app-nc-table',
