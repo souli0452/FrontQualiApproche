@@ -138,7 +138,7 @@
                         </p-tag>
                     </span>
 
-                    <span *ngIf="col.type === 'enum'">
+                    <span *ngIf="col.type === 'enum'" class="text-center">
                         <span *ngIf="rowData[col.field]==='DRAFT'">
                             <span *ngIf="btnActions==BtnActions.CLOTURE" class="p-badge p-badge-warning">En attente de soumission</span>
                         </span>     
@@ -160,17 +160,15 @@
                             <span *ngIf="btnActions==BtnActions.VALIDATION || btnActions==BtnActions.VALIDATION_RS" class="p-badge p-badge-info">En attente de validation</span>
                             <span *ngIf="btnActions==BtnActions.RECEPTION" class="p-badge p-badge-info">En attente de reception</span>
                         </span>
-
-              <span *ngIf="rowData[col.field]==='APPROVED'">
-
-         <span class="p-badge p-badge-success">Traitée</span>
-       </span>
-             <span *ngIf="rowData[col.field]==='IN_PROGRESS'">
-
-                 <span *ngIf="btnActions==BtnActions.SUIVI_RQ" class="p-badge p-badge-info">En attente de cloture</span></span>
-      <span *ngIf="rowData[col.field]==='REJECTED'">
-      <span class="p-badge p-badge-danger">Réjetée pour corrections</span>
-      </span></span>
+                        <span *ngIf="rowData[col.field]==='APPROVED'">
+                            <span class="p-badge p-badge-success">Traitée</span>
+                        </span>
+                        <span *ngIf="rowData[col.field]==='IN_PROGRESS'">
+                            <span *ngIf="btnActions==BtnActions.SUIVI_RQ" class="p-badge p-badge-info">En attente de cloture</span></span>
+                        <span *ngIf="rowData[col.field]==='REJECTED'">
+                            <span class="p-badge p-badge-danger">Réjetée pour corrections</span>
+                        </span>
+                    </span>
                 </td>
             }
             <td pFrozenColumn alignFrozen="right" class="text-right pr-4 bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
@@ -180,9 +178,10 @@
                                 class="p-button-rounded p-button-text p-button-secondary h-8 w-8 hover:bg-surface-100 dark:hover:bg-surface-800"
                                 pTooltip="Traiter" (click)="displayDetails(rowData)"></button>
                     } @else {
-                        <button pButton pRipple icon="pi pi-search"
+                        <p-button size="small" icon="pi pi-search" pTooltip="Détails" tooltipPosition="left" (click)="displayDetails(rowData)" pRipple severity="secondary" />
+                        <!-- <button pButton pRipple icon="pi pi-search"
                                 class="p-button-rounded p-button-text p-button-info h-8 w-8 hover:bg-surface-100 dark:hover:bg-surface-800"
-                                pTooltip="Détails" (click)="displayDetails(rowData)"></button>
+                                pTooltip="Détails" (click)="displayDetails(rowData)"></button> -->
                     }
                 </div>
             </td>
@@ -357,10 +356,10 @@
             </button>}
             @if (btnActions === BtnActions.TRAITEMENT) {
 
-                <button pRipple pButton type="button"
+                <!-- <button pRipple pButton type="button"
 
                         (click)="saveEntity()" icon="pi pi-save" label="Enregistrer">
-                </button>
+                </button> -->
                 &nbsp;
                 <button pRipple pButton type="button" icon="pi pi-send"
                         [disabled]="isActionDisabled()"
@@ -374,17 +373,15 @@
 
 
             @if (btnActions===BtnActions.SUIVI_RQ) {
-                <button pRipple pButton type="button" icon="pi pi-times"
+                <button pRipple pButton severity="success" type="button" icon="pi pi-times"
                         (click)="cloture()"
-                        label="Cloturer">
+                        label="Clôturer">
                 </button>
             }
 
-            @if (btnActions === BtnActions.VALIDATION) {
-
+            @if (btnActions === BtnActions.VALIDATION && !(hasNonTraiter || hasInactive)) {
                 <button pRipple pButton type="button" icon="pi pi-check"
                         (click)="validate()"
-                        [disabled]="hasNonTraiter||hasInactive"
                         label="Valider">
                 </button>
             }
@@ -398,9 +395,9 @@
                 <button pRipple pButton type="button" icon="pi pi-check"
                         [disabled]="isActionDisabled()"
                         (click)="validationRS()" label="Valider"></button>
-                <button pRipple pButton class="mx-2" type="button" icon="pi pi-times"
+                <button class="ml-2" pRipple pButton severity="success" type="button" icon="pi pi-times"
                         [disabled]="isActionDisabledClotureRQ()"
-                        (click)="cloture()" label="Cloturer"></button>
+                        (click)="cloture()" label="Clôturer"></button>
             }
             @if (btnActions === BtnActions.IMPUTATION) {
                 <button pRipple pButton type="button" icon="pi pi-check"
@@ -417,8 +414,8 @@
 </p-dialog>
 <p-confirmDialog #cd [key]="imputationKey" [baseZIndex]="1100999">
     <ng-template pTemplate="headless" let-message>
-        <div class="p-5 bg-white border border-gray-100 rounded-2xl shadow-xl text-center" 
-             style="display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; max-width: 380px; width: 100% !important; box-sizing: border-box !important; border-radius: 16px !important;">
+        <div class="p-5 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-2xl shadow-xl text-center" 
+             style="display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; max-width: 380px; min-width: 380px; width: 100% !important; box-sizing: border-box !important; border-radius: 16px !important;">
             
             <!-- Badge d'icône d'avertissement circulaire -->
             <div class="bg-red-50 text-red-500 mb-4" 

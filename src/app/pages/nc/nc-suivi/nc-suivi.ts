@@ -9,7 +9,8 @@ import {
     ReportFormat,
     ReportingInput,
     showToast,
-    StatusEnum
+    StatusEnum,
+    TypeDemande
 } from '../../../utils';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../prime-ng.module';
@@ -239,27 +240,51 @@ export class NCSuiviComponent {
         })
     }
 
-    private editer(rowData: any, resp: HttpResponse<any>) {
+    // private editer(rowData: any, resp: HttpResponse<any>) {
+    //     const reportingInput: ReportingInput = {
+    //         reportFormat: ReportFormat.PDF,
+    //         reportType: rowData.typeDemande,
+    //         entityId: rowData.id!,
+    //     };
+    //     this.featureService.printReport(reportingInput).pipe()
+    //         .subscribe({
+    //             next: arrayBytes => {
+    //                 if (arrayBytes.byteLength) {
+    //                     generateReportFile(arrayBytes, reportingInput);
+    //                     this.dmdTraitement.displayDetails(resp.body);
+    //                     this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'oppération à réussie !", life: 3000 });
+    //                 }
+    //             },
+    //             error: () => {
+    //                 this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 2", life: 3000 });
+    //                 //showToast(handleHttpErrors(err, 'error', 'Impression correspondance', 'demandeCodeKey'), this.messageService);
+    //             }
+    //         });
+    // }
+
+    private editer(rowData: any, resp: any) { // J'ai retiré HttpResponse car c'est trompeur
         const reportingInput: ReportingInput = {
             reportFormat: ReportFormat.PDF,
-            reportType: rowData.typeDemande,
+            reportType: TypeDemande.NON_CONFORMITE, // Utilisation de l'Enum correcte
             entityId: rowData.id!,
         };
+        
         this.featureService.printReport(reportingInput).pipe()
             .subscribe({
                 next: arrayBytes => {
                     if (arrayBytes.byteLength) {
                         generateReportFile(arrayBytes, reportingInput);
-                        this.dmdTraitement.displayDetails(resp.body);
-                        this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'oppération à réussie !", life: 3000 });
+                        this.dmdTraitement.displayDetails(resp); // Remplacement de resp.body par resp
+                        this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'oppération a réussi !", life: 3000 });
                     }
                 },
-                error: () => {
-                    this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 2", life: 3000 });
-                    //showToast(handleHttpErrors(err, 'error', 'Impression correspondance', 'demandeCodeKey'), this.messageService);
+                error: (error) => {
+                    console.log("ERREUR DE PRINT : ", error)
+                    this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'opération a échoué ! Veuillez réessayer", life: 3000 });
                 }
             });
     }
+
 
     edition(demandes: any) {
         this.editer(demandes[0], demandes[0]);}

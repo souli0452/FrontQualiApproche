@@ -11,7 +11,7 @@ import { RejetFormsComponent } from '../../../proc-non-conformite/forms/rejet.fo
 import { Structure } from '../../../structure/structure-config/structure';
 import { FeaturesService } from '../../../../services/feature-service';
 import { ProcNonConformiteService } from '../../../proc-non-conformite/proc-non-conformite.service';
-import { generateReportFile, ReportFormat, ReportingInput, showToast, StatusEnum } from '../../../../utils';
+import { generateReportFile, ReportFormat, ReportingInput, showToast, StatusEnum, TypeDemande } from '../../../../utils';
 import { NCRejetComponent } from '../../nc-rejet/nc-rejet';
 
 @Component({
@@ -65,7 +65,7 @@ export class ReceptionComponent {
     private editer(rowData: any, resp: HttpResponse<any>) {
         const reportingInput: ReportingInput = {
             reportFormat: ReportFormat.PDF,
-            reportType: rowData.typeDemande,
+            reportType: TypeDemande.NON_CONFORMITE,
             entityId: rowData.id!,
         };
         this.featureService.printReport(reportingInput).pipe(takeUntil(this.destroy$))

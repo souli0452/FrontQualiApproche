@@ -53,9 +53,10 @@ export class DetailsDialogComponent {
     }
 
     isViewable(fichier: any): boolean {
-        if (!fichier || !fichier.nom) return false;
-        const nom = fichier.nom.toLowerCase();
-        return nom.endsWith('.pdf') || nom.endsWith('.png') || nom.endsWith('.jpg') || nom.endsWith('.jpeg');
+        const nom = fichier?.nom || fichier?.nomFichier;
+        if (!nom) return false;
+        const nomStr = nom.toLowerCase();
+        return nomStr.endsWith('.pdf') || nomStr.endsWith('.png') || nomStr.endsWith('.jpg') || nomStr.endsWith('.jpeg');
     }
 
     edit(action: any) {
@@ -114,7 +115,14 @@ export class DetailsDialogComponent {
         });
     }
     downloadFile(fichier: any) {
-        downloadFile(fichier.nomFichier, fichier.fichierBase64);
+        const nom = fichier.nom || fichier.nomFichier;
+        const base64 = fichier.fichier || fichier.fichierBase64;
+        if (base64) {
+            downloadFile(nom, base64);
+        } else {
+            console.error('Aucun contenu base64 trouvé pour ce fichier', fichier);
+            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Le fichier est introuvable ou vide.', life: 3000 });
+        }
     }
     telechargerTout(fichiers: any[]) {
         fichiers?.forEach((fichier) => {

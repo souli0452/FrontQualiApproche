@@ -212,27 +212,27 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
                 if (ds.label === 'Mineure') {
                     return {
                         ...ds,
-                        backgroundColor: 'rgba(255, 255, 255, 0.2)', // Très transparent
-                        hoverBackgroundColor: 'rgba(255, 255, 255, 0.4)',
-                        borderRadius: 0,
+                        backgroundColor: '#ffffff2f', // Vert très clair pastel (green-200)
+                        hoverBackgroundColor: '#00ff99ff', // Vert un peu plus soutenu au survol (green-300)
+                        borderRadius: 6,
                         borderWidth: 0,
                         barThickness: 24
                     };
                 } else if (ds.label === 'Majeure') {
                     return {
                         ...ds,
-                        backgroundColor: 'rgba(255, 255, 255, 0.5)', // Mi-transparent
-                        hoverBackgroundColor: 'rgba(255, 255, 255, 0.7)',
-                        borderRadius: 0,
+                        backgroundColor: '#ffffffab', // Orange très clair pastel (orange-200)
+                        hoverBackgroundColor: '#ffbf00ff', // Orange un peu plus soutenu (orange-400)
+                        borderRadius: 6,
                         borderWidth: 0,
                         barThickness: 24
                     };
                 } else if (ds.label === 'Critique') {
                     return {
                         ...ds,
-                        backgroundColor: 'rgba(255, 255, 255, 1)', // Opaque
-                        hoverBackgroundColor: 'rgba(255, 255, 255, 1)',
-                        borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
+                        backgroundColor: '#ffffffff', // Rouge très clair pastel (red-200)
+                        hoverBackgroundColor: '#ff0000ff', // Rouge un peu plus soutenu (red-300)
+                        borderRadius: 6,
                         borderWidth: 0,
                         barThickness: 24
                     };

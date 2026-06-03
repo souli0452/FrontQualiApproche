@@ -50,13 +50,16 @@ export class LightboxComponent {
     constructor(private sanitizer: DomSanitizer) {}
 
     public open(pj: any) {
-        if (!pj || !pj.fichier) return;
+        if (!pj) return;
+        const fichierBase64 = pj.fichier || pj.fichierBase64;
+        if (!fichierBase64) return;
         
-        const nom = pj.nom ? pj.nom.toLowerCase() : '';
+        const nomBrut = pj.nom || pj.nomFichier;
+        const nom = nomBrut ? nomBrut.toLowerCase() : '';
         this.isImage = nom.endsWith('.png') || nom.endsWith('.jpg') || nom.endsWith('.jpeg');
         this.isPdf = nom.endsWith('.pdf');
         
-        const byteCharacters = atob(pj.fichier);
+        const byteCharacters = atob(fichierBase64);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
             byteNumbers[i] = byteCharacters.charCodeAt(i);

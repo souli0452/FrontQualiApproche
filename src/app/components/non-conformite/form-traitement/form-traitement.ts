@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { TabViewModule } from 'primeng/tabview';
 import { FormArray, FormBuilder, FormGroup, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -15,15 +15,19 @@ import { nonConformiteForm } from '../../../pages/proc-non-conformite/proc-non-c
 import { downloadFile, formatDateToDDMMYYYY, getStatusSeverity } from '../../../utils';
 import { DetailsDialogComponent } from '../details-dialog/details-dialog';
 import { HttpResponse } from '@angular/common/http';
+import { LightboxComponent } from '../lightbox/lightbox';
 
 @Component({
     selector: 'app-form-traitement',
     standalone: true,
-    imports: [NgPrimeModule, TabViewModule, DetailsDialogComponent, Chips],
+    imports: [NgPrimeModule, TabViewModule, DetailsDialogComponent, Chips, LightboxComponent],
     templateUrl: './form-traitement.html',
     styleUrl: './form-traitement.scss'
 })
 export class FormTraitementComponent {
+    @Input()
+    selectedData: any;
+    @ViewChild(LightboxComponent) maLightbox!: LightboxComponent;
     @Input() demande: any;
     editForm!: UntypedFormGroup;
     responsable: any;
@@ -312,12 +316,23 @@ export class FormTraitementComponent {
         // Create a copy so we don't mutate the original directly if the user cancels
         this.planAction = { ...plan }; 
         
-        // Convert "DD-MM-YYYY" to a real Date object for the p-datePicker
-        if (this.planAction.dateEcheance && typeof this.planAction.dateEcheance === 'string') {
-            const parts = this.planAction.dateEcheance.split(/-|\//); // handles both "-" and "/"
-            if (parts.length === 3) {
-                // Assuming DD-MM-YYYY
-                this.planAction.dateEcheance = new Date(+parts[2], +parts[1] - 1, +parts[0]);
+        // Convert string to a real Date object for the p-datePicker
+        if (this.planAction.dateEcheance) {
+            if (typeof this.planAction.dateEcheance === 'string') {
+                const parts = this.planAction.dateEcheance.split(/-|\//);
+                if (parts.length === 3) {
+                    if (parts[2].length === 4) {
+                        this.planAction.dateEcheance = new Date(+parts[2], +parts[1] - 1, +parts[0]);
+                    } else if (parts[0].length === 4) {
+                        this.planAction.dateEcheance = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+                    } else {
+                        this.planAction.dateEcheance = new Date(this.planAction.dateEcheance);
+                    }
+                } else {
+                    this.planAction.dateEcheance = new Date(this.planAction.dateEcheance);
+                }
+            } else {
+                this.planAction.dateEcheance = new Date(this.planAction.dateEcheance);
             }
         }
 
@@ -346,21 +361,29 @@ export class FormTraitementComponent {
             this.demande.planActions = this.planActions;
             this.displayDialog = false;
         } else {
-            this.service.updatePlanAction(this.planAction).subscribe({
-                next: (data) => {
-                    // Update the array with the new value
-                    const index = this.demande.planActions.findIndex((p: any) => p.numeroOdre === this.planAction.numeroOdre);
-                    if (index !== -1) {
-                        this.demande.planActions[index] = this.planAction;
+            if (this.planAction.id) {
+                this.service.updatePlanAction(this.planAction).subscribe({
+                    next: (data) => {
+                        // Update the array with the new value
+                        const index = this.demande.planActions.findIndex((p: any) => p.numeroOdre === this.planAction.numeroOdre);
+                        if (index !== -1) {
+                            this.demande.planActions[index] = this.planAction;
+                        }
+                        this.displayDialog = false;
+                        this.messageService.add({ severity: 'success', summary: 'Réussi', detail: "L'opération a réussi !", life: 3000 });
+                    },
+                    error: (error) => {
+                        this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'opération a échoué ! Veuillez vérifier le format des données.", life: 3000 });
                     }
-                    this.displayDialog = false;
-
-                    this.messageService.add({ severity: 'success', summary: 'Réussi', detail: "L'oppération à réussie !", life: 3000 });
-                },
-                error: (error) => {
-                    this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 5", life: 3000 });
+                });
+            } else {
+                // Plan n'a pas encore d'ID (créé localement)
+                const index = this.demande.planActions.findIndex((p: any) => p.numeroOdre === this.planAction.numeroOdre);
+                if (index !== -1) {
+                    this.demande.planActions[index] = this.planAction;
                 }
-            })
+                this.displayDialog = false;
+            }
         }
 
     }
@@ -395,8 +418,27 @@ export class FormTraitementComponent {
         });
     }
     downloadFile(fichier: any) {
-        downloadFile(fichier.nomFichier, fichier.fichierBase64);
+        const nom = fichier.nom || fichier.nomFichier;
+        const base64 = fichier.fichier || fichier.fichierBase64;
+        if (base64) {
+            downloadFile(nom, base64);
+        } else {
+            console.error('Aucun contenu base64 trouvé pour ce fichier', fichier);
+            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Le fichier est introuvable ou vide.', life: 3000 });
+        }
     }
+    
+    openLightbox(file: any) {
+        this.maLightbox.open(file);
+    }
+
+    isViewable(fichier: any): boolean {
+        const nom = fichier?.nom || fichier?.nomFichier;
+        if (!nom) return false;
+        const nomStr = nom.toLowerCase();
+        return nomStr.endsWith('.pdf') || nomStr.endsWith('.png') || nomStr.endsWith('.jpg') || nomStr.endsWith('.jpeg');
+    }
+
     hideDialogAffich() {
         this.afficheDialog = false;
     }

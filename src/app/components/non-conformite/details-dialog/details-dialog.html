@@ -173,10 +173,15 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="flex gap-2">
-                            <button *ngIf="isViewable(fichier)" pButton pRipple type="button" icon="pi pi-eye" class="p-button-text p-button-rounded p-button-info" (click)="openLightbox(fichier)" pTooltip="Visualiser" tooltipPosition="top"></button>
+                        <div class="flex items-center gap-2">
+                            <!-- <button *ngIf="isViewable(fichier)" pButton pRipple type="button" icon="pi pi-eye" class="p-button-text p-button-rounded p-button-info" (click)="openLightbox(fichier)" pTooltip="Visualiser" tooltipPosition="top"></button>
+                            
                             <p-button [rounded]="true" [text]="true" size="small" icon="pi pi-download"
                                 (click)="downloadAttachment(fichier)" pTooltip="Télécharger" [tooltipPosition]="'left'">
+                            </p-button> -->
+                            <p-button icon="pi pi-search" size="small" severity="secondary" *ngIf="isViewable(fichier)" pRipple (click)="openLightbox(fichier)" pTooltip="Visualiser" tooltipPosition="top" />
+                            <p-button severity="info" size="small" [text]="true" icon="pi pi-cloud-download"
+                                (click)="downloadAttachment(fichier)" pTooltip="Télécharger" tooltipPosition="left" >
                             </p-button>
                         </div>
                     </div>
@@ -379,17 +384,19 @@
                                             class="p-button-rounded p-button-text p-button-info p-button-sm" (click)="edit(plan)"
                                             pTooltip="Modifier" tooltipPosition="top">
                                         </button>
-                                        <button 
+                                        <!-- <button 
                                             pButton pRipple type="button" icon="pi pi-search"
                                             class="p-button-rounded p-button-text p-button-secondary p-button-sm" (click)="affich(plan)"
                                             pTooltip="Détails" tooltipPosition="top">
-                                        </button>
-                                        <button pButton pRipple type="button"
+                                        </button> -->
+                                        <p-button [text]="true" severity="secondary" size="small" icon="pi pi-search" (click)="affich(plan)" pTooltip="Visualiser" tooltipPosition="top" />
+                                        <p-button severity="danger" size="small" *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)" pRipple icon="pi pi-arrow-up" (click)="displayRejet(plan)" pTooltip="Rejeter" tooltipPosition="top" />
+                                        <!-- <button pButton pRipple type="button"
                                             *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
                                             icon="pi pi-arrow-up" (click)="displayRejet(plan)"
-                                            class="p-button-rounded p-button-text p-button-danger p-button-sm" pTooltip="Réjeter"
+                                            class="p-button-rounded p-button-text p-button-danger p-button-sm" pTooltip="Rejeter"
                                             tooltipPosition="top">
-                                        </button>
+                                        </button> -->
                                     </div>
                                 </td>
                             </tr>
@@ -604,7 +611,7 @@
             <div class="bg-surface-50 dark:bg-surface-900 p-4 rounded-xl border border-surface-200 dark:border-surface-700">
                 <div class="flex items-center gap-2 mb-3 text-blue-500">
                     <i class="pi pi-paperclip"></i>
-                    <span class="font-bold">Pièces jointes 1</span>
+                    <span class="font-bold">Pièces jointes</span>
                 </div>
                 <div class="flex flex-col gap-2">
                     <div *ngFor="let fichier of planAction.fichiers"
@@ -614,14 +621,18 @@
                                 <img [src]="getFileIcon(fichier.nom || fichier.nomFichier)" alt="File icon" width="20" height="20" />
                             </div>
                             <div class="flex flex-col">
-                                <span class="font-semibold text-sm text-900 dark:text-100 block" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [title]="fichier.nom || fichier.nomFichier">
+                                <span class="font-normal text-sm text-900 dark:text-100 block" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [title]="fichier.nom || fichier.nomFichier">
                                     {{ fichier.nom || fichier.nomFichier }}
                                 </span>
                             </div>
                         </div>
-                        <p-button [rounded]="true" [text]="true" icon="pi pi-download"
-                            (click)="downloadFile(fichier)" pTooltip="Télécharger" tooltipPosition="left" class="p-button-secondary">
-                        </p-button>
+                        <div class="flex items-center gap-2">
+                            <!-- <button *ngIf="isViewable(fichier)" pButton pRipple type="button" icon="pi pi-eye" class="p-button-text p-button-rounded p-button-info" (click)="openLightbox(fichier)" pTooltip="Visualiser" tooltipPosition="top"></button> -->
+                            <p-button icon="pi pi-search" size="small" severity="secondary" *ngIf="isViewable(fichier)" pRipple (click)="openLightbox(fichier)" pTooltip="Visualiser" tooltipPosition="top" />
+                            <p-button severity="info" size="small" [text]="true" icon="pi pi-cloud-download"
+                                (click)="downloadFile(fichier)" pTooltip="Télécharger" tooltipPosition="left" >
+                            </p-button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -12,7 +12,8 @@ import {
     ReportFormat,
     ReportingInput,
     showToast,
-    StatusEnum
+    StatusEnum,
+    TypeDemande
 } from '../../../utils';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../prime-ng.module';
@@ -73,7 +74,7 @@ ngOnInit() {
     private editer(rowData: any, resp: HttpResponse<any>) {
         const reportingInput: ReportingInput = {
             reportFormat: ReportFormat.PDF,
-            reportType: rowData.typeDemande,
+            reportType: TypeDemande.NON_CONFORMITE,
             entityId: rowData.id!,
         };
         this.featureService.printReport(reportingInput).pipe(takeUntil(this.destroy$))

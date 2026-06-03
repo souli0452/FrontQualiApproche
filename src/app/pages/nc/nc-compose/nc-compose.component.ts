@@ -4,7 +4,6 @@ import { convertFilesToBase64, getCurrentUserStructure, onFileUpload, PieceJoint
 import { MessageService } from 'primeng/api';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { FeaturesService } from '../../../services/feature-service';
-import { takeUntil } from 'rxjs';
 import { StructureService } from '../../structure/structure-service/structure-service';
 import { Structure } from '../../structure/structure-config/structure';
 import {
@@ -169,6 +168,9 @@ export class NcComposeComponent {
             next: (res: HttpResponse<any>) => {
                 this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'La non-conformité a été enregistrée avec succès.' });
                 this.closeDialog.emit();
+                if (!this.editId) {
+                    this.location.back();
+                }
                 this.featureService.onReloadRequested(true);
             },
             error: (error: HttpErrorResponse) => {

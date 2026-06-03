@@ -46,6 +46,7 @@ import { TraitementGlobalComponent } from './nc/nc-traitement/nc-traitement-glob
 import { QmsDocumentComponent } from './qms-document/qms-document.component';
 import { QmsDocumentCreateComponent } from './qms-document-create/qms-document-create.component';
 import { QmsDocumentTypeComponent } from './qms-document-type/qms-document-type';
+import { NcComposeComponent } from './nc/nc-compose/nc-compose.component';
 
 
 export default [
@@ -98,6 +99,7 @@ export default [
         data: { breadcrumb: 'Gestion des non-conformités' },
         children: [
             { path: '', redirectTo: 'vue-ensemble', pathMatch: 'full' },
+            // { path: 'declaration', component: NcComposeComponent, title: 'Declaration d\'une Non-Conformité' },
             { path: 'vue-ensemble', component: NcVueEnsembleComponent, title: 'Vue d\'ensemble' },
             { path: 'affectation-action', component: NCAffectationActionComponent, title: 'Affectations' },
             { path: 'analyse-reception', component: AnalyseReceptionComponent, title: 'Analyse et Réception' },
