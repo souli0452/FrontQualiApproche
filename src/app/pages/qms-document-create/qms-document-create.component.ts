@@ -5,9 +5,9 @@ import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { QmsDocumentService, QmsDocumentType } from '../../services/qms-document.service';
-import { StructureService } from '../structure/structure-service/structure-service';
-import { Structure } from '../structure/structure-config/structure';
 import { showToast, StatusEnum } from '../../utils';
+import { Structure } from '../parametrages/structure/structure-config/structure';
+import { StructureService } from '../parametrages/structure/structure-service/structure-service';
 
 declare const tinymce: any;
 

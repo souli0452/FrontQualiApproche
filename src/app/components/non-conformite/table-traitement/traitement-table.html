@@ -176,7 +176,7 @@
                     @if (btnActions === BtnActions.TRAITEMENT) {
                         <button pButton pRipple icon="pi pi-wrench"
                                 class="p-button-rounded p-button-text p-button-secondary h-8 w-8 hover:bg-surface-100 dark:hover:bg-surface-800"
-                                pTooltip="Traiter" (click)="displayDetails(rowData)"></button>
+                                pTooltip="Traiter" tooltipPosition="left" (click)="displayDetails(rowData)"></button>
                     } @else {
                         <p-button size="small" icon="pi pi-search" pTooltip="Détails" tooltipPosition="left" (click)="displayDetails(rowData)" pRipple severity="secondary" />
                         <!-- <button pButton pRipple icon="pi pi-search"

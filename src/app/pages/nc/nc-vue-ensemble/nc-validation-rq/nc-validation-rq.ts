@@ -3,17 +3,18 @@ import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
 import { HttpResponse } from '@angular/common/http';
 import { TraitementTableComponent } from '../../../../components/non-conformite/table-traitement/traitement-table';
-import { RejetFormsComponent } from '../../../proc-non-conformite/forms/rejet.forms/rejet.forms.component';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { EtapeTraitement } from '../../../../enums';
-import { ProcNonConformiteService } from '../../../proc-non-conformite/proc-non-conformite.service';
 import { showToast, StatusEnum } from '../../../../utils';
 import { FeaturesService } from '../../../../services/feature-service';
+import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
+import { NCRejetComponent } from '../../nc-rejet/nc-rejet';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-nc-validation-rq',
     standalone: true,
-    imports: [CommonModule, NgPrimeModule, TraitementTableComponent, RejetFormsComponent],
+    imports: [CommonModule, NgPrimeModule, TraitementTableComponent, NCRejetComponent],
     providers: [MessageService],
     templateUrl: './nc-validation-rq.html'
 })
@@ -30,7 +31,8 @@ export class ValidationRQComponent {
     constructor(
         protected messageService: MessageService,
         private service: ProcNonConformiteService,
-         private  featureService:FeaturesService,
+        private  featureService:FeaturesService,
+        private router: Router
     ) {
         this.cols = [
             { field: 'numeroReference', header: 'N° Ref', type: 'string', filter: true, width: '220px', centered: false },
@@ -90,6 +92,7 @@ export class ValidationRQComponent {
             next: (data) => {
                this.featureService.onReloadRequested(true);
                 this.dmdTraitement.closeDetailsDialog();
+                this.router.navigate(['/non-conformite/vue-ensemble']);
                 this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'oppération à réussie !", life: 5000 });
             },
             error: (error) => {
@@ -133,6 +136,7 @@ export class ValidationRQComponent {
         this.service.updateNomConformites(cleanedDemandes).subscribe({
             next: (data) => {
                 this.featureService.onReloadRequested(true);
+                this.router.navigate(['/non-conformite/vue-ensemble']);
                 this.dmdTraitement.closeDetailsDialog();
                 this.messageService.add({ severity: 'success', summary: 'Succès', detail: "Clôture de la Non-Conformité réussie", life: 5000 });
             },

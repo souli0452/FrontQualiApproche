@@ -7,7 +7,6 @@ import { Location } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { NonConformStatus } from '../../../enums';
 import { FeaturesService } from '../../../services/feature-service';
-import { ProcNonConformiteService } from '../../../pages/proc-non-conformite/proc-non-conformite.service';
 import { convertFilesToBase64, showToast, StatusEnum } from '../../../utils';
 
 
@@ -50,7 +49,6 @@ export class TraitementActionTable implements OnInit {
     private messageService: MessageService,
     private nonConformiteService: NonConformiteService,
     private featureService: FeaturesService,
-    private procedureNonConformiteService: ProcNonConformiteService,
     private confirmationService: ConfirmationService,
     private location: Location,
     private globalSearchService: GlobalSearchService
@@ -82,7 +80,7 @@ export class TraitementActionTable implements OnInit {
     onDeleteMultiple() {
         if (this.selectedNonConformite && this.selectedNonConformite.length > 0) {
             this.confirmationService.confirm({
-                message: `Voulez-vous supprimer la sélection ? `,
+                message: `Voulez-vous supprimer la sélection 1? `,
                 key: this.confirmKey,
                 accept: () => {
                     this.nonConformiteService.deleteMany(this.selectedNonConformite).subscribe({

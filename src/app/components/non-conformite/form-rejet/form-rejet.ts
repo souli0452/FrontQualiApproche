@@ -2,8 +2,8 @@ import {Component, EventEmitter, Input, Output} from '@angular/core';
 import { EtapeTraitement } from '../../../enums';
 import { convertFilesToBase64 } from '../../../utils';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { ProcNonConformiteService } from '../../../pages/proc-non-conformite/proc-non-conformite.service';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
+import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 
 @Component({
     selector: 'app-form-rejet',

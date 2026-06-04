@@ -1,22 +1,23 @@
-    <div *ngIf="roleService.isChef">
-      <div class="bg-surface-100 mb-4 p-2 text-center">
-        <div class="text-xl mb-2 font-bold">Analyse des Non-Conformitées et Réception (Pilote)</div>
-        <p>Espace de pilotage dédié à l'examen de vos dossiers et à la validation des étapes de votre circuit de conformité.</p>
-      </div>
+<div *ngIf="roleService.isChef">
+    <div class="bg-surface-100 mb-4 p-2 text-center">
+    <div class="text-xl mb-2 font-bold">Analyse des Non-Conformitées et Réception (Pilote)</div>
+    <p>Espace de pilotage dédié à l'examen de vos dossiers et à la validation des étapes de votre circuit de conformité.</p>
     </div>
+</div>
 
-<app-nc-filter-bar (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
+<div *ngIf="receptionPiloteData.length > 0">
+    <app-nc-filter-bar (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
+</div>
 
 <div>
-    
     <!-- 1. Affichage normal du tableau (s'il y a des données) -->
     <div *ngIf="roleService.isChef && receptionPiloteData.length > 0">
-        <app-vue-ensemble-reception [demandeList]="receptionPiloteData"></app-vue-ensemble-reception>
+        <app-nc-reception [demandeList]="receptionPiloteData"></app-nc-reception>
     </div>
 
     <!-- 2. LE MAGNIFIQUE EMPTY STATE (s'il n'y a aucune donnée) -->
     <div *ngIf="roleService.isChef && receptionPiloteData.length === 0 && !loading" 
-         class="flex flex-col items-center justify-center py-12 px-4 mt-2 bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl shadow-sm text-center">
+         class="flex flex-col items-center justify-center p-4 mt-2 bg-surface-0 dark:bg-surface-900 text-center">
         
         <!-- Image en noir et blanc (CSS filter: grayscale) -->
         <img src="assets/images/empty.svg" 

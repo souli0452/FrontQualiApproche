@@ -5,8 +5,6 @@ import { ButtonModule } from 'primeng/button';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Product, ProductService } from '../../service/product.service';
 import { UIChart } from 'primeng/chart';
-import { ProcNonConformiteService } from '../../proc-non-conformite/proc-non-conformite.service';
-import { data } from 'autoprefixer';
 import { isUserInRoles } from '../../../utils';
 
 @Component({

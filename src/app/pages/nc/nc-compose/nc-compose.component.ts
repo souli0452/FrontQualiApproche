@@ -4,8 +4,6 @@ import { convertFilesToBase64, getCurrentUserStructure, onFileUpload, PieceJoint
 import { MessageService } from 'primeng/api';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { FeaturesService } from '../../../services/feature-service';
-import { StructureService } from '../../structure/structure-service/structure-service';
-import { Structure } from '../../structure/structure-config/structure';
 import {
     ActionNonConformite,
     NiveauNonConformite,
@@ -17,17 +15,25 @@ import {
 import { TypeProcessusService } from '../../../services/non-conformite/type-processus.service';
 import { ReclamationService } from '../../../services/reclamation.service';
 import { ActionNonConformiteService } from '../../../services/non-conformite/action-non-conformite.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NonConformStatus, EtapeTraitement } from '../../../enums';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { TypeNonConformiteService } from '../../../services/non-conformite/type-non-conformite.service';
 import { NiveauNonConformiteService } from '../../../services/non-conformite/niveau-non-conformite.service';
+import { Structure } from '../../parametrages/structure/structure-config/structure';
+import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
+
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { NgPrimeModule } from '../../../../prime-ng.module';
+import { FileUploadComponent } from '../../../components/non-conformite/file-upload/file-upload.component';
 
 @Component({
     selector: 'app-nc-compose',
     templateUrl: './nc-compose.component.html',
     styleUrl: './nc-compose.component.scss',
-    standalone: false
+    standalone: true,
+    imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent]
 })
 export class NcComposeComponent {
     @Input() editId: any;
@@ -59,7 +65,8 @@ export class NcComposeComponent {
         private reclamationService: ReclamationService,
         private niveauService: NiveauNonConformiteService,
         protected actionNonConformiteService: ActionNonConformiteService,
-        private activatedRoute: ActivatedRoute
+        private activatedRoute: ActivatedRoute,
+        private router: Router
     ) {
         this.loadStuctures();
         this.loadNiveau();
@@ -157,19 +164,24 @@ export class NcComposeComponent {
         }
 
         if (this.nonConformite.id != null) {
-            this.nonConformiteService.update(this.nonConformite).subscribe(this.onResponse());
+            this.nonConformiteService.update(this.nonConformite).subscribe(this.onResponse(publish));
         } else {
-            this.nonConformiteService.save(this.nonConformite).subscribe(this.onResponse());
+            this.nonConformiteService.save(this.nonConformite).subscribe(this.onResponse(publish));
         }
     }
 
-    onResponse() {
+    onResponse(publish: boolean) {
         return {
             next: (res: HttpResponse<any>) => {
                 this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'La non-conformité a été enregistrée avec succès.' });
-                this.closeDialog.emit();
+                // this.closeDialog.emit();
+                
                 if (!this.editId) {
-                    this.location.back();
+                    if (publish) {
+                        this.router.navigate(['/non-conformite/publiees']);
+                    } else {
+                        this.location.back();
+                    }
                 }
                 this.featureService.onReloadRequested(true);
             },

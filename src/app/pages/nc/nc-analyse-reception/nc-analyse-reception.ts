@@ -3,12 +3,12 @@ import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { NcFilterBarComponent } from '../nc-filter-bar/nc-filter-bar';
 import { RoleService } from '../../../services/non-conformite/role.service'; // 👈 Bon chemin
-import { ProcNonConformiteService } from '../../proc-non-conformite/proc-non-conformite.service';
 import { getCurrentUserStructure } from '../../../utils';
 import { EtapeTraitement } from '../../../enums';
 import { Subject, takeUntil } from 'rxjs';
 
 import { ReceptionComponent } from '../nc-vue-ensemble/nc-reception/nc-reception';
+import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 
 @Component({
   selector: 'app-nc-analyse-reception',

@@ -10,26 +10,11 @@ import { ActionCorrectivePreventiveComponent } from './action-corrective-prevent
 import { ReclamationComponent } from './reclamation/reclamation';
 import { RisqueComponent } from './risque/risque';
 import { AuditeComponent } from './audite/audite';
-import { NonConformiteComponent } from './non-conformite/non-conformite';
-import { ProcedureNonConformiteComponent } from './procedure-non-conformite/procedure-non-conformite';
 import { reglementationComponent } from './reglementation/reglementation';
 import { CritereEvaluationComponent } from './critere-evaluation/critere-evaluation';
-import { ReceptionComponent } from './proc-non-conformite/reception/reception.component';
-import { ValidationComponent } from './proc-non-conformite/validation/validation.component';
-import { TraitementComponent } from './proc-non-conformite/traitement/traitement.component';
-import { ClotureComponent } from './proc-non-conformite/cloture/cloture.component';
-import { StructureComponent } from './structure/structure-view/structure.component';
 import { TypeStructure } from '../enums';
-import { ConsultationsComponent } from './proc-non-conformite/consultations/consultations.component';
-import { ValidationRSComponent } from './proc-non-conformite/validation-rs/validation-rs.component';
-import { ImputationComponent } from './proc-non-conformite/imputation/imputation.component';
 import { KcUserComponent } from './kc-user/kc-user.component';
 import { ProfilComponent } from './profil/profil.component';
-import { TypeNonConformiteComponent } from './procedure-non-conformite/types/type-non-conformite';
-import { TypeProcessusComponent } from './procedure-non-conformite/types/type-processus';
-import { NiveauNonConformiteComponent } from './procedure-non-conformite/niveau/niveau';
-import { ActionNonConformiteComponent } from './procedure-non-conformite/action/action';
-import { PlanActionComponent } from './proc-non-conformite/plan-action/plan-action.component';
 import { ConfigGComponent } from './config-g/config-g.component';
 import { SearchResultsComponent } from './recherche/search-results';
 import { RoleComponent } from './role/role-table/role.component';
@@ -42,10 +27,15 @@ import { NCSuiviComponent } from './nc/nc-suivi/nc-suivi';
 import { ParametragesComponent } from './parametrages/parametrages.component';
 import { NcPublieesComponent } from './nc/nc-publiees/nc-publiees';
 import { AnalyseValidationComponent } from './nc/nc-analyse-validation/nc-analyse-validation';
-import { TraitementGlobalComponent } from './nc/nc-traitement/nc-traitement-global';
+import { TraitementGlobalComponent } from './nc/nc-action-a-mener/nc-traitement-global';
 import { QmsDocumentComponent } from './qms-document/qms-document.component';
 import { QmsDocumentCreateComponent } from './qms-document-create/qms-document-create.component';
 import { QmsDocumentTypeComponent } from './qms-document-type/qms-document-type';
+import { ActionNonConformiteComponent } from './parametrages/parametrage-non-conformite/action-nc/action';
+import { NiveauNonConformiteComponent } from './parametrages/parametrage-non-conformite/niveau-nc/niveau';
+import { SourceNonConformite } from './parametrages/parametrage-non-conformite/source-nc/source';
+import { CategorieProcessusComponent } from './parametrages/categorie-processus/categorie-processus';
+import { StructureComponent } from './parametrages/structure/structure-view/structure.component';
 import { NcComposeComponent } from './nc/nc-compose/nc-compose.component';
 
 
@@ -61,19 +51,8 @@ export default [
     { path: 'reclamation', component: ReclamationComponent, title: 'Liste des Réclamations' },
     { path: 'risque', component: RisqueComponent, title: 'Liste des Risques' },
     { path: 'audite', component: AuditeComponent, title: 'Liste des Audites' },
-    { path: 'procedure-non-conformite', component: ProcedureNonConformiteComponent, title: 'Liste des Procédures de Non Conformité' },
     { path: 'reglementation', component: reglementationComponent, title: 'Liste des Réglementations' },
     { path: 'critere-evaluation', component: CritereEvaluationComponent, title: 'Critères d\'évaluation' },
-
-    {path: 'reception', data: {breadcrumb: 'Réception'}, component: ReceptionComponent, title: 'Réception des non-conformités'},
-    {path: 'validation', data: {breadcrumb: 'Validation'}, component: ValidationComponent, title: 'Validation des non-conformités'},
-    {path: 'traitement', data: {breadcrumb: 'Traitement'}, component: TraitementComponent, title: 'Traitement des non-conformités'},
-    {path: 'cloture', data: {breadcrumb: 'Cloture'}, component: ClotureComponent, title: 'Clôture des non-conformités'},
-    {path: 'consultation', data: {breadcrumb: 'Consultations'}, component: ConsultationsComponent, title: 'Consultations des non-conformités'},
-    {path: 'validation_rs', data: {breadcrumb: 'validation'}, component: ValidationRSComponent, title: 'Validation RS'},
-    {path: 'imputation', data: {breadcrumb: 'imputations'}, component: ImputationComponent, title: 'Imputations'},
-    {path: 'plan-action', data: {breadcrumb: 'Traitements plan action'}, component: PlanActionComponent, title: 'Plan d\'action'},
-    
     {
         path: 'configurations', 
         component: ParametragesComponent, 
@@ -83,8 +62,8 @@ export default [
             { path: 'utilisateurs', component: KcUserComponent, title: 'Utilisateurs' },
             { path: 'roles', component: RoleComponent, title: 'Rôles' },
             { path: 'roles/:id', component: RoleDetailComponent, title: 'Détail Rôle' },
-            { path: 'type-processus', component: TypeProcessusComponent, title: 'Processus' },
-            { path: 'type-nc', component: TypeNonConformiteComponent, title: 'Types NC' },
+            { path: 'type-processus', component: CategorieProcessusComponent, title: 'Processus' },
+            { path: 'type-nc', component: SourceNonConformite, title: 'Types NC' },
             { path: 'niveau-nc', component: NiveauNonConformiteComponent, title: 'Niveaux NC' },
             { path: 'type-action', component: ActionNonConformiteComponent, title: 'Actions' },
             { path: 'direction', component: StructureComponent, title: 'Liste des Directions', data: { typeStructure: TypeStructure.DIRECTION } },
@@ -99,7 +78,8 @@ export default [
         data: { breadcrumb: 'Gestion des non-conformités' },
         children: [
             { path: '', redirectTo: 'vue-ensemble', pathMatch: 'full' },
-            // { path: 'declaration', component: NcComposeComponent, title: 'Declaration d\'une Non-Conformité' },
+            { path: 'declaration', component: NcComposeComponent, title: 'Declaration d\'une Non-Conformité' },
+            { path: 'declaration/:id', component: NcComposeComponent, title: 'Modification d\'une Non-Conformité' },
             { path: 'vue-ensemble', component: NcVueEnsembleComponent, title: 'Vue d\'ensemble' },
             { path: 'affectation-action', component: NCAffectationActionComponent, title: 'Affectations' },
             { path: 'analyse-reception', component: AnalyseReceptionComponent, title: 'Analyse et Réception' },
@@ -110,8 +90,8 @@ export default [
         ]
     },
     { path: 'profil', component: ProfilComponent, title: 'Liste des Profils' },
-    { path: 'type-nc', component: TypeNonConformiteComponent, title: 'Types de non conformité' },
-    { path: 'type-processus', component: TypeProcessusComponent, title: 'Types de processus' },
+    { path: 'type-nc', component: SourceNonConformite, title: 'Types de non conformité' },
+    { path: 'type-processus', component: CategorieProcessusComponent, title: 'Types de processus' },
     { path: 'niveau-nc', component: NiveauNonConformiteComponent, title: 'Niveaux des non-conformités' },
     { path: 'type-action', component: ActionNonConformiteComponent, title: 'Types d\'actions' },
     { path: 'qms-documents', data: { breadcrumb: 'Documents QMS' }, component: QmsDocumentComponent, title: 'Gestion Documentaire QMS' },

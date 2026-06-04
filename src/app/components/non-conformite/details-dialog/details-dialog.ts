@@ -5,11 +5,11 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
 import { FeaturesService } from '../../../services/feature-service';
-import { ProcNonConformiteService } from '../../../pages/proc-non-conformite/proc-non-conformite.service';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { EtapeTraitement } from '../../../enums';
 import { convertFilesToBase64, downloadAttachment, downloadFile, formatDateToDDMMYYYY } from '../../../utils';
 import { LightboxComponent } from '../lightbox/lightbox';
+import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 
 @Component({
     selector: 'app-details-dialog',

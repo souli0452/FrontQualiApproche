@@ -1,10 +1,10 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { EtapeTraitement } from '../../../enums';
-import { ProcNonConformiteService } from '../../proc-non-conformite/proc-non-conformite.service';
 import { convertFilesToBase64 } from '../../../utils';
 import { MessageService } from 'primeng/api';
 import { FileUploadComponent } from '../../../components/non-conformite/file-upload/file-upload.component';
+import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 @Component({
     selector: 'app-nc-rejet',
     templateUrl: './nc-rejet.html',

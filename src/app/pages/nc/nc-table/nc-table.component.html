@@ -160,6 +160,15 @@
                                 [value]="actuality[col.field]">
                             </p-tag>
                         </span>
+                        
+                        <span *ngIf="col.type === 'enum' && actuality[col.field]" class="flex justify-center w-full">
+                            <span *ngIf="actuality[col.field]==='DRAFT'" class="p-badge p-badge-secondary">Brouillon</span>
+                            <span *ngIf="actuality[col.field]==='PUBLISHED'" class="p-badge p-badge-info">Publiée</span>
+                            <span *ngIf="actuality[col.field]==='PENDING'" class="p-badge p-badge-warning">En attente</span>
+                            <span *ngIf="actuality[col.field]==='IN_PROGRESS'" class="p-badge p-badge-primary">En cours</span>
+                            <span *ngIf="actuality[col.field]==='APPROVED'" class="p-badge p-badge-success">Traitée</span>
+                            <span *ngIf="actuality[col.field]==='REJECTED'" class="p-badge p-badge-danger">Rejetée</span>
+                        </span>
                     </span>
                 </td>
             </ng-container>
@@ -305,9 +314,9 @@
         </div>
     </ng-template>
 
-    <div class="p-1" *ngIf="editDialogVisible">
+    <!-- <div class="p-1" *ngIf="editDialogVisible">
         <app-nc-compose [editId]="selectedNcId" (closeDialog)="editDialogVisible = false"></app-nc-compose>
-    </div>
+    </div> -->
 </p-dialog>
 
 <!-- 👇 Dialogue des détails de la Non-Conformité -->

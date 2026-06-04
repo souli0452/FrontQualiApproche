@@ -5,7 +5,7 @@ import { FeaturesService } from "../../../services/feature-service";
 import { TypeDemande } from "../../../utils";
 import { EtapeTraitement, StatusEnum } from '../../../enums';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { SearchAgentComponent } from '../../search-agent-component/search-agent.component';
+import { SearchAgentComponent } from '../search-agent-component/search-agent.component';
 
 
 @Component({

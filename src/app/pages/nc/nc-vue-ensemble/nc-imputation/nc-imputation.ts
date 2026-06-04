@@ -3,20 +3,20 @@ import { HttpResponse } from '@angular/common/http';
 import { MessageService } from 'primeng/api';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../services/auth-services/auth.service';
-import { ProcNonConformiteService } from '../../../proc-non-conformite/proc-non-conformite.service';
 import { showToast, StatusEnum } from '../../../../utils';
 import { EtapeTraitement } from '../../../../enums';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
-import { RejetFormsComponent } from '../../../proc-non-conformite/forms/rejet.forms/rejet.forms.component';
 import { TraitementTableComponent } from '../../../../components/non-conformite/table-traitement/traitement-table';
+import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
+import { NCRejetComponent } from '../../nc-rejet/nc-rejet';
 
 @Component({
-    selector: 'app-vue-ensemble-imputation',
+    selector: 'app-nc-imputation',
     templateUrl: './nc-imputation.html',
     styleUrl: './nc-imputation.scss',
     standalone: true,
     providers: [MessageService],
-    imports: [CommonModule, NgPrimeModule, TraitementTableComponent, RejetFormsComponent]
+    imports: [CommonModule, NgPrimeModule, TraitementTableComponent, NCRejetComponent]
 })
 export class VueEnsembleImputationComponent {
     @Input() demandeList: any = [];

@@ -10,7 +10,7 @@ import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-c
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { TypeStructure } from '../../enums';
 import { RoleService } from '../role/role-service/role-service';
-import { StructureService } from '../structure/structure-service/structure-service';
+import { StructureService } from '../parametrages/structure/structure-service/structure-service';
 
 @Component({
     selector: 'app-kc-user',

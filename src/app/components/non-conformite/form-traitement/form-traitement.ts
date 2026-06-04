@@ -5,17 +5,17 @@ import { MessageService } from 'primeng/api';
 import { Chips } from 'primeng/chips';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { EtapeTraitement } from '../../../enums';
-import { Structure } from '../../../pages/structure/structure-config/structure';
 import { ActionNonConformite } from '../../../models';
 import { AuthService } from '../../../services/auth-services/auth.service';
-import { ProcNonConformiteService } from '../../../pages/proc-non-conformite/proc-non-conformite.service';
-import { StructureService } from '../../../pages/structure/structure-service/structure-service';
 import { ActionNonConformiteService } from '../../../services/non-conformite/action-non-conformite.service';
-import { nonConformiteForm } from '../../../pages/proc-non-conformite/proc-non-conformite.data';
 import { downloadFile, formatDateToDDMMYYYY, getStatusSeverity } from '../../../utils';
 import { DetailsDialogComponent } from '../details-dialog/details-dialog';
 import { HttpResponse } from '@angular/common/http';
 import { LightboxComponent } from '../lightbox/lightbox';
+import { Structure } from '../../../pages/parametrages/structure/structure-config/structure';
+import { StructureService } from '../../../pages/parametrages/structure/structure-service/structure-service';
+import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
+import { nonConformiteForm } from '../config/proc-non-conformite.data';
 
 @Component({
     selector: 'app-form-traitement',

@@ -6,9 +6,9 @@ import { takeUntil } from 'rxjs/operators';
 import {FeaturesService} from "../../../services/feature-service";
 import { NcStats } from '../../../models/statsNc';
 import { NonConformStatus } from '../../../enums';
-import { Structure } from '../../structure/structure-config/structure';
 import { getCurrentUserStructure } from '../../../utils';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
+import { Structure } from '../../parametrages/structure/structure-config/structure';
 
 @Component({
     selector: 'app-nc-sidebar',

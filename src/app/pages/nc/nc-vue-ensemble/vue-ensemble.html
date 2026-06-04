@@ -360,7 +360,7 @@
 <div *ngIf="countImputees > 0" class="mt-6 bg-surface-0 dark:bg-surface-900 p-4 border border-surface-200 dark:border-surface-700 rounded-xl shadow-sm">
     <div>
         <!-- C'est ici qu'on appelle le composant traitement et qu'on lui passe les imputationsData -->
-        <app-vue-ensemble-imputation [demandeList]="imputationsData"></app-vue-ensemble-imputation>
+        <app-nc-imputation [demandeList]="imputationsData"></app-nc-imputation>
     </div>
 </div>
 
@@ -371,7 +371,7 @@
 <div *ngIf="countReception > 0" class="mt-6 bg-surface-0 dark:bg-surface-900 p-4 border border-surface-200 dark:border-surface-700 rounded-xl shadow-sm">
     <div *ngIf="countReception > 0">
         <!-- Appel de votre composant avec passage des données -->
-        <app-vue-ensemble-reception [demandeList]="receptionData"></app-vue-ensemble-reception>
+        <app-nc-reception [demandeList]="receptionData"></app-nc-reception>
     </div>
 </div>
 
@@ -400,7 +400,7 @@
 <div *ngIf="countValidationPilote > 0" class="mt-6 bg-surface-0 dark:bg-surface-900 p-4 border border-surface-200 dark:border-surface-700 rounded-xl shadow-sm">
     <div>
         <!-- C'est ici qu'on appelle le composant traitement et qu'on lui passe les imputationsData -->
-        <app-vue-ensemble-validation-pilote [demandeList]="validationPiloteData"></app-vue-ensemble-validation-pilote>
+        <app-nc-validation-pilote [demandeList]="validationPiloteData"></app-nc-validation-pilote>
     </div>
 </div>
 
@@ -426,7 +426,7 @@
 
 <!-- LE MAGNIFIQUE EMPTY STATE GLOBAL (Affiché si aucun tableau n'a de données) -->
 <div *ngIf="countTotal === 0 && !loading" 
-     class="flex flex-col items-center justify-center py-16 px-4 mt-8 bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl shadow-sm text-center">
+     class="flex flex-col items-center justify-center p-4 mt-8 bg-surface-0 dark:bg-surface-900 text-center">
     
     <!-- Image en noir et blanc -->
     <img src="assets/images/empty.svg" 

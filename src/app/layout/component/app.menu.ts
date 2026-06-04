@@ -6,8 +6,7 @@ import { AppMenuitem } from './app.menuitem';
 import { AuthService } from '../../services/auth-services/auth.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { isUserInRoles, hasAnyPermission, isLicenseActive, isModuleSubscribed } from '../../utils';
-import { app_roles } from '../../app-roles-utils';
-import { ProcNonConformiteService } from '../../pages/proc-non-conformite/proc-non-conformite.service';
+import { ProcNonConformiteService } from '../../services/non-conformite/proc-non-conformite.service';
 
 @Component({
     selector: 'app-menu',
@@ -62,7 +61,7 @@ export class AppMenu {
                 items: [
                     { label: 'Audite', icon: 'pi pi-fw pi-eye', visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['AUDITE_READ']), routerLink: ['/audite'] },
                     { label: 'Non-Conformités', icon: 'pi pi-fw pi-briefcase', visible: isLicenseActive() && isModuleSubscribed('NON_CONFORMITE') && hasAnyPermission(['SUBMIT_NC']), routerLink: ['/non-conformite'] },
-                    // { label: 'Non conformité', icon: 'pi pi-fw pi-times', visible: isLicenseActive() && isModuleSubscribed('NON_CONFORMITE') && hasAnyPermission(['SUBMIT_NC']), routerLink: ['/nc'] },
+                    // =={ label: 'Non conformité', icon: 'pi pi-fw pi-times', visible: isLicenseActive() && isModuleSubscribed('NON_CONFORMITE') && hasAnyPermission(['SUBMIT_NC']), routerLink: ['/nc'] },
                     { label: 'Réglementation', visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['REGLEMENTATION_READ']), icon: 'pi pi-fw pi-file-edit', routerLink: ['/reglementation'] },
                     { label: "Critères d'évaluation", visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['CRITERE_EVAL_READ']), icon: 'pi pi-fw pi-file', routerLink: ['/critere-evaluation'] }
                 ]

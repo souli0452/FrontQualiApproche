@@ -5,11 +5,12 @@ import { HttpResponse } from '@angular/common/http';
 import { TraitementTableComponent } from '../../../../components/non-conformite/table-traitement/traitement-table';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { EtapeTraitement } from '../../../../enums';
-import { Structure } from '../../../structure/structure-config/structure';
-import { ProcNonConformiteService } from '../../../proc-non-conformite/proc-non-conformite.service';
 import { showToast, StatusEnum } from '../../../../utils';
 import { FeaturesService } from '../../../../services/feature-service';
 import { FormRejetComponent } from '../../../../components/non-conformite/form-rejet/form-rejet';
+import { Structure } from '../../../parametrages/structure/structure-config/structure';
+import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-nc-affectation',
@@ -31,6 +32,7 @@ export class NcAffectationComponent {
         protected messageService: MessageService,
         private service: ProcNonConformiteService,
         private  featureService:FeaturesService,
+        private router: Router
     ) {
         this.cols = [
             { field: 'numeroReference', header: 'N° ref', type: 'string', filter: true, width: '220px', centered: false },
@@ -71,7 +73,8 @@ export class NcAffectationComponent {
         this.service.updateNomConformites(selectedDemandes).subscribe({
             next: (data) => {
                this.featureService.onReloadRequested(true);
-                this.messageService.add({ severity: 'success', summary: 'Réussi', detail: 'Demandes imputées avec succès', life: 3000 });
+                this.messageService.add({ severity: 'success', summary: 'Réussi', detail: 'Non-Conformité imputées avec succès', life: 5000 });
+                this.router.navigate(['/non-conformite/vue-ensemble']);
                 this.dmdTraitement.closeDetailsDialog();
             },
             error: () => {

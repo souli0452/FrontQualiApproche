@@ -7,9 +7,9 @@ import { takeUntil } from 'rxjs/operators';
 import { MessageService, MenuItem } from 'primeng/api';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { QmsDocumentService, DocumentQms, QmsDocumentType, QmsDocumentVersion, QmsAuditLog } from '../../services/qms-document.service';
-import { StructureService } from '../structure/structure-service/structure-service';
-import { Structure } from '../structure/structure-config/structure';
 import { showToast, StatusEnum } from '../../utils';
+import { Structure } from '../parametrages/structure/structure-config/structure';
+import { StructureService } from '../parametrages/structure/structure-service/structure-service';
 
 @Component({
   selector: 'app-qms-document',

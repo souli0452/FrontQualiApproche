@@ -5,17 +5,17 @@ import { CommonModule } from '@angular/common';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { EtapeTraitement } from '../../../../enums';
+import { Router } from '@angular/router';
 import { TraitementTableComponent } from '../../../../components/non-conformite/table-traitement/traitement-table';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
-import { RejetFormsComponent } from '../../../proc-non-conformite/forms/rejet.forms/rejet.forms.component';
-import { Structure } from '../../../structure/structure-config/structure';
 import { FeaturesService } from '../../../../services/feature-service';
-import { ProcNonConformiteService } from '../../../proc-non-conformite/proc-non-conformite.service';
 import { generateReportFile, ReportFormat, ReportingInput, showToast, StatusEnum, TypeDemande } from '../../../../utils';
 import { NCRejetComponent } from '../../nc-rejet/nc-rejet';
+import { Structure } from '../../../parametrages/structure/structure-config/structure';
+import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
 
 @Component({
-    selector: 'app-vue-ensemble-reception',
+    selector: 'app-nc-reception',
     templateUrl: './nc-reception.html',
     standalone: true,
     imports: [
@@ -38,7 +38,8 @@ export class ReceptionComponent {
     
     constructor(protected messageService: MessageService,
                 private  featureService:FeaturesService,
-                private service:ProcNonConformiteService) {
+                private service:ProcNonConformiteService,
+                private router: Router) {
         this.cols = [
             { field: 'numeroReference', header: 'N° ref', type: 'string', filter: true, width: '220px', centered: false },
             { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '300px', centered: false },
@@ -126,8 +127,10 @@ export class ReceptionComponent {
         this.service.updateNomConformites(dmd).subscribe({
             next: (data) => {
                 this.featureService.onReloadRequested(true);
+                
                 this.dmdTraitement.closeDetailsDialog();
                 this.messageService.add({ severity: 'success', summary: 'SUCCÈS', detail: "L'opération a réussie !", life: 3000 });
+                this.router.navigate(['/non-conformite/vue-ensemble']);
             },
             error: (error) => {
                 console.log("ERREUR : ", error);

@@ -5,10 +5,11 @@
       </div>
     </div>
 
-<app-nc-filter-bar (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
+<div *ngIf="affectationData.length > 0">
+    <app-nc-filter-bar (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
+</div>
 
 <div>
-    
     <!-- 1. Affichage normal du tableau (s'il y a des données) -->
     <div *ngIf="roleService.isChef && affectationData.length > 0">
         <app-nc-affectation [demandeList]="affectationData"></app-nc-affectation>
@@ -16,7 +17,7 @@
 
     <!-- 2. LE MAGNIFIQUE EMPTY STATE (s'il n'y a aucune donnée) -->
     <div *ngIf="roleService.isChef && affectationData.length === 0 && !loading" 
-         class="flex flex-col items-center justify-center py-12 px-4 mt-2 bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl shadow-sm text-center">
+         class="flex flex-col items-center justify-center p-4 mt-2 bg-surface-0 dark:bg-surface-900 text-center">
         
         <!-- Image en noir et blanc (CSS filter: grayscale) -->
         <img src="assets/images/empty.svg" 

@@ -17,10 +17,10 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
 import { FeaturesService } from '../../../services/feature-service';
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
 import { NcFilter, NcFilterBarComponent } from '../nc-filter-bar/nc-filter-bar';
-import { ProcNonConformiteService } from '../../proc-non-conformite/proc-non-conformite.service';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { Subject, takeUntil } from 'rxjs';
 import { hasAnyPermission } from '../../../utils';
+import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 
 @Component({
     selector: 'app-nc-suivi',

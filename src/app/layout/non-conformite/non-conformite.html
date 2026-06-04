@@ -1,4 +1,4 @@
-<div class="card-first p-0 overflow-hidden border-none premium-hub bg-surface-0 dark:bg-surface-900 transition-colors duration-300">
+<div class="card-first overflow-hidden border-none premium-hub bg-surface-0 dark:bg-surface-900 transition-colors duration-300">
     <!-- Header Premium -->
     <div class="bg-primary-50 dark:bg-surface-800 p-5 flex justify-between items-center border-b border-surface-border">
         <div class="flex items-center gap-4">
@@ -11,12 +11,20 @@
             </div>
         </div>
         
-        <div class="flex items-center gap-3">
+        <!-- <div class="flex items-center gap-3">
             <p-button 
                 label="Soumettre une NC" 
                 icon="pi pi-plus" 
                 severity="info" 
                 (click)="openSubmitNC()"
+                styleClass="shadow-sm font-semibold" />
+        </div> -->
+        <div class="flex items-center gap-3">
+            <p-button 
+                label="Soumettre une NC" 
+                icon="pi pi-plus" 
+                severity="info" 
+                routerLink="/non-conformite/declaration"
                 styleClass="shadow-sm font-semibold" />
         </div>
     </div>
@@ -71,8 +79,9 @@
         </div>
     </ng-template>
 
-    <div class="p-1" *ngIf="submitNCVisible">
+    <!-- <div class="p-1" *ngIf="submitNCVisible">
         <app-nc-compose (closeDialog)="submitNCVisible = false"></app-nc-compose>
-    </div>
+    </div> -->
 </p-dialog>
 
+ 

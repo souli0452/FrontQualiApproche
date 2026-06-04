@@ -4,14 +4,12 @@ import { Router } from '@angular/router';
 import {AuthService} from "../../services/auth-services/auth.service";
 import { KcLoginRequest, KcUser } from '../../models';
 import { MessageService } from 'primeng/api';
-import {takeUntil} from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
 import {Subject} from 'rxjs';
-import { ToastModule } from 'primeng/toast';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { isUserInRoles, USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
-import { StructureService } from '../structure/structure-service/structure-service';
+import { StructureService } from '../parametrages/structure/structure-service/structure-service';
 
 @Component({
     selector: 'app-login',

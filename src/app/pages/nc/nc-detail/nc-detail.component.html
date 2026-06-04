@@ -191,9 +191,10 @@
                             <span class="file-name font-sm text-surface-900 dark:text-surface-0">{{ fichier.nom }}</span>
                         </div>
                         <div class="flex gap-2">
-                            <!-- <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-text p-button-rounded p-button-info" (click)="viewAttachment(fichier)" pTooltip="Visualiser" tooltipPosition="top"></button> -->
-                             <button *ngIf="isViewable(fichier)" pButton pRipple type="button" icon="pi pi-eye" class="p-button-text p-button-rounded p-button-info" (click)="openLightbox(fichier)" pTooltip="Visualiser" tooltipPosition="top"></button>
-                            <button pButton pRipple type="button" icon="pi pi-download" class="p-button-text p-button-rounded p-button-success" (click)="downloadAttachment(fichier)" pTooltip="Télécharger" tooltipPosition="top"></button>
+                            <p-button icon="pi pi-search" size="small" severity="secondary" *ngIf="isViewable(fichier)" pRipple (click)="openLightbox(fichier)" pTooltip="Visualiser" tooltipPosition="top" />
+                            <p-button severity="info" size="small" [text]="true" icon="pi pi-cloud-download"
+                                (click)="downloadAttachment(fichier)" pTooltip="Télécharger" tooltipPosition="left" >
+                            </p-button>
                         </div>
                     </div>
                 </div>

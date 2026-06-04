@@ -2,15 +2,6 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { HttpClient, HttpRequest } from '@angular/common/http';
 import { ReportingInput, TypeDemande } from '../utils';
-import { FormationComponent } from '../pages/formation/formation';
-import { DetailsComponent } from '../pages/proc-non-conformite/details/details.component';
-import {
-    DemandeNon_conformiteDetailsComponent
-} from '../pages/proc-non-conformite/details/demande.non-conformite.service.details/demande.non_conformite.details.component';
-import {
-    NonConformitFormsComponent
-} from '../pages/proc-non-conformite/forms/non-conformit.forms/non-conformit.forms.component';
-import { FormsComponent } from '../pages/proc-non-conformite/forms/forms.component';
 import { SERVICE_PREFIX } from './quali-url-configs';
 import { FormTraitementComponent } from '../components/non-conformite/form-traitement/form-traitement';
 import { DetailsDialogComponent } from '../components/non-conformite/details-dialog/details-dialog';
@@ -47,23 +38,6 @@ export class FeaturesService {
     public printReport(data: ReportingInput): Observable<ArrayBuffer> {
         return this.http.post(this.REPORTING_URL, data, {responseType: 'arraybuffer'});
     }
-    getDynamicDetailComponent(typeDemande: TypeDemande) {
-        switch (typeDemande) {
-            case TypeDemande.NON_CONFORMITE:
-                return DemandeNon_conformiteDetailsComponent;
-            default: return DetailsComponent
-
-        }
-    }
-
-    getDynamicFormComponent(typeDemande: TypeDemande) {
-        switch (typeDemande) {
-            case TypeDemande.NON_CONFORMITE:
-                return NonConformitFormsComponent;
-            default: return FormsComponent
-
-        }
-    }
 
 
     getDynamicFormTraitementComponent(typeDemande: TypeDemande) {
@@ -79,7 +53,7 @@ export class FeaturesService {
         switch (typeDemande) {
             case TypeDemande.NON_CONFORMITE:
                 return DetailsDialogComponent;
-            default: return DetailsComponent
+            default: return DetailsDialogComponent
         }
     }
 

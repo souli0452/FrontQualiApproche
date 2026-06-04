@@ -222,8 +222,7 @@ export class NcTableComponent implements OnInit {
         this.detailDialogVisible = true;
     }
     update(nc: any) {
-        this.selectedNcId = nc.id;
-        this.editDialogVisible = true;
+        this.router.navigate(['/non-conformite/declaration', nc.id]);
     }
 
     onGlobalFilter(table: Table, event: Event) {

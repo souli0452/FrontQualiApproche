@@ -1,9 +1,9 @@
 import { ChangeDetectorRef, Component, inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { AuthService } from '../../../services/auth-services/auth.service';
-import { ProcNonConformiteService } from '../../proc-non-conformite/proc-non-conformite.service';
 import { getCurrentUserStructure, isUserInRoles } from '../../../utils';
-import { StructureService } from '../../structure/structure-service/structure-service';
+import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
+import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 
 @Component({
     standalone: true,

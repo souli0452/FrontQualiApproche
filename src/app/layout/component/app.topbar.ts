@@ -11,8 +11,8 @@ import { NgPrimeModule } from '../../../prime-ng.module';
 import { Popover } from 'primeng/popover';
 import { showToast, StatusEnum, hasAnyPermission, isLicenseActive } from '../../utils';
 import { Subject } from 'rxjs';
-import { ProcNonConformiteService } from '../../pages/proc-non-conformite/proc-non-conformite.service';
 import { GlobalSearchService } from '../../services/non-conformite/global-search.service';
+import { ProcNonConformiteService } from '../../services/non-conformite/proc-non-conformite.service';
 
 
 @Component({

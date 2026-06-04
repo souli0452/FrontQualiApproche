@@ -6,9 +6,8 @@ import { FeaturesService } from '../../../../services/feature-service';
 import { NonConformStatus } from '../../../../enums';
 import { showToast, StatusEnum } from '../../../../utils';
 import { AuthService } from '../../../../services/auth-services/auth.service';
-import { ProcNonConformiteService } from '../../../proc-non-conformite/proc-non-conformite.service';
-
 import { TraitementActionTable } from '../../../../components/non-conformite/action-traitement/traitement-action-table';
+import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
 
 @Component({
     selector: 'app-nc-non-traiter',

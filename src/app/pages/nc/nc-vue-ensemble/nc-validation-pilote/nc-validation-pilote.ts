@@ -3,18 +3,17 @@ import {MessageService} from "primeng/api";
 import {HttpResponse} from "@angular/common/http";
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
-import { ProcNonConformiteService } from '../../../proc-non-conformite/proc-non-conformite.service';
 import { AuthService } from '../../../../services/auth-services/auth.service';
 import { getCurrentUserStructure, showToast, StatusEnum } from '../../../../utils';
 import { FeaturesService } from '../../../../services/feature-service';
 import { TraitementTableComponent } from '../../../../components/non-conformite/table-traitement/traitement-table';
-import { RejetFormsComponent } from '../../../proc-non-conformite/forms/rejet.forms/rejet.forms.component';
 import { EtapeTraitement } from '../../../../enums';
-import { Structure } from '../../../structure/structure-config/structure';
+import { Structure } from '../../../parametrages/structure/structure-config/structure';
 import { FormRejetComponent } from '../../../../components/non-conformite/form-rejet/form-rejet';
+import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
 
 @Component({
-    selector: 'app-vue-ensemble-validation-pilote',
+    selector: 'app-nc-validation-pilote',
     templateUrl: './nc-validation-pilote.html',
     providers: [MessageService],
     standalone: true,

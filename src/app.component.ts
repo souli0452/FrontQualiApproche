@@ -8,7 +8,7 @@ import { take } from 'rxjs';
 import { USER_PROFILE_KEY, USER_STRUCTURE_KEY } from './app/utils';
 import { MessageService } from 'primeng/api';
 import { Toast } from 'primeng/toast';
-import { StructureService } from './app/pages/structure/structure-service/structure-service';
+import { StructureService } from './app/pages/parametrages/structure/structure-service/structure-service';
 
 @Component({
     selector: 'app-root',

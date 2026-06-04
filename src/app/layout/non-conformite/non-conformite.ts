@@ -4,11 +4,11 @@ import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { MenuItem } from 'primeng/api';
 import { NcModule } from '../../pages/nc/nc.module';
-import { ProcNonConformiteService } from '../../pages/proc-non-conformite/proc-non-conformite.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LayoutService } from '../service/layout.service';
 import { RoleService } from '../../services/non-conformite/role.service';
+import { ProcNonConformiteService } from '../../services/non-conformite/proc-non-conformite.service';
 
 
 @Component({

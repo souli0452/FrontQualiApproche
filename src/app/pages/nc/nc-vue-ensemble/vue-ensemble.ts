@@ -2,17 +2,14 @@ import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NcModule } from '../nc.module';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { ProcNonConformiteService } from '../../proc-non-conformite/proc-non-conformite.service';
 import { NcFilter, NcFilterBarComponent } from '../nc-filter-bar/nc-filter-bar';
 import { NcStatsCardComponent } from './nc-stats-card/nc-stats-card';
-import { NcDoughnutGraphComponent } from './nc-doughnut-graph/nc-doughnut-graph';
 import { isUserInRoles, hasAnyPermission, hasAllPermissions, getCurrentUserStructure } from '../../../utils';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { Subject, takeUntil, forkJoin, of } from 'rxjs';
 import { EtapeTraitement } from '../../../enums';
 import { VueEnsembleImputationComponent } from './nc-imputation/nc-imputation';
 import { AlerteTraitement } from './alerte-traitement/alerte-traitement';
-import { NcStackedBarGraphComponent } from './nc-stackedBar-graph/nc-stackedBar-graph';
 import { FeaturesService } from '../../../services/feature-service';
 import { ReceptionComponent } from './nc-reception/nc-reception';
 import { ValidationRQComponent } from './nc-validation-rq/nc-validation-rq';
@@ -20,9 +17,9 @@ import { NcAffectationComponent } from './nc-affectation/nc-affectation';
 import { ValidationPiloteComponent } from './nc-validation-pilote/nc-validation-pilote';
 import { NcClotureComponent } from './nc-cloture-rq/nc-cloture';
 import { NcNonTraiterComponent } from './nc-traitement-action/nc-non-traiter';
-import { TraitementActionTable } from '../../../components/non-conformite/action-traitement/traitement-action-table';
-import { StructureService } from '../../structure/structure-service/structure-service';
 import { RoleService } from '../../../services/non-conformite/role.service';
+import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
+import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 
 @Component({
   selector: 'app-vue-ensemble',
@@ -32,9 +29,7 @@ import { RoleService } from '../../../services/non-conformite/role.service';
             NcModule, 
             NgPrimeModule, 
             NcFilterBarComponent,  
-            NcStatsCardComponent, 
-            // NcDoughnutGraphComponent, 
-            // NcStackedBarGraphComponent,
+            NcStatsCardComponent,
             VueEnsembleImputationComponent,
             AlerteTraitement,
             ReceptionComponent,

@@ -11,12 +11,14 @@
   </div>
 </div>
 
-<app-nc-filter-bar (onFilter)="handleFilter($event)"></app-nc-filter-bar>
+<div *ngIf="validationPiloteData.length > 0">
+    <app-nc-filter-bar (onFilter)="handleFilter($event)"></app-nc-filter-bar>
+</div>
 
 <div>
     <!-- Affichage pour le PILOTE -->
     <div *ngIf="roleService.isChef && validationPiloteData.length > 0">
-        <app-vue-ensemble-validation-pilote [demandeList]="validationPiloteData"></app-vue-ensemble-validation-pilote>
+        <app-nc-validation-pilote [demandeList]="validationPiloteData"></app-nc-validation-pilote>
     </div>
 
     <!-- Affichage pour le RQ -->
@@ -32,7 +34,7 @@
     </div>
 
     <div *ngIf="(roleService.isChef || roleService.isRQ) && validationRqData.length === 0 && clotureData.length === 0 && validationPiloteData.length === 0 && !loading" 
-         class="flex flex-col items-center justify-center py-12 px-4 mt-2 bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl shadow-sm text-center">
+         class="flex flex-col items-center justify-center p-4 mt-2 bg-surface-0 dark:bg-surface-900 text-center">
         
         <!-- Image en noir et blanc (CSS filter: grayscale) -->
         <img src="assets/images/empty.svg" 
