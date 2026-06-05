@@ -181,7 +181,7 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
         this.roleService.updateRole(this.roleForm.value).subscribe({
             next: () => {
                 this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Rôle enregistré' });
-                this.router.navigate(['/roles']);
+                this.router.navigate(['/configurations/roles']);
             },
             error: (error) => {
                 this.loading = false;
@@ -192,6 +192,6 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
     }
 
     cancel() {
-        this.router.navigate(['/roles']);
+        this.router.navigate(['/configurations/roles']);
     }
 }
