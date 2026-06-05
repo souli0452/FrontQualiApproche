@@ -66,7 +66,7 @@ export class RoleComponent implements OnInit, OnDestroy {
     }
 
     goToDetail(id: string = 'new') {
-        this.router.navigate(['/roles', id]);
+        this.router.navigate(['/configurations/roles', id]);
     }
 
     loadRoles() {
