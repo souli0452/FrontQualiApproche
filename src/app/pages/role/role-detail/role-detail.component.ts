@@ -122,6 +122,8 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (roles) => {
                     const role = roles.find((r) => r.id === id);
+                    console.log("le role est : ",role);
+                    
                     if (role) {
                         this.roleForm.patchValue(role);
                         this.updateAllSelectedStatus();

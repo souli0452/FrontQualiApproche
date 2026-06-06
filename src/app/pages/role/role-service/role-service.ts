@@ -27,7 +27,7 @@ export class RoleService {
     }
 
     deleteRole(id: string): Observable<void> {
-        return this.http.delete<void>(`${QualiUrlConfig.APP_ROLE_URL}/${id}`);
+        return this.http.delete<void>(`${QualiUrlConfig.ROLE_URL}/role/${id}`);
     }
 
     assignRoleToUser(userId: string, roleId: string): Observable<any> {
