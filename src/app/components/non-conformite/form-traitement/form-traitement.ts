@@ -137,26 +137,26 @@ export class FormTraitementComponent {
         }
 
         // Gestion de l'action (Valeur par défaut temporaire)
-        if (formValues.typeAction) {
-            this.demande.actionId = formValues.typeAction.id;
-            this.demande.actionLibelle = formValues.typeAction.libelle;
-        } else {
-            if (this.typesActions && this.typesActions.length > 0) {
-                this.demande.actionId = this.typesActions[0].id;
-                this.demande.actionLibelle = this.typesActions[0].libelle;
-            } else {
-                this.demande.actionId = null;
-                this.demande.actionLibelle = null;
-            }
-        }
-
         // if (formValues.typeAction) {
         //     this.demande.actionId = formValues.typeAction.id;
         //     this.demande.actionLibelle = formValues.typeAction.libelle;
         // } else {
-        //     this.demande.actionId = null;
-        //     this.demande.actionLibelle = null;
+        //     if (this.typesActions && this.typesActions.length > 0) {
+        //         this.demande.actionId = this.typesActions[0].id;
+        //         this.demande.actionLibelle = this.typesActions[0].libelle;
+        //     } else {
+        //         this.demande.actionId = null;
+        //         this.demande.actionLibelle = null;
+        //     }
         // }
+
+        if (formValues.typeAction) {
+            this.demande.actionId = formValues.typeAction.id;
+            this.demande.actionLibelle = formValues.typeAction.libelle;
+        } else {
+            this.demande.actionId = null;
+            this.demande.actionLibelle = null;
+        }
 
         // Note: We no longer sync from planActionForm.actions because plan actions are managed via the dialog and stored directly in this.demande.planActions
     }
