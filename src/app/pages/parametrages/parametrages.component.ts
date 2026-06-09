@@ -35,9 +35,9 @@ export class ParametragesComponent implements OnInit, OnDestroy {
         this.items = [
             { label: 'Utilisateurs', icon: 'pi pi-users', routerLink: '/configurations/utilisateurs' },
             { label: 'Rôles & Permissions', icon: 'pi pi-lock', routerLink: '/configurations/roles' },
-            { label: 'Processus', icon: 'pi pi-cog', routerLink: '/configurations/type-processus' },
-            { label: 'Types de NC', icon: 'pi pi-list', routerLink: '/configurations/type-nc' },
-            { label: 'Niveaux de NC', icon: 'pi pi-sort-amount-up', routerLink: '/configurations/niveau-nc' },
+            { label: 'Catégories de Processus', icon: 'pi pi-cog', routerLink: '/configurations/type-processus' },
+            { label: 'Origine des Non-Conformités', icon: 'pi pi-list', routerLink: '/configurations/type-nc' },
+            { label: 'Niveaux de Non-Conformités', icon: 'pi pi-sort-amount-up', routerLink: '/configurations/niveau-nc' },
             { label: 'Types Actions', icon: 'pi pi-bolt', routerLink: '/configurations/type-action' },
             { label: 'Services', icon: 'pi pi-map-marker', routerLink: '/configurations/service' },
             { label: 'Configuration globale', icon: 'pi pi-cog', routerLink: '/configurations/config-systeme' }

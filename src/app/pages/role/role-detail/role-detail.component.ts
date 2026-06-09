@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, finalize, takeUntil } from 'rxjs';
 import { MessageService } from 'primeng/api';
 
-import { AppRole, Permission } from '../../../models';
+import { ApiResponse, AppRole, Permission } from '../../../models';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { RoleService } from '../role-service/role-service';
 
@@ -120,9 +120,12 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
                 finalize(() => (this.loading = false))
             )
             .subscribe({
-                next: (roles) => {
-                    const role = roles.find((r) => r.id === id);
-                    console.log("le role est : ",role);
+                next: (resp: ApiResponse<AppRole>) => {
+                    // On extrait le tableau depuis la réponse paginée
+                    const rolesArray = resp.data.content || [];
+                    
+                    const role = rolesArray.find((r) => r.id === id);
+                    console.log("le role est : ", role);
                     
                     if (role) {
                         this.roleForm.patchValue(role);
@@ -134,6 +137,7 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
                 }
             });
     }
+
 
     onPermissionChange(permissionValue: string) {
         let selected = [...this.roleForm.value.permissions];

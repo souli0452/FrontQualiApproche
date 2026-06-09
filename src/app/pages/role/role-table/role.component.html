@@ -27,6 +27,11 @@
         [loading]="loading"
         [asRoleEdit]="true"
         (customActionEvent)="handleCustomAction($event)"
+        [totalElements]="totalElements"
+        [isPagination]="false"
+        [currentPage]="currentPage"
+        [pageSize]="pageSize"
+        (pageChangeEvent)="onPageChange($event)"
         (removeEvent)="onDelete($event)">
     </app-crud-generic>
 </div>

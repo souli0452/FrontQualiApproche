@@ -14,5 +14,11 @@
     [customButtons]="customButtons"
     (customActionEvent)="handleCustomAction($event)"
     (newItemEvent)="onSave($event)"
-    [notDelete]="true">
+    [notDelete]="true"
+    [totalElements]="totalElements"
+    [isPagination]="false"
+    [currentPage]="currentPage"
+    [pageSize]="pageSize"
+    (pageChangeEvent)="onPageChange($event)"
+    >
 </app-crud-generic>

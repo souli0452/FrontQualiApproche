@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils';
-import { DropdownSelector, FormGroupColumn, MultiSelectSelector, TableColumn } from '../../models';
+import { ApiResponse, AppRole, DropdownSelector, FormGroupColumn, KcUser, MultiSelectSelector, TableColumn } from '../../models';
 import { AuthService } from '../../services/auth-services/auth.service';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
 import { NgPrimeModule } from '../../../prime-ng.module';
@@ -24,7 +24,14 @@ export class KcUserComponent implements OnInit, OnDestroy {
 
     loading: boolean = true;
     destroy$: Subject<boolean> = new Subject<boolean>();
+
     dataList: any[] = [];
+    totalElements: number = 0;
+    currentPage: number = 0;
+    pageSize: number = 0;
+    totalPages: number = 0;
+
+
     closeDialog = false;
     formGroup: UntypedFormGroup;
     dropdownEntries: any[] = [];
@@ -100,30 +107,29 @@ export class KcUserComponent implements OnInit, OnDestroy {
             .getAllRoles()
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-                next: (resp: any) => {
-                    // RoleService.getAllRoles() renvoie directement le tableau, pas un HttpResponse
-                    const fetchedRoles = (resp || []).map((r: any) => ({ value: r.name, label: r.name }));
-                    this.rolesEntries.length = 0; // Nettoyer avant de remplir
+                next: (resp: ApiResponse<AppRole>) => {
+                    // On extrait le tableau 'content' depuis la réponse
+                    const rolesArray = resp.data.content || [];
+                    
+                    const fetchedRoles = rolesArray.map((r: AppRole) => ({ value: r.name, label: r.name }));
+                    this.rolesEntries.length = 0;
                     this.rolesEntries.push(...fetchedRoles);
 
-                    // Forcer la mise à jour dans l'objet de multiSelectList si nécessaire
-                    if (this.rolesDropdown) {
-                        this.rolesDropdown.multiselectEntries = [...this.rolesEntries];
-                        this.multiSelectList = [...this.multiSelectList];
-                    }
+                    // ... (la suite de votre code)
                 },
                 error: (error: any) => {
                     console.error('Erreur lors du chargement des rôles', error);
                 }
             });
     }
+
     loadStuctures() {
         this.structureService
             .getAllStructure(TypeStructure.SERVICE)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (resp: any) => {
-                    this.structures = (resp.body || []).map((value: any) => ({
+                    this.structures = (resp.content || []).map((value: any) => ({
                         value: value.id,
                         label: value.libelleLong
                     }));
@@ -138,13 +144,20 @@ export class KcUserComponent implements OnInit, OnDestroy {
                 error: (error: any) => {}
             });
     }
-    fetchUsers() {
+
+    fetchUsers(page: number = 0, size: number = 10) {
+        this.loading = true;
         this.authService
-            .getAllUsers()
+            .getAllUsers(page, size)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res: any) => {
-                    this.dataList = res.body || [];
+                    // On affecte la liste pour app-crud-generic
+                    this.dataList = res.data.content || [];
+                    // On garde la trace du total pour la pagination
+                    this.totalElements = res.data.totalElements; 
+                    this.currentPage = res.data.pageNumber || 0;
+                    this.pageSize = res.data.pageSize || 10;
                     this.loading = false;
                 },
                 error: (error: any) => {
@@ -152,6 +165,10 @@ export class KcUserComponent implements OnInit, OnDestroy {
                     this.loading = false;
                 }
             });
+    }
+
+    onPageChange(event: { page: number, size: number }) {
+        this.fetchUsers(event.page, event.size);
     }
 
     getDuplicateField(object: any): string | null {

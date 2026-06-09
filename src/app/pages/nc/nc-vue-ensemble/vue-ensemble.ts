@@ -174,9 +174,9 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     loadStructures() {
         this.structureService.getAllStructures().subscribe({
         next: (res) => {
-            if (res.body) {
+            if (res.data) {
                 // C'est ici le changement : s.libelleCourt
-                this.structuresList = res.body.map((s: any) => ({
+                this.structuresList = res.data.content.map((s: any) => ({
                     nom: s.libelleCourt, 
                     id: s.id
                 }));

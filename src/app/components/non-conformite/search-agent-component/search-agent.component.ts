@@ -51,7 +51,7 @@ export class SearchAgentComponent implements OnInit {
             this.structureService.getAllStructure(TypeStructure.SERVICE, this.directionId)
                 .subscribe({
                     next: (data) => {
-                        this.services = data.body || [];
+                        this.services = data.content || [];
                     },
                     error: (error) => {
                         console.log(error);

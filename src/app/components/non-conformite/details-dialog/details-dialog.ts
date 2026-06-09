@@ -81,7 +81,7 @@ export class DetailsDialogComponent {
             .pipe()
             .subscribe({
                 next: (res) => {
-                    this.users = res.body || [];
+                    this.users = res.data.content || [];
                     this.users = this.users.map((user: any) => {
                         return {
                             ...user,

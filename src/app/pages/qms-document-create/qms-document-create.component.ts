@@ -68,7 +68,7 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
     });
 
     this.structureService.getAllStructures().subscribe({
-      next: (res) => { this.structures = res.body || []; this.loading = false; },
+      next: (res) => { this.structures = res.data.content || []; this.loading = false; },
       error: () => this.loading = false
     });
 

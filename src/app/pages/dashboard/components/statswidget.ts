@@ -183,12 +183,9 @@ ngOnInit(){
             .pipe()
             .subscribe({
                 next: (res) => {
-                    this.users = res.body || [];
+                    this.users = res.data.content || [];
                     console.log(this.users);
                     this.agents = this.users.filter(nc => nc.structure === this.userStructure.id);
-
-
-
                 },
             });
     }
@@ -198,7 +195,7 @@ ngOnInit(){
             .pipe()
             .subscribe({
                 next: (res) => {
-                    this.structures = res.body || [];
+                    this.structures = res.data.content || [];
 
 
 

@@ -1,6 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { createRequestOption } from '../utils';
+import { ApiResponse } from '../models';
 
 export interface CrudOperations<T, ID> {
 
@@ -9,6 +10,8 @@ export interface CrudOperations<T, ID> {
     update(t: T): Observable<HttpResponse<T>>;
 
     findAll(): Observable<HttpResponse<Array<T>>>;
+
+    GetAllObjects(page: number, size: number): Observable<ApiResponse<T>>;
 
     delete(id: ID): Observable<HttpResponse<void>>;
 }
@@ -33,6 +36,10 @@ export abstract class QualiCrudService<T, ID> implements CrudOperations<T, ID> {
     }
     findAll(): Observable<HttpResponse<Array<T>>> {
         return this.http.get<T[]>(this.uri + "/all", {observe: 'response'});
+    }
+
+    GetAllObjects(page: number, size: number): Observable<ApiResponse<T>> {
+        return this.http.get<ApiResponse<T>>(`${this.uri}/all?page=${page}&size=${size}`);
     }
 
     findAllNc(status?: string,id?:any): Observable<HttpResponse<Array<T>>> {

@@ -5,12 +5,12 @@ import { MessageService } from 'primeng/api';
 import { Chips } from 'primeng/chips';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { EtapeTraitement } from '../../../enums';
-import { ActionNonConformite } from '../../../models';
+import { ActionNonConformite, ApiResponse, PaginatedData } from '../../../models';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { ActionNonConformiteService } from '../../../services/non-conformite/action-non-conformite.service';
 import { downloadFile, formatDateToDDMMYYYY, getStatusSeverity } from '../../../utils';
 import { DetailsDialogComponent } from '../details-dialog/details-dialog';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LightboxComponent } from '../lightbox/lightbox';
 import { Structure } from '../../../pages/parametrages/structure/structure-config/structure';
 import { StructureService } from '../../../pages/parametrages/structure/structure-service/structure-service';
@@ -198,7 +198,7 @@ export class FormTraitementComponent {
             .pipe()
             .subscribe({
                 next: (res) => {
-                    this.users = res.body || [];
+                    this.users = res.data.content || [];
                     this.users = this.users.map((user: any) => {
                         return {
                             ...user,
@@ -241,21 +241,44 @@ export class FormTraitementComponent {
             });
     }
 
-    loadStuctures() {
-        this.structureService
-            .getAllStructures()
-            .pipe()
-            .subscribe({
-                next: (resp: HttpResponse<Structure[]>) => {
-                    this.structures = resp.body || [];
-                    // Ré-essayer le patch si les données arrivent après ngOnInit
-                    if (this.demande?.origineId && !this.editForm.get('destination')?.value) {
-                        const dest = this.structures.find(s => s.id === this.demande.origineId);
-                        if (dest) this.editForm.get('destination')?.patchValue(dest);
+    // loadStuctures() {
+    //     this.structureService
+    //         .getAllStructures()
+    //         .pipe()
+    //         .subscribe({
+    //             next: (resp: HttpResponse<Structure[]>) => {
+    //                 this.structures = resp.body || [];
+    //                 // Ré-essayer le patch si les données arrivent après ngOnInit
+    //                 if (this.demande?.origineId && !this.editForm.get('destination')?.value) {
+    //                     const dest = this.structures.find(s => s.id === this.demande.origineId);
+    //                     if (dest) this.editForm.get('destination')?.patchValue(dest);
+    //                 }
+    //             }
+    //         });
+    // }
+
+loadStuctures() {
+    this.structureService
+        .getAllStructures(0, 1000) // On demande une large plage pour tout récupérer
+        .subscribe({
+            next: (resp: ApiResponse<Structure>) => {
+                // 'resp' est de type ApiResponse<Structure>
+                // On accède à 'data' puis 'content'
+                this.structures = resp.data.content || [];
+
+                // Ré-essayer le patch
+                if (this.demande?.origineId && !this.editForm.get('destination')?.value) {
+                    const dest = this.structures.find(s => s.id === this.demande.origineId);
+                    if (dest) {
+                        this.editForm.get('destination')?.patchValue(dest);
                     }
                 }
-            });
-    }
+            },
+            error: (error: HttpErrorResponse) => {
+                console.error("Erreur lors du chargement:", error);
+            }
+        });
+}
 
     fetchActions() {
         this.actionNonConformiteService

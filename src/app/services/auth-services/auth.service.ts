@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/comm
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, finalize, switchMap } from 'rxjs/operators';
-import { KcLoginRequest, KcUser } from '../../models';
+import { ApiResponse, KcLoginRequest, KcUser } from '../../models';
 import { map } from 'rxjs/operators';
 import { QualiCrudService } from '../quali-crud.service';
 import { QualiUrlConfig } from '../quali-url-configs';
@@ -175,11 +175,10 @@ export class AuthService extends QualiCrudService<KcUser, number> {
             })
         );
     }
-
-    // Gestion des utilisateurs
-    getAllUsers(): Observable<HttpResponse<KcUser[]>> {
-        return this.http.get<KcUser[]>(QualiUrlConfig.USERS_URL, { observe: 'response' });
+    getAllUsers(page: number = 0, size: number = 10): Observable<ApiResponse<KcUser>> {
+        return this.http.get<ApiResponse<KcUser>>(`${QualiUrlConfig.USERS_URL}?page=${page}&size=${size}`);
     }
+
     getUserById(id: string): Observable<HttpResponse<KcUser>> {
         const params = new HttpParams().set('userId', id);
         return this.http.get<KcUser>(QualiUrlConfig.USERS_BY_ID_URL, { params, observe: 'response' });

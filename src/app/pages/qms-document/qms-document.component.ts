@@ -134,7 +134,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     this.structureService.getAllStructures()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (res) => this.structures = res.body || [],
+        next: (res) => this.structures = res.data.content || [],
         error: (err) => console.error('Failed to load structures', err)
       });
 

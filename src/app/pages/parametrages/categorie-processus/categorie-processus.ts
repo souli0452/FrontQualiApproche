@@ -28,6 +28,11 @@ import { TypeProcessusService } from '../../../services/non-conformite/type-proc
                 [closeDialog]="closeDialog"
                 [formHeader]="formHeader"
                 (newItemEvent)="onSave($event)"
+                [totalElements]="totalElements"
+                [isPagination]="false"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChangeEvent)="onPageChange($event)"
                 (removeEvent)="onDelete($event)">
             </app-crud-generic>
     </div>
@@ -37,6 +42,11 @@ export class CategorieProcessusComponent {
     loading: boolean = true;
       destroy$: Subject<boolean> = new Subject<boolean>();
       dataList: TypeProcessus[] = [];
+      totalElements: number = 0;
+      currentPage: number = 0;
+      pageSize: number = 0;
+      totalPages: number = 0;
+
       closeDialog = false;
       formGroup: UntypedFormGroup;
       tableCols: TableColumn[];
@@ -72,20 +82,55 @@ export class CategorieProcessusComponent {
           this.fetchObject();
       }
 
-      fetchObject() {
-        this.loading = true;
-          this.typeProcessusService.findAll().pipe(takeUntil(this.destroy$))
-              .subscribe({
-                  next: res => {
-                      this.dataList = res.body || [];
-                      this.loading = false;
-                  },
-                  error: error => {
-                      this.loading = false;
-                      showToast(StatusEnum.error, error.status, null, this.messageService, error);
-                  }
-              });
-      }
+    //   fetchObject() {
+    //     this.loading = true;
+    //       this.typeProcessusService.findAll().pipe(takeUntil(this.destroy$))
+    //           .subscribe({
+    //               next: (res) => {
+    //                 console.log("CATEGORIE DE PROCESSUS : ", res);
+                    
+    //                   this.dataList = res.body || [];
+    //                   this.loading = false;
+    //               },
+    //               error: error => {
+    //                   this.loading = false;
+    //                   showToast(StatusEnum.error, error.status, null, this.messageService, error);
+    //               }
+    //           });
+    //   }
+
+
+    fetchObject() {
+    this.loading = true;
+    this.typeProcessusService.GetAllObjects(this.currentPage, this.pageSize)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+            next: (res: any) => {
+                console.log("CATEGORIE DE PROCESSUS : ", res);
+                // Si votre méthode 'findAll' renvoie maintenant une ApiResponse :
+                this.dataList = res.data.content || [];
+                this.totalElements = res.data.totalElements;
+                this.currentPage = res.data.pageNumber || 0;
+                this.pageSize = res.data.pageSize;
+                this.totalPages = res.data.totalPages;
+                
+                // Si votre méthode renvoie une simple liste (Option 1 de la réponse précédente) :
+                // this.dataList = res || [];
+                
+                this.loading = false;
+            },
+            error: (error: any) => {
+                this.loading = false;
+                showToast(StatusEnum.error, error.status, null, this.messageService, error);
+            }
+        });
+    }
+
+    
+    onPageChange(event: { page: number, size: number }) {
+        this.fetchObject();
+    }
+
 
       onSuccess(res: HttpResponse<any>) {
           this.closeDialog = true;

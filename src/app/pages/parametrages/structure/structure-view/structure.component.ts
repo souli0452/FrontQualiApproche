@@ -111,7 +111,7 @@ export class StructureComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (resp) => {
-                    this.structures = resp.body || [];
+                    this.structures = resp.content || [];
                     this.loading = false;
                 },
                 error: (error) => {

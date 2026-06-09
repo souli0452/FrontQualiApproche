@@ -5,7 +5,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { Router } from '@angular/router';
 
-import { AppRole, Permission, TableColumn, FormGroupColumn, MultiSelectSelector } from '../../../models';
+import { AppRole, Permission, TableColumn, FormGroupColumn, MultiSelectSelector, ApiResponse } from '../../../models';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { AppCrudGenericComponent } from '../../../components/app-crud-generic/app-crud-generic.component';
 import { RoleService } from '../role-service/role-service';
@@ -25,6 +25,11 @@ import { RoleService } from '../role-service/role-service';
 })
 export class RoleComponent implements OnInit, OnDestroy {
     roles: AppRole[] = [];
+    totalElements: number = 0;
+    currentPage: number = 0;
+    pageSize: number = 0;
+    totalPages: number = 0;
+    
     permissions: Permission[] = [];
     loading: boolean = false;
     destroy$: Subject<boolean> = new Subject<boolean>();
@@ -69,20 +74,31 @@ export class RoleComponent implements OnInit, OnDestroy {
         this.router.navigate(['/configurations/roles', id]);
     }
 
-    loadRoles() {
+    loadRoles(page: number = 0, size: number = 10) {
         this.loading = true;
-        this.roleService.getAllRoles()
+        this.roleService
+            .getAllRoles()
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-                next: (data) => {
-                    this.roles = data;
+                next: (resp: ApiResponse<AppRole>) => {
+                    // On extrait le tableau 'content' depuis la réponse
+                    this.roles = resp.data.content || [];
+                    this.totalElements = resp.data.totalElements;
+                    this.currentPage = resp.data.pageNumber || 0;
+                    this.pageSize = resp.data.pageSize;
+                    this.totalPages = resp.data.totalPages;
                     this.loading = false;
                 },
-                error: () => {
+                error: (error: any) => {
                     this.loading = false;
+                    console.error('Erreur lors du chargement des rôles', error);
                     this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les rôles' });
                 }
             });
+    }
+
+    onPageChange(event: { page: number, size: number }) {
+        this.loadRoles(event.page, event.size);
     }
 
     handleCustomAction(event: any) {

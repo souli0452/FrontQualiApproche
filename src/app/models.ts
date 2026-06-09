@@ -326,12 +326,29 @@ export interface PlanAction {
     responsable: string;
     echeance: Date;
 }
+
+export interface PaginatedData<T> {
+    content: T[];
+    last: boolean;
+    pageNumber: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+}
+// Interface globale pour toutes vos réponses d'API
+export interface ApiResponse<T> {
+    message: string;
+    statusCode: number;
+    data: PaginatedData<T>; // Contient la pagination et la liste
+}
+
 export interface KcRole {
     id?: string;
     name?: string;
     description?: string;
     composite?: boolean;
 }
+
 
 export interface AppRole {
     id?: string;

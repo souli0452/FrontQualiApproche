@@ -40,6 +40,12 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     @Output() newItemEvent = new EventEmitter<any>();
     @Output() removeEvent = new EventEmitter<any>();
     @Output() filterEvent = new EventEmitter<any>();
+
+    @Input() totalElements: number = 0;
+    @Input() pageSize: number = 10;
+    @Input() currentPage: number = 0;
+    @Output() pageChangeEvent = new EventEmitter<{ page: number, size: number }>();
+
     @Input() listeObject!: any[];
     @Input() dropdownList!: DropdownSelector[];
     @Input() multiSelectList!: MultiSelectSelector[];
@@ -126,6 +132,28 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
         }
         if (this.closeDialog) {
             this.hidDialog();
+        }
+    }
+
+    onPageChange(event: any) {
+        // PrimeNG renvoie : 
+        // event.page : l'index de la page (0, 1, 2...)
+        // event.rows : le nombre de lignes par page
+        this.pageChangeEvent.emit({ 
+            page: event.page, 
+            size: event.rows 
+        });
+    }
+
+    // Calcul automatique du nombre de pages
+    get totalPages(): number {
+        return Math.ceil(this.totalElements / this.pageSize);
+    }
+
+    // Gestion du clic
+    onPageNumberClick(pageIndex: number) {
+        if (pageIndex >= 0 && pageIndex < this.totalPages) {
+            this.pageChangeEvent.emit({ page: pageIndex, size: this.pageSize });
         }
     }
 

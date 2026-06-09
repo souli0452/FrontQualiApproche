@@ -153,8 +153,8 @@
                                 <td [attr.colspan]="tableCols.length + 1">
                                     <div class="h-60">
                                         <div class="centrer-image mt-6">
-                                                <img src="../../../assets/images/empty.svg" alt="Image vide" style="width: 150px; height: auto;">
-                                                <span class="text-red-500 mt-4 flex justify-content-center opacity-35">Aucune données trouvées</span>
+                                                <img src="../../../assets/images/empty.svg" alt="Image vide" style="width: 150px; height: auto; margin: auto; filter: grayscale(1);">
+                                                <span class="text-slate-500 mt-4 flex justify-content-center opacity-35">Aucune données trouvées</span>
                                         </div>
                                     </div>
                                 </td>
@@ -162,6 +162,14 @@
                         </ng-template>
                     </p-table>
 
+                </div>
+                <div class="paginator-container" style="margin-top: 1rem; padding-bottom: 1rem;">
+                    <p-paginator 
+                        [rows]="pageSize" 
+                        appendTo="body"
+                        [totalRecords]="totalElements"
+                        (onPageChange)="onPageChange($event)">
+                    </p-paginator>
                 </div>
             </div>
         </div>

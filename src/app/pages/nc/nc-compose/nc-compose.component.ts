@@ -8,6 +8,7 @@ import {
     ActionNonConformite,
     NiveauNonConformite,
     NonConformite,
+    PaginatedData,
     Reclamation,
     TypeNonConformite,
     TypeProcessus
@@ -191,16 +192,29 @@ export class NcComposeComponent {
         };
     }
 
+    // loadStuctures() {
+    //     this.structureService
+    //         .getAllStructures()
+    //         .pipe()
+    //         .subscribe({
+    //             next: (resp: HttpResponse<Structure[]>) => {
+    //                 this.structures = resp.data.content || [];
+    //             },
+    //             error: (error: HttpErrorResponse) => {}
+    //         });
+    // }
+
     loadStuctures() {
-        this.structureService
-            .getAllStructures()
-            .pipe()
-            .subscribe({
-                next: (resp: HttpResponse<Structure[]>) => {
-                    this.structures = resp.body || [];
-                },
-                error: (error: HttpErrorResponse) => {}
-            });
+    this.structureService
+        .getAllStructure() // Assurez-vous que le nom de la méthode est correct
+        .subscribe({
+            next: (data: PaginatedData<Structure>) => {
+                this.structures = data.content || [];
+            },
+            error: (error: HttpErrorResponse) => {
+                console.error("Erreur lors du chargement des structures", error);
+            }
+        });
     }
 
     loadNiveau() {

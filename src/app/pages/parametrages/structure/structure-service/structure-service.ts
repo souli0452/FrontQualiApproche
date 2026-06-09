@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { Structure } from '../structure-config/structure';
 import { StructureEndpoint } from '../structure-config/strucuture-url-config';
 import { createRequestOption, formatUrl } from '../../../../utils';
 import { TypeStructure } from '../../../../enums';
+import { ApiResponse, PaginatedData } from '../../../../models';
 
 
 @Injectable({providedIn: 'root'})
@@ -25,13 +26,21 @@ export class StructureService {
         return this.http.delete<Structure>(formatUrl(StructureEndpoint.STRUCTURE_DELETE_URL, id), {observe: 'response'});
     }
 
-    public getAllStructure(typeStructure?: TypeStructure, directionId?: string): Observable<HttpResponse<Array<Structure>>> {
-        const params = createRequestOption({typeStructure, directionId});
-        return this.http.get<Array<Structure>>(StructureEndpoint.STRUCTURE_ROOT_URL, {observe: 'response', params});
+    public getAllStructure(typeStructure?: TypeStructure, directionId?: string): Observable<PaginatedData<Structure>> {
+    const params = createRequestOption({ typeStructure, directionId });
+    
+    // On appelle l'API en typant la réponse avec notre enveloppe globale
+    return this.http.get<ApiResponse<Structure>>(`${StructureEndpoint.STRUCTURE_ROOT_URL}`, { params })
+        .pipe(
+            // On extrait uniquement les données de la pagination
+            map(response => response.data)
+        );
     }
-    public getAllStructures(): Observable<HttpResponse<Array<Structure>>> {
-        return this.http.get<Array<Structure>>(StructureEndpoint.STRUCTURE_ALL_ROOT_URL, {observe: 'response'});
+
+    public getAllStructures(page: number = 0, size: number = 10): Observable<ApiResponse<Structure>> {
+        return this.http.get<ApiResponse<Structure>>(`${StructureEndpoint.STRUCTURE_ROOT_URL}?page=${page}&size=${size}`);
     }
+
     public getAllDirections(typeStructure?: TypeStructure): Observable<HttpResponse<Array<Structure>>> {
         const params = createRequestOption({typeStructure});
         return this.http.get<Array<Structure>>(StructureEndpoint.STRUCTURE_ROOT_URL, {observe: 'response', params});

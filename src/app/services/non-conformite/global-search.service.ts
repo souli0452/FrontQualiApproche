@@ -40,7 +40,7 @@ export class GlobalSearchService {
         // On lance plusieurs recherches en parallèle
         return forkJoin({
             structures: this.structureService.getAllStructures().pipe(
-                map(resp => resp.body || []),
+                map(resp => resp.data.content || []),
                 catchError(() => of([]))
             ),
             ncs: this.ncService.findAll().pipe(
