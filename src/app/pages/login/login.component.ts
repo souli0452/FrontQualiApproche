@@ -65,7 +65,7 @@ export class LoginComponent implements OnInit{
             this.authService.login(credentials).subscribe({
                 next: (response: any) => {
                     const { data } = response.data;
-                    // console.log("Données reçues : ", data);
+                    // console.log("Données reçues ZOOOO : ", data);
 
                     this.isLoading = false;
                     this.authService.setTokens(data.access_token, data.refresh_token);
@@ -78,6 +78,8 @@ export class LoginComponent implements OnInit{
                     });
                     this.authService.getUserById(data!.user.userId!).subscribe((value) => {
                         this.userCurrentUser = value.body!;
+                        // console.log("Données reçues DDDDDDD : ", this.userCurrentUser);
+                        
                         if (this.userCurrentUser.structure) {
                             this.fetchStucture(this.userCurrentUser.structure);
                         } else {

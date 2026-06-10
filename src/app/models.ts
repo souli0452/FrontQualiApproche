@@ -300,24 +300,48 @@ export interface KcLoginRequest {
     refreshToken: String;
 }
 
+// export interface KcUser {
+//     id: string;
+//     userId?: string;
+//     createdTimestamp: number;
+//     username: string;
+//     enabled: boolean;
+//     emailVerified: boolean;
+//     firstName: string;
+//     lastName: string;
+//     fonction?: string;
+//     email: string;
+//     password: string;
+//     structure: string;
+//     permissions?: string[];
+//     appRoles?: string[];
+//     licenseActive?: boolean;
+//     licenseDaysRemaining: number;
+// }
+
 export interface KcUser {
-    id: string;
-    userId?: string;
-    createdTimestamp: number;
-    username: string;
-    enabled: boolean;
-    emailVerified: boolean;
-    firstName: string;
-    lastName: string;
-    fonction?: string;
-    email: string;
-    password: string;
-    structure: string;
-    permissions?: string[];
-    appRoles?: string[];
-    licenseActive?: boolean;
-    licenseDaysRemaining: number;
+  id?: string;
+  userId?: string;
+  createdTimestamp?: number;
+  username: string;
+  enabled?: boolean;
+  emailVerified?: boolean;
+  firstName: string;
+  lastName: string;
+  fonction?: string | null;
+  email: string;
+  password?: string;
+  structure: string;
+  permissions?: string[];
+  appRoles?: string[];
+  licenseActive?: boolean;
+  licenseDaysRemaining?: number;
+  roles?: string[];
 }
+
+
+
+
 export interface PlanAction {
     id?: number;
     numeroOrdre: number;

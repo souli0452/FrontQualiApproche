@@ -323,8 +323,22 @@ export const REGION_LIST = [
     { value: 'Sahel', label: 'Sahel' },
     { value: 'Sud-Ouest', label: 'Sud-Ouest' }
 ];
+// export function isUserInRoles(roles: string[]): boolean {
+//     const user = JSON.parse(localStorage.getItem('user')!);
+//     const rolesUsermap = JSON.parse(localStorage.getItem(USER_PROFILE_KEY)!);
+
+//     if (rolesUsermap) {
+//         user.roles = [];
+//         rolesUsermap.forEach((item: { name: string }) => {
+//             user.roles?.push(item.name); // ✅ Ajout avec `push()`
+//         });
+//     }
+
+//     return roles.some(role => user.roles.includes(role)); // ✅ Vérification simplifiée
+// }
+
 export function isUserInRoles(roles: string[]): boolean {
-    const user = JSON.parse(localStorage.getItem('user')!);
+    const user = JSON.parse(localStorage.getItem('auth')!);
     const rolesUsermap = JSON.parse(localStorage.getItem(USER_PROFILE_KEY)!);
 
     if (rolesUsermap) {
@@ -334,38 +348,60 @@ export function isUserInRoles(roles: string[]): boolean {
         });
     }
 
-    return roles.some(role => user.roles.includes(role)); // ✅ Vérification simplifiée
+    return roles.some(role => user.data.data.roles.includes(role)); // ✅ Vérification simplifiée
 }
 
 export function hasAnyPermission(permissions: string[]): boolean {
-    const user = JSON.parse(localStorage.getItem('user')!);
+    const user = JSON.parse(localStorage.getItem('auth')!);
     if (!user) return false;
 
     // Le SUPER_ADMIN n'a plus de bypass automatique ici, il utilise ses permissions réelles
-    if (!user.permissions) return false;
-    return permissions.some(p => user.permissions.includes(p));
+    if (!user.data.data.permissions) return false;
+    return permissions.some(p => user.data.data.permissions.includes(p));
 }
+
+// export function hasAnyPermission(permissions: string[]): boolean {
+//     const user = JSON.parse(localStorage.getItem('user')!);
+//     if (!user) return false;
+
+//     // Le SUPER_ADMIN n'a plus de bypass automatique ici, il utilise ses permissions réelles
+//     if (!user.permissions) return false;
+//     return permissions.some(p => user.permissions.includes(p));
+// }
 
 // Renvoie true uniquement si l'utilisateur a TOUTES les permissions demandées (Ce qu'il te faut)
 export function hasAllPermissions(permissions: string[]): boolean {
-    const user = JSON.parse(localStorage.getItem('user')!);
-    if (!user || !user.permissions) return false;
+    const user = JSON.parse(localStorage.getItem('auth')!);
+    if (!user || !user.data.data.permissions) return false;
     
     // .every() vérifie que CHAQUE permission 'p' est incluse dans les permissions du user
-    return permissions.every(p => user.permissions.includes(p));
+    return permissions.every(p => user.data.data.permissions.includes(p));
 }
+
+// export function isLicenseActive(): boolean {
+//     const user = JSON.parse(localStorage.getItem('user')!);
+//     if (!user) return false;
+//     // Plus de bypass pour le SUPER_ADMIN, il est soumis à la licence globale
+//     return user.licenseActive || false;
+// }
 
 export function isLicenseActive(): boolean {
-    const user = JSON.parse(localStorage.getItem('user')!);
+    const user = JSON.parse(localStorage.getItem('auth')!);
     if (!user) return false;
     // Plus de bypass pour le SUPER_ADMIN, il est soumis à la licence globale
-    return user.licenseActive || false;
+    return user.data.data.licenseActive || false;
 }
 
+// export function isModuleSubscribed(moduleName: string): boolean {
+//     const user = JSON.parse(localStorage.getItem('user')!);
+//     if (!user) return false;
+//     return user.modulesSubscribed?.includes(moduleName) || false;
+// }
+
 export function isModuleSubscribed(moduleName: string): boolean {
-    const user = JSON.parse(localStorage.getItem('user')!);
+    const user = JSON.parse(localStorage.getItem('auth')!);
     if (!user) return false;
-    return user.modulesSubscribed?.includes(moduleName) || false;
+    return user.data.data.modulesSubscribed?.includes(moduleName) || false;
 }
 
 export function onFileUpload(file: File, rowdata: PieceJointe) {

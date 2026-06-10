@@ -9,22 +9,56 @@ import { QualiCrudService } from '../quali-crud.service';
 import { QualiUrlConfig } from '../quali-url-configs';
 import { createRequestOption, USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
 
-interface AuthResponse {
-    accessToken: string;
-    refreshToken: string;
-    expiresIn: number;
-    refreshExpiresIn: number;
-    tokenType: string;
-    scope: string;
+// interface AuthResponse {
+//     accessToken: string;
+//     refreshToken: string;
+//     expiresIn: number;
+//     refreshExpiresIn: number;
+//     tokenType: string;
+//     scope: string;
+//     data: {
+//         user: any;
+//         appRoles?: string[];
+//         permissions?: string[];
+//         licenseActive?: boolean;
+//         licenseDaysRemaining?: number;
+//         modulesSubscribed?:string[];
+//     };
+// }
+
+export interface AuthResponse {
+  message: string;
+  data: {
     data: {
-        user: any;
-        appRoles?: string[];
-        permissions?: string[];
-        licenseActive?: boolean;
-        licenseDaysRemaining?: number;
-        modulesSubscribed?:string[];
+        access_token: string;
+        appRoles: string[];
+        expires_in: number;
+        fonction: string | null;
+        licenseActive: boolean;
+        licenseDaysRemaining: number;
+        modulesSubscribed: string[];
+        permissions: string[];
+        refresh_expires_in: number;
+        refresh_token: string;
+        scope: string;
+        token_type: string;
+        user: {
+            email: string;
+            firstName: string;
+            fonction: string | null;
+            lastName: string;
+            roles: string[];
+            structure: string;
+            userId: string;
+            username: string;
+        };
     };
+    message: string | null;
+    status: string;
+    };
+    statusCode: number;
 }
+
 
 @Injectable({
     providedIn: 'root'
@@ -51,16 +85,17 @@ export class AuthService extends QualiCrudService<KcUser, number> {
     login(credentials: KcLoginRequest): Observable<AuthResponse> {
         return this.http.post<AuthResponse>(QualiUrlConfig.LOGIN_URL, credentials).pipe(
             map((response: AuthResponse) => {
-                const user = response.data.user;
+                const user = response.data.data;
                 if (user) {
-                    user.appRoles = response.data.appRoles;
-                    user.permissions = response.data.permissions;
-                    user.licenseActive = response.data.licenseActive;
-                    user.licenseDaysRemaining = response.data.licenseDaysRemaining;
-                    user.modulesSubscribed = response.data.modulesSubscribed;
-                    this.setUser(user);
+                    user.appRoles = response.data.data.appRoles;
+                    user.permissions = response.data.data.permissions;
+                    user.licenseActive = response.data.data.licenseActive;
+                    user.licenseDaysRemaining = response.data.data.licenseDaysRemaining;
+                    user.modulesSubscribed = response.data.data.modulesSubscribed;
+                    this.setUser(user.user);
+                    this.setAuth(response);
                 }
-                this.setTokens(response.accessToken, response.refreshToken);
+                this.setTokens(response.data.data.access_token, response.data.data.refresh_token);
                 return response;
             })
         );
@@ -83,9 +118,19 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         return userJson ? JSON.parse(userJson) : null;
     }
 
+    getAuth(): AuthResponse | null {
+        const authJson = localStorage.getItem('auth');
+        return authJson ? JSON.parse(authJson) : null;
+    }
+
     setUser(user: KcUser): void {
         localStorage.setItem('user', JSON.stringify(user));
         this.currentUser.next(user);
+    }
+
+    setAuth(auth: AuthResponse): void {
+        localStorage.setItem('auth', JSON.stringify(auth));
+        this.currentUser.next(auth.data.data.user);
     }
 
     // Déconnexion
@@ -119,20 +164,36 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         this.isLoggedIn.next(true);
     }
 
+    // hasPermission(permission: string): boolean {
+    //     const user = this.getUser();
+    //     if (!user) return false;
+    //     return user.permissions?.includes(permission) || false;
+    // }
+
     hasPermission(permission: string): boolean {
-        const user = this.getUser();
+        const user = this.getAuth();
         if (!user) return false;
-        return user.permissions?.includes(permission) || false;
+        return user.data.data.permissions?.includes(permission) || false;
     }
+
+    // isLicenseActive(): boolean {
+    //     const user = this.getUser();
+    //     return user?.licenseActive || false;
+    // }
 
     isLicenseActive(): boolean {
-        const user = this.getUser();
-        return user?.licenseActive || false;
+        const user = this.getAuth();
+        return user?.data.data.licenseActive || false;
     }
 
+    // getLicenseDaysRemaining(): number {
+    //     const user = JSON.parse(localStorage.getItem('user')!) as KcUser;
+    //     return user?.licenseDaysRemaining || 0;
+    // }
+
     getLicenseDaysRemaining(): number {
-        const user = JSON.parse(localStorage.getItem('user')!) as KcUser;
-        return user?.licenseDaysRemaining || 0;
+        const user = JSON.parse(localStorage.getItem('auth')!) as AuthResponse;
+        return user?.data.data.licenseDaysRemaining || 0;
     }
 
     // Récupère le token d'accès
@@ -149,8 +210,8 @@ export class AuthService extends QualiCrudService<KcUser, number> {
 
         return this.http.post<AuthResponse>(QualiUrlConfig.REFRESH_TOKEN_URL, { refreshToken }).pipe(
             switchMap((response) => {
-                this.setTokens(response.accessToken, response.refreshToken);
-                return of(response.accessToken);
+                this.setTokens(response.data.data.access_token, response.data.data.refresh_token);
+                return of(response.data.data.access_token);
             }),
             catchError(() => {
                 this.logout();

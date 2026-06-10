@@ -41,11 +41,18 @@ export class AppLayout {
 
     daysRemaining: number | undefined;
     
+    // isSuperAdmin(): boolean {
+    //     const user = JSON.parse(localStorage.getItem('user')!);
+    //     return user?.appRoles?.includes('SUPER_ADMIN') || 
+    //            (user?.roles && user.roles.includes('SUPER_ADMIN')) ||
+    //            (user?.user?.roles && user.user.roles.includes('SUPER_ADMIN'));
+    // }
+
     isSuperAdmin(): boolean {
-        const user = JSON.parse(localStorage.getItem('user')!);
-        return user?.appRoles?.includes('SUPER_ADMIN') || 
-               (user?.roles && user.roles.includes('SUPER_ADMIN')) ||
-               (user?.user?.roles && user.user.roles.includes('SUPER_ADMIN'));
+        const user = JSON.parse(localStorage.getItem('auth')!);
+        return user?.data.data.appRoles?.includes('SUPER_ADMIN') || 
+               (user?.data.data.roles && user.data.data.roles.includes('SUPER_ADMIN')) ||
+               (user?.data.data.user?.roles && user.data.data.user.roles.includes('SUPER_ADMIN'));
     }
 
     @ViewChild(AppSidebar) appSidebar!: AppSidebar;

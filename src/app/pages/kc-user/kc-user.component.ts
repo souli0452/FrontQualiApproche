@@ -152,6 +152,8 @@ export class KcUserComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res: any) => {
+                    console.log("LES UTILISATEURS : ",res);
+                    
                     // On affecte la liste pour app-crud-generic
                     this.dataList = res.data.content || [];
                     // On garde la trace du total pour la pagination
