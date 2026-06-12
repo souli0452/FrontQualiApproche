@@ -5,14 +5,33 @@
     </div>
 </div>
 
-<div *ngIf="receptionPiloteData.length > 0">
-    <app-nc-filter-bar (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
-</div>
+<app-nc-filter-bar (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
 
 <div>
     <!-- 1. Affichage normal du tableau (s'il y a des données) -->
     <div *ngIf="roleService.isChef && receptionPiloteData.length > 0">
-        <app-nc-reception [demandeList]="receptionPiloteData"></app-nc-reception>
+        <!-- <app-nc-reception 
+        [demandeList]="receptionPiloteData"
+        [totalElements]="totalElements"
+        [pageSize]="pageSize"
+        [currentPage]="currentPage"
+        (pageChangeEvent)="onPageChange($event)"
+        ></app-nc-reception> -->
+    <app-traitement-table
+        [btnActions]="BtnActions.RECEPTION"
+        [demandeList]="receptionPiloteData"
+        [totalElements]="totalElements"
+        [pageSize]="pageSize"
+        [showGridlines]="false"
+        [paginator]="false"
+        [currentPage]="currentPage"
+        (pageChangeEvent)="onPageChange($event)"
+        [cols]="cols"
+        (onEdition)="edition($event)"
+        (onRejet)="rejet($event)"
+        (onReceptionner)="reception($event)"
+        [title]="title">
+    </app-traitement-table>
     </div>
 
     <!-- 2. LE MAGNIFIQUE EMPTY STATE (s'il n'y a aucune donnée) -->
@@ -42,3 +61,4 @@
     
 </div>
 
+<app-nc-rejet  [motifRejetDialog]="motifRejetDialog" [demande]="demande" (onSuccess)="hideDialog($event)"></app-nc-rejet>

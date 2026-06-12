@@ -5,7 +5,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { MessageService } from 'primeng/api';
 import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../../../components/app-crud-generic/app-crud-generic.component';
-import { FormGroupColumn, NiveauNonConformite, TableColumn } from '../../../../models';
+import { ApiItemResponse, ApiResponse, FormGroupColumn, NiveauNonConformite, TableColumn } from '../../../../models';
 import { showToast, StatusEnum } from '../../../../utils';
 import { NiveauNonConformiteService } from '../../../../services/non-conformite/niveau-non-conformite.service';
 
@@ -28,7 +28,7 @@ import { NiveauNonConformiteService } from '../../../../services/non-conformite/
                 [closeDialog]="closeDialog"
                 [formHeader]="formHeader"
                 (newItemEvent)="onSave($event)"
-                             [totalElements]="totalElements"
+                [totalElements]="totalElements"
                 [isPagination]="false"
                 [currentPage]="currentPage"
                 [pageSize]="pageSize"
@@ -40,19 +40,19 @@ import { NiveauNonConformiteService } from '../../../../services/non-conformite/
 })
 export class NiveauNonConformiteComponent {
     loading: boolean = true;
-      destroy$: Subject<boolean> = new Subject<boolean>();
-      dataList: NiveauNonConformite[] = [];
-                totalElements: number = 0;
-      currentPage: number = 0;
-      pageSize: number = 0;
-      totalPages: number = 0;
+    destroy$: Subject<boolean> = new Subject<boolean>();
+    dataList: NiveauNonConformite[] = [];
+    totalElements: number = 0;
+    currentPage: number = 0;
+    pageSize: number = 5;
+    totalPages: number = 0;
 
-      closeDialog = false;
-      formGroup: UntypedFormGroup;
-      tableCols: TableColumn[];
-      formCols: FormGroupColumn[];
-      pageLabel = 'Niveaux de non conformité';
-      formHeader = 'Création et mise à jour d\'un niveau de non conformité';
+    closeDialog = false;
+    formGroup: UntypedFormGroup;
+    tableCols: TableColumn[];
+    formCols: FormGroupColumn[];
+    pageLabel = 'Niveaux de non conformité';
+    formHeader = 'Création et mise à jour d\'un niveau de non conformité';
 
       constructor(protected fb: UntypedFormBuilder,
                   protected messageService: MessageService,
@@ -66,8 +66,6 @@ export class NiveauNonConformiteComponent {
           this.tableCols = [
               {field: 'libelle', header: 'Libellé', type: 'string', filter: true},
               {field: 'description', header: 'Description', type: 'string', filter: true},
-              {field: 'createdAt', header: 'Date de création', type: 'string', filter: true},
-              {field: 'updatedAt', header: 'Date de modification', type: 'string', filter: true}
           ];
 
           this.formGroup = this.fb.group({
@@ -83,13 +81,12 @@ export class NiveauNonConformiteComponent {
           this.fetchObject();
       }
 
-      fetchObject() {
+    fetchObject() {
         this.loading = true;
-          this.niveauNonConformiteService.GetAllObjects(this.currentPage, this.pageSize)
+          this.niveauNonConformiteService.findAll(this.currentPage, this.pageSize)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
             next: (res: any) => {
-                console.log("CATEGORIE DE PROCESSUS : ", res);
                 // Si votre méthode 'findAll' renvoie maintenant une ApiResponse :
                 this.dataList = res.data.content || [];
                 this.totalElements = res.data.totalElements;
@@ -110,36 +107,35 @@ export class NiveauNonConformiteComponent {
     }
 
     onPageChange(event: { page: number, size: number }) {
-        this.fetchObject();
+        this.currentPage = event.page;   // ✅ mettre à jour la page
+        this.pageSize = event.size;      // ✅ mettre à jour la taille
+
+        this.fetchObject();              // ✅ ensuite appeler
     }
 
-      onSuccess(res: HttpResponse<any>) {
-          this.closeDialog = true;
-          this.fetchObject();
-          showToast(StatusEnum.success, res.status, null, this.messageService);
-      }
 
-      onSave(object: NiveauNonConformite) {
-          if (object.id != null || undefined) {
-              this.niveauNonConformiteService.update(object).pipe(takeUntil(this.destroy$))
-                  .subscribe({
-                      next: res => {
-                          this.onSuccess(res);
-                      }, error: error => {
-                          showToast(StatusEnum.error, error.status, null, this.messageService, error);
-                      }
-                  });
-          } else {
-              this.niveauNonConformiteService.save(object).pipe(takeUntil(this.destroy$))
-                  .subscribe({
-                      next: res => {
-                          this.onSuccess(res);
-                      }, error: error => {
-                          showToast(StatusEnum.error, error.status, null, this.messageService, error);
-                      }
-                  });
-          }
-      }
+    onSuccess(res: ApiItemResponse<any>) {
+        this.closeDialog = true;
+        this.fetchObject();
+
+        showToast(StatusEnum.success, res.statusCode, res.message, this.messageService);
+    }
+
+    onSave(object: NiveauNonConformite) {
+        const request = object.id != null
+            ? this.niveauNonConformiteService.update(object)
+            : this.niveauNonConformiteService.create(object);
+
+        request.pipe(takeUntil(this.destroy$)).subscribe({
+            next: (res) => {
+                this.onSuccess(res);
+            },
+            error: (error) => {
+                showToast(StatusEnum.error, error.status, null, this.messageService, error);
+            }
+        });
+    }
+
 
       onDelete(niveau: NiveauNonConformite) {
           this.niveauNonConformiteService.delete(niveau.id).pipe(takeUntil(this.destroy$))

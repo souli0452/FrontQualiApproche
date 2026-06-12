@@ -13,6 +13,8 @@ import { generateReportFile, ReportFormat, ReportingInput, showToast, StatusEnum
 import { NCRejetComponent } from '../../nc-rejet/nc-rejet';
 import { Structure } from '../../../parametrages/structure/structure-config/structure';
 import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
+import { NonConformiteService } from '../../../../services/non-conformite/non-conformite.service';
+import { ApiResponse } from '../../../../models';
 
 @Component({
     selector: 'app-nc-reception',
@@ -39,6 +41,7 @@ export class ReceptionComponent {
     constructor(protected messageService: MessageService,
                 private  featureService:FeaturesService,
                 private service:ProcNonConformiteService,
+                private nonConformiteService:NonConformiteService,
                 private router: Router) {
         this.cols = [
             { field: 'numeroReference', header: 'N° ref', type: 'string', filter: true, width: '220px', centered: false },
@@ -97,24 +100,10 @@ export class ReceptionComponent {
             }
             });
     }
-    // getDemandeList() {
-    //     this.loading = true;
-    //     this.service.getNonConformiteByEtapeAndSumit(EtapeTraitement.RECEPTION,this.userStructure.id!).subscribe({
-    //         next: (data) => {
-    //             this.demandeList = data.body;
-    //             this.loading = false;
-    //             console.log("demandeList : ",this.demandeList);
-                
-    //         },
-    //         error: (error) => {
-    //             this.loading = false;
-    //             //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-    //         }
-    //     });
-    // }
-      onSuccess(res: HttpResponse<any>) {
+
+      onSuccess(res: ApiResponse<any>) {
          this.featureService.onReloadRequested(true);
-        showToast(StatusEnum.success, res.status, null, this.messageService);
+        showToast(StatusEnum.success, res.statusCode, null, this.messageService);
           this.dmdTraitement.closeDetailsDialog();
     }
     rejet(demande: any) {
@@ -124,7 +113,7 @@ export class ReceptionComponent {
     reception(dmd:any) {
         console.log("dmd : ",dmd);
         
-        this.service.updateNomConformites(dmd).subscribe({
+        this.nonConformiteService.nonConformiteReceptionUpdate(dmd).subscribe({
             next: (data) => {
                 this.featureService.onReloadRequested(true);
                 

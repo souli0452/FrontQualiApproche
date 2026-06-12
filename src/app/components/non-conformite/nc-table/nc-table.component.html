@@ -268,6 +268,15 @@
     </ng-template>
 </p-table>
 
+<div class="paginator-container" style="margin-top: 1rem; padding-bottom: 1rem;">
+    <p-paginator 
+        [rows]="pageSize" 
+        appendTo="body"
+        [totalRecords]="totalElements"
+        (onPageChange)="onPageChange($event)">
+    </p-paginator>
+</div>
+
 <!-- 👇 Notre popup de confirmation local customisé et haut de gamme -->
 <p-confirmpopup #cp [key]="confirmKey">
     <ng-template pTemplate="headless" let-message>

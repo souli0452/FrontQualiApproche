@@ -86,7 +86,7 @@ export class TraitementActionTable implements OnInit {
                     this.nonConformiteService.deleteMany(this.selectedNonConformite).subscribe({
                         next: (data) => {
                             this.featureService.onReloadRequested(true);
-                            showToast(StatusEnum.success, data.status, 'Opération succès', this.messageService);
+                            showToast(StatusEnum.success, data.statusCode, 'Opération succès', this.messageService);
                             this.goBack();
                         },
                         error: error => {
@@ -110,7 +110,7 @@ export class TraitementActionTable implements OnInit {
                     this.nonConformiteService.updateManyStatus(this.selectedNonConformite, NonConformStatus.ARCHIVED).subscribe({
                         next: (data) => {
                             this.featureService.onReloadRequested(true);
-                            showToast(StatusEnum.success, data.status, 'Opération succès', this.messageService);
+                            showToast(StatusEnum.success, data.statusCode, 'Opération succès', this.messageService);
                             this.goBack();
                         },
                         error: error => {
@@ -135,7 +135,7 @@ export class TraitementActionTable implements OnInit {
                     this.nonConformiteService.updateManyStatus(this.selectedNonConformite, NonConformStatus.PUBLISHED).subscribe({
                         next: (data) => {
                             this.featureService.onReloadRequested(true);
-                            showToast(StatusEnum.success, data.status, 'Opération succès', this.messageService);
+                            showToast(StatusEnum.success, data.statusCode, 'Opération succès', this.messageService);
                             this.goBack();
                         },
                         error: error => {

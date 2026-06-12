@@ -53,17 +53,17 @@ export class NcFilterBarComponent implements OnInit {
 
     private loadRealData() {
         this.typeProcessusService.findAll().subscribe({
-            next: (res) => this.processusList = res.body || [],
+            next: (res) => this.processusList = res.data.content || [],
             error: (err) => console.error('Erreur chargement processus', err)
         });
 
         this.niveauNonConformiteService.findAll().subscribe({
-            next: (res) => this.graviteList = res.body || [],
+            next: (res) => this.graviteList = res.data.content || [],
             error: (err) => console.error('Erreur chargement gravités', err)
         });
 
         this.typeNonConformiteService.findAll().subscribe({
-            next: (res) => this.origineList = res.body || [],
+            next: (res) => this.origineList = res.data.content || [],
             error: (err) => console.error('Erreur chargement origines', err)
         });
     }

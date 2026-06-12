@@ -213,6 +213,17 @@
         </div>
     </ng-template>
 </p-table>
+
+<div *ngIf="totalElements > 0" class="mt-4 flex justify-center">
+    <p-paginator 
+        [totalRecords]="totalElements" 
+        [rows]="pageSize" 
+        [first]="currentPage * pageSize" 
+        (onPageChange)="onPageChange($event)"
+        [showPageLinks]="true">
+    </p-paginator>
+</div>
+    
 <p-dialog
     [(visible)]="display"
     [modal]="true"

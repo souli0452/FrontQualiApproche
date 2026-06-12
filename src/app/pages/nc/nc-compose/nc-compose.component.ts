@@ -2,10 +2,11 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Location } from '@angular/common';
 import { convertFilesToBase64, getCurrentUserStructure, onFileUpload, PieceJointe, showToast, StatusEnum, StatusEnumShow } from '../../../utils';
 import { MessageService } from 'primeng/api';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FeaturesService } from '../../../services/feature-service';
 import {
     ActionNonConformite,
+    ApiItemResponse,
     NiveauNonConformite,
     NonConformite,
     PaginatedData,
@@ -13,9 +14,9 @@ import {
     TypeNonConformite,
     TypeProcessus
 } from '../../../models';
-import { TypeProcessusService } from '../../../services/non-conformite/type-processus.service';
-import { ReclamationService } from '../../../services/reclamation.service';
-import { ActionNonConformiteService } from '../../../services/non-conformite/action-non-conformite.service';
+// import { TypeProcessusService } from '../../../services/non-conformite/type-processus.service';
+// import { ReclamationService } from '../../../services/reclamation.service';
+// import { ActionNonConformiteService } from '../../../services/non-conformite/action-non-conformite.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NonConformStatus, EtapeTraitement } from '../../../enums';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
@@ -61,20 +62,20 @@ export class NcComposeComponent {
         protected nonConformiteService: NonConformiteService,
         private featureService: FeaturesService,
         private structureService: StructureService,
-        private typeProcessusService: TypeProcessusService,
+        // private typeProcessusService: TypeProcessusService,
         private typeNonConformiteService: TypeNonConformiteService,
-        private reclamationService: ReclamationService,
+        // private reclamationService: ReclamationService,
         private niveauService: NiveauNonConformiteService,
-        protected actionNonConformiteService: ActionNonConformiteService,
+        // protected actionNonConformiteService: ActionNonConformiteService,
         private activatedRoute: ActivatedRoute,
         private router: Router
     ) {
         this.loadStuctures();
         this.loadNiveau();
-        this.loadReclamations();
+        // this.loadReclamations();
         this.loadTypeNonConformite();
-        this.loadProcessus();
-        this.fetchActions();
+        // this.loadProcessus();
+        // this.fetchActions();
     }
 
     goBack() {
@@ -97,19 +98,19 @@ export class NcComposeComponent {
 
         if (id && id !== '' && id !== 'create') {
             this.nonConformiteService
-                .findById(id)
+                .findNCById(id)
                 .pipe()
                 .subscribe({
                     next: (data) => {
-                        if (data.body) {
-                            this.nonConformite = data.body;
+                        if (data.data) {
+                            this.nonConformite = data.data;
                         }
                         this.nc.origineService = this.structures.find((value) => value.id === this.nonConformite.origineId);
-                        this.nc.typeProcedure = this.typeProcessus.find((value) => value.id === this.nonConformite.typeProcessusId);
+                        // this.nc.typeProcedure = this.typeProcessus.find((value) => value.id === this.nonConformite.typeProcessusId);
                         this.nc.typeNonformite = this.typesNcs.find((value) => value.id === this.nonConformite.typeNonConformiteId);
                         this.nc.niveauNonConformite = this.niveauNcs.find((value) => value.id === this.nonConformite.niveauNonConformiteId);
-                        this.nc.typeAction = this.typesActions.find((value) => value.id === this.nonConformite.actionId);
-                        this.nc.reclamationClient = this.reclamationsClients.find((value) => value.id === this.nonConformite.originNonConformiteId);
+                        // this.nc.typeAction = this.typesActions.find((value) => value.id === this.nonConformite.actionId);
+                        // this.nc.reclamationClient = this.reclamationsClients.find((value) => value.id === this.nonConformite.originNonConformiteId);
                     }
                 });
         }
@@ -160,6 +161,8 @@ export class NcComposeComponent {
         if (publish) {
             this.nonConformite.status = NonConformStatus.PUBLISHED;
             this.nonConformite.etatTraitement = EtapeTraitement.RECEPTION;
+            console.log("NON CONFORMITE " , this.nonConformite);
+            
         } else if (!this.nonConformite.id) {
             this.nonConformite.status = NonConformStatus.DRAFT;
         }
@@ -167,16 +170,19 @@ export class NcComposeComponent {
         if (this.nonConformite.id != null) {
             this.nonConformiteService.update(this.nonConformite).subscribe(this.onResponse(publish));
         } else {
-            this.nonConformiteService.save(this.nonConformite).subscribe(this.onResponse(publish));
+            this.nonConformiteService.create(this.nonConformite).subscribe(this.onResponse(publish));
         }
     }
 
     onResponse(publish: boolean) {
         return {
-            next: (res: HttpResponse<any>) => {
-                this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'La non-conformité a été enregistrée avec succès.' });
-                // this.closeDialog.emit();
-                
+            next: (res: ApiItemResponse<NonConformite>) => { // ✅ correction ici
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Succès',
+                    detail: res.message || 'La non-conformité a été enregistrée avec succès.'
+                });
+
                 if (!this.editId) {
                     if (publish) {
                         this.router.navigate(['/non-conformite/publiees']);
@@ -184,10 +190,18 @@ export class NcComposeComponent {
                         this.location.back();
                     }
                 }
+
                 this.featureService.onReloadRequested(true);
             },
+
             error: (error: HttpErrorResponse) => {
-                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Une erreur est survenue' });
+                console.log("ERREUR :", error);
+
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Erreur',
+                    detail: error.error?.message || 'Une erreur est survenue'
+                });
             }
         };
     }
@@ -217,62 +231,76 @@ export class NcComposeComponent {
         });
     }
 
+
+    // loadNiveau() {
+    //     this.niveauService
+    //         .findAll()
+    //         .pipe()
+    //         .subscribe({
+    //             next: (data: PaginatedData<NiveauNonConformite>) => {
+    //                 this.niveauNcs = data.content || [];
+    //             },
+    //             error: (error: HttpErrorResponse) => {}
+    //         });
+    // }
+
+
+
     loadNiveau() {
-        this.niveauService
-            .findAll()
-            .pipe()
-            .subscribe({
-                next: (resp: HttpResponse<NiveauNonConformite[]>) => {
-                    this.niveauNcs = resp.body || [];
-                },
-                error: (error: HttpErrorResponse) => {}
-            });
+        this.niveauService.findAll().subscribe({
+            next: (resp) => {
+                this.niveauNcs = resp.data.content || [];
+            },
+            error: (error: HttpErrorResponse) => {
+                console.error(error);
+            }
+        });
     }
-    loadReclamations() {
-        this.reclamationService
-            .findAll()
-            .pipe()
-            .subscribe({
-                next: (resp: HttpResponse<Reclamation[]>) => {
-                    this.reclamationsClients = resp.body || [];
-                },
-                error: (error: HttpErrorResponse) => {}
-            });
-    }
+
+
+
+    
+    // loadReclamations() {
+    //     this.reclamationService
+    //         .findAll()
+    //         .subscribe({
+    //             next: (resp) => {
+    //                 this.reclamationsClients = resp.data.content || [];
+    //             },
+    //             error: (error: HttpErrorResponse) => {}
+    //         });
+    // }
     loadTypeNonConformite() {
         this.typeNonConformiteService
             .findAll()
-            .pipe()
             .subscribe({
-                next: (resp: HttpResponse<TypeNonConformite[]>) => {
-                    this.typesNcs = resp.body || [];
+                next: (resp) => {
+                    this.typesNcs = resp.data.content || [];
                 },
                 error: (error: HttpErrorResponse) => {}
             });
     }
-    loadProcessus() {
-        this.typeProcessusService
-            .findAll()
-            .pipe()
-            .subscribe({
-                next: (resp: HttpResponse<TypeProcessus[]>) => {
-                    this.typeProcessus = resp.body || [];
-                },
-                error: (error: HttpErrorResponse) => {}
-            });
-    }
+    // loadProcessus() {
+    //     this.typeProcessusService
+    //         .findAll()
+    //         .subscribe({
+    //             next: (resp) => {
+    //                 this.typeProcessus = resp.data.content || [];
+    //             },
+    //             error: (error: HttpErrorResponse) => {}
+    //         });
+    // }
     handleFileUpload(files: any[]) {
         this.uploadedFiles = files;
     }
-    fetchActions() {
-        this.actionNonConformiteService
-            .findAll()
-            .pipe()
-            .subscribe({
-                next: (res: HttpResponse<ActionNonConformite[]>) => {
-                    this.typesActions = res.body || [];
-                },
-                error: (error: HttpErrorResponse) => {}
-            });
-    }
+    // fetchActions() {
+    //     this.actionNonConformiteService
+    //         .findAll()
+    //         .subscribe({
+    //             next: (res) => {
+    //                 this.typesActions = res.data.content || [];
+    //             },
+    //             error: (error: HttpErrorResponse) => {}
+    //         });
+    // }
 }

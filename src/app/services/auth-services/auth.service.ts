@@ -77,9 +77,15 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         this.user = this.getUser()!;
     }
 
-    override findAll(): Observable<HttpResponse<Array<KcUser>>> {
-        return this.http.get<KcUser[]>(QualiUrlConfig.USERS_URL, { observe: 'response' });
+    // override findAll(): Observable<HttpResponse<Array<KcUser>>> {
+    //     return this.http.get<KcUser[]>(QualiUrlConfig.USERS_URL, { observe: 'response' });
+    // }
+
+
+    override findAll(): Observable<ApiResponse<KcUser>> {
+        return this.http.get<ApiResponse<KcUser>>(QualiUrlConfig.USERS_URL);
     }
+
 
     // Connexion
     login(credentials: KcLoginRequest): Observable<AuthResponse> {
@@ -244,6 +250,10 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         const params = new HttpParams().set('userId', id);
         return this.http.get<KcUser>(QualiUrlConfig.USERS_BY_ID_URL, { params, observe: 'response' });
     }
+    // getUserById(id: string): Observable<HttpResponse<AuthResponse>> {
+    //     const params = new HttpParams().set('userId', id);
+    //     return this.http.get<AuthResponse>(QualiUrlConfig.USERS_BY_ID_URL, { params, observe: 'response' });
+    // }
     loadAgentPublicByService(structureId: string): Observable<Array<KcUser>> {
         return this.http.get<KcUser[]>(this.replaceArgs(new Map().set('structureId', structureId), QualiUrlConfig.USERS_BY_STRUCTURE_URL));
     }

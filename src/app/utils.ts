@@ -355,8 +355,12 @@ export function hasAnyPermission(permissions: string[]): boolean {
     const user = JSON.parse(localStorage.getItem('auth')!);
     if (!user) return false;
 
+    // console.log("USER PARSED : ", user.data.data.permissions);
+    
+
     // Le SUPER_ADMIN n'a plus de bypass automatique ici, il utilise ses permissions réelles
     if (!user.data.data.permissions) return false;
+    
     return permissions.some(p => user.data.data.permissions.includes(p));
 }
 

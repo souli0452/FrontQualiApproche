@@ -366,6 +366,14 @@ export interface ApiResponse<T> {
     data: PaginatedData<T>; // Contient la pagination et la liste
 }
 
+
+export interface ApiItemResponse<T> {
+    data: T;
+    message: string;
+    statusCode: number;
+}
+
+
 export interface KcRole {
     id?: string;
     name?: string;

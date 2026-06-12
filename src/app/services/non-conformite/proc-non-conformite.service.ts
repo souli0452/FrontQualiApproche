@@ -4,6 +4,7 @@ import {Observable} from "rxjs";
 import { EtapeTraitement } from '../../enums';
 import { BehaviorSubject } from 'rxjs';
 import { NonConformiteUrlConfig } from '../../components/non-conformite/config/proc-non-conformite.urls.configs';
+import { ApiResponse, NonConformite } from '../../models';
 
 @Injectable({
   providedIn: 'root'
@@ -26,12 +27,33 @@ export class ProcNonConformiteService {
         nonTraiter: 0
     });
 
-    getNonConformiteByEtape(etapeTraitement :EtapeTraitement): Observable<HttpResponse<Array<any>>> {
-        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL+etapeTraitement, {observe: 'response', headers: {'X-Skip-Loader': 'true'}});
+    // getNonConformiteByEtape(etapeTraitement :EtapeTraitement): Observable<HttpResponse<Array<any>>> {
+    //     return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL+etapeTraitement, {observe: 'response', headers: {'X-Skip-Loader': 'true'}});
+    // }
+
+    getNonConformiteByEtape(etapeTraitement: EtapeTraitement): Observable<ApiResponse<any>> {
+        return this.http.get<ApiResponse<any>>(
+            NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL + etapeTraitement,
+            { headers: { 'X-Skip-Loader': 'true' } }
+        );
     }
-    getNonConformiteByEtapeAndOrigin(etapeTraitement :EtapeTraitement,structureId:string): Observable<HttpResponse<Array<any>>> {
-        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_ETAPE_ORIGIN+etapeTraitement+`/${structureId}`, {observe: 'response', headers: {'X-Skip-Loader': 'true'}});
+
+    // getNonConformiteByEtapeAndOrigin(etapeTraitement :EtapeTraitement,structureId:string): Observable<HttpResponse<Array<any>>> {
+    //     return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_ETAPE_ORIGIN+etapeTraitement+`/${structureId}`, {observe: 'response', headers: {'X-Skip-Loader': 'true'}});
+    // }
+
+    getNonConformiteByEtapeAndOrigin(
+        etapeTraitement: EtapeTraitement,
+        structureId: string
+    ): Observable<ApiResponse<NonConformite>> {
+        return this.http.get<ApiResponse<NonConformite>>(
+            NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_ETAPE_ORIGIN + etapeTraitement + `/${structureId}`,
+            {
+                headers: { 'X-Skip-Loader': 'true' }
+            }
+        );
     }
+
     getNonConformiteByEtapeAndSumit(etapeTraitement :EtapeTraitement,structureId:string): Observable<HttpResponse<Array<any>>> {
         return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_ETAPE_SUMIT+etapeTraitement+`/${structureId}`, {observe: 'response', headers: {'X-Skip-Loader': 'true'}});
     }
@@ -102,9 +124,14 @@ export class ProcNonConformiteService {
         return this.http.get<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL + "user/"+userId+"/imputed", { observe: 'response' });
     }
 
-    getNCByUser(userId:string): Observable<HttpResponse<any>> {
-        return this.http.get<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL + "user/"+userId, { observe: 'response' });
+    getNCByUser(userId: string): Observable<ApiResponse<NonConformite>> {
+        return this.http.get<ApiResponse<NonConformite>>(
+            NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL + "user/" + userId
+        );
     }
+
+
+    
 
     getUserDashboard(id: string): Observable<HttpResponse<any>> {
         // let params = this.buildFilterParams(filters);

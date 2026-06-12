@@ -5,7 +5,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { MessageService } from 'primeng/api';
 import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../../../components/app-crud-generic/app-crud-generic.component';
-import { ActionNonConformite, FormGroupColumn, TableColumn } from '../../../../models';
+import { ActionNonConformite, ApiItemResponse, FormGroupColumn, TableColumn } from '../../../../models';
 import { ActionNonConformiteService } from '../../../../services/non-conformite/action-non-conformite.service';
 import { showToast, StatusEnum } from '../../../../utils';
 
@@ -28,7 +28,7 @@ import { showToast, StatusEnum } from '../../../../utils';
                 [closeDialog]="closeDialog"
                 [formHeader]="formHeader"
                 (newItemEvent)="onSave($event)"
-                                             [totalElements]="totalElements"
+                [totalElements]="totalElements"
                 [isPagination]="false"
                 [currentPage]="currentPage"
                 [pageSize]="pageSize"
@@ -40,21 +40,21 @@ import { showToast, StatusEnum } from '../../../../utils';
 })
 export class ActionNonConformiteComponent {
     loading: boolean = true;
-      destroy$: Subject<boolean> = new Subject<boolean>();
-      dataList: ActionNonConformite[] = [];
-                      totalElements: number = 0;
-      currentPage: number = 0;
-      pageSize: number = 0;
-      totalPages: number = 0;
+    destroy$: Subject<boolean> = new Subject<boolean>();
+    dataList: ActionNonConformite[] = [];
+    totalElements: number = 0;
+    currentPage: number = 0;
+    pageSize: number = 0;
+    totalPages: number = 0;
 
 
-      closeDialog = false;
-      formGroup: UntypedFormGroup;
-      tableCols: TableColumn[];
-      formCols: FormGroupColumn[];
-      pageLabel = 'Types actions entreprises';
-      formHeader = 'Création et mise à jour d\'une action';
-      addButtonLabel = "Nouveau type d'action";
+    closeDialog = false;
+    formGroup: UntypedFormGroup;
+    tableCols: TableColumn[];
+    formCols: FormGroupColumn[];
+    pageLabel = 'Types actions entreprises';
+    formHeader = 'Création et mise à jour d\'une action';
+    addButtonLabel = "Nouveau type d'action";
 
       constructor(protected fb: UntypedFormBuilder,
                   protected messageService: MessageService,
@@ -87,7 +87,7 @@ export class ActionNonConformiteComponent {
 
       fetchObject() {
         this.loading = true;
-          this.actionNonConformiteService.GetAllObjects(this.currentPage, this.pageSize)
+          this.actionNonConformiteService.findAll(this.currentPage, this.pageSize)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
             next: (res: any) => {
@@ -112,36 +112,34 @@ export class ActionNonConformiteComponent {
     }
 
     onPageChange(event: { page: number, size: number }) {
-        this.fetchObject();
+        this.currentPage = event.page;   // ✅ mettre à jour la page
+        this.pageSize = event.size;      // ✅ mettre à jour la taille
+
+        this.fetchObject();              // ✅ ensuite appeler
     }
 
-      onSuccess(res: HttpResponse<any>) {
-          this.closeDialog = true;
-          this.fetchObject();
-          showToast(StatusEnum.success, res.status, null, this.messageService);
-      }
 
-      onSave(object: ActionNonConformite) {
-          if (object.id != null || undefined) {
-              this.actionNonConformiteService.update(object).pipe(takeUntil(this.destroy$))
-                  .subscribe({
-                      next: res => {
-                          this.onSuccess(res);
-                      }, error: error => {
-                          showToast(StatusEnum.error, error.status, null, this.messageService, error);
-                      }
-                  });
-          } else {
-              this.actionNonConformiteService.save(object).pipe(takeUntil(this.destroy$))
-                  .subscribe({
-                      next: res => {
-                          this.onSuccess(res);
-                      }, error: error => {
-                          showToast(StatusEnum.error, error.status, null, this.messageService, error);
-                      }
-                  });
-          }
-      }
+    onSuccess(res: ApiItemResponse<any>) {
+        this.closeDialog = true;
+        this.fetchObject();
+
+        showToast(StatusEnum.success, res.statusCode, res.message, this.messageService);
+    }
+
+    onSave(object: ActionNonConformite) {
+        const request = object.id != null
+            ? this.actionNonConformiteService.update(object)
+            : this.actionNonConformiteService.create(object);
+
+        request.pipe(takeUntil(this.destroy$)).subscribe({
+            next: (res) => {
+                this.onSuccess(res);
+            },
+            error: (error) => {
+                showToast(StatusEnum.error, error.status, null, this.messageService, error);
+            }
+        });
+    }
 
       onDelete(action: ActionNonConformite) {
           this.actionNonConformiteService.delete(action.id).pipe(takeUntil(this.destroy$))

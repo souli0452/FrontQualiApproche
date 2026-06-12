@@ -9,10 +9,10 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
 import { FormRejetComponent } from '../../../components/non-conformite/form-rejet/form-rejet';
-import { NcFilter, NcFilterBarComponent } from '../nc-filter-bar/nc-filter-bar';
 import { FeaturesService } from '../../../services/feature-service';
 import { NcNonTraiterComponent } from '../nc-vue-ensemble/nc-traitement-action/nc-non-traiter';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
+import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 
 @Component({
     selector: 'app-nc-traitement-global',

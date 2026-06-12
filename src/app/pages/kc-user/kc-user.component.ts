@@ -9,7 +9,7 @@ import { AuthService } from '../../services/auth-services/auth.service';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { TypeStructure } from '../../enums';
-import { RoleService } from '../role/role-service/role-service';
+import { AppRoleService, RoleService } from '../role/role-service/role.service';
 import { StructureService } from '../parametrages/structure/structure-service/structure-service';
 
 @Component({
@@ -28,7 +28,7 @@ export class KcUserComponent implements OnInit, OnDestroy {
     dataList: any[] = [];
     totalElements: number = 0;
     currentPage: number = 0;
-    pageSize: number = 0;
+    pageSize: number = 5;
     totalPages: number = 0;
 
 
@@ -55,6 +55,7 @@ export class KcUserComponent implements OnInit, OnDestroy {
         private messageService: MessageService,
         private authService: AuthService,
         private roleService: RoleService,
+        private appRoleService: AppRoleService,
         private structureService: StructureService
     ) {
         this.formCols = [
@@ -103,8 +104,8 @@ export class KcUserComponent implements OnInit, OnDestroy {
     }
 
     loadRoles() {
-        this.roleService
-            .getAllRoles()
+        this.appRoleService
+            .getAllRoles(0, 1000)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (resp: ApiResponse<AppRole>) => {
@@ -145,14 +146,13 @@ export class KcUserComponent implements OnInit, OnDestroy {
             });
     }
 
-    fetchUsers(page: number = 0, size: number = 10) {
+    fetchUsers() {
         this.loading = true;
         this.authService
-            .getAllUsers(page, size)
+            .getAllUsers(this.currentPage, this.pageSize)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res: any) => {
-                    console.log("LES UTILISATEURS : ",res);
                     
                     // On affecte la liste pour app-crud-generic
                     this.dataList = res.data.content || [];
@@ -170,7 +170,10 @@ export class KcUserComponent implements OnInit, OnDestroy {
     }
 
     onPageChange(event: { page: number, size: number }) {
-        this.fetchUsers(event.page, event.size);
+        this.currentPage = event.page;  
+        this.pageSize = event.size;     
+
+        this.fetchUsers();             
     }
 
     getDuplicateField(object: any): string | null {

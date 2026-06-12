@@ -280,21 +280,41 @@ loadStuctures() {
         });
 }
 
+    // fetchActions() {
+    //     this.actionNonConformiteService
+    //         .findAll()
+    //         .subscribe({
+    //             next: (res: HttpResponse<ActionNonConformite[]>) => {
+    //                 this.typesActions = res.body || [];
+    //                 // Ré-essayer le patch si les données arrivent après ngOnInit
+    //                 if (this.demande?.actionId && !this.editForm.get('typeAction')?.value) {
+    //                     const act = this.typesActions.find(a => a.id === this.demande.actionId);
+    //                     if (act) this.editForm.get('typeAction')?.patchValue(act);
+    //                 }
+    //             }
+    //         });
+    // }
+
     fetchActions() {
-        this.actionNonConformiteService
-            .findAll()
-            .pipe()
-            .subscribe({
-                next: (res: HttpResponse<ActionNonConformite[]>) => {
-                    this.typesActions = res.body || [];
-                    // Ré-essayer le patch si les données arrivent après ngOnInit
-                    if (this.demande?.actionId && !this.editForm.get('typeAction')?.value) {
-                        const act = this.typesActions.find(a => a.id === this.demande.actionId);
-                        if (act) this.editForm.get('typeAction')?.patchValue(act);
+    this.actionNonConformiteService
+        .findAll()
+        .subscribe({
+            next: (res) => {
+                this.typesActions = res.data.content || [];
+
+                // Patch sélection automatique
+                if (this.demande?.actionId && !this.editForm.get('typeAction')?.value) {
+                    const act = this.typesActions.find(a => a.id === this.demande.actionId);
+                    if (act) {
+                        this.editForm.get('typeAction')?.patchValue(act);
                     }
                 }
-            });
-    }
+            },
+            error: (error: HttpErrorResponse) => {
+                console.error(error);
+            }
+        });
+}
 
     removeAction(index: number): void {
         if (this.actions.length > 1) {

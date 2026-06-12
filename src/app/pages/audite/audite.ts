@@ -99,7 +99,7 @@ export class AuditeComponent {
                     this.auditService.findAll().pipe(takeUntil(this.destroy$))
                         .subscribe({
                             next: res => {
-                                this.dataList = res.body || [];
+                                this.dataList = res.data.content || [];
                                 this.loading = false;
                             },
                             error: error => {

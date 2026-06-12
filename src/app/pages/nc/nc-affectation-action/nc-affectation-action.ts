@@ -1,13 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { NcFilterBarComponent } from '../nc-filter-bar/nc-filter-bar';
 import { RoleService } from '../../../services/non-conformite/role.service';
 import { getCurrentUserStructure } from '../../../utils';
 import { EtapeTraitement } from '../../../enums';
 import { Subject, takeUntil } from 'rxjs';
 import { NcAffectationComponent } from '../nc-vue-ensemble/nc-affectation/nc-affectation';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
+import { NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 
 @Component({
   selector: 'app-nc-affectation-action',

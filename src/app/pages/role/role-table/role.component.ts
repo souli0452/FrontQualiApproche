@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
 import { AppRole, Permission, TableColumn, FormGroupColumn, MultiSelectSelector, ApiResponse } from '../../../models';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { AppCrudGenericComponent } from '../../../components/app-crud-generic/app-crud-generic.component';
-import { RoleService } from '../role-service/role-service';
+import { AppRoleService, RoleService } from '../role-service/role.service';
 
 @Component({
   selector: 'app-role',
@@ -27,7 +27,7 @@ export class RoleComponent implements OnInit, OnDestroy {
     roles: AppRole[] = [];
     totalElements: number = 0;
     currentPage: number = 0;
-    pageSize: number = 0;
+    pageSize: number = 5;
     totalPages: number = 0;
     
     permissions: Permission[] = [];
@@ -49,6 +49,7 @@ export class RoleComponent implements OnInit, OnDestroy {
 
     constructor(
         private roleService: RoleService,
+        private appRoleService: AppRoleService,
         private fb: UntypedFormBuilder,
         private messageService: MessageService,
         private router: Router
@@ -74,31 +75,39 @@ export class RoleComponent implements OnInit, OnDestroy {
         this.router.navigate(['/configurations/roles', id]);
     }
 
-    loadRoles(page: number = 0, size: number = 10) {
+    loadRoles() {
         this.loading = true;
-        this.roleService
-            .getAllRoles()
+
+        this.appRoleService
+            .getAllRoles(this.currentPage, this.pageSize)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-                next: (resp: ApiResponse<AppRole>) => {
-                    // On extrait le tableau 'content' depuis la réponse
+                next: (resp) => {
                     this.roles = resp.data.content || [];
                     this.totalElements = resp.data.totalElements;
-                    this.currentPage = resp.data.pageNumber || 0;
+                    this.currentPage = resp.data.pageNumber;
                     this.pageSize = resp.data.pageSize;
                     this.totalPages = resp.data.totalPages;
+
                     this.loading = false;
                 },
-                error: (error: any) => {
+                error: (error) => {
                     this.loading = false;
                     console.error('Erreur lors du chargement des rôles', error);
-                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les rôles' });
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Erreur',
+                        detail: 'Impossible de charger les rôles'
+                    });
                 }
             });
     }
 
     onPageChange(event: { page: number, size: number }) {
-        this.loadRoles(event.page, event.size);
+        this.currentPage = event.page;   // ✅ mettre à jour la page
+        this.pageSize = event.size;      // ✅ mettre à jour la taille
+
+        this.loadRoles();              // ✅ ensuite appeler
     }
 
     handleCustomAction(event: any) {

@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { NcFilterBarComponent } from '../nc-filter-bar/nc-filter-bar';
 import { RoleService } from '../../../services/non-conformite/role.service'; // 👈 Bon chemin
 import { getCurrentUserStructure } from '../../../utils';
 import { EtapeTraitement } from '../../../enums';
@@ -13,6 +12,7 @@ import { ReceptionComponent } from '../nc-vue-ensemble/nc-reception/nc-reception
 import { ValidationPiloteComponent } from '../nc-vue-ensemble/nc-validation-pilote/nc-validation-pilote';
 import { NcClotureComponent } from '../nc-vue-ensemble/nc-cloture-rq/nc-cloture';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
+import { NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 
 @Component({
   selector: 'app-nc-analyse-validation',

@@ -18,6 +18,12 @@ import { GlobalSearchService } from '../../../services/non-conformite/global-sea
 export class NcTableComponent implements OnInit {
 
     @Input() brouillonData: any[] = [];
+    @Input() totalElements: number = 0;
+    @Input() pageSize: number = 10;
+    @Input() currentPage: number = 0;
+    @Output() pageChangeEvent = new EventEmitter<{ page: number, size: number }>();
+
+
     @Input() loading: boolean = false;
     @Input() status!: NonConformStatus;
     @Input() cols!: any[];
@@ -41,6 +47,28 @@ export class NcTableComponent implements OnInit {
                 private location: Location,
                 private globalSearchService: GlobalSearchService
     ) {
+    }
+
+    onPageChange(event: any) {
+        // PrimeNG renvoie : 
+        // event.page : l'index de la page (0, 1, 2...)
+        // event.rows : le nombre de lignes par page
+        this.pageChangeEvent.emit({ 
+            page: event.page, 
+            size: event.rows 
+        });
+    }
+
+    // Calcul automatique du nombre de pages
+    get totalPages(): number {
+        return Math.ceil(this.totalElements / this.pageSize);
+    }
+
+    // Gestion du clic
+    onPageNumberClick(pageIndex: number) {
+        if (pageIndex >= 0 && pageIndex < this.totalPages) {
+            this.pageChangeEvent.emit({ page: pageIndex, size: this.pageSize });
+        }
     }
 
     ngOnInit(): void {
@@ -80,11 +108,11 @@ export class NcTableComponent implements OnInit {
                     this.actualityService.deleteMany(this.selectedActualities).subscribe({
                         next: (data) => {
                             this.featureService.onReloadRequested(true);
-                            showToast(StatusEnum.success, data.status, 'Opération succès', this.messageService);
+                            showToast(StatusEnum.success, data.statusCode, 'Opération succès', this.messageService);
                             this.selectedActualities = [];
                         },
                         error: error => {
-                            showToast(StatusEnum.error, error.status, 'Une erreur est survenue', this.messageService, error);
+                            showToast(StatusEnum.error, error.message, 'Une erreur est survenue', this.messageService, error);
                         }
                     });
                 }
@@ -100,7 +128,7 @@ export class NcTableComponent implements OnInit {
                     this.actualityService.updateManyStatus(this.selectedActualities, NonConformStatus.ARCHIVED).subscribe({
                         next: (data) => {
                             this.featureService.onReloadRequested(true);
-                            showToast(StatusEnum.success, data.status, 'Opération succès', this.messageService);
+                            showToast(StatusEnum.success, data.statusCode, 'Opération succès', this.messageService);
                             this.selectedActualities = [];
                         },
                         error: error => {
@@ -120,7 +148,7 @@ export class NcTableComponent implements OnInit {
                     this.actualityService.updateManyStatus(this.selectedActualities, NonConformStatus.PUBLISHED).subscribe({
                         next: (data) => {
                             this.featureService.onReloadRequested(true);
-                            showToast(StatusEnum.success, data.status, 'Opération succès', this.messageService);
+                            showToast(StatusEnum.success, data.statusCode, 'Opération succès', this.messageService);
                             this.selectedActualities = [];
                         },
                         error: error => {

@@ -5,7 +5,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { MessageService } from 'primeng/api';
 import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../../components/app-crud-generic/app-crud-generic.component';
-import { FormGroupColumn, TableColumn, TypeNonConformite, TypeProcessus } from '../../../models';
+import { ApiItemResponse, FormGroupColumn, TableColumn, TypeNonConformite, TypeProcessus } from '../../../models';
 import { showToast, StatusEnum } from '../../../utils';
 import { TypeProcessusService } from '../../../services/non-conformite/type-processus.service';
 
@@ -66,7 +66,6 @@ export class CategorieProcessusComponent {
           this.tableCols = [
               {field: 'libelle', header: 'Libellé', type: 'string', filter: true},
               {field: 'description', header: 'Description', type: 'string', filter: true},
-              {field: 'createdAt', header: 'Date de création', type: 'date', filter: true}
           ];
 
           this.formGroup = this.fb.group({
@@ -82,32 +81,13 @@ export class CategorieProcessusComponent {
           this.fetchObject();
       }
 
-    //   fetchObject() {
-    //     this.loading = true;
-    //       this.typeProcessusService.findAll().pipe(takeUntil(this.destroy$))
-    //           .subscribe({
-    //               next: (res) => {
-    //                 console.log("CATEGORIE DE PROCESSUS : ", res);
-                    
-    //                   this.dataList = res.body || [];
-    //                   this.loading = false;
-    //               },
-    //               error: error => {
-    //                   this.loading = false;
-    //                   showToast(StatusEnum.error, error.status, null, this.messageService, error);
-    //               }
-    //           });
-    //   }
-
 
     fetchObject() {
     this.loading = true;
-    this.typeProcessusService.GetAllObjects(this.currentPage, this.pageSize)
+    this.typeProcessusService.findAll(this.currentPage, this.pageSize)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
             next: (res: any) => {
-                console.log("CATEGORIE DE PROCESSUS : ", res);
-                // Si votre méthode 'findAll' renvoie maintenant une ApiResponse :
                 this.dataList = res.data.content || [];
                 this.totalElements = res.data.totalElements;
                 this.currentPage = res.data.pageNumber || 0;
@@ -128,49 +108,45 @@ export class CategorieProcessusComponent {
 
     
     onPageChange(event: { page: number, size: number }) {
-        this.fetchObject();
+        this.currentPage = event.page;   // ✅ mettre à jour la page
+        this.pageSize = event.size;      // ✅ mettre à jour la taille
+
+        this.fetchObject();              // ✅ ensuite appeler
     }
 
 
-      onSuccess(res: HttpResponse<any>) {
-          this.closeDialog = true;
-          this.fetchObject();
-          showToast(StatusEnum.success, res.status, null, this.messageService);
-      }
+    onSuccess(res: ApiItemResponse<any>) {
+        this.closeDialog = true;
+        this.fetchObject();
 
-      onSave(object: TypeProcessus) {
-          if (object.id != null || undefined) {
-              this.typeProcessusService.update(object).pipe(takeUntil(this.destroy$))
-                  .subscribe({
-                      next: res => {
-                          this.onSuccess(res);
-                      }, error: error => {
-                          showToast(StatusEnum.error, error.status, null, this.messageService, error);
-                      }
-                  });
-          } else {
-              this.typeProcessusService.save(object).pipe(takeUntil(this.destroy$))
-                  .subscribe({
-                      next: res => {
-                          this.onSuccess(res);
-                      }, error: error => {
-                          showToast(StatusEnum.error, error.status, null, this.messageService, error);
-                      }
-                  });
-          }
-      }
+        showToast(StatusEnum.success, res.statusCode, res.message, this.messageService);
+    }
 
-      onDelete(processus: TypeProcessus) {
-          this.typeProcessusService.delete(processus.id).pipe(takeUntil(this.destroy$))
-              .subscribe({
-                  next: res => {
-                      this.onSuccess(res);
-                  }, error: error => {
-                      showToast(StatusEnum.error, error.status, null, this.messageService, error);
-                  }
-              });
+    onSave(object: TypeProcessus) {
+        const request = object.id != null
+            ? this.typeProcessusService.update(object)
+            : this.typeProcessusService.create(object);
 
-      }
+        request.pipe(takeUntil(this.destroy$)).subscribe({
+            next: (res) => {
+                this.onSuccess(res);
+            },
+            error: (error) => {
+                showToast(StatusEnum.error, error.status, null, this.messageService, error);
+            }
+        });
+    }
+
+    onDelete(processus: TypeProcessus) {
+    this.typeProcessusService.delete(processus.id).pipe(takeUntil(this.destroy$))
+        .subscribe({
+            next: res => {
+                this.onSuccess(res);
+            }, error: error => {
+                showToast(StatusEnum.error, error.status, null, this.messageService, error);
+            }
+        });
+    }
 
       ngOnDestroy(): void {
           this.destroy$.next(true);

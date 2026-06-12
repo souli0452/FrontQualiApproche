@@ -1,14 +1,22 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { NcFilterBarComponent } from '../nc-filter-bar/nc-filter-bar';
-import { RoleService } from '../../../services/non-conformite/role.service'; // 👈 Bon chemin
-import { getCurrentUserStructure } from '../../../utils';
+import { RoleService } from '../../../services/non-conformite/role.service';
+import { getCurrentUserStructure, generateReportFile, ReportFormat, ReportingInput, TypeDemande } from '../../../utils';
 import { EtapeTraitement } from '../../../enums';
 import { Subject, takeUntil } from 'rxjs';
 
-import { ReceptionComponent } from '../nc-vue-ensemble/nc-reception/nc-reception';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
+import { NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
+import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
+
+// Nouveaux imports pour le tableau
+import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
+import { MessageService } from 'primeng/api';
+import { FeaturesService } from '../../../services/feature-service';
+import { Router } from '@angular/router';
+import { HttpResponse } from '@angular/common/http';
+import { NCRejetComponent } from '../nc-rejet/nc-rejet';
 
 @Component({
   selector: 'app-nc-analyse-reception',
@@ -17,47 +25,83 @@ import { ProcNonConformiteService } from '../../../services/non-conformite/proc-
       CommonModule, 
       NgPrimeModule, 
       NcFilterBarComponent,
-      ReceptionComponent, // 👈 Import du tableau Pilote
+      TraitementTableComponent, 
+      NCRejetComponent
   ],
+  providers: [MessageService], // Essentiel pour les toasts
   templateUrl: './nc-analyse-reception.html',
   styleUrl: './nc-analyse-reception.scss'
 })
 export class AnalyseReceptionComponent implements OnInit, OnDestroy {
+  title = 'Réceptions des non-conformités';
   
   receptionPiloteData: any[] = [];
+  totalElements: number = 0;
+  currentPage: number = 0;
+  pageSize: number = 0;
+  totalPages: number = 0;
+
   rawReceptionPiloteData: any[] = []; 
   loading: boolean = false;
   userStructure: any = {};
   
   private destroy$ = new Subject<void>();
 
+  // Propriétés du tableau
+  protected readonly BtnActions = EtapeTraitement;
+  cols: any[] = [];
+  motifRejetDialog: boolean = false;
+  demande: any;
+
+  @ViewChild(TraitementTableComponent) dmdTraitement!: TraitementTableComponent;
+
   constructor(
     public roleService: RoleService,
-    private procService: ProcNonConformiteService
-  ){}
+    private procService: ProcNonConformiteService,
+    private nonConformiteService: NonConformiteService,
+    protected messageService: MessageService,
+    private featureService: FeaturesService,
+    private router: Router
+  ){
+        this.cols = [
+            { field: 'numeroReference', header: 'N° ref', type: 'string', filter: true, width: '220px', centered: false },
+            { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '300px', centered: false },
+            { field: 'currentUserfullName', header: 'Initateur', type: 'string', filter: true, width: '150px', centered: false },
+            { field: 'niveauNonConformiteLibelle', header: 'Gravité', type: 'badge', filter: false, width: '150px', centered: false },
+            { field: 'createdAt', header: 'Date soumission', type: 'date', filter: true, width: '150px', centered: false }
+        ];
+  }
     
   ngOnInit() {
     this.userStructure = getCurrentUserStructure();
     this.fetchData();
   }
 
+  onPageChange(event: { page: number, size: number }) {
+      this.currentPage = event.page;
+      this.pageSize = event.size;
+      this.fetchData();
+  }
+
   fetchData() {
     this.loading = true;
 
-    // 1. Si c'est le Pilote (Chef), on charge UNIQUEMENT ses validations
     if (this.roleService.isChef && this.userStructure?.id) {
-        this.procService.getNonConformiteByEtapeAndSumit(EtapeTraitement.RECEPTION, this.userStructure.id)
+        this.nonConformiteService.nonConformiteParEtape(EtapeTraitement.RECEPTION, this.userStructure.id)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res) => {
-                    // On sauvegarde les données brutes
-                    this.rawReceptionPiloteData = res.body || [];
+                    this.rawReceptionPiloteData = res.data.content || [];
+                    this.totalElements = res.data.totalElements;
+                    this.currentPage = res.data.pageNumber || 0;
+                    this.pageSize = res.data.pageSize;
+                    this.totalPages = res.data.totalPages;
+
                     const currentNotifs = this.procService.notificationsNC$.value;
                     this.procService.notificationsNC$.next({
                         ...currentNotifs,
-                        reception: this.rawReceptionPiloteData.length
+                        reception: this.totalElements
                     });
-                    // Par défaut, on affiche tout
                     this.receptionPiloteData = [...this.rawReceptionPiloteData];
                     this.loading = false;
                 },
@@ -66,17 +110,15 @@ export class AnalyseReceptionComponent implements OnInit, OnDestroy {
     }
   }
 
-   handleFilter(filters: any) {
+  handleFilter(filters: any) {
     if (!filters) return;
     
     const { dateDebut, dateFin, process, gravite, origine } = filters;
 
-    // On part des données brutes
     this.receptionPiloteData = this.rawReceptionPiloteData.filter(item => {
         if (!item) return false;
         let isValid = true;
 
-        // 1. Filtrage par Date (dateCreation ou createdAt ou date)
         if (dateDebut || dateFin) {
             const itemDateStr = item.dateCreation || item.createdAt || item.date;
             if (itemDateStr) {
@@ -96,17 +138,14 @@ export class AnalyseReceptionComponent implements OnInit, OnDestroy {
             }
         }
 
-        // 2. Filtrage par Processus
         if (process && process.id) {
             if (item.typeProcessusId !== process.id) isValid = false;
         }
 
-        // 3. Filtrage par Gravité (Niveau)
         if (gravite && gravite.id) {
             if (item.niveauNonConformiteId !== gravite.id) isValid = false;
         }
 
-        // 4. Filtrage par Origine (Type de NC)
         if (origine && origine.id) {
             if (item.typeNonConformiteId !== origine.id) isValid = false;
         }
@@ -115,10 +154,73 @@ export class AnalyseReceptionComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ============== ACTIONS DU TABLEAU ==============
 
+  private editer(rowData: any, resp: HttpResponse<any>) {
+      const reportingInput: ReportingInput = {
+          reportFormat: ReportFormat.PDF,
+          reportType: TypeDemande.NON_CONFORMITE,
+          entityId: rowData.id!,
+      };
+      this.featureService.printReport(reportingInput).pipe(takeUntil(this.destroy$))
+          .subscribe({
+              next: arrayBytes => {
+                  if (arrayBytes.byteLength) {
+                      generateReportFile(arrayBytes, reportingInput);
+                      this.dmdTraitement.displayDetails(resp.body);
+                      this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'opération a réussie !", life: 3000 });
+                  }
+              },
+              error: () => {
+                  this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'opération a échouée !", life: 3000 });
+              }
+          });
+  }
+
+  edition(demandes: any) {
+      this.procService.updateNomConformites(demandes).subscribe({
+          next: (data) => {
+              this.editer(demandes[0], data);
+              this.dmdTraitement.closeDetailsDialog();
+          },
+          error: () => {
+              this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'opération a échouée !", life: 3000 });
+          }
+      });
+  }
+
+  rejet(demande: any) {
+      this.demande = demande;
+      this.motifRejetDialog = true;
+      // Note: Il faudra ajouter le composant app-nc-rejet dans le template HTML
+      // si tu veux que la pop-up de rejet s'affiche !
+  }
+
+  reception(dmd: any) {
+      this.procService.updateNomConformites(dmd).subscribe({
+          next: (data) => {
+              this.featureService.onReloadRequested(true);
+              this.dmdTraitement.closeDetailsDialog();
+              this.messageService.add({ severity: 'success', summary: 'SUCCÈS', detail: "L'opération a réussie !", life: 3000 });
+              
+              // Optionnel: Recharger les données directement plutôt que de rediriger
+              this.fetchData();
+          },
+          error: (error) => {
+              this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'opération a échouée !", life: 3000 });
+          }
+      });
+  }
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
   }
+
+      hideDialog(event: any) {
+        if (event) {
+            this.dmdTraitement.displayDetails();
+            this.featureService.onReloadRequested(true);
+        }
+    }
 }

@@ -87,7 +87,7 @@ export class FournisseurComponent {
             this.fournisseurService.findAll().pipe(takeUntil(this.destroy$))
                 .subscribe({
                     next: res => {
-                        this.dataList = res.body || [];
+                        this.dataList = res.data.content || [];
                         this.loading = false;
                         this.loading = false;
                     },

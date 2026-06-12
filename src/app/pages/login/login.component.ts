@@ -78,10 +78,10 @@ export class LoginComponent implements OnInit{
                     });
                     this.authService.getUserById(data!.user.userId!).subscribe((value) => {
                         this.userCurrentUser = value.body!;
-                        // console.log("Données reçues DDDDDDD : ", this.userCurrentUser);
+                        console.log("Données reçues DDDDDDD : ", this.userCurrentUser);
                         
-                        if (this.userCurrentUser.structure) {
-                            this.fetchStucture(this.userCurrentUser.structure);
+                        if (this.userCurrentUser as any) {
+                            this.fetchStucture((this.userCurrentUser as any).data.structure);
                         } else {
                             this.messageService.add({ severity: 'info', summary: 'AVERTISSEMENT', detail: 'Votre utilisateur est mal configuré', life: 3000 });
                             this.navigateAfterLogin();
@@ -122,7 +122,7 @@ export class LoginComponent implements OnInit{
     fetchStucture(structureId: string) {
         this.structureService.getByStructureId(structureId).subscribe({
             next: (structure) => {
-                localStorage.setItem(USER_STRUCTURE_KEY, JSON.stringify(structure));
+                localStorage.setItem(USER_STRUCTURE_KEY, JSON.stringify(structure.data));
                 this.navigateAfterLogin();
             },
             error: (err) => {

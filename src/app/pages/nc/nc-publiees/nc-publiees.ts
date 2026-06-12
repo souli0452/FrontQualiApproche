@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { getCurrentUserStructure, hasAnyPermission, showToast, StatusEnum } from '../../../utils';
 import { MessageService } from 'primeng/api';
 import { FeaturesService } from '../../../services/feature-service';
@@ -12,6 +12,7 @@ import { NcModule } from '../nc.module';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { Structure } from '../../parametrages/structure/structure-config/structure';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
+import { ApiResponse, NonConformite } from '../../../models';
 
 @Component({
     selector: 'app-nc-publiees',
@@ -21,6 +22,12 @@ import { ProcNonConformiteService } from '../../../services/non-conformite/proc-
 })
 export class NcPublieesComponent implements OnInit, OnDestroy {
     publishedList: any[] = [];
+    totalElements: number = 0;
+    currentPage: number = 0;
+    pageSize: number = 10;
+    totalPages: number = 0;
+
+
     loading: boolean = false;
     destroy$: Subject<boolean> = new Subject<boolean>();
     cols: any[] = [
@@ -74,17 +81,29 @@ ngOnInit() {
 
     getDemandeListUser(userId: string) {
         this.loading = true;
-        this.service.getNCByUser(userId).subscribe({
-            next: (data) => {
-                this.publishedList = data.body || [];
-                this.loading = false;
-            },
-            error: (error) => {
-                this.loading = false;
-            }
-        });
-    }
+        this.nonConformiteService
+            .getNCByUserPaged(userId, this.currentPage, this.pageSize) // ✅ passer page et size
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (res: ApiResponse<NonConformite>) => {
+                    console.log(res);
+                    
+                    this.publishedList = res.data?.content ?? [];
 
+                    // ✅ mise à jour pagination
+                    this.totalElements = res.data?.totalElements ?? 0;
+                    this.currentPage = res.data?.pageNumber ?? 0;
+                    this.pageSize = res.data?.pageSize ?? 10;
+                    this.totalPages = res.data?.totalPages ?? 0;
+
+                    this.loading = false;
+                },
+                error: (error) => {
+                    console.error(error);
+                    this.loading = false;
+                }
+            });
+    }
 
     goBack() {
         this.location.back();
@@ -93,6 +112,18 @@ ngOnInit() {
     ngOnDestroy() {
         this.destroy$.next(true);
         this.destroy$.unsubscribe();
+    }
+
+    onPageChange(event: { page: number, size: number }) {
+        this.currentPage = event.page;   // ✅ mettre à jour la page
+        this.pageSize = event.size;      // ✅ mettre à jour la taille
+        const user = this.authService.getUser();
+        const userId = user?.userId;
+        
+        // 2. Appel de la bonne méthode
+        if (userId) {
+            this.getDemandeListUser(userId);
+        }
     }
 
     archive(rowdata: any): void {

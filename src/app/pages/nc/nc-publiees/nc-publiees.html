@@ -1,4 +1,4 @@
-<div *ngIf="publishedList.length > 0">
+<!-- <div *ngIf="publishedList.length > 0"> -->
 <app-nc-table 
     [brouillonData]="publishedList"
     [cols]="cols"
@@ -7,9 +7,13 @@
     [balanceFrozen]="true" 
     [status]="NonConformStatus.PUBLISHED"
     (archive)="archive($event)"
+    [totalElements]="totalElements"
+    [currentPage]="currentPage"
+    [pageSize]="pageSize"
+    (pageChangeEvent)="onPageChange($event)"
     (delete)="delete($event)">
 </app-nc-table>
-</div>
+<!-- </div> -->
 
 <div *ngIf="publishedList.length === 0 && !loading" 
       class="flex flex-col items-center justify-center p-4 mt-2 bg-surface-0 dark:bg-surface-900 text-center">

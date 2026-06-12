@@ -44,7 +44,7 @@ export class GlobalSearchService {
                 catchError(() => of([]))
             ),
             ncs: this.ncService.findAll().pipe(
-                map(resp => resp.body || []),
+                map(resp => resp.data.content || []),
                 catchError(() => of([]))
             )
         }).pipe(

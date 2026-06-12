@@ -7,7 +7,7 @@ import { MessageService } from 'primeng/api';
 
 import { ApiResponse, AppRole, Permission } from '../../../models';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { RoleService } from '../role-service/role-service';
+import { AppRoleService, RoleService } from '../role-service/role.service';
 
 interface GroupedPermission {
     module: string;
@@ -32,6 +32,7 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
     constructor(
         private fb: UntypedFormBuilder,
         private roleService: RoleService,
+        private appRoleService: AppRoleService,
         private messageService: MessageService,
         private route: ActivatedRoute,
         private router: Router
@@ -69,7 +70,7 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
 
     loadPermissionsAndRole(roleId: string | null) {
         this.loading = true;
-        this.roleService
+        this.appRoleService
             .getPermissionsDictionary()
             .pipe(
                 takeUntil(this.destroy$),
@@ -113,7 +114,7 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
     }
 
     loadRole(id: string) {
-        this.roleService
+        this.appRoleService
             .getAllRoles()
             .pipe(
                 takeUntil(this.destroy$),
@@ -184,7 +185,7 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
         if (this.roleForm.invalid) return;
 
         this.loading = true;
-        this.roleService.updateRole(this.roleForm.value).subscribe({
+        this.appRoleService.updateRole(this.roleForm.value).subscribe({
             next: () => {
                 this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Rôle enregistré' });
                 this.router.navigate(['/configurations/roles']);

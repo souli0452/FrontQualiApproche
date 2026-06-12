@@ -5,6 +5,7 @@ import { NonConformStatus } from '../../../enums';
 import { getCurrentUserStructure } from '../../../utils';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { Structure } from '../../parametrages/structure/structure-config/structure';
+import { ApiResponse } from '../../../models';
 
 @Component({
     selector: 'app-nc-archive',
@@ -37,18 +38,20 @@ export class NcArchiveComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.userStructure = getCurrentUserStructure();
         this.loading = true;
-        this.nonConformiteService
-            .findAllNc(NonConformStatus.ARCHIVED,this.userStructure.id)
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-                next: (data) => {
-                    this.brouillonData = data.body!;
-                    this.loading = false;
-                },
-                error: (error) => {
-                    this.loading = false;
-                }
-            });
+
+        // this.nonConformiteService
+        //     .findAllNc(0, 10, NonConformStatus.ARCHIVED, this.userStructure.id) // ✅ ordre corrigé
+        //     .pipe(takeUntil(this.destroy$))
+        //     .subscribe({
+        //         next: (res: ApiResponse<any>) => {
+        //             this.brouillonData = res.data.content || []; // ✅ CORRECT
+        //             this.loading = false;
+        //         },
+        //         error: (error) => {
+        //             this.loading = false;
+        //             console.error(error);
+        //         }
+        //     });
     }
 
     ngOnDestroy() {

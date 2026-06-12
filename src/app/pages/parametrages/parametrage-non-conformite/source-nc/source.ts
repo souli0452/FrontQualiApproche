@@ -5,7 +5,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { MessageService } from 'primeng/api';
 import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../../../components/app-crud-generic/app-crud-generic.component';
-import { FormGroupColumn, TableColumn, TypeNonConformite } from '../../../../models';
+import { ApiItemResponse, FormGroupColumn, TableColumn, TypeNonConformite } from '../../../../models';
 import { showToast, StatusEnum } from '../../../../utils';
 import { TypeNonConformiteService } from '../../../../services/non-conformite/type-non-conformite.service';
 
@@ -86,12 +86,10 @@ export class SourceNonConformite {
 
       fetchObject() {
         this.loading = true;
-          this.typeNonConformiteService.GetAllObjects(this.currentPage, this.pageSize)
+          this.typeNonConformiteService.findAll(this.currentPage, this.pageSize)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
             next: (res: any) => {
-                console.log("CATEGORIE DE PROCESSUS : ", res);
-                // Si votre méthode 'findAll' renvoie maintenant une ApiResponse :
                 this.dataList = res.data.content || [];
                 this.totalElements = res.data.totalElements;
                 this.currentPage = res.data.pageNumber || 0;
@@ -111,38 +109,34 @@ export class SourceNonConformite {
     }
 
     onPageChange(event: { page: number, size: number }) {
-        this.fetchObject();
+        this.currentPage = event.page;   // ✅ mettre à jour la page
+        this.pageSize = event.size;      // ✅ mettre à jour la taille
+
+        this.fetchObject();              // ✅ ensuite appeler
     }
 
-      onSuccess(res: HttpResponse<any>) {
-          this.closeDialog = true;
-          this.fetchObject();
-          showToast(StatusEnum.success, res.status, null, this.messageService);
-      }
 
-      onSave(object: TypeNonConformite) {
-          if (object.id != null || undefined) {
-            console.log("TYPE DE NON CONFORMITE ", object);
+    onSuccess(res: ApiItemResponse<any>) {
+        this.closeDialog = true;
+        this.fetchObject();
 
-              this.typeNonConformiteService.update(object).pipe(takeUntil(this.destroy$))
-                  .subscribe({
-                      next: res => {
-                          this.onSuccess(res);
-                      }, error: error => {
-                          showToast(StatusEnum.error, error.status, null, this.messageService, error);
-                      }
-                  });
-          } else {
-              this.typeNonConformiteService.save(object).pipe(takeUntil(this.destroy$))
-                  .subscribe({
-                      next: res => {
-                          this.onSuccess(res);
-                      }, error: error => {
-                          showToast(StatusEnum.error, error.status, null, this.messageService, error);
-                      }
-                  });
-          }
-      }
+        showToast(StatusEnum.success, res.statusCode, res.message, this.messageService);
+    }
+
+    onSave(object: TypeNonConformite) {
+        const request = object.id != null
+            ? this.typeNonConformiteService.update(object)
+            : this.typeNonConformiteService.create(object);
+
+        request.pipe(takeUntil(this.destroy$)).subscribe({
+            next: (res) => {
+                this.onSuccess(res);
+            },
+            error: (error) => {
+                showToast(StatusEnum.error, error.status, null, this.messageService, error);
+            }
+        });
+    }
 
       onDelete(produit: TypeNonConformite) {
           this.typeNonConformiteService.delete(produit.id).pipe(takeUntil(this.destroy$))

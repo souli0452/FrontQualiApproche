@@ -48,18 +48,22 @@ export class NcDetailComponent {
     ngOnInit() {
         if (this.viewId) {
             // Mode Popup (on reçoit l'ID directement)
-            this.nonConformiteService.findById(this.viewId).subscribe((actuality) => {
-                this.nc = actuality.body!;
+            this.nonConformiteService.findNCById(this.viewId).subscribe((nonConformite) => {
+                this.nc = nonConformite.data!;
             });
         } else {
             // Mode Page classique (on récupère l'ID dans l'URL)
             this.route.params.subscribe((params) => {
-                this.nonConformiteService.findById(params['id']).subscribe((actuality) => {
-                    this.nc = actuality.body!;
+                this.nonConformiteService.findNCById(params['id']).subscribe((nonConformite) => {
+                    this.nc = nonConformite.data!;
                 });
             });
         }
     }
+
+    
+
+    
 
 
     goBack() {

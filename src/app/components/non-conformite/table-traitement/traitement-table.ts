@@ -23,6 +23,11 @@ export class TraitementTableComponent implements OnInit {
     @Input() showGridlines: boolean = true;
     @Input() balanceFrozen: boolean = false;
 
+    @Input() totalElements: number = 0;
+    @Input() pageSize: number = 10;
+    @Input() currentPage: number = 0;
+    @Output() pageChangeEvent = new EventEmitter<{ page: number, size: number }>();
+
 
     @Input() btnActions?: EtapeTraitement = EtapeTraitement.RECEPTION;
     @Input() title?: string;
@@ -113,6 +118,16 @@ export class TraitementTableComponent implements OnInit {
         } else {
             this.display = true;
         }
+    }
+
+    onPageChange(event: any) {
+        // PrimeNG renvoie : 
+        // event.page : l'index de la page (0, 1, 2...)
+        // event.rows : le nombre de lignes par page
+        this.pageChangeEvent.emit({ 
+            page: event.page, 
+            size: event.rows 
+        });
     }
 
     getSeverity(gravity: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {

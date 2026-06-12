@@ -1,7 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { createRequestOption } from '../utils';
-import { ApiResponse } from '../models';
+import { ApiResponse, NiveauNonConformite } from '../models';
 
 export interface CrudOperations<T, ID> {
 
@@ -9,7 +9,8 @@ export interface CrudOperations<T, ID> {
 
     update(t: T): Observable<HttpResponse<T>>;
 
-    findAll(): Observable<HttpResponse<Array<T>>>;
+    // findAllArray(): Observable<HttpResponse<Array<T>>>;
+    findAll(): Observable<ApiResponse<T>>;
 
     GetAllObjects(page: number, size: number): Observable<ApiResponse<T>>;
 
@@ -34,9 +35,17 @@ export abstract class QualiCrudService<T, ID> implements CrudOperations<T, ID> {
     updateG(t: T,id:string): Observable<HttpResponse<T>> {
         return this.http.put<T>(this.uri + `/update/${id}`, t, {observe: 'response'});
     }
-    findAll(): Observable<HttpResponse<Array<T>>> {
-        return this.http.get<T[]>(this.uri + "/all", {observe: 'response'});
+    // findAll(): Observable<HttpResponse<Array<T>>> {
+    //     return this.http.get<T[]>(this.uri + "/all", {observe: 'response'});
+    // }
+
+
+    findAll(): Observable<ApiResponse<T>> {
+        return this.http.get<ApiResponse<T>>(`${this.uri}/all`, {
+            observe: 'body'
+        });
     }
+
 
     GetAllObjects(page: number, size: number): Observable<ApiResponse<T>> {
         return this.http.get<ApiResponse<T>>(`${this.uri}/all?page=${page}&size=${size}`);
