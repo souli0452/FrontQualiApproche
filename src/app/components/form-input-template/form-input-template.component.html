@@ -38,7 +38,7 @@
                     {{ col.header }}
                     <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
                 </label>
-                <p-editor [formControlName]="col.field" 
+                <p-editor [formats]="[]" [formControlName]="col.field" 
                           [id]="col.field" 
                           [style]="{ height: '70px' }">
                     <ng-template pTemplate="header">

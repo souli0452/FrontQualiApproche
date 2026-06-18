@@ -39,7 +39,7 @@ export class ParametragesComponent implements OnInit, OnDestroy {
             { label: 'Origine des Non-Conformités', icon: 'pi pi-list', routerLink: '/configurations/type-nc' },
             { label: 'Niveaux de Non-Conformités', icon: 'pi pi-sort-amount-up', routerLink: '/configurations/niveau-nc' },
             { label: 'Types Actions', icon: 'pi pi-bolt', routerLink: '/configurations/type-action' },
-            { label: 'Services', icon: 'pi pi-map-marker', routerLink: '/configurations/service' },
+            { label: 'Processus', icon: 'pi pi-map-marker', routerLink: '/configurations/service' },
             { label: 'Configuration globale', icon: 'pi pi-cog', routerLink: '/configurations/config-systeme' }
         ];
     }

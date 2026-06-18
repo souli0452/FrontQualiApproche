@@ -16,7 +16,7 @@ import { TypeProcessusService } from '../../../services/non-conformite/type-proc
     template: `
         <div class="page-layout">
             <app-crud-generic
-                [addButtonLabel]="'Nouveau processus'"
+                [addButtonLabel]="'Nouvelle catégorie de processus'"
                 [dialogWidth]="'40rem'"
                 [loading]="loading"
                 [pageLabel]="pageLabel"
@@ -88,6 +88,8 @@ export class CategorieProcessusComponent {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
             next: (res: any) => {
+                console.log(res);
+                
                 this.dataList = res.data.content || [];
                 this.totalElements = res.data.totalElements;
                 this.currentPage = res.data.pageNumber || 0;

@@ -140,16 +140,7 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
     }
 
 
-    onPermissionChange(permissionValue: string) {
-        let selected = [...this.roleForm.value.permissions];
-        if (selected.includes(permissionValue)) {
-            selected = selected.filter((v) => v !== permissionValue);
-        } else {
-            selected.push(permissionValue);
-        }
-        this.roleForm.patchValue({ permissions: selected });
-        this.updateAllSelectedStatus();
-    }
+
 
     toggleModule(group: GroupedPermission, event: any) {
         const isChecked = event.checked;
@@ -171,15 +162,17 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
     }
 
     updateAllSelectedStatus() {
-        const selected = this.roleForm.value.permissions;
+        const selected = this.roleForm.value.permissions || [];
         this.groupedPermissions.forEach((group) => {
-            group.allSelected = group.permissions.every((p) => selected.includes(p.value));
+            if (group.permissions && group.permissions.length > 0) {
+                group.allSelected = group.permissions.every((p) => selected.includes(p.value));
+            } else {
+                group.allSelected = false;
+            }
         });
     }
 
-    isPermissionSelected(value: string): boolean {
-        return this.roleForm.value.permissions.includes(value);
-    }
+
 
     save() {
         if (this.roleForm.invalid) return;

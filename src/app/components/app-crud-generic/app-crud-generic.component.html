@@ -177,14 +177,25 @@
 </div>
 <p-dialog (onHide)="hidDialog()" [modal]="true" [(visible)]="display" appendTo="body"
           [style]="{width: dialogWidth}" [maximizable]="true" class="p-fluid" styleClass="ng-dialog">
-    <ng-template #header>
-        <div class="flex align-items-center justify-content-center items-center gap-2">
+    <ng-template pTemplate="header">
+        <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center bg-blue-50 text-blue-500 rounded-full" style="width: 3.5rem; height: 3.5rem">
+                <i class="pi pi-plus-circle text-2xl"></i>
+            </div>
+            <div class="flex flex-col">
+                <span class="font-bold text-xl text-900 mb-1">{{ rowData?.libelle ? (pageLabel + ' : ' + rowData.libelle) : (detailTitle || 'Détails ' + pageLabel) }}</span>
+                <span class="text-500 text-sm">Ajout d'un nouvel élément</span>
+            </div>
+        </div>
+    </ng-template>
+    <!-- <ng-template #header>
+        <div class="flex items-center justify-center items-center gap-2">
             <i class="pi pi-info-circle text-info-500"></i>
             <span class="popup-header">
                 {{ rowData?.libelle ? (pageLabel + ' : ' + rowData.libelle) : (detailTitle || 'Détails ' + pageLabel) }}
             </span>
         </div>
-    </ng-template>
+    </ng-template> -->
     <form *ngIf="display" [formGroup]="formGroup" autocomplete="off" role="form">
         <div class="grid p-fluid mt-1">
             <ng-container *ngFor="let col of formCols">

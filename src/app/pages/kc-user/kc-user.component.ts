@@ -43,7 +43,7 @@ export class KcUserComponent implements OnInit, OnDestroy {
     multiSelectList: MultiSelectSelector[] = [];
     rolesEntries: any[] = [];
     rolesDropdown!: MultiSelectSelector;
-    pageLabel = 'utilisateurs';
+    pageLabel = 'utilisateur';
     formHeader = "Création et mise à jour d'un utilisateur";
     customButtons = [
         { label: 'Réinitialiser mot de passe', icon: 'pi pi-refresh', action: 'resetPassword', color: 'blue', tooltip: 'Réinitialiser le mot de passe', tooltipPosition: 'top' },

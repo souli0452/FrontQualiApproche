@@ -68,7 +68,7 @@ export class NcVueEnsembleFacade {
     ncNonTraiterRes: this.procService.getPlanActions(user.email, "NON_TRAITER")
   };
 
-  if ((roleService.isChef && userStructure?.id) || roleService.isRQ) {
+    if (userStructure?.id && (roleService.isChef || roleService.isRQ))  {
 
     requests.receptionRes =
       this.nonConformiteService.nonConformiteParEtape(

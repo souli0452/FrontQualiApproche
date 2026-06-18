@@ -122,7 +122,9 @@ export class RoleComponent implements OnInit, OnDestroy {
                 this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Rôle supprimé' });
                 this.loadRoles();
             },
-            error: () => {
+            error: (error) => {
+                console.log(error);
+                
                 this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de la suppression' });
             }
         });

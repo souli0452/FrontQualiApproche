@@ -11,28 +11,26 @@
         </div>
     </div>
 
-    <div class="grid">
+    <form [formGroup]="roleForm" class="grid m-0">
         <!-- Section Configuration (Gauche) -->
-        <div class="col-12 lg:col-4 px-3">
+        <div class="col-12 lg:col-4 px-3 mb-4 lg:mb-0">
             <div class="bg-white border-1 border-gray-200 border-round-xl p-4 shadow-sm h-full">
                 <div class="mb-5">
                     <h3 class="text-lg font-bold text-gray-900 m-0 mb-1">Configuration générale</h3>
                     <p class="text-sm text-gray-500 m-0">Définissez l'identité de ce rôle au sein de l'application.</p>
                 </div>
-
-                <form [formGroup]="roleForm" >
                     <div class="field w-full mb-4">
-                        <label for="name" class="block layout-topbar-title font-bold text-gray-700 mb-2 uppercase">Identité du rôle</label>
-                        <p-floatlabel variant="on">
+                        <label for="name" class="block layout-topbar-title font-bold text-gray-700 mb-2 uppercase text-xs">Identité du rôle</label>
+                        <p-floatlabel variant="on" class="w-full block">
                             <input pInputText id="name" type="text" formControlName="name" class="w-full" />
                             <label for="name">Libellé du rôle <span class="text-red-500">*</span></label>
                         </p-floatlabel>
-                        <small class="block mt-1 text-muted-color">Donnez un nom explicite pour identifier ce rôle dans la liste.</small>
+                        <small class="block mt-1 text-gray-500">Donnez un nom explicite pour identifier ce rôle dans la liste.</small>
                     </div>
 
                     <div class="field w-full">
                         <label for="description" class="block layout-topbar-title font-bold text-gray-700 mb-2 uppercase">Description détaillée</label>
-                        <p-editor formControlName="description" id="description" [style]="{ height: '70px' }" styleClass="border-round-lg overflow-hidden">
+                        <p-editor [formats]="[]" formControlName="description" id="description" [style]="{ height: '70px' }" styleClass="border-round-lg overflow-hidden">
                             <ng-template pTemplate="header">
                                 <span class="ql-formats">
                                     <select class="ql-size"></select>
@@ -55,30 +53,29 @@
                             </ng-template>
                         </p-editor>
                     </div>
-                </form>
-            </div>
+                    </div>
         </div>
-
         <!-- Section Permissions (Droite) -->
         <div class="col-12 lg:col-8 px-3">
             <div class="bg-white border-1 border-gray-200 border-round-xl p-4 shadow-sm h-full">
-                <div class="flex align-items-center justify-content-between mb-5">
+                <div class="flex items-center justify-between mb-5">
                     <div>
                         <h3 class="text-lg font-bold text-gray-900 m-0 mb-1">Droits d'accès</h3>
                         <p class="text-sm text-gray-500 m-0">Attribuez les permissions granulaires par module.</p>
                     </div>
-                    <p-tag [value]="roleForm.value.permissions.length + ' sélectionnés'" severity="info" styleClass="px-3 border-round-pill bg-blue-50 text-blue-600 font-bold border-none"></p-tag>
+                    <p-tag [value]="(roleForm.get('permissions')?.value?.length || 0) + ' sélectionnés'" severity="info" styleClass="px-3 border-round-pill bg-blue-50 text-blue-600 font-bold border-none"></p-tag>
                 </div>
 
-                <div class="grid">
-                    <div *ngFor="let group of groupedPermissions" class="col-12 md:col-6 mb-5">
+                <div class="grid m-0">
+                    <div *ngFor="let group of groupedPermissions" class="col-12 md:col-6 mb-5 px-2">
                         <div class="border-1 border-gray-100 border-round-lg p-3 hover:border-blue-200 transition-colors">
                             <!-- Module Header -->
-                            <div class="flex flex-wrap items-center justify-content-between mb-4 pb-2 border-bottom-1 border-gray-50">
+                            <div class="flex flex-wrap items-center justify-between mb-4 pb-2 border-bottom-1 border-gray-50">
                                 <span class="font-bold text-gray-800">{{ group.module }}</span>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-xs font-bold text-gray-400 uppercase tracking-tighter">Tout</span>
+                                    <label [for]="'switch-' + group.module" class="text-xs font-bold text-gray-400 uppercase tracking-tighter cursor-pointer m-0 pt-1">Tout</label>
                                     <p-inputSwitch
+                                        [inputId]="'switch-' + group.module"
                                         [ngModel]="group.allSelected"
                                         [ngModelOptions]="{standalone: true}"
                                         (onChange)="toggleModule(group, $event)"
@@ -88,17 +85,17 @@
                             </div>
 
                             <!-- Permissions List -->
-                            <div class="flex flex-wrap gap-3">
+                            <div class="flex flex-wrap gap-2 flex-column">
                                 <div *ngFor="let perm of group.permissions"
-                                     class="flex items-center gap-3 p-2 border-round hover:bg-gray-50 cursor-pointer transition-colors"
-                                     (click)="onPermissionChange(perm.value)">
+                                     class="flex items-center gap-3 p-2 border-round hover:bg-gray-50 transition-colors w-full">
                                     <p-checkbox
-                                        [binary]="true"
-                                        [id]="perm.value"
-                                        [ngModel]="isPermissionSelected(perm.value)"
-                                        [ngModelOptions]="{standalone: true}">
+                                        name="permissionsGroup"
+                                        [value]="perm.value"
+                                        [inputId]="perm.value"
+                                        formControlName="permissions"
+                                        (onChange)="updateAllSelectedStatus()">
                                     </p-checkbox>
-                                    <label [for]="perm.value" class="cursor-pointer text-sm font-medium text-gray-600 flex-grow-1">{{ perm.label }}</label>
+                                    <label [for]="perm.value" class="cursor-pointer text-sm font-medium text-gray-600 flex-grow-1 m-0 w-full">{{ perm.label }}</label>
                                 </div>
                             </div>
                         </div>
@@ -106,5 +103,5 @@
                 </div>
             </div>
         </div>
-    </div>
+    </form>
 </div>
