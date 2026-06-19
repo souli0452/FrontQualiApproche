@@ -15,8 +15,14 @@ import { TypeNonConformiteService } from '../../../../services/non-conformite/ty
     imports: [CommonModule, AppCrudGenericComponent],
     template: `
         <div class="page-layout">
+            <div class="card mb-0 pb-0">
+                <div class="bg-surface-100 p-2 text-center">
+                    <div class="text-xl mb-2 font-bold">Gestion des Origines de Non-Conformité</div>
+                    <p>Ajoutez ou modifiez les différentes Origines d'une Non-Conformité.</p>
+                </div>
+            </div>
             <app-crud-generic
-                [addButtonLabel]="'Nouveau type de non conformité'"
+                [addButtonLabel]="'Nouvelle Origine de Non-Conformité'"
                 [dialogWidth]="'40rem'"
                 [loading]="loading"
                 [pageLabel]="pageLabel"
@@ -52,7 +58,7 @@ export class SourceNonConformite {
       formGroup: UntypedFormGroup;
       tableCols: TableColumn[];
       formCols: FormGroupColumn[];
-      pageLabel = 'Types de non conformité';
+      pageLabel = 'Origine de Non-Conformité';
       formHeader = 'Création et mise à jour d\'un type de non conformité';
 
       constructor(protected fb: UntypedFormBuilder,
@@ -133,6 +139,8 @@ export class SourceNonConformite {
                 this.onSuccess(res);
             },
             error: (error) => {
+                console.log(error);
+                
                 showToast(StatusEnum.error, error.status, null, this.messageService, error);
             }
         });

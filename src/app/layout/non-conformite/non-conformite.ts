@@ -79,19 +79,42 @@ export class NonConformiteLayoutComponent implements OnInit, OnDestroy {
         }
 
         // 3. Les menus pour les Chefs OU les RQ
-        if (this.roleService.isChef || this.roleService.isRQ) {
+        if (this.roleService.isChef) {
+            const actionsCount = (notifs?.validationPilote || 0) + (notifs?.validationRQ || 0) + (notifs?.cloture || 0);
+            this.items.push({ 
+                label: 'Validation Pilote', 
+                icon: 'pi pi-check-square', 
+                routerLink: '/non-conformite/validation-pilote',
+                badge: actionsCount > 0 ? actionsCount.toString() : undefined
+            }
+        );
+        }
+
+        // 3. Les menus pour les Chefs OU les RQ
+        if (this.roleService.isRQ) {
             const actionsCount = (notifs?.validationPilote || 0) + (notifs?.validationRQ || 0) + (notifs?.cloture || 0);
             this.items.push({ 
                 label: 'Analyse et Validation', 
                 icon: 'pi pi-check-square', 
                 routerLink: '/non-conformite/analyse-validation',
-                badge: actionsCount > 0 ? actionsCount.toString() : undefined
+                badge: notifs?.validationRQ > 0 ? notifs.validationRQ.toString() : undefined
             },
+            { 
+                label: 'Analyse et Clôture', 
+                icon: 'pi pi-check-square', 
+                routerLink: '/non-conformite/analyse-cloture',
+                badge: notifs?.cloture > 0 ? notifs.cloture.toString() : undefined  
+            }
+        );
+        }
+
+                // 3. Les menus pour les Chefs OU les RQ
+        if (this.roleService.isRQ || this.roleService.isChef) {
+            this.items.push(
             { 
                 label: 'Suivi des NC', 
                 icon: 'pi pi-clock', 
                 routerLink: '/non-conformite/suivi',
-                badge: notifs?.suivi > 0 ? notifs.suivi.toString() : undefined
             }
         );
         }
@@ -117,6 +140,12 @@ export class NonConformiteLayoutComponent implements OnInit, OnDestroy {
                 routerLink: '/non-conformite/publiees' 
             }
         );
+    }
+
+    onTabChange(url: any) {
+        if (url && typeof url === 'string') {
+            this.router.navigate([url]);
+        }
     }
 
 

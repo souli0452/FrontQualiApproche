@@ -63,7 +63,7 @@ export class NcVueEnsembleFacade {
   private buildUserNcRequests(user: any, roleService: RoleService, userStructure: any): any {
 
   const requests: any = {
-    userNcsRes: this.nonConformiteService.getNCByUserPaged(user.userId),
+    userNcsRes: this.nonConformiteService.nonConformiteParUtilisateurGetPagination(user.userId),
     imputationsRes: this.procService.findImputedByUserId(user.userId),
     ncNonTraiterRes: this.procService.getPlanActions(user.email, "NON_TRAITER")
   };
@@ -71,11 +71,10 @@ export class NcVueEnsembleFacade {
     if (userStructure?.id && (roleService.isChef || roleService.isRQ))  {
 
     requests.receptionRes =
-      this.nonConformiteService.nonConformiteParEtape(
+      this.nonConformiteService.nonConformiteParStructureEtTraitementGet(
         EtapeTraitement.RECEPTION,
         userStructure.id
       );
-    console.log("receptionRes : ",requests.receptionRes);
 
     requests.affectationRes =
       this.procService.getNonConformiteByEtapeAndOrigin(
@@ -114,15 +113,17 @@ private populateData(data: any) {
 
   const userNcs = this.safeArray(data.allUserNcs);
   const imputations = this.safeArray(data.allImputations);
+  const receptions = this.safeArray(data.allReceptions);
 
-  const receptions = data.allReceptions && data.allReceptions.length > 0 
-    ? data.allReceptions 
-    : imputations.filter((imp: any) => imp?.etatTraitement === EtapeTraitement.RECEPTION);
+  // const receptions = data.allReceptions && data.allReceptions.length > 0 
+  //   ? data.allReceptions 
+  //   : imputations.filter((imp: any) => imp?.etatTraitement === EtapeTraitement.RECEPTION);
 
   return {
     brouillonData: userNcs.filter((nc: any) => nc?.status === 'DRAFT'),
     imputationsData: imputations.filter((imp: any) => imp?.etatTraitement === EtapeTraitement.TRAITEMENT),
-    receptionData: receptions,
+    receptionData: receptions.filter((reception: any) => reception?.etatTraitement === EtapeTraitement.RECEPTION),
+    rejectByRqData: receptions.filter((reception: any) => reception?.etatTraitement === EtapeTraitement.RECEPTION),
     affectationData: this.safeArray(data.allAffectations),
     validationPiloteData: this.safeArray(data.allValidationPilotes),
     validationRqData: this.safeArray(data.allValidationRq),
@@ -164,67 +165,64 @@ private enrichNonTraiterData(data: any, nonTraiterData: any[]) {
   }
 
 
-loadUserNcData(user: any, roleService: RoleService, userStructure: any) {
+  loadUserNcData(user: any, roleService: RoleService, userStructure: any) {
 
-  const requests = this.buildUserNcRequests(user, roleService, userStructure);
+    const requests = this.buildUserNcRequests(user, roleService, userStructure);
 
-  return forkJoin(requests).pipe(
-    map((res: any) => {
-      
-      const raw = this.extractNcResponses(res);
-      console.log("################## `RAW` : ", raw);
-      
-      const processed = this.populateData(raw);
-      console.log("################## `processed` : ", processed);
-      
-      const enrichedNonTraiter =
-        this.enrichNonTraiterData(raw, processed.nonTraiterData);
+    return forkJoin(requests).pipe(
+      map((res: any) => {
+        
+        const raw = this.extractNcResponses(res);
+        console.log("################## `RAW` : ", raw);
+        
+        const processed = this.populateData(raw);
+        console.log("################## `processed` : ", processed);
+        
+        const enrichedNonTraiter =
+          this.enrichNonTraiterData(raw, processed.nonTraiterData);
 
-      console.log("DATA VUE ENSEMBLE FACADE : ", enrichedNonTraiter);
+        console.log("DATA VUE ENSEMBLE FACADE : ", enrichedNonTraiter);
 
-      return {
-        ...processed,
-        nonTraiterData: enrichedNonTraiter
-      };
-    })
-  );
-}
+        return {
+          ...processed,
+          nonTraiterData: enrichedNonTraiter
+        };
+      })
+    );
+  }
 
+  loadEvolutionStats(annee: number, mois?: number, structureId?: string) {
 
+    return this.procService.getNcEvolution(annee, mois, structureId).pipe(
+      map((response: any) => {
 
+        const stats = response.body.data;
+        const backendChartData = stats.chartData;
 
-loadEvolutionStats(annee: number, mois?: number, structureId?: string) {
+        const styledDatasets = styleEvolutionDatasets(
+          backendChartData.datasets
+        );
 
-  return this.procService.getNcEvolution(annee, mois, structureId).pipe(
-    map((response: any) => {
+        const chartData = {
+          labels: backendChartData.labels,
+          datasets: styledDatasets
+        };
 
-      const stats = response.body.data;
-      const backendChartData = stats.chartData;
+        const critiqueObj = stats.gravites.find((g: any) => g.nom === 'Critique');
+        const majeureObj = stats.gravites.find((g: any) => g.nom === 'Majeure');
+        const mineureObj = stats.gravites.find((g: any) => g.nom === 'Mineure');
 
-      const styledDatasets = styleEvolutionDatasets(
-        backendChartData.datasets
-      );
-
-      const chartData = {
-        labels: backendChartData.labels,
-        datasets: styledDatasets
-      };
-
-      const critiqueObj = stats.gravites.find((g: any) => g.nom === 'Critique');
-      const majeureObj = stats.gravites.find((g: any) => g.nom === 'Majeure');
-      const mineureObj = stats.gravites.find((g: any) => g.nom === 'Mineure');
-
-      return {
-        chartData,
-        evolutionTotal: stats.totalEvolution,
-        evolutionPourcentage: stats.pourcentageEvolution,
-        countCritique: critiqueObj ? critiqueObj.count : 0,
-        countMajeure: majeureObj ? majeureObj.count : 0,
-        countMineure: mineureObj ? mineureObj.count : 0
-      };
-    })
-  );
-}
+        return {
+          chartData,
+          evolutionTotal: stats.totalEvolution,
+          evolutionPourcentage: stats.pourcentageEvolution,
+          countCritique: critiqueObj ? critiqueObj.count : 0,
+          countMajeure: majeureObj ? majeureObj.count : 0,
+          countMineure: mineureObj ? mineureObj.count : 0
+        };
+      })
+    );
+  }
 
 
 

@@ -249,9 +249,9 @@
     
     <ng-template pTemplate="footer">
         <div class="flex justify-end gap-3 border-t border-surface-200 dark:border-surface-700 pt-4 mt-2">
-            <button type="button" pRipple pButton icon="pi pi-times" (click)="displayDialog = false" label="Fermer"
+            <button size="small" type="button" pRipple pButton icon="pi pi-times" (click)="displayDialog = false" label="Fermer"
                     class="p-button-text p-button-secondary font-semibold hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"></button>
-            <p-button severity="info" pRipple icon="pi pi-send" (click)="soumettre($event)" label="Soumettre"
+            <p-button size="small" severity="info" pRipple icon="pi pi-send" (click)="soumettre($event)" label="Soumettre"
                     class="font-semibold shadow-sm rounded-lg" [disabled]="!planAction.observation"></p-button>
         </div>
     </ng-template>

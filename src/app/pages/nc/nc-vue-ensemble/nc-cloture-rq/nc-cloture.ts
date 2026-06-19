@@ -51,19 +51,7 @@ export class NcClotureComponent {
     ngOnInit() {
         // this.getDemandeList();
     }
-    // getDemandeList() {
-    //     this.loading = true;
-    //     this.service.getNonConformiteByEtape(EtapeTraitement.SUIVI_RQ).subscribe({
-    //         next: (data) => {
-    //             this.demandeList = data.body;
-    //             this.loading = false;
-    //         },
-    //         error: (error) => {
-    //             this.loading = false;
-    //             //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-    //         }
-    //     });
-    // }
+    
     onSuccess(res: HttpResponse<any>) {
         // this.getDemandeList();
         this.featureService.onReloadRequested(true);

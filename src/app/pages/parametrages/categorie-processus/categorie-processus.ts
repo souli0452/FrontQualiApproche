@@ -15,6 +15,12 @@ import { TypeProcessusService } from '../../../services/non-conformite/type-proc
     imports: [CommonModule, AppCrudGenericComponent],
     template: `
         <div class="page-layout">
+            <div class="card mb-0 pb-0">
+                <div class="bg-surface-100 p-2 text-center">
+                    <div class="text-xl mb-2 font-bold">Gestion des catégories de processus</div>
+                    <p>Ajoutez ou modifiez les différentes catégories de processus.</p>
+                </div>
+            </div>
             <app-crud-generic
                 [addButtonLabel]="'Nouvelle catégorie de processus'"
                 [dialogWidth]="'40rem'"

@@ -1,22 +1,32 @@
-    <div *ngIf="roleService.isChef">
-      <div class="bg-surface-100 mb-4 p-2 text-center">
-        <div class="text-xl mb-2 font-bold">Affectation des Actions</div>
-        <p>Espace dédié à l'affectation des non-conformités aux collaborateurs ou responsables.</p>
-      </div>
-    </div>
-
-<div *ngIf="affectationData.length > 0">
-    <app-nc-filter-bar (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
+<p-toast />
+<div class="bg-surface-100 mb-4 p-2 text-center">
+    <div class="text-xl mb-2 font-bold">Affectation des Actions</div>
+    <p>Espace dédié à l'affectation des non-conformités aux collaborateurs ou responsables.</p>
 </div>
 
-<div>
+<app-nc-filter-bar (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
+
     <!-- 1. Affichage normal du tableau (s'il y a des données) -->
-    <div *ngIf="roleService.isChef && affectationData.length > 0">
-        <app-nc-affectation [demandeList]="affectationData"></app-nc-affectation>
+    <div *ngIf="affectationData.length > 0">
+        <app-traitement-table
+            [btnActions]="BtnActions.IMPUTATION"
+            [demandeList]="affectationData"
+            [cols]="cols"
+            (onImputation)="imputation($event)"
+            [paginator]="false"
+            [showGridlines]="false"
+            [loading]="loading"
+            [title]="title"
+            (pageChangeEvent)="onPageChange($event)"
+            [totalElements]="totalElements"
+            [pageSize]="pageSize"
+            [currentPage]="currentPage"
+            >
+        </app-traitement-table>
     </div>
 
     <!-- 2. LE MAGNIFIQUE EMPTY STATE (s'il n'y a aucune donnée) -->
-    <div *ngIf="roleService.isChef && affectationData.length === 0 && !loading" 
+    <div *ngIf="affectationData.length === 0 && !loading" 
          class="flex flex-col items-center justify-center p-4 mt-2 bg-surface-0 dark:bg-surface-900 text-center">
         
         <!-- Image en noir et blanc (CSS filter: grayscale) -->
@@ -39,5 +49,3 @@
         </p>
 
     </div>
-    
-</div>

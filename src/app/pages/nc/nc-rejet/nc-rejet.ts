@@ -18,6 +18,7 @@ export class NCRejetComponent {
     etape!: EtapeTraitement;
     fileRejet:any;
     @Output() onSuccess = new EventEmitter<any>();
+    @Output() onClose = new EventEmitter<void>();
     private uploadedFiles: any[]=[];
 
     constructor(
@@ -26,7 +27,6 @@ export class NCRejetComponent {
 
     rejetDemande() {
         this.isSummited = true;
-        console.log(this.demande);
         if (this.demande.etatTraitement == EtapeTraitement.RECEPTION) {
             this.etape = EtapeTraitement.SOUMISSION;
         }
@@ -54,6 +54,7 @@ export class NCRejetComponent {
                 this.messageService.add({severity:'error', summary:'Erreur', detail:'Demande non rejetée'});
                 console.log("Erruer lors du rejet : ", error);
                 this.isSummited = false;
+                this.motifRejetDialog = false;
             }
         });
     }
@@ -63,11 +64,15 @@ export class NCRejetComponent {
     }
 
     hideDialog() {
+        console.log("ORIGINE MOTIF DIALIOG 1 ", this.motifRejetDialog);
         this.motifRejetDialog = false;
+        console.log("ORIGINE MOTIF DIALIOG 2 ", this.motifRejetDialog);
+        this.onClose.emit();
+        
     }
     async handleFileUpload(files: any[]) {
         this.uploadedFiles = files;
-      const file  =await convertFilesToBase64(files);
+        const file  =await convertFilesToBase64(files);
         this.fileRejet=file;
     }
 }

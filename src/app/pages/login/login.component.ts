@@ -120,16 +120,20 @@ export class LoginComponent implements OnInit{
         }
     }
     fetchStucture(structureId: string) {
-        this.structureService.getByStructureId(structureId).subscribe({
-            next: (structure) => {
-                localStorage.setItem(USER_STRUCTURE_KEY, JSON.stringify(structure.data));
-                this.navigateAfterLogin();
-            },
-            error: (err) => {
-                this.messageService.add({ severity: 'warn', summary: 'Avertissement', detail: 'Impossible de charger la structure. Vérifiez votre configuration.', life: 3000 });
-                this.navigateAfterLogin();
-            }
-        });
+        if (!structureId) {
+            return;
+        } else {
+            this.structureService.getByStructureId(structureId).subscribe({
+                next: (structure) => {
+                    localStorage.setItem(USER_STRUCTURE_KEY, JSON.stringify(structure.data));
+                    this.navigateAfterLogin();
+                },
+                error: (err) => {
+                    this.messageService.add({ severity: 'warn', summary: 'Avertissement', detail: 'Impossible de charger la structure. Vérifiez votre configuration.', life: 3000 });
+                    this.navigateAfterLogin();
+                }
+            });
+        }
     }
 
     navigateAfterLogin() {

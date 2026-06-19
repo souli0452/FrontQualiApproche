@@ -36,6 +36,8 @@ export class FormTraitementComponent {
     planActionForm: FormGroup;
     actions: FormArray;
     user: any = {};
+
+    isAllSelected: boolean = false;
     selectedPlans: any = [];
     isEdit: boolean = false;
     submitted = false;
@@ -169,9 +171,16 @@ export class FormTraitementComponent {
     toggleAllPlans(checked: boolean) {
         if (checked) {
             this.selectedPlans = [...this.demande.planActions];
+            this.isAllSelected = true;
         } else {
             this.selectedPlans = [];
+            this.isAllSelected = false;
         }
+    }
+
+    onLineChange() {
+        const selectablePlans = this.planActions.filter(plan => plan.status !== 'NON_TRAITER' && plan.status !== 'TRAITER');
+        this.isAllSelected = selectablePlans.length > 0 && this.selectedPlans.length === selectablePlans.length;
     }
 
     createAction(): FormGroup {
@@ -224,7 +233,7 @@ export class FormTraitementComponent {
             .pipe()
             .subscribe({
                 next: (res) => {
-                    this.usersByStructure = res || [];
+                    this.usersByStructure = res.data.content || [];
                     this.usersByStructure = this.usersByStructure.map((user: any) => {
                         return {
                             ...user,

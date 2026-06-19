@@ -1,18 +1,13 @@
 <p-toast />
-<div class="shadow-1">
-
-    <app-traitement-table
-        [btnActions]="BtnActions.RECEPTION"
-        [demandeList]="demandeList"
-        [cols]="cols"
-        (onEdition)="edition($event)"
-        (onRejet)="rejet($event)"
-        (onReceptionner)="reception($event)"
-        [loading]="loading"
-        [paginator]="false"
-        [showGridlines]="false"
-        [title]="title">
-    </app-traitement-table>
-</div>
-
-<app-nc-rejet  [motifRejetDialog]="motifRejetDialog" [demande]="demande" (onSuccess)="hideDialog($event)"></app-nc-rejet>
+<app-traitement-table
+    [btnActions]="BtnActions.RECEPTION"
+    [demandeList]="demandeList"
+    [cols]="cols"
+    (onRejet)="rejet($event)"
+    (onReceptionner)="reception($event)"
+    [loading]="loading"
+    [paginator]="false"
+    [showGridlines]="false"
+    [title]="title">
+</app-traitement-table>
+<app-nc-rejet  [motifRejetDialog]="motifRejetDialog" [demande]="demande" (onSuccess)="hideDialog($event)" (onClose)="motifRejetDialog = false"></app-nc-rejet>

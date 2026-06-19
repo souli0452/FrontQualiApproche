@@ -1,5 +1,5 @@
 <div class="flex flex-col md:flex-row">
-    <div class="w-full md:w-2/3">
+    <div class="w-full md:w-2/3 bg-surface-50 px-2 md:px-4">
         <div class="flex flex-col md:flex-row justify-center p-0 gap-4">
             <!-- Colonne Gauche : Fichiers joints -->
             <div class="w-full md:w-1/3 pt-4">
@@ -105,22 +105,22 @@
                 </div>
             </div>
         </div>
-        <div class="flex justify-end gap-2 mt-8">
-            <button pButton pRipple class="p-button-secondary font-bold" label="Annuler"
+        <div class="flex justify-center gap-2 mt-8">
+            <button pButton size="small" pRipple class="p-button-secondary font-bold" label="Annuler"
                     icon="pi pi-fw pi-times" (click)="goBack()">
             </button>
 
-            <button pButton pRipple class="p-button-primary font-bold" label="Enregistrer"
+            <button pButton size="small" pRipple class="p-button-primary font-bold" label="Enregistrer"
                     *ngIf="!nonConformite.id || nonConformite.status === 'DRAFT'"
                     [disabled]="!nc.typeNonformite||!nc.niveauNonConformite"
                     icon="pi pi-fw pi-save" (click)="onSave(false)">
             </button>
-            <button pButton pRipple class="p-button-info font-bold" label="Publier"
+            <button pButton size="small" pRipple class="p-button-info font-bold" label="Publier" size="small"
                     *ngIf="!nonConformite.id || nonConformite.status === 'DRAFT'"
                     [disabled]="!nc.typeNonformite||!nc.niveauNonConformite"
                     icon="pi pi-fw pi-send" (click)="onSave(true)">
             </button>
-            <button pButton pRipple class="p-button-primary font-bold" label="Modifier"
+            <button pButton size="small" pRipple class="p-button-primary font-bold" label="Modifier"
                     *ngIf="nonConformite.id && nonConformite.status !== 'DRAFT'"
                     [disabled]="!nc.typeNonformite||!nc.niveauNonConformite"
                     icon="pi pi-fw pi-check" (click)="onSave(false)">

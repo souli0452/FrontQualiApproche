@@ -21,6 +21,8 @@ import { Subject, takeUntil } from 'rxjs';
 import { hasAnyPermission } from '../../../utils';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
+import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
+import { RoleService } from '../../../services/non-conformite/role.service';
 
 @Component({
     selector: 'app-nc-suivi',
@@ -54,6 +56,8 @@ export class NCSuiviComponent {
       private featureService:FeaturesService,
       protected messageService: MessageService,
       private service:ProcNonConformiteService,
+      private nonConformiteService:NonConformiteService,
+      public roleService: RoleService,
       private authService: AuthService) 
       {
         this.userStructure = getCurrentUserStructure();
@@ -94,8 +98,10 @@ export class NCSuiviComponent {
     loadSuiviData() {
         this.loading = true;
         const user = this.authService.getUser();
+        console.log("user: ", user);
         
-        if (!user || !user.permissions) {
+        
+        if (!user) {
             console.warn("Utilisateur non connecté ou sans permissions.");
             this.loading = false;
             return;
@@ -103,33 +109,13 @@ export class NCSuiviComponent {
     
         const currentUserId = user.id || user.userId;
         
-    
-        // 1. Détermination stricte des rôles
-        const hasRQ = hasAnyPermission(['VALIDATION_RQ']);
-        const hasChef = hasAnyPermission(['VALIDATION_CHEF']);
-    
-        if (hasRQ) {
-            this.isRQ = true;
-            this.isChef = false;
-            this.isAgent = false;
-        } else if (hasChef) {
-            this.isChef = true;
-            this.isRQ = false;
-            this.isAgent = false;
-        } else {
-            this.isAgent = true;
-            this.isRQ = false;
-            this.isChef = false;
-        }
-    
-        // 2. Récupération des données selon le rôle
-        if (this.isRQ) {
+        if (this.roleService.isRQ) {
             this.getDemandeList();
         } 
-        else if (this.isChef) {
+        else if (this.roleService.isChef) {
             this.getDemandeListStructure();
         }
-        else if (this.isAgent) {
+        else if (this.roleService.isAgent) {
             this.getDemandeListUser(currentUserId!);
         }
     }
@@ -178,9 +164,11 @@ export class NCSuiviComponent {
 
     getDemandeList() {
         this.loading = true;
-        this.service.getNonConformiteAll().subscribe({
+        this.nonConformiteService.nonConformiteGetAll().subscribe({
             next: (data) => {
-                this.rawDemandeList = data.body || [];
+                this.rawDemandeList = data.data.content || [];
+                console.log("RETOUR NON-CONFORMITE : ", data);
+                
                 this.applyLocalFilters();
                 this.featureService.onReloadRequested(true);
                 this.loading = false;
@@ -196,6 +184,8 @@ export class NCSuiviComponent {
         this.service.getNonConformiteAllStructure(this.userStructure.id).subscribe({
             next: (data) => {
                 this.rawDemandeList = data.body || [];
+                console.log("RETOUR NON-CONFORMITE : ", data);
+                
                 this.applyLocalFilters();
                 this.featureService.onReloadRequested(true);
                 this.loading = false;

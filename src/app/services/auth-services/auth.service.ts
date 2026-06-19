@@ -254,8 +254,8 @@ export class AuthService extends QualiCrudService<KcUser, number> {
     //     const params = new HttpParams().set('userId', id);
     //     return this.http.get<AuthResponse>(QualiUrlConfig.USERS_BY_ID_URL, { params, observe: 'response' });
     // }
-    loadAgentPublicByService(structureId: string): Observable<Array<KcUser>> {
-        return this.http.get<KcUser[]>(this.replaceArgs(new Map().set('structureId', structureId), QualiUrlConfig.USERS_BY_STRUCTURE_URL));
+    loadAgentPublicByService(structureId: string): Observable<ApiResponse<KcUser>> {
+        return this.http.get<ApiResponse<KcUser>>(this.replaceArgs(new Map().set('structureId', structureId), QualiUrlConfig.USERS_BY_STRUCTURE_URL));
     }
     createUser(user: KcUser): Observable<HttpResponse<KcUser>> {
         return this.http.post<KcUser>(`${QualiUrlConfig.USERS_URL}/create`, user, { observe: 'response' });

@@ -44,8 +44,8 @@ export class ReceptionComponent {
                 private nonConformiteService:NonConformiteService,
                 private router: Router) {
         this.cols = [
-            { field: 'numeroReference', header: 'N° ref', type: 'string', filter: true, width: '220px', centered: false },
-            { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '300px', centered: false },
+            { field: 'numeroReference', header: 'N° ref', type: 'string', filter: true, width: '150px', centered: false },
+            { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '150px', centered: false },
             {
                 field: 'currentUserfullName',
                 header: 'Initateur',
@@ -54,6 +54,7 @@ export class ReceptionComponent {
                 width: '150px',
                 centered: false
             },
+            { field: 'status', header: 'Statut', type: 'enum', filter: true, width: '250px', centered: false },
             { field: 'niveauNonConformiteLibelle', header: 'Gravité', type: 'badge', filter: false, width: '150px', centered: false },
             { field: 'createdAt', header: 'Date soumission', type: 'date', filter: true, width: '150px', centered: false }
         ];
@@ -88,43 +89,35 @@ export class ReceptionComponent {
             });
     }
 
-    edition(demandes: any) {
-        this.service.updateNomConformites(demandes).subscribe({
-            next: (data) => {
+    // edition(demandes: any) {
+    //     this.service.updateNomConformites(demandes).subscribe({
+    //         next: (data) => {
 
-                this.editer(demandes[0], data);
-                this.dmdTraitement.closeDetailsDialog();
-            },
-            error: () => {
-                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 10", life: 3000 });
-            }
-            });
-    }
+    //             this.editer(demandes[0], data);
+    //             this.dmdTraitement.closeDetailsDialog();
+    //         },
+    //         error: () => {
+    //             this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 10", life: 3000 });
+    //         }
+    //         });
+    // }
 
-      onSuccess(res: ApiResponse<any>) {
-         this.featureService.onReloadRequested(true);
-        showToast(StatusEnum.success, res.statusCode, null, this.messageService);
-          this.dmdTraitement.closeDetailsDialog();
+    onSuccess(res: ApiResponse<any>) {
+        this.featureService.onReloadRequested(true);
+        this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'opération a réussie !", life: 5000 });
+        this.dmdTraitement.closeDetailsDialog();
     }
     rejet(demande: any) {
         this.demande = demande;
         this.motifRejetDialog = true;
     }
     reception(dmd:any) {
-        console.log("dmd : ",dmd);
-        
-        this.nonConformiteService.nonConformiteReceptionUpdate(dmd).subscribe({
+        this.nonConformiteService.nonConformiteUpdate(dmd).subscribe({
             next: (data) => {
-                this.featureService.onReloadRequested(true);
-                
-                this.dmdTraitement.closeDetailsDialog();
-                this.messageService.add({ severity: 'success', summary: 'SUCCÈS', detail: "L'opération a réussie !", life: 3000 });
-                this.router.navigate(['/non-conformite/vue-ensemble']);
+                this.onSuccess(data);
             },
             error: (error) => {
-                console.log("ERREUR : ", error);
-                
-                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 11 Nc Reception", life: 3000 });
+                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "L'oppération à échouée ! Veuillez réessayer 11 Nc Reception", life: 3000 });
             }
         })
     }

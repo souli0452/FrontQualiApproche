@@ -76,8 +76,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
                this.countAffectation + 
                this.countValidationPilote + 
                this.countCloture + 
-               this.countNonTraiter + 
-               this.countNonConformiteCloturee;
+               this.countNonTraiter;
     }
 
     brouillonData: any[] = [];
@@ -342,7 +341,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
                 .pipe(takeUntil(this.destroy$))
                 .subscribe({
                 next: (response: any) => {
-                    this.dashboardData = response.body;
+                    this.dashboardData = response.body.data;
                     this.updateKpis();
                     this.loading = false;
                 },

@@ -33,17 +33,18 @@ export class SearchAgentComponent implements OnInit {
     ngOnInit() {
         if (this.prefilledStructureId) {
             this.loadAgentsForStructure(this.prefilledStructureId);
-        } else {
-            this.structureService.getAllDirections(TypeStructure.DIRECTION)
-                .subscribe({
-                    next: (data) => {
-                        this.directions = data.body || [];
-                    },
-                    error: (error) => {
-                        console.log(error);
-                    }
-                });
-        }
+        } 
+        // else {
+        //     this.structureService.getAllDirections(TypeStructure.DIRECTION)
+        //         .subscribe({
+        //             next: (data) => {
+        //                 this.directions = data.body || [];
+        //             },
+        //             error: (error) => {
+        //                 console.log(error);
+        //             }
+        //         });
+        // }
     }
 
     loadServiceByDirection() {
@@ -69,7 +70,9 @@ export class SearchAgentComponent implements OnInit {
         this.authService.loadAgentPublicByService(structureId)
             .subscribe({
                 next: (data) => {
-                    this.agents = data.map(a => ({
+                    console.log("data: ",data);
+                    
+                    this.agents = data.data.content.map(a => ({
                         label:  a.lastName + ' ' + a.firstName,
                         value: a
                     }));

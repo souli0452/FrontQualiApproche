@@ -33,10 +33,12 @@ import { QmsDocumentCreateComponent } from './qms-document-create/qms-document-c
 import { QmsDocumentTypeComponent } from './qms-document-type/qms-document-type';
 import { ActionNonConformiteComponent } from './parametrages/parametrage-non-conformite/action-nc/action';
 import { NiveauNonConformiteComponent } from './parametrages/parametrage-non-conformite/niveau-nc/niveau';
-import { SourceNonConformite } from './parametrages/parametrage-non-conformite/source-nc/source';
+import { SourceNonConformite } from './parametrages/parametrage-non-conformite/origine-nc/origine';
 import { CategorieProcessusComponent } from './parametrages/categorie-processus/categorie-processus';
 import { StructureComponent } from './parametrages/structure/structure-view/structure.component';
 import { NcComposeComponent } from './nc/nc-compose/nc-compose.component';
+import { ValidationPilote } from './nc/nc-validation-pilote/nc-validation-pilote';
+import { AnalyseClotureComponent } from './nc/nc-analyse-cloture/nc-analyse-cloture';
 
 
 export default [
@@ -58,7 +60,8 @@ export default [
         component: ParametragesComponent, 
         data: { breadcrumb: 'Configurations Globales' },
         children: [
-            { path: '', redirectTo: 'utilisateurs', pathMatch: 'full' },
+            { path: '', redirectTo: 'config-systeme', pathMatch: 'full' },
+            { path: 'config-systeme', component: ConfigGComponent, title: 'Configuration Système' },
             { path: 'utilisateurs', component: KcUserComponent, title: 'Utilisateurs' },
             { path: 'roles', component: RoleComponent, title: 'Rôles' },
             { path: 'roles/:id', component: RoleDetailComponent, title: 'Détail Rôle' },
@@ -68,7 +71,6 @@ export default [
             { path: 'type-action', component: ActionNonConformiteComponent, title: 'Actions' },
             { path: 'direction', component: StructureComponent, title: 'Liste des Directions', data: { typeStructure: TypeStructure.DIRECTION } },
             { path: 'service', component: StructureComponent, title: 'Services', data: { typeStructure: TypeStructure.SERVICE } },
-            { path: 'config-systeme', component: ConfigGComponent, title: 'Configuration Système' },
         ]
     },
 
@@ -84,6 +86,8 @@ export default [
             { path: 'affectation-action', component: NCAffectationActionComponent, title: 'Affectations' },
             { path: 'analyse-reception', component: AnalyseReceptionComponent, title: 'Analyse et Réception' },
             { path: 'analyse-validation', component: AnalyseValidationComponent, title: 'Analyse et Validation' },
+            { path: 'validation-pilote', component: ValidationPilote, title: 'Validation Pilote' },
+            { path: 'analyse-cloture', component: AnalyseClotureComponent, title: 'Analyse et clôture' },
             { path: 'suivi', component: NCSuiviComponent, title: 'Suivi' },
             { path: 'publiees', component: NcPublieesComponent, title: 'Mes Non-Conformitées publiées' },
             { path: 'actions', component: TraitementGlobalComponent, title: 'Mes actions à mener' },

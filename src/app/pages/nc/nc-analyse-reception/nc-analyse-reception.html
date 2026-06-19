@@ -1,3 +1,4 @@
+<p-toast />
 <div *ngIf="roleService.isChef">
     <div class="bg-surface-100 mb-4 p-2 text-center">
     <div class="text-xl mb-2 font-bold">Analyse des Non-Conformitées et Réception (Pilote)</div>
@@ -10,13 +11,6 @@
 <div>
     <!-- 1. Affichage normal du tableau (s'il y a des données) -->
     <div *ngIf="roleService.isChef && receptionPiloteData.length > 0">
-        <!-- <app-nc-reception 
-        [demandeList]="receptionPiloteData"
-        [totalElements]="totalElements"
-        [pageSize]="pageSize"
-        [currentPage]="currentPage"
-        (pageChangeEvent)="onPageChange($event)"
-        ></app-nc-reception> -->
     <app-traitement-table
         [btnActions]="BtnActions.RECEPTION"
         [demandeList]="receptionPiloteData"
@@ -27,7 +21,6 @@
         [currentPage]="currentPage"
         (pageChangeEvent)="onPageChange($event)"
         [cols]="cols"
-        (onEdition)="edition($event)"
         (onRejet)="rejet($event)"
         (onReceptionner)="reception($event)"
         [title]="title">

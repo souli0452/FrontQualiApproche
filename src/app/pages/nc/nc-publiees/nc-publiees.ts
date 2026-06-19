@@ -82,7 +82,7 @@ ngOnInit() {
     getDemandeListUser(userId: string) {
         this.loading = true;
         this.nonConformiteService
-            .getNCByUserPaged(userId, this.currentPage, this.pageSize) // ✅ passer page et size
+            .nonConformiteParUtilisateurGetPagination(userId, this.currentPage, this.pageSize) // ✅ passer page et size
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res: ApiResponse<NonConformite>) => {

@@ -58,9 +58,9 @@
         <div class="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center gap-5 hover:shadow-md transition-shadow">
             
             <!-- Avatar -->
-            <div class="flex items-center justify-center bg-indigo-50 dark:bg-indigo-900/30 rounded-full shrink-0" style="width: 64px; height: 64px;">
-                <i class="pi pi-user text-indigo-600 dark:text-indigo-400" style="font-size: 1.75rem;"></i>
-            </div>
+            <!-- <div class="flex items-center justify-center bg-indigo-50 dark:bg-indigo-900/30 rounded-full shrink-0" style="width: 40px; height: 40px;">
+                <i class="pi pi-user text-indigo-600 dark:text-indigo-400" style="font-size: 1rem;"></i>
+            </div> -->
             
             <!-- Informations -->
             <div class="flex-grow text-center md:text-left">
@@ -70,15 +70,15 @@
                 </div>
                 
                 <div class="flex flex-wrap gap-3 mt-2 items-center justify-center md:justify-start">
-                    <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700">
+                    <!-- <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700">
                         <i class="pi pi-envelope text-slate-400"></i>
                         <span class="text-sm font-medium">{{ searchedAgent.email || 'Non renseigné' }}</span>
-                    </div>
+                    </div> -->
                     
-                    <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700">
+                    <!-- <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700">
                         <i class="pi pi-id-card text-slate-400"></i>
-                        <span class="text-sm font-medium">{{ searchedAgent.username || 'N/A' }}</span>
-                    </div>
+                        <span class="text-sm font-medium">{{ searchedAgent.username || searchedAgent.email }}</span>
+                    </div> -->
                 </div>
             </div>
             

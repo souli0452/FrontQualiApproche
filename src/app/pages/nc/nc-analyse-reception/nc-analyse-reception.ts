@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { RoleService } from '../../../services/non-conformite/role.service';
-import { getCurrentUserStructure, generateReportFile, ReportFormat, ReportingInput, TypeDemande } from '../../../utils';
+import { getCurrentUserStructure, generateReportFile, ReportFormat, ReportingInput, TypeDemande, showToast, StatusEnum } from '../../../utils';
 import { EtapeTraitement } from '../../../enums';
 import { Subject, takeUntil } from 'rxjs';
 
@@ -17,6 +17,7 @@ import { FeaturesService } from '../../../services/feature-service';
 import { Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { NCRejetComponent } from '../nc-rejet/nc-rejet';
+import { ApiItemResponse } from '../../../models';
 
 @Component({
   selector: 'app-nc-analyse-reception',
@@ -33,7 +34,7 @@ import { NCRejetComponent } from '../nc-rejet/nc-rejet';
   styleUrl: './nc-analyse-reception.scss'
 })
 export class AnalyseReceptionComponent implements OnInit, OnDestroy {
-  title = 'Réceptions des non-conformités';
+  title = 'Réceptions des Non-Conformités';
   
   receptionPiloteData: any[] = [];
   totalElements: number = 0;
@@ -64,9 +65,10 @@ export class AnalyseReceptionComponent implements OnInit, OnDestroy {
     private router: Router
   ){
         this.cols = [
-            { field: 'numeroReference', header: 'N° ref', type: 'string', filter: true, width: '220px', centered: false },
-            { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '300px', centered: false },
+            { field: 'numeroReference', header: 'N° ref', type: 'string', filter: true, width: '150px', centered: false },
+            { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '150px', centered: false },
             { field: 'currentUserfullName', header: 'Initateur', type: 'string', filter: true, width: '150px', centered: false },
+            { field: 'status', header: 'Statut', type: 'enum', filter: true, width: '150px', centered: false },
             { field: 'niveauNonConformiteLibelle', header: 'Gravité', type: 'badge', filter: false, width: '150px', centered: false },
             { field: 'createdAt', header: 'Date soumission', type: 'date', filter: true, width: '150px', centered: false }
         ];
@@ -87,7 +89,7 @@ export class AnalyseReceptionComponent implements OnInit, OnDestroy {
     this.loading = true;
 
     if (this.roleService.isChef && this.userStructure?.id) {
-        this.nonConformiteService.nonConformiteParEtape(EtapeTraitement.RECEPTION, this.userStructure.id)
+        this.nonConformiteService.nonConformiteParStructureEtTraitementGet(EtapeTraitement.RECEPTION, this.userStructure.id)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res) => {
@@ -97,8 +99,8 @@ export class AnalyseReceptionComponent implements OnInit, OnDestroy {
                     this.pageSize = res.data.pageSize;
                     this.totalPages = res.data.totalPages;
 
-                    const currentNotifs = this.procService.notificationsNC$.value;
-                    this.procService.notificationsNC$.next({
+                    const currentNotifs = this.nonConformiteService.notificationsNC$.value;
+                    this.nonConformiteService.notificationsNC$.next({
                         ...currentNotifs,
                         reception: this.totalElements
                     });
@@ -156,38 +158,40 @@ export class AnalyseReceptionComponent implements OnInit, OnDestroy {
 
   // ============== ACTIONS DU TABLEAU ==============
 
-  private editer(rowData: any, resp: HttpResponse<any>) {
-      const reportingInput: ReportingInput = {
-          reportFormat: ReportFormat.PDF,
-          reportType: TypeDemande.NON_CONFORMITE,
-          entityId: rowData.id!,
-      };
-      this.featureService.printReport(reportingInput).pipe(takeUntil(this.destroy$))
-          .subscribe({
-              next: arrayBytes => {
-                  if (arrayBytes.byteLength) {
-                      generateReportFile(arrayBytes, reportingInput);
-                      this.dmdTraitement.displayDetails(resp.body);
-                      this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'opération a réussie !", life: 3000 });
-                  }
-              },
-              error: () => {
-                  this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'opération a échouée !", life: 3000 });
-              }
-          });
-  }
+//   private editer(rowData: any, resp: HttpResponse<any>) {
+//       const reportingInput: ReportingInput = {
+//           reportFormat: ReportFormat.PDF,
+//           reportType: TypeDemande.NON_CONFORMITE,
+//           entityId: rowData.id!,
+//       };
+//       this.featureService.printReport(reportingInput).pipe(takeUntil(this.destroy$))
+//           .subscribe({
+//               next: arrayBytes => {
+//                   if (arrayBytes.byteLength) {
+//                       generateReportFile(arrayBytes, reportingInput);
+//                       this.dmdTraitement.displayDetails(resp.body);
+//                       this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'opération a réussie !", life: 3000 });
+//                   }
+//               },
+//               error: () => {
+//                   this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'opération a échouée !", life: 3000 });
+//               }
+//           });
+//   }
 
-  edition(demandes: any) {
-      this.procService.updateNomConformites(demandes).subscribe({
-          next: (data) => {
-              this.editer(demandes[0], data);
-              this.dmdTraitement.closeDetailsDialog();
-          },
-          error: () => {
-              this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'opération a échouée !", life: 3000 });
-          }
-      });
-  }
+//   edition(demandes: any) {
+//     console.log(demandes);
+    
+//       this.procService.updateNomConformites(demandes).subscribe({
+//           next: (data) => {
+//               this.editer(demandes[0], data);
+//               this.dmdTraitement.closeDetailsDialog();
+//           },
+//           error: () => {
+//               this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'opération a échouée !", life: 3000 });
+//           }
+//       });
+//   }
 
   rejet(demande: any) {
       this.demande = demande;
@@ -196,28 +200,30 @@ export class AnalyseReceptionComponent implements OnInit, OnDestroy {
       // si tu veux que la pop-up de rejet s'affiche !
   }
 
-  reception(dmd: any) {
-      this.procService.updateNomConformites(dmd).subscribe({
-          next: (data) => {
-              this.featureService.onReloadRequested(true);
-              this.dmdTraitement.closeDetailsDialog();
-              this.messageService.add({ severity: 'success', summary: 'SUCCÈS', detail: "L'opération a réussie !", life: 3000 });
-              
-              // Optionnel: Recharger les données directement plutôt que de rediriger
-              this.fetchData();
-          },
-          error: (error) => {
-              this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'opération a échouée !", life: 3000 });
-          }
-      });
-  }
+    onSuccess(res: ApiItemResponse<any>) {
+        this.dmdTraitement.closeDetailsDialog();
+        this.featureService.onReloadRequested(true);
+        this.fetchData();
+        this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'opération a réussie !", life: 5000 });
+    }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+    reception(dmd: any) {
+        this.nonConformiteService.nonConformiteUpdate(dmd).subscribe({
+            next: (data) => {
+                this.onSuccess(data);
+            },
+            error: (error) => {
+                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "L'opération a échouée !", life: 3000 });
+            }
+        });
+    }
 
-      hideDialog(event: any) {
+    ngOnDestroy() {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
+
+    hideDialog(event: any) {
         if (event) {
             this.dmdTraitement.displayDetails();
             this.featureService.onReloadRequested(true);

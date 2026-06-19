@@ -1,3 +1,9 @@
+<p-toast />
+<div class="bg-surface-100 mb-4 p-2 text-center">
+    <div class="text-xl mb-2 font-bold">Traitement des non-conformités</div>
+    <p>Espace dédié au traitement des non-conformités. Vous trouverez les Non-Conformités qui vous ont été imputées oú celles dont le traitement n'a pas été validé.</p>
+</div>
+
 <app-nc-filter-bar 
     (onFilterChange)="handleFilter($event)"
     [showProcessus]="false"
@@ -8,25 +14,25 @@
 <div class="shadow-1">
 
     <app-traitement-table
-        *ngIf="demandeList.length > 0"
+        *ngIf="mesNonConformites.length > 0"
         [btnActions]="BtnActions.TRAITEMENT"
-        [demandeList]="demandeList"
+        [demandeList]="mesNonConformites"
         (onSaveEntity)="saveEntity($event)"
         [cols]="cols"
-        (onRejet)="rejet($event)"
+        [paginator]="false"
         [showGridlines]="false"
         [balanceFrozen]="true" 
         (onSubmission)="submission($event)"
         [loading]="loading"
-        [title]="title">
+        [title]="title"
+        (pageChangeEvent)="onPageChange($event)"
+        [totalElements]="totalElements"
+        [pageSize]="pageSize"
+        [currentPage]="currentPage">
     </app-traitement-table>
 
-    <div *ngIf="nonTraiterData.length > 0" class="mt-4">
-        <app-nc-non-traiter [nonTraiterData]="nonTraiterData"></app-nc-non-traiter>
-    </div>
-
     <!-- Empty state si aucune donnée -->
-    <div *ngIf="demandeList.length === 0 && nonTraiterData.length === 0 && !loading" 
+    <div *ngIf="mesNonConformites.length === 0 && nonTraiterData.length === 0 && !loading" 
          class="flex flex-col items-center justify-center p-4 mt-2 bg-surface-0 dark:bg-surface-900 text-center">
         <img src="assets/images/empty.svg" 
              alt="Aucune action" 
@@ -40,4 +46,3 @@
         </p>
     </div>
 </div>
-<app-form-rejet  [motifRejetDialog]="motifRejetDialog" [demande]="demande" (onSuccess)="hideDialog($event)"></app-form-rejet>

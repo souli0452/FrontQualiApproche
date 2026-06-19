@@ -30,6 +30,7 @@ export class TraitementTableComponent implements OnInit {
 
 
     @Input() btnActions?: EtapeTraitement = EtapeTraitement.RECEPTION;
+    @Input() status?: String;
     @Input() title?: string;
     @Output() onImputation = new EventEmitter<any>();
     @Output() onValidation = new EventEmitter<any>();

@@ -31,7 +31,7 @@
 
     <!-- Navigation Hub (Tabs) -->
     <div class="pt-2 bg-surface-0 dark:bg-surface-900 border-b border-surface-border">
-        <p-tabs [value]="activeTab" [scrollable]="true">
+        <p-tabs [value]="activeTab" [scrollable]="true" (valueChange)="onTabChange($event)">
             <p-tablist>
                 <p-tab *ngFor="let tab of items" [value]="tab.routerLink">
                     <a [routerLink]="tab.routerLink" routerLinkActive="text-primary font-bold" class="flex items-center gap-2 text-inherit no-underline outline-none px-2 py-1">

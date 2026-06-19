@@ -15,8 +15,14 @@ import { NiveauNonConformiteService } from '../../../../services/non-conformite/
     imports: [CommonModule, AppCrudGenericComponent],
     template: `
         <div class="page-layout">
+            <div class="card mb-0 pb-0">
+                <div class="bg-surface-100 p-2 text-center">
+                    <div class="text-xl mb-2 font-bold">Gestion des Niveaux de Non-Conformité</div>
+                    <p>Ajoutez ou modifiez les différents Niveaux criticité d'une Non-Conformité.</p>
+                </div>
+            </div>
             <app-crud-generic
-                [addButtonLabel]="'Niveau de gravité'"
+                [addButtonLabel]="'Nouveau Niveau de Non-Conformité'"
                 [dialogWidth]="'40rem'"
                 [loading]="loading"
                 [pageLabel]="pageLabel"
@@ -51,7 +57,7 @@ export class NiveauNonConformiteComponent {
     formGroup: UntypedFormGroup;
     tableCols: TableColumn[];
     formCols: FormGroupColumn[];
-    pageLabel = 'Niveaux de non conformité';
+    pageLabel = 'Niveau de Non-Conformité';
     formHeader = 'Création et mise à jour d\'un niveau de non conformité';
 
       constructor(protected fb: UntypedFormBuilder,

@@ -227,7 +227,7 @@
 <p-dialog
     [(visible)]="display"
     [modal]="true"
-    [style]="{ width: '50rem' }"
+    [style]="{ width: '40rem' }"
     [maximizable]="true"
     [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
     [contentStyle]="{ padding: '2rem' }"
@@ -251,7 +251,7 @@
 
     <!-- 🔍 Content -->
     <ng-template pTemplate="content">
-        <div class="mt-4 mb-2">
+        <div class="my-2">
             <!-- NOTE: Décommentez la ligne [prefilledStructureId]="selectedDemande?.origineId" ci-dessous si la décision finale est de préfiltrer les agents -->
             <app-search-agent 
                 [prefilledStructureId]="selectedDemande?.origineId || selectedDemandes[0]?.origineId"
@@ -262,11 +262,12 @@
 
     <!-- ✅ Footer -->
     <ng-template #footer>
-        <div class="flex justify-content-end gap-3 border-top-1 surface-border pt-4 mt-2">
+        <div class="flex w-full justify-between gap-3 border-top-1 surface-border pt-4 mt-2">
             <button
                 type="button"
                 pButton
-                icon="pi pi-times"
+                size="small"
+                icon="pi pi-arrow-circle-left"
                 label="Annuler"
                 class="p-button-text p-button-secondary font-semibold hover:bg-surface-100 transition-colors"
                 (click)="onDisplay()">
@@ -274,6 +275,7 @@
             <button
                 type="button"
                 pButton
+                size="small"
                 icon="pi pi-check"
                 label="Confirmer l'affectation"
                 class="p-button-primary font-semibold shadow-2 border-round-md"
@@ -349,19 +351,19 @@
     </ng-template>
 
     <ng-template #footer>
-        <div class="flex justify-content-end flex-wrap">
-            <button type="button" pRipple pButton icon="pi pi-times-circle"
+        <div class="flex justify-between flex-wrap p-4 bg-surface-100 w-full">
+            <button type="button" size="small" pRipple pButton icon="pi pi-times-circle"
                     class="p-button-secondary position-left mr-3"
                     label="Quitter" (click)="displayDetails()">
             </button>
-            @if (btnActions!==BtnActions.CLOTURE && selectedDemande?.etatTraitement!==BtnActions.TRAITEMENT) {
-            <button pRipple pButton type="button" icon="pi pi-arrow-up"
+            @if (btnActions!==BtnActions.IMPUTATION && btnActions!==BtnActions.CLOTURE && selectedDemande?.etatTraitement!==BtnActions.TRAITEMENT) {
+            <button pRipple pButton size="small" type="button" icon="pi pi-ban"
                     class="p-button-danger position-left mr-3"
                     (click)=rejet()
                     label="Rejeter">
             </button>}
             @if (btnActions === BtnActions.CLOTURE&&selectedDemande?.etatTraitement===BtnActions.CLOTURE) {
-            <button pRipple pButton type="button" icon="pi pi-print"
+            <button pRipple pButton size="small" type="button" icon="pi pi-print"
                     class="p-button-warning position-left mr-3"
                     (click)="editionNew()" label="Editer">
             </button>}
@@ -372,7 +374,7 @@
                         (click)="saveEntity()" icon="pi pi-save" label="Enregistrer">
                 </button> -->
                 &nbsp;
-                <button pRipple pButton type="button" icon="pi pi-send"
+                <button size="small" pRipple pButton type="button" icon="pi pi-send"
                         [disabled]="isActionDisabled()"
                         (click)="soumettre()" label="Soumettre">
                 </button>
@@ -384,34 +386,35 @@
 
 
             @if (btnActions===BtnActions.SUIVI_RQ) {
-                <button pRipple pButton severity="success" type="button" icon="pi pi-times"
+                <button size="small" pRipple pButton severity="success" type="button" icon="pi pi-times"
                         (click)="cloture()"
                         label="Clôturer">
                 </button>
             }
 
             @if (btnActions === BtnActions.VALIDATION && !(hasNonTraiter || hasInactive)) {
-                <button pRipple pButton type="button" icon="pi pi-check"
+                <button size="small" pRipple pButton type="button" icon="pi pi-check"
                         (click)="validate()"
                         label="Valider">
                 </button>
             }
 
             @if (btnActions === BtnActions.RECEPTION) {
-                <button pRipple pButton type="button" icon="pi pi-check"
+                <button size="small" pRipple pButton type="button" icon="pi pi-check"
                         [disabled]="isActionDisabled()"
                         (click)="receptionner()" label="Réceptionner"></button>
             }
             @if (btnActions === BtnActions.VALIDATION_RS) {
-                <button pRipple pButton type="button" icon="pi pi-check"
-                        [disabled]="isActionDisabled()"
-                        (click)="validationRS()" label="Valider"></button>
-                <button class="ml-2" pRipple pButton severity="success" type="button" icon="pi pi-times"
-                        [disabled]="isActionDisabledClotureRQ()"
-                        (click)="cloture()" label="Clôturer"></button>
+                        <button size="small" pRipple pButton type="button" icon="pi pi-check"
+                                [disabled]="isActionDisabled()"
+                                (click)="validationRS()" label="Valider"></button>
+                        <button size="small" class="ml-2" pRipple pButton severity="success" type="button" icon="pi pi-times"
+                                [disabled]="isActionDisabledClotureRQ()"
+                                (click)="cloture()" label="Clôturer"></button>
+                
             }
             @if (btnActions === BtnActions.IMPUTATION) {
-                <button pRipple pButton type="button" icon="pi pi-check"
+                <button size="small" pRipple pButton type="button" icon="pi pi-check"
                         (click)="onDisplay()" label="Imputer">
                 </button>
             }

@@ -195,7 +195,7 @@ export class KcUserComponent implements OnInit, OnDestroy {
     onSuccess(res: any) {
         this.closeDialog = true;
         this.fetchUsers();
-        showToast(StatusEnum.success, res.status, null, this.messageService);
+        this.messageService.add({ severity: 'success', summary: 'Succès', detail: res.message || 'Opération effectuée avec succès!!!' });
     }
 
     // générer un mot de passe aléatoire à 8 chiffres

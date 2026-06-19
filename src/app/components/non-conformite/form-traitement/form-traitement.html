@@ -45,10 +45,16 @@
                                 </div>
                             </div>
                             <div>
-                                <button pButton pRipple label="Valider la sélection" icon="pi pi-check"
+                                <i class="pi pi-question-circle ml-3 mr-3 text-500 cursor-pointer hover:text-primary transition-colors" (click)="validationPopover.toggle($event)"></i>
+                                <button size="small" pButton pRipple label="Valider ce plan" icon="pi pi-check-square"
                                     [disabled]="selectedPlans.length === 0" class="p-button-primary font-bold border-round-md shadow-2"
                                     (click)="validerPlans()">
                                 </button>
+                                <p-popover #validationPopover appendTo="body">
+                                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                                        « En cliquant sur l'icône de loupe dans la colonne [ACTION] de chaque plan d'action, vous pouvez consulter ses détails et sélectionner ceux que vous jugez pertinents à implémenter. Après avoir coché le ou les plans d'actions souhaités, cliquez sur le bouton Valider cette sélection pour enregistrer vos modifications. Le collaborateur désigné recevra automatiquement une notification par email. » 
+                                    </div>
+                                </p-popover>
                             </div>
                         </div>
 
@@ -68,9 +74,9 @@
                                     <ng-template pTemplate="header">
                                         <tr>
                                             <th pFrozenColumn alignFrozen="left" class="bg-surface-50 text-700 font-semibold" style="width: 50px; text-align: center; z-index: 10;">
-                                                <p-checkbox (onChange)="toggleAllPlans($event.checked)"></p-checkbox>
+                                                <p-checkbox (onChange)="toggleAllPlans($event.checked)" [(ngModel)]="isAllSelected" [binary]="true"></p-checkbox>
                                             </th>
-                                            <th pFrozenColumn alignFrozen="left" class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 80px; text-align: center; z-index: 10;">N°</th>
+                                            <th pFrozenColumn alignFrozen="left" class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 70px; text-align: center; z-index: 10;">N°</th>
                                             <th class="bg-surface-50 text-700 font-semibold" style="min-width: 300px" *ngIf="demande.circuit ==='B'">Causes</th>
                                             <th class="bg-surface-50 text-700 font-semibold" style="min-width: 300px">Solutions</th>
                                             <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 200px">Responsable</th>
@@ -82,7 +88,7 @@
                                     <ng-template pTemplate="body" let-plan>
                                         <tr class="text-sm">
                                             <td pFrozenColumn alignFrozen="left" class="text-center bg-white" style="z-index: 1;">
-                                                <p-checkbox [value]="plan" [(ngModel)]="selectedPlans"
+                                                <p-checkbox [value]="plan" [(ngModel)]="selectedPlans" (onChange)="onLineChange()"
                                                     [disabled]="plan.status=='NON_TRAITER'||plan.status=='TRAITER'"></p-checkbox>
                                             </td>
                                             <td pFrozenColumn alignFrozen="left" class="font-bold text-600 text-center bg-white" style="z-index: 1;">{{plan.numeroOdre}}</td>
@@ -114,7 +120,7 @@
                                             </td>
                                             <td pFrozenColumn alignFrozen="right" class="text-center bg-white" style="z-index: 1;">
                                                 <div style="min-width: 80px" class="flex justify-center gap-2">
-                                                    <button pButton pRipple type="button" icon="pi pi-eye"
+                                                    <button pButton pRipple type="button" icon="pi pi-search"
                                                         class="p-button-rounded p-button-text p-button-secondary p-button-sm" (click)="affich(plan)"
                                                         pTooltip="Détails" tooltipPosition="top">
                                                     </button>
@@ -538,7 +544,7 @@
                                                     </td>
                                                 </tr>
                                             </ng-template>
-                                            <ng-template pTemplate="emptymessage">
+                                            <!-- <ng-template pTemplate="emptymessage">
                                                 <tr>
                                                     <td colspan="7" class="text-center p-5">
                                                         <div class="flex flex-col items-center text-500">
@@ -547,7 +553,7 @@
                                                         </div>
                                                     </td>
                                                 </tr>
-                                            </ng-template>
+                                            </ng-template> -->
                                         </p-table>
                                 </div>
                             </div>
@@ -559,7 +565,7 @@
             </form>
         </div>
                 <div class="flex pt-6 justify-start">
-                    <p-button label="Retour" severity="secondary" icon="pi pi-arrow-left" (onClick)="activateCallback(1)" />
+                    <p-button size="small" label="Retour" severity="secondary" icon="pi pi-arrow-left" (onClick)="activateCallback(1)" />
                 </div>
             </ng-template>
         </p-step-panel>
@@ -659,16 +665,16 @@
 
     </div>
     <ng-template #footer>
-        <button pButton pRipple type="button" icon="pi pi-times" class="p-button-outlined p-button-secondary"
+        <button pButton pRipple size="small" type="button" icon="pi pi-arrow-circle-left" class="p-button-outlined p-button-secondary"
             label="Annuler" (click)="hideDialog()">
         </button>
         @if (isEdit){
-        <button pButton pRipple type="button" icon="pi pi-check" [disabled]="!planAction.solutionRetenues"
+        <button pButton pRipple size="small" type="button" icon="pi pi-check" [disabled]="!planAction.solutionRetenues"
             class="p-button-primary ml-2" (click)="save()" label="Modifier">
         </button>
         }
         @if (!isEdit){
-        <button pButton pRipple type="button" icon="pi pi-check" class="p-button-primary ml-2" (click)="save()"
+        <button pButton pRipple size="small" type="button" icon="pi pi-check" class="p-button-primary ml-2" (click)="save()"
             label="Ajouter">
         </button>
         }
