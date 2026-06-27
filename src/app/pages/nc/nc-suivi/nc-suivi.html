@@ -7,8 +7,14 @@
         [cols]="cols"
         (onEdition)="edition($event)"
         [loading]="loading"
+        [paginator]="false"
         [showGridlines]="false"
-        (onCloture)="cloture($event)">
+        (onCloture)="cloture($event)"
+        [totalElements]="totalElements"
+        [currentPage]="currentPage"
+        [pageSize]="pageSize"
+        (pageChangeEvent)="onPageChange($event)"
+        >
     </app-traitement-table>
 </div>
 

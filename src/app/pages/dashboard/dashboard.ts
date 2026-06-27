@@ -8,10 +8,11 @@ import { AuthService } from '../../services/auth-services/auth.service';
 import { isPlatformBrowser, Location } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import { NgPrimeModule } from '../../../prime-ng.module';
-import { generateColor, getCurrentUserStructure, isUserInRoles } from '../../utils';
+import { generateColor, getCurrentUserStructure } from '../../utils';
 import { Router } from '@angular/router';
 import { StructureService } from '../parametrages/structure/structure-service/structure-service';
 import { ProcNonConformiteService } from '../../services/non-conformite/proc-non-conformite.service';
+import { isUserInRoles } from '../../utils/auth/auth-utils';
 
 
 
@@ -74,20 +75,20 @@ export class Dashboard implements AfterViewInit {
         this.userStructure = getCurrentUserStructure();
     }
     ngOnInit() {
-        if (isUserInRoles(['SUPER_ADMIN'])) {
-            this.fecthNonConformite();
-            this.fetchStatsMensuelStatus();
-            this.fetchStatsMensuel();
-            this.fetchStats();
-        }
-        else {
-            this.fecthNonConformiteConnect();
-            this.fetchStatsMensuelStatusService();
-            this.fecthStatMensuelStatusConnect();
-            this.fetchStatsPlanAction();
-            this.fetchStatsMensuelStatusNiveau();
+        // if (isUserInRoles(['SUPER_ADMIN'])) {
+        //     this.fecthNonConformite();
+        //     this.fetchStatsMensuelStatus();
+        //     this.fetchStatsMensuel();
+        //     this.fetchStats();
+        // }
+        // else {
+        //     this.fecthNonConformiteConnect();
+        //     this.fetchStatsMensuelStatusService();
+        //     this.fecthStatMensuelStatusConnect();
+        //     this.fetchStatsPlanAction();
+        //     this.fetchStatsMensuelStatusNiveau();
 
-        }
+        // }
 
 
     }
@@ -367,49 +368,49 @@ export class Dashboard implements AfterViewInit {
     }
 
     change(year: any) {
-        if (isUserInRoles(['SUPER_ADMIN'])) {
-            this.service.getStatsMensuel(year).subscribe({
-                next: (data) => {
-                    this.initChartAll(data.body);
-                },
-                error: (error) => {
-                    //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-                }
-            });
-        } else {
-            this.service.getStatsMensuelService(year, this.userStructure.id).subscribe({
-                next: (data) => {
-                    this.initChartAll(data.body);
-                },
-                error: (error) => {
-                    //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-                }
-            });
-        }
+        // if (isUserInRoles(['SUPER_ADMIN'])) {
+        //     this.service.getStatsMensuel(year).subscribe({
+        //         next: (data) => {
+        //             this.initChartAll(data.body);
+        //         },
+        //         error: (error) => {
+        //             //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
+        //         }
+        //     });
+        // } else {
+        //     this.service.getStatsMensuelService(year, this.userStructure.id).subscribe({
+        //         next: (data) => {
+        //             this.initChartAll(data.body);
+        //         },
+        //         error: (error) => {
+        //             //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
+        //         }
+        //     });
+        // }
 
 
     }
     changeForProcessus(year: any) {
-        if (isUserInRoles(['SUPER_ADMIN'])) {
-            this.service.getStatsNfStruct(year).subscribe({
-                next: (data) => {
-                    this.initChartBystuct(data.body);
-                },
-                error: (error) => {
-                    //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-                }
-            });
-        } else {
-            this.service.getStatsPlanAction(year).subscribe({
-                next: (data) => {
-                    this.initChartTaux(data.body);
+        // if (isUserInRoles(['SUPER_ADMIN'])) {
+        //     this.service.getStatsNfStruct(year).subscribe({
+        //         next: (data) => {
+        //             this.initChartBystuct(data.body);
+        //         },
+        //         error: (error) => {
+        //             //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
+        //         }
+        //     });
+        // } else {
+        //     this.service.getStatsPlanAction(year).subscribe({
+        //         next: (data) => {
+        //             this.initChartTaux(data.body);
 
-                },
-                error: (error) => {
-                    //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-                }
-            });
-        }
+        //         },
+        //         error: (error) => {
+        //             //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
+        //         }
+        //     });
+        // }
 
     }
     initChartStructMonthLast(stats: any) {
@@ -495,25 +496,25 @@ export class Dashboard implements AfterViewInit {
     }
 
     changeAll(year: any) {
-        if (isUserInRoles(['SUPER_ADMIN'])) {
-            this.service.getStatsMensuelStatus(year).subscribe({
-                next: (data) => {
-                    this.initChartStructMonthLast(data.body);
-                },
-                error: (error) => {
-                    //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-                }
-            });
-        } else {
-            this.service.getStatsMensuelStatusService(year, this.userStructure.id).subscribe({
-                next: (data) => {
-                    this.initChartStructMonthLast(data.body);
-                },
-                error: (error) => {
-                    //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-                }
-            });
-        }
+        // if (isUserInRoles(['SUPER_ADMIN'])) {
+        //     this.service.getStatsMensuelStatus(year).subscribe({
+        //         next: (data) => {
+        //             this.initChartStructMonthLast(data.body);
+        //         },
+        //         error: (error) => {
+        //             //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
+        //         }
+        //     });
+        // } else {
+        //     this.service.getStatsMensuelStatusService(year, this.userStructure.id).subscribe({
+        //         next: (data) => {
+        //             this.initChartStructMonthLast(data.body);
+        //         },
+        //         error: (error) => {
+        //             //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
+        //         }
+        //     });
+        // }
 
     }
     initChartTaux(statsData: any) {

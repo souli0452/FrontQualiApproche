@@ -270,11 +270,33 @@
     </div>
 
     <!-- Dialog Plan d'action -->
-    <p-dialog [header]="'Détails du plan action n°'+planAction?.numeroOrdre"
-              [(visible)]="afficheDialog"
-              [style]="{ width: '50rem' }"
-              [breakpoints]="{ '960px': '95vw' }">
-        <div class="grid">Date échéance
+    <p-dialog 
+    [modal]="true" 
+    [maximizable]="true"
+    appendTo="body"
+    styleClass="premium-dialog"
+    [(visible)]="afficheDialog"
+    [style]="{ width: '50rem' }"
+    [breakpoints]="{ '960px': '95vw' }">
+
+        <ng-template pTemplate="header">
+        <div class="flex items-center justify-between w-full">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-950/20 rounded-full flex items-center justify-center" style="width: 2.5rem; height: 2.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: #EEF2FF;">
+                    <i class="pi pi-eye text-xl text-indigo-600 dark:text-indigo-400"></i>
+                </div>
+                <div>
+                    <h5 class="m-0 font-bold text-surface-900 dark:text-surface-50 text-lg" style="margin: 0; font-weight: 700; font-size: 1.125rem;">
+                        Détails du plan action n°{{planAction?.numeroOrdre}}
+                    </h5>
+                    <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5" style="margin: 0.125rem 0 0 0; font-size: 0.75rem; color: #6B7280;">
+                        Consultez l'ensemble des informations et le plan d'action
+                    </p>
+                </div>
+            </div>
+        </div>
+    </ng-template>
+        <div class="grid">
             <div class="col-12">
                 <div class="card nc-card">
                     <h4 class="nc-card-title">Informations générales</h4>
@@ -298,8 +320,8 @@
             <div class="col-12 md:col-6">
                 <div class="card nc-card mt-3">
                     <h4 class="nc-card-title">Causes identifiées</h4>
-                    <div class="nc-description">
-                        {{planAction?.causeIdentifiees || 'Aucune cause identifiée'}}
+                    <div class="nc-description break-words mt-2"
+                        [innerHTML]="planAction?.causeIdentifiees || 'Aucune cause identifiée'">
                     </div>
                 </div>
             </div>
@@ -307,8 +329,8 @@
             <div class="col-12 md:col-6">
                 <div class="card nc-card mt-3">
                     <h4 class="nc-card-title">Solutions retenues</h4>
-                    <div class="nc-description">
-                        {{planAction?.solutionRetenues || 'Aucune solution retenue'}}
+                    <div class="nc-description break-words mt-2"
+                        [innerHTML]="planAction?.solutionRetenues || 'Aucune solution retenue'">
                     </div>
                 </div>
             </div>

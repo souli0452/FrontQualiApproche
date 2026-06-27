@@ -1,16 +1,19 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { forkJoin, Subject, takeUntil } from 'rxjs';
 import { MessageService } from 'primeng/api';
-import { EtapeTraitement } from '../../../enums';
+import { EtapeTraitement, NonConformStatus } from '../../../enums';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
 import { FeaturesService } from '../../../services/feature-service';
-import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
-import { ApiItemResponse } from '../../../models';
+import { ApiItemResponse, AuthData } from '../../../models';
+import { showToast, StatusEnum } from '../../../utils';
+import { Location } from '@angular/common';
+import { TraitementActionTable } from '../../../components/non-conformite/action-traitement/traitement-action-table';
+import { currentUserState } from '../../../services/auth-services/auth.state';
 
 @Component({
     selector: 'app-nc-traitement-global',
@@ -22,7 +25,8 @@ import { ApiItemResponse } from '../../../models';
         CommonModule, 
         NgPrimeModule, 
         TraitementTableComponent, 
-        NcFilterBarComponent
+        NcFilterBarComponent,
+        TraitementActionTable
     ]
 })
 export class TraitementGlobalComponent {
@@ -37,6 +41,11 @@ export class TraitementGlobalComponent {
     pageSize: number = 5;
     totalPages: number = 0;
 
+    totalElementsNonTraiter: number = 0;
+    currentPageNonTraiter: number = 0;
+    pageSizeNonTraiter: number = 5;
+    totalPagesNonTraiter: number = 0;
+
     nonTraiterData: any[] = [];
     rawNonTraiterData: any[] = [];
 
@@ -50,12 +59,13 @@ export class TraitementGlobalComponent {
     protected readonly BtnActions = EtapeTraitement;
     @ViewChild(TraitementTableComponent) dmdTraitement!: TraitementTableComponent;
     cols: any[] = [];
+    colsAction: any[] = [];
     constructor(
         private authService: AuthService,
         protected messageService: MessageService,
-        private service: ProcNonConformiteService,
         private featureService:FeaturesService,
-        private nonConformiteService:NonConformiteService
+        private nonConformiteService:NonConformiteService,
+        private location: Location
     ) {
         this.cols = [
             {field: 'numeroReference', header: 'N° Ref', type: 'string', filter: true, width: '220px'},
@@ -63,9 +73,23 @@ export class TraitementGlobalComponent {
             {field: 'niveauNonConformiteLibelle', header: 'Gravité', type: 'badge', filter: true, width: '150px'},
             {field: 'createdAt', header: 'Date de soumission', type: 'date', filter: true, width: '200px'}
         ];
+
+        this.colsAction = [
+            { field: 'numeroOdre', header: 'N° Ordre', type: 'string', filter: true, centered: false },
+            { field: 'numeroNc', header: 'N° Ref', type: 'string', filter: true, width: '200px', centered: false },
+            {
+                field: 'procEmetteur',
+                header: 'Processus emetteur',
+                type: 'string',
+                filter: true,
+                width: '30%',
+                centered: false
+            },
+            { field: 'dateEcheance', header: 'Date écheance', type: 'string', filter: true, width: '18%', centered: false }
+        ];
     }
     ngOnInit() {
-        this.user = this.authService.getUser()!;
+        this.user = currentUserState.value as AuthData;
         this.fetchData();
     }
         handleFilter(event: NcFilter) {
@@ -78,6 +102,11 @@ export class TraitementGlobalComponent {
         this.pageSize = event.size;
         this.fetchData();
     }
+    onPageChangeNonTraiter(event: { page: number, size: number }) {
+        this.currentPageNonTraiter = event.page;
+        this.pageSizeNonTraiter = event.size;
+        this.fetchData();
+    }
 
     fetchData() {
         this.loading = true;
@@ -86,7 +115,7 @@ export class TraitementGlobalComponent {
         forkJoin({
             traitement: this.nonConformiteService.nonConformiteImputesGetPagination(
                 this.user.userId, 
-                EtapeTraitement.IMPUTATION, 
+                EtapeTraitement.TRAITEMENT, 
                 this.currentPage, 
                 this.pageSize
             ),
@@ -105,7 +134,20 @@ export class TraitementGlobalComponent {
                 this.totalPages = res.traitement.data?.totalPages || 0;
 
                 // 2. Extraction des autres listes (on s'adapte si c'est une structure ApiResponse ou un body brut)
-                const nonTraiter = res.nonTraiter.data?.content || [];
+                let nonTraiter = [];
+                if (Array.isArray(res.nonTraiter)) {
+                    nonTraiter = res.nonTraiter;
+                } else if (res.nonTraiter.body && Array.isArray(res.nonTraiter.body)) {
+                    nonTraiter = res.nonTraiter.body;
+                } else if (res.nonTraiter.data && Array.isArray(res.nonTraiter.data.content)) {
+                    nonTraiter = res.nonTraiter.data.content;
+                    this.totalElementsNonTraiter = res.nonTraiter.data?.totalElements || 0;
+                    this.currentPageNonTraiter = res.nonTraiter.data?.pageNumber || 0;
+                    this.pageSizeNonTraiter = res.nonTraiter.data?.pageSize || 10;
+                    this.totalPagesNonTraiter = res.nonTraiter.data?.totalPages || 0;
+                    
+                }
+                
                 const allUserNCs = res.userNCs.data?.content || [];
 
                 // 3. Application de ta logique de mapping pour la Gravité
@@ -122,14 +164,15 @@ export class TraitementGlobalComponent {
                 });
 
                 this.rawNonTraiterData = nonTraiter;
+                this.nonTraiterData = [...this.rawNonTraiterData];
 
                 // 4. Mise à jour de ton BehaviorSubject de notifications globales (Barre latérale)
                 const currentNotifs = this.nonConformiteService.notificationsNC$.value || {};
                 this.nonConformiteService.notificationsNC$.next({
                     ...currentNotifs,
-                    imputees: this.mesNonConformitesRaw.length,
-                    nonTraiter: this.rawNonTraiterData.length,
-                    nonConformites: this.mesNonConformitesRaw.length
+                    imputees: res.traitement.data?.totalElements ?? this.mesNonConformitesRaw.length,
+                    nonTraiter: res.nonTraiter.data?.totalElements ?? this.rawNonTraiterData.length,
+                    nonConformites: res.traitement.data?.totalElements ?? this.mesNonConformitesRaw.length
                 });
 
                 // 5. Finalisation de la vue
@@ -195,6 +238,25 @@ export class TraitementGlobalComponent {
         this.mesNonConformites = this.mesNonConformitesRaw.filter(filterFn);
     }
 
+    traiter(rowdata: any): void {
+        rowdata.status= NonConformStatus.TRAITER
+        this.nonConformiteService.nonConformiteUpdatePlanAction(rowdata).pipe().subscribe({
+            next: (data) => {
+                this.featureService.onReloadRequested(true);
+                showToast(StatusEnum.success, data.status, null, this.messageService);
+                    this.goBack();
+            },
+            error:(error)=>{
+                showToast(StatusEnum.error,error.status, null, this.messageService, error);
+
+            }
+        })
+    }
+
+    goBack() {
+        this.location.back();
+    }
+
    
     saveEntity(demandes: any) {
         const cleanedDemandes = demandes.map((demande: { planActions: { [x: string]: any; responsable: any; dateEcheance: string }[] }) => {
@@ -254,4 +316,7 @@ export class TraitementGlobalComponent {
             this.featureService.onReloadRequested(true);
         }
     }
+
+    protected readonly NonConformStatus = NonConformStatus;
 }
+

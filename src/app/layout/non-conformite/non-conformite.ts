@@ -9,6 +9,7 @@ import { takeUntil } from 'rxjs/operators';
 import { LayoutService } from '../service/layout.service';
 import { RoleService } from '../../services/non-conformite/role.service';
 import { ProcNonConformiteService } from '../../services/non-conformite/proc-non-conformite.service';
+import { NonConformiteService } from '../../services/non-conformite/non-conformite.service';
 
 
 @Component({
@@ -33,7 +34,7 @@ export class NonConformiteLayoutComponent implements OnInit, OnDestroy {
     constructor(
         private router: Router,
         public layoutService: LayoutService,
-        private procService: ProcNonConformiteService,
+        private nonConformiteService: NonConformiteService,
         public roleService: RoleService
     ) {
         this.routerSubscription = this.router.events.subscribe((event) => {
@@ -45,7 +46,7 @@ export class NonConformiteLayoutComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.activeTab = this.router.url.split('?')[0];
-        this.procService.notificationsNC$
+        this.nonConformiteService.notificationsNC$
             .pipe(takeUntil(this.destroy$))
             .subscribe(notifs => {
                 this.buildMenu(notifs); // On reconstruit le menu à chaque changement

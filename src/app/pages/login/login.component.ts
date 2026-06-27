@@ -2,13 +2,14 @@ import {Component, OnInit} from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import {AuthService} from "../../services/auth-services/auth.service";
-import { KcLoginRequest, KcUser } from '../../models';
+import { ApiItemResponse, AuthData, KcLoginRequest, KcUser, LoginRequest } from '../../models';
 import { MessageService } from 'primeng/api';
 import { ActivatedRoute } from '@angular/router';
 import {Subject} from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../prime-ng.module';
-import { isUserInRoles, USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
+import { USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
+import { isUserInRoles } from '../../utils/auth/auth-utils';
 import { StructureService } from '../parametrages/structure/structure-service/structure-service';
 
 @Component({
@@ -46,55 +47,84 @@ export class LoginComponent implements OnInit{
             email: ['', [Validators.required, Validators.email]],
         });
     }
-    ngOnInit() {
-        if (this.authService.getAccessToken()) {
-            if(isUserInRoles(['SUPER_ADMIN'])){
-                this.router.navigate(['/non-conformite/vue-ensemble']);
-            }else {
-                this.router.navigate(['/non-conformite/vue-ensemble']);
-            }
 
-        }
+    ngOnInit() {
+        this.authService.getMe().subscribe({
+            next: (response) => {
+                // response.data contient l'objet complet avec { user, permissions, ... }
+                if (response) {
+                    // On vérifie directement le rôle sans passer connectedUser car la fonction lit en mémoire
+                    if (isUserInRoles(['SUPER_ADMIN'])) {
+
+                        this.router.navigate(['/configurations']).then(success => {
+                            console.log('Navigation réussie ?', success);
+                        }).catch(err => {
+                            console.error('Erreur de navigation :', err);
+                        });
+
+                        // this.router.navigate(['/configurations']);
+                        // console.log("Rediriger vers configurations");
+                    } else {
+                        console.log("Je suis ici 2");
+                        this.router.navigate(['/non-conformite/vue-ensemble']);
+                    }
+                }
+            },
+            error: (err) => {
+                console.log('Aucune session active ou cookie expiré/absent.', err);
+                // Optionnel : redirection vers le login si la session a expiré
+                // this.router.navigate(['/login']);
+            }
+        });
     }
 
     onLogin() {
         if (this.loginForm.valid) {
             this.isLoading = true;
-            const credentials: KcLoginRequest = this.loginForm.value;
+            const credentials: LoginRequest = this.loginForm.value;
 
             this.authService.login(credentials).subscribe({
-                next: (response: any) => {
-                    const { data } = response.data;
-                    // console.log("Données reçues ZOOOO : ", data);
-
+                next: (response: ApiItemResponse<AuthData>) => {
                     this.isLoading = false;
-                    this.authService.setTokens(data.access_token, data.refresh_token);
-                    this.authService.setUser(data.user);
+                    
+                    // Récupération directe des données utilisateur renvoyées par le login
+                    const userCurrentUser = response.data?.user;
 
-                    this.user = this.authService.getUser()!;
-
-                    this.authService.getUserRoles(data!.user.userId!).subscribe((roles) => {
-                        localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(roles.body));
-                    });
-                    this.authService.getUserById(data!.user.userId!).subscribe((value) => {
-                        this.userCurrentUser = value.body!;
-                        console.log("Données reçues DDDDDDD : ", this.userCurrentUser);
+                    if (userCurrentUser) {
                         
-                        if (this.userCurrentUser as any) {
-                            this.fetchStucture((this.userCurrentUser as any).data.structure);
+                        // Récupération des rôles (si tu en as encore besoin pour les permissions)
+                        this.authService.getUserRoles(userCurrentUser.userId!).subscribe((roles) => {
+                            localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(roles.body));
+                        });
+
+                        // Vérification de la structure affectée à l'utilisateur
+                        if (userCurrentUser.structure) {
+                            this.fetchStucture(userCurrentUser.structure);
                         } else {
-                            this.messageService.add({ severity: 'info', summary: 'AVERTISSEMENT', detail: 'Votre utilisateur est mal configuré', life: 3000 });
+                            this.messageService.add({ 
+                                severity: 'info', 
+                                summary: 'AVERTISSEMENT', 
+                                detail: 'Votre utilisateur est mal configuré (aucune structure associée)', 
+                                life: 3000 
+                            });
                             this.navigateAfterLogin();
                         }
-                    });
+                    } else {
+                        this.messageService.add({ 
+                            severity: 'error', 
+                            summary: 'Erreur', 
+                            detail: 'Impossible de récupérer les informations de session.', 
+                            life: 3000 
+                        });
+                    }
                 },
-                // Dans onLogin(), au niveau de la gestion d'erreur
                 error: (err) => {
                     this.isLoading = false;
                     let detailMessage = '';
 
                     if (err.status === 403) {
-                        const { data } = err.error;
+                        // Gestion fine des comptes non vérifiés, désactivés ou pwd temporaires
+                        const data = err.error?.data;
                         if (data) {
                             if (!data.emailVerified) {
                                 detailMessage = "Votre adresse e-mail n'a pas été vérifiée.";
@@ -102,16 +132,18 @@ export class LoginComponent implements OnInit{
                                 detailMessage = "Votre compte a été désactivé.";
                             } else if (data.temporaryPwd) {
                                 detailMessage = "Mot de passe temporaire. Redirection...";
-                                this.router.navigate(['/reset-password'], { queryParams: { username: credentials.username, oldpwd:credentials.password } });
+                                this.router.navigate(['/reset-password'], { 
+                                    queryParams: { username: credentials.username, oldpwd: credentials.password } 
+                                });
                             }
                         } else {
-                            detailMessage = err.error.message || 'Une erreur est survenue.';
+                            detailMessage = err.error?.message || 'Une erreur est survenue.';
                         }
                     } else {
                         detailMessage = 'Nom d’utilisateur ou mot de passe incorrect.';
                     }
 
-                    // Affichage du Toast
+                    // Affichage du Toast d'erreur
                     this.messageService.add({ severity: 'error', summary: 'Erreur', detail: detailMessage, life: 5000 });
                 }
             });
@@ -119,25 +151,36 @@ export class LoginComponent implements OnInit{
             this.errorMessage = 'Veuillez remplir tous les champs correctement avant de continuer.';
         }
     }
+    
     fetchStucture(structureId: string) {
         if (!structureId) {
+            this.navigateAfterLogin();
             return;
-        } else {
-            this.structureService.getByStructureId(structureId).subscribe({
-                next: (structure) => {
-                    localStorage.setItem(USER_STRUCTURE_KEY, JSON.stringify(structure.data));
-                    this.navigateAfterLogin();
-                },
-                error: (err) => {
-                    this.messageService.add({ severity: 'warn', summary: 'Avertissement', detail: 'Impossible de charger la structure. Vérifiez votre configuration.', life: 3000 });
-                    this.navigateAfterLogin();
-                }
-            });
         }
+
+        this.structureService.getByStructureId(structureId).subscribe({
+            next: (structure) => {
+                if (structure && structure.data) {
+                    // Stockage en sessionStorage plutôt qu'en localStorage
+                    sessionStorage.setItem(USER_STRUCTURE_KEY, JSON.stringify(structure.data));
+                }
+                this.navigateAfterLogin();
+            },
+            error: (err) => {
+                console.error('Erreur lors du chargement de la structure:', err);
+                this.messageService.add({ 
+                    severity: 'warn', 
+                    summary: 'Avertissement', 
+                    detail: 'Impossible de charger la structure. Vérifiez votre configuration.', 
+                    life: 3000 
+                });
+                this.navigateAfterLogin();
+            }
+        });
     }
 
     navigateAfterLogin() {
-            this.router.navigate(['/non-conformite/vue-ensemble']);
+        this.router.navigate(['/non-conformite/vue-ensemble']);
     }
 
     initiatePasswordReset(): void {

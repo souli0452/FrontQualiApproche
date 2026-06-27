@@ -40,7 +40,8 @@ export class QualiUrlConfig {
 
     // User Service (Authentification et Utilisateurs)
     static readonly LOGIN_URL = `${USER_SERVICE}/login`;
-    static readonly REFRESH_TOKEN_URL = `${USER_SERVICE}/auth/refresh`;
+    static readonly LOGOUT_URL = `${USER_SERVICE}/logout`;
+    static readonly REFRESH_TOKEN_URL = `${USER_SERVICE}/refresh`;
     static readonly USERS_URL = `${USER_SERVICE}/users`;
     static readonly ROLE_URL = `${USER_SERVICE}/roles`;
     static readonly APP_ROLE_URL = `${USER_SERVICE}/app-roles`;

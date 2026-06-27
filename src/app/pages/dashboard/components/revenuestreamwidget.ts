@@ -4,14 +4,15 @@ import { debounceTime, Subscription } from 'rxjs';
 import { LayoutService } from '../../../layout/service/layout.service';
 import { SelectModule } from 'primeng/select';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { isUserInRoles } from '../../../utils';
+import { isUserInRoles } from '../../../utils/auth/auth-utils';
 
 @Component({
     standalone: true,
     selector: 'app-revenue-stream-widget',
     imports: [ChartModule, SelectModule, NgPrimeModule],
     template: `<div class="card !mb-8">
-        <div class="font-semibold text-xl mb-4"> <span *ngIf="isUserInRoles(['SUPER_ADMIN'])">Non conformité par processus</span>
+        <div class="font-semibold text-xl mb-4">
+            <span *ngIf="isUserInRoles(['SUPER_ADMIN'])">Non conformité par processus</span>
             <span *ngIf="!isUserInRoles(['SUPER_ADMIN'])">Fréquence de traitement des plans d'action</span>
         </div>
         <div class="flex align-items-center justify-content-end gap-3">

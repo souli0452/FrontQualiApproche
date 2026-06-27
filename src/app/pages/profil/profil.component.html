@@ -1,7 +1,7 @@
 <div class="profile-container">
     <div class="profile-header">
         <p-avatar [style]="{ 'background-color': '#007ad9', color: 'white' }">
-            <span>{{ user?.firstName.charAt(0).toUpperCase()}}{{user?.lastName.charAt(0).toUpperCase() }}</span>
+            <span>{{ user?.firstName ? user?.firstName?.charAt(0)?.toUpperCase() : '' }}</span>
         </p-avatar>
         <h2>{{ user?.firstName }} {{ user?.lastName }}</h2>
         <p>{{ user?.email }}</p>
@@ -10,7 +10,7 @@
     <div class="profile-details">
         <p><strong>Nom d'utilisateur :</strong> {{ user?.username }}</p>
         <p><strong>Fonction :</strong> </p>
-        <p><strong>Structure : {{userStructure.libelleLong}}</strong>  </p>
+        <!-- <p><strong>Structure : {{userStructure.libelleLong}}</strong>  </p> -->
     </div>
 
     <div class="profile-actions">

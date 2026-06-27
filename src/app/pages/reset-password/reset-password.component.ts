@@ -51,41 +51,38 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const password = this.newPasswordForm.get('password')?.value;
+        // const password = this.newPasswordForm.get('password')?.value;
 
-        if (this.isTemporaryPasswordReset) {
-            const username = this.route.snapshot.queryParamMap.get('username');
-            const oldPassword = this.route.snapshot.queryParamMap.get('oldpwd');
-            if (username && oldPassword) {
-                console.log(username,oldPassword)
-                this.handleTemporaryPasswordReset(username, password, oldPassword);
-            } else {
-                this.errorMessage = 'Les informations sont incorrectes.';
-            }
-        } else {
-            const token = this.authService.getAccessToken();
-            const user = this.authService.getUser();
-            console.log(user)
-            if (!token || !user) {
-                console.error('Token ou userId manquant');
-                return;
-            }
+        // if (this.isTemporaryPasswordReset) {
+        //     const username = this.route.snapshot.queryParamMap.get('username');
+        //     const oldPassword = this.route.snapshot.queryParamMap.get('oldpwd');
+        //     if (username && oldPassword) {
+        //         console.log(username,oldPassword)
+        //         this.handleTemporaryPasswordReset(username, password, oldPassword);
+        //     } else {
+        //         this.errorMessage = 'Les informations sont incorrectes.';
+        //     }
+        // } else {
+        //     const token = this.authService.getAccessToken();
+        //     const user = this.authService.getUser();
+        //     console.log(user)
+        //     if (!token || !user) {
+        //         console.error('Token ou userId manquant');
+        //         return;
+        //     }
 
-            this.handleTokenPasswordReset(user.userId!, password, token);
-        }
+        //     this.handleTokenPasswordReset(user.userId!, password, token);
+        // }
     }
 
     private handleTemporaryPasswordReset(username: string, password: string, oldPassword: string): void {
         this.authService.updateTemporaryPassword(username, password, oldPassword).pipe(
             takeUntil(this.destroy$)
         ).subscribe({
-            next: (res) => {
-                if (res.data.access_token && res.data.refresh_token) {
-                    this.authService.setTokens(res.data.access_token, res.data.refresh_token);
-                    this.router.navigate(['/']);
-                } else {
-                    this.router.navigate(['/login']);
-                }
+            next: () => {
+                // Le backend a mis à jour le mot de passe.
+                // On redirige vers la page de connexion pour qu'il se connecte avec son nouveau mot de passe.
+                this.router.navigate(['/login']);
             },
             error: (error) => {
                 this.handleError(error);

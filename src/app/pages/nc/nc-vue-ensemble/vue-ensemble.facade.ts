@@ -14,7 +14,6 @@ import { styleEvolutionDatasets } from '../../../utils/non-conformite/nc-utils';
 export class NcVueEnsembleFacade {
 
   constructor(
-    private procService: ProcNonConformiteService,
     private nonConformiteService: NonConformiteService,
   ) {}
 
@@ -64,8 +63,8 @@ export class NcVueEnsembleFacade {
 
   const requests: any = {
     userNcsRes: this.nonConformiteService.nonConformiteParUtilisateurGetPagination(user.userId),
-    imputationsRes: this.procService.findImputedByUserId(user.userId),
-    ncNonTraiterRes: this.procService.getPlanActions(user.email, "NON_TRAITER")
+    imputationsRes: this.nonConformiteService.nonConformiteImputeParUtilisateur(user.userId),
+    ncNonTraiterRes: this.nonConformiteService.nonConformitePlanActionsGetPagination(user.email, "NON_TRAITER")
   };
 
     if (userStructure?.id && (roleService.isChef || roleService.isRQ))  {
@@ -77,13 +76,13 @@ export class NcVueEnsembleFacade {
       );
 
     requests.affectationRes =
-      this.procService.getNonConformiteByEtapeAndOrigin(
+      this.nonConformiteService.nonConformiteParStructureEtOrigineGet(
         EtapeTraitement.IMPUTATION,
         userStructure.id
       );
 
     requests.validationPiloteRes =
-      this.procService.getNonConformiteByEtapeAndOrigin(
+      this.nonConformiteService.nonConformiteParStructureEtOrigineGet(
         EtapeTraitement.VALIDATION,
         userStructure.id
       );
@@ -91,21 +90,20 @@ export class NcVueEnsembleFacade {
 
   if (roleService.isRQ) {
     requests.validationRqRes =
-      this.procService.getNonConformiteByEtape(
+      this.nonConformiteService.nonConformiteParEtapeGet(
         EtapeTraitement.VALIDATION_RS
       );
 
     requests.clotureRes =
-      this.procService.getNonConformiteByEtape(
+      this.nonConformiteService.nonConformiteParEtapeGet(
         EtapeTraitement.SUIVI_RQ
       );
 
     requests.nonConformiteClotureeRes =
-      this.procService.getNonConformiteByEtape(
+      this.nonConformiteService.nonConformiteParEtapeGet(
         EtapeTraitement.CLOTURE
       );
   }
-
   return requests;
 }
 
@@ -171,18 +169,10 @@ private enrichNonTraiterData(data: any, nonTraiterData: any[]) {
 
     return forkJoin(requests).pipe(
       map((res: any) => {
-        
         const raw = this.extractNcResponses(res);
-        console.log("################## `RAW` : ", raw);
-        
         const processed = this.populateData(raw);
-        console.log("################## `processed` : ", processed);
-        
         const enrichedNonTraiter =
           this.enrichNonTraiterData(raw, processed.nonTraiterData);
-
-        console.log("DATA VUE ENSEMBLE FACADE : ", enrichedNonTraiter);
-
         return {
           ...processed,
           nonTraiterData: enrichedNonTraiter
@@ -193,7 +183,7 @@ private enrichNonTraiterData(data: any, nonTraiterData: any[]) {
 
   loadEvolutionStats(annee: number, mois?: number, structureId?: string) {
 
-    return this.procService.getNcEvolution(annee, mois, structureId).pipe(
+    return this.nonConformiteService.nonConformiteEvolutionGet(annee, mois, structureId).pipe(
       map((response: any) => {
 
         const stats = response.body.data;

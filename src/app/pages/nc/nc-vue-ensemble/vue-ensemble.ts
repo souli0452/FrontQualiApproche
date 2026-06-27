@@ -1,12 +1,11 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NcModule } from '../nc.module';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { NcStatsCardComponent } from '../../../components/non-conformite/nc-stats-card/nc-stats-card';
-import { isUserInRoles, hasAnyPermission, hasAllPermissions, getCurrentUserStructure } from '../../../utils';
+import { getCurrentUserStructure } from '../../../utils';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { Subject, takeUntil, forkJoin, of } from 'rxjs';
-import { EtapeTraitement } from '../../../enums';
 import { VueEnsembleImputationComponent } from './nc-imputation/nc-imputation';
 import { AlerteTraitement } from '../../../components/non-conformite/alerte-traitement/alerte-traitement';
 import { FeaturesService } from '../../../services/feature-service';
@@ -18,11 +17,13 @@ import { NcClotureComponent } from './nc-cloture-rq/nc-cloture';
 import { NcNonTraiterComponent } from './nc-traitement-action/nc-non-traiter';
 import { RoleService } from '../../../services/non-conformite/role.service';
 import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
-import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
-import { buildDashboardStats, styleEvolutionDatasets } from '../../../utils/non-conformite/nc-utils';
+import { buildDashboardStats } from '../../../utils/non-conformite/nc-utils';
 import { DASHBOARD_CARDS_AGENT, DASHBOARD_CARDS_CHEF, DASHBOARD_CARDS_RQ } from '../../../components/non-conformite/dashboard-card/dashboard-card';
 import { NcVueEnsembleFacade } from './vue-ensemble.facade';
+import { AuthData, UserResponse } from '../../../models';
+import { isUserInRoles } from '../../../utils/auth/auth-utils';
+import { currentUserState } from '../../../services/auth-services/auth.state';
 
 @Component({
   selector: 'app-vue-ensemble',
@@ -84,6 +85,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     receptionData: any[] = [];
     validationRqData: any[] = [];
     affectationData: any[] = [];
+    currentUser: AuthData | null = null;
     userStructure: any = {};
     validationPiloteData: any[] = [];
     clotureData: any[] = [];
@@ -152,7 +154,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     }
     
     constructor(
-        private procService: ProcNonConformiteService,
+        private nonConformiteService: NonConformiteService,
         private authService: AuthService,
         private featureService: FeaturesService,
         private structureService: StructureService,
@@ -161,6 +163,11 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     ) {} 
 
     ngOnInit(): void {
+        this.authService.currentUser$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(user => {
+                this.currentUser = user;
+        });
         this.userStructure = getCurrentUserStructure();
         
         // Charger les données initialement
@@ -289,39 +296,36 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     loadDashboardData() {
         this.loading = true;
 
-        const user = this.authService.getAuth();
+        const authData = currentUserState.value as AuthData | any;
 
-        if (!user || !user.data?.data?.permissions) {
+        if (!authData || !authData.permissions) {
             this.loading = false;
             return;
         }
 
-        const currentUserId = user.data.data.user.userId;
+        const currentUserId = authData.userId;
         const role = this.getUserRole();
 
         // ✅ ROUTAGE PAR RÔLE
         switch (role) {
 
             case 'AGENT':
-            this.procService.getUserDashboard(currentUserId!)
+            this.nonConformiteService.nonConformiteDashboardAgent(currentUserId!)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe({
                 next: (response: any) => {
                     this.dashboardData = response.body.data;
-                    console.log("dashboardData agent : ", this.dashboardData);
-                    
                     this.updateKpis();
                     this.loading = false;
                 },
                 error: (error: any) => {
-                    console.error('Erreur dashboard Agent:', error);
                     this.loading = false;
                 }
                 });
             break;
 
             case 'CHEF':
-            this.procService.getPilotDashboard(this.userStructure?.id)
+            this.nonConformiteService.nonConformiteDashboardPilot(this.userStructure?.id)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe({
                 next: (response: any) => {
@@ -330,14 +334,13 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
                     this.loading = false;
                 },
                 error: (error: any) => {
-                    console.error('Erreur dashboard Chef:', error);
                     this.loading = false;
                 }
                 });
             break;
 
             case 'RQ':
-            this.procService.getDashboardRQ()
+            this.nonConformiteService.nonConformiteDashboardRq()
                 .pipe(takeUntil(this.destroy$))
                 .subscribe({
                 next: (response: any) => {
@@ -346,7 +349,6 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
                     this.loading = false;
                 },
                 error: (error: any) => {
-                    console.error('Erreur dashboard RQ:', error);
                     this.loading = false;
                 }
                 });
@@ -355,9 +357,9 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     }
 
     private loadUserNcData() {
-    const user = this.authService.getUser();
+    const user = this.currentUser;
 
-    if (!user || !user.userId) {
+    if (!user || !user.user?.userId) {
         this.resetUserDataState();
         return;
     }
@@ -388,7 +390,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
             this.countNonTraiter = this.nonTraiterData.length;
 
             // ✅ Mise à jour du badge dans le menu global et les onglets spécifiques
-            this.procService.notificationsNC$.next({
+            this.nonConformiteService.notificationsNC$.next({
                 total: this.countTotal,
                 brouillons: this.countBrouillon,
                 imputees: this.countImputees,
@@ -399,7 +401,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
                 affectation: this.countAffectation,
                 nonTraiter: this.countNonTraiter,
                 // Si actions est la même chose que nonTraiter ou imputees pour l'agent, on le met
-                actions: this.countNonTraiter // à adapter selon le vrai compteur "actions"
+                //actions: this.countNonTraiter // à adapter selon le vrai compteur "actions"
             });
         },
         error: (err) => {

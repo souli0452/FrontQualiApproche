@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
-import { getCurrentUserStructure, hasAnyPermission, showToast, StatusEnum } from '../../../utils';
+import { getCurrentUserStructure, showToast, StatusEnum } from '../../../utils';
 import { MessageService } from 'primeng/api';
 import { FeaturesService } from '../../../services/feature-service';
 import { Location } from '@angular/common';
@@ -12,7 +12,8 @@ import { NcModule } from '../nc.module';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { Structure } from '../../parametrages/structure/structure-config/structure';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
-import { ApiResponse, NonConformite } from '../../../models';
+import { ApiResponse, AuthData, NonConformite } from '../../../models';
+import { currentUserState } from '../../../services/auth-services/auth.state';
 
 @Component({
     selector: 'app-nc-publiees',
@@ -24,7 +25,7 @@ export class NcPublieesComponent implements OnInit, OnDestroy {
     publishedList: any[] = [];
     totalElements: number = 0;
     currentPage: number = 0;
-    pageSize: number = 10;
+    pageSize: number = 5;
     totalPages: number = 0;
 
 
@@ -70,8 +71,8 @@ export class NcPublieesComponent implements OnInit, OnDestroy {
 
 ngOnInit() {
         this.userStructure = getCurrentUserStructure();
-        const user = this.authService.getUser();
-        const userId = user?.userId;
+        const user = currentUserState.value as AuthData | any;
+        const userId = user.userId;
         
         // 2. Appel de la bonne méthode
         if (userId) {
@@ -117,10 +118,9 @@ ngOnInit() {
     onPageChange(event: { page: number, size: number }) {
         this.currentPage = event.page;   // ✅ mettre à jour la page
         this.pageSize = event.size;      // ✅ mettre à jour la taille
-        const user = this.authService.getUser();
-        const userId = user?.userId;
+        const user = currentUserState.value as AuthData | any;
+        const userId = user.userId;
         
-        // 2. Appel de la bonne méthode
         if (userId) {
             this.getDemandeListUser(userId);
         }

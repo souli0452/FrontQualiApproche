@@ -34,6 +34,15 @@ export class TraitementActionTable implements OnInit {
     @Output() publish = new EventEmitter<any>();
     @Output() delete = new EventEmitter<any>();
     @Output() archive = new EventEmitter<any>();
+    @Input() paginator: boolean = true;
+    @Input() showGridlines: boolean = true;
+
+    @Input() totalElements: number = 0;
+    @Input() pageSize: number = 10;
+    @Input() currentPage: number = 0;
+    @Output() pageChangeEvent = new EventEmitter<{ page: number, size: number }>();
+
+
     menuItems: MenuItem[] = [];
     uploadedFiles: any[] = [];
     confirmKey = 'confirmKey';
@@ -75,6 +84,16 @@ export class TraitementActionTable implements OnInit {
 
     goBack() {
         this.location.back();
+    }
+
+    onPageChange(event: any) {
+        // PrimeNG renvoie : 
+        // event.page : l'index de la page (0, 1, 2...)
+        // event.rows : le nombre de lignes par page
+        this.pageChangeEvent.emit({ 
+            page: event.page, 
+            size: event.rows 
+        });
     }
 
     onDeleteMultiple() {

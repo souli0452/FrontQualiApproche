@@ -37,6 +37,7 @@ export class DetailsDialogComponent {
     users: any = [];
     user: any = {};
     isConsultation: boolean = false;
+    confirmKey = 'confirmKey';
 
     ngOnInit() {
         console.log(this.demande);
@@ -153,8 +154,8 @@ export class DetailsDialogComponent {
 
     rejet() {
         this.confirmationService.confirm({
-            message: `Voulez-vous vraiment réjeter la demande n°: ${this.planAction.numeroOdre} ?`,
-            key: '1',
+            message: `Voulez-vous vraiment rejeter le plan d'action n°: ${this.planAction.numeroOdre} ?`,
+            key: this.confirmKey,
             accept: () => {
                 this.service.rejetPlanAction(this.planAction).subscribe({
                     next: (data) => {

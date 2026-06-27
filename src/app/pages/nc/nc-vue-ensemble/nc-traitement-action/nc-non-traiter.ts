@@ -7,7 +7,9 @@ import { NonConformStatus } from '../../../../enums';
 import { showToast, StatusEnum } from '../../../../utils';
 import { AuthService } from '../../../../services/auth-services/auth.service';
 import { TraitementActionTable } from '../../../../components/non-conformite/action-traitement/traitement-action-table';
-import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
+import { NonConformiteService } from '../../../../services/non-conformite/non-conformite.service';
+import { currentUserState } from '../../../../services/auth-services/auth.state';
+import { AuthData } from '../../../../models';
 
 @Component({
     selector: 'app-nc-non-traiter',
@@ -44,7 +46,7 @@ export class NcNonTraiterComponent implements OnInit, OnDestroy {
 
     ];
 user: any = {};
-    constructor(private procedureNonConformiteService: ProcNonConformiteService,
+    constructor(private nonConformiteService: NonConformiteService,
                 private authService: AuthService,
                 private messageService: MessageService,
                 private featureService: FeaturesService,
@@ -52,25 +54,8 @@ user: any = {};
     }
 
     ngOnInit() {
-        this.user = this.authService.getUser();
+        this.user = currentUserState.value as AuthData | any;
     }
-
-    // fetchPlanActions() {
-    //     this.loading = true;
-    //     this.actualityService
-    //         .getPlanActions(this.user.email,"NON_TRAITER")
-    //         .pipe(takeUntil(this.destroy$))
-    //         .subscribe({
-    //             next: (data) => {
-    //                 this.actualities = data.body!;
-    //                 this.loading = false;
-    //             },
-    //             error: (error) => {
-    //                 this.loading = false;
-    //             }
-    //         });
-    // }
-
 
     goBack() {
         this.location.back();
@@ -83,7 +68,7 @@ user: any = {};
 
     traiter(rowdata: any): void {
         rowdata.status=NonConformStatus.TRAITER
-      this.procedureNonConformiteService.updatePlanAction(rowdata).pipe().subscribe({
+      this.nonConformiteService.nonConformiteUpdatePlanAction(rowdata).pipe().subscribe({
           next: (data) => {
              this.featureService.onReloadRequested(true);
               showToast(StatusEnum.success, data.status, null, this.messageService);

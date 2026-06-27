@@ -5,7 +5,6 @@ import { HttpResponse } from '@angular/common/http';
 import {
     generateReportFile,
     getCurrentUserStructure,
-    isUserInRoles,
     ReportFormat,
     ReportingInput,
     showToast,
@@ -17,12 +16,13 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
 import { FeaturesService } from '../../../services/feature-service';
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
 import { AuthService } from '../../../services/auth-services/auth.service';
-import { Subject, takeUntil } from 'rxjs';
-import { hasAnyPermission } from '../../../utils';
+import { Subject } from 'rxjs';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { RoleService } from '../../../services/non-conformite/role.service';
+import { currentUserState } from '../../../services/auth-services/auth.state';
+import { AuthData } from '../../../models';
 
 @Component({
     selector: 'app-nc-suivi',
@@ -39,6 +39,12 @@ import { RoleService } from '../../../services/non-conformite/role.service';
 export class NCSuiviComponent {
     demandeList: any = [];
     rawDemandeList: any[] = [];
+
+    totalElements: number = 0;
+    currentPage: number = 0;
+    pageSize: number = 5;
+    totalPages: number = 0;
+
     currentFilters: NcFilter | undefined;
 
     title = 'Consultations des non-conformités';
@@ -97,9 +103,7 @@ export class NCSuiviComponent {
 
     loadSuiviData() {
         this.loading = true;
-        const user = this.authService.getUser();
-        console.log("user: ", user);
-        
+        const user = currentUserState.value as AuthData | any;
         
         if (!user) {
             console.warn("Utilisateur non connecté ou sans permissions.");
@@ -107,7 +111,7 @@ export class NCSuiviComponent {
             return;
         }
     
-        const currentUserId = user.id || user.userId;
+        const currentUserId = user.userId;
         
         if (this.roleService.isRQ) {
             this.getDemandeList();
@@ -167,8 +171,6 @@ export class NCSuiviComponent {
         this.nonConformiteService.nonConformiteGetAll().subscribe({
             next: (data) => {
                 this.rawDemandeList = data.data.content || [];
-                console.log("RETOUR NON-CONFORMITE : ", data);
-                
                 this.applyLocalFilters();
                 this.featureService.onReloadRequested(true);
                 this.loading = false;
@@ -181,10 +183,13 @@ export class NCSuiviComponent {
 
     getDemandeListStructure() {
         this.loading = true;
-        this.service.getNonConformiteAllStructure(this.userStructure.id).subscribe({
+        this.nonConformiteService.nonConformiteByStructureGetPagination(this.userStructure.id, this.currentPage, this.pageSize).subscribe({
             next: (data) => {
-                this.rawDemandeList = data.body || [];
-                console.log("RETOUR NON-CONFORMITE : ", data);
+                this.rawDemandeList = data.data.content || [];
+                this.totalElements = data.data.totalElements;
+                this.totalPages = data.data.totalPages;
+                this.currentPage = data.data.pageNumber;
+                this.pageSize = data.data.pageSize;
                 
                 this.applyLocalFilters();
                 this.featureService.onReloadRequested(true);
@@ -197,11 +202,9 @@ export class NCSuiviComponent {
     }
 
     getDemandeListUser(userId: string) {
-        console.log('UTILISATEUR ID : ', userId);
         this.loading = true;
         this.service.getNCByUser(userId).subscribe({
             next: (data) => {
-                console.log("Demande list : ", data);
                 this.rawDemandeList = data.data.content || [];
                 this.applyLocalFilters();
                 this.featureService.onReloadRequested(true);
@@ -228,6 +231,12 @@ export class NCSuiviComponent {
 
             }
         })
+    }
+
+    onPageChange(event: { page: number, size: number }) {
+        this.currentPage = event.page;   // ✅ mettre à jour la page
+        this.pageSize = event.size;      // ✅ mettre à jour la taille
+        this.loadSuiviData();
     }
 
     // private editer(rowData: any, resp: HttpResponse<any>) {

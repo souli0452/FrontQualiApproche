@@ -50,22 +50,8 @@ export class NcAffectationComponent {
         ];
     }
     ngOnInit() {
-        // this.userStructure = getCurrentUserStructure();
-        // this.getDemandeList();
     }
-    // getDemandeList() {
-    //     this.loading = true;
-    //     this.service.getNonConformiteByEtapeAndOrigin(EtapeTraitement.IMPUTATION, this.userStructure.id!).subscribe({
-    //         next: (data) => {
-    //             this.demandeList = data.body;
-    //             this.loading = false;
-    //         },
-    //         error: (error) => {
-    //             this.loading = false;
-    //             // showToast(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-    //         }
-    //     });
-    // }
+
     onSuccess(res: HttpResponse<any>) {
         showToast(StatusEnum.success, res.status, null, this.messageService);
     }

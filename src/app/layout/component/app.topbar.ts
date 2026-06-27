@@ -9,10 +9,12 @@ import { filter, map, takeUntil } from 'rxjs/operators';
 import { FormsModule, ReactiveFormsModule, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { Popover } from 'primeng/popover';
-import { showToast, StatusEnum, hasAnyPermission, isLicenseActive } from '../../utils';
 import { Subject } from 'rxjs';
 import { GlobalSearchService } from '../../services/non-conformite/global-search.service';
-import { ProcNonConformiteService } from '../../services/non-conformite/proc-non-conformite.service';
+import { NonConformiteService } from '../../services/non-conformite/non-conformite.service';
+import { hasAnyPermission, isLicenseActive } from '../../utils/auth/auth-utils';
+import { currentUserState } from '../../services/auth-services/auth.state';
+import { AuthData } from '../../models';
 
 
 @Component({
@@ -244,13 +246,13 @@ export class AppTopbar implements OnInit {
         private globalSearchService: GlobalSearchService,
         protected fb: UntypedFormBuilder,
         protected messageService: MessageService,
-        private procService: ProcNonConformiteService
+        private nonConformiteService: NonConformiteService,
     ) {
     }
 
 
     ngOnInit() {
-        this.user = this.authService.getUser();
+        this.user = currentUserState.value as AuthData
         this.updateTitle();
 
         // Écouter les changements de route pour mettre à jour le titre
@@ -266,7 +268,7 @@ export class AppTopbar implements OnInit {
         ];
 
         // Souscription aux notifications globales de NC
-        this.procService.notificationsNC$.pipe(takeUntil(this.destroy$)).subscribe((notifs: any) => {
+        this.nonConformiteService.notificationsNC$.pipe(takeUntil(this.destroy$)).subscribe((notifs: any) => {
             this.notificationCount = notifs.total || 0;
             this.notifications = [];
 

@@ -1,17 +1,9 @@
-import { Component, OnInit, OnDestroy, ViewChild, input, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { RoleService } from '../../../services/non-conformite/role.service'; // 👈 Bon chemin
-import { getCurrentUserStructure } from '../../../utils';
 import { EtapeTraitement } from '../../../enums';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
-
-// 👇 N'oubliez pas d'importer les composants de vos deux tableaux
-import { ValidationRQComponent } from '../nc-vue-ensemble/nc-validation-rq/nc-validation-rq';
-import { ReceptionComponent } from '../nc-vue-ensemble/nc-reception/nc-reception';
-import { ValidationPiloteComponent } from '../nc-vue-ensemble/nc-validation-pilote/nc-validation-pilote';
-import { NcClotureComponent } from '../nc-vue-ensemble/nc-cloture-rq/nc-cloture';
-import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
+import { Subject, takeUntil } from 'rxjs';
 import { NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
@@ -155,42 +147,6 @@ export class AnalyseValidationComponent implements OnInit, OnDestroy {
       });
     }
 
-  // fetchData() {
-  //   this.loading = true;
-
-    // 1. Si c'est le Pilote (Chef), on charge UNIQUEMENT ses validations
-    // if (this.roleService.isChef && this.userStructure?.id) {
-    //     this.procService.getNonConformiteByEtapeAndSumit(EtapeTraitement.VALIDATION, this.userStructure.id)
-    //         .pipe(takeUntil(this.destroy$))
-    //         .subscribe({
-    //             next: (res) => {
-    //               console.log(" validation pilote ", res);
-                  
-    //                 this.validationPiloteData = res.body || [];
-    //                 this.loading = false;
-    //             },
-    //             error: () => this.loading = false
-    //         });
-    // }
-
-    // 2. Si c'est le RQ, on charge UNIQUEMENT les validations RQ
-    // if (this.roleService.isRQ) {
-    //     forkJoin({
-    //         validation: this.procService.getNonConformiteByEtape(EtapeTraitement.VALIDATION_RS),
-    //         cloture: this.procService.getNonConformiteByEtape(EtapeTraitement.SUIVI_RQ)
-    //     })
-    //     .pipe(takeUntil(this.destroy$))
-    //     .subscribe({
-    //         next: (res: any) => {
-    //             this.validationRqData = res.validation.body || [];
-    //             this.clotureData = res.cloture.body || [];
-    //             this.loading = false;
-    //         },
-    //         error: () => this.loading = false
-    //     });
-    // }
-  // }
-
   validationRs(demandes: any) {
       const clean = (val: any) => (val === '' ? null : val);
       const cleanedDemandes = demandes.map((demande: any) => {
@@ -217,8 +173,6 @@ export class AnalyseValidationComponent implements OnInit, OnDestroy {
           };
       });
 
-      console.log("PAYLOAD VALIDATION RQ: ", cleanedDemandes);
-
       this.nonConformiteService.nonConformiteUpdate(cleanedDemandes).subscribe({
           next: (data) => {
               this.featureService.onReloadRequested(true);
@@ -237,10 +191,7 @@ export class AnalyseValidationComponent implements OnInit, OnDestroy {
 
   rejet(demande: any) {
       this.demande = demande;
-      console.log("MOTIF REJET DEMANDEE 1 ", this.motifRejetDialog);
       this.motifRejetDialog = true;
-      console.log("MOTIF REJET DEMANDEE 2 ", this.motifRejetDialog);
-      
       // Note: Il faudra ajouter le composant app-nc-rejet dans le template HTML
       // si tu veux que la pop-up de rejet s'affiche !
   }

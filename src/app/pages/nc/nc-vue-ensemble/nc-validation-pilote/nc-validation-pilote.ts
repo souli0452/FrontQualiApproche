@@ -3,14 +3,13 @@ import {MessageService} from "primeng/api";
 import {HttpResponse} from "@angular/common/http";
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
-import { AuthService } from '../../../../services/auth-services/auth.service';
-import { getCurrentUserStructure, showToast, StatusEnum } from '../../../../utils';
+import { showToast, StatusEnum } from '../../../../utils';
 import { FeaturesService } from '../../../../services/feature-service';
 import { TraitementTableComponent } from '../../../../components/non-conformite/table-traitement/traitement-table';
 import { EtapeTraitement } from '../../../../enums';
 import { Structure } from '../../../parametrages/structure/structure-config/structure';
 import { FormRejetComponent } from '../../../../components/non-conformite/form-rejet/form-rejet';
-import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
+import { NonConformiteService } from '../../../../services/non-conformite/non-conformite.service';
 
 @Component({
     selector: 'app-nc-validation-pilote',
@@ -31,9 +30,8 @@ export class ValidationPiloteComponent {
     userStructure: Structure = {};
     cols: any[] = [];
     constructor(
-        private authService: AuthService,
         protected messageService: MessageService,
-        private service: ProcNonConformiteService,
+        private nonConformiteService: NonConformiteService,
         private  featureService:FeaturesService,
     ) {
         this.cols = [
@@ -52,23 +50,7 @@ export class ValidationPiloteComponent {
         ];
     }
     ngOnInit() {
-        // this.userStructure = getCurrentUserStructure();
-        // this.getDemandeList();
     }
-    // getDemandeList() {
-    //     this.loading = true;
-    //     this.service.getNonConformiteByEtapeAndOrigin(EtapeTraitement.VALIDATION, this.userStructure.id!).subscribe({
-    //         next: (data) => {
-    //             this.demandeList = data.body;
-    //             this.loading = false;
-    //         },
-    //         error: (error) => {
-    //             this.loading = false;
-    //             this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: 'Erreur lors de la recupérations des demande', life: 3000 });
-    //             // showToast(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-    //         }
-    //     });
-    // }
     onSuccess(res: HttpResponse<any>) {
         showToast(StatusEnum.success, res.status, null, this.messageService);
     }
@@ -85,7 +67,7 @@ export class ValidationPiloteComponent {
             };
         });
 
-        this.service.updateNomConformites(cleanedDemandes).subscribe({
+        this.nonConformiteService.nonConformiteUpdate(cleanedDemandes).subscribe({
             next: (data) => {
                this.featureService.onReloadRequested(true);
                 this.dmdTraitement.closeDetailsDialog();

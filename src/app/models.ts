@@ -300,6 +300,12 @@ export interface KcLoginRequest {
     refreshToken: String;
 }
 
+export interface LoginRequest {
+    username: String;
+    password: String;
+    refreshToken: String;
+}
+
 // export interface KcUser {
 //     id: string;
 //     userId?: string;
@@ -318,6 +324,42 @@ export interface KcLoginRequest {
 //     licenseActive?: boolean;
 //     licenseDaysRemaining: number;
 // }
+
+
+
+export interface AuthData {
+  appRoles: string[];
+  expires_in: number;
+  fonction?: string | null;
+  licenseActive: boolean;
+  licenseDaysRemaining: number;
+  modulesSubscribed: string[];
+  permissions: string[];
+  refresh_expires_in: number;
+  scope: string;
+  token_type: string;
+  user: UserResponse;
+}
+
+
+export interface UserResponse{
+  userId: string;
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+
+  fonction?: string | null;
+  structure: string;
+
+  roles: string[];
+
+  // Ajouts utiles venant du parent (optionnels)
+  permissions?: string[];
+  appRoles?: string[];
+  licenseActive?: boolean;
+  licenseDaysRemaining?: number;
+}
 
 export interface KcUser {
   id?: string;

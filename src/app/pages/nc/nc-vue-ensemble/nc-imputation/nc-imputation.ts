@@ -9,6 +9,9 @@ import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { TraitementTableComponent } from '../../../../components/non-conformite/table-traitement/traitement-table';
 import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
 import { NCRejetComponent } from '../../nc-rejet/nc-rejet';
+import { NonConformiteService } from '../../../../services/non-conformite/non-conformite.service';
+import { currentUserState } from '../../../../services/auth-services/auth.state';
+import { AuthData } from '../../../../models';
 
 @Component({
     selector: 'app-nc-imputation',
@@ -28,10 +31,11 @@ export class VueEnsembleImputationComponent {
     protected readonly BtnActions = EtapeTraitement;
     @ViewChild(TraitementTableComponent) traitementDemandeTable!: TraitementTableComponent;
     cols: any[] = [];
+
     constructor(
         private authService: AuthService,
         protected messageService: MessageService,
-        private service: ProcNonConformiteService
+        private nonConformiteService: NonConformiteService,
     ) {
         this.cols = [
             { field: 'numeroReference', header: 'N° Ref.', type: 'string', filter: false, width: '220px', centered: true },
@@ -41,7 +45,7 @@ export class VueEnsembleImputationComponent {
         ];
     }
     ngOnInit() {
-        this.user = this.authService.getUser()!;
+        this.user = currentUserState.value as AuthData | any;
     }
   
     onSuccess(res: HttpResponse<any>) {
@@ -60,7 +64,7 @@ export class VueEnsembleImputationComponent {
             };
         });
 
-        this.service.updateNomConformites(cleanedDemandes).subscribe({
+        this.nonConformiteService.nonConformiteUpdate(cleanedDemandes).subscribe({
             next: () => {
                 this.traitementDemandeTable.closeDetailsDialog();
                 this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'oppération à réussie !", life: 3000 });
@@ -84,7 +88,7 @@ export class VueEnsembleImputationComponent {
             };
         });
 
-        this.service.updateNomConformites(cleanedDemandes).subscribe({
+        this.nonConformiteService.nonConformiteUpdate(cleanedDemandes).subscribe({
             next: (data) => {
                 this.traitementDemandeTable.closeDetailsDialog();
                 this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'oppération à réussie !", life: 3000 });

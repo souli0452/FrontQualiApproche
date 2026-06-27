@@ -31,6 +31,24 @@
         [currentPage]="currentPage">
     </app-traitement-table>
 
+    <div *ngIf="nonTraiterData.length > 0" class="mt-4">
+        <!-- <app-nc-non-traiter [nonTraiterData]="nonTraiterData"></app-nc-non-traiter> -->
+        <app-traitement-action
+            [nonTraiterData]="nonTraiterData"
+            [cols]="colsAction"
+            [loading]="loading"
+            (publish)="traiter($event)"
+            [paginator]="false"
+            [showGridlines]="false"
+            [status]="NonConformStatus.NON_TRAITER"
+            (pageChangeEvent)="onPageChangeNonTraiter($event)"
+            [totalElements]="totalElementsNonTraiter"
+            [pageSize]="pageSizeNonTraiter"
+            [currentPage]="currentPageNonTraiter"
+            >
+        </app-traitement-action>
+    </div>
+
     <!-- Empty state si aucune donnée -->
     <div *ngIf="mesNonConformites.length === 0 && nonTraiterData.length === 0 && !loading" 
          class="flex flex-col items-center justify-center p-4 mt-2 bg-surface-0 dark:bg-surface-900 text-center">

@@ -12,15 +12,6 @@ import { EtapeTraitement, NonConformStatus } from '../../enums';
 
 
 @Injectable({providedIn: 'root'})
-// export class NonConformiteService extends QualiCrudService<NonConformite, string> {
-//     constructor(public override http: HttpClient) {
-//         super(http, QualiUrlConfig.NON_CONFORMITE_ROOT_URL);
-//     }
-
-//     getCountByStatus(id:any): Observable<HttpResponse<Array<NcStats>>> {
-//         return this.http.get<any>(`${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/count-by-status/${id}`, {observe: 'response'});
-//     }
-// }
 export class NonConformiteService extends BaseCrudService<NonConformite, string> {
     constructor(public override http: HttpClient) {
         super(http, QualiUrlConfig.NON_CONFORMITE_ROOT_URL);
@@ -131,6 +122,18 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
         const params = this.buildParams({ page, size, ...filters });
         const httpHeaders = this.buildHeaders(headers);
         return this.http.get<ApiResponse<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL, {params, headers: httpHeaders});
+    }
+
+    nonConformiteByStructureGetPagination(
+        id:any,
+        page: number = 0,
+        size: number = 10,
+        filters?: Record<string, any>,
+        headers?: Record<string, string>
+    ): Observable<ApiResponse<any>> {
+        const params = this.buildParams({ page, size, ...filters });
+        const httpHeaders = this.buildHeaders(headers);
+        return this.http.get<ApiResponse<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL+`/structure/${id}`, {params: params, headers: httpHeaders});
     }
 
     /**
@@ -245,6 +248,18 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
         });
     }
 
+    nonConformiteParStructureEtOrigineGet(
+        etapeTraitement: EtapeTraitement,
+        structureId: string
+    ): Observable<ApiResponse<NonConformite>> {
+        return this.http.get<ApiResponse<NonConformite>>(
+            NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_ETAPE_ORIGIN + etapeTraitement + `/${structureId}`,
+            {
+                headers: { 'X-Skip-Loader': 'true' }
+            }
+        );
+    }
+
     /**
      * Récupérer les NC par étape + structure
      */
@@ -274,7 +289,7 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
         email:string,
         status:any,
         page: number = 0,
-        size: number = 10,
+        size: number = 5,
         filters?: Record<string, any>,
         headers?: Record<string, string>
     ): Observable<ApiResponse<any>> {
@@ -335,56 +350,50 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
         );
     }
 
+    nonConformiteImputeParUtilisateur(userId:string): Observable<HttpResponse<any>> {
+        return this.http.get<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL + "user/"+userId+"/imputed", { observe: 'response' });
+    }
+
+    /**
+     * Récupérer les stats pour le Dashboard de l'Agent
+     */
+    nonConformiteDashboardAgent(id: string): Observable<HttpResponse<any>> {
+        return this.http.get<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL + "dashboard/user/" + id, { observe: 'response' });
+    }
+
+    nonConformiteDashboardRq(): Observable<HttpResponse<any>> {
+        return this.http.get<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL + "/dashboard/rq", { observe: 'response' });
+    }
+
+    nonConformiteDashboardPilot(structureId:string): Observable<HttpResponse<any>> {
+        return this.http.get<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL + "dashboard/pilot/" + structureId, { observe: 'response' });
+    }
+
+    nonConformiteEvolutionGet(annee: number, mois?: number, structureId?: string): Observable<HttpResponse<any>> {
+        let params = new HttpParams().set('annee', annee.toString());
+        if (mois !== undefined && mois !== null) {
+            params = params.set('mois', mois.toString());
+        }
+        if (structureId) {
+            params = params.set('structureId', structureId);
+        }
+        return this.http.get<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL + "stats/evolution", { params, observe: 'response' });
+    }
 
 
+    nonConformitePlanActionsGet(email:string,status:any): Observable<HttpResponse<Array<any>>> {
+        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_PLAN_ACTION+email+`/${status}`, {observe: 'response'});
+    }
 
-    // nonConformiteReceptionUpdate(demandes: any[]): Observable<HttpResponse<any>> {
-    //     console.log('Route vers le BACKEND Demandes->',demandes);
-        
-    //     return this.http.put<any>(NonConformiteUrlConfig.UPDATE_NON_CONFORMITE , demandes, {observe: 'response'});
-    // }
+    nonConformiteUpdatePlanAction(demande: any): Observable<HttpResponse<any>> {
+        return this.http.put<any>(NonConformiteUrlConfig.UPDATE_PLAN_ACTION , demande, {observe: 'response'});
+    }
+
 
 
     getNonConformiteImputed(userId :string,etapeTraitement :EtapeTraitement): Observable<HttpResponse<Array<any>>> {
         return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_IMPUTED+userId+`/${etapeTraitement}`, {observe: 'response', headers: {'X-Skip-Loader': 'true'}});
     }
-
-    /**
-     * Variante qui retourne directement la liste
-     */
-    // findAllNcAsList(
-    //     page: number = 0,
-    //     size: number = 10,
-    //     status?: string,
-    //     id?: any,
-    //     headers?: Record<string, string>
-    // ): Observable<NonConformite[]> {
-    //     return this.findAllNc(page, size, status, id, headers).pipe(
-    //         map(res => res.data?.content ?? [])
-    //     );
-    // }
-
-    /**
-     * Helper métier lisible : NC archivées par structure
-     */
-    // findArchivedByStructure(
-    //     structureId: string,
-    //     page: number = 0,
-    //     size: number = 10
-    // ): Observable<ApiResponse<NonConformite>> {
-    //     return this.findAllNc(page, size, NonConformStatus.ARCHIVED, structureId);
-    // }
-
-    /**
-     * Helper métier lisible : brouillons par structure
-     */
-    // findDraftByStructure(
-    //     structureId: string,
-    //     page: number = 0,
-    //     size: number = 10
-    // ): Observable<ApiResponse<NonConformite>> {
-    //     return this.findAllNc(page, size, NonConformStatus.DRAFT, structureId);
-    // }
 }
 
     

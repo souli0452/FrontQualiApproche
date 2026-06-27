@@ -5,8 +5,9 @@ import { MenuItem } from 'primeng/api';
 import { AppMenuitem } from './app.menuitem';
 import { AuthService } from '../../services/auth-services/auth.service';
 import { ChangeDetectorRef } from '@angular/core';
-import { isUserInRoles, hasAnyPermission, isLicenseActive, isModuleSubscribed } from '../../utils';
 import { ProcNonConformiteService } from '../../services/non-conformite/proc-non-conformite.service';
+import { NonConformiteService } from '../../services/non-conformite/non-conformite.service';
+import { hasAnyPermission, isLicenseActive, isModuleSubscribed } from '../../utils/auth/auth-utils';
 
 @Component({
     selector: 'app-menu',
@@ -33,7 +34,7 @@ export class AppMenu {
     model: MenuItem[] = [];
     roles:any[]=[];
     constructor(
-        private readonly procService: ProcNonConformiteService,
+        private readonly nonConformiteService: NonConformiteService,
         private authService: AuthService,
         private cdr: ChangeDetectorRef
     ) {}
@@ -209,7 +210,7 @@ export class AppMenu {
             },
         ];
             // On écoute les changements du badge !
-    this.procService.notificationsNC$.subscribe((notifs: any) => {
+    this.nonConformiteService.notificationsNC$.subscribe((notifs: any) => {
             const total = notifs.total;
             // On trouve l'élément "Non-conformité" dans l'arbre du menu
             // On trouve la rubrique "Qualité & Conformité"

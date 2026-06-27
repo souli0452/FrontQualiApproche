@@ -6,7 +6,6 @@ import { getCurrentUserStructure, generateReportFile, ReportFormat, ReportingInp
 import { EtapeTraitement } from '../../../enums';
 import { Subject, takeUntil } from 'rxjs';
 
-import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 import { NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 
@@ -14,8 +13,6 @@ import { NonConformiteService } from '../../../services/non-conformite/non-confo
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
 import { MessageService } from 'primeng/api';
 import { FeaturesService } from '../../../services/feature-service';
-import { Router } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
 import { NCRejetComponent } from '../nc-rejet/nc-rejet';
 import { ApiItemResponse } from '../../../models';
 
@@ -58,11 +55,9 @@ export class AnalyseReceptionComponent implements OnInit, OnDestroy {
 
   constructor(
     public roleService: RoleService,
-    private procService: ProcNonConformiteService,
     private nonConformiteService: NonConformiteService,
     protected messageService: MessageService,
-    private featureService: FeaturesService,
-    private router: Router
+    private featureService: FeaturesService
   ){
         this.cols = [
             { field: 'numeroReference', header: 'N° ref', type: 'string', filter: true, width: '150px', centered: false },

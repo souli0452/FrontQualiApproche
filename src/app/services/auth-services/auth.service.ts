@@ -3,244 +3,144 @@ import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/comm
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, finalize, switchMap } from 'rxjs/operators';
-import { ApiResponse, KcLoginRequest, KcUser } from '../../models';
+import { ApiItemResponse, ApiResponse, AuthData, KcLoginRequest, KcUser, LoginRequest } from '../../models';
 import { map } from 'rxjs/operators';
 import { QualiCrudService } from '../quali-crud.service';
 import { QualiUrlConfig } from '../quali-url-configs';
 import { createRequestOption, USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
-
-// interface AuthResponse {
-//     accessToken: string;
-//     refreshToken: string;
-//     expiresIn: number;
-//     refreshExpiresIn: number;
-//     tokenType: string;
-//     scope: string;
-//     data: {
-//         user: any;
-//         appRoles?: string[];
-//         permissions?: string[];
-//         licenseActive?: boolean;
-//         licenseDaysRemaining?: number;
-//         modulesSubscribed?:string[];
-//     };
-// }
-
-export interface AuthResponse {
-  message: string;
-  data: {
-    data: {
-        access_token: string;
-        appRoles: string[];
-        expires_in: number;
-        fonction: string | null;
-        licenseActive: boolean;
-        licenseDaysRemaining: number;
-        modulesSubscribed: string[];
-        permissions: string[];
-        refresh_expires_in: number;
-        refresh_token: string;
-        scope: string;
-        token_type: string;
-        user: {
-            email: string;
-            firstName: string;
-            fonction: string | null;
-            lastName: string;
-            roles: string[];
-            structure: string;
-            userId: string;
-            username: string;
-        };
-    };
-    message: string | null;
-    status: string;
-    };
-    statusCode: number;
-}
-
+import { currentUserState } from './auth.state';
 
 @Injectable({
     providedIn: 'root'
 })
 export class AuthService extends QualiCrudService<KcUser, number> {
+
     private isLoggedIn = new BehaviorSubject<boolean>(false);
     private refreshTokenInProgress = false;
     user: any;
-    private currentUser = new BehaviorSubject<KcUser | null>(this.getUser());
 
     constructor(
         public override http: HttpClient,
         private router: Router
     ) {
         super(http, QualiUrlConfig.FORMATION_ROOT_URL);
-        this.user = this.getUser()!;
     }
-
-    // override findAll(): Observable<HttpResponse<Array<KcUser>>> {
-    //     return this.http.get<KcUser[]>(QualiUrlConfig.USERS_URL, { observe: 'response' });
-    // }
-
 
     override findAll(): Observable<ApiResponse<KcUser>> {
         return this.http.get<ApiResponse<KcUser>>(QualiUrlConfig.USERS_URL);
     }
 
-
-    // Connexion
-    login(credentials: KcLoginRequest): Observable<AuthResponse> {
-        return this.http.post<AuthResponse>(QualiUrlConfig.LOGIN_URL, credentials).pipe(
-            map((response: AuthResponse) => {
-                const user = response.data.data;
-                if (user) {
-                    user.appRoles = response.data.data.appRoles;
-                    user.permissions = response.data.data.permissions;
-                    user.licenseActive = response.data.data.licenseActive;
-                    user.licenseDaysRemaining = response.data.data.licenseDaysRemaining;
-                    user.modulesSubscribed = response.data.data.modulesSubscribed;
-                    this.setUser(user.user);
-                    this.setAuth(response);
-                }
-                this.setTokens(response.data.data.access_token, response.data.data.refresh_token);
+    login(credentials: LoginRequest): Observable<ApiItemResponse<AuthData>> {
+        return this.http.post<ApiItemResponse<AuthData>>(QualiUrlConfig.LOGIN_URL, credentials, {
+            withCredentials: true
+        }).pipe(
+            map((response: ApiItemResponse<AuthData>) => {
+                currentUserState.next(response.data);
+                this.isLoggedIn.next(true);
+                sessionStorage.setItem('userId', response.data.user.userId);
                 return response;
             })
         );
     }
+
+    get currentUser$(): Observable<AuthData | null> {
+        return currentUserState.asObservable();
+    }
+
     getAllRoles(): Observable<HttpResponse<Array<any>>> {
         return this.http.get<Array<any>>(QualiUrlConfig.ROLE_URL, { observe: 'response' });
     }
 
-    // Connexion
-    login3(credentials: KcLoginRequest): Observable<AuthResponse> {
-        return this.http.post<AuthResponse>(QualiUrlConfig.LOGIN_URL, credentials);
+    getMe(): Observable<ApiItemResponse<AuthData> | null> {
+        const userId = sessionStorage.getItem('userId');
+        if (!userId) {
+            // Pas d'userId = pas de session connue
+            return of(null);
+        }
+        const params = new HttpParams().set('userId', userId);
+        return this.http.get<ApiItemResponse<AuthData>>(QualiUrlConfig.USERS_BY_ID_URL, {
+            params,
+            withCredentials: true
+        }).pipe(
+            map((response: ApiItemResponse<AuthData>) => {
+                currentUserState.next(response.data);
+                this.isLoggedIn.next(true);
+                return response;
+            }),
+            catchError(() => {
+                currentUserState.next(null);
+                this.isLoggedIn.next(false);
+                return of(null);
+            })
+        );
     }
 
-    get currentUser$(): Observable<KcUser | null> {
-        return this.currentUser.asObservable();
-    }
+    // getAuth(): AuthResponse | null {
+    //     const authJson = localStorage.getItem('auth');
+    //     return authJson ? JSON.parse(authJson) : null;
+    // }
 
-    getUser(): KcUser | null {
-        const userJson = localStorage.getItem('user');
-        return userJson ? JSON.parse(userJson) : null;
-    }
-
-    getAuth(): AuthResponse | null {
-        const authJson = localStorage.getItem('auth');
-        return authJson ? JSON.parse(authJson) : null;
-    }
-
-    setUser(user: KcUser): void {
-        localStorage.setItem('user', JSON.stringify(user));
-        this.currentUser.next(user);
-    }
-
-    setAuth(auth: AuthResponse): void {
-        localStorage.setItem('auth', JSON.stringify(auth));
-        this.currentUser.next(auth.data.data.user);
-    }
-
-    // Déconnexion
     logout(): void {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem(USER_PROFILE_KEY);
-        localStorage.removeItem(USER_STRUCTURE_KEY);
-        localStorage.removeItem('user');
+        this.http.post(QualiUrlConfig.LOGOUT_URL, {}, { withCredentials: true })
+            .subscribe({
+                next: () => this.clearSession(),
+                error: () => this.clearSession() // on nettoie quand même, même si le backend échoue
+            });
+    }
+    private clearSession(): void {
+        sessionStorage.removeItem('userId');
         this.isLoggedIn.next(false);
-        this.currentUser.next(null);
+        currentUserState.next(null);
         this.router.navigate(['/login']);
     }
-    removeAll(): void {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem(USER_PROFILE_KEY);
-        localStorage.removeItem(USER_STRUCTURE_KEY);
-        localStorage.removeItem('user');
-        this.isLoggedIn.next(false);
-        this.currentUser.next(null);
-    }
-    isAuthenticated(): Observable<boolean> {
+
+
+    public isAuthenticated(): Observable<boolean> {
         return this.isLoggedIn.asObservable();
     }
 
     // Stockage des tokens
-    public setTokens(accessToken: string, refreshToken: string): void {
-        localStorage.setItem('access_token', accessToken);
-        localStorage.setItem('refresh_token', refreshToken);
-        this.isLoggedIn.next(true);
-    }
-
-    // hasPermission(permission: string): boolean {
-    //     const user = this.getUser();
-    //     if (!user) return false;
-    //     return user.permissions?.includes(permission) || false;
+    // public setTokens(accessToken: string, refreshToken: string): void {
+    //     localStorage.setItem('access_token', accessToken);
+    //     localStorage.setItem('refresh_token', refreshToken);
+    //     this.isLoggedIn.next(true);
     // }
 
     hasPermission(permission: string): boolean {
-        const user = this.getAuth();
-        if (!user) return false;
-        return user.data.data.permissions?.includes(permission) || false;
+        // On récupère la valeur actuelle stockée dans le BehaviorSubject
+        const authData = currentUserState.value; 
+        
+        if (!authData) return false;
+        
+        return authData.permissions?.includes(permission) || false;
     }
-
-    // isLicenseActive(): boolean {
-    //     const user = this.getUser();
-    //     return user?.licenseActive || false;
-    // }
-
+    
     isLicenseActive(): boolean {
-        const user = this.getAuth();
-        return user?.data.data.licenseActive || false;
+        const authData = currentUserState.value;
+        return authData?.licenseActive || false;
     }
-
-    // getLicenseDaysRemaining(): number {
-    //     const user = JSON.parse(localStorage.getItem('user')!) as KcUser;
-    //     return user?.licenseDaysRemaining || 0;
-    // }
 
     getLicenseDaysRemaining(): number {
-        const user = JSON.parse(localStorage.getItem('auth')!) as AuthResponse;
-        return user?.data.data.licenseDaysRemaining || 0;
+        const authData = currentUserState.value;
+        return authData?.licenseDaysRemaining || 0;
     }
 
-    // Récupère le token d'accès
-    getAccessToken(): string | null {
-        return localStorage.getItem('access_token');
-    }
+    // Plus besoin de getAccessToken(), le token est géré automatiquement par les cookies.
+    // getAccessToken(): string | null {
+    //     return localStorage.getItem('access_token');
+    // }
 
     // Rafraîchissement des tokens
-    refreshToken(): Observable<string | null> {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken || this.refreshTokenInProgress) return of(null);
-
-        this.refreshTokenInProgress = true;
-
-        return this.http.post<AuthResponse>(QualiUrlConfig.REFRESH_TOKEN_URL, { refreshToken }).pipe(
-            switchMap((response) => {
-                this.setTokens(response.data.data.access_token, response.data.data.refresh_token);
-                return of(response.data.data.access_token);
-            }),
-            catchError(() => {
-                this.logout();
-                return of(null);
-            }),
-            finalize(() => {
-                this.refreshTokenInProgress = false;
-            })
-        );
+    refreshToken(): Observable<any> {
+        // Le Mutex (isRefreshing) est déjà géré par ton AuthInterceptor.
+        // On fait simplement un POST vide, le navigateur envoie le cookie 'refresh_token'
+        // et le backend répond avec un 'Set-Cookie' contenant le nouveau 'access_token'.
+        return this.http.post(QualiUrlConfig.REFRESH_TOKEN_URL, {}, { withCredentials: true });
     }
 
-    // Gestion du token expiré
-    handleExpiredToken(): Observable<string | null> {
-        return this.refreshToken().pipe(
-            switchMap((newAccessToken) => {
-                if (newAccessToken) {
-                    return of(newAccessToken);
-                } else {
-                    this.router.navigate(['/login']);
-                    return of(null);
-                }
-            })
-        );
+    // Gestion du token expiré (si utilisée ailleurs)
+    handleExpiredToken(): Observable<any> {
+        return this.refreshToken();
     }
     getAllUsers(page: number = 0, size: number = 10): Observable<ApiResponse<KcUser>> {
         return this.http.get<ApiResponse<KcUser>>(`${QualiUrlConfig.USERS_URL}?page=${page}&size=${size}`);
