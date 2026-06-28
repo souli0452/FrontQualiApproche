@@ -14,7 +14,7 @@ import { TraitementTableComponent } from '../../../components/non-conformite/tab
 import { MessageService } from 'primeng/api';
 import { FeaturesService } from '../../../services/feature-service';
 import { NCRejetComponent } from '../nc-rejet/nc-rejet';
-import { ApiItemResponse } from '../../../models';
+import { ApiItemResponse } from '../../../models/response.model';
 
 @Component({
   selector: 'app-nc-analyse-reception',

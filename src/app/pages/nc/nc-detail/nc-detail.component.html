@@ -66,13 +66,13 @@
                         <span class="font-bold text-sm">Validation par le pilote processus</span>
                     </div>
                 </ng-template>
-                <div class="nc-details-grid pt-2">
-                    <div class="nc-detail-item">
-                        <span class="nc-detail-label block font-bold ">Pertinence :</span>
-                        <span class="nc-detail-value">{{nc.pertinancePilote}}</span>
+                <div class="pt-2">
+                    <div class="nc-detail-item mb-2">
+                        <span class="nc-detail-label block font-bold underline mb-1">Pertinence :</span>
+                        <span class="nc-detail-value p-2 rounded" [ngClass]="nc.pertinancePilote === 'oui' ? 'bg-green-100' : 'bg-red-100'">{{nc.pertinancePilote}}</span>
                     </div>
                     <div class="nc-detail-item" *ngIf="nc.justificationPilote">
-                        <span class="nc-detail-label block font-bold ">Justification :</span>
+                        <span class="nc-detail-label block font-bold underline">Justification :</span>
                         <span class="nc-detail-value" [innerHTML]="nc.justificationPilote"></span>
                     </div>
                 </div>
@@ -112,13 +112,13 @@
                         <span class="font-bold text-sm">Validation du RQ</span>
                     </div>
                 </ng-template>
-                <div class="nc-details-grid pt-2">
-                    <div class="nc-detail-item">
-                        <span class="nc-detail-label">Pertinence :</span>
-                        <span class="nc-detail-value">{{nc.pertinanceRs}}</span>
+                <div class="pt-2">
+                    <div class="nc-detail-item mb-2">
+                        <span class="nc-detail-label block font-bold underline mb-1">Pertinence :</span>
+                        <span class="nc-detail-value p-2 rounded" [ngClass]="nc.pertinanceRs === 'oui' ? 'bg-green-100' : 'bg-red-100'">{{nc.pertinanceRs}}</span>
                     </div>
                     <div class="nc-detail-item" *ngIf="nc.justificationRs">
-                        <span class="nc-detail-label block font-bold ">Justification :</span>
+                        <span class="nc-detail-label block font-bold underline mb-1">Justification :</span>
                         <span class="nc-detail-value" [innerHTML]="nc.justificationRs"></span>
                     </div>
                 </div>
@@ -133,13 +133,13 @@
                         <span class="font-bold text-sm">Suivi du Responsable Qualité</span>
                     </div>
                 </ng-template>
-                <div class="nc-details-grid pt-2">
-                    <div class="nc-detail-item">
-                        <span class="nc-detail-label block font-bold ">Pertinence :</span>
-                        <span class="nc-detail-value">{{nc.pertinanceRsSuivi || '-'}}</span>
+                <div class="pt-2">
+                    <div class="nc-detail-item mb-2">
+                        <span class="nc-detail-label block font-bold underline mb-1">Pertinence :</span>
+                        <span class="nc-detail-value p-2 rounded" [ngClass]="nc.pertinanceRsSuivi === 'oui' ? 'bg-green-100' : 'bg-red-100'">{{nc.pertinanceRsSuivi || '-'}}</span>
                     </div>
                     <div class="nc-detail-item">
-                        <span class="nc-detail-label block font-bold ">Date :</span>
+                        <span class="nc-detail-label block font-bold underline mb-1">Date :</span>
                         <span class="nc-detail-value">{{nc.dateSuivi || '-'}}</span>
                     </div>
                 </div>
@@ -251,11 +251,7 @@
                                 <p-tag [severity]="getStatusSeverity(plan.status)" [value]="plan.status"></p-tag>
                             </td>
                             <td>
-                                <button pButton pRipple type="button" icon="pi pi-eye"
-                                        class="p-button-outlined p-button-secondary p-button-sm"
-                                        (click)="affich(plan)"
-                                        pTooltip="Voir détails" tooltipPosition="top">
-                                </button>
+                                <button pButton pRipple type="button" icon="pi pi-search" size="small" class="p-button-text p-button-rounded p-button-info" (click)="affich(plan)" pTooltip="Voir détails" tooltipPosition="top"></button>
                             </td>
                         </tr>
                     </ng-template>
@@ -287,7 +283,7 @@
                 </div>
                 <div>
                     <h5 class="m-0 font-bold text-surface-900 dark:text-surface-50 text-lg" style="margin: 0; font-weight: 700; font-size: 1.125rem;">
-                        Détails du plan action n°{{planAction?.numeroOrdre}}
+                        Détails du plan action n°{{planAction?.numeroOdre}}
                     </h5>
                     <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5" style="margin: 0.125rem 0 0 0; font-size: 0.75rem; color: #6B7280;">
                         Consultez l'ensemble des informations et le plan d'action
@@ -298,61 +294,83 @@
     </ng-template>
         <div class="grid">
             <div class="col-12">
-                <div class="card nc-card">
-                    <h4 class="nc-card-title">Informations générales</h4>
-                    <div class="nc-details-grid">
-                        <div class="nc-detail-item">
-                            <span class="nc-detail-label">N° Ordre :</span>
-                            <span class="nc-detail-value">{{ planAction?.numeroOdre }}</span>
+                <div class="mt-4">
+                    <p-fieldset [toggleable]="true" styleClass="mb-4">
+                        <ng-template pTemplate="header">
+                            <div class="flex items-center gap-2 text-primary">
+                                <span class="font-bold text-sm">Informations générales</span>
+                            </div>
+                        </ng-template>
+                        <div class="nc-details-grid">
+                            <div class="nc-detail-item">
+                                <span class="nc-detail-label">N° Ordre :</span>
+                                <span class="nc-detail-value">{{ planAction?.numeroOdre }}</span>
+                            </div>
+                            <div class="nc-detail-item">
+                                <span class="nc-detail-label">Responsable :</span>
+                                <span class="nc-detail-value">{{planAction?.responsableNomComplet}} ({{planAction?.responsableEmail}})</span>
+                            </div>
+                            <div class="nc-detail-item">
+                                <span class="nc-detail-label">Date d'échéance :</span>
+                                <span class="nc-detail-value">{{planAction?.dateEcheance }}</span>
+                            </div>
                         </div>
-                        <div class="nc-detail-item">
-                            <span class="nc-detail-label">Responsable :</span>
-                            <span class="nc-detail-value">{{planAction?.responsableNomComplet}} ({{planAction?.responsableEmail}})</span>
-                        </div>
-                        <div class="nc-detail-item">
-                            <span class="nc-detail-label">Date d'échéance :</span>
-                            <span class="nc-detail-value">{{planAction?.dateEcheance }}</span>
-                        </div>
-                    </div>
+                    </p-fieldset>
                 </div>
             </div>
 
             <div class="col-12 md:col-6">
-                <div class="card nc-card mt-3">
-                    <h4 class="nc-card-title">Causes identifiées</h4>
-                    <div class="nc-description break-words mt-2"
-                        [innerHTML]="planAction?.causeIdentifiees || 'Aucune cause identifiée'">
-                    </div>
+                <div class="mt-4">
+                    <p-fieldset [toggleable]="true" styleClass="mb-4">
+                        <ng-template pTemplate="header">
+                            <div class="flex items-center gap-2 text-primary">
+                                <span class="font-bold text-sm">Causes identifiées</span>
+                            </div>
+                        </ng-template>
+                        <div class="nc-description break-words mt-2"
+                            [innerHTML]="planAction?.causeIdentifiees || 'Aucune cause identifiée'">
+                        </div>
+                    </p-fieldset>
                 </div>
             </div>
 
             <div class="col-12 md:col-6">
-                <div class="card nc-card mt-3">
-                    <h4 class="nc-card-title">Solutions retenues</h4>
-                    <div class="nc-description break-words mt-2"
-                        [innerHTML]="planAction?.solutionRetenues || 'Aucune solution retenue'">
-                    </div>
+                <div class="mt-4">
+                    <p-fieldset [toggleable]="true" styleClass="mb-4">
+                        <ng-template pTemplate="header">
+                            <div class="flex items-center gap-2 text-primary">
+                                <span class="font-bold text-sm">Solutions retenues</span>
+                            </div>
+                        </ng-template>
+                        <div class="nc-description break-words mt-2"
+                            [innerHTML]="planAction?.solutionRetenues || 'Aucune solution retenue'">
+                        </div>
+                    </p-fieldset>
                 </div>
             </div>
 
             <div class="col-12" *ngIf="planAction?.fichiers?.length > 0">
-                <div class="card nc-card mt-3">
-                    <h4 class="nc-card-title">
-                        <i class="pi pi-paperclip mr-2"></i>Pièces jointes
-                    </h4>
-                    <div *ngFor="let fichier of planAction.fichiers" class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
-                        <div class="flex align-items-center mt-3">
-                            <span class="file-name">{{ fichier.nomFichier }}</span>
-                        </div>
-                        <button pButton pRipple
-                                type="button"
+                <div class="mt-4">
+                    <p-fieldset [toggleable]="true" styleClass="mb-4">
+                        <ng-template pTemplate="header">
+                            <div class="flex items-center gap-2 text-primary">
+                                <span class="font-bold text-sm">Pièces jointes</span>
+                            </div>
+                        </ng-template>
+                        <div *ngFor="let fichier of planAction.fichiers" class="file-item flex align-items-center justify-content-between p-2 border-round mb-2">
+                            <div class="flex align-items-center mt-3">
+                                <span class="file-name">{{ fichier.nomFichier }}</span>
+                            </div>
+                            <button pButton pRipple
+                                    type="button"
                                 icon="pi pi-download"
                                 class="p-button-text p-button-rounded p-button-plain"
                                 (click)="downloadFile(fichier)"
                                 pTooltip="Télécharger"
                                 tooltipPosition="left">
-                        </button>
-                    </div>
+                            </button>
+                        </div>
+                    </p-fieldset>
                 </div>
             </div>
         </div>

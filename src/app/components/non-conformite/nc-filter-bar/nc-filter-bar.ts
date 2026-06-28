@@ -2,10 +2,11 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { TypeProcessusService } from '../../../services/non-conformite/type-processus.service';
-import { NiveauNonConformite, TypeProcessus, TypeNonConformite } from '../../../models';
 import { NiveauNonConformiteService } from '../../../services/non-conformite/niveau-non-conformite.service';
-import { TypeNonConformiteService } from '../../../services/non-conformite/type-non-conformite.service';
+import { CategorieProcessus } from '../../../models/categore-processus.model';
+import { NiveauNonConformite, OrigineNonConformite } from '../../../models/non-conformite.model';
+import { CategorieProcessusService } from '../../../services/non-conformite/type-processus.service';
+import { OrigineNonConformiteService } from '../../../services/non-conformite/type-non-conformite.service';
 
 export interface NcFilter {
     dateDebut: Date | undefined;
@@ -29,9 +30,9 @@ export class NcFilterBarComponent implements OnInit {
     @Input() showGravite: boolean = true; 
     @Input() showOrigine: boolean = true; 
     
-    processusList: TypeProcessus[] = [];
+    processusList: CategorieProcessus[] = [];
     graviteList: NiveauNonConformite[] = [];
-    origineList: TypeNonConformite[] = [];
+    origineList: OrigineNonConformite[] = [];
 
     dateDebut: Date | undefined;
     dateFin: Date | undefined;
@@ -40,9 +41,9 @@ export class NcFilterBarComponent implements OnInit {
     selectedOrigine: any;
 
     constructor(
-        protected typeProcessusService: TypeProcessusService,
+        protected typeProcessusService: CategorieProcessusService,
         protected niveauNonConformiteService: NiveauNonConformiteService,
-        protected typeNonConformiteService: TypeNonConformiteService
+        protected typeNonConformiteService: OrigineNonConformiteService
     ) {}
 
     ngOnInit() {

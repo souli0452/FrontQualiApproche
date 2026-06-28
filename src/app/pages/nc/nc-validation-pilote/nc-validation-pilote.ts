@@ -19,7 +19,7 @@ import { NCRejetComponent } from '../nc-rejet/nc-rejet';
 import { MessageService } from 'primeng/api';
 import { FeaturesService } from '../../../services/feature-service';
 import { Router } from '@angular/router';
-import { ApiItemResponse } from '../../../models';
+import { ApiItemResponse } from '../../../models/response.model';
 
 @Component({
   selector: 'app-nc-validation-pilote',

@@ -2,10 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {QualiCrudService} from "./quali-crud.service";
 import {QualiUrlConfig} from "./quali-url-configs";
-import {Reclamation} from "../models";
-
-
-
+import { Reclamation } from '../models/reclamation.model';
 
 @Injectable({providedIn: 'root'})
 export class ReclamationService extends QualiCrudService<Reclamation, string> {

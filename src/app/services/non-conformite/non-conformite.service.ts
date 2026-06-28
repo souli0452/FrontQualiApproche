@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
-import {ApiItemResponse, ApiResponse, NonConformite} from "../../models";
 import { BehaviorSubject, map, Observable } from 'rxjs';
 import { NcStats } from '../../models/statsNc';
 import { QualiCrudService } from '../quali-crud.service';
@@ -8,6 +7,8 @@ import { QualiUrlConfig } from '../quali-url-configs';
 import { BaseCrudService } from '../base-crud.service';
 import { NonConformiteUrlConfig } from '../../components/non-conformite/config/proc-non-conformite.urls.configs';
 import { EtapeTraitement, NonConformStatus } from '../../enums';
+import { ApiItemResponse, ApiResponse } from '../../models/response.model';
+import { NonConformite } from '../../models/non-conformite.model';
 
 
 

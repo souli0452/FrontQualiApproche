@@ -4,7 +4,8 @@ import {Observable} from "rxjs";
 import { EtapeTraitement } from '../../enums';
 import { BehaviorSubject } from 'rxjs';
 import { NonConformiteUrlConfig } from '../../components/non-conformite/config/proc-non-conformite.urls.configs';
-import { ApiResponse, NonConformite } from '../../models';
+import { ApiResponse } from '../../models/response.model';
+import { NonConformite } from '../../models/non-conformite.model';
 
 @Injectable({
   providedIn: 'root'

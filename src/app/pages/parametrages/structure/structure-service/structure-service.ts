@@ -5,7 +5,7 @@ import { Structure } from '../structure-config/structure';
 import { StructureEndpoint } from '../structure-config/strucuture-url-config';
 import { createRequestOption, formatUrl } from '../../../../utils';
 import { TypeStructure } from '../../../../enums';
-import { ApiResponse, PaginatedData } from '../../../../models';
+import { ApiResponse, PaginatedData } from '../../../../models/response.model';
 
 
 @Injectable({providedIn: 'root'})

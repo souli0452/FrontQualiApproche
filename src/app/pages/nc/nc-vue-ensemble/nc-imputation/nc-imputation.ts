@@ -11,7 +11,7 @@ import { ProcNonConformiteService } from '../../../../services/non-conformite/pr
 import { NCRejetComponent } from '../../nc-rejet/nc-rejet';
 import { NonConformiteService } from '../../../../services/non-conformite/non-conformite.service';
 import { currentUserState } from '../../../../services/auth-services/auth.state';
-import { AuthData } from '../../../../models';
+import { AuthData } from '../../../../models/auth.model';
 
 @Component({
     selector: 'app-nc-imputation',

@@ -14,7 +14,7 @@ import { NCRejetComponent } from '../../nc-rejet/nc-rejet';
 import { Structure } from '../../../parametrages/structure/structure-config/structure';
 import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
 import { NonConformiteService } from '../../../../services/non-conformite/non-conformite.service';
-import { ApiResponse } from '../../../../models';
+import { ApiResponse } from '../../../../models/response.model';
 
 @Component({
     selector: 'app-nc-reception',

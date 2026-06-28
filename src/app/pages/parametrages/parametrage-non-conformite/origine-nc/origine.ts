@@ -5,9 +5,11 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { MessageService } from 'primeng/api';
 import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../../../components/app-crud-generic/app-crud-generic.component';
-import { ApiItemResponse, FormGroupColumn, TableColumn, TypeNonConformite } from '../../../../models';
 import { showToast, StatusEnum } from '../../../../utils';
-import { TypeNonConformiteService } from '../../../../services/non-conformite/type-non-conformite.service';
+import { ApiItemResponse } from '../../../../models/response.model';
+import { FormGroupColumn, TableColumn } from '../../../../models/generique.model';
+import { OrigineNonConformite } from '../../../../models/non-conformite.model';
+import { OrigineNonConformiteService } from '../../../../services/non-conformite/type-non-conformite.service';
 
 @Component({
     selector: 'app-type-non-conformite',
@@ -47,7 +49,7 @@ import { TypeNonConformiteService } from '../../../../services/non-conformite/ty
 export class SourceNonConformite {
     loading: boolean = true;
       destroy$: Subject<boolean> = new Subject<boolean>();
-      dataList: TypeNonConformite[] = [];
+      dataList: OrigineNonConformite[] = [];
           totalElements: number = 0;
       currentPage: number = 0;
       pageSize: number = 0;
@@ -61,20 +63,22 @@ export class SourceNonConformite {
       pageLabel = 'Origine de Non-Conformité';
       formHeader = 'Création et mise à jour d\'un type de non conformité';
 
-      constructor(protected fb: UntypedFormBuilder,
-                  protected messageService: MessageService,
-                  protected typeNonConformiteService: TypeNonConformiteService) {
+      constructor(
+        protected fb: UntypedFormBuilder,
+        protected messageService: MessageService,
+        protected typeNonConformiteService: OrigineNonConformiteService
+        ) {
           this.formCols = [
-              {field: 'id', label: "", header: 'Id', type: 'number', visible: false, required: false},
-              {field: 'libelle', label: "Libellé du type de non conformité (Système - Service)", header: 'Libellé', type: 'string', visible: true, required: true},
-              {field: 'description', label: "Description du type de non conformité", header: 'Description', type: 'text', visible: true, required: false}
+            {field: 'id', label: "", header: 'Id', type: 'number', visible: false, required: false},
+            {field: 'libelle', label: "Libellé du type de non conformité (Système - Service)", header: 'Libellé', type: 'string', visible: true, required: true},
+            {field: 'description', label: "Description du type de non conformité", header: 'Description', type: 'text', visible: true, required: false}
           ];
 
           this.tableCols = [
-              {field: 'libelle', header: 'Libellé', type: 'string', filter: true},
-              {field: 'description', header: 'Description', type: 'string', filter: true},
-              {field: 'createdAt', header: 'Date de création', type: 'date', filter: true},
-              {field: 'updatedAt', header: 'Date de modification', type: 'date', filter: true}
+            {field: 'libelle', header: 'Libellé', type: 'string', filter: true},
+            {field: 'description', header: 'Description', type: 'string', filter: true},
+            {field: 'createdAt', header: 'Date de création', type: 'date', filter: true},
+            {field: 'updatedAt', header: 'Date de modification', type: 'date', filter: true}
           ];
 
           this.formGroup = this.fb.group({
@@ -129,7 +133,7 @@ export class SourceNonConformite {
         showToast(StatusEnum.success, res.statusCode, res.message, this.messageService);
     }
 
-    onSave(object: TypeNonConformite) {
+    onSave(object: OrigineNonConformite) {
         const request = object.id != null
             ? this.typeNonConformiteService.update(object)
             : this.typeNonConformiteService.create(object);
@@ -146,7 +150,7 @@ export class SourceNonConformite {
         });
     }
 
-      onDelete(produit: TypeNonConformite) {
+      onDelete(produit: OrigineNonConformite) {
           this.typeNonConformiteService.delete(produit.id).pipe(takeUntil(this.destroy$))
               .subscribe({
                   next: res => {

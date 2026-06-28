@@ -3,11 +3,12 @@ import { Component } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../../../components/app-crud-generic/app-crud-generic.component';
-import { ActionNonConformite, ApiItemResponse, FormGroupColumn, TableColumn } from '../../../../models';
 import { ActionNonConformiteService } from '../../../../services/non-conformite/action-non-conformite.service';
 import { showToast, StatusEnum } from '../../../../utils';
+import { ApiItemResponse } from '../../../../models/response.model';
+import { FormGroupColumn, TableColumn } from '../../../../models/generique.model';
+import { ActionNonConformite } from '../../../../models/non-conformite.model';
 
 @Component({
     selector: 'app-action',

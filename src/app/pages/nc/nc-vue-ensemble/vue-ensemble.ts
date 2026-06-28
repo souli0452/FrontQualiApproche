@@ -21,29 +21,29 @@ import { NonConformiteService } from '../../../services/non-conformite/non-confo
 import { buildDashboardStats } from '../../../utils/non-conformite/nc-utils';
 import { DASHBOARD_CARDS_AGENT, DASHBOARD_CARDS_CHEF, DASHBOARD_CARDS_RQ } from '../../../components/non-conformite/dashboard-card/dashboard-card';
 import { NcVueEnsembleFacade } from './vue-ensemble.facade';
-import { AuthData, UserResponse } from '../../../models';
 import { isUserInRoles } from '../../../utils/auth/auth-utils';
 import { currentUserState } from '../../../services/auth-services/auth.state';
+import { AuthData } from '../../../models/auth.model';
 
 @Component({
-  selector: 'app-vue-ensemble',
-  standalone: true,
-  imports: [
-            CommonModule, 
-            NcModule, 
-            NgPrimeModule,
-            NcStatsCardComponent,
-            VueEnsembleImputationComponent,
-            AlerteTraitement,
-            ReceptionComponent,
-            ValidationRQComponent,
-            NcAffectationComponent,
-            ValidationPiloteComponent,
-            NcClotureComponent,
-            NcNonTraiterComponent
-          ],
-  templateUrl: './vue-ensemble.html',
-  styleUrl: './vue-ensemble.scss'
+    selector: 'app-vue-ensemble',
+    standalone: true,
+    imports: [
+                CommonModule, 
+                NcModule, 
+                NgPrimeModule,
+                NcStatsCardComponent,
+                VueEnsembleImputationComponent,
+                AlerteTraitement,
+                ReceptionComponent,
+                ValidationRQComponent,
+                NcAffectationComponent,
+                ValidationPiloteComponent,
+                NcClotureComponent,
+                NcNonTraiterComponent
+            ],
+    templateUrl: './vue-ensemble.html',
+    styleUrl: './vue-ensemble.scss'
 })
 export class NcVueEnsembleComponent implements OnInit, OnDestroy {
 
@@ -357,9 +357,9 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     }
 
     private loadUserNcData() {
-    const user = this.currentUser;
+    const user = currentUserState.value as AuthData | any;
 
-    if (!user || !user.user?.userId) {
+    if (!user || !user?.userId) {
         this.resetUserDataState();
         return;
     }

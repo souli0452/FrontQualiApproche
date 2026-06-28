@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {QualiCrudService} from "./quali-crud.service";
 import {QualiUrlConfig} from "./quali-url-configs";
-import {Reglementation} from "../models";
+import { Reglementation } from '../models/reglementation.model';
 
 
 

@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { TypeStructure } from '../../../enums';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { KcUser } from '../../../models';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { Structure } from '../../../pages/parametrages/structure/structure-config/structure';
 import { StructureService } from '../../../pages/parametrages/structure/structure-service/structure-service';
+import { AuthData } from '../../../models/auth.model';
 
 
 @Component({
@@ -20,8 +20,8 @@ export class SearchAgentComponent implements OnInit {
 
     directionId: string | undefined;
     serviceId: string | undefined;
-    searchedAgent: KcUser | undefined;
-    users: KcUser[] = [];
+    searchedAgent: AuthData | undefined;
+    users: AuthData[] = [];
     agents: any[] = [];
     @Input() prefilledStructureId?: string;
     @Output() searchedAgentChange = new EventEmitter<any>();
@@ -70,10 +70,8 @@ export class SearchAgentComponent implements OnInit {
         this.authService.loadAgentPublicByService(structureId)
             .subscribe({
                 next: (data) => {
-                    console.log("data: ",data);
-                    
                     this.agents = data.data.content.map(a => ({
-                        label:  a.lastName + ' ' + a.firstName,
+                        label:  a.user.lastName + ' ' + a.user.firstName,
                         value: a
                     }));
 
@@ -86,7 +84,7 @@ export class SearchAgentComponent implements OnInit {
             });
     }
 
-    onAgentSelect(agent: KcUser) {
+    onAgentSelect(agent: AuthData) {
         this.searchedAgentChange.emit(agent);
     }
 }

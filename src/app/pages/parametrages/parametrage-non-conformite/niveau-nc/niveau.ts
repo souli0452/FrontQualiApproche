@@ -3,11 +3,12 @@ import { Component } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../../../components/app-crud-generic/app-crud-generic.component';
-import { ApiItemResponse, ApiResponse, FormGroupColumn, NiveauNonConformite, TableColumn } from '../../../../models';
 import { showToast, StatusEnum } from '../../../../utils';
 import { NiveauNonConformiteService } from '../../../../services/non-conformite/niveau-non-conformite.service';
+import { ApiItemResponse } from '../../../../models/response.model';
+import { FormGroupColumn, TableColumn } from '../../../../models/generique.model';
+import { NiveauNonConformite } from '../../../../models/non-conformite.model';
 
 @Component({
     selector: 'app-niveau-non-conformite',

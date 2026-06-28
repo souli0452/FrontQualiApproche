@@ -10,7 +10,7 @@ import { TraitementTableComponent } from '../../../components/non-conformite/tab
 import { NCRejetComponent } from '../nc-rejet/nc-rejet';
 import { MessageService } from 'primeng/api';
 import { FeaturesService } from '../../../services/feature-service';
-import { ApiItemResponse } from '../../../models';
+import { ApiItemResponse } from '../../../models/response.model';
 
 @Component({
   selector: 'app-nc-analyse-cloture',

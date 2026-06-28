@@ -1,11 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { NonConformStatus } from '../../../enums';
 import { getCurrentUserStructure } from '../../../utils';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { Structure } from '../../parametrages/structure/structure-config/structure';
-import { ApiResponse } from '../../../models';
 
 @Component({
     selector: 'app-nc-archive',
@@ -32,7 +30,9 @@ export class NcArchiveComponent implements OnInit, OnDestroy {
         { field: 'fichiers', header: 'Pièces Jointes', type: 'file' }
     ];
     userStructure:Structure={};
-    constructor(private nonConformiteService: NonConformiteService) {
+    constructor(
+        private nonConformiteService: NonConformiteService
+    ) {
     }
 
     ngOnInit() {

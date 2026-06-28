@@ -1,7 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { createRequestOption } from '../utils';
-import { ApiResponse, NiveauNonConformite } from '../models';
+import { ApiResponse } from '../models/response.model';
 
 export interface CrudOperations<T, ID> {
 

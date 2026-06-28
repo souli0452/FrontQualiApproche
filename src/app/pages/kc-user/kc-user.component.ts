@@ -4,13 +4,15 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils';
-import { ApiResponse, AppRole, DropdownSelector, FormGroupColumn, KcUser, MultiSelectSelector, TableColumn } from '../../models';
 import { AuthService } from '../../services/auth-services/auth.service';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { TypeStructure } from '../../enums';
 import { AppRoleService, RoleService } from '../role/role-service/role.service';
 import { StructureService } from '../parametrages/structure/structure-service/structure-service';
+import { ApiResponse } from '../../models/response.model';
+import { AppRole } from '../../models/role.model';
+import { DropdownSelector, FormGroupColumn, MultiSelectSelector, TableColumn } from '../../models/generique.model';
 
 @Component({
     selector: 'app-kc-user',
@@ -153,6 +155,7 @@ export class KcUserComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res: any) => {
+                    console.log("LISTE DES USERS ", res);
                     
                     // On affecte la liste pour app-crud-generic
                     this.dataList = res.data.content || [];

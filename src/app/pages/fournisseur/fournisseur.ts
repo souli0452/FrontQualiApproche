@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
-import { Formation, FormGroupColumn, Fournisseur, TableColumn } from '../../models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { FormationService } from '../../services/formation.service';
@@ -9,6 +8,8 @@ import { showToast, StatusEnum } from '../../utils';
 import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
 import { FournisseurService } from '../../services/fournisseur.service';
+import { FormGroupColumn, TableColumn } from '../../models/generique.model';
+import { Fournisseur } from '../../models/fournisseur.model';
 
 @Component({
     selector: 'app-fournisseur',

@@ -14,13 +14,13 @@ import { Table } from 'primeng/table';
 import { Subject, takeUntil } from 'rxjs';
 import {ConfirmationService, MessageService} from "primeng/api";
 import {patternToDate, toFormatFromDate} from "../../utils";
-import { DropdownSelector, FormGroupColumn, MultiSelectSelector, TableColumn} from "../../models";
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { FormInputTemplateComponent } from '../form-input-template/form-input-template.component';
 import { DetailTemplateComponent } from '../detail-template/detail-template.component';
 import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
 import { GlobalSearchService } from '../../services/non-conformite/global-search.service';
+import { DropdownSelector, FormGroupColumn, MultiSelectSelector, TableColumn } from '../../models/generique.model';
 
 @Component({
     selector: 'app-crud-generic',

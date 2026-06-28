@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { ApiItemResponse, ApiResponse } from '../models';
+import { ApiItemResponse, ApiResponse } from '../models/response.model';
 
 export abstract class BaseCrudService<T, ID = string> {
     protected constructor(

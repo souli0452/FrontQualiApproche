@@ -3,7 +3,6 @@ import moment from 'moment';
 import { MessageService } from 'primeng/api';
 import { NcStats } from './models/statsNc';
 import { Structure } from './pages/parametrages/structure/structure-config/structure';
-import { AuthData } from './models';
 export interface ReportingInput {
     reportFormat: ReportFormat;
     reportType: any;
@@ -324,114 +323,6 @@ export const REGION_LIST = [
     { value: 'Sahel', label: 'Sahel' },
     { value: 'Sud-Ouest', label: 'Sud-Ouest' }
 ];
-// export function isUserInRoles(roles: string[]): boolean {
-//     const user = JSON.parse(localStorage.getItem('user')!);
-//     const rolesUsermap = JSON.parse(localStorage.getItem(USER_PROFILE_KEY)!);
-
-//     if (rolesUsermap) {
-//         user.roles = [];
-//         rolesUsermap.forEach((item: { name: string }) => {
-//             user.roles?.push(item.name); // ✅ Ajout avec `push()`
-//         });
-//     }
-
-//     return roles.some(role => user.roles.includes(role)); // ✅ Vérification simplifiée
-// }
-
-// export function isUserInRoles(roles: string[]): boolean {
-//     const user = JSON.parse(localStorage.getItem('auth')!);
-//     const rolesUsermap = JSON.parse(localStorage.getItem(USER_PROFILE_KEY)!);
-
-//     if (rolesUsermap) {
-//         user.roles = [];
-//         rolesUsermap.forEach((item: { name: string }) => {
-//             user.roles?.push(item.name); // ✅ Ajout avec `push()`
-//         });
-//     }
-
-//     return roles.some(role => user.data.data.roles.includes(role)); // ✅ Vérification simplifiée
-// }
-
-// export function isUserInRoles(user: any, requiredRoles: string[]): boolean {
-//     return user?.roles?.some((role: any) => {
-//         const roleName = typeof role === 'string' ? role : role.name;
-//         return requiredRoles.includes(roleName);
-//     }) ?? false;
-// }
-
-// export function isUserInRoles(user: AuthData | any, requiredRoles: string[]): boolean {
-
-//     console.log("USER DANS ROLE ", user);
-//     console.log("ROLE REQUIS ", requiredRoles);
-
-//     if (!user || !user.user.roles) {
-//         return false;
-//     }
-
-
-    
-//     // Si tes rôles sont des objets (ex: { name: 'SUPER_ADMIN' }) ou des chaînes de caractères :
-//     return user.user.roles.some((role: any) => {
-//         const roleName = typeof role === 'string' ? role : role.name;
-//         return requiredRoles.includes(roleName);
-//     });
-// }
-
-// export function hasAnyPermission(permissions: string[]): boolean {
-//     const user = JSON.parse(localStorage.getItem('auth')!);
-//     if (!user) return false;
-
-//     // console.log("USER PARSED : ", user.data.data.permissions);
-    
-
-//     // Le SUPER_ADMIN n'a plus de bypass automatique ici, il utilise ses permissions réelles
-//     if (!user.data.data.permissions) return false;
-    
-//     return permissions.some(p => user.data.data.permissions.includes(p));
-// }
-
-// export function hasAnyPermission(permissions: string[]): boolean {
-//     const user = JSON.parse(localStorage.getItem('user')!);
-//     if (!user) return false;
-
-//     // Le SUPER_ADMIN n'a plus de bypass automatique ici, il utilise ses permissions réelles
-//     if (!user.permissions) return false;
-//     return permissions.some(p => user.permissions.includes(p));
-// }
-
-// export function hasAllPermissions(permissions: string[]): boolean {
-//     const user = JSON.parse(localStorage.getItem('auth')!);
-//     if (!user || !user.data.data.permissions) return false;
-    
-//     // .every() vérifie que CHAQUE permission 'p' est incluse dans les permissions du user
-//     return permissions.every(p => user.data.data.permissions.includes(p));
-// }
-
-// export function isLicenseActive(): boolean {
-//     const user = JSON.parse(localStorage.getItem('user')!);
-//     if (!user) return false;
-//     // Plus de bypass pour le SUPER_ADMIN, il est soumis à la licence globale
-//     return user.licenseActive || false;
-// }
-
-// export function isLicenseActive(): boolean {
-//     const user = JSON.parse(localStorage.getItem('auth')!);
-//     if (!user) return false;
-//     // Plus de bypass pour le SUPER_ADMIN, il est soumis à la licence globale
-//     return user.data.data.licenseActive || false;
-// }
-
-// export function isModuleSubscribed(moduleName: string): boolean {
-//     const user = JSON.parse(localStorage.getItem('user')!);
-//     if (!user) return false;
-//     return user.modulesSubscribed?.includes(moduleName) || false;
-// }
-
-// export function isModuleSubscribed(moduleName: string): boolean {
-//     const user = JSON.parse(localStorage.getItem('auth')!);
-//     if (!user) return false;
-//     return user.data.data.modulesSubscribed?.includes(moduleName) || false;
-// }
 
 export function onFileUpload(file: File, rowdata: PieceJointe) {
     const reader = new FileReader();

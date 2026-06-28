@@ -1,13 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
-import { FormGroupColumn, Prestataire, TableColumn } from '../../models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils';
 import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
 import { PrestataireService } from '../../services/prestataire.service';
+import { FormGroupColumn, TableColumn } from '../../models/generique.model';
+import { Prestataire } from '../../models/prestataire.model';
 
 @Component({
     selector: 'app-prestataire',

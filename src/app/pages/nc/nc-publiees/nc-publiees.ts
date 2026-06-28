@@ -12,8 +12,10 @@ import { NcModule } from '../nc.module';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { Structure } from '../../parametrages/structure/structure-config/structure';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
-import { ApiResponse, AuthData, NonConformite } from '../../../models';
 import { currentUserState } from '../../../services/auth-services/auth.state';
+import { AuthData } from '../../../models/auth.model';
+import { ApiResponse } from '../../../models/response.model';
+import { NonConformite } from '../../../models/non-conformite.model';
 
 @Component({
     selector: 'app-nc-publiees',

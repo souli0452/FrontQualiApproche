@@ -5,9 +5,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, finalize, takeUntil } from 'rxjs';
 import { MessageService } from 'primeng/api';
 
-import { ApiResponse, AppRole, Permission } from '../../../models';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { AppRoleService, RoleService } from '../role-service/role.service';
+import { ApiResponse } from '../../../models/response.model';
+import { AppRole, Permission } from '../../../models/role.model';
 
 interface GroupedPermission {
     module: string;

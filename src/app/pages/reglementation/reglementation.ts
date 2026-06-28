@@ -1,13 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
-import { FormGroupColumn, Reglementation, TableColumn } from '../../models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils';
 import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
 import { ReglementationService } from '../../services/reglementation.service';
+import { FormGroupColumn, TableColumn } from '../../models/generique.model';
+import { Reglementation } from '../../models/reglementation.model';
 
 @Component({
     selector: 'app-reglementation',

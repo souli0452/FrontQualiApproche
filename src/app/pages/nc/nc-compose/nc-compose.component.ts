@@ -4,23 +4,12 @@ import { convertFilesToBase64, getCurrentUserStructure, onFileUpload, PieceJoint
 import { MessageService } from 'primeng/api';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FeaturesService } from '../../../services/feature-service';
-import {
-    ActionNonConformite,
-    ApiItemResponse,
-    NiveauNonConformite,
-    NonConformite,
-    PaginatedData,
-    Reclamation,
-    TypeNonConformite,
-    TypeProcessus
-} from '../../../models';
 // import { TypeProcessusService } from '../../../services/non-conformite/type-processus.service';
 // import { ReclamationService } from '../../../services/reclamation.service';
 // import { ActionNonConformiteService } from '../../../services/non-conformite/action-non-conformite.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NonConformStatus, EtapeTraitement } from '../../../enums';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
-import { TypeNonConformiteService } from '../../../services/non-conformite/type-non-conformite.service';
 import { NiveauNonConformiteService } from '../../../services/non-conformite/niveau-non-conformite.service';
 import { Structure } from '../../parametrages/structure/structure-config/structure';
 import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
@@ -29,6 +18,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { FileUploadComponent } from '../../../components/non-conformite/file-upload/file-upload.component';
+import { ApiItemResponse, PaginatedData } from '../../../models/response.model';
+import { ActionNonConformite, NiveauNonConformite, NonConformite, OrigineNonConformite } from '../../../models/non-conformite.model';
+import { CategorieProcessus } from '../../../models/categore-processus.model';
+import { Reclamation } from '../../../models/reclamation.model';
+import { OrigineNonConformiteService } from '../../../services/non-conformite/type-non-conformite.service';
 
 @Component({
     selector: 'app-nc-compose',
@@ -48,9 +42,9 @@ export class NcComposeComponent {
     pieceJointes: PieceJointe[] = [];
 
     structures: Structure[] = [];
-    typesNcs: TypeNonConformite[] = [];
+    typesNcs: OrigineNonConformite[] = [];
     niveauNcs: NiveauNonConformite[] = [];
-    typeProcessus: TypeProcessus[] = [];
+    categorieProcessus: CategorieProcessus[] = [];
     reclamationsClients: Reclamation[] = [];
     formSubmitted: boolean = false;
     uploadedFiles: any[] = [];
@@ -63,7 +57,7 @@ export class NcComposeComponent {
         private featureService: FeaturesService,
         private structureService: StructureService,
         // private typeProcessusService: TypeProcessusService,
-        private typeNonConformiteService: TypeNonConformiteService,
+        private origineNonConformiteService: OrigineNonConformiteService,
         // private reclamationService: ReclamationService,
         private niveauService: NiveauNonConformiteService,
         // protected actionNonConformiteService: ActionNonConformiteService,
@@ -271,7 +265,7 @@ export class NcComposeComponent {
     //         });
     // }
     loadTypeNonConformite() {
-        this.typeNonConformiteService
+        this.origineNonConformiteService
             .findAll()
             .subscribe({
                 next: (resp) => {

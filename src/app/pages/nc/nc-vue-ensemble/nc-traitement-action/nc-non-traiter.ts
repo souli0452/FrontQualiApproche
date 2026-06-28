@@ -9,7 +9,7 @@ import { AuthService } from '../../../../services/auth-services/auth.service';
 import { TraitementActionTable } from '../../../../components/non-conformite/action-traitement/traitement-action-table';
 import { NonConformiteService } from '../../../../services/non-conformite/non-conformite.service';
 import { currentUserState } from '../../../../services/auth-services/auth.state';
-import { AuthData } from '../../../../models';
+import { AuthData } from '../../../../models/auth.model';
 
 @Component({
     selector: 'app-nc-non-traiter',
@@ -46,11 +46,12 @@ export class NcNonTraiterComponent implements OnInit, OnDestroy {
 
     ];
 user: any = {};
-    constructor(private nonConformiteService: NonConformiteService,
-                private authService: AuthService,
-                private messageService: MessageService,
-                private featureService: FeaturesService,
-                private location: Location) {
+    constructor(
+        private nonConformiteService: NonConformiteService,
+        private messageService: MessageService,
+        private featureService: FeaturesService,
+        private location: Location
+    ) {
     }
 
     ngOnInit() {

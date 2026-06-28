@@ -61,8 +61,8 @@ export class ConfigGComponent implements OnInit {
         const config = this.configForm.value;
 
         const request = this.configGlobal.id 
-            ? this.configService.updateG(config, this.configGlobal.id)
-            : this.configService.save(config);
+            ? this.configService.update(config, this.configGlobal.id)
+            : this.configService.create(config);
 
         request.pipe(finalize(() => this.loading = false))
             .subscribe({

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {QualiCrudService} from "./quali-crud.service";
 import {QualiUrlConfig} from "./quali-url-configs";
-import {Risque} from "../models";
+import { Risque } from '../models/risque.model';
 
 @Injectable({providedIn: 'root'})
 export class RisqueService extends QualiCrudService<Risque, string> {

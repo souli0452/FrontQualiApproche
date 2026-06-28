@@ -22,7 +22,7 @@ import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformi
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { RoleService } from '../../../services/non-conformite/role.service';
 import { currentUserState } from '../../../services/auth-services/auth.state';
-import { AuthData } from '../../../models';
+import { AuthData } from '../../../models/auth.model';
 
 @Component({
     selector: 'app-nc-suivi',

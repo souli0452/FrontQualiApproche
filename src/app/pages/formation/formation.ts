@@ -1,13 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
-import { Formation, FormGroupColumn, TableColumn } from '../../models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { FormationService } from '../../services/formation.service';
 import { showToast, StatusEnum } from '../../utils';
 import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
+import { FormGroupColumn, TableColumn } from '../../models/generique.model';
+import { Formation } from '../../models/formation.model';
+import { ApiItemResponse } from '../../models/response.model';
 
 @Component({
     selector: 'app-formation',
@@ -100,10 +102,10 @@ loading: boolean = true;
             });
     }
 
-    onSuccess(res: HttpResponse<any>) {
+    onSuccess(res: ApiItemResponse<any>) {
         this.closeDialog = true;
         this.fetchFormation();
-        showToast(StatusEnum.success, res.status, null, this.messageService);
+        showToast(StatusEnum.success, res.statusCode, null, this.messageService);
     }
 
     onSave(object: Formation) {
@@ -117,7 +119,7 @@ loading: boolean = true;
                     }
                 });
         } else {
-            this.formationService.save(object).pipe(takeUntil(this.destroy$))
+            this.formationService.create(object).pipe(takeUntil(this.destroy$))
                 .subscribe({
                     next: res => {
                         this.onSuccess(res);

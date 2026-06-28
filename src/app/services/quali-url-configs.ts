@@ -46,6 +46,7 @@ export class QualiUrlConfig {
     static readonly ROLE_URL = `${USER_SERVICE}/roles`;
     static readonly APP_ROLE_URL = `${USER_SERVICE}/app-roles`;
     static readonly USERS_BY_ID_URL = `${USER_SERVICE}/user-by-id`;
+    static readonly USER = `${USER_SERVICE}/me`;
     static readonly USERS_BY_STRUCTURE_URL = `${USER_SERVICE}/users/{structureId}`;
     static readonly RESET_PASSWORD_URL = `${USER_SERVICE}/users/reset-password`;
     static readonly INITIATE_RESET_PASSWORD_URL = `${USER_SERVICE}/initiate-reset-pwd`;

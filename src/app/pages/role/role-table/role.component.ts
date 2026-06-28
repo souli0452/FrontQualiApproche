@@ -5,10 +5,11 @@ import { Subject, takeUntil } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { Router } from '@angular/router';
 
-import { AppRole, Permission, TableColumn, FormGroupColumn, MultiSelectSelector, ApiResponse } from '../../../models';
+import { TableColumn, FormGroupColumn, MultiSelectSelector } from '../../../models/generique.model';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { AppCrudGenericComponent } from '../../../components/app-crud-generic/app-crud-generic.component';
 import { AppRoleService, RoleService } from '../role-service/role.service';
+import { AppRole, Permission } from '../../../models/role.model';
 
 @Component({
   selector: 'app-role',

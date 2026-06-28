@@ -3,11 +3,12 @@ import { Component } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../../components/app-crud-generic/app-crud-generic.component';
-import { ApiItemResponse, FormGroupColumn, TableColumn, TypeNonConformite, TypeProcessus } from '../../../models';
 import { showToast, StatusEnum } from '../../../utils';
-import { TypeProcessusService } from '../../../services/non-conformite/type-processus.service';
+import { ApiItemResponse } from '../../../models/response.model';
+import { FormGroupColumn, TableColumn } from '../../../models/generique.model';
+import { CategorieProcessus } from '../../../models/categore-processus.model';
+import { CategorieProcessusService } from '../../../services/non-conformite/type-processus.service';
 
 @Component({
     selector: 'app-type-processus',
@@ -47,7 +48,7 @@ import { TypeProcessusService } from '../../../services/non-conformite/type-proc
 export class CategorieProcessusComponent {
     loading: boolean = true;
       destroy$: Subject<boolean> = new Subject<boolean>();
-      dataList: TypeProcessus[] = [];
+      dataList: CategorieProcessus[] = [];
       totalElements: number = 0;
       currentPage: number = 0;
       pageSize: number = 0;
@@ -62,7 +63,7 @@ export class CategorieProcessusComponent {
 
       constructor(protected fb: UntypedFormBuilder,
                   protected messageService: MessageService,
-                  protected typeProcessusService: TypeProcessusService) {
+                  protected categorieProcessusService: CategorieProcessusService) {
           this.formCols = [
               {field: 'id', label: "", header: 'Id', type: 'number', visible: false, required: false},
               {field: 'libelle', label: "Libellé du type de processus (Réalisation - Support)", header: 'Libellé', type: 'string', visible: true, required: true},
@@ -90,7 +91,7 @@ export class CategorieProcessusComponent {
 
     fetchObject() {
     this.loading = true;
-    this.typeProcessusService.findAll(this.currentPage, this.pageSize)
+    this.categorieProcessusService.findAll(this.currentPage, this.pageSize)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
             next: (res: any) => {
@@ -130,10 +131,10 @@ export class CategorieProcessusComponent {
         showToast(StatusEnum.success, res.statusCode, res.message, this.messageService);
     }
 
-    onSave(object: TypeProcessus) {
+    onSave(object: CategorieProcessus) {
         const request = object.id != null
-            ? this.typeProcessusService.update(object)
-            : this.typeProcessusService.create(object);
+            ? this.categorieProcessusService.update(object)
+            : this.categorieProcessusService.create(object);
 
         request.pipe(takeUntil(this.destroy$)).subscribe({
             next: (res) => {
@@ -145,8 +146,8 @@ export class CategorieProcessusComponent {
         });
     }
 
-    onDelete(processus: TypeProcessus) {
-    this.typeProcessusService.delete(processus.id).pipe(takeUntil(this.destroy$))
+    onDelete(processus: CategorieProcessus) {
+    this.categorieProcessusService.delete(processus.id).pipe(takeUntil(this.destroy$))
         .subscribe({
             next: res => {
                 this.onSuccess(res);

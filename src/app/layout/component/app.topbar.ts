@@ -14,8 +14,7 @@ import { GlobalSearchService } from '../../services/non-conformite/global-search
 import { NonConformiteService } from '../../services/non-conformite/non-conformite.service';
 import { hasAnyPermission, isLicenseActive } from '../../utils/auth/auth-utils';
 import { currentUserState } from '../../services/auth-services/auth.state';
-import { AuthData } from '../../models';
-
+import { AuthData } from '../../models/auth.model';
 
 @Component({
     selector: 'app-topbar',

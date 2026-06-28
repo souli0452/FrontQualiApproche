@@ -10,7 +10,7 @@ import { Structure } from '../../parametrages/structure/structure-config/structu
 import { MessageService } from 'primeng/api';
 import { FeaturesService } from '../../../services/feature-service';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
-import { ApiItemResponse } from '../../../models';
+import { ApiItemResponse } from '../../../models/response.model';
 
 @Component({
   selector: 'app-nc-affectation-action',

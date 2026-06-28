@@ -5,9 +5,9 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { MessageService } from 'primeng/api';
 import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
-import { FormGroupColumn, TableColumn } from '../../models';
 import { QmsDocumentService, QmsDocumentType } from '../../services/qms-document.service';
 import { showToast, StatusEnum } from '../../utils';
+import { FormGroupColumn, TableColumn } from '../../models/generique.model';
 
 @Component({
     selector: 'app-qms-document-type',

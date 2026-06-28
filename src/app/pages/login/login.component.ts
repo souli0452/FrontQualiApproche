@@ -2,7 +2,6 @@ import {Component, OnInit} from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import {AuthService} from "../../services/auth-services/auth.service";
-import { ApiItemResponse, AuthData, KcLoginRequest, KcUser, LoginRequest } from '../../models';
 import { MessageService } from 'primeng/api';
 import { ActivatedRoute } from '@angular/router';
 import {Subject} from 'rxjs';
@@ -11,6 +10,8 @@ import { NgPrimeModule } from '../../../prime-ng.module';
 import { USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
 import { isUserInRoles } from '../../utils/auth/auth-utils';
 import { StructureService } from '../parametrages/structure/structure-service/structure-service';
+import { AuthData, LoginRequest } from '../../models/auth.model';
+import { ApiItemResponse } from '../../models/response.model';
 
 @Component({
     selector: 'app-login',
@@ -29,7 +30,7 @@ export class LoginComponent implements OnInit{
     isResetScreen = false;
     isConfirmationScreen: boolean = false;
     user!: any;
-    userCurrentUser!: KcUser;
+    userCurrentUser!: AuthData;
 
 
     constructor(private fb: FormBuilder, private authService: AuthService,
@@ -93,9 +94,9 @@ export class LoginComponent implements OnInit{
                     if (userCurrentUser) {
                         
                         // Récupération des rôles (si tu en as encore besoin pour les permissions)
-                        this.authService.getUserRoles(userCurrentUser.userId!).subscribe((roles) => {
-                            localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(roles.body));
-                        });
+                        // this.authService.getUserRoles(userCurrentUser.userId!).subscribe((roles) => {
+                        //     localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(roles.body));
+                        // });
 
                         // Vérification de la structure affectée à l'utilisateur
                         if (userCurrentUser.structure) {

@@ -9,11 +9,12 @@ import { TraitementTableComponent } from '../../../components/non-conformite/tab
 import { FeaturesService } from '../../../services/feature-service';
 import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
-import { ApiItemResponse, AuthData } from '../../../models';
 import { showToast, StatusEnum } from '../../../utils';
 import { Location } from '@angular/common';
 import { TraitementActionTable } from '../../../components/non-conformite/action-traitement/traitement-action-table';
 import { currentUserState } from '../../../services/auth-services/auth.state';
+import { AuthData } from '../../../models/auth.model';
+import { ApiItemResponse } from '../../../models/response.model';
 
 @Component({
     selector: 'app-nc-traitement-global',

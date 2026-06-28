@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {QualiCrudService} from "./quali-crud.service";
 import {QualiUrlConfig} from "./quali-url-configs";
-import {Produit} from "../models";
-
+import { Produit } from '../models/produit.model';
 
 
 @Injectable({providedIn: 'root'})

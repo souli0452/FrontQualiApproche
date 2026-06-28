@@ -6,9 +6,9 @@ import { AuthService } from '../../services/auth-services/auth.service';
 import { getCurrentUserStructure } from '../../utils';
 import { Router } from '@angular/router';
 import { Structure } from '../parametrages/structure/structure-config/structure';
-import { AuthData, UserResponse } from '../../models';
 import { Subject, takeUntil } from 'rxjs';
 import { currentUserState } from '../../services/auth-services/auth.state';
+import { UserResponse } from '../../models/auth.model';
 
 @Component({
     selector: 'app-profil',
@@ -23,7 +23,6 @@ export class ProfilComponent implements OnInit, OnDestroy {
     private destroy$ = new Subject<boolean>();
 
     constructor(
-        private authService: AuthService, 
         private router: Router
     ) {}
 

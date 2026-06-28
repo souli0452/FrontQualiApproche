@@ -5,7 +5,6 @@ import { MessageService } from 'primeng/api';
 import { Chips } from 'primeng/chips';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { EtapeTraitement } from '../../../enums';
-import { ActionNonConformite, ApiResponse, PaginatedData } from '../../../models';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { ActionNonConformiteService } from '../../../services/non-conformite/action-non-conformite.service';
 import { downloadFile, formatDateToDDMMYYYY, getStatusSeverity } from '../../../utils';
@@ -16,6 +15,8 @@ import { Structure } from '../../../pages/parametrages/structure/structure-confi
 import { StructureService } from '../../../pages/parametrages/structure/structure-service/structure-service';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 import { nonConformiteForm } from '../config/proc-non-conformite.data';
+import { ApiResponse } from '../../../models/response.model';
+import { ActionNonConformite } from '../../../models/non-conformite.model';
 
 @Component({
     selector: 'app-form-traitement',

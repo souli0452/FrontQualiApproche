@@ -1,19 +1,19 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, finalize, switchMap } from 'rxjs/operators';
-import { ApiItemResponse, ApiResponse, AuthData, KcLoginRequest, KcUser, LoginRequest } from '../../models';
+import { catchError } from 'rxjs/operators';
 import { map } from 'rxjs/operators';
-import { QualiCrudService } from '../quali-crud.service';
 import { QualiUrlConfig } from '../quali-url-configs';
-import { createRequestOption, USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils';
 import { currentUserState } from './auth.state';
+import { BaseCrudService } from '../base-crud.service';
+import { AuthData, LoginRequest } from '../../models/auth.model';
+import { ApiItemResponse, ApiResponse } from '../../models/response.model';
 
 @Injectable({
     providedIn: 'root'
 })
-export class AuthService extends QualiCrudService<KcUser, number> {
+export class AuthService extends BaseCrudService<AuthData, number> {
 
     private isLoggedIn = new BehaviorSubject<boolean>(false);
     private refreshTokenInProgress = false;
@@ -26,8 +26,8 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         super(http, QualiUrlConfig.FORMATION_ROOT_URL);
     }
 
-    override findAll(): Observable<ApiResponse<KcUser>> {
-        return this.http.get<ApiResponse<KcUser>>(QualiUrlConfig.USERS_URL);
+    override findAll(): Observable<ApiResponse<AuthData>> {
+        return this.http.get<ApiResponse<AuthData>>(QualiUrlConfig.USERS_URL);
     }
 
     login(credentials: LoginRequest): Observable<ApiItemResponse<AuthData>> {
@@ -37,7 +37,7 @@ export class AuthService extends QualiCrudService<KcUser, number> {
             map((response: ApiItemResponse<AuthData>) => {
                 currentUserState.next(response.data);
                 this.isLoggedIn.next(true);
-                sessionStorage.setItem('userId', response.data.user.userId);
+                // sessionStorage.setItem('userId', response.data.user.userId);
                 return response;
             })
         );
@@ -52,14 +52,7 @@ export class AuthService extends QualiCrudService<KcUser, number> {
     }
 
     getMe(): Observable<ApiItemResponse<AuthData> | null> {
-        const userId = sessionStorage.getItem('userId');
-        if (!userId) {
-            // Pas d'userId = pas de session connue
-            return of(null);
-        }
-        const params = new HttpParams().set('userId', userId);
-        return this.http.get<ApiItemResponse<AuthData>>(QualiUrlConfig.USERS_BY_ID_URL, {
-            params,
+        return this.http.get<ApiItemResponse<AuthData>>(QualiUrlConfig.USER, {
             withCredentials: true
         }).pipe(
             map((response: ApiItemResponse<AuthData>) => {
@@ -74,11 +67,6 @@ export class AuthService extends QualiCrudService<KcUser, number> {
             })
         );
     }
-
-    // getAuth(): AuthResponse | null {
-    //     const authJson = localStorage.getItem('auth');
-    //     return authJson ? JSON.parse(authJson) : null;
-    // }
 
     logout(): void {
         this.http.post(QualiUrlConfig.LOGOUT_URL, {}, { withCredentials: true })
@@ -99,13 +87,6 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         return this.isLoggedIn.asObservable();
     }
 
-    // Stockage des tokens
-    // public setTokens(accessToken: string, refreshToken: string): void {
-    //     localStorage.setItem('access_token', accessToken);
-    //     localStorage.setItem('refresh_token', refreshToken);
-    //     this.isLoggedIn.next(true);
-    // }
-
     hasPermission(permission: string): boolean {
         // On récupère la valeur actuelle stockée dans le BehaviorSubject
         const authData = currentUserState.value; 
@@ -125,11 +106,6 @@ export class AuthService extends QualiCrudService<KcUser, number> {
         return authData?.licenseDaysRemaining || 0;
     }
 
-    // Plus besoin de getAccessToken(), le token est géré automatiquement par les cookies.
-    // getAccessToken(): string | null {
-    //     return localStorage.getItem('access_token');
-    // }
-
     // Rafraîchissement des tokens
     refreshToken(): Observable<any> {
         // Le Mutex (isRefreshing) est déjà géré par ton AuthInterceptor.
@@ -142,26 +118,26 @@ export class AuthService extends QualiCrudService<KcUser, number> {
     handleExpiredToken(): Observable<any> {
         return this.refreshToken();
     }
-    getAllUsers(page: number = 0, size: number = 10): Observable<ApiResponse<KcUser>> {
-        return this.http.get<ApiResponse<KcUser>>(`${QualiUrlConfig.USERS_URL}?page=${page}&size=${size}`);
+    getAllUsers(page: number = 0, size: number = 10): Observable<ApiResponse<AuthData>> {
+        return this.http.get<ApiResponse<AuthData>>(`${QualiUrlConfig.USERS_URL}?page=${page}&size=${size}`);
     }
 
-    getUserById(id: string): Observable<HttpResponse<KcUser>> {
+    getUserById(id: string): Observable<HttpResponse<AuthData>> {
         const params = new HttpParams().set('userId', id);
-        return this.http.get<KcUser>(QualiUrlConfig.USERS_BY_ID_URL, { params, observe: 'response' });
+        return this.http.get<AuthData>(QualiUrlConfig.USERS_BY_ID_URL, { params, observe: 'response' });
     }
     // getUserById(id: string): Observable<HttpResponse<AuthResponse>> {
     //     const params = new HttpParams().set('userId', id);
     //     return this.http.get<AuthResponse>(QualiUrlConfig.USERS_BY_ID_URL, { params, observe: 'response' });
     // }
-    loadAgentPublicByService(structureId: string): Observable<ApiResponse<KcUser>> {
-        return this.http.get<ApiResponse<KcUser>>(this.replaceArgs(new Map().set('structureId', structureId), QualiUrlConfig.USERS_BY_STRUCTURE_URL));
+    loadAgentPublicByService(structureId: string): Observable<ApiResponse<AuthData>> {
+        return this.http.get<ApiResponse<AuthData>>(this.replaceArgs(new Map().set('structureId', structureId), QualiUrlConfig.USERS_BY_STRUCTURE_URL));
     }
-    createUser(user: KcUser): Observable<HttpResponse<KcUser>> {
-        return this.http.post<KcUser>(`${QualiUrlConfig.USERS_URL}/create`, user, { observe: 'response' });
+    createUser(user: AuthData): Observable<HttpResponse<AuthData>> {
+        return this.http.post<AuthData>(`${QualiUrlConfig.USERS_URL}/create`, user, { observe: 'response' });
     }
 
-    updateUser(user: KcUser): Observable<HttpResponse<void>> {
+    updateUser(user: AuthData): Observable<HttpResponse<void>> {
         return this.http.put<void>(`${QualiUrlConfig.USERS_URL}/update`, user, { observe: 'response' });
     }
     getUserRoles(id: string): Observable<HttpResponse<Array<any>>> {

@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
-import { FormGroupColumn, Produit, Reclamation, Risque, TableColumn } from '../../models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils';
@@ -9,6 +8,8 @@ import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
 import { ReclamationService } from '../../services/reclamation.service';
 import { RisqueService } from '../../services/risque.service';
+import { FormGroupColumn, TableColumn } from '../../models/generique.model';
+import { Risque } from '../../models/risque.model';
 
 @Component({
     selector: 'app-risque',

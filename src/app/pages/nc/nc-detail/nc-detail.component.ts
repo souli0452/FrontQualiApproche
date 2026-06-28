@@ -61,11 +61,6 @@ export class NcDetailComponent {
         }
     }
 
-    
-
-    
-
-
     goBack() {
         if (this.viewId) {
             this.closeDialog.emit(); // Ferme le popup
@@ -75,6 +70,8 @@ export class NcDetailComponent {
     }
     affich(action:any){
         this.planAction=action;
+        console.log("DETAIL PLAN D'ACTION ", this.planAction);
+        
         this.planAction.dateEcheance=action.dateEcheance.replace(/-/g, "/");
         this.afficheDialog = true;
     }
