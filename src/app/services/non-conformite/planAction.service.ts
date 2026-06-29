@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { QualiCrudService } from '../quali-crud.service';
-import { Formation } from '../../models';
 import { QualiUrlConfig } from '../quali-url-configs';
+import { Formation } from '../../models/formation.model';
 
 
 

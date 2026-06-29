@@ -3,7 +3,7 @@ import { RouterModule } from '@angular/router';
 import { ShareConfirmToastComponent } from './app/components/share-confirm-toast/share-confirm-toast.component';
 import { LoaderComponent } from './app/components/loader/loader.component';
 import { AuthService } from './app/services/auth-services/auth.service';
-import { USER_STRUCTURE_KEY } from './app/utils';
+import { USER_STRUCTURE_KEY } from './app/utils/global/global-utils';
 import { MessageService } from 'primeng/api';
 import { Toast } from 'primeng/toast';
 import { StructureService } from './app/pages/parametrages/structure/structure-service/structure-service';

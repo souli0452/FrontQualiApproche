@@ -5,7 +5,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { MessageService } from 'primeng/api';
 import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../../../components/app-crud-generic/app-crud-generic.component';
-import { showToast, StatusEnum } from '../../../../utils';
+import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
 import { ApiItemResponse } from '../../../../models/response.model';
 import { FormGroupColumn, TableColumn } from '../../../../models/generique.model';
 import { OrigineNonConformite } from '../../../../models/non-conformite.model';

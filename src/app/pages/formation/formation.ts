@@ -4,7 +4,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { FormationService } from '../../services/formation.service';
-import { showToast, StatusEnum } from '../../utils';
+import { showToast, StatusEnum } from '../../utils/global/global-utils';
 import { HttpResponse } from '@angular/common/http';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
 import { FormGroupColumn, TableColumn } from '../../models/generique.model';

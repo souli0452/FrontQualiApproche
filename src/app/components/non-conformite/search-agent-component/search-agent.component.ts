@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { TypeStructure } from '../../../enums';
+import { TypeStructure } from '../../../enums/enums';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { Structure } from '../../../pages/parametrages/structure/structure-config/structure';

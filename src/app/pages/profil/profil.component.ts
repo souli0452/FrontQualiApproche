@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Avatar } from 'primeng/avatar';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { AuthService } from '../../services/auth-services/auth.service';
-import { getCurrentUserStructure } from '../../utils';
+import { getCurrentUserStructure } from '../../utils/global/global-utils';
 import { Router } from '@angular/router';
 import { Structure } from '../parametrages/structure/structure-config/structure';
 import { Subject, takeUntil } from 'rxjs';

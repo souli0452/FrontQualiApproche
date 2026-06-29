@@ -3,7 +3,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { MenuItem } from 'primeng/api';
-import { NcModule } from '../../pages/nc/nc.module';
+import { NcModule } from '../../pages/module-nc/nc.module';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LayoutService } from '../service/layout.service';

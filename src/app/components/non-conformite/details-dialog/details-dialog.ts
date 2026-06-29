@@ -6,10 +6,11 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
 import { FeaturesService } from '../../../services/feature-service';
 import { AuthService } from '../../../services/auth-services/auth.service';
-import { EtapeTraitement } from '../../../enums';
-import { convertFilesToBase64, downloadAttachment, downloadFile, formatDateToDDMMYYYY } from '../../../utils';
+import { EtapeTraitement } from '../../../enums/enums';
 import { LightboxComponent } from '../lightbox/lightbox';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
+import { convertFilesToBase64, downloadAttachment, downloadFile } from '../../../utils/fichier/fichier-utils';
+import { formatDateToDDMMYYYY } from '../../../utils/formatage/formatage-utils';
 
 @Component({
     selector: 'app-details-dialog',

@@ -1,8 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { TypeStructure } from '../../../../enums';
-import { REGION_LIST } from '../../../../utils';
+import { TypeStructure } from '../../../../enums/enums';
+import { REGION_LIST } from '../../../../utils/global/global-utils';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
 

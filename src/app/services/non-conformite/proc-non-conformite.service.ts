@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import {HttpClient, HttpParams, HttpResponse} from "@angular/common/http";
 import {Observable} from "rxjs";
-import { EtapeTraitement } from '../../enums';
+import { EtapeTraitement } from '../../enums/enums';
 import { BehaviorSubject } from 'rxjs';
 import { NonConformiteUrlConfig } from '../../components/non-conformite/config/proc-non-conformite.urls.configs';
 import { ApiResponse } from '../../models/response.model';

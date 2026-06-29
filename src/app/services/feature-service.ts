@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { HttpClient, HttpRequest } from '@angular/common/http';
-import { ReportingInput, TypeDemande } from '../utils';
+import { TypeDemande } from '../utils/global/global-utils';
 import { SERVICE_PREFIX } from './quali-url-configs';
 import { FormTraitementComponent } from '../components/non-conformite/form-traitement/form-traitement';
 import { DetailsDialogComponent } from '../components/non-conformite/details-dialog/details-dialog';
+import { ReportingInput } from '../utils/fichier/fichier-utils';
 
 
 @Injectable({providedIn: 'root'})

@@ -1,6 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { createRequestOption } from '../utils';
+import { createRequestOption } from '../utils/global/global-utils';
 import { ApiResponse } from '../models/response.model';
 
 export interface CrudOperations<T, ID> {

@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { AuthService } from '../../../services/auth-services/auth.service';
-import { getCurrentUserStructure } from '../../../utils';
+import { getCurrentUserStructure } from '../../../utils/global/global-utils';
 import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 import { isUserInRoles } from '../../../utils/auth/auth-utils';

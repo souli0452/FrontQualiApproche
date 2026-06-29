@@ -4,8 +4,8 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { Subject, takeUntil } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ActivatedRoute } from '@angular/router';
-import { TypeStructure } from '../../../../enums';
-import { handleHttpErrors, showToast } from '../../../../utils';
+import { TypeStructure } from '../../../../enums/enums';
+import { handleHttpErrors, showToast } from '../../../../utils/global/global-utils';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { CreationComponent } from '../structure-creation/creation.component';

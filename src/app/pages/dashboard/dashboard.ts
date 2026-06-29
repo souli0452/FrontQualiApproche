@@ -8,7 +8,7 @@ import { AuthService } from '../../services/auth-services/auth.service';
 import { isPlatformBrowser, Location } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import { NgPrimeModule } from '../../../prime-ng.module';
-import { generateColor, getCurrentUserStructure } from '../../utils';
+import { generateColor, getCurrentUserStructure } from '../../utils/global/global-utils';
 import { Router } from '@angular/router';
 import { StructureService } from '../parametrages/structure/structure-service/structure-service';
 import { ProcNonConformiteService } from '../../services/non-conformite/proc-non-conformite.service';

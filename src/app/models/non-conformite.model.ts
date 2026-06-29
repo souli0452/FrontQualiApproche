@@ -1,4 +1,5 @@
-import { PieceJointe } from "../utils";
+
+import { PieceJointe } from "../utils/fichier/fichier-utils";
 import { UserInfos } from "./auth.model";
 import { PlanAction } from "./plan-action.model";
 import { Reclamation } from "./reclamation.model";

@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { ConfigGlobalService } from '../../services/config-global.service';
 import { MessageService } from 'primeng/api';
 import { NgPrimeModule } from '../../../prime-ng.module';
-import { showToast, StatusEnum } from '../../utils';
+import { showToast, StatusEnum } from '../../utils/global/global-utils';
 import { finalize } from 'rxjs';
 
 @Component({

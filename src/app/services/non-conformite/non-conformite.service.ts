@@ -6,7 +6,7 @@ import { QualiCrudService } from '../quali-crud.service';
 import { QualiUrlConfig } from '../quali-url-configs';
 import { BaseCrudService } from '../base-crud.service';
 import { NonConformiteUrlConfig } from '../../components/non-conformite/config/proc-non-conformite.urls.configs';
-import { EtapeTraitement, NonConformStatus } from '../../enums';
+import { EtapeTraitement, NonConformStatus } from '../../enums/enums';
 import { ApiItemResponse, ApiResponse } from '../../models/response.model';
 import { NonConformite } from '../../models/non-conformite.model';
 

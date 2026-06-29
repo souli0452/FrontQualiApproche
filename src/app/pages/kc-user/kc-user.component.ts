@@ -3,11 +3,11 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
-import { showToast, StatusEnum } from '../../utils';
+import { showToast, StatusEnum } from '../../utils/global/global-utils';
 import { AuthService } from '../../services/auth-services/auth.service';
 import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
 import { NgPrimeModule } from '../../../prime-ng.module';
-import { TypeStructure } from '../../enums';
+import { TypeStructure } from '../../enums/enums';
 import { AppRoleService, RoleService } from '../role/role-service/role.service';
 import { StructureService } from '../parametrages/structure/structure-service/structure-service';
 import { ApiResponse } from '../../models/response.model';
@@ -155,8 +155,6 @@ export class KcUserComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res: any) => {
-                    console.log("LISTE DES USERS ", res);
-                    
                     // On affecte la liste pour app-crud-generic
                     this.dataList = res.data.content || [];
                     // On garde la trace du total pour la pagination

@@ -3,9 +3,10 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { Structure } from '../structure-config/structure';
 import { StructureEndpoint } from '../structure-config/strucuture-url-config';
-import { createRequestOption, formatUrl } from '../../../../utils';
-import { TypeStructure } from '../../../../enums';
+import { createRequestOption } from '../../../../utils/global/global-utils';
+import { TypeStructure } from '../../../../enums/enums';
 import { ApiResponse, PaginatedData } from '../../../../models/response.model';
+import { formatUrl } from '../../../../utils/formatage/formatage-utils';
 
 
 @Injectable({providedIn: 'root'})

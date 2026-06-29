@@ -4,10 +4,10 @@ import { FormArray, FormBuilder, FormGroup, UntypedFormGroup, Validators } from 
 import { MessageService } from 'primeng/api';
 import { Chips } from 'primeng/chips';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { EtapeTraitement } from '../../../enums';
+import { EtapeTraitement } from '../../../enums/enums';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { ActionNonConformiteService } from '../../../services/non-conformite/action-non-conformite.service';
-import { downloadFile, formatDateToDDMMYYYY, getStatusSeverity } from '../../../utils';
+import { getStatusSeverity } from '../../../utils/global/global-utils';
 import { DetailsDialogComponent } from '../details-dialog/details-dialog';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LightboxComponent } from '../lightbox/lightbox';
@@ -17,6 +17,8 @@ import { ProcNonConformiteService } from '../../../services/non-conformite/proc-
 import { nonConformiteForm } from '../config/proc-non-conformite.data';
 import { ApiResponse } from '../../../models/response.model';
 import { ActionNonConformite } from '../../../models/non-conformite.model';
+import { downloadFile } from '../../../utils/fichier/fichier-utils';
+import { formatDateToDDMMYYYY } from '../../../utils/formatage/formatage-utils';
 
 @Component({
     selector: 'app-form-traitement',

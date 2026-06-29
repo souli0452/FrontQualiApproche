@@ -25,7 +25,7 @@ export const appRoutes: Routes = [
 
             { path: 'documentation', component: Documentation, title: 'Documentation' },
             {
-                path: 'nc', loadChildren: () => import('./app/pages/nc/nc.module').then(m => m.NcModule)
+                path: 'nc', loadChildren: () => import('./app/pages/module-nc/nc.module').then(m => m.NcModule)
             },
             { path: '', loadChildren: () => import('./app/pages/pages.routes') }
         ]

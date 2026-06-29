@@ -1,4 +1,4 @@
-import { TypeStructure } from "../../../../enums";
+import { TypeStructure } from "../../../../enums/enums";
 import { UserInfos } from "../../../../models/auth.model";
 
 

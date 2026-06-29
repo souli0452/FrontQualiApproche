@@ -2,8 +2,8 @@ import { Component, ComponentRef, EventEmitter, Input, OnInit, Output, ViewChild
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FeaturesService } from "../../../services/feature-service";
-import { TypeDemande } from "../../../utils";
-import { EtapeTraitement, StatusEnum } from '../../../enums';
+import { TypeDemande } from "../../../utils/global/global-utils";
+import { EtapeTraitement, StatusEnum } from '../../../enums/enums';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { SearchAgentComponent } from '../search-agent-component/search-agent.component';
 
