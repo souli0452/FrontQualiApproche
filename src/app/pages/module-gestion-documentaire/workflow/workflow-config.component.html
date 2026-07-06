@@ -1,0 +1,200 @@
+<p-toast></p-toast>
+<div class="block">
+  <div class="col-12">
+    <!-- Toolbar -->
+    <p-toolbar styleClass="mb-4 shadow-1 border-round-xl bg-white">
+      <ng-template pTemplate="left">
+        <div class="flex align-items-center gap-3">
+          <h5 class="m-0 font-bold text-xl text-slate-800 mr-4">Configuration des Workflows</h5>
+          <p-iconfield iconPosition="left">
+            <p-inputicon>
+              <i class="pi pi-search text-primary"></i>
+            </p-inputicon>
+            <input pInputText type="text" [(ngModel)]="searchQuery" (input)="onSearch($event)"
+              placeholder="Rechercher..." class="w-full p-inputtext-sm border-none bg-transparent focus:ring-0" />
+          </p-iconfield>
+        </div>
+      </ng-template>
+      <ng-template pTemplate="right">
+        <button pButton pRipple label="Nouveau Workflow" icon="pi pi-plus" class="p-button-primary p-button-sm"
+          (click)="openNew()"></button>
+      </ng-template>
+    </p-toolbar>
+
+    <!-- Generic CRUD Component for Listing -->
+    <app-crud-generic [loading]="loading" [tableCols]="tableCols" [listeObject]="workflows" [formGroup]="workflowForm"
+      [formCols]="[]" [notModif]="true" [notDelete]="true" [isAffich]="false" [asRoleEdit]="true"
+      [customButtons]="customButtons" (customActionEvent)="handleCustomAction($event)" [totalElements]="totalRecords"
+      [pageSize]="rows" [currentPage]="first / rows" [isPagination]="false" (pageChangeEvent)="onPageChange($event)">
+    </app-crud-generic>
+  </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- Modale Unifiée (Workflow + Etapes) -->
+<!-- ======================================================================= -->
+<p-dialog [(visible)]="showDialog" [style]="{width: '60rem'}"
+  header="{{ isEditMode ? 'Modifier le Workflow' : 'Nouveau Workflow' }}" [modal]="true" class="p-fluid"
+  [breakpoints]="{ '960px': '75vw', '640px': '90vw' }" [maximizable]="true">
+
+  <ng-template pTemplate="content">
+    <form [formGroup]="workflowForm" class="mt-2">
+      <!-- Section 1 : Infos Générales -->
+      <div class="surface-card p-4 shadow-1 border-round mb-4">
+        <div class="text-xl font-medium text-900 mb-3 border-bottom-1 border-300 pb-2">Informations Générales</div>
+
+        <div class="grid grid-cols-12 gap-4">
+          <div class="col-span-12 md:col-span-6">
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Nom du workflow <span class="text-red-500">*</span></label>
+            <input pInputText formControlName="nom" placeholder="Ex: Validation Qualité" required class="w-full" />
+            <small class="p-error block mt-1"
+              *ngIf="workflowForm.get('nom')?.invalid && workflowForm.get('nom')?.touched">
+              Le nom est obligatoire.
+            </small>
+          </div>
+          <div class="col-span-12 md:col-span-6">
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Type de Document <span class="text-red-500">*</span></label>
+            <p-select [options]="documentTypes" formControlName="documentType" optionLabel="libelle"
+              optionValue="code" placeholder="Sélectionner un type de document" class="w-full"
+              [filter]="true" [showClear]="true" appendTo="body"></p-select>
+            <small class="p-error block mt-1"
+              *ngIf="workflowForm.get('documentType')?.invalid && workflowForm.get('documentType')?.touched">
+              Le type de document est obligatoire.
+            </small>
+          </div>
+          <div class="col-span-12">
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Description</label>
+            <textarea pInputTextarea formControlName="description" placeholder="Description courte..." class="w-full"
+              rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2 : Les étapes -->
+      <div class="surface-card p-4 shadow-1 border-round mb-2">
+        <div class="flex align-items-center justify-content-between mb-3 border-bottom-1 border-300 pb-2">
+          <div class="text-xl font-medium text-900">Étapes de Validation</div>
+          <button pButton pRipple label="Ajouter une étape" icon="pi pi-plus" type="button"
+            class="p-button-outlined p-button-sm" (click)="addStep()"></button>
+        </div>
+
+        <p class="text-sm text-slate-500 mb-3" *ngIf="stepsFormArray.length > 0">
+          Les étapes seront exécutées dans l'ordre défini ci-dessous (de 1 à {{stepsFormArray.length}}).
+        </p>
+
+        <div formArrayName="steps">
+          <div *ngFor="let step of stepsFormArray.controls; let i=index" [formGroupName]="i"
+            class="flex align-items-center gap-3 mb-3 p-3 bg-slate-50 border border-slate-200 border-round hover:surface-100 transition-colors">
+
+            <div class="flex-none">
+              <div
+                class="flex align-items-center justify-content-center bg-indigo-500 text-white border-circle w-2rem h-2rem font-bold">
+                {{ i + 1 }}
+              </div>
+            </div>
+
+            <div class="flex-grow-1 grid grid-cols-12 gap-3">
+              <div class="col-span-12 md:col-span-6">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Nom de l'étape <span class="text-red-500">*</span></label>
+                <input pInputText formControlName="nomEtape" placeholder="Ex: Validation RH"
+                  class="w-full p-inputtext-sm" />
+              </div>
+              <div class="col-span-12 md:col-span-6">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Rôle Responsable / Permission <span class="text-red-500">*</span></label>
+                <p-select [options]="rolesList" formControlName="responsableRole" optionLabel="label"
+                  optionValue="value" placeholder="Sélectionner un rôle ou permission" class="w-full" [filter]="true"
+                  [showClear]="true" appendTo="body"></p-select>
+              </div>
+              <div class="col-span-12">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Description</label>
+                <textarea pInputTextarea formControlName="description" placeholder="Consigne..."
+                  class="w-full p-inputtext-sm" rows="2"></textarea>
+              </div>
+            </div>
+
+            <div class="flex-none">
+              <button pButton pRipple type="button" icon="pi pi-trash"
+                class="p-button-rounded p-button-danger p-button-text" (click)="removeStep(i)"
+                pTooltip="Supprimer l'étape"></button>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="stepsFormArray.length === 0" class="text-center p-4 border-2 border-dashed border-300 border-round">
+          <i class="pi pi-sitemap text-400 text-4xl mb-3"></i>
+          <p class="text-600 m-0">Aucune étape définie. Ajoutez au moins une étape pour ce circuit.</p>
+        </div>
+      </div>
+    </form>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <button pButton pRipple label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary"
+      (click)="hideDialog()"></button>
+    <button pButton pRipple label="Enregistrer" icon="pi pi-check" class="p-button-primary shadow-sm"
+      [disabled]="workflowForm.invalid || stepsFormArray.length === 0" [loading]="loading"
+      (click)="saveWorkflow()"></button>
+  </ng-template>
+</p-dialog>
+
+<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+
+<!-- Modale de Détail du Workflow -->
+<p-dialog [(visible)]="showDetailDialog" [style]="{width: '50rem'}" header="Détails du Workflow" [modal]="true"
+  [breakpoints]="{ '960px': '75vw', '640px': '90vw' }">
+  <div *ngIf="selectedWorkflow" class="p-fluid">
+    <!-- Infos Générales -->
+    <div class="mb-4 flex align-items-center justify-content-between">
+      <div>
+        <h3 class="text-xl font-bold text-slate-800 m-0">{{ selectedWorkflow.nom }}</h3>
+        <p class="text-sm text-slate-500 mt-2">{{ selectedWorkflow.description || 'Aucune description fournie.' }}</p>
+      </div>
+      <div *ngIf="selectedWorkflow.documentType">
+        <span class="p-tag p-tag-info font-bold text-xs px-2.5 py-1 rounded border border-indigo-100">
+          Type : {{ selectedWorkflow.documentType }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Les étapes -->
+    <div class="surface-card p-4 border-round border border-slate-200 bg-slate-50">
+      <div class="text-lg font-bold text-slate-700 mb-3 border-bottom-1 border-300 pb-2 flex align-items-center gap-2">
+        <i class="pi pi-sitemap text-indigo-500"></i>
+        Étapes de Validation ({{ selectedWorkflow.steps.length }})
+      </div>
+
+      <div *ngIf="selectedWorkflow.steps && selectedWorkflow.steps.length > 0; else noSteps"
+        class="flex flex-column gap-3">
+        <div *ngFor="let step of getSortedSteps(selectedWorkflow.steps); let i = index"
+          class="flex align-items-start gap-3 p-3 bg-white border border-slate-200 border-round shadow-sm">
+          <div class="flex-none">
+            <div
+              class="flex align-items-center justify-content-center bg-indigo-500 text-white border-circle w-2rem h-2rem font-bold">
+              {{ step.stepOrder || (i + 1) }}
+            </div>
+          </div>
+          <div class="flex-grow-1">
+            <div class="flex align-items-center justify-content-between">
+              <span class="font-bold text-slate-800 text-base">{{ step.nomEtape }}</span>
+              <span
+                class="px-2.5 py-0.5 bg-indigo-50 text-indigo-700 text-xs border border-indigo-100 rounded-full font-semibold">
+                {{ step.responsableRole }}
+              </span>
+            </div>
+            <p class="text-sm text-slate-600 m-0 mt-1" *ngIf="step.description">{{ step.description }}</p>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noSteps>
+        <div class="text-center p-4">
+          <p class="text-slate-400 m-0">Aucune étape configurée pour ce workflow.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton pRipple label="Fermer" icon="pi pi-times" class="p-button-text p-button-secondary"
+      (click)="showDetailDialog = false"></button>
+  </ng-template>
+</p-dialog>

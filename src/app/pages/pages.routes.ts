@@ -101,6 +101,7 @@ export default [
     { path: 'qms-documents', data: { breadcrumb: 'Documents QMS' }, component: QmsDocumentComponent, title: 'Gestion Documentaire QMS' },
     { path: 'qms-document-create', data: { breadcrumb: 'Nouveau Document' }, component: QmsDocumentCreateComponent, title: 'Créer un Document QMS' },
     { path: 'qms-document-types', data: { breadcrumb: 'Types de Document QMS' }, component: QmsDocumentTypeComponent, title: 'Configuration des Types de Document' },
+    { path: 'qms-workflow-config', data: { breadcrumb: 'Configuration des Workflows' }, loadComponent: () => import('./module-gestion-documentaire/workflow/workflow-config.component').then(c => c.WorkflowConfigComponent), title: 'Workflows QMS' },
     { path: 'empty', component: Empty },
     { path: '**', redirectTo: '/notfound' },
 ] as Routes;

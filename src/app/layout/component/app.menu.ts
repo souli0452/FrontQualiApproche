@@ -52,7 +52,8 @@ export class AppMenu {
                 routerLink: ['/'],
                 items: [
                     { label: 'Gestions des documents', icon: 'pi pi-fw pi-eye', routerLink: ['/qms-documents'] },
-                    { label: 'Gestion des types de documents ', icon: 'pi pi-fw pi-briefcase', routerLink: ['/qms-document-types'] }
+                    { label: 'Gestion des types de documents ', icon: 'pi pi-fw pi-briefcase', routerLink: ['/qms-document-types'] },
+                    { label: 'Workflows  documents ', icon: 'pi pi-fw pi-briefcase', routerLink: ['/qms-workflow-config'] }
                 ]
             },
             {
@@ -204,10 +205,8 @@ export class AppMenu {
                 label: 'Configurations',
                 icon: 'pi pi-sliders-h',
                 visible: true,
-                items: [
-                    { label: 'Configurations Globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'], visible: true },
-                ]
-            },
+                items: [{ label: 'Configurations Globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'], visible: true }]
+            }
         ];
             // On écoute les changements du badge !
     this.nonConformiteService.notificationsNC$.subscribe((notifs: any) => {
@@ -218,15 +217,15 @@ export class AppMenu {
             if (menuQualite && menuQualite.items) {
                 // On trouve le sous-menu "Non-Conformités" (celui qui a la valise)
                 const menuNC = menuQualite.items.find(i => i.label === 'Non-Conformités');
-                
+
                 if (menuNC) {
                     // PrimeNG permet d'ajouter un 'badge' sur n'importe quel MenuItem
                     // On met le total (en string), ou rien s'il est à zéro
                     menuNC.badge = total > 0 ? total.toString() : undefined;
-                    
+
                     // Optionnel : ajouter une classe CSS pour le rendre rouge par exemple
-                    menuNC.badgeStyleClass = 'bg-red-500 text-white font-bold'; 
-                    
+                    menuNC.badgeStyleClass = 'bg-red-500 text-white font-bold';
+
                     // On force Angular à rafraîchir le composant
                     this.cdr.detectChanges();
                 }

@@ -37,9 +37,9 @@ export class AppRoleService extends BaseCrudService<AppRole> {
         });
     }
 
-    getPermissionsDictionary(): Observable<Permission[]> {
+    getPermissionsDictionary(): Observable<any> {
         return this.http
-            .get<ApiResponse<Permission>>(
+            .get<ApiResponse<any>>(
                 `${QualiUrlConfig.APP_ROLE_URL}/permissions-dictionary`,
                 {
                     params: {

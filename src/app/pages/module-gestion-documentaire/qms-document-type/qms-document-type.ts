@@ -8,12 +8,15 @@ import { QmsDocumentService } from '../../../services/module-gestion-documentair
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 import { FormGroupColumn, TableColumn } from '../../../models/generique.model';
 import { QmsDocumentType } from '../../../models/gestion-documentaire.model';
+import { NgPrimeModule } from '../../../../prime-ng.module';
 
 @Component({
     selector: 'app-qms-document-type',
     standalone: true,
-    imports: [CommonModule, AppCrudGenericComponent],
+    imports: [CommonModule, AppCrudGenericComponent, NgPrimeModule],
+    providers: [MessageService],
     template: `
+        <p-toast></p-toast>
         <div class="page-layout">
             <app-crud-generic
                 [addButtonLabel]="'Nouveau type de document'"

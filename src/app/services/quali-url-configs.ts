@@ -37,6 +37,8 @@ export class QualiUrlConfig {
     // Support Service (Gestion Documentaire QMS)
     static readonly QMS_DOCUMENT_ROOT_URL = `${SUPPORT_SERVICE}/qms/documents`;
     static readonly QMS_DOCUMENT_TYPE_ROOT_URL = `${SUPPORT_SERVICE}/qms/document-types`;
+    static readonly WORKFLOW_ROOT_URL = `${SUPPORT_SERVICE}/workflows`;
+
 
     // User Service (Authentification et Utilisateurs)
     static readonly LOGIN_URL = `${USER_SERVICE}/login`;
