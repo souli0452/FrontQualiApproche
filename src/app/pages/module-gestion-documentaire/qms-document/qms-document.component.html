@@ -9,7 +9,7 @@
       <p class="text-sm text-slate-500 mt-1">Gérez le cycle de vie, les versions et la conformité de vos documents qualité.</p>
     </div>
     <div class="flex gap-2 ml-auto">
-      <button pButton pRipple label="Nouveau Document" icon="pi pi-plus" class="p-button-primary p-button-sm shadow-sm" (click)="navigateToCreate()"></button>
+      <button *ngxPermissionsOnly="['DOC_WRITE']" pButton pRipple label="Nouveau Document" icon="pi pi-plus" class="p-button-primary p-button-sm shadow-sm" (click)="navigateToCreate()"></button>
       <button pButton pRipple label="Actualiser" icon="pi pi-refresh" class="p-button-outlined p-button-secondary p-button-sm" (click)="refreshList()"></button>
     </div>
   </div>

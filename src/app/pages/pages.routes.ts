@@ -40,6 +40,7 @@ import { QmsDocumentComponent } from './module-gestion-documentaire/qms-document
 import { QmsDocumentCreateComponent } from './module-gestion-documentaire/qms-document-create/qms-document-create.component';
 import { QmsDocumentTypeComponent } from './module-gestion-documentaire/qms-document-type/qms-document-type';
 
+import { NgxPermissionsGuard } from 'ngx-permissions';
 
 export default [
     { path: 'recherche', component: SearchResultsComponent, title: 'Résultats de recherche' },
@@ -98,10 +99,34 @@ export default [
     { path: 'type-processus', component: CategorieProcessusComponent, title: 'Types de processus' },
     { path: 'niveau-nc', component: NiveauNonConformiteComponent, title: 'Niveaux des non-conformités' },
     { path: 'type-action', component: ActionNonConformiteComponent, title: 'Types d\'actions' },
-    { path: 'qms-documents', data: { breadcrumb: 'Documents QMS' }, component: QmsDocumentComponent, title: 'Gestion Documentaire QMS' },
-    { path: 'qms-document-create', data: { breadcrumb: 'Nouveau Document' }, component: QmsDocumentCreateComponent, title: 'Créer un Document QMS' },
-    { path: 'qms-document-types', data: { breadcrumb: 'Types de Document QMS' }, component: QmsDocumentTypeComponent, title: 'Configuration des Types de Document' },
-    { path: 'qms-workflow-config', data: { breadcrumb: 'Configuration des Workflows' }, loadComponent: () => import('./module-gestion-documentaire/workflow/workflow-config.component').then(c => c.WorkflowConfigComponent), title: 'Workflows QMS' },
+    { 
+        path: 'qms-documents', 
+        data: { breadcrumb: 'Documents QMS', permissions: { only: ['DOC_READ'], redirectTo: '/notfound' } }, 
+        component: QmsDocumentComponent, 
+        title: 'Gestion Documentaire QMS',
+        canActivate: [NgxPermissionsGuard]
+    },
+    { 
+        path: 'qms-document-create', 
+        data: { breadcrumb: 'Nouveau Document', permissions: { only: ['DOC_WRITE'], redirectTo: '/notfound' } }, 
+        component: QmsDocumentCreateComponent, 
+        title: 'Créer un Document QMS',
+        canActivate: [NgxPermissionsGuard]
+    },
+    { 
+        path: 'qms-document-types', 
+        data: { breadcrumb: 'Types de Document QMS', permissions: { only: ['DOC_TYPE_READ'], redirectTo: '/notfound' } }, 
+        component: QmsDocumentTypeComponent, 
+        title: 'Configuration des Types de Document',
+        canActivate: [NgxPermissionsGuard]
+    },
+    { 
+        path: 'qms-workflow-config', 
+        data: { breadcrumb: 'Configuration des Workflows', permissions: { only: ['WORKFLOW_READ'], redirectTo: '/notfound' } }, 
+        loadComponent: () => import('./module-gestion-documentaire/workflow/workflow-config.component').then(c => c.WorkflowConfigComponent), 
+        title: 'Workflows QMS',
+        canActivate: [NgxPermissionsGuard]
+    },
     { path: 'empty', component: Empty },
     { path: '**', redirectTo: '/notfound' },
 ] as Routes;

@@ -14,10 +14,12 @@ import { AppCrudGenericComponent } from '../../../components/app-crud-generic/ap
 import { TableColumn } from '../../../models/generique.model';
 import { QmsDocumentService } from '../../../services/module-gestion-documentaire/qms-document.service';
 
+import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
+
 @Component({
     selector: 'app-workflow-config',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, FormsModule, NgPrimeModule, InputTextarea, AppCrudGenericComponent],
+    imports: [CommonModule, ReactiveFormsModule, FormsModule, NgPrimeModule, InputTextarea, AppCrudGenericComponent, NgxPermissionsModule],
 
     providers: [MessageService, ConfirmationService],
     templateUrl: './workflow-config.component.html'
@@ -65,7 +67,8 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
         private authService: AuthService,
         private roleService: AppRoleService,
         private messageService: MessageService,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private ngxPermissionsService: NgxPermissionsService
     ) {
         this.workflowForm = this.fb.group({
             nom: [null, Validators.required],
@@ -79,6 +82,32 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
         this.fetchWorkflows(0, this.rows);
         this.fetchRoles();
         this.fetchDocumentTypes();
+        this.initCustomButtons();
+    }
+
+    initCustomButtons() {
+        const perms = this.ngxPermissionsService.getPermissions();
+        const hasWrite = !!perms['WORKFLOW_WRITE'];
+        const hasDelete = !!perms['WORKFLOW_DELETE'] || hasWrite;
+
+        const buttons = [
+            { label: 'Détails', icon: 'pi pi-eye', action: 'detail' }
+        ];
+
+        if (hasWrite) {
+            buttons.push({ label: 'Modifier', icon: 'pi pi-pencil', action: 'edit' });
+        }
+
+        if (hasDelete) {
+            buttons.push({ label: 'Supprimer', icon: 'pi pi-trash', action: 'delete' });
+        }
+
+        this.customButtons = buttons;
+    }
+
+    hasWritePermission(): boolean {
+        const perms = this.ngxPermissionsService.getPermissions();
+        return !!perms['WORKFLOW_WRITE'];
     }
 
     fetchDocumentTypes() {

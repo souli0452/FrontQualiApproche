@@ -50,10 +50,11 @@ export class AppMenu {
                 label: 'Gestion documentaire',
                 icon: 'pi pi-fw pi-briefcase',
                 routerLink: ['/'],
+                visible: hasAnyPermission(['DOC_READ', 'DOC_TYPE_READ', 'WORKFLOW_READ']),
                 items: [
-                    { label: 'Gestions des documents', icon: 'pi pi-fw pi-eye', routerLink: ['/qms-documents'] },
-                    { label: 'Gestion des types de documents ', icon: 'pi pi-fw pi-briefcase', routerLink: ['/qms-document-types'] },
-                    { label: 'Workflows  documents ', icon: 'pi pi-fw pi-briefcase', routerLink: ['/qms-workflow-config'] }
+                    { label: 'Gestions des documents', icon: 'pi pi-fw pi-eye', visible: hasAnyPermission(['DOC_READ']), routerLink: ['/qms-documents'] },
+                    { label: 'Gestion des types de documents ', icon: 'pi pi-fw pi-briefcase', visible: hasAnyPermission(['DOC_TYPE_READ']), routerLink: ['/qms-document-types'] },
+                    { label: 'Workflows  documents ', icon: 'pi pi-fw pi-briefcase', visible: hasAnyPermission(['WORKFLOW_READ']), routerLink: ['/qms-workflow-config'] }
                 ]
             },
             {

@@ -16,7 +16,7 @@
         </div>
       </ng-template>
       <ng-template pTemplate="right">
-        <button pButton pRipple label="Nouveau Workflow" icon="pi pi-plus" class="p-button-primary p-button-sm"
+        <button *ngxPermissionsOnly="['WORKFLOW_WRITE']" pButton pRipple label="Nouveau Workflow" icon="pi pi-plus" class="p-button-primary p-button-sm"
           (click)="openNew()"></button>
       </ng-template>
     </p-toolbar>

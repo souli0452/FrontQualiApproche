@@ -9,11 +9,12 @@ import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 import { FormGroupColumn, TableColumn } from '../../../models/generique.model';
 import { QmsDocumentType } from '../../../models/gestion-documentaire.model';
 import { NgPrimeModule } from '../../../../prime-ng.module';
+import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
 
 @Component({
     selector: 'app-qms-document-type',
     standalone: true,
-    imports: [CommonModule, AppCrudGenericComponent, NgPrimeModule],
+    imports: [CommonModule, AppCrudGenericComponent, NgPrimeModule, NgxPermissionsModule],
     providers: [MessageService],
     template: `
         <p-toast></p-toast>
@@ -37,6 +38,9 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
                 [currentPage]="currentPage"
                 [pageSize]="pageSize"
                 (pageChangeEvent)="onPageChange($event)"
+                [consultation]="!hasWritePermission()"
+                [notModif]="!hasWritePermission()"
+                [notDelete]="!hasDeletePermission()"
                 >
             </app-crud-generic>
         </div>
@@ -60,7 +64,8 @@ export class QmsDocumentTypeComponent {
 
     constructor(protected fb: UntypedFormBuilder,
                 protected messageService: MessageService,
-                protected qmsService: QmsDocumentService) {
+                protected qmsService: QmsDocumentService,
+                private ngxPermissionsService: NgxPermissionsService) {
         this.formCols = [
             {field: 'id', label: "", header: 'Id', type: 'string', visible: false, required: false},
             {field: 'code', label: "Code du type (ex: PRO, INS, ENR)", header: 'Code', type: 'string', visible: true, required: true},
@@ -81,6 +86,16 @@ export class QmsDocumentTypeComponent {
             libelle: [null, Validators.required],
             folderName: [null, Validators.required]
         });
+    }
+
+    hasWritePermission(): boolean {
+        const perms = this.ngxPermissionsService.getPermissions();
+        return !!perms['DOC_TYPE_WRITE'];
+    }
+
+    hasDeletePermission(): boolean {
+        const perms = this.ngxPermissionsService.getPermissions();
+        return !!perms['DOC_TYPE_DELETE'] || !!perms['DOC_TYPE_WRITE'];
     }
 
     ngOnInit(): void {

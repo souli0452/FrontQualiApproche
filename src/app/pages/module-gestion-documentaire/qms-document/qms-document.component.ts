@@ -16,11 +16,12 @@ import { StructureService } from '../../parametrages/structure/structure-service
 import { WorkflowService } from '../../../services/module-gestion-documentaire/workflow.service';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentType, QmsDocumentVersion, DocumentWorkflow } from '../../../models/gestion-documentaire.model';
+import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
 
 @Component({
   selector: 'app-qms-document',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule],
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule],
   templateUrl: './qms-document.component.html',
   styleUrls: ['./qms-document.component.scss'],
   providers: [MessageService, DatePipe]
@@ -89,6 +90,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     private workflowService: WorkflowService,
     private structureService: StructureService,
     private authService: AuthService,
+    private ngxPermissionsService: NgxPermissionsService,
     private messageService: MessageService,
     private datePipe: DatePipe
   ) {
@@ -146,8 +148,8 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     this.qmsService.typeDocumentQmsGetAll()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (res) => this.documentTypes = res.data.content || [],
-        error: (err) => showToast(StatusEnum.error, err.status, null, this.messageService, err)
+        next: (res: any) => this.documentTypes = res.data.content || [],
+        error: (err: any) => showToast(StatusEnum.error, err.status, null, this.messageService, err)
       });
 
 
@@ -156,8 +158,8 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     this.structureService.getAllStructures()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (res) => this.structures = res.data.content || [],
-        error: (err) => console.error('Failed to load structures', err)
+        next: (res: any) => this.structures = res.data.content || [],
+        error: (err: any) => console.error('Failed to load structures', err)
       });
 
     this.refreshList();
@@ -206,11 +208,11 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     this.workflowService.getAllWorkflows()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (workflows) => {
+        next: (workflows: any) => {
           this.availableWorkflows = workflows;
           this.findAssociatedWorkflow(this.documentForm.get('documentType')?.value);
         },
-        error: (err) => console.error('Erreur chargement des workflows', err)
+        error: (err: any) => console.error('Erreur chargement des workflows', err)
       });
 
     this.showCreateModal = true;
@@ -439,8 +441,10 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
       }
     ];
 
-    // @ts-ignore
-      if (doc.versionMajeure >1) {
+    const hasValidate = this.hasPermission('DOC_VALIDATE');
+    const hasWrite = this.hasPermission('DOC_WRITE');
+
+    if (doc.currentStep && hasValidate) {
       items.push({
         label: "Approuver l'étape du Workflow",
         icon: 'pi pi-check-circle',
@@ -451,7 +455,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
         icon: 'pi pi-times-circle',
         command: () => this.openWorkflowDialog(doc, 'REJETE')
       });
-    } else if (!doc.esTraiter && !doc.currentStep && !doc.obsolete && !doc.archived) {
+    } else if (!doc.esTraiter && !doc.currentStep && !doc.obsolete && !doc.archived && hasWrite) {
       items.push({
         label: 'Soumettre à un Workflow',
         icon: 'pi pi-sitemap',
@@ -459,7 +463,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
       });
     }
 
-    if (doc.workflowStatus !== 'EN_COURS') {
+    if (!doc.currentStep && hasWrite) {
       items.push({
         label: 'Transition Statut',
         icon: 'pi pi-directions',
@@ -477,13 +481,16 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
         label: 'Piste d\'Audit',
         icon: 'pi pi-list',
         command: () => this.viewAuditLogs(doc)
-      },
-      {
+      }
+    );
+
+    if (hasWrite || this.hasPermission('DOC_SHARE')) {
+      items.push({
         label: 'Partage & Permissions',
         icon: 'pi pi-share-alt',
         command: () => this.openShareModal(doc)
-      }
-    );
+      });
+    }
 
     this.actionMenuItems = items;
     menu.toggle(event);
@@ -538,12 +545,12 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     this.workflowService.getAllWorkflows()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (workflows) => {
+        next: (workflows: any) => {
           this.availableWorkflows = workflows;
           this.loading = false;
           this.showAssignWorkflowModal = true;
         },
-        error: (err) => {
+        error: (err: any) => {
           this.loading = false;
           showToast(StatusEnum.error, err.status, 'Erreur de chargement des workflows', this.messageService, err);
         }
@@ -702,6 +709,11 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
         userEmail: ''
       });
     }
+  }
+
+  hasPermission(p: string): boolean {
+    const perms = this.ngxPermissionsService.getPermissions();
+    return !!perms[p];
   }
 
   submitPermissions(): void {
