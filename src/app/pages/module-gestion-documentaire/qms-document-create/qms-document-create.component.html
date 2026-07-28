@@ -72,10 +72,10 @@
                 </div>
               </div>
 
-              <!-- Service émetteur -->
+              <!-- Processus émetteur -->
               <div class="col-span-12 md:col-span-6">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Service Émetteur <span class="text-red-500">*</span></label>
-                <p-select [options]="structures" formControlName="service" optionLabel="libelleLong" placeholder="Sélectionner le service" [filter]="true" class="w-full"></p-select>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Processus Émetteur <span class="text-red-500">*</span></label>
+                <p-select [options]="structures" formControlName="service" optionLabel="libelleLong" placeholder="Sélectionner le processus émetteur" [filter]="true" class="w-full"></p-select>
               </div>
 
               <!-- Rédacteur -->
@@ -101,10 +101,10 @@
             </h3>
             <div class="grid grid-cols-12 gap-3">
 
-              <!-- Organisme émetteur -->
+              <!-- Processus destinataire -->
               <div class="col-span-12 md:col-span-6">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Organisme Émetteur</label>
-                <p-select [options]="organismesList" formControlName="organismeEmetteur" optionLabel="label" optionValue="value" placeholder="Sélectionner l'organisme" [showClear]="true" class="w-full"></p-select>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Processus Destinataire</label>
+                <p-select [options]="structures" formControlName="processusDest" optionLabel="libelleLong" placeholder="Sélectionner le processus destinataire" [showClear]="true" [filter]="true" class="w-full"></p-select>
               </div>
 
               <!-- Référence officielle -->

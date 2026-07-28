@@ -1,12 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { WorkflowService } from '../../../services/module-gestion-documentaire/workflow.service';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
-import { DocumentWorkflow, WorkflowStep, QmsDocumentType } from '../../../models/gestion-documentaire.model';
+import { DocumentWorkflow, WorkflowStep, WorkflowStepTemplate, WorkflowTransition, WorkflowDecision, QmsDocumentType } from '../../../models/gestion-documentaire.model';
+import { WorkflowStepTemplateService } from '../../../services/module-gestion-documentaire/workflow-step-template.service';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { InputTextarea } from 'primeng/inputtextarea';
 import { AppRoleService, RoleService } from '../../role/role-service/role.service';
@@ -15,6 +17,10 @@ import { TableColumn } from '../../../models/generique.model';
 import { QmsDocumentService } from '../../../services/module-gestion-documentaire/qms-document.service';
 
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
+
+function generateClientId(): string {
+    return (crypto as any)?.randomUUID ? crypto.randomUUID() : `step-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 @Component({
     selector: 'app-workflow-config',
@@ -32,6 +38,7 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
     allWorkflows: DocumentWorkflow[] = [];
     rolesList: any[] = [];
     documentTypes: QmsDocumentType[] = [];
+    stepTemplates: WorkflowStepTemplate[] = [];
     totalRecords = 0;
     rows = 10;
     first = 0;
@@ -62,10 +69,12 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
 
     constructor(
         private fb: FormBuilder,
+        private router: Router,
         private workflowService: WorkflowService,
         private qmsService: QmsDocumentService,
         private authService: AuthService,
         private roleService: AppRoleService,
+        private stepTemplateService: WorkflowStepTemplateService,
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         private ngxPermissionsService: NgxPermissionsService
@@ -82,32 +91,42 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
         this.fetchWorkflows(0, this.rows);
         this.fetchRoles();
         this.fetchDocumentTypes();
+        this.fetchStepTemplates();
         this.initCustomButtons();
     }
 
+    fetchStepTemplates() {
+        this.stepTemplateService.getAll()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (res) => {
+                    this.stepTemplates = res || [];
+                },
+                error: () => {
+                    console.warn("Impossible de charger le catalogue d'étapes.");
+                }
+            });
+    }
+
+    onStepTemplateSelected(index: number, templateId: string): void {
+        const template = this.stepTemplates.find(t => t.id === templateId);
+        const group = this.stepsFormArray.at(index);
+        if (!template || !group) return;
+        group.get('nomEtape')?.setValue(template.nomEtape);
+        group.get('responsableRole')?.setValue(template.responsableRole);
+        this.targetOptionsCache.clear();
+    }
+
     initCustomButtons() {
-        const perms = this.ngxPermissionsService.getPermissions();
-        const hasWrite = !!perms['WORKFLOW_WRITE'];
-        const hasDelete = !!perms['WORKFLOW_DELETE'] || hasWrite;
-
-        const buttons = [
-            { label: 'Détails', icon: 'pi pi-eye', action: 'detail' }
+        this.customButtons = [
+            { label: 'Détails', icon: 'pi pi-eye', action: 'detail' },
+            { label: 'Modifier', icon: 'pi pi-pencil', action: 'edit' },
+            { label: 'Supprimer', icon: 'pi pi-trash', action: 'delete' }
         ];
-
-        if (hasWrite) {
-            buttons.push({ label: 'Modifier', icon: 'pi pi-pencil', action: 'edit' });
-        }
-
-        if (hasDelete) {
-            buttons.push({ label: 'Supprimer', icon: 'pi pi-trash', action: 'delete' });
-        }
-
-        this.customButtons = buttons;
     }
 
     hasWritePermission(): boolean {
-        const perms = this.ngxPermissionsService.getPermissions();
-        return !!perms['WORKFLOW_WRITE'];
+        return true;
     }
 
     fetchDocumentTypes() {
@@ -130,10 +149,10 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (res) => {
 
-                    if (res) {
+                    if (res && res.data && res.data.content) {
                         // Normalise la liste pour le dropdown
                         this.rolesList = res.data.content.map((r: any) => ({
-                            label: r.name,
+                            label: r.name || r.code || r.libelle || r.id,
                             value: r.id
                         }));
                     }
@@ -143,6 +162,13 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
                 }
             });
     }
+
+    getRoleLabel(roleIdOrName: string | undefined | null): string {
+        if (!roleIdOrName) return '';
+        const role = this.rolesList.find(r => r.value === roleIdOrName || r.label === roleIdOrName);
+        return role ? role.label : roleIdOrName;
+    }
+
 
     fetchWorkflows(page: number = 0, size: number = 10) {
         this.loading = true;
@@ -215,13 +241,23 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
     }
 
     viewWorkflowDetail(workflow: DocumentWorkflow) {
-        this.selectedWorkflow = workflow;
-        this.showDetailDialog = true;
+        if (workflow && workflow.id) {
+            this.router.navigate(['/parametrage-document/workflows/detail', workflow.id]);
+        }
     }
 
     getSortedSteps(steps: WorkflowStep[] | undefined): WorkflowStep[] {
         if (!steps) return [];
         return [...steps].sort((a, b) => a.stepOrder - b.stepOrder);
+    }
+
+    getTransitionLabel(steps: WorkflowStep[] | undefined, step: WorkflowStep, decision: WorkflowDecision): string {
+        const transition = step.transitions?.find(t => t.decision === decision);
+        if (!transition || transition.toStepOrder == null) {
+            return decision === 'APPROUVE' ? 'Fin de circuit (validé)' : 'Retour au brouillon';
+        }
+        const target = steps?.find(s => s.stepOrder === transition.toStepOrder);
+        return target ? `Étape ${target.stepOrder} — ${target.nomEtape}` : `Étape ${transition.toStepOrder}`;
     }
 
     // --- Gestion du Formulaire ---
@@ -231,6 +267,7 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
     }
 
     openNew() {
+        this.targetOptionsCache.clear();
         this.isEditMode = false;
         this.editingId = undefined;
         this.workflowForm.reset();
@@ -240,6 +277,7 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
     }
 
     editWorkflow(workflow: DocumentWorkflow) {
+        this.targetOptionsCache.clear();
         this.isEditMode = true;
         this.editingId = workflow.id;
         this.workflowForm.patchValue({
@@ -251,13 +289,39 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
         this.stepsFormArray.clear();
         if (workflow.steps && workflow.steps.length > 0) {
             const sortedSteps = [...workflow.steps].sort((a, b) => a.stepOrder - b.stepOrder);
-            sortedSteps.forEach((step) => {
+
+            // clientId stable par étape (indépendant du stepOrder, qui peut bouger pendant l'édition)
+            // + résolution stepOrder -> clientId pour reconstituer les cibles de transition existantes.
+            const clientIdByStepOrder = new Map<number, string>();
+            const stepClientIds = sortedSteps.map((step) => {
+                const clientId = generateClientId();
+                clientIdByStepOrder.set(step.stepOrder, clientId);
+                return clientId;
+            });
+
+            sortedSteps.forEach((step, idx) => {
+                const approve = step.transitions?.find(t => t.decision === 'APPROUVE');
+                const reject = step.transitions?.find(t => t.decision === 'REJETE');
+
+                // Si aucune transition n'est encore connue pour cette étape (ancien workflow jamais
+                // retouché), on propose le même défaut séquentiel qu'à l'ajout d'une étape.
+                const defaultApproveTarget = idx + 1 < stepClientIds.length ? stepClientIds[idx + 1] : null;
+                const defaultRejectTarget = idx > 0 ? stepClientIds[idx - 1] : null;
+
                 this.stepsFormArray.push(
                     this.fb.group({
+                        clientId: [stepClientIds[idx]],
                         id: [step.id],
-                        nomEtape: [step.nomEtape, Validators.required],
-                        responsableRole: [step.responsableRole, Validators.required],
-                        description: [step.description]
+                        stepTemplateId: [step.stepTemplateId ?? null, Validators.required],
+                        nomEtape: [{ value: step.nomEtape, disabled: true }],
+                        responsableRole: [{ value: step.responsableRole, disabled: true }],
+                        description: [step.description],
+                        approveTarget: [approve ? (approve.toStepOrder != null ? (clientIdByStepOrder.get(approve.toStepOrder) ?? null) : null) : defaultApproveTarget],
+                        approveRole: [approve?.requiredRole ?? null],
+                        approveLabel: [approve?.label ?? null],
+                        rejectTarget: [reject ? (reject.toStepOrder != null ? (clientIdByStepOrder.get(reject.toStepOrder) ?? null) : null) : defaultRejectTarget],
+                        rejectRole: [reject?.requiredRole ?? null],
+                        rejectLabel: [reject?.label ?? null]
                     })
                 );
             });
@@ -268,18 +332,157 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
     }
 
     addStep() {
+        const lastStep = this.stepsFormArray.length > 0 ? this.stepsFormArray.at(this.stepsFormArray.length - 1) : null;
+        const previousClientId = lastStep ? lastStep.get('clientId')?.value : null;
+
         this.stepsFormArray.push(
             this.fb.group({
+                clientId: [generateClientId()],
                 id: [null],
-                nomEtape: [null, Validators.required],
-                responsableRole: [null, Validators.required],
-                description: [null]
+                stepTemplateId: [null, Validators.required],
+                nomEtape: [{ value: null, disabled: true }],
+                responsableRole: [{ value: null, disabled: true }],
+                description: [null],
+                // Nouvelle étape toujours ajoutée en fin de liste : Approuver -> fin de circuit par
+                // défaut, Rejeter -> étape précédente par défaut (comportement séquentiel historique,
+                // fixé une seule fois, sans jamais réécrire le routage déjà choisi des autres étapes).
+                approveTarget: [null],
+                approveRole: [null],
+                approveLabel: [null],
+                rejectTarget: [previousClientId],
+                rejectRole: [null],
+                rejectLabel: [null]
             })
         );
     }
 
     removeStep(index: number) {
+        const removedClientId = this.stepsFormArray.at(index)?.get('clientId')?.value;
         this.stepsFormArray.removeAt(index);
+
+        if (!removedClientId) return;
+
+        // Miroir de WorkflowService.detachStepTransitions côté backend : toute transition qui
+        // ciblait l'étape supprimée retombe sur "fin de circuit" plutôt que de référencer le vide.
+        this.stepsFormArray.controls.forEach((control) => {
+            const approveTarget = control.get('approveTarget');
+            const rejectTarget = control.get('rejectTarget');
+            if (approveTarget && approveTarget.value === removedClientId) approveTarget.setValue(null);
+            if (rejectTarget && rejectTarget.value === removedClientId) rejectTarget.setValue(null);
+        });
+    }
+
+    private targetOptionsCache = new Map<string, { label: string; value: string }[]>();
+
+    getStepTargetOptions(excludeIndex: number): { label: string; value: string }[] {
+        const controls = this.stepsFormArray.controls;
+        if (excludeIndex < 0 || excludeIndex >= controls.length) return [];
+
+        const currentGroup = controls[excludeIndex];
+        const currentTemplateId = currentGroup.get('stepTemplateId')?.value;
+
+        const signature = controls
+            .map((c, idx) => `${idx}:${c.get('clientId')?.value}:${c.get('stepTemplateId')?.value || ''}:${c.get('nomEtape')?.value || ''}`)
+            .join('|') + `_ex:${excludeIndex}_tpl:${this.stepTemplates.length}`;
+
+        if (this.targetOptionsCache.has(signature)) {
+            return this.targetOptionsCache.get(signature)!;
+        }
+
+        const options: { label: string; value: string }[] = [];
+
+        // 1. Étapes existantes dans le circuit (sauf l'étape de cette carte)
+        controls.forEach((control, idx) => {
+            if (idx !== excludeIndex) {
+                const nom = control.get('nomEtape')?.value || 'Étape sans nom';
+                options.push({
+                    label: `${idx + 1}. ${nom}`,
+                    value: control.get('clientId')?.value
+                });
+            }
+        });
+
+        // 2. Étapes du catalogue pas encore présentes ET pas égales à l'étape courante (anti-doublon dans la carte)
+        const existingTemplateIdsInCards = new Set<string>();
+        controls.forEach(c => {
+            const tId = c.get('stepTemplateId')?.value;
+            if (tId) existingTemplateIdsInCards.add(tId);
+        });
+
+        this.stepTemplates.forEach(template => {
+            if (template.id && template.id !== currentTemplateId && !existingTemplateIdsInCards.has(template.id)) {
+                options.push({
+                    label: `Catalogue : ${template.nomEtape}`,
+                    value: `template:${template.id}`
+                });
+            }
+        });
+
+        if (this.targetOptionsCache.size > 100) {
+            this.targetOptionsCache.clear();
+        }
+
+        this.targetOptionsCache.set(signature, options);
+        return options;
+    }
+
+    onTargetSelected(index: number, type: 'approve' | 'reject', selectedValue: any): void {
+        if (!selectedValue || typeof selectedValue !== 'string') return;
+
+        if (selectedValue.startsWith('template:')) {
+            const templateId = selectedValue.replace('template:', '');
+            const template = this.stepTemplates.find(t => t.id === templateId);
+            if (!template) return;
+
+            // Vérifie si une carte existe déjà pour ce template
+            let existingStepControl = this.stepsFormArray.controls.find(
+                c => c.get('stepTemplateId')?.value === templateId
+            );
+
+            let targetClientId: string;
+
+            if (existingStepControl) {
+                targetClientId = existingStepControl.get('clientId')?.value;
+            } else {
+                // Ajoute automatiquement la nouvelle étape basée sur le catalogue
+                targetClientId = this.addStepWithTemplate(template);
+            }
+
+            // Assigne le clientId résultant au contrôle approveTarget ou rejectTarget
+            const currentGroup = this.stepsFormArray.at(index);
+            if (currentGroup) {
+                const targetControlName = type === 'approve' ? 'approveTarget' : 'rejectTarget';
+                currentGroup.get(targetControlName)?.setValue(targetClientId);
+            }
+
+            this.targetOptionsCache.clear();
+        }
+    }
+
+    addStepWithTemplate(template: WorkflowStepTemplate): string {
+        const lastStep = this.stepsFormArray.length > 0 ? this.stepsFormArray.at(this.stepsFormArray.length - 1) : null;
+        const previousClientId = lastStep ? lastStep.get('clientId')?.value : null;
+        const newClientId = generateClientId();
+
+        this.stepsFormArray.push(
+            this.fb.group({
+                clientId: [newClientId],
+                id: [null],
+                stepTemplateId: [template.id, Validators.required],
+                nomEtape: [{ value: template.nomEtape, disabled: true }],
+                responsableRole: [{ value: template.responsableRole, disabled: true }],
+                description: [template.description || null],
+                approveTarget: [null],
+                approveRole: [null],
+                approveLabel: [null],
+                rejectTarget: [previousClientId],
+                rejectRole: [null],
+                rejectLabel: [null]
+            })
+        );
+
+        this.targetOptionsCache.clear();
+        return newClientId;
     }
 
     hideDialog() {
@@ -292,22 +495,45 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const formValue = this.workflowForm.value;
+        // getRawValue() (et non .value) : nomEtape/responsableRole sont des contrôles désactivés
+        // (dérivés du catalogue d'étapes) et .value les exclurait silencieusement du payload.
+        const formValue = this.workflowForm.getRawValue();
+        const steps: any[] = formValue.steps || [];
+
+        // Au moins une étape
+        if (steps.length === 0) {
+            this.messageService.add({ severity: 'warn', summary: 'Erreur', detail: 'Le circuit doit contenir au moins une étape' });
+            return;
+        }
+
+        // clientId -> stepOrder (calculé selon la position dans la liste, comme aujourd'hui)
+        const stepOrderByClientId = new Map<string, number>();
+        steps.forEach((s, idx) => stepOrderByClientId.set(s.clientId, idx + 1));
+
+        const buildTransition = (decision: WorkflowDecision, targetClientId: string | null, role: string | null, label: string | null): WorkflowTransition => ({
+            decision,
+            toStepOrder: targetClientId ? (stepOrderByClientId.get(targetClientId) ?? null) : null,
+            requiredRole: role || null,
+            label: label || null
+        });
+
         const payload: DocumentWorkflow = {
             nom: formValue.nom,
             documentType: formValue.documentType,
             description: formValue.description,
-            steps: formValue.steps.map((s: any, idx: number) => ({
-                ...s,
-                stepOrder: idx + 1
+            steps: steps.map((s, idx) => ({
+                id: s.id,
+                stepTemplateId: s.stepTemplateId,
+                nomEtape: s.nomEtape,
+                responsableRole: s.responsableRole,
+                description: s.description,
+                stepOrder: idx + 1,
+                transitions: [
+                    buildTransition('APPROUVE', s.approveTarget, s.approveRole, s.approveLabel),
+                    buildTransition('REJETE', s.rejectTarget, s.rejectRole, s.rejectLabel)
+                ]
             }))
         };
-
-        // Au moins une étape
-        if (!payload.steps || payload.steps.length === 0) {
-            this.messageService.add({ severity: 'warn', summary: 'Erreur', detail: 'Le circuit doit contenir au moins une étape' });
-            return;
-        }
 
         this.loading = true;
         if (this.isEditMode && this.editingId) {

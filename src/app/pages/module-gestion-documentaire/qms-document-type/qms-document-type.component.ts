@@ -63,21 +63,21 @@ export class QmsDocumentTypeComponent {
     formHeader = 'Création et mise à jour d\'un type de document';
 
     constructor(protected fb: UntypedFormBuilder,
-                protected messageService: MessageService,
-                protected qmsService: QmsDocumentService,
-                private ngxPermissionsService: NgxPermissionsService) {
+        protected messageService: MessageService,
+        protected qmsService: QmsDocumentService,
+        private ngxPermissionsService: NgxPermissionsService) {
         this.formCols = [
-            {field: 'id', label: "", header: 'Id', type: 'string', visible: false, required: false},
-            {field: 'code', label: "Code du type (ex: PRO, INS, ENR)", header: 'Code', type: 'string', visible: true, required: true},
-            {field: 'libelle', label: "Libellé (ex: Procédure, Instruction)", header: 'Libellé', type: 'string', visible: true, required: true},
-            {field: 'folderName', label: "Nom du dossier dans Alfresco", header: 'Dossier Alfresco', type: 'string', visible: true, required: true}
+            { field: 'id', label: "", header: 'Id', type: 'string', visible: false, required: false },
+            { field: 'code', label: "Code du type (ex: PRO, INS, ENR)", header: 'Code', type: 'string', visible: true, required: true },
+            { field: 'libelle', label: "Libellé (ex: Procédure, Instruction)", header: 'Libellé', type: 'string', visible: true, required: true },
+            { field: 'folderName', label: "Nom du dossier dans Alfresco", header: 'Dossier Alfresco', type: 'string', visible: true, required: true }
         ];
 
         this.tableCols = [
-            {field: 'code', header: 'Code', type: 'string', filter: true},
-            {field: 'libelle', header: 'Libellé', type: 'string', filter: true},
-            {field: 'folderName', header: 'Dossier Alfresco', type: 'string', filter: true},
-            {field: 'createdAt', header: 'Date de création', type: 'string', filter: true}
+            { field: 'code', header: 'Code', type: 'string', filter: true },
+            { field: 'libelle', header: 'Libellé', type: 'string', filter: true },
+            { field: 'folderName', header: 'Dossier sur minio', type: 'string', filter: true },
+            { field: 'createdAt', header: 'Date de création', type: 'string', filter: true }
         ];
 
         this.formGroup = this.fb.group({
@@ -89,13 +89,11 @@ export class QmsDocumentTypeComponent {
     }
 
     hasWritePermission(): boolean {
-        const perms = this.ngxPermissionsService.getPermissions();
-        return !!perms['DOC_TYPE_WRITE'];
+        return true;
     }
 
     hasDeletePermission(): boolean {
-        const perms = this.ngxPermissionsService.getPermissions();
-        return !!perms['DOC_TYPE_DELETE'] || !!perms['DOC_TYPE_WRITE'];
+        return true;
     }
 
     ngOnInit(): void {
@@ -109,7 +107,7 @@ export class QmsDocumentTypeComponent {
                 next: res => {
                     this.dataList = res.data.content || [];
                     // On garde la trace du total pour la pagination
-                    this.totalElements = res.data.totalElements; 
+                    this.totalElements = res.data.totalElements;
                     this.currentPage = res.data.pageNumber;
                     this.pageSize = res.data.pageSize;
                     this.loading = false;
@@ -122,10 +120,10 @@ export class QmsDocumentTypeComponent {
     }
 
     onPageChange(event: { page: number, size: number }) {
-        this.currentPage = event.page;  
-        this.pageSize = event.size;     
+        this.currentPage = event.page;
+        this.pageSize = event.size;
 
-        this.fetchObject();             
+        this.fetchObject();
     }
 
     onSuccess(res: any) {

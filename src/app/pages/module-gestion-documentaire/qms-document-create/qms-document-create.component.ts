@@ -87,7 +87,7 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       periodiciteMois: [12, [Validators.required, Validators.min(1)]],
       confidentiel: [false],
       documentExterne: [false],
-      organismeEmetteur: [null],
+      processusDest: [null],
       referenceOfficielle: [null],
       domaine: [null],
       statutLegal: [null]
@@ -117,9 +117,9 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       this.findAssociatedWorkflow(typeCode);
     });
 
-    this.structureService.getAllStructures().subscribe({
-      next: (res) => { 
-        this.structures = res.data.content || []; 
+    this.structureService.getAllStructures().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res: any) => { 
+        this.structures = res.data?.content || res.content || []; 
         this.loading = false; 
         this.trySetUserStructure();
       },
@@ -127,19 +127,57 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
     });
 
     this.authService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(currentUser => {
-      if (currentUser && currentUser.user) {
-        const redacteurNom = `${currentUser.user.lastName || ''} ${currentUser.user.firstName || ''}`.trim();
-        this.documentForm.patchValue({ redacteur: redacteurNom });
-        
-        this.currentUserStructureId = currentUser.user.structure;
-        this.trySetUserStructure();
+      if (currentUser) {
+        this.applyUserData(currentUser);
+      }
+    });
+
+    // En complément au cas où currentUserState est nul à l'initialisation
+    this.authService.getMe().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res) => {
+        if (res?.data) {
+          this.applyUserData(res.data);
+        }
       }
     });
   }
 
+  private applyUserData(authData: any): void {
+    if (!authData) return;
+    const userObj = authData.user ? authData.user : authData;
+    if (!userObj) return;
+
+    // Nom du Rédacteur
+    const firstName = userObj.firstName || '';
+    const lastName = userObj.lastName || '';
+    let redacteurNom = `${firstName} ${lastName}`.trim();
+    if (!redacteurNom) {
+      redacteurNom = `${lastName} ${firstName}`.trim();
+    }
+    if (!redacteurNom) {
+      redacteurNom = userObj.username || userObj.email || '';
+    }
+
+    if (redacteurNom) {
+      this.documentForm.patchValue({ redacteur: redacteurNom });
+    }
+
+    // Service Émetteur (Structure)
+    const structVal = userObj.structure;
+    if (structVal) {
+      this.currentUserStructureId = typeof structVal === 'object' ? (structVal.id || structVal.code) : structVal;
+      this.trySetUserStructure();
+    }
+  }
+
   trySetUserStructure(): void {
     if (this.currentUserStructureId && this.structures.length > 0) {
-      const userStructure = this.structures.find(s => s.id === this.currentUserStructureId);
+      const userStructure = this.structures.find(s => 
+        s.id === this.currentUserStructureId ||
+        s.libelleCourt === this.currentUserStructureId ||
+        s.libelleLong === this.currentUserStructureId ||
+        (s as any).code === this.currentUserStructureId
+      );
       if (userStructure) {
         this.documentForm.patchValue({ service: userStructure });
       }
@@ -167,7 +205,7 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/qms-documents']);
+    this.router.navigate(['/gestion-documentaire/documents']);
   }
 
   submitDocument(): void {
@@ -198,7 +236,10 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       confidentiel: formVal.confidentiel,
       documentExterne: formVal.documentExterne,
       ...(this.associatedWorkflow && { workflowId: this.associatedWorkflow.id }),
-      ...(formVal.organismeEmetteur && { organismeEmetteur: formVal.organismeEmetteur }),
+      ...(formVal.processusDest && {
+        processusDestId: formVal.processusDest.id,
+        processusDestLibelle: formVal.processusDest.libelleLong || formVal.processusDest.libelleCourt || ''
+      }),
       ...(formVal.referenceOfficielle && { referenceOfficielle: formVal.referenceOfficielle }),
       ...(formVal.domaine && { domaine: formVal.domaine }),
       ...(formVal.statutLegal && { statutLegal: formVal.statutLegal })
@@ -206,7 +247,7 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       next: (doc) => {
         this.loading = false;
         this.messageService.add({ severity: 'success', summary: 'Document créé', detail: `Le document ${doc.documentNumber} a été enregistré avec succès.` });
-        setTimeout(() => this.router.navigate(['/qms-documents']), 1500);
+        setTimeout(() => this.router.navigate(['/gestion-documentaire/documents']), 1500);
       },
       error: (err: any) => {
         this.loading = false;

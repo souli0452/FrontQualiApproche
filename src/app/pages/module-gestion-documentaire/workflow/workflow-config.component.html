@@ -16,7 +16,7 @@
         </div>
       </ng-template>
       <ng-template pTemplate="right">
-        <button *ngxPermissionsOnly="['WORKFLOW_WRITE']" pButton pRipple label="Nouveau Workflow" icon="pi pi-plus" class="p-button-primary p-button-sm"
+        <button pButton pRipple label="Nouveau Workflow" icon="pi pi-plus" class="p-button-primary p-button-sm"
           (click)="openNew()"></button>
       </ng-template>
     </p-toolbar>
@@ -95,20 +95,72 @@
 
             <div class="flex-grow-1 grid grid-cols-12 gap-3">
               <div class="col-span-12 md:col-span-6">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Nom de l'étape <span class="text-red-500">*</span></label>
-                <input pInputText formControlName="nomEtape" placeholder="Ex: Validation RH"
-                  class="w-full p-inputtext-sm" />
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Étape du catalogue <span class="text-red-500">*</span></label>
+                <p-select [options]="stepTemplates" formControlName="stepTemplateId" optionLabel="nomEtape"
+                  optionValue="id" placeholder="Choisir une étape" class="w-full" [filter]="true"
+                  appendTo="body" (onChange)="onStepTemplateSelected(i, $event.value)"></p-select>
+                <small class="text-slate-400">
+                  Pas encore créée ? Onglet "Étapes" du Paramétrage Document.
+                </small>
               </div>
               <div class="col-span-12 md:col-span-6">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Rôle Responsable / Permission <span class="text-red-500">*</span></label>
-                <p-select [options]="rolesList" formControlName="responsableRole" optionLabel="label"
-                  optionValue="value" placeholder="Sélectionner un rôle ou permission" class="w-full" [filter]="true"
-                  [showClear]="true" appendTo="body"></p-select>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Rôle Responsable / Permission</label>
+                <input pInputText [value]="getRoleLabel(step.get('responsableRole')?.value)" placeholder="Déterminé par l'étape choisie"
+                  class="w-full p-inputtext-sm" readonly />
               </div>
               <div class="col-span-12">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Description</label>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Consigne spécifique à ce circuit</label>
                 <textarea pInputTextarea formControlName="description" placeholder="Consigne..."
                   class="w-full p-inputtext-sm" rows="2"></textarea>
+              </div>
+
+              <!-- Routage du circuit : cible de chaque décision (Approuver / Rejeter) -->
+              <div class="col-span-12 pt-2 mt-2 border-top-1 border-300">
+                <div class="text-xs font-bold text-slate-500 uppercase mb-2 flex align-items-center gap-2">
+                  <i class="pi pi-directions"></i> Routage du circuit
+                </div>
+                <div class="grid grid-cols-12 gap-3">
+                  <div class="col-span-12 md:col-span-6">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Si Approuvé →</label>
+                    <p-select [options]="getStepTargetOptions(i)" formControlName="approveTarget" optionLabel="label"
+                      optionValue="value" placeholder="Fin de circuit (document validé)" [showClear]="true"
+                      class="w-full p-inputtext-sm" appendTo="body" (onChange)="onTargetSelected(i, 'approve', $event.value)"></p-select>
+                    <details class="mt-2 text-xs">
+                      <summary class="cursor-pointer text-indigo-600 font-semibold select-none">Personnaliser le rôle / libellé</summary>
+                      <div class="grid grid-cols-12 gap-2 mt-2">
+                        <div class="col-span-12 md:col-span-6">
+                          <p-select [options]="rolesList" formControlName="approveRole" optionLabel="label"
+                            optionValue="value" placeholder="Rôle de l'étape (par défaut)" [showClear]="true"
+                            class="w-full p-inputtext-sm" appendTo="body"></p-select>
+                        </div>
+                        <div class="col-span-12 md:col-span-6">
+                          <input pInputText formControlName="approveLabel" placeholder="Libellé du bouton (ex: Approuver)"
+                            class="w-full p-inputtext-sm" />
+                        </div>
+                      </div>
+                    </details>
+                  </div>
+                  <div class="col-span-12 md:col-span-6">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Si Rejeté →</label>
+                    <p-select [options]="getStepTargetOptions(i)" formControlName="rejectTarget" optionLabel="label"
+                      optionValue="value" placeholder="Retour au brouillon" [showClear]="true"
+                      class="w-full p-inputtext-sm" appendTo="body" (onChange)="onTargetSelected(i, 'reject', $event.value)"></p-select>
+                    <details class="mt-2 text-xs">
+                      <summary class="cursor-pointer text-indigo-600 font-semibold select-none">Personnaliser le rôle / libellé</summary>
+                      <div class="grid grid-cols-12 gap-2 mt-2">
+                        <div class="col-span-12 md:col-span-6">
+                          <p-select [options]="rolesList" formControlName="rejectRole" optionLabel="label"
+                            optionValue="value" placeholder="Rôle de l'étape (par défaut)" [showClear]="true"
+                            class="w-full p-inputtext-sm" appendTo="body"></p-select>
+                        </div>
+                        <div class="col-span-12 md:col-span-6">
+                          <input pInputText formControlName="rejectLabel" placeholder="Libellé du bouton (ex: Rejeter)"
+                            class="w-full p-inputtext-sm" />
+                        </div>
+                      </div>
+                    </details>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -138,63 +190,3 @@
 </p-dialog>
 
 <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
-
-<!-- Modale de Détail du Workflow -->
-<p-dialog [(visible)]="showDetailDialog" [style]="{width: '50rem'}" header="Détails du Workflow" [modal]="true"
-  [breakpoints]="{ '960px': '75vw', '640px': '90vw' }">
-  <div *ngIf="selectedWorkflow" class="p-fluid">
-    <!-- Infos Générales -->
-    <div class="mb-4 flex align-items-center justify-content-between">
-      <div>
-        <h3 class="text-xl font-bold text-slate-800 m-0">{{ selectedWorkflow.nom }}</h3>
-        <p class="text-sm text-slate-500 mt-2">{{ selectedWorkflow.description || 'Aucune description fournie.' }}</p>
-      </div>
-      <div *ngIf="selectedWorkflow.documentType">
-        <span class="p-tag p-tag-info font-bold text-xs px-2.5 py-1 rounded border border-indigo-100">
-          Type : {{ selectedWorkflow.documentType }}
-        </span>
-      </div>
-    </div>
-
-    <!-- Les étapes -->
-    <div class="surface-card p-4 border-round border border-slate-200 bg-slate-50">
-      <div class="text-lg font-bold text-slate-700 mb-3 border-bottom-1 border-300 pb-2 flex align-items-center gap-2">
-        <i class="pi pi-sitemap text-indigo-500"></i>
-        Étapes de Validation ({{ selectedWorkflow.steps.length }})
-      </div>
-
-      <div *ngIf="selectedWorkflow.steps && selectedWorkflow.steps.length > 0; else noSteps"
-        class="flex flex-column gap-3">
-        <div *ngFor="let step of getSortedSteps(selectedWorkflow.steps); let i = index"
-          class="flex align-items-start gap-3 p-3 bg-white border border-slate-200 border-round shadow-sm">
-          <div class="flex-none">
-            <div
-              class="flex align-items-center justify-content-center bg-indigo-500 text-white border-circle w-2rem h-2rem font-bold">
-              {{ step.stepOrder || (i + 1) }}
-            </div>
-          </div>
-          <div class="flex-grow-1">
-            <div class="flex align-items-center justify-content-between">
-              <span class="font-bold text-slate-800 text-base">{{ step.nomEtape }}</span>
-              <span
-                class="px-2.5 py-0.5 bg-indigo-50 text-indigo-700 text-xs border border-indigo-100 rounded-full font-semibold">
-                {{ step.responsableRole }}
-              </span>
-            </div>
-            <p class="text-sm text-slate-600 m-0 mt-1" *ngIf="step.description">{{ step.description }}</p>
-          </div>
-        </div>
-      </div>
-
-      <ng-template #noSteps>
-        <div class="text-center p-4">
-          <p class="text-slate-400 m-0">Aucune étape configurée pour ce workflow.</p>
-        </div>
-      </ng-template>
-    </div>
-  </div>
-  <ng-template pTemplate="footer">
-    <button pButton pRipple label="Fermer" icon="pi pi-times" class="p-button-text p-button-secondary"
-      (click)="showDetailDialog = false"></button>
-  </ng-template>
-</p-dialog>

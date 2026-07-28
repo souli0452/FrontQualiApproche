@@ -165,11 +165,25 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
     }
 
     getVersionHistory(id: string): Observable<QmsDocumentVersion[]> {
-        return this.http.get<QmsDocumentVersion[]>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/versions`);
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/versions`).pipe(
+            map(res => {
+                if (Array.isArray(res)) return res;
+                if (res?.data?.content) return res.data.content;
+                if (res?.data) return Array.isArray(res.data) ? res.data : [];
+                return [];
+            })
+        );
     }
 
     getAuditLogs(id: string): Observable<QmsAuditLog[]> {
-        return this.http.get<QmsAuditLog[]>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/audit-logs`);
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/audit-logs`).pipe(
+            map(res => {
+                if (Array.isArray(res)) return res;
+                if (res?.data?.content) return res.data.content;
+                if (res?.data) return Array.isArray(res.data) ? res.data : [];
+                return [];
+            })
+        );
     }
 
     searchDocuments(filters: Record<string, any>): Observable<DocumentQms[]> {
@@ -195,11 +209,27 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
     }
 
     getDocumentStats(): Observable<DocumentStatsDto> {
-        return this.http.get<DocumentStatsDto>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/stats`);
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/stats`).pipe(
+            map(res => res?.data ?? res)
+        );
+    }
+
+    getDocumentStatsByDimension(dimension: string): Observable<Record<string, number>> {
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/stats/by/${dimension}`).pipe(
+            map(res => {
+                const data = res?.data ?? res;
+                if (data && typeof data === 'object' && !Array.isArray(data)) {
+                    return data;
+                }
+                return {};
+            })
+        );
     }
 
     getDocumentById(id: string): Observable<DocumentQms> {
-        return this.http.get<DocumentQms>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}`);
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}`).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
     // --- Document Access Management (ACL) ---
@@ -218,7 +248,14 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
     }
 
     getDocumentAccess(id: string): Observable<DocumentUserAccess[]> {
-        return this.http.get<DocumentUserAccess[]>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/access`);
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/access`).pipe(
+            map(res => {
+                if (Array.isArray(res)) return res;
+                if (res?.data?.content) return res.data.content;
+                if (res?.data) return Array.isArray(res.data) ? res.data : [];
+                return [];
+            })
+        );
     }
 
     // --- Shared Documents ---

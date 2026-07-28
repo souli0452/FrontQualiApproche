@@ -1,0 +1,33 @@
+<div class="card-first p-0 overflow-hidden border-none bg-surface-0 dark:bg-surface-900 transition-colors duration-300">
+    <!-- Header de la zone de configuration -->
+    <div class="bg-primary-50 dark:bg-surface-800 p-5 flex justify-between items-center border-b border-surface-border">
+        <div>
+            <h1 class="text-2xl font-bold m-0 flex items-center gap-3 text-surface-900 dark:text-surface-50">
+                <i class="pi pi-file-edit text-primary dark:text-primary-400"></i>
+                Paramétrage Document
+            </h1>
+            <p class="text-surface-500 dark:text-surface-400 mt-1 mb-0">Types de documents et circuits de validation (workflows)</p>
+        </div>
+    </div>
+
+    <!-- Navigation Hub (Topbar) -->
+    <div class="pt-2 bg-surface-0 dark:bg-surface-900 border-b border-surface-border">
+        <p-tabs [value]="activeTab" [scrollable]="true" (valueChange)="onTabChange($event)">
+            <p-tablist>
+                <p-tab *ngFor="let tab of items" [value]="tab.routerLink">
+                    <a [routerLink]="tab.routerLink" routerLinkActive="text-primary font-bold" class="flex items-center gap-2 text-inherit no-underline outline-none px-2 py-1">
+                        <i [class]="tab.icon"></i>
+                        <span class="whitespace-nowrap">{{ tab.label }}</span>
+                    </a>
+                </p-tab>
+            </p-tablist>
+        </p-tabs>
+    </div>
+
+    <!-- Contenu dynamique (Router Outlet) -->
+    <div class="bg-surface-50/50 dark:bg-surface-950/40 min-h-[500px]">
+        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl overflow-hidden">
+            <router-outlet></router-outlet>
+        </div>
+    </div>
+</div>

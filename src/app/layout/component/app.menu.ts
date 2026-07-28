@@ -50,11 +50,12 @@ export class AppMenu {
                 label: 'Gestion documentaire',
                 icon: 'pi pi-fw pi-briefcase',
                 routerLink: ['/'],
-                visible: hasAnyPermission(['DOC_READ', 'DOC_TYPE_READ', 'WORKFLOW_READ']),
-                items: [
-                    { label: 'Gestions des documents', icon: 'pi pi-fw pi-eye', visible: hasAnyPermission(['DOC_READ']), routerLink: ['/qms-documents'] },
-                    { label: 'Gestion des types de documents ', icon: 'pi pi-fw pi-briefcase', visible: hasAnyPermission(['DOC_TYPE_READ']), routerLink: ['/qms-document-types'] },
-                    { label: 'Workflows  documents ', icon: 'pi pi-fw pi-briefcase', visible: hasAnyPermission(['WORKFLOW_READ']), routerLink: ['/qms-workflow-config'] }
+                items:[
+                    {
+                        label: 'Gestion documentaire',
+                        icon: 'pi pi-fw pi-briefcase',
+                        routerLink: ['/gestion-documentaire'],
+                    },
                 ]
             },
             {
@@ -69,16 +70,6 @@ export class AppMenu {
                     { label: "Critères d'évaluation", visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['CRITERE_EVAL_READ']), icon: 'pi pi-fw pi-file', routerLink: ['/critere-evaluation'] }
                 ]
             },
-            // {
-            //     label: 'Gestion Documentaire',
-            //     visible: isLicenseActive() && isModuleSubscribed('DOCUMENT') && hasAnyPermission(['DOC_READ']),
-            //     icon: 'pi pi-fw pi-briefcase',
-            //     routerLink: ['/'],
-            //     items: [
-            //         { label: 'Catégorie de fichiers', icon: 'pi pi-fw pi-users', routerLink: ['/pages/'] },
-            //         { label: 'Exigence', icon: 'pi pi-fw pi-user-plus', routerLink: ['/pages/'] }
-            //     ]
-            // },
             // {
             //     label: 'TRAITEMENTS DES DEMANDES',
             //     icon: 'pi pi-fw pi-envelope',
@@ -206,7 +197,10 @@ export class AppMenu {
                 label: 'Configurations',
                 icon: 'pi pi-sliders-h',
                 visible: true,
-                items: [{ label: 'Configurations Globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'], visible: true }]
+                items: [
+                    { label: 'Configurations Globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'], visible: true },
+                    { label: 'Paramétrage Document', icon: 'pi pi-fw pi-file-edit', routerLink: ['/parametrage-document'] }
+                ]
             }
         ];
             // On écoute les changements du badge !

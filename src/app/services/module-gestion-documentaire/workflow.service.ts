@@ -44,6 +44,12 @@ export class WorkflowService {
     return this.http.get<ApiResponse<DocumentWorkflow>>(QualiUrlConfig.WORKFLOW_ROOT_URL, { params });
   }
 
+  getWorkflowById(id: string): Observable<DocumentWorkflow> {
+    return this.http.get<any>(`${QualiUrlConfig.WORKFLOW_ROOT_URL}/${id}`).pipe(
+      map(res => res?.data ?? res)
+    );
+  }
+
 
 
   createWorkflow(workflow: DocumentWorkflow): Observable<DocumentWorkflow> {

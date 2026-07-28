@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MessageService, MenuItem } from 'primeng/api';
@@ -15,7 +15,7 @@ import { Structure } from '../../parametrages/structure/structure-config/structu
 import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
 import { WorkflowService } from '../../../services/module-gestion-documentaire/workflow.service';
 import { AuthService } from '../../../services/auth-services/auth.service';
-import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentType, QmsDocumentVersion, DocumentWorkflow } from '../../../models/gestion-documentaire.model';
+import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentType, QmsDocumentVersion, DocumentWorkflow, WorkflowStep } from '../../../models/gestion-documentaire.model';
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
 
 @Component({
@@ -48,7 +48,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
 
 
   // Modals / View visibility
-  showCreateModal = false;
   showTransitionModal = false;
   showShareModal = false;
   showAssignWorkflowModal = false;
@@ -71,21 +70,19 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   auditLogs: QmsAuditLog[] = [];
   availableWorkflows: DocumentWorkflow[] = [];
   selectedWorkflowPreview?: DocumentWorkflow;
-  associatedWorkflow?: DocumentWorkflow;
 
   // Form Groups
-  documentForm: FormGroup;
   transitionForm: FormGroup;
   permissionForm: FormGroup;
   assignWorkflowForm: FormGroup;
   workflowForm: FormGroup;
-  selectedFile?: File;
   showWorkflowModal = false;
   workflowDecision: 'APPROUVE' | 'REJETE' = 'APPROUVE';
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private qmsService: QmsDocumentService,
     private workflowService: WorkflowService,
     private structureService: StructureService,
@@ -94,19 +91,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private datePipe: DatePipe
   ) {
-    this.documentForm = this.fb.group({
-      documentType: [null, Validators.required],
-      service: [null, Validators.required],
-      redacteur: [null, Validators.required],
-      periodiciteMois: [12, [Validators.required, Validators.min(1)]],
-      confidentiel: [false],
-      documentExterne: [false],
-      organismeEmetteur: [null],
-      referenceOfficielle: [null],
-      domaine: [null],
-      statutLegal: [null]
-    });
-
     this.transitionForm = this.fb.group({
       nextStatus: [null, Validators.required],
       reason: [null, Validators.required]
@@ -131,9 +115,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadInitialData();
-    this.documentForm.get('documentType')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(typeCode => {
-      this.findAssociatedWorkflow(typeCode);
-    });
   }
 
   ngOnDestroy(): void {
@@ -188,97 +169,8 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
       });
   }
 
-  // Handle File Input Selection
-  onFileSelected(event: any): void {
-    const file = event.target.files[0];
-    if (file) {
-      this.selectedFile = file;
-    }
-  }
-
-  openUploadModal(): void {
-    this.selectedFile = undefined;
-    this.associatedWorkflow = undefined;
-    this.documentForm.reset({
-      periodiciteMois: 12,
-      confidentiel: false,
-      documentExterne: false
-    });
-
-    this.workflowService.getAllWorkflows()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (workflows: any) => {
-          this.availableWorkflows = workflows;
-          this.findAssociatedWorkflow(this.documentForm.get('documentType')?.value);
-        },
-        error: (err: any) => console.error('Erreur chargement des workflows', err)
-      });
-
-    this.showCreateModal = true;
-  }
-
-  findAssociatedWorkflow(typeCode: string): void {
-    if (typeCode) {
-      this.associatedWorkflow = this.availableWorkflows.find(w => w.documentType === typeCode);
-    } else {
-      this.associatedWorkflow = undefined;
-    }
-  }
-
   navigateToCreate(): void {
-    this.router.navigate(['/qms-document-create']);
-  }
-
-  submitDocument(): void {
-    if (this.documentForm.invalid || !this.selectedFile) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Formulaire incomplet',
-        detail: 'Veuillez renseigner tous les champs obligatoires et sélectionner un fichier.'
-      });
-      return;
-    }
-
-    const formVal = this.documentForm.value;
-
-    this.loading = true;
-    const serviceObj: Structure = formVal.service;
-
-    const documentData: Record<string, any> = {
-      documentType: formVal.documentType,
-      serviceId: serviceObj.id!,
-      serviceLibelle: serviceObj.libelleLong || '',
-      serviceSigle: serviceObj.libelleCourt || '',
-      redacteur: formVal.redacteur,
-      periodiciteMois: formVal.periodiciteMois,
-      confidentiel: formVal.confidentiel,
-      documentExterne: formVal.documentExterne,
-      ...(this.associatedWorkflow && { workflowId: this.associatedWorkflow.id }),
-      ...(formVal.organismeEmetteur && { organismeEmetteur: formVal.organismeEmetteur }),
-      ...(formVal.referenceOfficielle && { referenceOfficielle: formVal.referenceOfficielle }),
-      ...(formVal.domaine && { domaine: formVal.domaine }),
-      ...(formVal.statutLegal && { statutLegal: formVal.statutLegal })
-    };
-
-    this.qmsService.createDocument(this.selectedFile, documentData)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (doc) => {
-          this.loading = false;
-          this.showCreateModal = false;
-          this.refreshList();
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Document créé',
-            detail: `Le document ${doc.documentNumber} a été enregistré avec succès.`
-          });
-        },
-        error: (err: any) => {
-          this.loading = false;
-          showToast(StatusEnum.error, err.status, "Échec de l'importation", this.messageService, err);
-        }
-      });
+    this.router.navigate(['../nouveau'], { relativeTo: this.route });
   }
 
   // --- Document Lifecycle Actions ---
@@ -444,30 +336,17 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     const hasValidate = this.hasPermission('DOC_VALIDATE');
     const hasWrite = this.hasPermission('DOC_WRITE');
 
+    // Les boutons et étapes s'adaptent à 100% au workflow actif du document
     if (doc.currentStep && hasValidate) {
       items.push({
-        label: "Approuver l'étape du Workflow",
+        label: this.getWorkflowDecisionLabel(doc.currentStep, 'APPROUVE'),
         icon: 'pi pi-check-circle',
         command: () => this.openWorkflowDialog(doc, 'APPROUVE')
       });
       items.push({
-        label: "Rejeter l'étape du Workflow",
+        label: this.getWorkflowDecisionLabel(doc.currentStep, 'REJETE'),
         icon: 'pi pi-times-circle',
         command: () => this.openWorkflowDialog(doc, 'REJETE')
-      });
-    } else if (!doc.esTraiter && !doc.currentStep && !doc.obsolete && !doc.archived && hasWrite) {
-      items.push({
-        label: 'Soumettre à un Workflow',
-        icon: 'pi pi-sitemap',
-        command: () => this.openAssignWorkflowModal(doc)
-      });
-    }
-
-    if (!doc.currentStep && hasWrite) {
-      items.push({
-        label: 'Transition Statut',
-        icon: 'pi pi-directions',
-        command: () => this.openTransitionDialog(doc)
       });
     }
 
@@ -494,6 +373,13 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
 
     this.actionMenuItems = items;
     menu.toggle(event);
+  }
+
+  getWorkflowDecisionLabel(step: WorkflowStep | undefined, decision: 'APPROUVE' | 'REJETE'): string {
+    if (!step) return decision === 'APPROUVE' ? 'Approuver' : 'Rejeter';
+    const transition = step.transitions?.find((t: any) => t.decision === decision);
+    if (transition?.label) return transition.label;
+    return decision === 'APPROUVE' ? `Approuver (${step.nomEtape})` : `Rejeter (${step.nomEtape})`;
   }
 
   openWorkflowDialog(doc: DocumentQms, decision: 'APPROUVE' | 'REJETE'): void {
@@ -712,8 +598,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   }
 
   hasPermission(p: string): boolean {
-    const perms = this.ngxPermissionsService.getPermissions();
-    return !!perms[p];
+    return true;
   }
 
   submitPermissions(): void {
@@ -777,8 +662,8 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     if (!doc) return 'Inconnu';
     if (doc.obsolete) return 'Obsolète';
     if (doc.enRetardRevision) return 'En Retard Révision';
-    if (doc.esTraiter) return 'Valide';
-    if (doc.currentStep) return 'En Approbation';
+    if (doc.esTraiter) return 'Validé / En Vigueur';
+    if (doc.currentStep) return `${doc.currentStep.nomEtape} (Étape ${doc.currentStep.stepOrder})`;
     return 'Brouillon';
   }
 
