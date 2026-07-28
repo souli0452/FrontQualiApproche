@@ -19,7 +19,6 @@ export class QualiUrlConfig {
     static readonly ACTION_NON_CONFORMITE_ROOT_URL = `${AMELIORATION_SERVICE}/actions`;
 
     // Referentiel Service
-    static readonly CATEGORIE_FICHIER_ROOT_URL = `${REFERENTIEL_SERVICE}/categorie/fichier`;
     static readonly PRESTATAIRE_ROOT_URL = `${REFERENTIEL_SERVICE}/prestataire`;
     static readonly FOURNISSEUR_ROOT_URL = `${REFERENTIEL_SERVICE}/fournisseur`;
     static readonly DEPARTEMENT_ROOT_URL = `${REFERENTIEL_SERVICE}/departement`;
@@ -37,6 +36,9 @@ export class QualiUrlConfig {
     // Support Service (Gestion Documentaire QMS)
     static readonly QMS_DOCUMENT_ROOT_URL = `${SUPPORT_SERVICE}/qms/documents`;
     static readonly QMS_DOCUMENT_TYPE_ROOT_URL = `${SUPPORT_SERVICE}/qms/document-types`;
+    static readonly WORKFLOW_ROOT_URL = `${SUPPORT_SERVICE}/workflows`;
+    static readonly WORKFLOW_STEP_TEMPLATE_ROOT_URL = `${SUPPORT_SERVICE}/workflow-step-templates`;
+
 
     // User Service (Authentification et Utilisateurs)
     static readonly LOGIN_URL = `${USER_SERVICE}/login`;

@@ -50,9 +50,12 @@ export class AppMenu {
                 label: 'Gestion documentaire',
                 icon: 'pi pi-fw pi-briefcase',
                 routerLink: ['/'],
-                items: [
-                    { label: 'Gestions des documents', icon: 'pi pi-fw pi-eye', routerLink: ['/qms-documents'] },
-                    { label: 'Gestion des types de documents ', icon: 'pi pi-fw pi-briefcase', routerLink: ['/qms-document-types'] }
+                items:[
+                    {
+                        label: 'Gestion documentaire',
+                        icon: 'pi pi-fw pi-briefcase',
+                        routerLink: ['/gestion-documentaire'],
+                    },
                 ]
             },
             {
@@ -67,16 +70,6 @@ export class AppMenu {
                     { label: "Critères d'évaluation", visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['CRITERE_EVAL_READ']), icon: 'pi pi-fw pi-file', routerLink: ['/critere-evaluation'] }
                 ]
             },
-            // {
-            //     label: 'Gestion Documentaire',
-            //     visible: isLicenseActive() && isModuleSubscribed('DOCUMENT') && hasAnyPermission(['DOC_READ']),
-            //     icon: 'pi pi-fw pi-briefcase',
-            //     routerLink: ['/'],
-            //     items: [
-            //         { label: 'Catégorie de fichiers', icon: 'pi pi-fw pi-users', routerLink: ['/pages/'] },
-            //         { label: 'Exigence', icon: 'pi pi-fw pi-user-plus', routerLink: ['/pages/'] }
-            //     ]
-            // },
             // {
             //     label: 'TRAITEMENTS DES DEMANDES',
             //     icon: 'pi pi-fw pi-envelope',
@@ -206,8 +199,9 @@ export class AppMenu {
                 visible: true,
                 items: [
                     { label: 'Configurations Globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'], visible: true },
+                    { label: 'Paramétrage Document', icon: 'pi pi-fw pi-file-edit', routerLink: ['/parametrage-document'] }
                 ]
-            },
+            }
         ];
             // On écoute les changements du badge !
     this.nonConformiteService.notificationsNC$.subscribe((notifs: any) => {
@@ -218,15 +212,15 @@ export class AppMenu {
             if (menuQualite && menuQualite.items) {
                 // On trouve le sous-menu "Non-Conformités" (celui qui a la valise)
                 const menuNC = menuQualite.items.find(i => i.label === 'Non-Conformités');
-                
+
                 if (menuNC) {
                     // PrimeNG permet d'ajouter un 'badge' sur n'importe quel MenuItem
                     // On met le total (en string), ou rien s'il est à zéro
                     menuNC.badge = total > 0 ? total.toString() : undefined;
-                    
+
                     // Optionnel : ajouter une classe CSS pour le rendre rouge par exemple
-                    menuNC.badgeStyleClass = 'bg-red-500 text-white font-bold'; 
-                    
+                    menuNC.badgeStyleClass = 'bg-red-500 text-white font-bold';
+
                     // On force Angular à rafraîchir le composant
                     this.cdr.detectChanges();
                 }

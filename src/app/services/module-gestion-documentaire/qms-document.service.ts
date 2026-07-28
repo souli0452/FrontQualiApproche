@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/comm
 import { map, Observable } from 'rxjs';
 import { QualiUrlConfig } from '../quali-url-configs';
 import { BaseCrudService } from '../base-crud.service';
-import { DocumentQms, QmsDocumentType } from '../../models/gestion-documentaire.model';
+import { DocumentQms, QmsDocumentType, QmsDocumentVersion, QmsAuditLog, DocumentStatsDto, DocumentUserAccess, SharedDocumentDto } from '../../models/gestion-documentaire.model';
 import { ApiItemResponse, ApiResponse } from '../../models/response.model';
 
 
@@ -122,111 +122,150 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
         });
     }
 
-    searchDocuments(filters: { query?: string; documentType?: string; serviceId?: string; status?: string[]; dateFrom?: string; dateTo?: string }): Observable<ApiResponse<any>> {
-        let params = new HttpParams();
-        if (filters.query) params = params.set('query', filters.query);
-        if (filters.documentType) params = params.set('documentType', filters.documentType);
-        if (filters.serviceId) params = params.set('serviceId', filters.serviceId);
-        if (filters.status && filters.status.length > 0) {
-            filters.status.forEach((s) => (params = params.append('status', s)));
-        }
-        if (filters.dateFrom) params = params.set('dateFrom', filters.dateFrom);
-        if (filters.dateTo) params = params.set('dateTo', filters.dateTo);
+    // --- NOUVEAUX ENDPOINTS ALIGNÉS SUR QmsDocumentController ---
 
-        return this.http.get<ApiResponse<any>>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/search`, { params });
+    createDocument(file: File, documentData: Record<string, any>): Observable<DocumentQms> {
+        const formData = new FormData();
+        formData.append('file', file);
+        Object.keys(documentData).forEach(key => {
+            if (documentData[key] !== null && documentData[key] !== undefined) {
+                formData.append(key, documentData[key].toString());
+            }
+        });
+        return this.http.post<DocumentQms>(QualiUrlConfig.QMS_DOCUMENT_ROOT_URL, formData);
+    }
+
+    addVersion(id: string, file: File, comments: string): Observable<QmsDocumentVersion> {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('comments', comments);
+        return this.http.post<QmsDocumentVersion>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/versions`, formData);
+    }
+
+    transitionStatus(id: string, nextStatus: string, reason: string): Observable<DocumentQms> {
+        const params = new HttpParams().set('nextStatus', nextStatus).set('reason', reason);
+        return this.http.post<DocumentQms>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/transition`, null, { params });
+    }
+
+    assignWorkflow(id: string, workflowId: string): Observable<DocumentQms> {
+        const params = new HttpParams().set('workflowId', workflowId);
+        return this.http.post<DocumentQms>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/workflow`, null, { params });
     }
 
 
-}
+    linkToNonConformity(id: string, ncRef: string, actionCorrective: string): Observable<DocumentQms> {
+        const params = new HttpParams().set('ncRef', ncRef).set('actionCorrective', actionCorrective);
+        return this.http.post<DocumentQms>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/link-nc`, null, { params });
+    }
 
+    exportSecuredPdf(id: string): Observable<Blob> {
+        return this.http.get(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/export-pdf`, {
+            responseType: 'blob'
+        });
+    }
 
-// export class QmsDocumentService {
-//     constructor(private http: HttpClient) {}
+    getVersionHistory(id: string): Observable<QmsDocumentVersion[]> {
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/versions`).pipe(
+            map(res => {
+                if (Array.isArray(res)) return res;
+                if (res?.data?.content) return res.data.content;
+                if (res?.data) return Array.isArray(res.data) ? res.data : [];
+                return [];
+            })
+        );
+    }
+
+    getAuditLogs(id: string): Observable<QmsAuditLog[]> {
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/audit-logs`).pipe(
+            map(res => {
+                if (Array.isArray(res)) return res;
+                if (res?.data?.content) return res.data.content;
+                if (res?.data) return Array.isArray(res.data) ? res.data : [];
+                return [];
+            })
+        );
+    }
+
+    searchDocuments(filters: Record<string, any>): Observable<DocumentQms[]> {
+        let params = new HttpParams();
+        Object.keys(filters).forEach(key => {
+            if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
+                 if (Array.isArray(filters[key])) {
+                     filters[key].forEach((v: any) => params = params.append(key, v));
+                 } else {
+                     params = params.set(key, filters[key].toString());
+                 }
+            }
+        });
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/search`, { params }).pipe(
+            map(res => {
+                if (Array.isArray(res)) return res;
+                if (res?.data?.content) return res.data.content;
+                if (res?.content) return res.content;
+                if (res?.data) return Array.isArray(res.data) ? res.data : [];
+                return [];
+            })
+        );
+    }
+
+    getDocumentStats(): Observable<DocumentStatsDto> {
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/stats`).pipe(
+            map(res => res?.data ?? res)
+        );
+    }
+
+    getDocumentStatsByDimension(dimension: string): Observable<Record<string, number>> {
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/stats/by/${dimension}`).pipe(
+            map(res => {
+                const data = res?.data ?? res;
+                if (data && typeof data === 'object' && !Array.isArray(data)) {
+                    return data;
+                }
+                return {};
+            })
+        );
+    }
+
+    getDocumentById(id: string): Observable<DocumentQms> {
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}`).pipe(
+            map(res => res?.data ?? res)
+        );
+    }
+
+    // --- Document Access Management (ACL) ---
     
+    grantAccess(id: string, userId: string, userFullName: string, userEmail: string, role: string): Observable<DocumentUserAccess> {
+        const formData = new FormData();
+        formData.append('userId', userId);
+        if (userFullName) formData.append('userFullName', userFullName);
+        if (userEmail) formData.append('userEmail', userEmail);
+        formData.append('role', role);
+        return this.http.post<DocumentUserAccess>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/access`, formData);
+    }
 
-//     // --- Document Type APIs ---
-//     getAllTypes(): Observable<QmsDocumentType[]> {
-//         console.log('Appel API vers :', QualiUrlConfig.QMS_DOCUMENT_TYPE_ROOT_URL);
-//         return this.http.get<QmsDocumentType[]>(QualiUrlConfig.QMS_DOCUMENT_TYPE_ROOT_URL);
-//     }
+    revokeAccess(id: string, userId: string): Observable<void> {
+        return this.http.delete<void>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/access/${userId}`);
+    }
 
-//     getTypeById(id: string): Observable<QmsDocumentType> {
-//         return this.http.get<QmsDocumentType>(`${QualiUrlConfig.QMS_DOCUMENT_TYPE_ROOT_URL}/${id}`);
-//     }
+    getDocumentAccess(id: string): Observable<DocumentUserAccess[]> {
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/access`).pipe(
+            map(res => {
+                if (Array.isArray(res)) return res;
+                if (res?.data?.content) return res.data.content;
+                if (res?.data) return Array.isArray(res.data) ? res.data : [];
+                return [];
+            })
+        );
+    }
 
-//     createType(type: QmsDocumentType): Observable<QmsDocumentType> {
-//         return this.http.post<QmsDocumentType>(QualiUrlConfig.QMS_DOCUMENT_TYPE_ROOT_URL, type);
-//     }
+    // --- Shared Documents ---
 
-//     updateType(id: string, type: QmsDocumentType): Observable<QmsDocumentType> {
-//         return this.http.put<QmsDocumentType>(`${QualiUrlConfig.QMS_DOCUMENT_TYPE_ROOT_URL}/${id}`, type);
-//     }
+    getMySharedDocuments(): Observable<SharedDocumentDto[]> {
+        return this.http.get<SharedDocumentDto[]>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/shared/me`);
+    }
 
-//     deleteType(id: string): Observable<void> {
-//         return this.http.delete<void>(`${QualiUrlConfig.QMS_DOCUMENT_TYPE_ROOT_URL}/${id}`);
-//     }
+    getSharedDocumentsForUser(userId: string): Observable<SharedDocumentDto[]> {
+        return this.http.get<SharedDocumentDto[]>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/shared/${userId}`);
+    }
 
-//     // --- Document QMS APIs ---
-//     createDocument(formData: FormData): Observable<DocumentQms> {
-//         return this.http.post<DocumentQms>(QualiUrlConfig.QMS_DOCUMENT_ROOT_URL, formData);
-//     }
-
-//     transitionStatus(id: string, nextStatus: string, reason: string): Observable<DocumentQms> {
-//         const params = new HttpParams().set('nextStatus', nextStatus).set('reason', reason);
-//         return this.http.post<DocumentQms>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/transition`, null, { params });
-//     }
-
-//     linkToNonConformity(id: string, ncRef: string, actionCorrective: string): Observable<DocumentQms> {
-//         const params = new HttpParams().set('ncRef', ncRef).set('actionCorrective', actionCorrective);
-//         return this.http.post<DocumentQms>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/link-nc`, null, { params });
-//     }
-
-//     exportSecuredPdf(id: string): Observable<HttpResponse<Blob>> {
-//         return this.http.get(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/export-pdf`, {
-//             responseType: 'blob',
-//             observe: 'response'
-//         });
-//     }
-
-//     getVersionHistory(id: string): Observable<QmsDocumentVersion[]> {
-//         return this.http.get<QmsDocumentVersion[]>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/versions`);
-//     }
-
-//     getAuditLogs(id: string): Observable<QmsAuditLog[]> {
-//         return this.http.get<QmsAuditLog[]>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/audit-logs`);
-//     }
-
-//     searchDocuments(filters: { query?: string; documentType?: string; serviceId?: string; status?: string[]; dateFrom?: string; dateTo?: string }): Observable<DocumentQms[]> {
-//         let params = new HttpParams();
-//         if (filters.query) params = params.set('query', filters.query);
-//         if (filters.documentType) params = params.set('documentType', filters.documentType);
-//         if (filters.serviceId) params = params.set('serviceId', filters.serviceId);
-//         if (filters.status && filters.status.length > 0) {
-//             filters.status.forEach((s) => (params = params.append('status', s)));
-//         }
-//         if (filters.dateFrom) params = params.set('dateFrom', filters.dateFrom);
-//         if (filters.dateTo) params = params.set('dateTo', filters.dateTo);
-
-//         return this.http.get<DocumentQms[]>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/search`, { params });
-//     }
-
-//     createAlfrescoUser(user: any): Observable<void> {
-//         return this.http.post<void>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/users`, user);
-//     }
-
-//     getAlfrescoUsers(): Observable<any[]> {
-//         return this.http.get<any[]>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/users`);
-//     }
-
-//     assignPermissions(id: string, payload: { username: string; role: string }): Observable<void> {
-//         return this.http.post<void>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/permissions`, payload);
-//     }
-
-//     getShareLink(id: string): Observable<{ sharedId: string }> {
-//         return this.http.get<{ sharedId: string }>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/share-link`);
-//     }
-
-//     getAosUrl(id: string): Observable<{ aosUrl: string }> {
-//         return this.http.get<{ aosUrl: string }>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/aos-url`);
-//     }
-// }
+}

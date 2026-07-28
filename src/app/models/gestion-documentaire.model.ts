@@ -1,39 +1,5 @@
 import { UserInfos } from "./auth.model";
 
-// export interface QmsDocumentType extends UserInfos {
-//     id?: string;
-//     code: string;
-//     libelle: string;
-//     folderName: string;
-// }
-
-// export interface DocumentQms extends UserInfos {
-//     id?: string;
-//     documentNumber?: string;
-//     documentType: string;
-//     serviceId: string;
-//     serviceLibelle?: string;
-//     serviceSigle?: string;
-//     redacteur: string;
-//     status?: string;
-//     versionMajeure?: number;
-//     versionMineure?: number;
-//     dateVigueur?: string;
-//     dateProchRevision?: string;
-//     periodiciteMois?: number;
-//     confidentiel?: boolean;
-//     documentExterne?: boolean;
-//     organismeEmetteur?: string;
-//     referenceOfficielle?: string;
-//     datePublication?: string;
-//     domaine?: string;
-//     statutLegal?: string;
-//     alfrescoNodeId?: string;
-//     ncReference?: string;
-//     archived?: boolean;
-// }
-
-
 export interface QmsDocumentType {
   id?: string;
   code: string;
@@ -52,7 +18,10 @@ export interface DocumentQms {
   serviceLibelle?: string;
   serviceSigle?: string;
   redacteur: string;
-  status?: string;
+  esTraiter?: boolean;
+  enRetardRevision?: boolean;
+  obsolete?: boolean;
+  currentStep?: WorkflowStep;
   versionMajeure?: number;
   versionMineure?: number;
   dateVigueur?: string;
@@ -60,7 +29,8 @@ export interface DocumentQms {
   periodiciteMois?: number;
   confidentiel?: boolean;
   documentExterne?: boolean;
-  organismeEmetteur?: string;
+  processusDestId?: string;
+  processusDestLibelle?: string;
   referenceOfficielle?: string;
   datePublication?: string;
   domaine?: string;
@@ -71,7 +41,10 @@ export interface DocumentQms {
   createdAt?: string;
   createdById?: string;
   currentUserfullName?: string;
+  currentFileHash?: string;
+  workflowStatus?: string;
 }
+
 
 export interface QmsDocumentVersion {
   id?: number;
@@ -81,7 +54,9 @@ export interface QmsDocumentVersion {
   createdBy: string;
   comment: string;
   alfrescoNodeId: string;
+  fileHash?: string;
 }
+
 
 export interface QmsAuditLog {
   id?: number;
@@ -90,4 +65,71 @@ export interface QmsAuditLog {
   timestamp: string;
   username: string;
   details: string;
+}
+
+export interface DocumentStatsDto {
+  totalDocuments: number;
+  countByDocumentType: Record<string, number>;
+  countByStatus: Record<string, number>;
+  countByDomaine: Record<string, number>;
+  countByService: Record<string, number>;
+  documentsEnRetardRevision: number;
+  documentsConfidentiels: number;
+  documentsExternes: number;
+}
+
+export interface DocumentUserAccess {
+  id?: string;
+  documentId: string;
+  userId: string;
+  userFullName?: string;
+  userEmail?: string;
+  role: string; // READ_ONLY | WRITE
+  grantedAt?: string;
+  grantedBy?: string;
+}
+
+export interface SharedDocumentDto {
+  document: DocumentQms;
+  accessRole: string; // READ_ONLY | WRITE
+  grantedAt?: string;
+  grantedBy?: string;
+}
+
+export type WorkflowDecision = 'APPROUVE' | 'REJETE';
+
+export interface WorkflowTransition {
+  id?: number;
+  decision: WorkflowDecision;
+  toStepOrder?: number | null;
+  requiredRole?: string | null;
+  label?: string | null;
+}
+
+export interface WorkflowStep {
+  id?: number;
+  nomEtape: string;
+  stepOrder: number;
+  responsableRole: string;
+  description?: string;
+  transitions?: WorkflowTransition[];
+  stepTemplateId?: string | null;
+}
+
+export interface WorkflowStepTemplate {
+  id?: string;
+  nomEtape: string;
+  responsableRole: string;
+  description?: string;
+  createdAt?: string;
+}
+
+export interface DocumentWorkflow {
+  id?: string;
+  nom: string;
+  documentType?: string;
+  description?: string;
+  steps: WorkflowStep[];
+  createdAt?: string;
+  createdBy?: string;
 }

@@ -87,12 +87,12 @@ export class LoginComponent implements OnInit{
             this.authService.login(credentials).subscribe({
                 next: (response: ApiItemResponse<AuthData>) => {
                     this.isLoading = false;
-                    
+
                     // Récupération directe des données utilisateur renvoyées par le login
                     const userCurrentUser = response.data?.user;
 
                     if (userCurrentUser) {
-                        
+
                         // Récupération des rôles (si tu en as encore besoin pour les permissions)
                         // this.authService.getUserRoles(userCurrentUser.userId!).subscribe((roles) => {
                         //     localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(roles.body));
@@ -102,20 +102,20 @@ export class LoginComponent implements OnInit{
                         if (userCurrentUser.structure) {
                             this.fetchStucture(userCurrentUser.structure);
                         } else {
-                            this.messageService.add({ 
-                                severity: 'info', 
-                                summary: 'AVERTISSEMENT', 
-                                detail: 'Votre utilisateur est mal configuré (aucune structure associée)', 
-                                life: 3000 
+                            this.messageService.add({
+                                severity: 'info',
+                                summary: 'AVERTISSEMENT',
+                                detail: 'Votre utilisateur est mal configuré (aucune structure associée)',
+                                life: 3000
                             });
                             this.navigateAfterLogin();
                         }
                     } else {
-                        this.messageService.add({ 
-                            severity: 'error', 
-                            summary: 'Erreur', 
-                            detail: 'Impossible de récupérer les informations de session.', 
-                            life: 3000 
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Erreur',
+                            detail: 'Impossible de récupérer les informations de session.',
+                            life: 3000
                         });
                     }
                 },
@@ -133,8 +133,8 @@ export class LoginComponent implements OnInit{
                                 detailMessage = "Votre compte a été désactivé.";
                             } else if (data.temporaryPwd) {
                                 detailMessage = "Mot de passe temporaire. Redirection...";
-                                this.router.navigate(['/reset-password'], { 
-                                    queryParams: { username: credentials.username, oldpwd: credentials.password } 
+                                this.router.navigate(['/reset-password'], {
+                                    queryParams: { username: credentials.username, oldpwd: credentials.password }
                                 });
                             }
                         } else {
@@ -152,7 +152,7 @@ export class LoginComponent implements OnInit{
             this.errorMessage = 'Veuillez remplir tous les champs correctement avant de continuer.';
         }
     }
-    
+
     fetchStucture(structureId: string) {
         if (!structureId) {
             this.navigateAfterLogin();
@@ -169,11 +169,11 @@ export class LoginComponent implements OnInit{
             },
             error: (err) => {
                 console.error('Erreur lors du chargement de la structure:', err);
-                this.messageService.add({ 
-                    severity: 'warn', 
-                    summary: 'Avertissement', 
-                    detail: 'Impossible de charger la structure. Vérifiez votre configuration.', 
-                    life: 3000 
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Avertissement',
+                    detail: 'Impossible de charger la structure. Vérifiez votre configuration.',
+                    life: 3000
                 });
                 this.navigateAfterLogin();
             }

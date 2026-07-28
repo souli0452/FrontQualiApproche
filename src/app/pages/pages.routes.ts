@@ -38,8 +38,12 @@ import { ValidationPilote } from './module-nc/nc-validation-pilote/nc-validation
 import { AnalyseClotureComponent } from './module-nc/nc-analyse-cloture/nc-analyse-cloture';
 import { QmsDocumentComponent } from './module-gestion-documentaire/qms-document/qms-document.component';
 import { QmsDocumentCreateComponent } from './module-gestion-documentaire/qms-document-create/qms-document-create.component';
-import { QmsDocumentTypeComponent } from './module-gestion-documentaire/qms-document-type/qms-document-type';
-
+import { QmsDocumentTypeComponent } from './module-gestion-documentaire/qms-document-type/qms-document-type.component';
+import { WorkflowStepTemplateComponent } from './module-gestion-documentaire/workflow-step-template/workflow-step-template.component';
+import { QmsVueEnsembleComponent } from './module-gestion-documentaire/qms-vue-ensemble/qms-vue-ensemble.component';
+import { QmsDocumentsPartagesComponent } from './module-gestion-documentaire/qms-documents-partages/qms-documents-partages.component';
+import { GestionDocumentaireLayoutComponent } from '../layout/gestion-documentaire/gestion-documentaire';
+import { ParametrageDocumentComponent } from './parametrage-document/parametrage-document.component';
 
 export default [
     { path: 'recherche', component: SearchResultsComponent, title: 'Résultats de recherche' },
@@ -56,8 +60,8 @@ export default [
     { path: 'reglementation', component: reglementationComponent, title: 'Liste des Réglementations' },
     { path: 'critere-evaluation', component: CritereEvaluationComponent, title: 'Critères d\'évaluation' },
     {
-        path: 'configurations', 
-        component: ParametragesComponent, 
+        path: 'configurations',
+        component: ParametragesComponent,
         data: { breadcrumb: 'Configurations Globales' },
         children: [
             { path: '', redirectTo: 'config-systeme', pathMatch: 'full' },
@@ -71,6 +75,39 @@ export default [
             { path: 'type-action', component: ActionNonConformiteComponent, title: 'Actions' },
             { path: 'direction', component: StructureComponent, title: 'Liste des Directions', data: { typeStructure: TypeStructure.DIRECTION } },
             { path: 'service', component: StructureComponent, title: 'Services', data: { typeStructure: TypeStructure.SERVICE } },
+        ]
+    },
+
+    {
+        path: 'parametrage-document',
+        component: ParametrageDocumentComponent,
+        data: { breadcrumb: 'Paramétrage Document' },
+        children: [
+            { path: '', redirectTo: 'types', pathMatch: 'full' },
+            {
+                path: 'types',
+                component: QmsDocumentTypeComponent,
+                title: 'Types de documents',
+                data: { breadcrumb: 'Types de Document QMS' }
+            },
+            {
+                path: 'etapes',
+                component: WorkflowStepTemplateComponent,
+                title: 'Étapes',
+                data: { breadcrumb: "Catalogue d'Étapes" }
+            },
+            {
+                path: 'workflows',
+                loadComponent: () => import('./module-gestion-documentaire/workflow/workflow-config.component').then(c => c.WorkflowConfigComponent),
+                title: 'Workflows documents',
+                data: { breadcrumb: 'Configuration des Workflows' }
+            },
+            {
+                path: 'workflows/detail/:id',
+                loadComponent: () => import('./module-gestion-documentaire/workflow/workflow-detail.component').then(c => c.WorkflowDetailComponent),
+                title: 'Détails du Workflow',
+                data: { breadcrumb: 'Détails du Workflow' }
+            },
         ]
     },
 
@@ -98,9 +135,34 @@ export default [
     { path: 'type-processus', component: CategorieProcessusComponent, title: 'Types de processus' },
     { path: 'niveau-nc', component: NiveauNonConformiteComponent, title: 'Niveaux des non-conformités' },
     { path: 'type-action', component: ActionNonConformiteComponent, title: 'Types d\'actions' },
-    { path: 'qms-documents', data: { breadcrumb: 'Documents QMS' }, component: QmsDocumentComponent, title: 'Gestion Documentaire QMS' },
-    { path: 'qms-document-create', data: { breadcrumb: 'Nouveau Document' }, component: QmsDocumentCreateComponent, title: 'Créer un Document QMS' },
-    { path: 'qms-document-types', data: { breadcrumb: 'Types de Document QMS' }, component: QmsDocumentTypeComponent, title: 'Configuration des Types de Document' },
+    {
+        path: 'gestion-documentaire',
+        component: GestionDocumentaireLayoutComponent,
+        data: { breadcrumb: 'Gestion Documentaire' },
+        children: [
+            { path: '', redirectTo: 'vue-ensemble', pathMatch: 'full' },
+            {
+                path: 'vue-ensemble',
+                component: QmsVueEnsembleComponent,
+                title: "Vue d'ensemble Documentaire",
+            },
+            {
+                path: 'documents',
+                component: QmsDocumentComponent,
+                title: 'Gestion Documentaire QMS',
+            },
+            {
+                path: 'partages',
+                component: QmsDocumentsPartagesComponent,
+                title: 'Documents partagés'
+            },
+            {
+                path: 'nouveau',
+                component: QmsDocumentCreateComponent,
+                title: 'Créer un Document QMS'
+            },
+        ]
+    },
     { path: 'empty', component: Empty },
     { path: '**', redirectTo: '/notfound' },
 ] as Routes;

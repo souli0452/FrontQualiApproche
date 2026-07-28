@@ -1,23 +1,27 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MessageService, MenuItem } from 'primeng/api';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { QmsDocumentService, 
-  // DocumentQms, QmsDocumentType, QmsDocumentVersion, QmsAuditLog 
+import {
+  QmsDocumentService,
+  // DocumentQms, QmsDocumentType, QmsDocumentVersion, QmsAuditLog
 } from '../../../services/module-gestion-documentaire/qms-document.service';
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 import { Structure } from '../../parametrages/structure/structure-config/structure';
 import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
-import { DocumentQms, QmsAuditLog, QmsDocumentType, QmsDocumentVersion } from '../../../models/gestion-documentaire.model';
+import { WorkflowService } from '../../../services/module-gestion-documentaire/workflow.service';
+import { AuthService } from '../../../services/auth-services/auth.service';
+import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentType, QmsDocumentVersion, DocumentWorkflow, WorkflowStep } from '../../../models/gestion-documentaire.model';
+import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
 
 @Component({
   selector: 'app-qms-document',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule],
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule],
   templateUrl: './qms-document.component.html',
   styleUrls: ['./qms-document.component.scss'],
   providers: [MessageService, DatePipe]
@@ -26,6 +30,10 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   documents: DocumentQms[] = [];
   documentTypes: QmsDocumentType[] = [];
   structures: Structure[] = [];
+  systemUsers: any[] = [];
+  filteredUsers: any[] = [];
+  selectedStructureFilter?: string;
+  selectedUser?: any;
   loading = false;
   destroy$ = new Subject<void>();
 
@@ -37,25 +45,20 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   dateFrom: string = '';
   dateTo: string = '';
 
-  statusOptions = [
-    { label: 'Brouillon', value: 'brouillon' },
-    { label: 'En Approbation', value: 'en_approbation' },
-    { label: 'Valide', value: 'valide' },
-    { label: 'Obsolète', value: 'obsolete' },
-    { label: 'En Retard Révision', value: 'en_retard_revision' }
-  ];
+
 
   // Modals / View visibility
-  showCreateModal = false;
   showTransitionModal = false;
   showShareModal = false;
-  activeTab = 'share';
-  shareUrl = '';
-  alfrescoUsers: any[] = [];
+  showAssignWorkflowModal = false;
+
+  activeTab = 'access';
+  accessList: DocumentUserAccess[] = [];
+  loadingAccess = false;
 
   roleOptions = [
-    { label: 'Lecture Seule ', value: 'READ' },
-    { label: 'Modification ', value: 'WRITE' }
+    { label: 'Lecture Seule', value: 'READ_ONLY' },
+    { label: 'Modification', value: 'WRITE' }
   ];
 
   currentView: 'list' | 'detail' | 'history' | 'audit' = 'list';
@@ -65,53 +68,50 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   selectedDocument?: DocumentQms;
   versionHistory: QmsDocumentVersion[] = [];
   auditLogs: QmsAuditLog[] = [];
+  availableWorkflows: DocumentWorkflow[] = [];
+  selectedWorkflowPreview?: DocumentWorkflow;
 
   // Form Groups
-  documentForm: FormGroup;
   transitionForm: FormGroup;
   permissionForm: FormGroup;
-  alfrescoUserForm: FormGroup;
-  selectedFile?: File;
+  assignWorkflowForm: FormGroup;
+  workflowForm: FormGroup;
+  showWorkflowModal = false;
+  workflowDecision: 'APPROUVE' | 'REJETE' = 'APPROUVE';
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private qmsService: QmsDocumentService,
+    private workflowService: WorkflowService,
     private structureService: StructureService,
+    private authService: AuthService,
+    private ngxPermissionsService: NgxPermissionsService,
     private messageService: MessageService,
     private datePipe: DatePipe
   ) {
-    this.documentForm = this.fb.group({
-      documentType: [null, Validators.required],
-      service: [null, Validators.required],
-      redacteur: [null, Validators.required],
-      periodiciteMois: [12, [Validators.required, Validators.min(1)]],
-      confidentiel: [false],
-      documentExterne: [false],
-      organismeEmetteur: [null],
-      referenceOfficielle: [null],
-      domaine: [null],
-      statutLegal: [null]
-    });
-
     this.transitionForm = this.fb.group({
       nextStatus: [null, Validators.required],
       reason: [null, Validators.required]
     });
 
     this.permissionForm = this.fb.group({
-      username: ['', Validators.required],
-      role: ['READ', Validators.required]
+      userId: ['', Validators.required],
+      userFullName: [''],
+      userEmail: ['', Validators.email],
+      role: ['READ_ONLY', Validators.required]
     });
 
-    this.alfrescoUserForm = this.fb.group({
-      username: ['', Validators.required],
-      firstName: ['', Validators.required],
-      lastName: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+    this.assignWorkflowForm = this.fb.group({
+      workflowId: [null, Validators.required]
+    });
+
+    this.workflowForm = this.fb.group({
+      comments: ['', Validators.required]
     });
   }
+
 
   ngOnInit(): void {
     this.loadInitialData();
@@ -129,18 +129,18 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     this.qmsService.typeDocumentQmsGetAll()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (res) => this.documentTypes = res.data.content || [],
-        error: (err) => showToast(StatusEnum.error, err.status, null, this.messageService, err)
+        next: (res: any) => this.documentTypes = res.data.content || [],
+        error: (err: any) => showToast(StatusEnum.error, err.status, null, this.messageService, err)
       });
 
-    
+
 
     // Load Structures/Services from DB
     this.structureService.getAllStructures()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (res) => this.structures = res.data.content || [],
-        error: (err) => console.error('Failed to load structures', err)
+        next: (res: any) => this.structures = res.data.content || [],
+        error: (err: any) => console.error('Failed to load structures', err)
       });
 
     this.refreshList();
@@ -149,96 +149,28 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   refreshList(): void {
     this.loading = true;
     this.qmsService.searchDocuments({
-      query: this.searchQuery,
-      documentType: this.selectedType,
-      serviceId: this.selectedService,
-      status: this.selectedStatuses,
-      dateFrom: this.dateFrom ? this.datePipe.transform(this.dateFrom, 'yyyy-MM-dd')! : undefined,
-      dateTo: this.dateTo ? this.datePipe.transform(this.dateTo, 'yyyy-MM-dd')! : undefined
+      query: this.searchQuery || undefined,
+      documentType: this.selectedType || undefined,
+      serviceId: this.selectedService || undefined,
+      status: this.selectedStatuses.length ? this.selectedStatuses : undefined,
+      createdAtFrom: this.dateFrom ? this.datePipe.transform(this.dateFrom, 'yyyy-MM-dd')! : undefined,
+      createdAtTo: this.dateTo ? this.datePipe.transform(this.dateTo, 'yyyy-MM-dd')! : undefined
     })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (docs) => {
-          this.documents = docs.data.content;
+        next: (docs: DocumentQms[]) => {
+          this.documents = docs;
           this.loading = false;
         },
-        error: (err) => {
+        error: (err: any) => {
           this.loading = false;
           showToast(StatusEnum.error, err.status, 'Erreur de chargement des documents', this.messageService, err);
         }
       });
   }
 
-  // Handle File Input Selection
-  onFileSelected(event: any): void {
-    const file = event.target.files[0];
-    if (file) {
-      this.selectedFile = file;
-    }
-  }
-
-  openUploadModal(): void {
-    this.selectedFile = undefined;
-    this.documentForm.reset({
-      periodiciteMois: 12,
-      confidentiel: false,
-      documentExterne: false
-    });
-    this.showCreateModal = true;
-  }
-
   navigateToCreate(): void {
-    this.router.navigate(['/qms-document-create']);
-  }
-
-  submitDocument(): void {
-    if (this.documentForm.invalid || !this.selectedFile) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Formulaire incomplet',
-        detail: 'Veuillez renseigner tous les champs obligatoires et sélectionner un fichier.'
-      });
-      return;
-    }
-
-    this.loading = true;
-    const formVal = this.documentForm.value;
-    const serviceObj: Structure = formVal.service;
-
-    const formData = new FormData();
-    formData.append('file', this.selectedFile);
-    formData.append('documentType', formVal.documentType);
-    formData.append('serviceId', serviceObj.id!);
-    formData.append('serviceLibelle', serviceObj.libelleLong || '');
-    formData.append('serviceSigle', serviceObj.libelleCourt || '');
-    formData.append('redacteur', formVal.redacteur);
-    formData.append('periodiciteMois', formVal.periodiciteMois.toString());
-    formData.append('confidentiel', formVal.confidentiel.toString());
-    formData.append('documentExterne', formVal.documentExterne.toString());
-
-    if (formVal.organismeEmetteur) formData.append('organismeEmetteur', formVal.organismeEmetteur);
-    if (formVal.referenceOfficielle) formData.append('referenceOfficielle', formVal.referenceOfficielle);
-    if (formVal.domaine) formData.append('domaine', formVal.domaine);
-    if (formVal.statutLegal) formData.append('statutLegal', formVal.statutLegal);
-
-    // this.qmsService.createDocument(formData)
-    //   .pipe(takeUntil(this.destroy$))
-    //   .subscribe({
-    //     next: (doc) => {
-    //       this.loading = false;
-    //       this.showCreateModal = false;
-    //       this.refreshList();
-    //       this.messageService.add({
-    //         severity: 'success',
-    //         summary: 'Document créé',
-    //         detail: `Le document ${doc.documentNumber} a été enregistré avec succès.`
-    //       });
-    //     },
-    //     error: (err) => {
-    //       this.loading = false;
-    //       showToast(StatusEnum.error, err.status, "Échec de l'importation", this.messageService, err);
-    //     }
-    //   });
+    this.router.navigate(['../nouveau'], { relativeTo: this.route });
   }
 
   // --- Document Lifecycle Actions ---
@@ -259,27 +191,52 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     this.loading = true;
     const formVal = this.transitionForm.value;
 
-    // this.qmsService.transitionStatus(this.selectedDocument.id!, formVal.nextStatus, formVal.reason)
-    //   .pipe(takeUntil(this.destroy$))
-    //   .subscribe({
-    //     next: (updatedDoc) => {
-    //       this.loading = false;
-    //       this.showTransitionModal = false;
-    //       if (this.currentView === 'detail' && this.selectedDocument?.id === updatedDoc.id) {
-    //         this.selectedDocument = updatedDoc;
-    //       }
-    //       this.refreshList();
-    //       this.messageService.add({
-    //         severity: 'success',
-    //         summary: 'Statut modifié',
-    //         detail: `Le document est maintenant dans l'état: ${updatedDoc.status}`
-    //       });
-    //     },
-    //     error: (err) => {
-    //       this.loading = false;
-    //       showToast(StatusEnum.error, err.status, 'Échec de la transition', this.messageService, err);
-    //     }
-    //   });
+    this.qmsService.transitionStatus(this.selectedDocument.id!, formVal.nextStatus, formVal.reason)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedDoc) => {
+          this.loading = false;
+          this.showTransitionModal = false;
+          if (this.currentView === 'detail' && this.selectedDocument?.id === updatedDoc.id) {
+            this.selectedDocument = updatedDoc;
+          }
+          this.refreshList();
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Statut mis à jour',
+            detail: `Le document est maintenant dans l'état: ${this.getStatusLabel(updatedDoc)}`
+          });
+        },
+        error: (err: any) => {
+          this.loading = false;
+          showToast(StatusEnum.error, err.status, 'Échec de la transition', this.messageService, err);
+        }
+      });
+  }
+
+  // --- Document Opener ---
+  openSecuredDocument(doc: DocumentQms): void {
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Ouverture du document',
+      detail: 'Chargement en cours...'
+    });
+
+    this.qmsService.exportSecuredPdf(doc.id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          window.open(url, '_blank');
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Échec de l\'ouverture',
+            detail: 'Le fichier est introuvable ou inaccessible.'
+          });
+        }
+      });
   }
 
   // --- Document Downloader ---
@@ -287,110 +244,113 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     this.messageService.add({
       severity: 'info',
       summary: 'Téléchargement en cours',
-      detail: 'Récupération du fichier depuis Alfresco...'
+      detail: 'Récupération du fichier...'
     });
 
-    // this.qmsService.exportSecuredPdf(doc.id!)
-    //   .pipe(takeUntil(this.destroy$))
-    //   .subscribe({
-    //     next: (response) => {
-    //       const blob = response.body!;
-
-    //       // Extract filename from Content-Disposition header
-    //       let filename = doc.documentNumber ?? 'document';
-    //       const contentDisposition = response.headers.get('Content-Disposition');
-    //       if (contentDisposition) {
-    //         const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
-    //         if (match && match[1]) {
-    //           filename = match[1].trim();
-    //         }
-    //       }
-
-    //       const url = window.URL.createObjectURL(blob);
-    //       const link = window.document.createElement('a');
-    //       link.href = url;
-    //       link.download = filename;
-    //       link.click();
-    //       window.URL.revokeObjectURL(url);
-
-    //       this.messageService.add({
-    //         severity: 'success',
-    //         summary: 'Téléchargement réussi',
-    //         detail: `Le fichier "${filename}" a été téléchargé.`
-    //       });
-    //     },
-    //     error: () => {
-    //       this.messageService.add({
-    //         severity: 'error',
-    //         summary: 'Échec du téléchargement',
-    //         detail: 'Le fichier est introuvable ou inaccessible dans Alfresco.'
-    //       });
-    //     }
-    //   });
+    this.qmsService.exportSecuredPdf(doc.id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (blob: Blob) => {
+          const filename = doc.documentNumber ?? 'document';
+          const url = window.URL.createObjectURL(blob);
+          const link = window.document.createElement('a');
+          link.href = url;
+          link.download = filename;
+          link.click();
+          window.URL.revokeObjectURL(url);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Téléchargement réussi',
+            detail: `Le fichier "${filename}" a été téléchargé.`
+          });
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Échec du téléchargement',
+            detail: 'Le fichier est introuvable ou inaccessible.'
+          });
+        }
+      });
   }
 
   // --- Version History Drawer ---
   viewVersionHistory(doc: DocumentQms): void {
     this.selectedDocument = doc;
     this.loading = true;
-    // this.qmsService.getVersionHistory(doc.id!)
-    //   .pipe(takeUntil(this.destroy$))
-    //   .subscribe({
-    //     next: (history) => {
-    //       this.versionHistory = history;
-    //       this.loading = false;
-    //       this.currentView = 'history';
-    //     },
-    //     error: (err) => {
-    //       this.loading = false;
-    //       showToast(StatusEnum.error, err.status, 'Erreur historique de versions', this.messageService, err);
-    //     }
-    //   });
+    this.qmsService.getVersionHistory(doc.id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (history) => {
+          this.versionHistory = history;
+          this.loading = false;
+          this.currentView = 'history';
+        },
+        error: (err: any) => {
+          this.loading = false;
+          showToast(StatusEnum.error, err.status, 'Erreur historique de versions', this.messageService, err);
+        }
+      });
   }
 
   // --- Audit Trail Logs Drawer ---
   viewAuditLogs(doc: DocumentQms): void {
     this.selectedDocument = doc;
     this.loading = true;
-    // this.qmsService.getAuditLogs(doc.id!)
-    //   .pipe(takeUntil(this.destroy$))
-    //   .subscribe({
-    //     next: (logs) => {
-    //       this.auditLogs = logs;
-    //       this.loading = false;
-    //       this.currentView = 'audit';
-    //     },
-    //     error: (err) => {
-    //       this.loading = false;
-    //       showToast(StatusEnum.error, err.status, "Erreur logs d'audit", this.messageService, err);
-    //     }
-    //   });
+    this.qmsService.getAuditLogs(doc.id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (logs) => {
+          this.auditLogs = logs;
+          this.loading = false;
+          this.currentView = 'audit';
+        },
+        error: (err: any) => {
+          this.loading = false;
+          showToast(StatusEnum.error, err.status, "Erreur logs d'audit", this.messageService, err);
+        }
+      });
   }
 
   // Dynamic Actions Menu Trigger
   setActionMenu(event: any, menu: any, doc: DocumentQms) {
     this.selectedDocument = doc;
-    this.actionMenuItems = [
+    const items: MenuItem[] = [
       {
         label: 'Détails',
         icon: 'pi pi-eye',
         command: () => this.viewDetails(doc)
       },
       {
+        label: 'Ouvrir le document',
+        icon: 'pi pi-external-link',
+        command: () => this.openSecuredDocument(doc)
+      },
+      {
         label: 'Télécharger le document',
-        icon: 'pi pi-file-pdf',
+        icon: 'pi pi-download',
         command: () => this.downloadSecuredPdf(doc)
-      },
-      {
-        label: 'Éditer le document directement',
-        icon: 'pi pi-microsoft',
-        command: () => this.editInOffice(doc)
-      },
-      {
-        label: 'Transition Statut',
-        icon: 'pi pi-directions',
-        command: () => this.openTransitionDialog(doc)
-      },
+      }
+    ];
+
+    const hasValidate = this.hasPermission('DOC_VALIDATE');
+    const hasWrite = this.hasPermission('DOC_WRITE');
+
+    // Les boutons et étapes s'adaptent à 100% au workflow actif du document
+    if (doc.currentStep && hasValidate) {
+      items.push({
+        label: this.getWorkflowDecisionLabel(doc.currentStep, 'APPROUVE'),
+        icon: 'pi pi-check-circle',
+        command: () => this.openWorkflowDialog(doc, 'APPROUVE')
+      });
+      items.push({
+        label: this.getWorkflowDecisionLabel(doc.currentStep, 'REJETE'),
+        icon: 'pi pi-times-circle',
+        command: () => this.openWorkflowDialog(doc, 'REJETE')
+      });
+    }
+
+    items.push(
       {
         label: 'Historique Versions',
         icon: 'pi pi-history',
@@ -400,195 +360,342 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
         label: 'Piste d\'Audit',
         icon: 'pi pi-list',
         command: () => this.viewAuditLogs(doc)
-      },
-      {
+      }
+    );
+
+    if (hasWrite || this.hasPermission('DOC_SHARE')) {
+      items.push({
         label: 'Partage & Permissions',
         icon: 'pi pi-share-alt',
         command: () => this.openShareModal(doc)
-      }
-    ];
+      });
+    }
+
+    this.actionMenuItems = items;
     menu.toggle(event);
   }
 
-  editInOffice(doc: DocumentQms): void {
-    // this.qmsService.getAosUrl(doc.id!).pipe(takeUntil(this.destroy$)).subscribe({
-    //   next: (res) => {
-    //     if (res.aosUrl) {
-    //       // Decode URL to ensure pipes aren't converted to %7C if possible, though the browser might re-encode it.
-    //       // Using an anchor tag sometimes helps OS handlers catch the exact href.
-    //       const a = document.createElement('a');
-    //       a.href = res.aosUrl;
-    //       a.style.display = 'none';
-    //       document.body.appendChild(a);
-    //       a.click();
-    //       setTimeout(() => document.body.removeChild(a), 100);
-    //     }
-    //   },
-    //   error: (err) => {
-    //     showToast(StatusEnum.error, err.status, err.error?.error || "Ce document ne supporte pas l'édition en direct.", this.messageService, err);
-    //   }
-    // });
+  getWorkflowDecisionLabel(step: WorkflowStep | undefined, decision: 'APPROUVE' | 'REJETE'): string {
+    if (!step) return decision === 'APPROUVE' ? 'Approuver' : 'Rejeter';
+    const transition = step.transitions?.find((t: any) => t.decision === decision);
+    if (transition?.label) return transition.label;
+    return decision === 'APPROUVE' ? `Approuver (${step.nomEtape})` : `Rejeter (${step.nomEtape})`;
   }
 
-  // --- Share & Permissions Dialog Logic ---
+  openWorkflowDialog(doc: DocumentQms, decision: 'APPROUVE' | 'REJETE'): void {
+    this.selectedDocument = doc;
+    this.workflowDecision = decision;
+    this.workflowForm.reset();
+    this.showWorkflowModal = true;
+  }
+
+  submitWorkflowDecision(): void {
+    if (this.workflowForm.invalid || !this.selectedDocument) return;
+
+    this.loading = true;
+    const comments = this.workflowForm.value.comments;
+    const docId = this.selectedDocument.id!;
+
+    const action$ = this.workflowDecision === 'APPROUVE'
+      ? this.workflowService.validateStep(docId, comments)
+      : this.workflowService.rejectStep(docId, comments);
+
+    action$.pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.loading = false;
+        this.showWorkflowModal = false;
+        this.refreshList();
+        this.messageService.add({
+          severity: 'success',
+          summary: this.workflowDecision === 'APPROUVE' ? 'Étape approuvée' : 'Étape rejetée',
+          detail: this.workflowDecision === 'APPROUVE'
+            ? 'La validation de l\'étape a été enregistrée avec succès.'
+            : 'Le document a été rejeté et renvoyé en brouillon.'
+        });
+      },
+      error: (err: any) => {
+        this.loading = false;
+        const msg = err.error?.message || "Échec de l'action du workflow";
+        showToast(StatusEnum.error, err.status, msg, this.messageService, err);
+      }
+    });
+  }
+
+  openAssignWorkflowModal(doc: DocumentQms): void {
+    this.selectedDocument = doc;
+    this.assignWorkflowForm.reset();
+    this.selectedWorkflowPreview = undefined;
+
+    // Charger les workflows disponibles
+    this.loading = true;
+    this.workflowService.getAllWorkflows()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (workflows: any) => {
+          this.availableWorkflows = workflows;
+          this.loading = false;
+          this.showAssignWorkflowModal = true;
+        },
+        error: (err: any) => {
+          this.loading = false;
+          showToast(StatusEnum.error, err.status, 'Erreur de chargement des workflows', this.messageService, err);
+        }
+      });
+  }
+
+  onWorkflowSelected(workflowId: string): void {
+    if (!workflowId) {
+      this.selectedWorkflowPreview = undefined;
+      return;
+    }
+    const wf = this.availableWorkflows.find(w => w.id === workflowId);
+    if (wf) {
+      this.selectedWorkflowPreview = {
+        ...wf,
+        steps: [...(wf.steps || [])].sort((a, b) => a.stepOrder - b.stepOrder)
+      };
+    } else {
+      this.selectedWorkflowPreview = undefined;
+    }
+  }
+
+  submitWorkflowAssignment(): void {
+    if (this.assignWorkflowForm.invalid || !this.selectedDocument) return;
+
+    this.loading = true;
+    const workflowId = this.assignWorkflowForm.value.workflowId;
+
+    this.qmsService.assignWorkflow(this.selectedDocument.id!, workflowId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedDoc) => {
+          this.loading = false;
+          this.showAssignWorkflowModal = false;
+          this.refreshList();
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Workflow assigné',
+            detail: 'Le document a été soumis au circuit de validation avec succès.'
+          });
+        },
+        error: (err) => {
+          this.loading = false;
+          // showToast with err
+          showToast(StatusEnum.error, err.status, "Échec de l'assignation du workflow", this.messageService, err);
+        }
+      });
+  }
+
+  editInOffice(_doc: DocumentQms): void {
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Non disponible',
+      detail: "L'édition en direct n'est pas encore supportée."
+    });
+  }
+
+  // --- Partage & Gestion des Accès (ACL) ---
   openShareModal(doc: DocumentQms): void {
     this.selectedDocument = doc;
-    this.shareUrl = '';
-    this.activeTab = 'share';
-    this.permissionForm.reset({ role: 'READ' });
-    this.alfrescoUserForm.reset();
-    this.loadAlfrescoUsers();
+    this.activeTab = 'access';
+    this.permissionForm.reset({ role: 'READ_ONLY' });
+    this.selectedStructureFilter = undefined;
+    this.selectedUser = undefined;
+    this.filteredUsers = [];
+    this.systemUsers = [];
+    this.loadSystemUsers();
+    this.loadDocumentAccess(doc);
     this.showShareModal = true;
   }
 
-  loadAlfrescoUsers(): void {
-    // this.qmsService.getAlfrescoUsers()
-    //   .pipe(takeUntil(this.destroy$))
-    //   .subscribe({
-    //     next: (users) => {
-    //       this.alfrescoUsers = users || [];
-    //     },
-    //     error: (err) => {
-    //       console.error('Failed to load Alfresco users', err);
-    //     }
-    //   });
+  loadDocumentAccess(doc: DocumentQms): void {
+    this.loadingAccess = true;
+    this.qmsService.getDocumentAccess(doc.id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (list) => {
+          this.accessList = list;
+          this.loadingAccess = false;
+        },
+        error: (err: any) => {
+          this.loadingAccess = false;
+          console.error('Erreur chargement des accès', err);
+        }
+      });
   }
 
-  generateShareLink(): void {
-    if (!this.selectedDocument) return;
-    this.loading = true;
-    // this.qmsService.getShareLink(this.selectedDocument.id!)
-    //   .pipe(takeUntil(this.destroy$))
-    //   .subscribe({
-    //     next: (res) => {
-    //       this.loading = false;
-    //       this.shareUrl = `${window.location.protocol}//${window.location.hostname}:8999/share/s/${res.sharedId}`;
-    //       this.messageService.add({
-    //         severity: 'success',
-    //         summary: 'Lien généré',
-    //         detail: 'Le lien de partage public a été généré avec succès.'
-    //       });
-    //     },
-    //     error: (err) => {
-    //       this.loading = false;
-    //       showToast(StatusEnum.error, err.status, 'Échec de génération du lien', this.messageService, err);
-    //     }
-    //   });
+  extractUserInfos(u: any): { id: string; firstName: string; lastName: string; email: string; fullName: string } {
+    const userObj = u.user ? u.user : u;
+    const id = userObj.id || userObj.userId || '';
+    const firstName = userObj.firstName || '';
+    const lastName = userObj.lastName || '';
+    const email = userObj.email || '';
+    const fullName = `${firstName} ${lastName}`.trim() || userObj.username || id;
+    return { id, firstName, lastName, email, fullName };
   }
 
-  copyShareLink(): void {
-    if (!this.shareUrl) return;
-    navigator.clipboard.writeText(this.shareUrl).then(() => {
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Copié',
-        detail: 'Le lien de partage a été copié dans le presse-papiers.'
+  loadSystemUsers(): void {
+    this.authService.getAllUsers(0, 1000)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: any) => {
+          const users = res.data?.content || res.content || res || [];
+          const list = Array.isArray(users) ? users : [];
+          this.systemUsers = list.map((u: any) => this.extractUserInfos(u));
+          this.filteredUsers = [...this.systemUsers];
+        },
+        error: (err: any) => {
+          console.error('Erreur chargement des utilisateurs du système', err);
+        }
       });
-    }).catch(err => {
-      console.error('Failed to copy', err);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Erreur',
-        detail: 'Impossible de copier automatiquement le lien.'
-      });
+  }
+
+  onStructureFilterChange(structureId: string): void {
+    this.selectedUser = undefined;
+    this.permissionForm.patchValue({
+      userId: '',
+      userFullName: '',
+      userEmail: ''
     });
+
+    if (!structureId) {
+      this.filteredUsers = [...this.systemUsers];
+      return;
+    }
+
+    this.loadingAccess = true;
+    this.authService.loadAgentPublicByService(structureId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: any) => {
+          const users = res.data?.content || res.data || res.content || res || [];
+          const list = Array.isArray(users) ? users : [];
+          this.filteredUsers = list.map((u: any) => this.extractUserInfos(u));
+          this.loadingAccess = false;
+        },
+        error: (err: any) => {
+          this.loadingAccess = false;
+          console.error('Erreur chargement des utilisateurs de la structure', err);
+          this.filteredUsers = [];
+        }
+      });
+  }
+
+  onUserSelected(user: any): void {
+    if (user) {
+      this.permissionForm.patchValue({
+        userId: user.id,
+        userFullName: user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        userEmail: user.email
+      });
+    } else {
+      this.permissionForm.patchValue({
+        userId: '',
+        userFullName: '',
+        userEmail: ''
+      });
+    }
+  }
+
+  hasPermission(p: string): boolean {
+    return true;
   }
 
   submitPermissions(): void {
     if (this.permissionForm.invalid || !this.selectedDocument) return;
     this.loading = true;
     const formVal = this.permissionForm.value;
-    // this.qmsService.assignPermissions(this.selectedDocument.id!, formVal)
-    //   .pipe(takeUntil(this.destroy$))
-    //   .subscribe({
-    //     next: () => {
-    //       this.loading = false;
-    //       this.messageService.add({
-    //         severity: 'success',
-    //         summary: 'Droits assignés',
-    //         detail: `Les droits ${formVal.role} ont été accordés à l'utilisateur ${formVal.username}.`
-    //       });
-    //     },
-    //     error: (err) => {
-    //       this.loading = false;
-    //       showToast(StatusEnum.error, err.status, 'Échec de l\'affectation', this.messageService, err);
-    //     }
-    //   });
+    this.qmsService.grantAccess(
+      this.selectedDocument.id!,
+      formVal.userId,
+      formVal.userFullName,
+      formVal.userEmail,
+      formVal.role
+    )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.loading = false;
+          this.permissionForm.reset({ role: 'READ_ONLY' });
+          this.loadDocumentAccess(this.selectedDocument!);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Accès accordé',
+            detail: `Les droits ${formVal.role} ont été accordés.`
+          });
+        },
+        error: (err: any) => {
+          this.loading = false;
+          showToast(StatusEnum.error, err.status, "Échec de l'affectation", this.messageService, err);
+        }
+      });
   }
 
-  submitCreateUser(): void {
-    if (this.alfrescoUserForm.invalid) return;
-    this.loading = true;
-    const formVal = this.alfrescoUserForm.value;
-    // this.qmsService.createAlfrescoUser(formVal)
-    //   .pipe(takeUntil(this.destroy$))
-    //   .subscribe({
-    //     next: () => {
-    //       this.loading = false;
-    //       this.messageService.add({
-    //         severity: 'success',
-    //         summary: 'Compte créé',
-    //         detail: `L'utilisateur Alfresco ${formVal.username} a été créé avec succès.`
-    //       });
-    //       this.loadAlfrescoUsers();
-    //       this.permissionForm.patchValue({ username: formVal.username });
-    //       this.activeTab = 'permissions';
-    //     },
-    //     error: (err) => {
-    //       this.loading = false;
-    //       showToast(StatusEnum.error, err.status, 'Échec de création de l\'utilisateur', this.messageService, err);
-    //     }
-    //   });
+  revokeAccess(access: DocumentUserAccess): void {
+    if (!this.selectedDocument) return;
+    this.qmsService.revokeAccess(this.selectedDocument.id!, access.userId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.loadDocumentAccess(this.selectedDocument!);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Accès révoqué',
+            detail: `L'accès de l'utilisateur a été révoqué.`
+          });
+        },
+        error: (err: any) => showToast(StatusEnum.error, err.status, 'Échec de la révocation', this.messageService, err)
+      });
   }
 
   // Helper mapping tags classes
-  getStatusSeverity(status: string | undefined): string {
-    switch (status?.toLowerCase()) {
-      case 'brouillon': return 'info';
-      case 'en_approbation': return 'warn';
-      case 'valide': return 'success';
-      case 'obsolete': return 'danger';
-      case 'en_retard_revision': return 'danger';
-      default: return 'secondary';
-    }
+  getStatusSeverity(doc: DocumentQms | undefined): string {
+    if (!doc) return 'secondary';
+    if (doc.obsolete) return 'danger';
+    if (doc.enRetardRevision) return 'danger';
+    if (doc.esTraiter) return 'success';
+    if (doc.currentStep) return 'warn';
+    return 'info'; // Brouillon
   }
 
-  getStatusLabel(status: string | undefined): string {
-    switch (status?.toLowerCase()) {
-      case 'brouillon': return 'Brouillon';
-      case 'en_approbation': return 'En Approbation';
-      case 'valide': return 'Valide';
-      case 'obsolete': return 'Obsolète';
-      case 'en_retard_revision': return 'En Retard Révision';
-      default: return status || 'Inconnu';
-    }
+  getStatusLabel(doc: DocumentQms | undefined): string {
+    if (!doc) return 'Inconnu';
+    if (doc.obsolete) return 'Obsolète';
+    if (doc.enRetardRevision) return 'En Retard Révision';
+    if (doc.esTraiter) return 'Validé / En Vigueur';
+    if (doc.currentStep) return `${doc.currentStep.nomEtape} (Étape ${doc.currentStep.stepOrder})`;
+    return 'Brouillon';
   }
 
-  getTransitionOptions(status: string): { label: string; value: string }[] {
-    switch (status?.toLowerCase()) {
-      case 'brouillon':
-        return [
-          { label: 'Soumettre pour approbation', value: 'en_approbation' }
-        ];
-      case 'en_approbation':
-        return [
-          { label: 'Valider et Publier (Mise en vigueur)', value: 'valide' },
-          { label: 'Rejeter en brouillon', value: 'brouillon' }
-        ];
-      case 'valide':
-        return [
-          { label: 'Rendre Obsolète', value: 'obsolete' },
-          { label: 'Retourner en modification (Brouillon)', value: 'brouillon' }
-        ];
-      case 'en_retard_revision':
-        return [
-          { label: 'Lancer une révision (Brouillon)', value: 'brouillon' },
-          { label: 'Rendre Obsolète', value: 'obsolete' }
-        ];
-      default:
-        return [
-          { label: 'Remettre en brouillon', value: 'brouillon' }
-        ];
+  getTransitionOptions(doc: DocumentQms | undefined): { label: string; value: string }[] {
+    if (!doc) return [];
+    if (doc.obsolete) {
+      return [
+        { label: 'Lancer une révision (Brouillon)', value: 'brouillon' }
+      ];
     }
+    if (doc.enRetardRevision) {
+      return [
+        { label: 'Lancer une révision (Brouillon)', value: 'brouillon' },
+        { label: 'Rendre Obsolète', value: 'obsolete' }
+      ];
+    }
+    if (doc.esTraiter) {
+      return [
+        { label: 'Rendre Obsolète', value: 'obsolete' },
+        { label: 'Retourner en modification (Brouillon)', value: 'brouillon' }
+      ];
+    }
+    if (doc.currentStep) {
+      // En cours de validation par le workflow
+      return [
+        { label: 'Valider et Publier (Mise en vigueur)', value: 'valide' },
+        { label: 'Rejeter au step précédent', value: 'brouillon' }
+      ];
+    }
+    // Brouillon
+    return [
+      { label: 'Soumettre pour approbation', value: 'en_approbation' }
+    ];
   }
 }

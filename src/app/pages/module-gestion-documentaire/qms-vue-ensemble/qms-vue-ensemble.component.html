@@ -1,0 +1,75 @@
+<div class="p-4">
+    <div class="grid grid-cols-12 gap-4 mb-4">
+        <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+            <app-doc-stats-card
+                label="Total Documents"
+                icon="pi pi-file"
+                color="blue"
+                [value]="stats?.totalDocuments || 0"
+                [loading]="loading">
+            </app-doc-stats-card>
+        </div>
+        <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+            <app-doc-stats-card
+                label="En retard de révision"
+                icon="pi pi-clock"
+                color="red"
+                [value]="stats?.documentsEnRetardRevision || 0"
+                [loading]="loading">
+            </app-doc-stats-card>
+        </div>
+        <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+            <app-doc-stats-card
+                label="Confidentiels"
+                icon="pi pi-lock"
+                color="orange"
+                [value]="stats?.documentsConfidentiels || 0"
+                [loading]="loading">
+            </app-doc-stats-card>
+        </div>
+        <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+            <app-doc-stats-card
+                label="Externes"
+                icon="pi pi-globe"
+                color="green"
+                [value]="stats?.documentsExternes || 0"
+                [loading]="loading">
+            </app-doc-stats-card>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-12 gap-4">
+        <div class="col-span-12 lg:col-span-6">
+            <div class="card border border-surface-border p-4">
+                <h3 class="text-base font-bold m-0 mb-3">Répartition par statut</h3>
+                <p-table [value]="countByStatus" [loading]="loading" styleClass="p-datatable-sm">
+                    <ng-template pTemplate="header">
+                        <tr><th>Statut</th><th class="text-right">Nombre</th></tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-row>
+                        <tr><td>{{ row.label }}</td><td class="text-right font-bold">{{ row.count }}</td></tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr><td colspan="2" class="text-center text-surface-400 py-4">Aucune donnée</td></tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </div>
+        <div class="col-span-12 lg:col-span-6">
+            <div class="card border border-surface-border p-4">
+                <h3 class="text-base font-bold m-0 mb-3">Répartition par type de document</h3>
+                <p-table [value]="countByDocumentType" [loading]="loading" styleClass="p-datatable-sm">
+                    <ng-template pTemplate="header">
+                        <tr><th>Type</th><th class="text-right">Nombre</th></tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-row>
+                        <tr><td>{{ row.label }}</td><td class="text-right font-bold">{{ row.count }}</td></tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr><td colspan="2" class="text-center text-surface-400 py-4">Aucune donnée</td></tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </div>
+    </div>
+</div>

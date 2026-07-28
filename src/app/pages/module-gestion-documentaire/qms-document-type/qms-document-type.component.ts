@@ -8,12 +8,16 @@ import { QmsDocumentService } from '../../../services/module-gestion-documentair
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 import { FormGroupColumn, TableColumn } from '../../../models/generique.model';
 import { QmsDocumentType } from '../../../models/gestion-documentaire.model';
+import { NgPrimeModule } from '../../../../prime-ng.module';
+import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
 
 @Component({
     selector: 'app-qms-document-type',
     standalone: true,
-    imports: [CommonModule, AppCrudGenericComponent],
+    imports: [CommonModule, AppCrudGenericComponent, NgPrimeModule, NgxPermissionsModule],
+    providers: [MessageService],
     template: `
+        <p-toast></p-toast>
         <div class="page-layout">
             <app-crud-generic
                 [addButtonLabel]="'Nouveau type de document'"
@@ -34,6 +38,9 @@ import { QmsDocumentType } from '../../../models/gestion-documentaire.model';
                 [currentPage]="currentPage"
                 [pageSize]="pageSize"
                 (pageChangeEvent)="onPageChange($event)"
+                [consultation]="!hasWritePermission()"
+                [notModif]="!hasWritePermission()"
+                [notDelete]="!hasDeletePermission()"
                 >
             </app-crud-generic>
         </div>
@@ -56,20 +63,21 @@ export class QmsDocumentTypeComponent {
     formHeader = 'Création et mise à jour d\'un type de document';
 
     constructor(protected fb: UntypedFormBuilder,
-                protected messageService: MessageService,
-                protected qmsService: QmsDocumentService) {
+        protected messageService: MessageService,
+        protected qmsService: QmsDocumentService,
+        private ngxPermissionsService: NgxPermissionsService) {
         this.formCols = [
-            {field: 'id', label: "", header: 'Id', type: 'string', visible: false, required: false},
-            {field: 'code', label: "Code du type (ex: PRO, INS, ENR)", header: 'Code', type: 'string', visible: true, required: true},
-            {field: 'libelle', label: "Libellé (ex: Procédure, Instruction)", header: 'Libellé', type: 'string', visible: true, required: true},
-            {field: 'folderName', label: "Nom du dossier dans Alfresco", header: 'Dossier Alfresco', type: 'string', visible: true, required: true}
+            { field: 'id', label: "", header: 'Id', type: 'string', visible: false, required: false },
+            { field: 'code', label: "Code du type (ex: PRO, INS, ENR)", header: 'Code', type: 'string', visible: true, required: true },
+            { field: 'libelle', label: "Libellé (ex: Procédure, Instruction)", header: 'Libellé', type: 'string', visible: true, required: true },
+            { field: 'folderName', label: "Nom du dossier dans Alfresco", header: 'Dossier Alfresco', type: 'string', visible: true, required: true }
         ];
 
         this.tableCols = [
-            {field: 'code', header: 'Code', type: 'string', filter: true},
-            {field: 'libelle', header: 'Libellé', type: 'string', filter: true},
-            {field: 'folderName', header: 'Dossier Alfresco', type: 'string', filter: true},
-            {field: 'createdAt', header: 'Date de création', type: 'string', filter: true}
+            { field: 'code', header: 'Code', type: 'string', filter: true },
+            { field: 'libelle', header: 'Libellé', type: 'string', filter: true },
+            { field: 'folderName', header: 'Dossier sur minio', type: 'string', filter: true },
+            { field: 'createdAt', header: 'Date de création', type: 'string', filter: true }
         ];
 
         this.formGroup = this.fb.group({
@@ -78,6 +86,14 @@ export class QmsDocumentTypeComponent {
             libelle: [null, Validators.required],
             folderName: [null, Validators.required]
         });
+    }
+
+    hasWritePermission(): boolean {
+        return true;
+    }
+
+    hasDeletePermission(): boolean {
+        return true;
     }
 
     ngOnInit(): void {
@@ -91,7 +107,7 @@ export class QmsDocumentTypeComponent {
                 next: res => {
                     this.dataList = res.data.content || [];
                     // On garde la trace du total pour la pagination
-                    this.totalElements = res.data.totalElements; 
+                    this.totalElements = res.data.totalElements;
                     this.currentPage = res.data.pageNumber;
                     this.pageSize = res.data.pageSize;
                     this.loading = false;
@@ -104,10 +120,10 @@ export class QmsDocumentTypeComponent {
     }
 
     onPageChange(event: { page: number, size: number }) {
-        this.currentPage = event.page;  
-        this.pageSize = event.size;     
+        this.currentPage = event.page;
+        this.pageSize = event.size;
 
-        this.fetchObject();             
+        this.fetchObject();
     }
 
     onSuccess(res: any) {

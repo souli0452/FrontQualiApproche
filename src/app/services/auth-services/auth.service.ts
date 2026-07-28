@@ -9,6 +9,7 @@ import { currentUserState } from './auth.state';
 import { BaseCrudService } from '../base-crud.service';
 import { AuthData, LoginRequest } from '../../models/auth.model';
 import { ApiItemResponse, ApiResponse } from '../../models/response.model';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 @Injectable({
     providedIn: 'root'
@@ -21,9 +22,17 @@ export class AuthService extends BaseCrudService<AuthData, number> {
 
     constructor(
         public override http: HttpClient,
-        private router: Router
+        private router: Router,
+        private ngxPermissionsService: NgxPermissionsService
     ) {
         super(http, QualiUrlConfig.FORMATION_ROOT_URL);
+        this.currentUser$.subscribe(user => {
+            if (user && user.permissions) {
+                this.ngxPermissionsService.loadPermissions(user.permissions);
+            } else {
+                this.ngxPermissionsService.flushPermissions();
+            }
+        });
     }
 
     override findAll(): Observable<ApiResponse<AuthData>> {

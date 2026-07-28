@@ -1,187 +1,228 @@
 <p-toast></p-toast>
 
 <div class="qms-container p-4">
+
+  <!-- Page Header -->
   <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 gap-3">
     <div>
       <div class="flex align-items-center gap-2 mb-1">
         <button pButton pRipple icon="pi pi-arrow-left" class="p-button-rounded p-button-text p-button-secondary p-button-sm" (click)="goBack()"></button>
         <h1 class="text-2xl font-bold text-slate-800 m-0">Nouveau Document QMS</h1>
       </div>
-      <p class="text-sm text-slate-500 ml-6">Importez un fichier ou rédigez directement le contenu.</p>
-    </div>
-    <div class="flex gap-2">
-      <button pButton pRipple label="Annuler" icon="pi pi-times" class="p-button-outlined p-button-secondary p-button-sm" (click)="goBack()"></button>
-      <button pButton pRipple label="Enregistrer" icon="pi pi-check" class="p-button-primary p-button-sm"
-        [disabled]="documentForm.invalid" [loading]="loading" (click)="submitDocument()"></button>
+      <p class="text-sm text-slate-500 ml-6 m-0">Renseignez les informations du document et importez le fichier correspondant.</p>
     </div>
   </div>
 
-  <div class="card p-4 shadow-sm border border-slate-200 bg-white">
-    <form [formGroup]="documentForm" class="p-fluid">
-      <div class="grid grid-cols-12 gap-4">
+  <!-- Main Layout: Guide | Form -->
+  <div class="grid grid-cols-12 gap-4 align-items-start">
 
-        <!-- Mode Selection -->
-        <div class="col-span-12 mb-1">
-          <label class="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">Méthode de création *</label>
-          <div class="flex gap-3">
-            <div class="mode-option" [class.mode-active]="creationMode === 'import'" (click)="creationMode = 'import'">
-              <i class="pi pi-upload text-xl mb-1"></i>
-              <span class="text-sm font-semibold">Importer un fichier</span>
-              <span class="text-xs text-slate-400">PDF, Word, Excel...</span>
-            </div>
-            <div class="mode-option" [class.mode-active]="creationMode === 'edit'" (click)="creationMode = 'edit'">
-              <i class="pi pi-pencil text-xl mb-1"></i>
-              <span class="text-sm font-semibold">Rédiger le contenu</span>
-              <span class="text-xs text-slate-400">Éditeur Word complet</span>
-            </div>
-          </div>
-        </div>
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- RIGHT PANEL: Formulaire                                -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="col-span-12">
+      <div class="card p-4 shadow-sm border border-slate-200 bg-white">
+        <form [formGroup]="documentForm" class="p-fluid">
 
-        <!-- File Selector (Import mode) -->
-        <div class="col-span-12" *ngIf="creationMode === 'import'">
-          <label class="block text-sm font-semibold text-slate-700 mb-1">Fichier du Document *</label>
-          <div class="flex align-items-center gap-3 p-3 border border-dashed border-slate-300 rounded-lg bg-slate-50 cursor-pointer" onclick="document.getElementById('qmsFileInput').click()">
-            <input type="file" id="qmsFileInput" (change)="onFileSelected($event)" style="display: none;" />
-            <i class="pi pi-cloud-upload text-2xl text-slate-400"></i>
-            <div>
-              <p class="text-sm font-semibold text-slate-600 m-0">
-                {{ selectedFile ? selectedFile.name : 'Cliquez pour choisir un fichier' }}
-              </p>
-              <p class="text-xs text-slate-400 m-0">
-                {{ selectedFile ? ((selectedFile.size/1024 | number:'1.0-1') + ' Ko') : 'PDF, Word, Excel, etc.' }}
-              </p>
-            </div>
-            <i *ngIf="selectedFile" class="pi pi-check-circle text-green-500 text-xl ml-auto"></i>
-          </div>
-        </div>
-
-        <!-- Editor mode: preview + open button -->
-        <div class="col-span-12" *ngIf="creationMode === 'edit'">
-          <label class="block text-sm font-semibold text-slate-700 mb-1">Contenu du Document *</label>
-          <div class="editor-preview-zone">
-            <div class="editor-preview-content" *ngIf="documentForm.get('content')?.value" [innerHTML]="documentForm.get('content')?.value | slice:0:300"></div>
-            <div class="editor-empty" *ngIf="!documentForm.get('content')?.value">
-              <i class="pi pi-file-edit text-4xl text-slate-300 mb-2"></i>
-              <p class="text-slate-400 text-sm m-0">Aucun contenu rédigé pour l'instant.</p>
-              <p class="text-slate-300 text-xs mt-1" *ngIf="hasDraft">✅ Brouillon restauré depuis la dernière session</p>
-            </div>
-            <div class="editor-actions">
-              <button pButton pRipple [label]="documentForm.get('content')?.value ? 'Modifier le contenu' : 'Ouvrir l\'éditeur'"
-                [icon]="documentForm.get('content')?.value ? 'pi pi-pencil' : 'pi pi-plus'"
-                class="p-button-primary p-button-sm" (click)="openEditorDialog()"></button>
-              <button *ngIf="documentForm.get('content')?.value" pButton pRipple label="Effacer"
-                icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" (click)="clearContent()"></button>
+          <!-- Section: Fichier -->
+          <div class="mb-4">
+            <h3 class="text-sm font-bold text-slate-700 flex align-items-center gap-2 mb-3 pb-2 border-bottom border-slate-100 mt-0">
+              <i class="pi pi-upload text-indigo-500"></i>
+              Fichier du document <span class="text-red-500">*</span>
+            </h3>
+            <div class="flex align-items-center gap-3 p-3 border border-dashed border-slate-300 rounded-lg bg-slate-50 cursor-pointer" onclick="document.getElementById('qmsFileInput').click()">
+              <input type="file" id="qmsFileInput" (change)="onFileSelected($event)" style="display: none;" />
+              <i class="pi pi-cloud-upload text-2xl text-slate-400"></i>
+              <div class="flex flex-column gap-1">
+                <p class="text-sm font-semibold text-slate-600 m-0">
+                  {{ selectedFile ? selectedFile.name : 'Cliquez pour choisir un fichier' }}
+                </p>
+                <p class="text-xs text-slate-400 m-0">
+                  {{ selectedFile ? ((selectedFile.size / 1024 | number:'1.0-1') + ' Ko') : 'Format PDF obligatoire pour les documents internes' }}
+                </p>
+              </div>
+              <i *ngIf="selectedFile" class="pi pi-check-circle text-green-500 text-xl ml-auto"></i>
             </div>
           </div>
-        </div>
 
-        <!-- Divider -->
-        <div class="col-span-12"><hr class="border-t border-slate-100 my-1"></div>
+          <!-- Section: Identification -->
+          <div class="mb-4">
+            <h3 class="text-sm font-bold text-slate-700 flex align-items-center gap-2 mb-3 pb-2 border-bottom border-slate-100 mt-0">
+              <i class="pi pi-id-card text-indigo-500"></i>
+              Identification du document
+            </h3>
+            <div class="grid grid-cols-12 gap-3">
 
-        <!-- Type Dropdown -->
-        <div class="col-span-12 md:col-span-6 lg:col-span-4">
-          <label class="block text-sm font-semibold text-slate-700 mb-1">Type de document *</label>
-          <p-select [options]="documentTypes" formControlName="documentType" optionLabel="libelle" optionValue="code" placeholder="Sélectionner le type"></p-select>
-        </div>
+              <!-- Titre -->
+              <div class="col-span-12 md:col-span-6">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Titre du document <span class="text-red-500">*</span></label>
+                <input pInputText formControlName="titre" placeholder="Ex: Procédure de validation" class="w-full" />
+              </div>
 
-        <!-- Service Dropdown -->
-        <div class="col-span-12 md:col-span-6 lg:col-span-4">
-          <label class="block text-sm font-semibold text-slate-700 mb-1">Service Émetteur / Structure *</label>
-          <p-select [options]="structures" formControlName="service" optionLabel="libelleLong" placeholder="Sélectionner le service" [filter]="true"></p-select>
-        </div>
+              <!-- Type de document -->
+              <div class="col-span-12 md:col-span-6">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Type de document <span class="text-red-500">*</span></label>
+                <p-select [options]="documentTypes" formControlName="documentType" optionLabel="libelle" optionValue="code" placeholder="Sélectionner le type" class="w-full"></p-select>
+                <!-- Workflow associated preview -->
+                <div *ngIf="associatedWorkflow" class="mt-2 p-2.5 bg-indigo-50 border border-indigo-100 rounded flex align-items-center gap-2.5">
+                  <i class="pi pi-sitemap text-indigo-500 text-base"></i>
+                  <div class="text-left">
+                    <span class="text-[10px] text-indigo-700 font-bold uppercase block">Circuit de validation associé :</span>
+                    <span class="text-xs font-semibold text-slate-800">{{ associatedWorkflow.nom }} ({{ associatedWorkflow.steps.length || 0 }} étapes)</span>
+                  </div>
+                </div>
+              </div>
 
-        <!-- Rédacteur -->
-        <div class="col-span-12 md:col-span-6 lg:col-span-4">
-          <label class="block text-sm font-semibold text-slate-700 mb-1">Nom du Rédacteur *</label>
-          <input pInputText formControlName="redacteur" placeholder="Ex: Jean Kaboré" />
-        </div>
+              <!-- Processus émetteur -->
+              <div class="col-span-12 md:col-span-6">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Processus Émetteur <span class="text-red-500">*</span></label>
+                <p-select [options]="structures" formControlName="service" optionLabel="libelleLong" placeholder="Sélectionner le processus émetteur" [filter]="true" class="w-full"></p-select>
+              </div>
 
-        <!-- Periodicite -->
-        <div class="col-span-12 md:col-span-6 lg:col-span-3">
-          <label class="block text-sm font-semibold text-slate-700 mb-1">Périodicité révision (mois) *</label>
-          <p-inputNumber formControlName="periodiciteMois" suffix=" mois" [min]="1"></p-inputNumber>
-        </div>
+              <!-- Rédacteur -->
+              <div class="col-span-12 md:col-span-6">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Nom du Rédacteur <span class="text-red-500">*</span></label>
+                <input pInputText formControlName="redacteur" placeholder="Ex: Jean Kaboré" class="w-full" />
+              </div>
 
-        <!-- Organisme -->
-        <div class="col-span-12 md:col-span-6 lg:col-span-3">
-          <label class="block text-sm font-semibold text-slate-700 mb-1">Organisme Émetteur</label>
-          <input pInputText formControlName="organismeEmetteur" placeholder="Ex: Bureau de Normalisation" />
-        </div>
+              <!-- Périodicité -->
+              <div class="col-span-12 md:col-span-6">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Périodicité de révision (mois) <span class="text-red-500">*</span></label>
+                <p-inputNumber formControlName="periodiciteMois" suffix=" mois" [min]="1" class="w-full"></p-inputNumber>
+              </div>
 
-        <!-- Reference -->
-        <div class="col-span-12 md:col-span-6 lg:col-span-3">
-          <label class="block text-sm font-semibold text-slate-700 mb-1">Référence Officielle</label>
-          <input pInputText formControlName="referenceOfficielle" placeholder="Ex: ISO 9001:2015" />
-        </div>
+            </div>
+          </div>
 
-        <!-- Domaine -->
-        <div class="col-span-12 md:col-span-6 lg:col-span-3">
-          <label class="block text-sm font-semibold text-slate-700 mb-1">Domaine d'application</label>
-          <input pInputText formControlName="domaine" placeholder="Ex: Management Qualité" />
-        </div>
+          <!-- Section: Métadonnées optionnelles -->
+          <div class="mb-4">
+            <h3 class="text-sm font-bold text-slate-700 flex align-items-center gap-2 mb-3 pb-2 border-bottom border-slate-100 mt-0">
+              <i class="pi pi-tags text-indigo-500"></i>
+              Métadonnées complémentaires
+            </h3>
+            <div class="grid grid-cols-12 gap-3">
 
-        <!-- Statut Legal -->
-        <div class="col-span-12 md:col-span-6 lg:col-span-3">
-          <label class="block text-sm font-semibold text-slate-700 mb-1">Statut Légal</label>
-          <input pInputText formControlName="statutLegal" placeholder="Ex: Recommandé" />
-        </div>
+              <!-- Processus destinataire -->
+              <div class="col-span-12 md:col-span-6">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Processus Destinataire</label>
+                <p-select [options]="structures" formControlName="processusDest" optionLabel="libelleLong" placeholder="Sélectionner le processus destinataire" [showClear]="true" [filter]="true" class="w-full"></p-select>
+              </div>
 
-        <!-- Switches -->
-        <div class="col-span-12 md:col-span-6 lg:col-span-2 flex align-items-center gap-2 mt-3">
-          <p-inputSwitch formControlName="confidentiel"></p-inputSwitch>
-          <span class="text-sm font-semibold text-slate-700">Confidentiel</span>
-        </div>
-        <div class="col-span-12 md:col-span-6 lg:col-span-2 flex align-items-center gap-2 mt-3">
-          <p-inputSwitch formControlName="documentExterne"></p-inputSwitch>
-          <span class="text-sm font-semibold text-slate-700">Document Externe</span>
-        </div>
+              <!-- Référence officielle -->
+              <div class="col-span-12 md:col-span-6">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Référence Officielle (ex: ISO 9001, ISO 9000...)</label>
+                <p-select [options]="referencesList" formControlName="referenceOfficielle" optionLabel="label" optionValue="value" placeholder="Sélectionner la référence" [showClear]="true" [filter]="true" class="w-full"></p-select>
+              </div>
 
+              <!-- Domaine -->
+              <div class="col-span-12 md:col-span-6">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Domaine d'application</label>
+                <p-select [options]="domainesList" formControlName="domaine" optionLabel="label" optionValue="value" placeholder="Sélectionner le domaine" [showClear]="true" class="w-full"></p-select>
+              </div>
+
+              <!-- Statut légal -->
+              <div class="col-span-12 md:col-span-6">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Statut Légal</label>
+                <p-select [options]="statutsList" formControlName="statutLegal" optionLabel="label" optionValue="value" placeholder="Sélectionner le statut" [showClear]="true" class="w-full"></p-select>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Section: Options -->
+          <div>
+            <h3 class="text-sm font-bold text-slate-700 flex align-items-center gap-2 mb-3 pb-2 border-bottom border-slate-100 mt-0">
+              <i class="pi pi-shield text-indigo-500"></i>
+              Options de diffusion
+            </h3>
+            <div class="flex gap-5 flex-wrap">
+              <div class="flex align-items-center gap-2">
+                <p-inputSwitch formControlName="confidentiel"></p-inputSwitch>
+                <div>
+                  <span class="text-sm font-semibold text-slate-700 block">Document Confidentiel</span>
+                  <span class="text-xs text-slate-400">Accès restreint aux utilisateurs autorisés</span>
+                </div>
+              </div>
+              <div class="flex align-items-center gap-2">
+                <p-inputSwitch formControlName="documentExterne"></p-inputSwitch>
+                <div>
+                  <span class="text-sm font-semibold text-slate-700 block">Document Externe</span>
+                  <span class="text-xs text-slate-400">Provient d'un organisme extérieur</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="flex justify-content-end gap-2 mt-4 pt-4 border-top border-slate-200">
+            <button pButton pRipple type="button" label="Voir guide de saisie" icon="pi pi-book" class="p-button-outlined p-button-info p-button-sm" (click)="showGuideModal = true"></button>
+            <button pButton pRipple type="button" label="Annuler" icon="pi pi-times" class="p-button-outlined p-button-secondary p-button-sm" (click)="goBack()"></button>
+            <button pButton pRipple type="button" label="Enregistrer le document" icon="pi pi-check" class="p-button-primary p-button-sm"
+              [disabled]="documentForm.invalid || !selectedFile" [loading]="loading" (click)="submitDocument()"></button>
+          </div>
+
+        </form>
       </div>
-    </form>
+    </div>
+
   </div>
 </div>
 
-<!-- ================================================================== -->
-<!-- DIALOG EDITEUR TINYMCE - Large, maximisable                        -->
-<!-- ================================================================== -->
-<p-dialog
-  header="Rédaction du document"
-  [(visible)]="showEditorDialog"
-  [modal]="true"
-  [maximizable]="true"
-  [style]="{ width: '90vw', height: '90vh' }"
-  [contentStyle]="{ padding: '0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }"
-  styleClass="editor-dialog"
-  (onHide)="onEditorDialogClose()">
+<!-- ========================================================================= -->
+<!-- MODAL: Guide Complet                                                      -->
+<!-- ========================================================================= -->
+<p-dialog header="Guide de saisie d'un Document QMS" [(visible)]="showGuideModal" [modal]="true" [style]="{ width: '50rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }" [maximizable]="true">
+  
+  <div class="p-3 bg-indigo-50 border border-indigo-100 border-round mb-4 flex align-items-center gap-3">
+    <i class="pi pi-info-circle text-2xl text-indigo-500"></i>
+    <p class="text-sm text-indigo-900 m-0 leading-relaxed">
+      Ce guide a pour but de vous accompagner dans la création d'un nouveau document Qualité. 
+      Veuillez lire attentivement les indications ci-dessous pour assurer la conformité de vos enregistrements.
+    </p>
+  </div>
 
-  <ng-template pTemplate="header">
-    <div class="flex align-items-center gap-3 w-full">
-      <i class="pi pi-file-edit text-indigo-600 text-xl"></i>
-      <span class="font-bold text-lg text-slate-800">Rédaction du Document</span>
-      <span class="text-xs text-slate-400 ml-2">Sauvegarde automatique activée</span>
-      <div class="ml-auto flex align-items-center gap-2">
-        <span *ngIf="autoSaveStatus" class="text-xs text-green-600 font-semibold">
-          <i class="pi pi-check-circle mr-1"></i>{{ autoSaveStatus }}
-        </span>
+  <div class="grid grid-cols-12 gap-4 px-2 pb-2">
+    
+    <div class="col-span-12">
+      <h3 class="text-sm font-bold text-slate-800 border-bottom border-slate-200 pb-2 mb-2">1. Fichier du document</h3>
+      <p class="text-sm text-slate-600 m-0 line-height-3">
+        Les documents internes doivent obligatoirement être importés au format <strong>PDF</strong> pour assurer le filigranage automatique et la protection. Pour les documents externes, les autres formats (Word, Excel) sont acceptés.
+      </p>
+    </div>
+
+    <div class="col-span-12">
+      <h3 class="text-sm font-bold text-slate-800 border-bottom border-slate-200 pb-2 mb-2">2. Type & Service</h3>
+      <div class="flex flex-column gap-2 text-sm text-slate-600 line-height-3">
+        <div><strong>Type :</strong> Permet de classer le document (Ex: Procédure, Manuel, Instruction).</div>
+        <div><strong>Service :</strong> Identifie l'entité organisationnelle propriétaire du document (responsable de ses révisions).</div>
       </div>
     </div>
-  </ng-template>
 
-  <!-- TinyMCE monte ici -->
-  <div class="tinymce-dialog-body">
-    <textarea id="qms-doc-editor" style="visibility: hidden; width: 100%;"></textarea>
+    <div class="col-span-12">
+      <h3 class="text-sm font-bold text-slate-800 border-bottom border-slate-200 pb-2 mb-2">3. Périodicité de révision</h3>
+      <p class="text-sm text-slate-600 m-0 line-height-3">
+        Indiquez en <strong>mois</strong> la fréquence à laquelle ce document doit être revu. Le système vous alertera automatiquement à l'approche de la date d'échéance. (Ex: 12 mois pour une revue annuelle).
+      </p>
+    </div>
+
+    <div class="col-span-12">
+      <h3 class="text-sm font-bold text-slate-800 border-bottom border-slate-200 pb-2 mb-2">4. Champs Métadonnées (Optionnels)</h3>
+      <div class="flex flex-column gap-2 text-sm text-slate-600 line-height-3">
+        <div><strong>Organisme / Référence :</strong> Utiles pour les normes ou lois provenant d'instances officielles externes (ex: ISO, AFNOR, Législation).</div>
+        <div><strong>Domaine / Statut légal :</strong> Fournissent un contexte de conformité réglementaire (ex: "Sécurité Environnement", "Obligatoire").</div>
+      </div>
+    </div>
+
+    <div class="col-span-12">
+      <h3 class="text-sm font-bold text-slate-800 border-bottom border-slate-200 pb-2 mb-2">5. Options de diffusion</h3>
+      <div class="flex flex-column gap-2 text-sm text-slate-600 line-height-3">
+        <div><strong>Confidentiel :</strong> Le document n'est visible que par les utilisateurs ayant reçu un droit d'accès explicite.</div>
+        <div><strong>Document Externe :</strong> Cochez cette case s'il s'agit d'un document qui n'a pas été produit en interne, mais qui est applicable à l'entreprise.</div>
+      </div>
+    </div>
+
   </div>
 
   <ng-template pTemplate="footer">
-    <div class="flex justify-content-between align-items-center w-full">
-      <span class="text-xs text-slate-400">
-        <i class="pi pi-info-circle mr-1"></i>
-        Le contenu est sauvegardé automatiquement dans ce navigateur.
-      </span>
-      <div class="flex gap-2">
-        <button pButton pRipple label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary p-button-sm" (click)="cancelEditorDialog()"></button>
-        <button pButton pRipple label="Valider et fermer" icon="pi pi-check" class="p-button-primary p-button-sm" (click)="saveAndCloseEditorDialog()"></button>
-      </div>
-    </div>
+    <button pButton label="J'ai compris" icon="pi pi-check" class="p-button-primary" (click)="showGuideModal = false"></button>
   </ng-template>
 </p-dialog>

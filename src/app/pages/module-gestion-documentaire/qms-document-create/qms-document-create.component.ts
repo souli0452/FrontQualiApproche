@@ -8,11 +8,10 @@ import { QmsDocumentService } from '../../../services/module-gestion-documentair
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 import { Structure } from '../../parametrages/structure/structure-config/structure';
 import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
-import { QmsDocumentType } from '../../../models/gestion-documentaire.model';
-
-declare const tinymce: any;
-
-const DRAFT_STORAGE_KEY = 'qms_doc_draft_content';
+import { QmsDocumentType, DocumentWorkflow } from '../../../models/gestion-documentaire.model';
+import { AuthService } from '../../../services/auth-services/auth.service';
+import { WorkflowService } from '../../../services/module-gestion-documentaire/workflow.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-qms-document-create',
@@ -28,214 +27,185 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
   structures: Structure[] = [];
   loading = false;
   selectedFile?: File;
+  showGuideModal = false;
+  workflows: DocumentWorkflow[] = [];
+  associatedWorkflow?: DocumentWorkflow;
+  currentUserStructureId?: string;
+  private destroy$ = new Subject<void>();
 
-  creationMode: 'import' | 'edit' = 'import';
+  organismesList = [
+    { label: 'ISO (Organisation internationale de normalisation)', value: 'ISO' },
+    { label: 'AFNOR (Association française de normalisation)', value: 'AFNOR' },
+    { label: 'CEN (Comité européen de normalisation)', value: 'CEN' },
+    { label: 'ANSI (American National Standards Institute)', value: 'ANSI' },
+    { label: 'Interne (Notre Organisme)', value: 'Interne' }
+  ];
 
-  // Dialog state
-  showEditorDialog = false;
-  autoSaveStatus = '';
-  hasDraft = false;
+  referencesList = [
+    { label: 'ISO 9001:2015 (Management de la Qualité)', value: 'ISO 9001:2015' },
+    { label: 'ISO 9000:2015 (Principes et Vocabulaire)', value: 'ISO 9000:2015' },
+    { label: 'ISO 9004:2018 (Qualité d\'un organisme)', value: 'ISO 9004:2018' },
+    { label: 'ISO 14001:2015 (Management Environnemental)', value: 'ISO 14001:2015' },
+    { label: 'ISO 45001:2018 (Santé & Sécurité au travail)', value: 'ISO 45001:2018' },
+    { label: 'ISO 27001:2022 (Sécurité de l\'information)', value: 'ISO 27001:2022' },
+    { label: 'ISO 19011:2018 (Audit des Systèmes de management)', value: 'ISO 19011:2018' },
+    { label: 'Norme Interne / Procédure de l\'entreprise', value: 'Norme Interne' }
+  ];
 
-  private autoSaveInterval: any;
+  domainesList = [
+    { label: 'Qualité (SMQ)', value: 'Qualité' },
+    { label: 'Environnement (SME)', value: 'Environnement' },
+    { label: 'Santé & Sécurité au Travail (SST)', value: 'Santé & Sécurité' },
+    { label: 'Sécurité de l\'Information (SMSI)', value: 'Sécurité de l\'information' },
+    { label: 'Sécurité Alimentaire (SMSDA - ISO 22000)', value: 'Sécurité Alimentaire' },
+    { label: 'Management Général', value: 'Management Général' },
+    { label: 'Ressources Humaines', value: 'Ressources Humaines' },
+    { label: 'Production & Opérations', value: 'Production & Opérations' }
+  ];
+
+  statutsList = [
+    { label: 'Obligatoire (Réglementaire)', value: 'Obligatoire' },
+    { label: 'Recommandé (Normatif)', value: 'Recommandé' },
+    { label: 'Volontaire', value: 'Volontaire' },
+    { label: 'Interne', value: 'Interne' }
+  ];
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private qmsService: QmsDocumentService,
+    private workflowService: WorkflowService,
     private structureService: StructureService,
+    private authService: AuthService,
     private messageService: MessageService
   ) {
     this.documentForm = this.fb.group({
+      titre: [null, Validators.required],
       documentType: [null, Validators.required],
       service: [null, Validators.required],
       redacteur: [null, Validators.required],
       periodiciteMois: [12, [Validators.required, Validators.min(1)]],
       confidentiel: [false],
       documentExterne: [false],
-      organismeEmetteur: [null],
+      processusDest: [null],
       referenceOfficielle: [null],
       domaine: [null],
-      statutLegal: [null],
-      content: ['']
+      statutLegal: [null]
     });
   }
 
   ngOnInit(): void {
     this.loading = true;
 
-    // this.qmsService.getAllTypes().subscribe({
-    //   next: (types) => this.documentTypes = types,
-    //   error: (err) => console.error(err)
-    // });
+    this.qmsService.typeDocumentQmsGetAll().subscribe({
+      next: (res: any) => {
+        this.documentTypes = res.data?.content || [];
+        this.findAssociatedWorkflow(this.documentForm.get('documentType')?.value);
+      },
+      error: (err: any) => console.error('Erreur chargement types de document', err)
+    });
 
-    this.structureService.getAllStructures().subscribe({
-      next: (res) => { this.structures = res.data.content || []; this.loading = false; },
+    this.workflowService.getAllWorkflows().subscribe({
+      next: (res) => {
+        this.workflows = res || [];
+        this.findAssociatedWorkflow(this.documentForm.get('documentType')?.value);
+      },
+      error: (err) => console.error('Erreur chargement des workflows', err)
+    });
+
+    this.documentForm.get('documentType')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(typeCode => {
+      this.findAssociatedWorkflow(typeCode);
+    });
+
+    this.structureService.getAllStructures().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res: any) => { 
+        this.structures = res.data?.content || res.content || []; 
+        this.loading = false; 
+        this.trySetUserStructure();
+      },
       error: () => this.loading = false
     });
 
-    // Restore draft from localStorage
-    const draft = localStorage.getItem(DRAFT_STORAGE_KEY);
-    if (draft) {
-      this.documentForm.patchValue({ content: draft });
-      this.hasDraft = true;
+    this.authService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(currentUser => {
+      if (currentUser) {
+        this.applyUserData(currentUser);
+      }
+    });
+
+    // En complément au cas où currentUserState est nul à l'initialisation
+    this.authService.getMe().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res) => {
+        if (res?.data) {
+          this.applyUserData(res.data);
+        }
+      }
+    });
+  }
+
+  private applyUserData(authData: any): void {
+    if (!authData) return;
+    const userObj = authData.user ? authData.user : authData;
+    if (!userObj) return;
+
+    // Nom du Rédacteur
+    const firstName = userObj.firstName || '';
+    const lastName = userObj.lastName || '';
+    let redacteurNom = `${firstName} ${lastName}`.trim();
+    if (!redacteurNom) {
+      redacteurNom = `${lastName} ${firstName}`.trim();
+    }
+    if (!redacteurNom) {
+      redacteurNom = userObj.username || userObj.email || '';
+    }
+
+    if (redacteurNom) {
+      this.documentForm.patchValue({ redacteur: redacteurNom });
+    }
+
+    // Service Émetteur (Structure)
+    const structVal = userObj.structure;
+    if (structVal) {
+      this.currentUserStructureId = typeof structVal === 'object' ? (structVal.id || structVal.code) : structVal;
+      this.trySetUserStructure();
+    }
+  }
+
+  trySetUserStructure(): void {
+    if (this.currentUserStructureId && this.structures.length > 0) {
+      const userStructure = this.structures.find(s => 
+        s.id === this.currentUserStructureId ||
+        s.libelleCourt === this.currentUserStructureId ||
+        s.libelleLong === this.currentUserStructureId ||
+        (s as any).code === this.currentUserStructureId
+      );
+      if (userStructure) {
+        this.documentForm.patchValue({ service: userStructure });
+      }
+    }
+  }
+
+  findAssociatedWorkflow(typeCode: string): void {
+    if (typeCode) {
+      this.associatedWorkflow = this.workflows.find(w => w.documentType === typeCode);
+    } else {
+      this.associatedWorkflow = undefined;
     }
   }
 
   ngOnDestroy(): void {
-    this.destroyTinyMCE();
-    clearInterval(this.autoSaveInterval);
-  }
-
-  // ─── Dialog Control ───────────────────────────────────────────
-
-  openEditorDialog(): void {
-    this.showEditorDialog = true;
-    this.initTinyMCE();
-  }
-
-  onEditorDialogClose(): void {
-    // Called when user clicks X or closes dialog
-    this.syncAndSaveDraft();
-    this.destroyTinyMCE();
-    clearInterval(this.autoSaveInterval);
-  }
-
-  cancelEditorDialog(): void {
-    this.showEditorDialog = false;
-    // onHide will fire and handle cleanup
-  }
-
-  saveAndCloseEditorDialog(): void {
-    this.syncAndSaveDraft();
-    this.showEditorDialog = false;
-    this.destroyTinyMCE();
-    clearInterval(this.autoSaveInterval);
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Contenu sauvegardé',
-      detail: 'Le contenu a été enregistré dans le formulaire.'
-    });
-  }
-
-  // ─── TinyMCE ─────────────────────────────────────────────────
-
-  private initTinyMCE(): void {
-    setTimeout(() => {
-      if (typeof tinymce === 'undefined') {
-        console.warn('TinyMCE non disponible — vérifiez la connexion internet.');
-        return;
-      }
-
-      tinymce.remove('#qms-doc-editor');
-
-      tinymce.init({
-        selector: '#qms-doc-editor',
-        height: '100%',
-        menubar: true,
-        language: 'fr_FR',
-
-        // ── Plugins gratuits uniquement ──────────────────────
-        plugins: [
-          'anchor', 'autolink', 'charmap', 'codesample',
-          'link', 'lists', 'media', 'searchreplace', 'table',
-          'visualblocks', 'wordcount', 'image', 'fullscreen', 'preview',
-          'insertdatetime', 'pagebreak', 'nonbreaking', 'directionality',
-          'emoticons', 'quickbars', 'advlist', 'autosave'
-        ],
-
-        // ── Toolbar style Word ───────────────────────────────
-        toolbar:
-          'undo redo | ' +
-          'blocks fontfamily fontsize | ' +
-          'bold italic underline strikethrough | ' +
-          'forecolor backcolor | ' +
-          'alignleft aligncenter alignright alignjustify | ' +
-          'numlist bullist indent outdent | ' +
-          'table link image media | ' +
-          'pagebreak insertdatetime charmap emoticons | ' +
-          'removeformat | fullscreen preview',
-
-        toolbar_sticky: true,
-
-        // ── Style contenu (feuille A4 Word) ─────────────────
-        content_style: `
-          body {
-            font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
-            font-size: 12pt;
-            line-height: 1.6;
-            margin: 20mm 25mm;
-            color: #1a1a1a;
-            background: #ffffff;
-          }
-          table { border-collapse: collapse; width: 100%; }
-          td, th { border: 1px solid #cccccc; padding: 6px 10px; }
-          h1 { font-size: 18pt; font-weight: bold; }
-          h2 { font-size: 14pt; font-weight: bold; }
-          h3 { font-size: 12pt; font-weight: bold; }
-          p { margin: 0 0 10px 0; }
-        `,
-
-        image_advtab: true,
-        quickbars_selection_toolbar: 'bold italic underline | quicklink h2 h3 blockquote',
-        autosave_ask_before_unload: true,
-        autosave_interval: '30s',
-
-        setup: (editor: any) => {
-          // Restaurer le contenu sauvegardé
-          const savedContent = this.documentForm.get('content')?.value;
-          if (savedContent) {
-            editor.on('init', () => editor.setContent(savedContent));
-          }
-
-          // Auto-save toutes les 20 secondes dans localStorage
-          this.autoSaveInterval = setInterval(() => {
-            if (editor && !editor.destroyed) {
-              const content = editor.getContent();
-              localStorage.setItem(DRAFT_STORAGE_KEY, content);
-              this.documentForm.patchValue({ content });
-              this.autoSaveStatus = 'Sauvegardé à ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-              this.hasDraft = true;
-              setTimeout(() => this.autoSaveStatus = '', 3000);
-            }
-          }, 20000);
-        }
-      });
-    }, 300);
-  }
-
-  private destroyTinyMCE(): void {
-    if (typeof tinymce !== 'undefined') {
-      try { tinymce.remove('#qms-doc-editor'); } catch (_) {}
-    }
-  }
-
-  private syncAndSaveDraft(): void {
-    if (typeof tinymce !== 'undefined') {
-      const editor = tinymce.get('qms-doc-editor');
-      if (editor && !editor.destroyed) {
-        const content = editor.getContent();
-        this.documentForm.patchValue({ content });
-        localStorage.setItem(DRAFT_STORAGE_KEY, content);
-        this.hasDraft = !!content;
-      }
-    }
-  }
-
-  // ─── Other Actions ────────────────────────────────────────────
-
-  clearContent(): void {
-    this.documentForm.patchValue({ content: '' });
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
-    this.hasDraft = false;
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   onFileSelected(event: any): void {
     const file = event.target.files[0];
-    if (file) this.selectedFile = file;
+    if (file) {
+      this.selectedFile = file;
+    }
   }
 
   goBack(): void {
-    this.router.navigate(['/qms-documents']);
+    this.router.navigate(['/gestion-documentaire/documents']);
   }
 
   submitDocument(): void {
@@ -243,52 +213,48 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       this.messageService.add({ severity: 'warn', summary: 'Formulaire incomplet', detail: 'Veuillez renseigner tous les champs obligatoires.' });
       return;
     }
-    if (this.creationMode === 'import' && !this.selectedFile) {
+    if (!this.selectedFile) {
       this.messageService.add({ severity: 'warn', summary: 'Fichier manquant', detail: 'Veuillez sélectionner un fichier à importer.' });
       return;
     }
-    if (this.creationMode === 'edit' && !this.documentForm.value.content) {
-      this.messageService.add({ severity: 'warn', summary: 'Contenu vide', detail: 'Veuillez rédiger le contenu du document.' });
-      return;
-    }
+
+    const formVal = this.documentForm.value;
+
 
     this.loading = true;
-    const formVal = this.documentForm.value;
     const serviceObj: Structure = formVal.service;
-    const formData = new FormData();
 
-    if (this.creationMode === 'import') {
-      formData.append('file', this.selectedFile!);
-    } else {
-      const blob = new Blob([formVal.content], { type: 'text/html' });
-      formData.append('file', blob, 'document.html');
-    }
 
-    formData.append('documentType', formVal.documentType);
-    formData.append('serviceId', serviceObj.id!);
-    formData.append('serviceLibelle', serviceObj.libelleLong || '');
-    formData.append('serviceSigle', serviceObj.libelleCourt || '');
-    formData.append('redacteur', formVal.redacteur);
-    formData.append('periodiciteMois', formVal.periodiciteMois.toString());
-    formData.append('confidentiel', formVal.confidentiel.toString());
-    formData.append('documentExterne', formVal.documentExterne.toString());
-    if (formVal.organismeEmetteur) formData.append('organismeEmetteur', formVal.organismeEmetteur);
-    if (formVal.referenceOfficielle) formData.append('referenceOfficielle', formVal.referenceOfficielle);
-    if (formVal.domaine) formData.append('domaine', formVal.domaine);
-    if (formVal.statutLegal) formData.append('statutLegal', formVal.statutLegal);
-
-    // this.qmsService.createDocument(formData).subscribe({
-    //   next: (doc) => {
-    //     this.loading = false;
-    //     // Clear draft on success
-    //     localStorage.removeItem(DRAFT_STORAGE_KEY);
-    //     this.messageService.add({ severity: 'success', summary: 'Document créé', detail: `Le document ${doc.documentNumber} a été enregistré avec succès.` });
-    //     setTimeout(() => this.router.navigate(['/qms-documents']), 1500);
-    //   },
-    //   error: (err) => {
-    //     this.loading = false;
-    //     showToast(StatusEnum.error, err.status, "Échec de l'enregistrement", this.messageService, err);
-    //   }
-    // });
+    this.qmsService.createDocument(this.selectedFile, {
+      titre: formVal.titre,
+      documentType: formVal.documentType,
+      serviceId: serviceObj.id!,
+      serviceLibelle: serviceObj.libelleLong || '',
+      serviceSigle: serviceObj.libelleCourt || '',
+      redacteur: formVal.redacteur,
+      periodiciteMois: formVal.periodiciteMois,
+      confidentiel: formVal.confidentiel,
+      documentExterne: formVal.documentExterne,
+      ...(this.associatedWorkflow && { workflowId: this.associatedWorkflow.id }),
+      ...(formVal.processusDest && {
+        processusDestId: formVal.processusDest.id,
+        processusDestLibelle: formVal.processusDest.libelleLong || formVal.processusDest.libelleCourt || ''
+      }),
+      ...(formVal.referenceOfficielle && { referenceOfficielle: formVal.referenceOfficielle }),
+      ...(formVal.domaine && { domaine: formVal.domaine }),
+      ...(formVal.statutLegal && { statutLegal: formVal.statutLegal })
+    }).subscribe({
+      next: (doc) => {
+        this.loading = false;
+        this.messageService.add({ severity: 'success', summary: 'Document créé', detail: `Le document ${doc.documentNumber} a été enregistré avec succès.` });
+        setTimeout(() => this.router.navigate(['/gestion-documentaire/documents']), 1500);
+      },
+      error: (err: any) => {
+        this.loading = false;
+        // On récupère le message d'erreur du backend s'il existe
+        const backendMessage = err.error?.message || "Échec de l'enregistrement";
+        showToast(StatusEnum.error, err.status, backendMessage, this.messageService, err);
+      }
+    });
   }
 }
