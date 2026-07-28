@@ -70,8 +70,8 @@ export class SearchAgentComponent implements OnInit {
         this.authService.loadAgentPublicByService(structureId)
             .subscribe({
                 next: (data) => {
-                    this.agents = data.data.content.map(a => ({
-                        label:  a.user.lastName + ' ' + a.user.firstName,
+                    this.agents = data.data.content.map((a: any) => ({
+                        label: a.user ? `${a.user.lastName} ${a.user.firstName}` : `${a.lastName || ''} ${a.firstName || ''}`.trim() || 'Utilisateur inconnu',
                         value: a
                     }));
 

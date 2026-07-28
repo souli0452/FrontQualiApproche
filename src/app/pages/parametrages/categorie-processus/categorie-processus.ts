@@ -15,13 +15,19 @@ import { CategorieProcessusService } from '../../../services/non-conformite/type
     standalone: true,
     imports: [CommonModule, AppCrudGenericComponent],
     template: `
-        <div class="page-layout">
-            <div class="card mb-0 pb-0">
-                <div class="bg-surface-100 p-2 text-center">
-                    <div class="text-xl mb-2 font-bold">Gestion des catégories de processus</div>
-                    <p>Ajoutez ou modifiez les différentes catégories de processus.</p>
+                        <div class="page-layout">
+            <div class="card-first overflow-hidden border-none premium-hub transition-colors duration-300">
+                <!-- Header Premium -->
+                <div class="pb-5 flex justify-between items-center border-b border-surface-border">
+                    <div class="flex items-center gap-4">
+                        <div>
+                            <h1 class="text-3xl font-bold m-0 text-surface-900 dark:text-surface-50 flex items-center gap-3">
+                                Catégories de processus
+                            </h1>
+                            <p class="text-surface-500 dark:text-surface-400 mt-1 mb-0">Ajoutez ou modifiez les différentes catégories de processus.</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
             <app-crud-generic
                 [addButtonLabel]="'Nouvelle catégorie de processus'"
                 [dialogWidth]="'40rem'"
@@ -42,6 +48,7 @@ import { CategorieProcessusService } from '../../../services/non-conformite/type
                 (pageChangeEvent)="onPageChange($event)"
                 (removeEvent)="onDelete($event)">
             </app-crud-generic>
+    </div>
     </div>
     `
 })

@@ -46,23 +46,28 @@ export class AppMenu {
                 label: 'Accueil',
                 items: [{ label: 'Tableau de bord', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
             },
+            // {
+            //     label: 'Modules',
+            //     icon: 'pi pi-fw pi-briefcase',
+            //     routerLink: ['/'],
+            //     items:[
+            //         {
+            //             label: 'Gestion documentaire',
+            //             icon: 'pi pi-fw pi-briefcase',
+            //             routerLink: ['/gestion-documentaire'],
+            //         },
+            //     ]
+            // },
             {
-                label: 'Gestion documentaire',
+                label: 'Modules',
                 icon: 'pi pi-fw pi-briefcase',
                 routerLink: ['/'],
-                items:[
+                items: [
                     {
                         label: 'Gestion documentaire',
                         icon: 'pi pi-fw pi-briefcase',
                         routerLink: ['/gestion-documentaire'],
                     },
-                ]
-            },
-            {
-                label: 'Qualité & Conformité',
-                icon: 'pi pi-fw pi-briefcase',
-                routerLink: ['/'],
-                items: [
                     { label: 'Audite', icon: 'pi pi-fw pi-eye', visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['AUDITE_READ']), routerLink: ['/audite'] },
                     { label: 'Non-Conformités', icon: 'pi pi-fw pi-briefcase', visible: isLicenseActive() && isModuleSubscribed('NON_CONFORMITE') && hasAnyPermission(['SUBMIT_NC']), routerLink: ['/non-conformite'] },
                     // =={ label: 'Non conformité', icon: 'pi pi-fw pi-times', visible: isLicenseActive() && isModuleSubscribed('NON_CONFORMITE') && hasAnyPermission(['SUBMIT_NC']), routerLink: ['/nc'] },
@@ -70,6 +75,86 @@ export class AppMenu {
                     { label: "Critères d'évaluation", visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['CRITERE_EVAL_READ']), icon: 'pi pi-fw pi-file', routerLink: ['/critere-evaluation'] }
                 ]
             },
+            {
+                label: 'Compte utilisateur',
+                icon: 'pi pi-fw pi-user',
+                routerLink: ['/'],
+                items: [
+                    {
+                        label: 'Gestion des utilisateurs',
+                        icon: 'pi pi-fw pi-users',
+                        routerLink: ['/utilisateurs']
+                    },
+                    {
+                        label: 'Gestion des rôles',
+                        icon: 'pi pi-fw pi-id-card',
+                        routerLink: ['/roles'] 
+                    }
+                ]
+            },
+
+            {
+                label: 'Paramètres',
+                icon: 'pi pi-fw pi-cog',
+                routerLink: ['/'],
+                items: [
+                    {
+                        label: 'Non-Conformités',
+                        icon: 'pi pi-fw pi-exclamation-triangle',
+                        items: [
+                            {
+                                label: 'Niveau de Non-Conformité',
+                                icon: 'pi pi-fw pi-list',
+                                routerLink: ['/niveau-non-conformite']
+                            },
+                            {
+                                label: 'Origine de Non-Conformité',
+                                icon: 'pi pi-fw pi-user-plus',
+                                routerLink: ['/origine-non-conformite'] 
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Organigramme',
+                        icon: 'pi pi-fw pi-sitemap',
+                        items: [
+                            {
+                                label: 'Catégorie de processu',
+                                icon: 'pi pi-fw pi-objects-column',
+                                routerLink: ['/type-processus']
+                            },
+                            {
+                                label: 'Processus',
+                                icon: 'pi pi-fw pi-map-marker',
+                                routerLink: ['/service'] 
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Documentation',
+                        icon: 'pi pi-fw pi-print',
+                        items: [
+                            {
+                                label: 'Type de document',
+                                icon: 'pi pi-fw pi-file-o',
+                                routerLink: ['/type-document']
+                            },
+                            {
+                                label: 'Étapes',
+                                icon: 'pi pi-fw pi-list-check',
+                                routerLink: ['/etapes-gestion-documentaire'] 
+                            },
+                            {
+                                label: 'Workflow',
+                                icon: 'pi pi-fw pi-th-large',
+                                routerLink: ['/workflows-gestion-documentaire'] 
+                            }
+                        ]
+                    },
+                    { label: 'Configurations Globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'], visible: true },
+                ]
+            },
+
             // {
             //     label: 'TRAITEMENTS DES DEMANDES',
             //     icon: 'pi pi-fw pi-envelope',
@@ -193,15 +278,15 @@ export class AppMenu {
             //         // { label: 'Niveau  non-conformité', visible: isLicenseActive() && hasAnyPermission(['NC_LEVEL_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/page/niveau-nc'] },
             //         { label: 'Type action entreprise', visible: isLicenseActive() && hasAnyPermission(['ACTION_TYPE_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/type-action'] }
             //     ]
-            {
-                label: 'Configurations',
-                icon: 'pi pi-sliders-h',
-                visible: true,
-                items: [
-                    { label: 'Configurations Globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'], visible: true },
-                    { label: 'Paramétrage Document', icon: 'pi pi-fw pi-file-edit', routerLink: ['/parametrage-document'] }
-                ]
-            }
+            // {
+            //     label: 'Configurations',
+            //     icon: 'pi pi-sliders-h',
+            //     visible: true,
+            //     items: [
+            //         { label: 'Configurations Globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'], visible: true },
+            //         { label: 'Paramétrage Document', icon: 'pi pi-fw pi-file-edit', routerLink: ['/parametrage-document'] }
+            //     ]
+            // }
         ];
             // On écoute les changements du badge !
     this.nonConformiteService.notificationsNC$.subscribe((notifs: any) => {

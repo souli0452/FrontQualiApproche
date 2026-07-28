@@ -1,9 +1,16 @@
-<div class="card mb-0 pb-0">
-    <div class="bg-surface-100 p-2 text-center">
-    <div class="text-xl mb-2 font-bold">Gestion des utilisateurs</div>
-    <p>Ajoutez ou modifiez les utilisateurs habilités à utiliser la plateforme, et définissez leurs accès.</p>
+<div class="card-first overflow-hidden border-none premium-hub transition-colors duration-300">
+    <!-- Header Premium -->
+    <div class="pb-5 flex justify-between items-center border-b border-surface-border">
+        <div class="flex items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold m-0 text-surface-900 dark:text-surface-50 flex items-center gap-3">
+                    Gestion des utilisateurs
+                </h1>
+                <p class="text-surface-500 dark:text-surface-400 mt-1 mb-0">Ajoutez ou modifiez les utilisateurs habilités à utiliser la plateforme, et définissez leurs accès.</p>
+            </div>
+        </div>
     </div>
-</div>
+
 <app-crud-generic
     [dialogWidth]="'40rem'"
     [addButtonLabel]="'Nouvel utilisateur'"
@@ -29,3 +36,4 @@
     >
 </app-crud-generic>
 
+</div> 

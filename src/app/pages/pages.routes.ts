@@ -59,6 +59,38 @@ export default [
     { path: 'audite', component: AuditeComponent, title: 'Liste des Audites' },
     { path: 'reglementation', component: reglementationComponent, title: 'Liste des Réglementations' },
     { path: 'critere-evaluation', component: CritereEvaluationComponent, title: 'Critères d\'évaluation' },
+    { path: 'utilisateurs', component: KcUserComponent, title: 'Gestion des utilisateurs' },
+    { path: 'roles', component: RoleComponent, title: 'Gestion des rôles' },
+    { path: 'roles/:id', component: RoleDetailComponent, title: 'Détail Rôle' },
+    { path: 'origine-non-conformite', component: SourceNonConformite, title: 'Origine de Non-Conformité' },
+    { path: 'niveau-non-conformite', component: NiveauNonConformiteComponent, title: 'Niveau de Non-Conformité' },
+    { path: 'type-processus', component: CategorieProcessusComponent, title: 'Processus' },
+    { path: 'direction', component: StructureComponent, title: 'Liste des Directions', data: { typeStructure: TypeStructure.DIRECTION } },
+    { path: 'service', component: StructureComponent, title: 'Services', data: { typeStructure: TypeStructure.SERVICE } },
+    {
+        path: 'type-document',
+        component: QmsDocumentTypeComponent,
+        title: 'Types de documents',
+        data: { breadcrumb: 'Types de Document QMS' }
+    },
+    {
+        path: 'etapes-gestion-documentaire',
+        component: WorkflowStepTemplateComponent,
+        title: 'Étapes',
+        data: { breadcrumb: "Catalogue d'Étapes" }
+    },
+    {
+        path: 'workflows-gestion-documentaire',
+        loadComponent: () => import('./module-gestion-documentaire/workflow/workflow-config.component').then(c => c.WorkflowConfigComponent),
+        title: 'Workflows documents',
+        data: { breadcrumb: 'Configuration des Workflows' }
+    },
+    {
+        path: 'workflows-gestion-documentaire/detail/:id',
+        loadComponent: () => import('./module-gestion-documentaire/workflow/workflow-detail.component').then(c => c.WorkflowDetailComponent),
+        title: 'Détails du Workflow',
+        data: { breadcrumb: 'Détails du Workflow' }
+    },
     {
         path: 'configurations',
         component: ParametragesComponent,
@@ -66,15 +98,8 @@ export default [
         children: [
             { path: '', redirectTo: 'config-systeme', pathMatch: 'full' },
             { path: 'config-systeme', component: ConfigGComponent, title: 'Configuration Système' },
-            { path: 'utilisateurs', component: KcUserComponent, title: 'Utilisateurs' },
-            { path: 'roles', component: RoleComponent, title: 'Rôles' },
-            { path: 'roles/:id', component: RoleDetailComponent, title: 'Détail Rôle' },
-            { path: 'type-processus', component: CategorieProcessusComponent, title: 'Processus' },
-            { path: 'type-nc', component: SourceNonConformite, title: 'Types NC' },
-            { path: 'niveau-nc', component: NiveauNonConformiteComponent, title: 'Niveaux NC' },
             { path: 'type-action', component: ActionNonConformiteComponent, title: 'Actions' },
-            { path: 'direction', component: StructureComponent, title: 'Liste des Directions', data: { typeStructure: TypeStructure.DIRECTION } },
-            { path: 'service', component: StructureComponent, title: 'Services', data: { typeStructure: TypeStructure.SERVICE } },
+
         ]
     },
 
@@ -84,30 +109,30 @@ export default [
         data: { breadcrumb: 'Paramétrage Document' },
         children: [
             { path: '', redirectTo: 'types', pathMatch: 'full' },
-            {
-                path: 'types',
-                component: QmsDocumentTypeComponent,
-                title: 'Types de documents',
-                data: { breadcrumb: 'Types de Document QMS' }
-            },
-            {
-                path: 'etapes',
-                component: WorkflowStepTemplateComponent,
-                title: 'Étapes',
-                data: { breadcrumb: "Catalogue d'Étapes" }
-            },
-            {
-                path: 'workflows',
-                loadComponent: () => import('./module-gestion-documentaire/workflow/workflow-config.component').then(c => c.WorkflowConfigComponent),
-                title: 'Workflows documents',
-                data: { breadcrumb: 'Configuration des Workflows' }
-            },
-            {
-                path: 'workflows/detail/:id',
-                loadComponent: () => import('./module-gestion-documentaire/workflow/workflow-detail.component').then(c => c.WorkflowDetailComponent),
-                title: 'Détails du Workflow',
-                data: { breadcrumb: 'Détails du Workflow' }
-            },
+            // {
+            //     path: 'types',
+            //     component: QmsDocumentTypeComponent,
+            //     title: 'Types de documents',
+            //     data: { breadcrumb: 'Types de Document QMS' }
+            // },
+            // {
+            //     path: 'etapes',
+            //     component: WorkflowStepTemplateComponent,
+            //     title: 'Étapes',
+            //     data: { breadcrumb: "Catalogue d'Étapes" }
+            // },
+            // {
+            //     path: 'workflows',
+            //     loadComponent: () => import('./module-gestion-documentaire/workflow/workflow-config.component').then(c => c.WorkflowConfigComponent),
+            //     title: 'Workflows documents',
+            //     data: { breadcrumb: 'Configuration des Workflows' }
+            // },
+            // {
+            //     path: 'workflows/detail/:id',
+            //     loadComponent: () => import('./module-gestion-documentaire/workflow/workflow-detail.component').then(c => c.WorkflowDetailComponent),
+            //     title: 'Détails du Workflow',
+            //     data: { breadcrumb: 'Détails du Workflow' }
+            // },
         ]
     },
 

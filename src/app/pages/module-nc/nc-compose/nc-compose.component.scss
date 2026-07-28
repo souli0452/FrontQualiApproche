@@ -9,6 +9,10 @@
     padding: 10px !important;
     display: flex;
     justify-content: center;
+
+    .file-list{
+        width: 100% !important;
+    }
 }
 
 ::ng-deep .text-content {
@@ -18,4 +22,48 @@
     align-items: center !important;
     width: max-content !important;
     opacity: .4 !important;
+}
+
+/* Supprimer l'ombre par défaut et l'ombre au clic (focus) sur tous les inputs */
+.p-inputtext,
+.p-dropdown,
+.p-select {
+    box-shadow: none !important;
+}
+.p-inputtext:enabled:focus,
+.p-dropdown:not(.p-disabled).p-focus,
+.p-select:not(.p-disabled).p-focus {
+    box-shadow: none !important;
+    /* Optionnel : si vous voulez garder une bordure colorée au clic à la place de l'ombre */
+    // border-color: var(--primary-color) !important;
+}
+
+.p-select-filter {
+    box-shadow: none !important;
+    outline: none !important;
+}
+h3{
+    margin: 0 !important;
+}
+h3.mb-4{
+    margin-bottom: 1rem !important;
+}
+
+
+.p-textarea:enabled:focus {
+    border-color: var(--secondary-color) !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.p-textarea{
+    box-shadow: none !important;
+}
+.p-select-overlay {
+    cursor: default;
+    background: var(--p-select-overlay-background);
+    color: var(--p-select-overlay-color);
+    border: 1px solid var(--p-select-overlay-border-color);
+    border-radius: var(--p-select-overlay-border-radius);
+    box-shadow: none !important;
 }

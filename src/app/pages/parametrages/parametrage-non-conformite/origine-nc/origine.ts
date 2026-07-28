@@ -17,32 +17,39 @@ import { OrigineNonConformiteService } from '../../../../services/non-conformite
     imports: [CommonModule, AppCrudGenericComponent],
     template: `
         <div class="page-layout">
-            <div class="card mb-0 pb-0">
-                <div class="bg-surface-100 p-2 text-center">
-                    <div class="text-xl mb-2 font-bold">Gestion des Origines de Non-Conformité</div>
-                    <p>Ajoutez ou modifiez les différentes Origines d'une Non-Conformité.</p>
+            <div class="card-first overflow-hidden border-none premium-hub transition-colors duration-300">
+                <!-- Header Premium -->
+                <div class="pb-5 flex justify-between items-center border-b border-surface-border">
+                    <div class="flex items-center gap-4">
+                        <div>
+                            <h1 class="text-3xl font-bold m-0 text-surface-900 dark:text-surface-50 flex items-center gap-3">
+                                Origines de Non-Conformité
+                            </h1>
+                            <p class="text-surface-500 dark:text-surface-400 mt-1 mb-0">Ajoutez ou modifiez les différentes Origines d'une Non-Conformité.</p>
+                        </div>
+                    </div>
                 </div>
+                <app-crud-generic
+                    [addButtonLabel]="'Nouvelle Origine de Non-Conformité'"
+                    [dialogWidth]="'40rem'"
+                    [loading]="loading"
+                    [pageLabel]="pageLabel"
+                    [tableCols]="tableCols"
+                    [listeObject]="dataList"
+                    [formGroup]="formGroup"
+                    [formCols]="formCols"
+                    [isAffich]="true"
+                    [closeDialog]="closeDialog"
+                    [formHeader]="formHeader"
+                    (newItemEvent)="onSave($event)"
+                    [totalElements]="totalElements"
+                    [isPagination]="false"
+                    [currentPage]="currentPage"
+                    [pageSize]="pageSize"
+                    (pageChangeEvent)="onPageChange($event)"
+                    (removeEvent)="onDelete($event)">
+                </app-crud-generic>
             </div>
-            <app-crud-generic
-                [addButtonLabel]="'Nouvelle Origine de Non-Conformité'"
-                [dialogWidth]="'40rem'"
-                [loading]="loading"
-                [pageLabel]="pageLabel"
-                [tableCols]="tableCols"
-                [listeObject]="dataList"
-                [formGroup]="formGroup"
-                [formCols]="formCols"
-                [isAffich]="true"
-                [closeDialog]="closeDialog"
-                [formHeader]="formHeader"
-                (newItemEvent)="onSave($event)"
-                [totalElements]="totalElements"
-                [isPagination]="false"
-                [currentPage]="currentPage"
-                [pageSize]="pageSize"
-                (pageChangeEvent)="onPageChange($event)"
-                (removeEvent)="onDelete($event)">
-            </app-crud-generic>
     </div>
     `
 })

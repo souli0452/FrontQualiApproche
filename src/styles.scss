@@ -49,8 +49,76 @@ html {
     font-style: normal;
 }
 
+
+
+
+
+
+@font-face {
+    font-family: 'DM Sans';
+    src: url('./assets/fonts/DMSans-Light.woff2') format('woff2');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans';
+    src: url('./assets/fonts/DMSans-ExtraLight.woff2') format('woff2');
+    font-weight: 200;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans';
+    src: url('./assets/fonts/DMSans-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans';
+    src: url('./assets/fonts/DMSans-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans';
+    src: url('./assets/fonts/DMSans-SemiBold.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans';
+    src: url('./assets/fonts/DMSans-Black.woff2') format('woff2');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans';
+    src: url('./assets/fonts/DMSans-Bold.woff2') format('woff2');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+
+
+
+
+
+
+
 body {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 1rem;
 }
 
@@ -58,7 +126,7 @@ body {
 .p-dialog-title,
 .p-fieldset-legend-label,
 .p-step-title {
-    font-weight: 700;
+    font-weight: 900;
 }
 
 .hidden{
@@ -491,4 +559,27 @@ p-button .p-button-info {
 
 .uploader-container{
   height: 145px !important;
+}
+
+
+
+
+.p-select-overlay {
+    cursor: default;
+    background: var(--p-select-overlay-background);
+    color: var(--p-select-overlay-color);
+    border: 1px solid var(--p-select-overlay-border-color);
+    border-radius: var(--p-select-overlay-border-radius);
+    box-shadow: none !important;
+}
+
+.p-inputtext:enabled:focus {
+    border-color: var(--secondary-color) !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.p-select-option:hover, .p-select-option.p-select-option-selected.p-focus {
+    background: var(--secondary-color) !important;
+    color: white !important;
 }
