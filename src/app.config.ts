@@ -1,5 +1,5 @@
 import { HTTP_INTERCEPTORS, provideHttpClient, withFetch, withInterceptorsFromDi } from '@angular/common/http';
-import { ApplicationConfig, importProvidersFrom } from '@angular/core';
+import { ApplicationConfig } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling } from '@angular/router';
 import Aura from '@primeng/themes/aura';
@@ -13,7 +13,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { ToastModule } from 'primeng/toast';
 import { UntypedFormBuilder } from '@angular/forms';
 import { LoaderInterceptor } from './app/interceptors/loader.interceptor';
-import { NgxPermissionsModule } from 'ngx-permissions';
 // Définition de votre thème bleu QualiSira
 const MyPreset = definePreset(Aura, {
     semantic: {
@@ -62,7 +61,6 @@ export const appConfig: ApplicationConfig = {
                 weekHeader: "Sem"
             }
         }),
-        { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
-        importProvidersFrom(NgxPermissionsModule.forRoot())
+        { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
     ]
 };
