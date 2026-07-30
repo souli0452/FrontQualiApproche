@@ -312,6 +312,8 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
                     this.fb.group({
                         clientId: [stepClientIds[idx]],
                         id: [step.id],
+                        // Code fonctionnel : fixé à la création, jamais réécrit ensuite.
+                        code: [step.code ?? null],
                         stepTemplateId: [step.stepTemplateId ?? null, Validators.required],
                         nomEtape: [{ value: step.nomEtape, disabled: true }],
                         responsableRole: [{ value: step.responsableRole, disabled: true }],
@@ -339,6 +341,7 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
             this.fb.group({
                 clientId: [generateClientId()],
                 id: [null],
+                code: [null],
                 stepTemplateId: [null, Validators.required],
                 nomEtape: [{ value: null, disabled: true }],
                 responsableRole: [{ value: null, disabled: true }],
@@ -506,13 +509,15 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
             return;
         }
 
-        // clientId -> stepOrder (calculé selon la position dans la liste, comme aujourd'hui)
-        const stepOrderByClientId = new Map<string, number>();
-        steps.forEach((s, idx) => stepOrderByClientId.set(s.clientId, idx + 1));
+        // Cible désignée par code d'étape : le rang se décale dès qu'on réordonne le circuit.
+        // Une étape encore sans code (nouvelle) se voit attribuer son clientId, que le serveur
+        // normalise et fige définitivement à l'enregistrement.
+        const codeByClientId = new Map<string, string>();
+        steps.forEach((s) => codeByClientId.set(s.clientId, s.code || s.clientId));
 
         const buildTransition = (decision: WorkflowDecision, targetClientId: string | null, role: string | null, label: string | null): WorkflowTransition => ({
             decision,
-            toStepOrder: targetClientId ? (stepOrderByClientId.get(targetClientId) ?? null) : null,
+            toStepCode: targetClientId ? (codeByClientId.get(targetClientId) ?? null) : null,
             requiredRole: role || null,
             label: label || null
         });
@@ -523,6 +528,7 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
             description: formValue.description,
             steps: steps.map((s, idx) => ({
                 id: s.id,
+                code: codeByClientId.get(s.clientId) ?? null,
                 stepTemplateId: s.stepTemplateId,
                 nomEtape: s.nomEtape,
                 responsableRole: s.responsableRole,
