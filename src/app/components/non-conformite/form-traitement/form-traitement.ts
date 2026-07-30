@@ -89,10 +89,6 @@ export class FormTraitementComponent {
 
     ngOnInit() {
         if (this.demande) {
-            console.log('--- DÉTAILS DE LA NON-CONFORMITÉ ---');
-            console.log('Processus Destinataire:', this.demande.origineService);
-            console.log('Objet Demande complet:', this.demande);
-            console.log('------------------------------------');
             // Préparer les objets pour les sélecteurs
             this.fetchUsersByStructure();
             const patchValues = { ...this.demande };
@@ -198,6 +194,7 @@ export class FormTraitementComponent {
             responsableId: [''],
             responsableNomComplet: [''],
             responsableEmail: [''],
+            critereEfficacite: [''],
             nonConformiteID: [this.demande?.id]
         });
     }
@@ -243,7 +240,6 @@ export class FormTraitementComponent {
                             fullName: user.firstName + ' ' + user.lastName,
                         }
                     });
-                    console.log('Utilisateurs récupérés pour la structure:', this.usersByStructure);
                     if (this.planAction?.responsableNomComplet) {
                         this.user = this.usersByStructure.find((user: any) =>
                             user.fullName === this.planAction.responsableNomComplet
@@ -348,6 +344,8 @@ loadStuctures() {
         
         let maxNumber = 0;
         const plans = this.demande.planActions || [];
+        console.log("Plan d'action : ", plans);
+        
         plans.forEach((p: any) => {
             if (p.numeroOdre && p.numeroOdre.startsWith('P-A-')) {
                 const num = parseInt(p.numeroOdre.substring(4), 10);

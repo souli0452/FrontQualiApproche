@@ -12,6 +12,10 @@
 
     .file-list{
         width: 100% !important;
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        align-items: center;
     }
 }
 

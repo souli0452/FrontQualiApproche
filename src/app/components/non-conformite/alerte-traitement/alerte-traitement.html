@@ -1,5 +1,5 @@
 <!-- Alerte Brouillons (Agent / Utilisateur) -->
-<div *ngIf="countBrouillon > 0" class="mb-2">
+<div *ngIf="countBrouillon > 0" class="mb-4">
     <p-message closable severity="warn" size="small">
         <div class="">
             <div class="flex align-items-center font-semibold">
@@ -14,7 +14,7 @@
 </div>
 
 <!-- Alerte NC de Service (Chef de service) -->
-<div *ngIf="countReception > 0" class="mb-2">
+<div *ngIf="countReception > 0" class="mb-4">
     <p-message closable severity="warn" size="small">
         <div class="">
             <div class="flex items-center font-bold">
@@ -29,7 +29,7 @@
 </div>
 
 <!-- Alerte Imputations (Actions pour l'utilisateur connecté) -->
-<div *ngIf="countImputees > 0" class="mb-2">
+<div *ngIf="countImputees > 0" class="mb-4">
     <p-message closable severity="error" size="small">
         <div class="">
             <div class="flex items-center font-bold">
@@ -45,7 +45,7 @@
 
 
 <!-- Alerte Validation RQ (Actions pour l'utilisateur connecté) -->
-<div *ngIf="countValidationRQ > 0" class="mb-2">
+<div *ngIf="countValidationRQ > 0" class="mb-4">
     <p-message closable severity="error" size="small">
         <div class="">
             <div class="flex items-center font-bold">
@@ -60,7 +60,7 @@
 </div>
 
 <!-- Alerte Validation RS (Admin / RQ) -->
-<div *ngIf="countEnAttenteValidation > 0" class="mb-2">
+<div *ngIf="countEnAttenteValidation > 0" class="mb-4">
     <p-message closable severity="error" size="small">
         <div class="">
             <div class="flex items-center font-bold">
@@ -75,11 +75,10 @@
 </div>
 
 <!-- Alerte Validation Pilote (Pilote) -->
-<div *ngIf="countValidationPilote > 0" class="mb-2">
+<div *ngIf="countValidationPilote > 0" class="mb-4">
     <p-message closable severity="error" size="small">
         <div class="">
             <div class="flex items-center font-bold">
-                <i class="pi pi-shield mr-2"></i>
                 <span>Validation des plans d'actions</span>
             </div>
             <p class="text-sm mt-2 flex items-center gap-2">
@@ -89,7 +88,7 @@
     </p-message>
 </div>
 
-<div *ngIf="countCloture > 0" class="mb-2">
+<div *ngIf="countCloture > 0" class="mb-4">
     <p-message closable severity="success" size="small">
         <div class="">
             <div class="flex items-center font-bold">
@@ -104,7 +103,7 @@
 </div>
 
 <!-- Alerte Affectation (Actions pour l'utilisateur connecté) -->
-<div *ngIf="countAffectation > 0" class="mb-2">
+<div *ngIf="countAffectation > 0" class="mb-4">
     <p-message closable severity="error" size="small">
         <div class="">
             <div class="flex items-center font-bold">
@@ -119,7 +118,7 @@
 </div>
 
 <!-- Alerte Plans d'actions à traiter (Actions pour l'utilisateur connecté) -->
-<div *ngIf="countNonTraiter > 0" class="mb-2">
+<div *ngIf="countNonTraiter > 0" class="mb-4">
     <p-message closable severity="error" size="small">
         <div class="">
             <div class="flex items-center font-bold">

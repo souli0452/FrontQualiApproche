@@ -1,28 +1,23 @@
 <div class="card-first overflow-hidden border-none premium-hub transition-colors duration-300">
-    <!-- Header Premium -->
     <div class="pb-5 flex justify-between items-center border-b border-surface-border">
         <div class="flex items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold m-0 tracking-tight text-surface-900 dark:text-surface-50 flex items-center gap-3">
-                    <i class="pi pi-briefcase text-primary dark:text-primary-400"></i>
                     Gestion Documentaire
                 </h1>
                 <p class="text-surface-500 dark:text-surface-400 mt-1 mb-0">Cycle de vie, workflows de validation et conformité des documents qualité</p>
             </div>
         </div>
-
         <div class="flex items-center gap-3">
             <p-button
                 label="Nouveau Document"
                 icon="pi pi-plus"
                 severity="info"
-                (click)="navigateToCreate()"
-                styleClass="shadow-sm font-semibold" />
+                (click)="navigateToCreate()"/>
         </div>
     </div>
 
-    <!-- Navigation Hub (Tabs) -->
-    <div class="pt-2 bg-surface-0 dark:bg-surface-900 border-b border-surface-border">
+    <div class="bg-surface-0 dark:bg-surface-900 ">
         <p-tabs [value]="activeTab" [scrollable]="true" (valueChange)="onTabChange($event)">
             <p-tablist>
                 <p-tab *ngFor="let tab of items" [value]="tab.routerLink">
@@ -36,8 +31,8 @@
     </div>
 
     <!-- Zone de Contenu Dynamique -->
-    <div class="bg-surface-50/50 dark:bg-surface-950/40 min-h-[600px]">
-        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl overflow-hidden card">
+    <div class="min-h-[600px]">
+        <div class="rounded-xl overflow-hidden py-4">
             <router-outlet></router-outlet>
         </div>
     </div>

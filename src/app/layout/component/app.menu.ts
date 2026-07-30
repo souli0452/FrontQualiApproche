@@ -44,20 +44,8 @@ export class AppMenu {
         this.model = [
             {
                 label: 'Accueil',
-                items: [{ label: 'Tableau de bord', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
+                items: [{ label: 'Tableau de bord', icon: 'pi pi-fw pi-objects-column', routerLink: ['/'] }]
             },
-            // {
-            //     label: 'Modules',
-            //     icon: 'pi pi-fw pi-briefcase',
-            //     routerLink: ['/'],
-            //     items:[
-            //         {
-            //             label: 'Gestion documentaire',
-            //             icon: 'pi pi-fw pi-briefcase',
-            //             routerLink: ['/gestion-documentaire'],
-            //         },
-            //     ]
-            // },
             {
                 label: 'Modules',
                 icon: 'pi pi-fw pi-briefcase',
@@ -65,7 +53,7 @@ export class AppMenu {
                 items: [
                     {
                         label: 'Gestion documentaire',
-                        icon: 'pi pi-fw pi-briefcase',
+                        icon: 'pi pi-fw pi-box',
                         routerLink: ['/gestion-documentaire'],
                     },
                     { label: 'Audite', icon: 'pi pi-fw pi-eye', visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['AUDITE_READ']), routerLink: ['/audite'] },
@@ -104,12 +92,10 @@ export class AppMenu {
                         items: [
                             {
                                 label: 'Niveau de Non-Conformité',
-                                icon: 'pi pi-fw pi-list',
                                 routerLink: ['/niveau-non-conformite']
                             },
                             {
                                 label: 'Origine de Non-Conformité',
-                                icon: 'pi pi-fw pi-user-plus',
                                 routerLink: ['/origine-non-conformite'] 
                             }
                         ]
@@ -119,13 +105,11 @@ export class AppMenu {
                         icon: 'pi pi-fw pi-sitemap',
                         items: [
                             {
-                                label: 'Catégorie de processu',
-                                icon: 'pi pi-fw pi-objects-column',
+                                label: 'Catégorie de processus',
                                 routerLink: ['/type-processus']
                             },
                             {
                                 label: 'Processus',
-                                icon: 'pi pi-fw pi-map-marker',
                                 routerLink: ['/service'] 
                             }
                         ]
@@ -136,17 +120,14 @@ export class AppMenu {
                         items: [
                             {
                                 label: 'Type de document',
-                                icon: 'pi pi-fw pi-file-o',
                                 routerLink: ['/type-document']
                             },
                             {
                                 label: 'Étapes',
-                                icon: 'pi pi-fw pi-list-check',
                                 routerLink: ['/etapes-gestion-documentaire'] 
                             },
                             {
                                 label: 'Workflow',
-                                icon: 'pi pi-fw pi-th-large',
                                 routerLink: ['/workflows-gestion-documentaire'] 
                             }
                         ]

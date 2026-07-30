@@ -10,117 +10,7 @@
     --info-color: #0084ca !important;
 }
 
-html {
-    font-size: 14px;
-}
 
-@font-face {
-    font-family: 'Poppins';
-    src: url('./assets/fonts/Poppins-Light.ttf') format('truetype');
-    font-weight: 300;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'Poppins';
-    src: url('./assets/fonts/Poppins-Regular.ttf') format('truetype');
-    font-weight: 400;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'Poppins';
-    src: url('./assets/fonts/Poppins-Medium.ttf') format('truetype');
-    font-weight: 500;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'Poppins';
-    src: url('./assets/fonts/Poppins-SemiBold.ttf') format('truetype');
-    font-weight: 600;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'Poppins';
-    src: url('./assets/fonts/Poppins-Bold.ttf') format('truetype');
-    font-weight: 700;
-    font-style: normal;
-}
-
-
-
-
-
-
-@font-face {
-    font-family: 'DM Sans';
-    src: url('./assets/fonts/DMSans-Light.woff2') format('woff2');
-    font-weight: 300;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'DM Sans';
-    src: url('./assets/fonts/DMSans-ExtraLight.woff2') format('woff2');
-    font-weight: 200;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'DM Sans';
-    src: url('./assets/fonts/DMSans-Medium.woff2') format('woff2');
-    font-weight: 500;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'DM Sans';
-    src: url('./assets/fonts/DMSans-Regular.woff2') format('woff2');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'DM Sans';
-    src: url('./assets/fonts/DMSans-SemiBold.woff2') format('woff2');
-    font-weight: 600;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'DM Sans';
-    src: url('./assets/fonts/DMSans-Black.woff2') format('woff2');
-    font-weight: 900;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'DM Sans';
-    src: url('./assets/fonts/DMSans-Bold.woff2') format('woff2');
-    font-weight: bold;
-    font-style: normal;
-    font-display: swap;
-}
-
-
-
-
-
-
-
-
-body {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 1rem;
-}
 
 .font-bold,
 .p-dialog-title,
@@ -582,4 +472,16 @@ p-button .p-button-info {
 .p-select-option:hover, .p-select-option.p-select-option-selected.p-focus {
     background: var(--secondary-color) !important;
     color: white !important;
+}
+
+.layout-menu ul ul.ng-trigger-children a .layout-menuitem-icon {
+    opacity: 0;
+}
+
+.p-datepicker-day-selected{
+    background: var(--secondary-color) !important;
+}
+
+.p-breadcrumb {
+    background: transparent !important;
 }

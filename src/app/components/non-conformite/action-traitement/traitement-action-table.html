@@ -231,13 +231,6 @@
     
     <ng-template pTemplate="content">
         <div class="flex flex-col md:flex-row justify-center gap-4">
-            <div class="md:w-1/2 h-[350px] w-full border border-surface-200 dark:border-surface-700 rounded-xl p-4 bg-surface-50/50 dark:bg-surface-900/50">
-                <label class="block font-normal m-0 font-semibold flex items-center mb-2 gap-2">
-                    <i class="pi pi-paperclip"></i>
-                    Documents liés à l'exécution
-                </label>
-                <app-file-upload (fileUploaded)="handleFileUpload($event)"></app-file-upload>
-            </div>
             
             <div class="md:w-1/2 w-full pt-4 pb-2 field">
                 <div class="flex align-items-center mb-2 gap-2">
@@ -249,10 +242,38 @@
                         Utilisez cet espace pour documenter le déroulement réel de l'action corrective. Vous pouvez y inscrire les retours d'expérience des équipes de terrain, les ajustements techniques de dernière minute, ou toute information pertinente qui facilitera le travail du Responsable Qualité (RQ) lors de la vérification finale de l'efficacité de l'action.
                     </div>
                 </p-popover>
-                <p-floatlabel variant="in">
+                <textarea class="w-full" rows="8"cols="30" pTextarea [(ngModel)]="planAction.observation" [autoResize]="true" placeholder="Observations liées à l'exécution de l'action"></textarea>
+                <!-- <p-floatlabel variant="in">
                     <textarea pTextarea id="planActionCauses" [(ngModel)]="planAction.observation" rows="10" cols="30" class="w-full"></textarea>
                     <label for="planActionCauses">Observations liées à l'exécution de l'action</label>
-                </p-floatlabel>
+                </p-floatlabel> -->
+            </div>
+
+            <div class="md:w-1/2 w-full rounded-xl">
+                <!-- <label class="block font-normal m-0 font-semibold flex items-center mb-2 gap-2">
+                    <i class="pi pi-paperclip"></i>
+                    Documents liés à l'exécution
+                </label>
+                <app-file-upload (fileUploaded)="handleFileUpload($event)"></app-file-upload> -->
+                <div class="p-4 bg-gray-50 rounded-xl  border border-2 border-gray-100">
+                    <div class="flex items-center mb-2 gap-2">
+                        <h3 class="text-xl font-bold text-900 mt-0">Documents liés à l'exécution</h3>
+                        <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoFichiers.toggle($event)"></i>
+                    </div>
+                    <p-popover #infoFichiers>
+                        <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                            Vous pouvez ajouter des fichiers pour justifier la non-conformité ou documenter sa solution, dans la limite d'un total maximum de 5 fichiers.
+                        </div>
+                    </p-popover>
+                    
+                    <!-- Notre composant d'upload tout-en-un -->
+                    <app-file-upload 
+                        styleClass="custom-nc-upload" 
+                        [existingFiles]="planAction.fichiers || []"
+                        (removeExisting)="removeExistingFile($event)"
+                        (fileUploaded)="handleFileUpload($event)">
+                    </app-file-upload>
+                </div>
             </div>
         
         </div>
@@ -262,8 +283,8 @@
         <div class="flex justify-end gap-3 border-t border-surface-200 dark:border-surface-700 pt-4 mt-2">
             <button size="small" type="button" pRipple pButton icon="pi pi-times" (click)="displayDialog = false" label="Fermer"
                     class="p-button-text p-button-secondary font-semibold hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"></button>
-            <p-button size="small" severity="info" pRipple icon="pi pi-send" (click)="soumettre($event)" label="Soumettre"
-                    class="font-semibold shadow-sm rounded-lg" [disabled]="!planAction.observation"></p-button>
+            <p-button severity="info" pRipple (click)="soumettre($event)" label="Soumettre"
+                    class="font-semibold rounded-lg" [disabled]="!planAction.observation"></p-button>
         </div>
     </ng-template>
 </p-dialog>

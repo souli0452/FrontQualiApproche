@@ -1,5 +1,6 @@
+<div class="bg-surface-50 dark:bg-surface-900">
 <app-nc-filter-bar (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
-<p-divider />
+<hr>
 <div class=" shadow-1">
     <app-traitement-table
         [btnActions]="BtnActions.CLOTURE"
@@ -19,7 +20,7 @@
 </div>
 
 <div *ngIf="demandeList.length === 0 && !loading" 
-      class="flex flex-col items-center justify-center p-4 mt-2 bg-surface-0 dark:bg-surface-900 text-center">
+      class="flex flex-col items-center justify-center p-4 text-center">
     
     <img src="assets/images/empty.svg" 
           alt="Aucune Non-Conformité" 
@@ -34,5 +35,7 @@
     <p class="text-surface-500 dark:text-surface-400 max-w-2xl leading-relaxed text-lg mb-0 mx-auto">
         Aucune non-conformité disponible à ce jour.
     </p>
+
+</div>
 
 </div>
