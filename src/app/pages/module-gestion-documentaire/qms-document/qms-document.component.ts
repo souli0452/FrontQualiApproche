@@ -16,6 +16,7 @@ import { StructureService } from '../../parametrages/structure/structure-service
 import { WorkflowService } from '../../../services/module-gestion-documentaire/workflow.service';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentType, QmsDocumentVersion, DocumentWorkflow, WorkflowStep } from '../../../models/gestion-documentaire.model';
+import { WorkflowStateDto } from '../../../models/workflow.model';
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
 
 @Component({
@@ -70,6 +71,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   auditLogs: QmsAuditLog[] = [];
   availableWorkflows: DocumentWorkflow[] = [];
   selectedWorkflowPreview?: DocumentWorkflow;
+  workflowState?: WorkflowStateDto;
 
   // Form Groups
   transitionForm: FormGroup;
@@ -177,6 +179,16 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   viewDetails(doc: DocumentQms): void {
     this.selectedDocument = doc;
     this.currentView = 'detail';
+    
+    if (doc.id) {
+      this.workflowState = undefined;
+      this.qmsService.getDocumentById(doc.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (fullDoc: any) => { this.selectedDocument = fullDoc; this.workflowState = fullDoc.workflowState; },
+          error: (err: any) => console.warn('Could not fetch dynamic workflow state', err)
+        });
+    }
   }
 
   openTransitionDialog(doc: DocumentQms): void {
@@ -337,16 +349,16 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     const hasWrite = this.hasPermission('DOC_WRITE');
 
     // Les boutons et étapes s'adaptent à 100% au workflow actif du document
-    if (doc.currentStep && hasValidate) {
+    if (doc.currentEtape && hasValidate) {
       items.push({
-        label: this.getWorkflowDecisionLabel(doc.currentStep, 'APPROUVE'),
+        label: this.getWorkflowDecisionLabel(doc.currentEtape, 'APPROUVE'),
         icon: 'pi pi-check-circle',
-        command: () => this.openWorkflowDialog(doc, 'APPROUVE')
+        command: () => this.openWorkflowDialog(doc, {code: 'APPROUVE', libelle: 'Approuver'})
       });
       items.push({
-        label: this.getWorkflowDecisionLabel(doc.currentStep, 'REJETE'),
+        label: this.getWorkflowDecisionLabel(doc.currentEtape, 'REJETE'),
         icon: 'pi pi-times-circle',
-        command: () => this.openWorkflowDialog(doc, 'REJETE')
+        command: () => this.openWorkflowDialog(doc, {code: 'REJETE', libelle: 'Rejeter'})
       });
     }
 
@@ -375,42 +387,41 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     menu.toggle(event);
   }
 
-  getWorkflowDecisionLabel(step: WorkflowStep | undefined, decision: 'APPROUVE' | 'REJETE'): string {
-    if (!step) return decision === 'APPROUVE' ? 'Approuver' : 'Rejeter';
-    const transition = step.transitions?.find((t: any) => t.decision === decision);
-    if (transition?.label) return transition.label;
-    return decision === 'APPROUVE' ? `Approuver (${step.nomEtape})` : `Rejeter (${step.nomEtape})`;
+  getWorkflowDecisionLabel(currentEtape: string | undefined, decision: 'APPROUVE' | 'REJETE'): string {
+    if (!currentEtape) return decision === 'APPROUVE' ? 'Approuver' : 'Rejeter';
+    return decision === 'APPROUVE' ? `Approuver (${currentEtape})` : `Rejeter (${currentEtape})`;
   }
 
-  openWorkflowDialog(doc: DocumentQms, decision: 'APPROUVE' | 'REJETE'): void {
+  selectedWorkflowAction?: any;
+
+  openWorkflowDialog(doc: DocumentQms, action: any): void {
     this.selectedDocument = doc;
-    this.workflowDecision = decision;
+    this.selectedWorkflowAction = action;
     this.workflowForm.reset();
     this.showWorkflowModal = true;
   }
 
   submitWorkflowDecision(): void {
-    if (this.workflowForm.invalid || !this.selectedDocument) return;
+    if (this.workflowForm.invalid || !this.selectedDocument || !this.selectedWorkflowAction) return;
 
     this.loading = true;
     const comments = this.workflowForm.value.comments;
     const docId = this.selectedDocument.id!;
+    const actionCode = this.selectedWorkflowAction.code;
+    // Étape sur laquelle l'écran croit agir : le serveur rejette la demande en 409 si le dossier
+    // a changé d'étape entre-temps, ce qui neutralise aussi le second envoi d'un double clic.
+    const expectedStateCode = this.workflowState?.currentStateCode;
 
-    const action$ = this.workflowDecision === 'APPROUVE'
-      ? this.workflowService.validateStep(docId, comments)
-      : this.workflowService.rejectStep(docId, comments);
-
-    action$.pipe(takeUntil(this.destroy$)).subscribe({
+    this.workflowService.executeTransition(docId, actionCode, comments, expectedStateCode).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.loading = false;
         this.showWorkflowModal = false;
+        this.selectedWorkflowAction = undefined;
         this.refreshList();
         this.messageService.add({
           severity: 'success',
-          summary: this.workflowDecision === 'APPROUVE' ? 'Étape approuvée' : 'Étape rejetée',
-          detail: this.workflowDecision === 'APPROUVE'
-            ? 'La validation de l\'étape a été enregistrée avec succès.'
-            : 'Le document a été rejeté et renvoyé en brouillon.'
+          summary: 'Action exécutée',
+          detail: 'L\'action a été enregistrée avec succès.'
         });
       },
       error: (err: any) => {
@@ -419,6 +430,27 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
         showToast(StatusEnum.error, err.status, msg, this.messageService, err);
       }
     });
+  }
+
+  getIconForAction(code: string): string {
+    const upperCode = code.toUpperCase();
+    if (upperCode.includes('APPROUVER') || upperCode.includes('VALIDER')) return 'pi pi-check-circle';
+    if (upperCode.includes('REJETER') || upperCode.includes('REFUSER')) return 'pi pi-times-circle';
+    if (upperCode.includes('SOUMETTRE')) return 'pi pi-send';
+    return 'pi pi-cog';
+  }
+
+  getClassForAction(code: string): string {
+    const upperCode = code.toUpperCase();
+    if (upperCode.includes('APPROUVER') || upperCode.includes('VALIDER')) return 'p-button-success shadow-sm';
+    if (upperCode.includes('REJETER') || upperCode.includes('REFUSER')) return 'p-button-danger shadow-sm';
+    if (upperCode.includes('SOUMETTRE')) return 'p-button-info shadow-sm';
+    return 'p-button-secondary shadow-sm';
+  }
+
+  executeDynamicAction(action: any): void {
+    if (!this.selectedDocument) return;
+    this.openWorkflowDialog(this.selectedDocument, action);
   }
 
   openAssignWorkflowModal(doc: DocumentQms): void {
@@ -654,7 +686,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     if (doc.obsolete) return 'danger';
     if (doc.enRetardRevision) return 'danger';
     if (doc.esTraiter) return 'success';
-    if (doc.currentStep) return 'warn';
+    if (doc.currentEtape) return 'warn';
     return 'info'; // Brouillon
   }
 
@@ -663,7 +695,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     if (doc.obsolete) return 'Obsolète';
     if (doc.enRetardRevision) return 'En Retard Révision';
     if (doc.esTraiter) return 'Validé / En Vigueur';
-    if (doc.currentStep) return `${doc.currentStep.nomEtape} (Étape ${doc.currentStep.stepOrder})`;
+    if (doc.currentEtape) return doc.currentEtape;
     return 'Brouillon';
   }
 
@@ -686,7 +718,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
         { label: 'Retourner en modification (Brouillon)', value: 'brouillon' }
       ];
     }
-    if (doc.currentStep) {
+    if (doc.currentEtape) {
       // En cours de validation par le workflow
       return [
         { label: 'Valider et Publier (Mise en vigueur)', value: 'valide' },
