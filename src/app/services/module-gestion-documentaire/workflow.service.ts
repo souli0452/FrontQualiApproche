@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { QualiUrlConfig } from '../quali-url-configs';
 import { DocumentWorkflow } from '../../models/gestion-documentaire.model';
 import { ApiResponse } from '../../models/response.model';
+import { WorkflowStateDto } from '../../models/workflow.model';
 
 import { map } from 'rxjs/operators';
 
@@ -50,6 +51,10 @@ export class WorkflowService {
     );
   }
 
+  getWorkflowStateForResource(resourceId: string): Observable<WorkflowStateDto> {
+    return this.http.get<WorkflowStateDto>(`${QualiUrlConfig.WORKFLOW_ROOT_URL}/instances/${resourceId}/state`);
+  }
+
 
 
   createWorkflow(workflow: DocumentWorkflow): Observable<DocumentWorkflow> {
@@ -64,11 +69,20 @@ export class WorkflowService {
     return this.http.delete<void>(`${QualiUrlConfig.WORKFLOW_ROOT_URL}/${id}`);
   }
 
-  validateStep(documentId: string, comments: string): Observable<void> {
-    return this.http.post<void>(`${QualiUrlConfig.WORKFLOW_ROOT_URL}/documents/${documentId}/validate`, null, { params: { comments } });
+  /**
+   * `expectedStateCode` est l'étape sur laquelle l'écran croit agir (le `currentStateCode` de
+   * l'état affiché). Le serveur refuse la demande en 409 si le dossier a changé d'étape
+   * entre-temps, ce qui neutralise du même coup le second envoi d'un double clic.
+   */
+  validateStep(documentId: string, comments: string, expectedStateCode?: string): Observable<void> {
+    return this.http.post<void>(`${QualiUrlConfig.WORKFLOW_ROOT_URL}/validate/${documentId}`, { comments, expectedStateCode });
   }
 
-  rejectStep(documentId: string, comments: string): Observable<void> {
-    return this.http.post<void>(`${QualiUrlConfig.WORKFLOW_ROOT_URL}/documents/${documentId}/reject`, null, { params: { comments } });
+  rejectStep(documentId: string, comments: string, expectedStateCode?: string): Observable<void> {
+    return this.http.post<void>(`${QualiUrlConfig.WORKFLOW_ROOT_URL}/reject/${documentId}`, { comments, expectedStateCode });
+  }
+
+  executeTransition(documentId: string, transitionCode: string, comments: string, expectedStateCode?: string): Observable<void> {
+    return this.http.post<void>(`${QualiUrlConfig.WORKFLOW_ROOT_URL}/execute/${documentId}`, { comments, expectedStateCode }, { params: { transitionCode } });
   }
 }
