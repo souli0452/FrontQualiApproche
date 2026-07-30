@@ -56,7 +56,10 @@ export interface WorkflowStateDto {
 }
 
 export interface WorkflowActionDto {
+  /** Identifiant technique de la transition, à renvoyer au serveur pour l'exécuter. */
   code: string;
   libelle: string;
   permission?: string;
+  /** Décision portée par l'action : détermine son apparence (approbation / rejet). */
+  decision?: 'APPROUVE' | 'REJETE' | string;
 }
