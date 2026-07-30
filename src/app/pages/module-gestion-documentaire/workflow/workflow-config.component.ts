@@ -114,6 +114,12 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
         if (!template || !group) return;
         group.get('nomEtape')?.setValue(template.nomEtape);
         group.get('responsableRole')?.setValue(template.responsableRole);
+        // Le code vient du catalogue : une même nature d'étape porte ainsi le même identifiant
+        // dans tous les circuits. Il n'est repris que si l'étape n'en a pas déjà un — le code
+        // d'une étape enregistrée est immuable.
+        if (!group.get('code')?.value) {
+            group.get('code')?.setValue(template.code ?? null);
+        }
         this.targetOptionsCache.clear();
     }
 
@@ -291,11 +297,12 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
             const sortedSteps = [...workflow.steps].sort((a, b) => a.stepOrder - b.stepOrder);
 
             // clientId stable par étape (indépendant du stepOrder, qui peut bouger pendant l'édition)
-            // + résolution stepOrder -> clientId pour reconstituer les cibles de transition existantes.
-            const clientIdByStepOrder = new Map<number, string>();
+            // + résolution code d'étape -> clientId pour reconstituer les cibles de transition.
+            // Le code est la seule clé stable : le rang se décale dès qu'on réordonne le circuit.
+            const clientIdByCode = new Map<string, string>();
             const stepClientIds = sortedSteps.map((step) => {
                 const clientId = generateClientId();
-                clientIdByStepOrder.set(step.stepOrder, clientId);
+                if (step.code) { clientIdByCode.set(step.code, clientId); }
                 return clientId;
             });
 
@@ -318,10 +325,14 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
                         nomEtape: [{ value: step.nomEtape, disabled: true }],
                         responsableRole: [{ value: step.responsableRole, disabled: true }],
                         description: [step.description],
-                        approveTarget: [approve ? (approve.toStepOrder != null ? (clientIdByStepOrder.get(approve.toStepOrder) ?? null) : null) : defaultApproveTarget],
+                        approveTarget: [approve ? (approve.toStepCode ? (clientIdByCode.get(approve.toStepCode) ?? null) : null) : defaultApproveTarget],
                         approveRole: [approve?.requiredRole ?? null],
                         approveLabel: [approve?.label ?? null],
-                        rejectTarget: [reject ? (reject.toStepOrder != null ? (clientIdByStepOrder.get(reject.toStepOrder) ?? null) : null) : defaultRejectTarget],
+                        // Un rejet n'est proposé que s'il en existe un : sans cette distinction,
+                        // « pas de bouton Rejeter » et « rejet qui clôt le circuit » se saisissaient
+                        // tous deux par un champ vide, et le second l'emportait silencieusement.
+                        avecRejet: [!!reject],
+                        rejectTarget: [reject ? (reject.toStepCode ? (clientIdByCode.get(reject.toStepCode) ?? null) : null) : defaultRejectTarget],
                         rejectRole: [reject?.requiredRole ?? null],
                         rejectLabel: [reject?.label ?? null]
                     })
@@ -349,6 +360,7 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
                 // Nouvelle étape toujours ajoutée en fin de liste : Approuver -> fin de circuit par
                 // défaut, Rejeter -> étape précédente par défaut (comportement séquentiel historique,
                 // fixé une seule fois, sans jamais réécrire le routage déjà choisi des autres étapes).
+                avecRejet: [true],
                 approveTarget: [null],
                 approveRole: [null],
                 approveLabel: [null],
@@ -472,9 +484,11 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
                 clientId: [newClientId],
                 id: [null],
                 stepTemplateId: [template.id, Validators.required],
+                code: [template.code ?? null],
                 nomEtape: [{ value: template.nomEtape, disabled: true }],
                 responsableRole: [{ value: template.responsableRole, disabled: true }],
                 description: [template.description || null],
+                avecRejet: [true],
                 approveTarget: [null],
                 approveRole: [null],
                 approveLabel: [null],
@@ -534,9 +548,12 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
                 responsableRole: s.responsableRole,
                 description: s.description,
                 stepOrder: idx + 1,
+                // Le rejet n'est émis que s'il est demandé : sinon l'étape n'expose qu'un seul
+                // bouton. Émettre une transition de rejet sans cible ne la supprimait pas, elle
+                // devenait terminale et clôturait le circuit.
                 transitions: [
                     buildTransition('APPROUVE', s.approveTarget, s.approveRole, s.approveLabel),
-                    buildTransition('REJETE', s.rejectTarget, s.rejectRole, s.rejectLabel)
+                    ...(s.avecRejet ? [buildTransition('REJETE', s.rejectTarget, s.rejectRole, s.rejectLabel)] : [])
                 ]
             }))
         };

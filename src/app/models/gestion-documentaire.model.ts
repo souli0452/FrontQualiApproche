@@ -123,6 +123,8 @@ export interface WorkflowStep {
 
 export interface WorkflowStepTemplate {
   id?: string;
+  /** Code fonctionnel du catalogue : unique, immuable, hérité par les étapes qui s'en inspirent. */
+  code?: string | null;
   nomEtape: string;
   responsableRole: string;
   description?: string;

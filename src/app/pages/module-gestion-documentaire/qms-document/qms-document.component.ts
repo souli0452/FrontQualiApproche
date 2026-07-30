@@ -16,7 +16,7 @@ import { StructureService } from '../../parametrages/structure/structure-service
 import { WorkflowService } from '../../../services/module-gestion-documentaire/workflow.service';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentType, QmsDocumentVersion, DocumentWorkflow, WorkflowStep } from '../../../models/gestion-documentaire.model';
-import { WorkflowStateDto } from '../../../models/workflow.model';
+import { WorkflowStateDto, WorkflowActionDto } from '../../../models/workflow.model';
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
 
 @Component({
@@ -432,19 +432,27 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     });
   }
 
-  getIconForAction(code: string): string {
-    const upperCode = code.toUpperCase();
-    if (upperCode.includes('APPROUVER') || upperCode.includes('VALIDER')) return 'pi pi-check-circle';
-    if (upperCode.includes('REJETER') || upperCode.includes('REFUSER')) return 'pi pi-times-circle';
-    if (upperCode.includes('SOUMETTRE')) return 'pi pi-send';
+  /**
+   * L'apparence d'une action découle de sa décision (APPROUVE / REJETE), pas de son code.
+   * Le code est l'identifiant technique de la transition — « 15 », « 18 » — qu'aucun test de
+   * libellé ne pouvait reconnaître : tous les boutons ressortaient gris, y compris l'approbation
+   * et le rejet. Le libellé reste utilisé en dernier recours pour affiner l'icône.
+   */
+  getIconForAction(action: WorkflowActionDto): string {
+    if (action?.decision === 'REJETE') return 'pi pi-times-circle';
+    if (action?.decision === 'APPROUVE') {
+      return (action.libelle || '').toUpperCase().includes('SOUMETTRE') ? 'pi pi-send' : 'pi pi-check-circle';
+    }
     return 'pi pi-cog';
   }
 
-  getClassForAction(code: string): string {
-    const upperCode = code.toUpperCase();
-    if (upperCode.includes('APPROUVER') || upperCode.includes('VALIDER')) return 'p-button-success shadow-sm';
-    if (upperCode.includes('REJETER') || upperCode.includes('REFUSER')) return 'p-button-danger shadow-sm';
-    if (upperCode.includes('SOUMETTRE')) return 'p-button-info shadow-sm';
+  getClassForAction(action: WorkflowActionDto): string {
+    if (action?.decision === 'REJETE') return 'p-button-danger shadow-sm';
+    if (action?.decision === 'APPROUVE') {
+      return (action.libelle || '').toUpperCase().includes('SOUMETTRE')
+        ? 'p-button-info shadow-sm'
+        : 'p-button-success shadow-sm';
+    }
     return 'p-button-secondary shadow-sm';
   }
 

@@ -69,7 +69,10 @@
             </span>
           </td>
           <td>
-              <span class="font-semibold text-slate-700">{{ doc.currentStep.nomEtape }}</span>
+            <div class="flex flex-column gap-1">
+              <p-tag [value]="getStatusLabel(doc)" [severity]="getStatusSeverity(doc)" styleClass="text-xs w-fit"></p-tag>
+              <span class="text-xs text-slate-500" *ngIf="doc.currentEtape">{{ doc.currentEtape }}</span>
+            </div>
           </td>
           <td>{{ doc.createdAt  }}</td>
           <td>
@@ -308,9 +311,18 @@
     <button pButton label="Fermer" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="currentView = 'list'"></button>
     <button pButton label="Ouvrir le document" icon="pi pi-external-link" class="p-button-primary shadow-sm" (click)="openSecuredDocument(selectedDocument)"></button>
     <button pButton label="Télécharger PDF" icon="pi pi-file-pdf" class="p-button-danger shadow-sm" (click)="downloadSecuredPdf(selectedDocument)"></button>
-    <button *ngIf="selectedDocument.workflowStatus === 'EN_COURS'" pButton label="Approuver Étape" icon="pi pi-check-circle" class="p-button-success shadow-sm" (click)="openWorkflowDialog(selectedDocument, 'APPROUVE')"></button>
-    <button *ngIf="selectedDocument.workflowStatus === 'EN_COURS'" pButton label="Rejeter Étape" icon="pi pi-times-circle" class="p-button-danger shadow-sm" (click)="openWorkflowDialog(selectedDocument, 'REJETE')"></button>
-    <button *ngIf="selectedDocument.workflowStatus !== 'EN_COURS'" pButton label="Transitionner" icon="pi pi-directions" class="p-button-warn" (click)="openTransitionDialog(selectedDocument)"></button>
+
+    <ng-container *ngIf="workflowState?.allowedActions">
+      <button *ngFor="let action of workflowState!.allowedActions"
+              pButton
+              [label]="action.libelle"
+              [icon]="getIconForAction(action)"
+              [class]="getClassForAction(action)"
+              (click)="executeDynamicAction(action)">
+      </button>
+    </ng-container>
+
+   <!-- <button *ngIf="(!workflowState?.allowedActions || workflowState!.allowedActions.length === 0) && selectedDocument.workflowStatus !== 'EN_COURS'" pButton label="Transitionner" icon="pi pi-directions" class="p-button-warn" (click)="openTransitionDialog(selectedDocument)"></button>-->
   </div>
 </div>
 
@@ -679,7 +691,7 @@
 <!-- ========================================================================= -->
 <!-- 8. WORKFLOW STEP DECISION DIALOG -->
 <!-- ========================================================================= -->
-<p-dialog [header]="workflowDecision === 'APPROUVE' ? 'Approuver l\'étape du Workflow' : 'Rejeter l\'étape du Workflow'" [(visible)]="showWorkflowModal" [modal]="true" [style]="{ width: '40rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }">
+<p-dialog [header]="'Exécuter l\'action: ' + (selectedWorkflowAction?.libelle || '')" [(visible)]="showWorkflowModal" [modal]="true" [style]="{ width: '40rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }">
   <div class="p-fluid mt-2" *ngIf="selectedDocument">
     <div class="p-3 bg-slate-50 border border-slate-200 border-round mb-4 flex align-items-center justify-content-between">
       <div class="flex align-items-center gap-2">
@@ -691,14 +703,14 @@
       </div>
       <div class="flex align-items-center gap-2 ml-3">
         <span class="text-sm font-bold text-slate-500">Action :</span>
-        <p-tag [value]="workflowDecision === 'APPROUVE' ? 'Approbation' : 'Rejet'" [severity]="workflowDecision === 'APPROUVE' ? 'success' : 'danger'" styleClass="text-xs"></p-tag>
+        <p-tag [value]="selectedWorkflowAction?.libelle" severity="info" styleClass="text-xs"></p-tag>
       </div>
     </div>
 
     <form [formGroup]="workflowForm" class="p-fluid">
       <div class="grid grid-cols-12 gap-4">
         <div class="col-span-12">
-          <label class="block text-sm font-bold text-slate-700 mb-1.5">Commentaires / Observations *</label>
+          <label class="block text-sm font-bold text-slate-700 mb-1.5">Commentaires / Observations</label>
           <textarea pTextarea formControlName="comments" rows="4" placeholder="Veuillez saisir vos observations pour motiver votre décision..." class="w-full"></textarea>
         </div>
       </div>
@@ -707,7 +719,7 @@
   <ng-template pTemplate="footer">
     <div class="flex justify-content-end gap-2">
       <button pButton label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="showWorkflowModal = false"></button>
-      <button pButton [label]="workflowDecision === 'APPROUVE' ? 'Confirmer l\'approbation' : 'Confirmer le rejet'" [icon]="workflowDecision === 'APPROUVE' ? 'pi pi-check' : 'pi pi-times'" [class]="workflowDecision === 'APPROUVE' ? 'p-button-success' : 'p-button-danger'" [disabled]="workflowForm.invalid" [loading]="loading" (click)="submitWorkflowDecision()"></button>
+      <button pButton [label]="'Confirmer ' + (selectedWorkflowAction?.libelle || '')" icon="pi pi-check" class="p-button-primary" [disabled]="workflowForm.invalid" [loading]="loading" (click)="submitWorkflowDecision()"></button>
     </div>
   </ng-template>
 </p-dialog>
