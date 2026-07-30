@@ -11,6 +11,7 @@ export interface QmsDocumentType {
 }
 
 export interface DocumentQms {
+  workflowState?: any;
   id?: string;
   documentNumber?: string;
   documentType: string;
@@ -21,7 +22,7 @@ export interface DocumentQms {
   esTraiter?: boolean;
   enRetardRevision?: boolean;
   obsolete?: boolean;
-  currentStep?: WorkflowStep;
+
   versionMajeure?: number;
   versionMineure?: number;
   dateVigueur?: string;
@@ -42,7 +43,7 @@ export interface DocumentQms {
   createdById?: string;
   currentUserfullName?: string;
   currentFileHash?: string;
-  workflowStatus?: string;
+  currentEtape?: string;
 }
 
 
@@ -101,6 +102,8 @@ export type WorkflowDecision = 'APPROUVE' | 'REJETE';
 export interface WorkflowTransition {
   id?: number;
   decision: WorkflowDecision;
+  /** Code de l'étape de destination : clé stable, à préférer au rang. */
+  toStepCode?: string | null;
   toStepOrder?: number | null;
   requiredRole?: string | null;
   label?: string | null;
@@ -108,6 +111,8 @@ export interface WorkflowTransition {
 
 export interface WorkflowStep {
   id?: number;
+  /** Identifiant fonctionnel fixé à la création, non modifiable ensuite. */
+  code?: string | null;
   nomEtape: string;
   stepOrder: number;
   responsableRole: string;
@@ -128,6 +133,7 @@ export interface DocumentWorkflow {
   id?: string;
   nom: string;
   documentType?: string;
+  resourceType?: string;
   description?: string;
   steps: WorkflowStep[];
   createdAt?: string;
