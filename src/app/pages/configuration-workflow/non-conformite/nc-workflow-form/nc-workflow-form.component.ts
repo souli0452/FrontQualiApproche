@@ -170,7 +170,7 @@ export class NcWorkflowFormComponent implements OnInit, OnDestroy {
                             id: [field.id],
                             fieldName: [field.fieldName, Validators.required],
                             fieldLabel: [field.fieldLabel, Validators.required],
-                            type: [field.type || 'text', Validators.required],
+                            type: [field.type || 'TEXT', Validators.required],
                             required: [field.required || false],
                             options: [field.options]
                         }));
@@ -230,7 +230,7 @@ export class NcWorkflowFormComponent implements OnInit, OnDestroy {
             id: [null],
             fieldName: ['', Validators.required],
             fieldLabel: ['', Validators.required],
-            type: ['text', Validators.required],
+            type: ['TEXT', Validators.required],
             required: [false],
             options: ['']
         }));

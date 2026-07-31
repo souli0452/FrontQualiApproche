@@ -6,6 +6,7 @@ export const REFERENTIEL_SERVICE = `${SERVICE_PREFIX}/referentiel-service/api/v1
 export const USER_SERVICE = `${SERVICE_PREFIX}/user-service/api/v1`;
 export const EVALUATION_SERVICE = `${SERVICE_PREFIX}/evaluation-service/api/v1`;
 export const SUPPORT_SERVICE = `${SERVICE_PREFIX}/support-service/api/v1`;
+export const WORKFLOW_SERVICE = `${SERVICE_PREFIX}/workflow-service/api/v1`;
 
 export class QualiUrlConfig {
     // Amelioration Service
@@ -36,8 +37,12 @@ export class QualiUrlConfig {
     // Support Service (Gestion Documentaire QMS)
     static readonly QMS_DOCUMENT_ROOT_URL = `${SUPPORT_SERVICE}/qms/documents`;
     static readonly QMS_DOCUMENT_TYPE_ROOT_URL = `${SUPPORT_SERVICE}/qms/document-types`;
-    static readonly WORKFLOW_ROOT_URL = `${SUPPORT_SERVICE}/workflows`;
+    static readonly WORKFLOW_ROOT_URL = `${WORKFLOW_SERVICE}/workflows`;
     static readonly WORKFLOW_STEP_TEMPLATE_ROOT_URL = `${SUPPORT_SERVICE}/workflow-step-templates`;
+    
+    // Workflow Service
+    static readonly WORKFLOW_DEFINITION_URL = `${WORKFLOW_SERVICE}/workflows`;
+    static readonly EMAIL_TEMPLATE_URL = `${WORKFLOW_SERVICE}/email-templates`;
 
 
     // User Service (Authentification et Utilisateurs)

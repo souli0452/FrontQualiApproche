@@ -108,10 +108,84 @@
                 <input pInputText [value]="getRoleLabel(step.get('responsableRole')?.value)" placeholder="Déterminé par l'étape choisie"
                   class="w-full p-inputtext-sm" readonly />
               </div>
+              <div class="col-span-12 md:col-span-6">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Notification (modèle d'e-mail)</label>
+                <p-select [options]="emailTemplates" formControlName="emailTemplateCode" optionLabel="subject"
+                  optionValue="code" placeholder="Aucune notification" [showClear]="true" [filter]="true"
+                  filterBy="subject,code" class="w-full p-inputtext-sm" appendTo="body">
+                  <ng-template pTemplate="selectedItem" let-selectedOption>
+                    <div class="flex align-items-center gap-2" *ngIf="selectedOption">
+                      <i class="pi pi-envelope text-indigo-600"></i>
+                      <span>{{ selectedOption.subject }}</span>
+                    </div>
+                  </ng-template>
+                  <ng-template pTemplate="item" let-item>
+                    <div class="flex align-items-center gap-2">
+                      <i class="pi pi-envelope text-indigo-600"></i>
+                      <div>
+                        <div class="font-medium text-sm">{{ item.subject }}</div>
+                        <div class="text-xs text-500">Code : {{ item.code }}</div>
+                      </div>
+                    </div>
+                  </ng-template>
+                </p-select>
+                <small class="text-slate-400">Envoyé au responsable lorsque le dossier arrive à cette étape.</small>
+              </div>
+
               <div class="col-span-12">
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Consigne spécifique à ce circuit</label>
                 <textarea pInputTextarea formControlName="description" placeholder="Consigne..."
                   class="w-full p-inputtext-sm" rows="2"></textarea>
+              </div>
+
+              <!-- Formulaire de l'étape : champs que le responsable devra renseigner -->
+              <div class="col-span-12">
+                <div class="surface-100 p-3 border-round border-1 border-300">
+                  <div class="flex justify-content-between align-items-center border-bottom-1 border-300 pb-2 mb-2">
+                    <div class="font-semibold text-sm text-slate-700">
+                      <i class="pi pi-list mr-2"></i>Formulaire de l'étape
+                    </div>
+                    <p-button icon="pi pi-plus" label="Ajouter un champ" [text]="true" size="small"
+                      (onClick)="addField(i)"></p-button>
+                  </div>
+
+                  <div formArrayName="fields">
+                    <div *ngFor="let field of getStepFields(i).controls; let fIndex = index" [formGroupName]="fIndex"
+                      class="grid grid-cols-12 gap-2 mt-2 align-items-end bg-white p-2 border-round shadow-1">
+                      <div class="col-span-12 md:col-span-3">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Libellé <span class="text-red-500">*</span></label>
+                        <input pInputText formControlName="fieldLabel" placeholder="Ex: Observations du vérificateur" class="w-full p-inputtext-sm" />
+                      </div>
+                      <div class="col-span-12 md:col-span-3">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Clé technique <span class="text-red-500">*</span></label>
+                        <input pInputText formControlName="fieldName" placeholder="Ex: observationsVerif" class="w-full p-inputtext-sm" />
+                      </div>
+                      <div class="col-span-12 md:col-span-3">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Type</label>
+                        <select formControlName="type" class="w-full p-2 border-1 border-300 border-round text-sm outline-none" style="height: 35px; background: white;">
+                          <option value="TEXT">Texte</option>
+                          <option value="NUMERIC">Nombre</option>
+                          <option value="SELECT">Liste de choix</option>
+                          <option value="DATE">Date</option>
+                          <option value="FILE">Fichier joint</option>
+                        </select>
+                      </div>
+                      <div class="col-span-12 md:col-span-2 flex flex-column justify-content-end pb-2">
+                        <div class="flex align-items-center mt-2">
+                          <p-checkbox formControlName="required" inputId="reqd-{{i}}-{{fIndex}}" [binary]="true"></p-checkbox>
+                          <label for="reqd-{{i}}-{{fIndex}}" class="ml-2 text-sm text-slate-700 cursor-pointer mb-0">Obligatoire</label>
+                        </div>
+                      </div>
+                      <div class="col-span-12 md:col-span-1 text-right pb-1">
+                        <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" size="small"
+                          (onClick)="removeField(i, fIndex)"></p-button>
+                      </div>
+                    </div>
+                    <div *ngIf="getStepFields(i).length === 0" class="text-xs text-slate-500 mt-2">
+                      <i class="pi pi-info-circle mr-1"></i>Aucun champ à renseigner à cette étape.
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Routage du circuit : cible de chaque décision (Approuver / Rejeter) -->

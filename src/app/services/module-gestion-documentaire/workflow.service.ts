@@ -57,6 +57,13 @@ export class WorkflowService {
 
 
 
+  /** Modèles d'e-mail servis par workflow-service, proposés à chaque étape d'un circuit. */
+  getAllEmailTemplates(): Observable<any[]> {
+    return this.http.get<any>(QualiUrlConfig.EMAIL_TEMPLATE_URL).pipe(
+      map((res) => (res?.data?.content ?? res?.data ?? res ?? []) as any[])
+    );
+  }
+
   createWorkflow(workflow: DocumentWorkflow): Observable<DocumentWorkflow> {
     return this.http.post<DocumentWorkflow>(QualiUrlConfig.WORKFLOW_ROOT_URL, workflow);
   }
