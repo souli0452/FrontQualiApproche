@@ -183,8 +183,7 @@ export class WorkflowDetailComponent implements OnInit, OnDestroy {
           if (res && res.data && res.data.content) {
             this.rolesList = res.data.content.map((r: any) => ({
               label: r.name || r.code || r.libelle || r.id,
-              // Le nom, et non l'identifiant : c'est lui que porte le jeton Keycloak.
-              value: r.name || r.code || r.libelle || r.id
+              value: r.id
             }));
           }
         },
@@ -280,7 +279,7 @@ export class WorkflowDetailComponent implements OnInit, OnDestroy {
   }
 
   goBack() {
-    this.router.navigate(['/configuration-workflow/document']);
+    this.router.navigate(['/parametrage-document/workflows']);
   }
 
   ngOnDestroy(): void {
