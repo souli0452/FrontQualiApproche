@@ -104,6 +104,8 @@ export interface WorkflowTransition {
   decision: WorkflowDecision;
   /** Code de l'étape de destination : clé stable, à préférer au rang. */
   toStepCode?: string | null;
+  /** La décision clôt le circuit, au lieu de mener à une autre étape. */
+  terminal?: boolean;
   toStepOrder?: number | null;
   requiredRole?: string | null;
   label?: string | null;
