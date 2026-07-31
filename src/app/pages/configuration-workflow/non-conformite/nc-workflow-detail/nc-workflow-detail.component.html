@@ -14,8 +14,8 @@
                         <h5 class="m-0 font-bold text-xl text-slate-800">
                             {{ workflow?.nom || 'Détails du Workflow' }}
                         </h5>
-                        <span class="text-xs text-slate-500" *ngIf="workflow?.documentType">
-              Type de document : <strong class="text-indigo-600">{{ workflow?.documentType }}</strong>
+                        <span class="text-xs text-slate-500" *ngIf="workflow?.resourceType">
+              Type de document : <strong class="text-indigo-600">{{ workflow?.resourceType }}</strong>
             </span>
                     </div>
                 </div>
@@ -61,13 +61,11 @@
                         </div>
                         <div class="flex align-items-center gap-2 flex-wrap">
               <span class="px-3 py-1.5  text-indigo-700 font-bold text-xs ">
-                <i class="pi pi-tag mr-1"></i> {{ workflow.documentType || 'Global' }}
+                <i class="pi pi-tag mr-1"></i> {{ workflow.resourceType || 'Global' }}
               </span>
-                            <span class="px-3 py-1.5 text-slate-600 font-semibold text-xs " *ngIf="workflow.createdAt">
-                <i class="pi pi-calendar mr-1"></i> {{ workflow.createdAt | date:'dd/MM/yyyy HH:mm' }}
-              </span>
+
                             <span class="px-3 py-1.5  text-emerald-700 font-bold text-xs border ">
-                <i class="pi pi-sitemap mr-1"></i> {{ workflow.steps.length || 0 }} étape(s)
+                <i class="pi pi-sitemap mr-1"></i> {{ workflow.steps?.length || 0 }} étape(s)
               </span>
                         </div>
                     </div>
@@ -155,6 +153,7 @@
                 </div>
             </div>
 
+            <!-- ═══════════════════════════════════════════════════════════ -->
 
 
         </div>

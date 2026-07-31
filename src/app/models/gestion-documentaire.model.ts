@@ -121,6 +121,20 @@ export interface WorkflowStep {
   description?: string;
   transitions?: WorkflowTransition[];
   stepTemplateId?: string | null;
+  /** Modèle d'e-mail envoyé au responsable à l'arrivée du dossier sur l'étape. */
+  emailTemplateCode?: string | null;
+  /** Champs que le responsable doit renseigner pour décider. */
+  fields?: WorkflowStepField[];
+}
+
+export interface WorkflowStepField {
+  id?: number | null;
+  fieldName: string;
+  fieldLabel: string;
+  /** Valeurs de l'énumération FieldType du serveur : TEXT, NUMERIC, SELECT, DATE, FILE. */
+  type: string;
+  required: boolean;
+  options?: string | null;
 }
 
 export interface WorkflowStepTemplate {

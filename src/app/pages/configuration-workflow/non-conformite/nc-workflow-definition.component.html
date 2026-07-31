@@ -1,0 +1,74 @@
+<p-toast></p-toast>
+
+<div class="card">
+    <div class="font-semibold text-xl mb-1">
+        Gestion des Workflows Qualité <span class="text-base text-surface-400">({{ totalRecords }} élément(s))</span>
+    </div>
+    <p class="text-surface-500 text-sm mb-4">Gérer les workflows utilisés pour le traitement des non-conformités et de leurs plans d'action.</p>
+
+    <div class="flex flex-col gap-3">
+        <!-- Toolbar -->
+        <p-toolbar>
+            <ng-template pTemplate="start">
+                <div class="flex gap-2 flex-wrap items-center">
+                    <!-- Création de workflow désactivée : workflows par défaut uniquement, mais au cas où -->
+                </div>
+            </ng-template>
+
+            <ng-template pTemplate="end">
+                <div class="flex items-center gap-2">
+                    <p-iconfield>
+                        <p-inputicon>
+                            <i class="pi pi-search text-primary"></i>
+                        </p-inputicon>
+                        <input pInputText type="text" [(ngModel)]="searchQuery" (input)="onSearch($event)" placeholder="Rechercher..." />
+                    </p-iconfield>
+                </div>
+            </ng-template>
+        </p-toolbar>
+
+        <!-- Table -->
+        <p-table #dt [value]="workflows" [loading]="loading" [paginator]="true" [rows]="rows"
+            [totalRecords]="totalRecords" [lazy]="true" (onLazyLoad)="loadWorkflows($event)"
+            styleClass="p-datatable-gridlines" [rowHover]="true"
+            [rowsPerPageOptions]="[10, 25, 50]">
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="nom">Nom <p-sortIcon field="nom"></p-sortIcon></th>
+                    <th pSortableColumn="resourceType">Type <p-sortIcon field="resourceType"></p-sortIcon></th>
+                    <th pSortableColumn="description">Description <p-sortIcon field="description"></p-sortIcon></th>
+                    <th>Nombre d'étapes</th>
+                    <th style="width: 8rem; text-align: center" pFrozenColumn alignFrozen="right">Actions</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-workflow>
+                <tr>
+                    <td><span class="font-semibold">{{ workflow.nom }}</span></td>
+                    <td><p-tag [severity]="workflow.resourceType === 'NON_CONFORMITE' ? 'danger' : 'warning'" [value]="workflow.resourceType"></p-tag></td>
+                    <td>{{ workflow.description }}</td>
+                    <td><p-tag severity="info" [value]="workflow.stepsCount + ' étape(s)'"></p-tag></td>
+                    <td class="text-center" pFrozenColumn alignFrozen="right">
+                        <div class="flex gap-1 justify-center">
+                            <p-button icon="pi pi-eye" severity="info" [outlined]="true" [rounded]="true" pTooltip="Détails" (onClick)="viewWorkflow(workflow)"></p-button>
+                            <p-button icon="pi pi-pencil" severity="secondary" [outlined]="true" [rounded]="true" pTooltip="Modifier" (onClick)="editWorkflow(workflow)"></p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="6">
+                        <div class="flex flex-col items-center gap-2 py-10 text-surface-400">
+                            <i class="pi pi-inbox text-5xl"></i>
+                            <span class="text-base">Aucun résultat trouvé</span>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+        </p-table>
+    </div>
+</div>

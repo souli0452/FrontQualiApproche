@@ -179,7 +179,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   viewDetails(doc: DocumentQms): void {
     this.selectedDocument = doc;
     this.currentView = 'detail';
-    
+
     if (doc.id) {
       this.workflowState = undefined;
       this.qmsService.getDocumentById(doc.id)
@@ -418,6 +418,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
         this.showWorkflowModal = false;
         this.selectedWorkflowAction = undefined;
         this.refreshList();
+          this.loadInitialData();
         this.messageService.add({
           severity: 'success',
           summary: 'Action exécutée',
