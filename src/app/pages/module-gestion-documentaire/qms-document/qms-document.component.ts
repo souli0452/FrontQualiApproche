@@ -20,11 +20,13 @@ import { WorkflowStateDto, WorkflowActionDto } from '../../../models/workflow.mo
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
 import { QmsDocumentListComponent } from './components/qms-document-list.component';
 import { QmsDocumentDetailComponent } from './components/qms-document-detail.component';
+import { QmsDocumentHistoryComponent } from './components/qms-document-history.component';
+import { QmsDocumentAuditComponent } from './components/qms-document-audit.component';
 
 @Component({
   selector: 'app-qms-document',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent],
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent],
   templateUrl: './qms-document.component.html',
   styleUrls: ['./qms-document.component.scss'],
   providers: [MessageService, DatePipe]
