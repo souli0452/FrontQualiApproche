@@ -159,7 +159,10 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
                         // Normalise la liste pour le dropdown
                         this.rolesList = res.data.content.map((r: any) => ({
                             label: r.name || r.code || r.libelle || r.id,
-                            value: r.id
+                            // Le nom, et non l'identifiant : c'est le nom que porte le jeton
+                            // Keycloak, et donc la seule valeur comparable lors du contrôle
+                            // d'habilitation d'une transition.
+                            value: r.name || r.code || r.libelle || r.id
                         }));
                     }
                 },
