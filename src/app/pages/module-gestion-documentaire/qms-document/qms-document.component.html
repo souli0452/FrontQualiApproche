@@ -22,48 +22,16 @@
 <!-- ========================================================================= -->
 <!-- 2. STATE TRANSITION DIALOG -->
 <!-- ========================================================================= -->
-<p-dialog header="Mise à jour du statut du document" [(visible)]="showTransitionModal" [modal]="true" [style]="{ width: '50rem', height: '35rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }">
-  <form [formGroup]="transitionForm" class="p-fluid mt-2" *ngIf="selectedDocument">
-    <div class="grid grid-cols-12 gap-4">
-
-      <!-- Current Info Alert Box (Single line layout) -->
-      <div class="col-span-12">
-        <div class="flex align-items-center justify-content-between p-3 bg-slate-50 border border-slate-200 border-round gap-3">
-          <div class="flex align-items-center gap-2">
-            <span class="text-sm font-bold text-slate-500">Document :</span>
-            <span class="text-sm font-bold text-slate-700 flex align-items-center gap-1.5">
-              <i class="pi pi-file text-indigo-500 text-xs"></i>
-              {{ selectedDocument.documentNumber }}
-            </span>
-          </div>
-          <div class="flex align-items-center gap-2">
-            <span class="text-sm font-bold text-slate-500">Statut Actuel :</span>
-            <p-tag [value]="getStatusLabel(selectedDocument)" [severity]="getStatusSeverity(selectedDocument)" styleClass="text-xs"></p-tag>
-          </div>
-        </div>
-      </div>
-
-      <!-- Next Status Dropdown -->
-      <div class="col-span-12">
-        <label class="block text-sm font-bold text-slate-700 mb-1.5">Nouveau Statut *</label>
-        <p-select [options]="getTransitionOptions(selectedDocument)" formControlName="nextStatus" placeholder="Sélectionner le nouveau statut" class="w-full"></p-select>
-      </div>
-
-      <!-- Reason Textarea -->
-      <div class="col-span-12">
-        <label class="block text-sm font-bold text-slate-700 mb-1.5">Motif / Justification *</label>
-        <textarea pTextarea formControlName="reason" rows="4" placeholder="Veuillez renseigner le motif de ce changement de statut (ex: validation de la version initiale, mise en conformité...)" class="w-full"></textarea>
-      </div>
-
-    </div>
-  </form>
-  <ng-template pTemplate="footer">
-    <div class="flex justify-content-end gap-2 w-full">
-      <button pButton label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="showTransitionModal = false"></button>
-      <button pButton label="Confirmer la transition" icon="pi pi-check" class="p-button-primary shadow-sm" [disabled]="transitionForm.invalid" (click)="submitTransition()"></button>
-    </div>
-  </ng-template>
-</p-dialog>
+<app-qms-transition-dialog
+  [document]="selectedDocument"
+  [transitionOptions]="selectedDocument ? getTransitionOptions(selectedDocument) : []"
+  [loading]="loading"
+  [statusLabel]="statusLabelFn"
+  [statusSeverity]="statusSeverityFn"
+  [visible]="showTransitionModal"
+  (visibleChange)="showTransitionModal = $event"
+  (confirm)="submitTransition($event)">
+</app-qms-transition-dialog>
 
 <!-- ========================================================================= -->
 <!-- 3. DETAIL PAGE VIEW -->
@@ -308,36 +276,12 @@
 <!-- ========================================================================= -->
 <!-- 8. WORKFLOW STEP DECISION DIALOG -->
 <!-- ========================================================================= -->
-<p-dialog [header]="'Exécuter l\'action: ' + (selectedWorkflowAction?.libelle || '')" [(visible)]="showWorkflowModal" [modal]="true" [style]="{ width: '40rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }">
-  <div class="p-fluid mt-2" *ngIf="selectedDocument">
-    <div class="p-3 bg-slate-50 border border-slate-200 border-round mb-4 flex align-items-center justify-content-between">
-      <div class="flex align-items-center gap-2">
-        <span class="text-sm font-bold text-slate-500">Document :</span>
-        <span class="text-sm font-bold text-slate-700">
-          <i class="pi pi-file text-indigo-500 mr-1"></i>
-          {{ selectedDocument.documentNumber }}
-        </span>
-      </div>
-      <div class="flex align-items-center gap-2 ml-3">
-        <span class="text-sm font-bold text-slate-500">Action :</span>
-        <p-tag [value]="selectedWorkflowAction?.libelle" severity="info" styleClass="text-xs"></p-tag>
-      </div>
-    </div>
-
-    <form [formGroup]="workflowForm" class="p-fluid">
-      <div class="grid grid-cols-12 gap-4">
-        <div class="col-span-12">
-          <label class="block text-sm font-bold text-slate-700 mb-1.5">Commentaires / Observations</label>
-          <textarea pTextarea formControlName="comments" rows="4" placeholder="Veuillez saisir vos observations pour motiver votre décision..." class="w-full"></textarea>
-        </div>
-      </div>
-    </form>
-  </div>
-  <ng-template pTemplate="footer">
-    <div class="flex justify-content-end gap-2">
-      <button pButton label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="showWorkflowModal = false"></button>
-      <button pButton [label]="'Confirmer ' + (selectedWorkflowAction?.libelle || '')" icon="pi pi-check" class="p-button-primary" [disabled]="workflowForm.invalid" [loading]="loading" (click)="submitWorkflowDecision()"></button>
-    </div>
-  </ng-template>
-</p-dialog>
+<app-qms-workflow-decision-dialog
+  [document]="selectedDocument"
+  [action]="selectedWorkflowAction"
+  [loading]="loading"
+  [visible]="showWorkflowModal"
+  (visibleChange)="showWorkflowModal = $event"
+  (confirm)="submitWorkflowDecision($event)">
+</app-qms-workflow-decision-dialog>
 
