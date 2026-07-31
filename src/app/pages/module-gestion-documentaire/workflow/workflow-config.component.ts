@@ -532,6 +532,9 @@ export class WorkflowConfigComponent implements OnInit, OnDestroy {
         const buildTransition = (decision: WorkflowDecision, targetClientId: string | null, role: string | null, label: string | null): WorkflowTransition => ({
             decision,
             toStepCode: targetClientId ? (codeByClientId.get(targetClientId) ?? null) : null,
+            // Aucune cible choisie : la décision clôt le circuit. Déclaré explicitement, pour que
+            // le serveur ne confonde pas une fin de circuit voulue avec une transition oubliée.
+            terminal: !targetClientId,
             requiredRole: role || null,
             label: label || null
         });
