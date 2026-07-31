@@ -1,0 +1,191 @@
+<div class="card border-none shadow-sm bg-white overflow-hidden p-0 fadein" *ngIf="document">
+  <!-- En-tête -->
+  <div class="p-4 bg-slate-50 border-bottom border-slate-100 flex align-items-center justify-content-between gap-3">
+    <div class="flex align-items-center gap-3">
+      <button pButton pRipple icon="pi pi-arrow-left" label="Retour"
+        class="p-button-outlined p-button-secondary p-button-sm" (click)="close.emit()"></button>
+      <div>
+        <h1 class="text-xl font-bold text-slate-800 m-0">{{ document.titre }}</h1>
+        <p class="text-xs text-slate-500 m-0 mt-1">
+          {{ document.documentNumber }} · version {{ document.versionMajeure }}.{{ document.versionMineure }}
+        </p>
+      </div>
+    </div>
+    <div class="flex flex-column align-items-end gap-1">
+      <p-tag [value]="statusLabel(document)" [severity]="statusSeverity(document)" styleClass="text-xs"></p-tag>
+      <span class="text-xs text-slate-500" *ngIf="document.currentEtape">Étape : {{ document.currentEtape }}</span>
+    </div>
+  </div>
+
+  <div class="p-4">
+    <!-- Grid Layout for Spacious Details (One section per line) -->
+    <div class="grid grid-cols-12 gap-4">
+
+      <!-- Section 1: Informations Générales -->
+      <div class="col-span-12">
+        <div class="card p-3 border border-slate-200 bg-slate-50-alpha-50">
+          <h3 class="text-sm font-bold text-slate-700 border-bottom border-slate-200 pb-2 mb-3 mt-0 flex align-items-center gap-2">
+            <i class="pi pi-info-circle text-indigo-500"></i>
+            Informations Générales
+          </h3>
+          <div class="grid grid-cols-12 gap-4 mt-2">
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Type de Document</span>
+              <span class="font-semibold text-slate-800 bg-slate-100 px-2.5 py-1 rounded text-xs border border-slate-200 inline-block">{{ document.documentType }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Rédacteur</span>
+              <span class="text-sm font-semibold text-slate-800 flex align-items-center gap-1.5">
+                <i class="pi pi-user text-slate-400 text-xs"></i>
+                {{ document.redacteur }}
+              </span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Service émetteur</span>
+              <div>
+                <span class="text-sm font-semibold text-slate-800 block">{{ document.serviceSigle }}</span>
+                <span class="text-xs text-slate-500 block">{{ document.serviceLibelle }}</span>
+              </div>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Confidentialité</span>
+              <div>
+                <span class="px-2.5 py-1 text-xs rounded font-bold inline-block"
+                      [ngClass]="document.confidentiel ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-slate-50 text-slate-500 border border-slate-200'">
+                  {{ document.confidentiel ? '🔒 Confidentiel' : '🔓 Public / Interne' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Cycle de vie & Validité -->
+      <div class="col-span-12">
+        <div class="card p-3 border border-slate-200 bg-slate-50-alpha-50">
+          <h3 class="text-sm font-bold text-slate-700 border-bottom border-slate-200 pb-2 mb-3 mt-0 flex align-items-center gap-2">
+            <i class="pi pi-calendar text-indigo-500"></i>
+            Cycle de vie & Validité
+          </h3>
+          <div class="grid grid-cols-12 gap-4 mt-2">
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Version Courante</span>
+              <span class="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded inline-block">
+                V{{ document.versionMajeure }}.{{ document.versionMineure }}
+              </span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Date de Vigueur</span>
+              <span class="text-sm font-semibold text-slate-800 flex align-items-center gap-1.5">
+                <i class="pi pi-calendar-plus text-slate-400 text-xs"></i>
+                {{ (document.dateVigueur | date:'dd/MM/yyyy HH:mm') || '-' }}
+              </span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Périodicité révision</span>
+              <span class="text-sm font-semibold text-slate-800">{{ document.periodiciteMois || 'Non spécifiée' }} mois</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <div class="flex flex-column"
+                    [class.text-red-600]="document.enRetardRevision"
+                    [class.font-bold]="document.enRetardRevision">
+                <span class="text-xs text-slate-500 font-semibold mb-1 flex align-items-center gap-1.5"
+                    [class.text-red-600]="document.enRetardRevision"
+                    [class.font-bold]="document.enRetardRevision">
+                  <i class="pi pi-calendar-times text-xs" [class.text-red-500]="document.enRetardRevision" [class.text-slate-400]="!document.enRetardRevision"></i>
+                  Prochaine Révision
+                </span>
+                {{ (document.dateProchRevision | date:'dd/MM/yyyy') || '-' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Métadonnées & Systèmes -->
+      <div class="col-span-12">
+        <div class="card p-3 border border-slate-200 bg-slate-50-alpha-50">
+          <h3 class="text-sm font-bold text-slate-700 border-bottom border-slate-200 pb-2 mb-3 mt-0 flex align-items-center gap-2">
+            <i class="pi pi-cog text-indigo-500"></i>
+            Métadonnées & Systèmes
+          </h3>
+          <div class="grid grid-cols-12 gap-4 mt-2">
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Externe</span>
+              <span class="text-sm font-semibold text-slate-800">{{ document.documentExterne ? 'Oui' : 'Non' }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3" *ngIf="document.processusDestLibelle">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Processus Destinataire</span>
+              <span class="text-sm font-semibold text-slate-800">{{ document.processusDestLibelle }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3" *ngIf="document.referenceOfficielle">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Référence Officielle</span>
+              <span class="text-sm font-semibold text-slate-800">{{ document.referenceOfficielle }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3" *ngIf="document.domaine">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Domaine</span>
+              <span class="text-sm font-semibold text-slate-800">{{ document.domaine }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3" *ngIf="document.statutLegal">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Statut Légal</span>
+              <span class="text-sm font-semibold text-slate-800">{{ document.statutLegal }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3" *ngIf="document.ncReference">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">NC Liée</span>
+              <span class="text-sm font-bold text-red-600">{{ document.ncReference }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6 md:col-span-3">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Créé par</span>
+              <div>
+                <span class="text-sm font-semibold text-slate-800 block">{{ document.currentUserfullName || 'Système' }}</span>
+                <span class="text-xs text-slate-400 font-normal block">{{ document.createdAt }}</span>
+              </div>
+            </div>
+            <div class="col-span-12" *ngIf="document.currentFileHash">
+              <span class="text-xs font-semibold text-slate-400 block mb-1">Empreinte Cryptographique d'Intégrité (SHA-256)</span>
+              <div class="flex align-items-center gap-2 bg-slate-100 p-2 border border-slate-200 rounded font-mono text-xs text-slate-700 max-w-max">
+                <i class="pi pi-shield text-green-600 text-sm"></i>
+                <strong>{{ document.currentFileHash }}</strong>
+                <span class="text-[10px] bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded font-bold uppercase ml-2">Intègre & Scellé</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Alfresco Node Info -->
+
+  </div>
+
+  <!-- Barre d'actions : chaque bouton dépend d'une permission, les décisions de circuit
+       proviennent de ce que le serveur autorise à l'étape courante. -->
+  <div class="p-4 bg-slate-50 border-top border-slate-100 flex flex-wrap justify-content-between gap-2">
+    <div class="flex flex-wrap gap-2">
+      <button pButton label="Ouvrir" icon="pi pi-external-link" class="p-button-outlined p-button-sm"
+        *ngIf="canDownload" (click)="openDocument.emit(document)"></button>
+      <button pButton label="Télécharger PDF" icon="pi pi-file-pdf" class="p-button-outlined p-button-danger p-button-sm"
+        *ngIf="canDownload" (click)="downloadPdf.emit(document)"></button>
+      <button pButton label="Historique" icon="pi pi-history" class="p-button-outlined p-button-secondary p-button-sm"
+        *ngIf="canViewHistory" (click)="viewHistory.emit(document)"></button>
+      <button pButton label="Piste d'audit" icon="pi pi-shield" class="p-button-outlined p-button-secondary p-button-sm"
+        *ngIf="canViewAudit" (click)="viewAudit.emit(document)"></button>
+      <button pButton label="Partage" icon="pi pi-users" class="p-button-outlined p-button-secondary p-button-sm"
+        *ngIf="canShare" (click)="share.emit(document)"></button>
+    </div>
+
+    <div class="flex flex-wrap gap-2 align-items-center">
+      <span class="text-xs text-slate-500 mr-2" *ngIf="canValidate && allowedActions.length === 0">
+        Aucune décision attendue de votre part à cette étape.
+      </span>
+      <ng-container *ngIf="canValidate">
+        <button *ngFor="let action of allowedActions" pButton
+          [label]="action.libelle" [icon]="actionIcon(action)" [class]="actionClass(action)"
+          (click)="executeAction.emit(action)"></button>
+      </ng-container>
+      <button pButton label="Fermer" icon="pi pi-times" class="p-button-text p-button-secondary"
+        (click)="close.emit()"></button>
+    </div>
+  </div>
+</div>
