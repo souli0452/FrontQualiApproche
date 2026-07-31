@@ -1,0 +1,72 @@
+<div *ngIf="document" class="card border-none shadow-sm bg-white overflow-hidden p-0 fadein">
+  <!-- Header -->
+  <div class="p-4 bg-slate-50 border-bottom border-slate-100 flex align-items-center justify-content-between">
+    <div class="flex align-items-center gap-3">
+      <button pButton pRipple icon="pi pi-arrow-left" class="p-button-outlined p-button-secondary p-button-sm mr-2" label="Retour" (click)="close.emit()"></button>
+      <div>
+        <h1 class="text-xl font-bold text-slate-800 m-0">Historique des Versions</h1>
+        <p class="text-xs text-slate-400 m-0 mt-1">
+          Consultez toutes les itérations, modifications et motifs de révision de ce document.
+        </p>
+      </div>
+    </div>
+    <div>
+      <span class="text-xs font-mono bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-1 border-round font-bold">
+        Ref: {{ document.documentNumber }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="p-4">
+    <div class="flex align-items-center gap-3 mb-4 p-3 bg-slate-50 border border-slate-200 border-round">
+      <i class="pi pi-history text-3xl text-indigo-600"></i>
+      <div class="text-left">
+        <h4 class="m-0 text-sm font-bold text-slate-700">Document {{ document.documentNumber }}</h4>
+        <span class="text-xs text-slate-400">Rédigé par {{ document.redacteur }}</span>
+      </div>
+    </div>
+
+    <!-- Timeline styled in a spacious block -->
+    <div class="px-3">
+      <p-timeline [value]="versionHistory" styleClass="qms-timeline" *ngIf="versionHistory.length > 0">
+        <ng-template pTemplate="content" let-ver>
+          <div class="card p-3 shadow-sm border border-slate-200 bg-white mb-3 rounded hover:border-indigo-200 transition-colors">
+            <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center mb-2 gap-2">
+              <span class="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded">
+                Version {{ ver.versionLabel }}
+              </span>
+              <span class="text-xs text-slate-400 flex align-items-center gap-1">
+                <i class="pi pi-calendar text-xs"></i>
+                {{ ver.dateCreation | date:'dd/MM/yyyy HH:mm' }}
+              </span>
+            </div>
+            <p class="text-sm text-slate-700 m-0 font-medium py-1 text-left">
+              {{ ver.comment || 'Aucun commentaire' }}
+            </p>
+            <div class="text-xs text-slate-500 mt-2 pt-2 border-top border-slate-100 flex justify-content-between align-items-center flex-wrap gap-2">
+              <div class="flex align-items-center gap-1.5">
+                <i class="pi pi-user text-xs text-slate-400"></i>
+                <span>Approbateur : <strong class="text-slate-700">{{ ver.createdBy }}</strong></span>
+              </div>
+              <div class="flex align-items-center gap-1.5 font-mono text-xs bg-slate-50 text-slate-500 px-2 py-0.5 rounded border border-slate-200" *ngIf="ver.fileHash" [pTooltip]="ver.fileHash" tooltipPosition="left">
+                <i class="pi pi-shield text-green-600 text-xs"></i>
+                <span>SHA-256 : {{ ver.fileHash.substring(0, 8) }}...</span>
+              </div>
+            </div>
+          </div>
+        </ng-template>
+      </p-timeline>
+
+      <div *ngIf="versionHistory.length === 0" class="text-center py-5 text-slate-400">
+        <i class="pi pi-info-circle text-4xl mb-2 block"></i>
+        <p>Aucune version archivée pour ce document.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Action Bar -->
+  <div class="p-4 bg-slate-50 border-top border-slate-100 flex justify-content-end">
+    <button pButton label="Fermer" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="close.emit()"></button>
+  </div>
+</div>
