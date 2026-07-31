@@ -22,11 +22,13 @@ import { QmsDocumentListComponent } from './components/qms-document-list.compone
 import { QmsDocumentDetailComponent } from './components/qms-document-detail.component';
 import { QmsDocumentHistoryComponent } from './components/qms-document-history.component';
 import { QmsDocumentAuditComponent } from './components/qms-document-audit.component';
+import { QmsTransitionDialogComponent, TransitionDecision } from './components/qms-transition-dialog.component';
+import { QmsWorkflowDecisionDialogComponent } from './components/qms-workflow-decision-dialog.component';
 
 @Component({
   selector: 'app-qms-document',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent],
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, QmsTransitionDialogComponent, QmsWorkflowDecisionDialogComponent],
   templateUrl: './qms-document.component.html',
   styleUrls: ['./qms-document.component.scss'],
   providers: [MessageService, DatePipe]
@@ -78,10 +80,8 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   workflowState?: WorkflowStateDto;
 
   // Form Groups
-  transitionForm: FormGroup;
   permissionForm: FormGroup;
   assignWorkflowForm: FormGroup;
-  workflowForm: FormGroup;
   showWorkflowModal = false;
   workflowDecision: 'APPROUVE' | 'REJETE' = 'APPROUVE';
 
@@ -97,10 +97,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private datePipe: DatePipe
   ) {
-    this.transitionForm = this.fb.group({
-      nextStatus: [null, Validators.required],
-      reason: [null, Validators.required]
-    });
 
     this.permissionForm = this.fb.group({
       userId: ['', Validators.required],
@@ -113,9 +109,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
       workflowId: [null, Validators.required]
     });
 
-    this.workflowForm = this.fb.group({
-      comments: ['', Validators.required]
-    });
   }
 
 
@@ -203,17 +196,15 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
 
   openTransitionDialog(doc: DocumentQms): void {
     this.selectedDocument = doc;
-    this.transitionForm.reset();
     this.showTransitionModal = true;
   }
 
-  submitTransition(): void {
-    if (this.transitionForm.invalid || !this.selectedDocument) return;
+  submitTransition(decision: TransitionDecision): void {
+    if (!this.selectedDocument) return;
 
     this.loading = true;
-    const formVal = this.transitionForm.value;
 
-    this.qmsService.transitionStatus(this.selectedDocument.id!, formVal.nextStatus, formVal.reason)
+    this.qmsService.transitionStatus(this.selectedDocument.id!, decision.nextStatus, decision.reason)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (updatedDoc) => {
@@ -407,15 +398,13 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   openWorkflowDialog(doc: DocumentQms, action: any): void {
     this.selectedDocument = doc;
     this.selectedWorkflowAction = action;
-    this.workflowForm.reset();
     this.showWorkflowModal = true;
   }
 
-  submitWorkflowDecision(): void {
-    if (this.workflowForm.invalid || !this.selectedDocument || !this.selectedWorkflowAction) return;
+  submitWorkflowDecision(comments: string): void {
+    if (!this.selectedDocument || !this.selectedWorkflowAction) return;
 
     this.loading = true;
-    const comments = this.workflowForm.value.comments;
     const docId = this.selectedDocument.id!;
     const actionCode = this.selectedWorkflowAction.code;
     // Étape sur laquelle l'écran croit agir : le serveur rejette la demande en 409 si le dossier
