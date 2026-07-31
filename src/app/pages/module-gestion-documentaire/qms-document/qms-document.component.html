@@ -202,76 +202,16 @@
 <!-- ========================================================================= -->
 <!-- 7. ASSIGNATION WORKFLOW DIALOG -->
 <!-- ========================================================================= -->
-<p-dialog header="Assigner un circuit de validation" [(visible)]="showAssignWorkflowModal" [modal]="true" [style]="{ width: '55rem' }" [breakpoints]="{ '960px': '85vw', '640px': '95vw' }" appendTo="body">
-  <div class="p-fluid mt-2" *ngIf="selectedDocument">
-
-    <!-- User Guidance Box (Guide à l'user) -->
-    <div class="p-3 bg-blue-50 border border-blue-200 border-round mb-4 flex align-items-start gap-3">
-      <i class="pi pi-info-circle text-blue-600 text-2xl mt-1 flex-shrink-0"></i>
-      <div>
-        <h4 class="m-0 text-sm font-bold text-blue-900">Guide de validation de document</h4>
-        <ul class="text-xs text-blue-800 m-0 pl-4 mt-2 line-height-3">
-          <li><strong>Mise en approbation :</strong> Le document passera automatiquement au statut <strong>"En Approbation"</strong>.</li>
-          <li><strong>Transitions du statut :</strong> Le statut du document changera automatiquement au fil des étapes. Il deviendra <strong>"Valide"</strong> uniquement lorsque la dernière étape sera validée.</li>
-          <li><strong>Rôles de validation :</strong> Chaque étape exige la signature électronique ou la validation par le détenteur du rôle spécifié.</li>
-          <li><strong>Retour en brouillon :</strong> Si une étape est rejetée, le processus s'arrête et le document retourne au statut <strong>"Brouillon"</strong> pour corrections.</li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- Info Alert Box -->
-    <div class="p-3 bg-slate-50 border border-slate-200 border-round mb-4 flex align-items-center justify-content-between">
-      <div class="flex align-items-center gap-2">
-        <span class="text-sm font-bold text-slate-500">Document :</span>
-        <span class="text-sm font-bold text-slate-700">
-          <i class="pi pi-file text-indigo-500 mr-1"></i>
-          {{ selectedDocument.documentNumber }}
-        </span>
-      </div>
-      <div class="flex align-items-center gap-2 ml-3">
-        <span class="text-sm font-bold text-slate-500">Statut actuel :</span>
-        <p-tag [value]="getStatusLabel(selectedDocument)" [severity]="getStatusSeverity(selectedDocument)" styleClass="text-xs"></p-tag>
-      </div>
-    </div>
-
-    <form [formGroup]="assignWorkflowForm" class="p-fluid">
-      <div class="grid grid-cols-12 gap-4">
-        <!-- Selection -->
-        <div class="col-span-12">
-          <label class="block text-sm font-bold text-slate-700 mb-1.5">Choisir le Workflow <span class="text-red-500">*</span></label>
-          <p-select [options]="availableWorkflows" formControlName="workflowId" optionLabel="nom" optionValue="id" placeholder="Sélectionner un workflow" class="w-full" appendTo="body" [filter]="true" [showClear]="true" (onChange)="onWorkflowSelected($event.value)"></p-select>
-          <small class="text-slate-400 mt-1 block">Le document suivra le circuit de validation configuré ci-dessous.</small>
-        </div>
-
-        <!-- Dynamic Steps Preview (La transition suit les steps du workflow) -->
-        <div *ngIf="selectedWorkflowPreview" class="col-span-12 mt-2">
-          <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Aperçu du circuit & Étapes de validation</h5>
-          <div class="flex flex-column gap-2">
-            <div *ngFor="let step of selectedWorkflowPreview.steps" class="flex align-items-center gap-3 p-3 bg-slate-50 border border-slate-200 border-round">
-              <span class="flex align-items-center justify-content-center bg-indigo-500 text-white font-bold border-circle w-2rem h-2rem text-sm">
-                {{ step.stepOrder }}
-              </span>
-              <div class="flex-grow-1">
-                <div class="text-sm font-semibold text-slate-800">{{ step.nomEtape }}</div>
-                <div class="text-xs text-slate-500 mt-0.5" *ngIf="step.description">{{ step.description }}</div>
-              </div>
-              <span class="p-tag p-tag-info text-xs font-mono px-2 py-0.5 border border-indigo-100">
-                Rôle : {{ step.responsableRole }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </form>
-  </div>
-  <ng-template pTemplate="footer">
-    <div class="flex justify-content-end gap-2">
-      <button pButton label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="showAssignWorkflowModal = false"></button>
-      <button pButton label="Assigner et Soumettre" icon="pi pi-check" class="p-button-primary shadow-sm" [disabled]="assignWorkflowForm.invalid" [loading]="loading" (click)="submitWorkflowAssignment()"></button>
-    </div>
-  </ng-template>
-</p-dialog>
+<app-qms-assign-workflow-dialog
+  [document]="selectedDocument"
+  [availableWorkflows]="availableWorkflows"
+  [loading]="loading"
+  [statusLabel]="statusLabelFn"
+  [statusSeverity]="statusSeverityFn"
+  [visible]="showAssignWorkflowModal"
+  (visibleChange)="showAssignWorkflowModal = $event"
+  (confirm)="submitWorkflowAssignment($event)">
+</app-qms-assign-workflow-dialog>
 
 <!-- ========================================================================= -->
 <!-- 8. WORKFLOW STEP DECISION DIALOG -->

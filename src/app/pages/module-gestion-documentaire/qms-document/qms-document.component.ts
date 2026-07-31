@@ -24,11 +24,12 @@ import { QmsDocumentHistoryComponent } from './components/qms-document-history.c
 import { QmsDocumentAuditComponent } from './components/qms-document-audit.component';
 import { QmsTransitionDialogComponent, TransitionDecision } from './components/qms-transition-dialog.component';
 import { QmsWorkflowDecisionDialogComponent } from './components/qms-workflow-decision-dialog.component';
+import { QmsAssignWorkflowDialogComponent } from './components/qms-assign-workflow-dialog.component';
 
 @Component({
   selector: 'app-qms-document',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, QmsTransitionDialogComponent, QmsWorkflowDecisionDialogComponent],
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, QmsTransitionDialogComponent, QmsWorkflowDecisionDialogComponent, QmsAssignWorkflowDialogComponent],
   templateUrl: './qms-document.component.html',
   styleUrls: ['./qms-document.component.scss'],
   providers: [MessageService, DatePipe]
@@ -76,12 +77,10 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   versionHistory: QmsDocumentVersion[] = [];
   auditLogs: QmsAuditLog[] = [];
   availableWorkflows: DocumentWorkflow[] = [];
-  selectedWorkflowPreview?: DocumentWorkflow;
   workflowState?: WorkflowStateDto;
 
   // Form Groups
   permissionForm: FormGroup;
-  assignWorkflowForm: FormGroup;
   showWorkflowModal = false;
   workflowDecision: 'APPROUVE' | 'REJETE' = 'APPROUVE';
 
@@ -105,9 +104,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
       role: ['READ_ONLY', Validators.required]
     });
 
-    this.assignWorkflowForm = this.fb.group({
-      workflowId: [null, Validators.required]
-    });
 
   }
 
@@ -463,8 +459,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
 
   openAssignWorkflowModal(doc: DocumentQms): void {
     this.selectedDocument = doc;
-    this.assignWorkflowForm.reset();
-    this.selectedWorkflowPreview = undefined;
 
     // Charger les workflows disponibles
     this.loading = true;
@@ -483,27 +477,11 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
       });
   }
 
-  onWorkflowSelected(workflowId: string): void {
-    if (!workflowId) {
-      this.selectedWorkflowPreview = undefined;
-      return;
-    }
-    const wf = this.availableWorkflows.find(w => w.id === workflowId);
-    if (wf) {
-      this.selectedWorkflowPreview = {
-        ...wf,
-        steps: [...(wf.steps || [])].sort((a, b) => a.stepOrder - b.stepOrder)
-      };
-    } else {
-      this.selectedWorkflowPreview = undefined;
-    }
-  }
 
-  submitWorkflowAssignment(): void {
-    if (this.assignWorkflowForm.invalid || !this.selectedDocument) return;
+  submitWorkflowAssignment(workflowId: string): void {
+    if (!this.selectedDocument) return;
 
     this.loading = true;
-    const workflowId = this.assignWorkflowForm.value.workflowId;
 
     this.qmsService.assignWorkflow(this.selectedDocument.id!, workflowId)
       .pipe(takeUntil(this.destroy$))
