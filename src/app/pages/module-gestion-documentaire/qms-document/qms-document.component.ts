@@ -18,11 +18,13 @@ import { AuthService } from '../../../services/auth-services/auth.service';
 import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentType, QmsDocumentVersion, DocumentWorkflow, WorkflowStep } from '../../../models/gestion-documentaire.model';
 import { WorkflowStateDto, WorkflowActionDto } from '../../../models/workflow.model';
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
+import { QmsDocumentListComponent } from './components/qms-document-list.component';
+import { QmsDocumentDetailComponent } from './components/qms-document-detail.component';
 
 @Component({
   selector: 'app-qms-document',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule],
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent],
   templateUrl: './qms-document.component.html',
   styleUrls: ['./qms-document.component.scss'],
   providers: [MessageService, DatePipe]
@@ -114,6 +116,12 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     });
   }
 
+
+  // Passés aux sous-composants : liés ici pour conserver le contexte du parent.
+  readonly statusLabelFn = (doc: DocumentQms) => this.getStatusLabel(doc);
+  readonly statusSeverityFn = (doc: DocumentQms) => this.getStatusSeverity(doc);
+  readonly actionIconFn = (action: any) => this.getIconForAction(action);
+  readonly actionClassFn = (action: any) => this.getClassForAction(action);
 
   ngOnInit(): void {
     this.loadInitialData();
@@ -638,8 +646,16 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Permissions réellement détenues par l'utilisateur, chargées à la connexion dans
+   * NgxPermissionsService. Cette méthode renvoyait `true` sans rien vérifier : tous les boutons
+   * s'affichaient pour tout le monde. La comparaison est insensible à la casse, le serveur
+   * normalisant les codes en majuscules.
+   */
   hasPermission(p: string): boolean {
-    return true;
+    const detenues = Object.keys(this.ngxPermissionsService.getPermissions() || {});
+    const attendue = p.toUpperCase();
+    return detenues.some(d => d.toUpperCase() === attendue);
   }
 
   submitPermissions(): void {

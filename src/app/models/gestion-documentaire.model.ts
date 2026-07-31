@@ -14,6 +14,11 @@ export interface DocumentQms {
   workflowState?: any;
   id?: string;
   documentNumber?: string;
+  /** Champs renvoyés par le serveur mais absents du modèle : le titre notamment, alors qu'il
+      identifie le document pour l'utilisateur bien mieux que son numéro. */
+  titre?: string;
+  reference?: string;
+  description?: string;
   documentType: string;
   serviceId: string;
   serviceLibelle?: string;
@@ -44,6 +49,10 @@ export interface DocumentQms {
   currentUserfullName?: string;
   currentFileHash?: string;
   currentEtape?: string;
+  currentObjectName?: string;
+  workflowId?: string;
+  lastModifiedBy?: string;
+  lastModifiedReason?: string;
 }
 
 
