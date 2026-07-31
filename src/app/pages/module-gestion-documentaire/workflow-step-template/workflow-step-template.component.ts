@@ -77,10 +77,7 @@ export class WorkflowStepTemplateComponent implements OnInit, OnDestroy {
                     if (res && res.data && res.data.content) {
                         this.rolesList = res.data.content.map((r: any) => ({
                             label: r.name || r.code || r.libelle || r.id,
-                            // Le nom, et non l'identifiant : c'est le nom que porte le jeton
-                            // Keycloak, et donc la seule valeur comparable lors du contrôle
-                            // d'habilitation d'une transition.
-                            value: r.name || r.code || r.libelle || r.id
+                            value: r.id
                         }));
                         this.templates = this.templates.map(t => ({
                             ...t,
