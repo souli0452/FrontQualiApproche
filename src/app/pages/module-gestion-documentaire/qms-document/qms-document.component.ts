@@ -25,11 +25,12 @@ import { QmsDocumentAuditComponent } from './components/qms-document-audit.compo
 import { QmsTransitionDialogComponent, TransitionDecision } from './components/qms-transition-dialog.component';
 import { QmsWorkflowDecisionDialogComponent } from './components/qms-workflow-decision-dialog.component';
 import { QmsAssignWorkflowDialogComponent } from './components/qms-assign-workflow-dialog.component';
+import { QmsDocumentAccessDialogComponent, AccessGrant } from './components/qms-document-access-dialog.component';
 
 @Component({
   selector: 'app-qms-document',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, QmsTransitionDialogComponent, QmsWorkflowDecisionDialogComponent, QmsAssignWorkflowDialogComponent],
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, QmsTransitionDialogComponent, QmsWorkflowDecisionDialogComponent, QmsAssignWorkflowDialogComponent, QmsDocumentAccessDialogComponent],
   templateUrl: './qms-document.component.html',
   styleUrls: ['./qms-document.component.scss'],
   providers: [MessageService, DatePipe]
@@ -80,7 +81,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   workflowState?: WorkflowStateDto;
 
   // Form Groups
-  permissionForm: FormGroup;
   showWorkflowModal = false;
   workflowDecision: 'APPROUVE' | 'REJETE' = 'APPROUVE';
 
@@ -97,12 +97,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     private datePipe: DatePipe
   ) {
 
-    this.permissionForm = this.fb.group({
-      userId: ['', Validators.required],
-      userFullName: [''],
-      userEmail: ['', Validators.email],
-      role: ['READ_ONLY', Validators.required]
-    });
 
 
   }
@@ -516,7 +510,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   openShareModal(doc: DocumentQms): void {
     this.selectedDocument = doc;
     this.activeTab = 'access';
-    this.permissionForm.reset({ role: 'READ_ONLY' });
     this.selectedStructureFilter = undefined;
     this.selectedUser = undefined;
     this.filteredUsers = [];
@@ -568,13 +561,8 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
       });
   }
 
-  onStructureFilterChange(structureId: string): void {
+  onStructureFilterChange(structureId?: string): void {
     this.selectedUser = undefined;
-    this.permissionForm.patchValue({
-      userId: '',
-      userFullName: '',
-      userEmail: ''
-    });
 
     if (!structureId) {
       this.filteredUsers = [...this.systemUsers];
@@ -601,17 +589,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
 
   onUserSelected(user: any): void {
     if (user) {
-      this.permissionForm.patchValue({
-        userId: user.id,
-        userFullName: user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-        userEmail: user.email
-      });
     } else {
-      this.permissionForm.patchValue({
-        userId: '',
-        userFullName: '',
-        userEmail: ''
-      });
     }
   }
 
@@ -627,27 +605,25 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     return detenues.some(d => d.toUpperCase() === attendue);
   }
 
-  submitPermissions(): void {
-    if (this.permissionForm.invalid || !this.selectedDocument) return;
+  submitPermissions(octroi: AccessGrant): void {
+    if (!this.selectedDocument) return;
     this.loading = true;
-    const formVal = this.permissionForm.value;
     this.qmsService.grantAccess(
       this.selectedDocument.id!,
-      formVal.userId,
-      formVal.userFullName,
-      formVal.userEmail,
-      formVal.role
+      octroi.userId,
+      octroi.userFullName,
+      octroi.userEmail,
+      octroi.role
     )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
           this.loading = false;
-          this.permissionForm.reset({ role: 'READ_ONLY' });
           this.loadDocumentAccess(this.selectedDocument!);
           this.messageService.add({
             severity: 'success',
             summary: 'Accès accordé',
-            detail: `Les droits ${formVal.role} ont été accordés.`
+            detail: `Les droits ${octroi.role} ont été accordés.`
           });
         },
         error: (err: any) => {
