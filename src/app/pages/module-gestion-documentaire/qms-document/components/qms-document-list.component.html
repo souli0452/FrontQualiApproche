@@ -1,86 +1,117 @@
-<!-- En-tête -->
-<div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 gap-3 w-full">
+<!-- En-tête : titre, sous-titre, action de rafraîchissement -->
+<div class="flex flex-column md:flex-row md:items-end justify-content-between gap-3 mb-5">
   <div>
-    <h1 class="text-2xl font-bold text-slate-800 m-0">Gestion documentaire</h1>
-    <p class="text-sm text-slate-500 mt-1">Gérez le cycle de vie, les versions et la conformité de vos documents qualité.</p>
+    <h1 class="text-2xl font-bold text-slate-900 m-0 tracking-tight">Gestion documentaire</h1>
+    <p class="text-sm text-slate-500 mt-1 mb-0">
+      Cycle de vie, versions et conformité de vos documents qualité.
+    </p>
   </div>
-  <div class="flex gap-2 ml-auto">
-    <button pButton pRipple label="Actualiser" icon="pi pi-refresh"
-      class="p-button-outlined p-button-secondary p-button-sm" (click)="refresh.emit()"></button>
-  </div>
+  <button pButton pRipple label="Actualiser" icon="pi pi-refresh"
+    class="p-button-outlined p-button-secondary p-button-sm shrink-0" (click)="refresh.emit()"></button>
 </div>
 
-<!-- Recherche et filtres -->
-<div class="card p-3 mb-4 shadow-sm border border-slate-200 bg-white">
-  <div class="grid grid-cols-12 gap-3">
-    <div class="col-span-12 md:col-span-4 lg:col-span-4">
-      <label class="block text-xs font-semibold text-slate-600 mb-1">Recherche</label>
-      <input pInputText type="text" [ngModel]="searchQuery" (ngModelChange)="searchQueryChange.emit($event)"
-        placeholder="Numéro, rédacteur…" class="w-full" (keyup.enter)="refresh.emit()" />
+<!-- Filtres : une seule ligne sur grand écran, la recherche occupe la moitié -->
+<div class="bg-white border border-slate-200 rounded-lg shadow-sm p-4 mb-4">
+  <div class="grid grid-cols-12 gap-3 items-end">
+    <div class="col-span-12 lg:col-span-5">
+      <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Recherche</label>
+      <span class="p-input-icon-left w-full">
+        <i class="pi pi-search text-slate-400"></i>
+        <input pInputText type="text" [ngModel]="searchQuery" (ngModelChange)="searchQueryChange.emit($event)"
+          placeholder="Numéro, titre ou rédacteur…" class="w-full" (keyup.enter)="refresh.emit()" />
+      </span>
     </div>
 
-    <div class="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-3">
-      <label class="block text-xs font-semibold text-slate-600 mb-1">Type de document</label>
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+      <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Type</label>
       <p-select [options]="documentTypes" [ngModel]="selectedType" (ngModelChange)="selectedTypeChange.emit($event)"
         optionLabel="libelle" optionValue="code" placeholder="Tous les types" class="w-full"
         [filter]="true" [showClear]="true" appendTo="body" (onChange)="refresh.emit()"></p-select>
     </div>
 
-    <div class="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-3">
-      <label class="block text-xs font-semibold text-slate-600 mb-1">Processus émetteur</label>
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+      <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Processus émetteur</label>
       <p-select [options]="structures" [ngModel]="selectedService" (ngModelChange)="selectedServiceChange.emit($event)"
         optionLabel="libelleLong" optionValue="id" placeholder="Tous les services" class="w-full"
         [filter]="true" [showClear]="true" appendTo="body" (onChange)="refresh.emit()"></p-select>
     </div>
 
-    <div class="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-2 flex align-items-end">
-      <button pButton pRipple icon="pi pi-filter" label="Filtrer" class="w-full p-button-secondary"
+    <div class="col-span-12 lg:col-span-1">
+      <button pButton pRipple icon="pi pi-filter" class="w-full p-button-secondary" pTooltip="Appliquer les filtres"
         (click)="refresh.emit()"></button>
     </div>
   </div>
 </div>
 
 <!-- Tableau -->
-<div class="card shadow-sm border border-slate-200 bg-white overflow-hidden">
-  <p-table [value]="documents" [loading]="loading" [paginator]="true" [rows]="10"
-    [responsiveLayout]="'scroll'" styleClass="p-datatable-striped">
+<div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+  <p-table [value]="documents" [loading]="loading" [paginator]="true" [rows]="15"
+    [rowsPerPageOptions]="[15, 30, 50]" [responsiveLayout]="'scroll'"
+    currentPageReportTemplate="{first}–{last} sur {totalRecords} documents" [showCurrentPageReport]="true"
+    styleClass="p-datatable-sm">
+
     <ng-template pTemplate="header">
-      <tr>
-        <th>Numéro</th>
-        <th>Titre</th>
-        <th>Rédacteur</th>
-        <th class="text-center">Version</th>
-        <th>État</th>
-        <th>Créé le</th>
+      <tr class="bg-slate-50">
+        <th class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Document</th>
+        <th class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Rédacteur</th>
+        <th class="text-xs font-semibold text-slate-500 uppercase tracking-wide text-center w-8rem">Version</th>
+        <th class="text-xs font-semibold text-slate-500 uppercase tracking-wide">État</th>
+        <th class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Créé le</th>
       </tr>
     </ng-template>
 
     <ng-template pTemplate="body" let-doc>
       <!-- La ligne entière ouvre la fiche : c'est la seule action de la liste. -->
-      <tr class="cursor-pointer hover:bg-slate-50 transition-colors" (click)="open.emit(doc)">
-        <td class="font-bold text-slate-700">{{ doc.documentNumber }}</td>
-        <td class="text-slate-700">{{ doc.titre }}</td>
-        <td class="text-slate-600">{{ doc.redacteur }}</td>
-        <td class="text-center font-mono text-xs">
-          <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100">
-            {{ doc.versionMajeure }}.{{ doc.versionMineure }}
+      <tr class="cursor-pointer hover:bg-indigo-50 transition-colors" (click)="open.emit(doc)">
+        <!-- Cellule principale : le titre porte l'identification, le numéro le référencement -->
+        <td class="py-3">
+          <div class="flex align-items-center gap-3">
+            <span class="flex align-items-center justify-content-center bg-indigo-50 text-indigo-600
+                         border border-indigo-100 rounded w-2rem h-2rem shrink-0">
+              <i class="pi pi-file text-sm"></i>
+            </span>
+            <div class="min-w-0">
+              <div class="font-semibold text-slate-800 truncate">{{ doc.titre || doc.documentNumber }}</div>
+              <div class="text-xs text-slate-400 font-mono mt-0.5">{{ doc.documentNumber }}</div>
+            </div>
+          </div>
+        </td>
+
+        <td class="text-sm text-slate-600">{{ doc.redacteur }}</td>
+
+        <td class="text-center">
+          <span class="font-mono text-xs bg-slate-100 text-slate-600 border border-slate-200 px-2 py-1 rounded">
+            v{{ doc.versionMajeure }}.{{ doc.versionMineure }}
           </span>
         </td>
+
         <td>
           <div class="flex flex-column gap-1">
             <p-tag [value]="statusLabel(doc)" [severity]="statusSeverity(doc)" styleClass="text-xs w-fit"></p-tag>
-            <span class="text-xs text-slate-500" *ngIf="doc.currentEtape">{{ doc.currentEtape }}</span>
+            <span class="text-xs text-slate-400" *ngIf="doc.currentEtape">
+              <i class="pi pi-arrow-right text-xs mr-1"></i>{{ doc.currentEtape }}
+            </span>
           </div>
         </td>
-        <td class="text-slate-600">{{ doc.createdAt }}</td>
+
+        <td class="text-sm text-slate-500 whitespace-nowrap">{{ doc.createdAt }}</td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="loadingbody">
+      <tr *ngFor="let i of [1,2,3,4,5]">
+        <td colspan="5" class="py-3"><p-skeleton height="1.5rem"></p-skeleton></td>
       </tr>
     </ng-template>
 
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="6" class="text-center py-6 text-slate-400">
-          <i class="pi pi-folder-open text-5xl mb-3 block"></i>
-          Aucun document ne correspond à votre recherche.
+        <td colspan="5" class="text-center py-8">
+          <i class="pi pi-inbox text-5xl text-slate-300 block mb-3"></i>
+          <div class="text-slate-600 font-semibold mb-1">Aucun document</div>
+          <div class="text-sm text-slate-400">
+            Aucun document ne correspond à ces critères. Ajustez la recherche ou les filtres.
+          </div>
         </td>
       </tr>
     </ng-template>
