@@ -40,4 +40,15 @@ export class QmsDocumentListComponent {
     /** Libellé et couleur de l'état, fournis par le parent qui détient la règle d'affichage. */
     @Input() statusLabel: (doc: DocumentQms) => string = () => '';
     @Input() statusSeverity: (doc: DocumentQms) => string = () => 'info';
+
+    /**
+     * État du circuit, résolu par le parent auprès de workflow-service.
+     *
+     * <p>Complète l'état du document sans le remplacer : celui-ci dit où en est le fichier
+     * (brouillon, obsolète, en retard de révision), celui-là où en est sa validation — et
+     * si l'utilisateur qui consulte a une décision à prendre.</p>
+     */
+    @Input() etapeDeCircuit: (doc: DocumentQms) => string | undefined = () => undefined;
+    @Input() aUneDecisionAttendue: (doc: DocumentQms) => boolean = () => false;
+    @Input() circuitTermine: (doc: DocumentQms) => boolean = () => false;
 }

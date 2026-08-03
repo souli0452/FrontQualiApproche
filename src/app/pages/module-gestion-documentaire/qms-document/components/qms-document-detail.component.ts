@@ -39,10 +39,29 @@ export class QmsDocumentDetailComponent {
     @Output() downloadPdf = new EventEmitter<DocumentQms>();
     @Output() viewHistory = new EventEmitter<DocumentQms>();
     @Output() viewAudit = new EventEmitter<DocumentQms>();
+    /** Décisions du circuit — distinctes des versions du fichier et de la piste d'accès. */
+    @Output() viewValidationHistory = new EventEmitter<DocumentQms>();
     @Output() share = new EventEmitter<DocumentQms>();
     @Output() executeAction = new EventEmitter<WorkflowActionDto>();
 
     get allowedActions(): WorkflowActionDto[] {
         return this.workflowState?.allowedActions ?? [];
+    }
+
+    /** Le circuit est clos : plus aucune décision n'est attendue. */
+    get circuitTermine(): boolean {
+        return this.workflowState?.status === 'TERMINE';
+    }
+
+    /**
+     * Champs que l'étape courante exigera au moment de décider.
+     *
+     * <p>Annoncés dès la fiche : le décideur sait ce qu'il devra fournir avant d'ouvrir le
+     * dialogue, plutôt que de le découvrir au refus du serveur.</p>
+     */
+    get champsAttendus(): string[] {
+        return (this.workflowState?.currentStepFields ?? [])
+            .filter((champ) => champ.required)
+            .map((champ) => champ.fieldLabel || champ.fieldName);
     }
 }

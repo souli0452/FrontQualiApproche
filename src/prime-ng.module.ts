@@ -73,6 +73,10 @@ import { TimelineModule } from 'primeng/timeline';
 import { TieredMenuModule } from 'primeng/tieredmenu';
 import { ToastModule } from 'primeng/toast';
 import { ToggleButtonModule } from 'primeng/togglebutton';
+// Interrupteur de PrimeNG 19, qui succède à InputSwitch (conservé ci-dessus le temps que les
+// écrans qui l'emploient encore migrent). Sans lui, <p-toggleswitch> reste un élément inconnu :
+// formControlName n'y trouve aucun ControlValueAccessor et l'écran échoue au rendu (NG01203).
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ToolbarModule } from 'primeng/toolbar';
 import { TooltipModule } from 'primeng/tooltip';
 import { TreeModule } from 'primeng/tree';
@@ -199,6 +203,7 @@ import { Popover } from 'primeng/popover';
         TieredMenuModule,
         ToastModule,
         ToggleButtonModule,
+        ToggleSwitchModule,
         ToolbarModule,
         TooltipModule,
         TreeModule,
@@ -310,6 +315,7 @@ import { Popover } from 'primeng/popover';
         TieredMenuModule,
         ToastModule,
         ToggleButtonModule,
+        ToggleSwitchModule,
         ToolbarModule,
         TooltipModule,
         TreeModule,

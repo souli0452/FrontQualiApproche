@@ -1,0 +1,368 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card">
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <div>
+            <h2 class="font-semibold text-xl mb-1">
+                Circuits de validation
+                <span class="text-base text-surface-400">({{ circuits.length }})</span>
+            </h2>
+            <p class="text-surface-500 text-sm m-0">
+                Étapes, décisions et destinataires — pour les documents, les non-conformités et les plans d'action.
+            </p>
+        </div>
+        @if (peutEcrire) {
+            <p-button label="Nouveau circuit" icon="pi pi-plus" (onClick)="ouvrirCreation()"></p-button>
+        }
+    </div>
+
+    <!-- Filtres -->
+    <div class="flex flex-wrap items-center gap-2 mb-4">
+        <p-button label="Tous" size="small" [outlined]="typeFiltre !== null" (onClick)="filtrerParType(null)"></p-button>
+        @for (type of typesRessource; track type.value) {
+            <p-button [label]="type.label" size="small" severity="secondary"
+                      [outlined]="typeFiltre !== type.value" (onClick)="filtrerParType(type.value)"></p-button>
+        }
+        <div class="flex-1"></div>
+        <p-iconfield>
+            <p-inputicon><i class="pi pi-search text-primary"></i></p-inputicon>
+            <input pInputText type="text" [(ngModel)]="recherche" (input)="appliquerFiltres()"
+                   placeholder="Rechercher un circuit..." />
+        </p-iconfield>
+    </div>
+
+    @if (typesEnConflit.length) {
+        <!-- Le serveur n'ouvre qu'un circuit par type de ressource, dans un ordre non garanti :
+             le signaler vaut mieux que de laisser une configuration au résultat imprévisible. -->
+        <div class="flex items-start gap-2 mb-4 p-3 border-round bg-orange-50 text-orange-800 text-sm">
+            <i class="pi pi-exclamation-triangle mt-0.5"></i>
+            <span>
+                Plusieurs circuits sont actifs pour {{ typesEnConflit.join(', ') }} : un seul sera
+                réellement ouvert aux nouveaux dossiers.
+            </span>
+        </div>
+    }
+
+</div>
+
+<!-- Tableau générique : même composant que le catalogue d'étapes et que les autres écrans de
+     configuration. Il apporte sa propre carte, d'où la fermeture de celle de l'en-tête juste
+     au-dessus. Les actions passent par son menu de ligne ; la création et la modification restent
+     portées par le dialogue ci-dessous, qu'aucun formulaire générique ne saurait décrire (étapes,
+     transitions, champs de saisie). -->
+<app-crud-generic [loading]="chargement" [tableCols]="colonnes" [listeObject]="circuits"
+                  [formGroup]="formulaireTableau" [formCols]="[]" [notModif]="true" [notDelete]="true"
+                  [isAffich]="false" [asRoleEdit]="true" [customButtons]="actionsLigne"
+                  (customActionEvent)="executerAction($event)"
+                  [isPagination]="circuits.length > 10">
+</app-crud-generic>
+
+<!-- ------------------------------------------------------------------ Édition -->
+<p-dialog [(visible)]="dialogueOuvert" [modal]="true" [style]="{ width: '62rem' }" [draggable]="false"
+          [header]="modeEdition ? 'Modifier le circuit' : 'Nouveau circuit'" styleClass="p-fluid">
+    <form [formGroup]="formulaire" class="flex flex-col gap-5">
+
+        <!-- Identité du circuit -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium">Nom du circuit <span class="text-red-500">*</span></label>
+                <input pInputText formControlName="nom" placeholder="Validation documentaire standard" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium">Type de ressource <span class="text-red-500">*</span></label>
+                <p-select formControlName="resourceType" [options]="typesRessource" optionLabel="label"
+                          optionValue="value" placeholder="Choisir un type"></p-select>
+            </div>
+            <div class="flex flex-col gap-1 md:col-span-2">
+                <label class="text-sm font-medium">Description</label>
+                <input pInputText formControlName="description" placeholder="À quoi sert ce circuit ?" />
+            </div>
+        </div>
+
+        <div class="flex items-start gap-3 rounded-lg border border-surface-200 bg-surface-50 p-3">
+            <p-toggleswitch formControlName="actif"></p-toggleswitch>
+            <div class="text-sm">
+                <div class="font-medium">Circuit actif</div>
+                <p class="text-surface-500 text-xs m-0">
+                    C'est le circuit ouvert aux nouveaux dossiers de ce type. Un seul doit l'être à la fois :
+                    au-delà, celui qui sera réellement utilisé n'est pas prévisible.
+                </p>
+            </div>
+        </div>
+
+        <!-- Étapes -->
+        <div>
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="font-semibold text-base m-0">Étapes du circuit</h3>
+                <p-button label="Ajouter une étape" icon="pi pi-plus" size="small" [text]="true"
+                          (onClick)="ajouterEtape()"></p-button>
+            </div>
+
+            <div formArrayName="steps" class="flex flex-col gap-3">
+                @for (etape of etapes.controls; track etape; let i = $index; let premier = $first; let dernier = $last) {
+                    <div [formGroupName]="i" class="rounded-lg border border-surface-200 overflow-hidden">
+
+                        <!-- En-tête d'étape -->
+                        <div class="flex items-center gap-2 bg-surface-50 px-3 py-2 border-b border-surface-200">
+                            <span class="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-contrast text-xs font-bold">
+                                {{ i + 1 }}
+                            </span>
+                            <span class="font-medium text-sm flex-1">
+                                {{ etape.get('nomEtape')?.value || 'Nouvelle étape' }}
+                            </span>
+                            @if (etape.get('code')?.value) {
+                                <!-- Le code est l'identité fonctionnelle de l'étape : les transitions le
+                                     désignent et les dossiers en cours s'y rapportent. Il ne se modifie pas. -->
+                                <p-tag severity="secondary" [value]="etape.get('code')?.value"
+                                       pTooltip="Code fonctionnel, fixé à la création et non modifiable"></p-tag>
+                            }
+                            <p-button icon="pi pi-arrow-up" [text]="true" [rounded]="true" size="small"
+                                      [disabled]="premier" pTooltip="Monter" (onClick)="deplacerEtape(i, -1)"></p-button>
+                            <p-button icon="pi pi-arrow-down" [text]="true" [rounded]="true" size="small"
+                                      [disabled]="dernier" pTooltip="Descendre" (onClick)="deplacerEtape(i, 1)"></p-button>
+                            <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" size="small"
+                                      pTooltip="Supprimer l'étape" (onClick)="supprimerEtape(i)"></p-button>
+                        </div>
+
+                        <div class="p-3 flex flex-col gap-4">
+                            <!-- Identité de l'étape -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                @if (modelesEtape.length) {
+                                    <div class="flex flex-col gap-1 md:col-span-2">
+                                        <label class="text-xs font-medium text-surface-600">Pré-remplir depuis le catalogue</label>
+                                        <p-select [options]="modelesEtape" optionLabel="nomEtape" optionValue="id"
+                                                  placeholder="Choisir un modèle d'étape (facultatif)" [showClear]="true"
+                                                  (onChange)="appliquerModeleEtape(i, $event.value)"></p-select>
+                                    </div>
+                                }
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-xs font-medium text-surface-600">Nom de l'étape <span class="text-red-500">*</span></label>
+                                    <input pInputText formControlName="nomEtape" placeholder="Vérification" />
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-xs font-medium text-surface-600">Rôle responsable <span class="text-red-500">*</span></label>
+                                    <p-select formControlName="responsableRole" [options]="rolesDisponibles"
+                                              optionLabel="label" optionValue="value" [filter]="true"
+                                              placeholder="Qui décide à cette étape ?"></p-select>
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-xs font-medium text-surface-600">État de traitement</label>
+                                    <input pInputText formControlName="etatTraitement" placeholder="VALIDATION_RS" />
+                                    <small class="text-surface-400 text-[11px]">
+                                        Transmis au service métier pour refléter l'avancement du dossier.
+                                    </small>
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-xs font-medium text-surface-600">Notification à l'arrivée</label>
+                                    <p-select formControlName="emailTemplateCode" [options]="modelesEmail"
+                                              optionLabel="label" optionValue="value"
+                                              placeholder="Aucune notification"></p-select>
+                                    <small class="text-surface-400 text-[11px]">
+                                        Envoyée aux porteurs du rôle responsable.
+                                    </small>
+                                </div>
+                                <div class="flex flex-col gap-1 md:col-span-2">
+                                    <label class="text-xs font-medium text-surface-600">Description</label>
+                                    <input pInputText formControlName="description" placeholder="Ce qui est attendu à cette étape" />
+                                </div>
+                            </div>
+
+                            <!-- Décisions -->
+                            <div class="rounded-md bg-surface-50 p-3 flex flex-col gap-3">
+                                <div class="text-xs font-semibold uppercase text-surface-500">Décisions possibles</div>
+
+                                <!-- Approbation -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-xs font-medium text-emerald-700">
+                                            <i class="pi pi-check-circle mr-1"></i>Approuver — destination
+                                        </label>
+                                        <p-select formControlName="cibleApprobation" [options]="ciblesPossibles(i)"
+                                                  optionLabel="label" optionValue="value"
+                                                  placeholder="Fin du circuit"></p-select>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-xs font-medium text-surface-600">Libellé du bouton</label>
+                                        <input pInputText formControlName="libelleApprobation" placeholder="Approuver" />
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-xs font-medium text-surface-600">Rôle exigé (facultatif)</label>
+                                        <p-select formControlName="roleApprobation" [options]="rolesDisponibles"
+                                                  optionLabel="label" optionValue="value" [showClear]="true"
+                                                  placeholder="Celui de l'étape"></p-select>
+                                    </div>
+                                </div>
+
+                                <!-- Rejet -->
+                                <div class="flex items-center gap-2 pt-1">
+                                    <p-toggleswitch formControlName="avecRejet"></p-toggleswitch>
+                                    <span class="text-xs text-surface-600">
+                                        Proposer une décision de rejet à cette étape
+                                    </span>
+                                </div>
+
+                                @if (etape.get('avecRejet')?.value) {
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-xs font-medium text-red-700">
+                                                <i class="pi pi-times-circle mr-1"></i>Rejeter — destination
+                                            </label>
+                                            <p-select formControlName="cibleRejet" [options]="ciblesPossibles(i)"
+                                                      optionLabel="label" optionValue="value"
+                                                      placeholder="Fin du circuit"></p-select>
+                                        </div>
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-xs font-medium text-surface-600">Libellé du bouton</label>
+                                            <input pInputText formControlName="libelleRejet" placeholder="Rejeter" />
+                                        </div>
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-xs font-medium text-surface-600">Rôle exigé (facultatif)</label>
+                                            <p-select formControlName="roleRejet" [options]="rolesDisponibles"
+                                                      optionLabel="label" optionValue="value" [showClear]="true"
+                                                      placeholder="Celui de l'étape"></p-select>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Champs de saisie -->
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="text-xs font-semibold uppercase text-surface-500">
+                                        Champs à renseigner pour décider
+                                    </div>
+                                    <p-button label="Ajouter un champ" icon="pi pi-plus" size="small" [text]="true"
+                                              (onClick)="ajouterChamp(i)"></p-button>
+                                </div>
+
+                                @if (champsDeLEtape(i).length === 0) {
+                                    <p class="text-xs text-surface-400 m-0">
+                                        Aucun champ : le décideur n'aura qu'un commentaire à saisir.
+                                    </p>
+                                } @else {
+                                    <div formArrayName="fields" class="flex flex-col gap-2">
+                                        @for (champ of champsDeLEtape(i).controls; track champ; let j = $index) {
+                                            <div [formGroupName]="j"
+                                                 class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end rounded-md border border-surface-200 p-2">
+                                                <div class="md:col-span-3 flex flex-col gap-1">
+                                                    <label class="text-[11px] text-surface-500">Libellé affiché</label>
+                                                    <input pInputText formControlName="fieldLabel" placeholder="Avis motivé" />
+                                                </div>
+                                                <div class="md:col-span-3 flex flex-col gap-1">
+                                                    <label class="text-[11px] text-surface-500">Nom technique</label>
+                                                    <input pInputText formControlName="fieldName" placeholder="avis" />
+                                                </div>
+                                                <div class="md:col-span-2 flex flex-col gap-1">
+                                                    <label class="text-[11px] text-surface-500">Type</label>
+                                                    <p-select formControlName="type" [options]="typesChamp"
+                                                              optionLabel="label" optionValue="value"></p-select>
+                                                </div>
+                                                <div class="md:col-span-2 flex flex-col gap-1">
+                                                    <label class="text-[11px] text-surface-500">Choix (séparés par des virgules)</label>
+                                                    <input pInputText formControlName="options"
+                                                           [disabled]="champ.get('type')?.value !== 'SELECT'"
+                                                           placeholder="Oui,Non" />
+                                                </div>
+                                                <div class="md:col-span-1 flex items-center gap-1 pb-2">
+                                                    <p-checkbox formControlName="required" [binary]="true"></p-checkbox>
+                                                    <span class="text-[11px] text-surface-500">Requis</span>
+                                                </div>
+                                                <div class="md:col-span-1 flex justify-end pb-1">
+                                                    <p-button icon="pi pi-trash" severity="danger" [text]="true"
+                                                              [rounded]="true" size="small"
+                                                              (onClick)="supprimerChamp(i, j)"></p-button>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="dialogueOuvert = false"></p-button>
+        <p-button label="Enregistrer" icon="pi pi-check" [loading]="enregistrement" (onClick)="enregistrer()"></p-button>
+    </ng-template>
+</p-dialog>
+
+<!-- ------------------------------------------------------------------ Consultation -->
+<p-dialog [(visible)]="dialogueDetailOuvert" [modal]="true" [style]="{ width: '48rem' }" [draggable]="false"
+          [header]="circuitConsulte?.nom || 'Circuit'">
+    @if (circuitConsulte) {
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+            <p-tag severity="secondary" [value]="libelleType(circuitConsulte.resourceType)"></p-tag>
+            @if (circuitConsulte.actif) {
+                <p-tag severity="success" value="Actif" icon="pi pi-check-circle"></p-tag>
+            } @else {
+                <p-tag severity="secondary" value="Inactif"></p-tag>
+            }
+            <p-tag severity="info" [value]="nombreEtapes(circuitConsulte) + ' étape(s)'"></p-tag>
+        </div>
+
+        @if (circuitConsulte.description) {
+            <p class="text-sm text-surface-600 mb-4">{{ circuitConsulte.description }}</p>
+        }
+
+        <div class="flex flex-col gap-3">
+            @for (etape of etapesTriees(circuitConsulte); track etape.code; let i = $index) {
+                <div class="rounded-lg border border-surface-200 p-3">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-contrast text-xs font-bold">
+                            {{ i + 1 }}
+                        </span>
+                        <span class="font-medium">{{ etape.nomEtape }}</span>
+                        @if (etape.responsableRole) {
+                            <p-tag severity="secondary" [value]="etape.responsableRole"></p-tag>
+                        }
+                        @if (etape.etatTraitement) {
+                            <span class="text-[11px] text-surface-400">→ {{ etape.etatTraitement }}</span>
+                        }
+                    </div>
+
+                    @if (etape.description) {
+                        <p class="text-xs text-surface-500 mb-2">{{ etape.description }}</p>
+                    }
+
+                    <div class="flex flex-col gap-1">
+                        @for (transition of etape.transitions; track transition.decision) {
+                            <div class="flex items-center gap-2 text-xs">
+                                @if (transition.decision === 'APPROUVE') {
+                                    <i class="pi pi-check-circle text-emerald-600"></i>
+                                } @else {
+                                    <i class="pi pi-times-circle text-red-600"></i>
+                                }
+                                <span class="font-medium">{{ transition.label || transition.decision }}</span>
+                                <span class="text-surface-500">{{ descriptionTransition(transition, circuitConsulte) }}</span>
+                                @if (transition.requiredRole) {
+                                    <p-tag severity="secondary" [value]="transition.requiredRole"></p-tag>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    @if (etape.fields?.length) {
+                        <div class="mt-2 pt-2 border-t border-surface-100">
+                            <div class="text-[11px] uppercase text-surface-400 mb-1">Champs à renseigner</div>
+                            <div class="flex flex-wrap gap-1">
+                                @for (champ of etape.fields; track champ.fieldName) {
+                                    <p-tag severity="secondary"
+                                           [value]="champ.fieldLabel + (champ.required ? ' *' : '')"></p-tag>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    <ng-template pTemplate="footer">
+        <p-button label="Fermer" severity="secondary" [text]="true" (onClick)="dialogueDetailOuvert = false"></p-button>
+    </ng-template>
+</p-dialog>

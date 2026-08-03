@@ -1,10 +1,27 @@
 import { UserInfos } from "./auth.model";
+import {
+  StepDecision,
+  WorkflowDto,
+  WorkflowStepDto,
+  WorkflowStepFieldDto,
+  WorkflowTransitionDto
+} from "./workflow.model";
 
 export interface QmsDocumentType {
   id?: string;
   code: string;
   libelle: string;
   folderName: string;
+  /**
+   * Circuit de validation ouvert sur les documents de ce type.
+   *
+   * Le serveur le prévoyait de longue date, mais aucun écran ne permettait de le renseigner :
+   * tous les types restaient sans circuit, et la création retombait sur le circuit actif. Faute
+   * de pouvoir exprimer « ce type suit ce circuit », des circuits étaient créés avec le code du
+   * type de document en guise de type de ressource — ce qui empêchait toute notification, la
+   * remise ne sachant router que DOCUMENT, NON_CONFORMITE et PLAN_ACTION.
+   */
+  workflowId?: string | null;
   createdAt?: string;
   createdById?: string;
   currentUserfullName?: string;
@@ -106,45 +123,18 @@ export interface SharedDocumentDto {
   grantedBy?: string;
 }
 
-export type WorkflowDecision = 'APPROUVE' | 'REJETE';
-
-export interface WorkflowTransition {
-  id?: number;
-  decision: WorkflowDecision;
-  /** Code de l'étape de destination : clé stable, à préférer au rang. */
-  toStepCode?: string | null;
-  /** La décision clôt le circuit, au lieu de mener à une autre étape. */
-  terminal?: boolean;
-  toStepOrder?: number | null;
-  requiredRole?: string | null;
-  label?: string | null;
-}
-
-export interface WorkflowStep {
-  id?: number;
-  /** Identifiant fonctionnel fixé à la création, non modifiable ensuite. */
-  code?: string | null;
-  nomEtape: string;
-  stepOrder: number;
-  responsableRole: string;
-  description?: string;
-  transitions?: WorkflowTransition[];
-  stepTemplateId?: string | null;
-  /** Modèle d'e-mail envoyé au responsable à l'arrivée du dossier sur l'étape. */
-  emailTemplateCode?: string | null;
-  /** Champs que le responsable doit renseigner pour décider. */
-  fields?: WorkflowStepField[];
-}
-
-export interface WorkflowStepField {
-  id?: number | null;
-  fieldName: string;
-  fieldLabel: string;
-  /** Valeurs de l'énumération FieldType du serveur : TEXT, NUMERIC, SELECT, DATE, FILE. */
-  type: string;
-  required: boolean;
-  options?: string | null;
-}
+/**
+ * Étape, transition et champ de saisie : alias du contrat canonique de workflow-service.
+ *
+ * Ces trois formes étaient décrites une seconde fois ici, et les deux descriptions avaient
+ * divergé — le module documentaire ignorait `etatTraitement`, le contrat canonique ignorait
+ * `terminal`. Un seul jeu de définitions fait désormais foi ({@code models/workflow.model.ts}),
+ * ces noms restant disponibles pour les écrans documentaires qui s'y réfèrent.
+ */
+export type WorkflowDecision = StepDecision;
+export type WorkflowTransition = WorkflowTransitionDto;
+export type WorkflowStep = WorkflowStepDto;
+export type WorkflowStepField = WorkflowStepFieldDto;
 
 export interface WorkflowStepTemplate {
   id?: string;
@@ -156,13 +146,16 @@ export interface WorkflowStepTemplate {
   createdAt?: string;
 }
 
-export interface DocumentWorkflow {
-  id?: string;
-  nom: string;
+/**
+ * Circuit tel que le manipule le module documentaire.
+ *
+ * Étend le contrat canonique de workflow-service ({@link WorkflowDto}) au lieu de le redéfinir :
+ * les deux descriptions avaient divergé, celle-ci ignorant notamment `actif`, sur lequel repose
+ * le choix du circuit ouvert par les services métier. Seuls les attributs propres à l'affichage
+ * documentaire restent déclarés ici.
+ */
+export interface DocumentWorkflow extends WorkflowDto {
   documentType?: string;
-  resourceType?: string;
-  description?: string;
-  steps: WorkflowStep[];
   createdAt?: string;
   createdBy?: string;
 }

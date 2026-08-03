@@ -162,19 +162,35 @@
         *ngIf="canViewHistory" (click)="viewHistory.emit(document)"></button>
       <button pButton label="Piste d'audit" icon="pi pi-shield" class="p-button-text p-button-secondary p-button-sm"
         *ngIf="canViewAudit" (click)="viewAudit.emit(document)"></button>
+      <button pButton label="Traçabilité" icon="pi pi-verified" class="p-button-text p-button-secondary p-button-sm"
+        *ngIf="canViewHistory" pTooltip="Qui a validé, quand et pourquoi"
+        (click)="viewValidationHistory.emit(document)"></button>
       <button pButton label="Partage" icon="pi pi-users" class="p-button-text p-button-secondary p-button-sm"
         *ngIf="canShare" (click)="share.emit(document)"></button>
     </div>
 
-    <div class="flex flex-wrap gap-2 align-items-center">
-      <span class="text-xs text-slate-500" *ngIf="canValidate && allowedActions.length === 0">
-        Aucune décision attendue de votre part à cette étape.
+    <div class="flex flex-column align-items-end gap-1">
+      <div class="flex flex-wrap gap-2 align-items-center">
+        <span class="text-xs text-slate-500" *ngIf="canValidate && circuitTermine">
+          <i class="pi pi-check-circle text-emerald-600 mr-1"></i>Circuit terminé.
+        </span>
+        <span class="text-xs text-slate-500" *ngIf="canValidate && !circuitTermine && allowedActions.length === 0">
+          Aucune décision attendue de votre part à cette étape.
+        </span>
+        <ng-container *ngIf="canValidate">
+          <button *ngFor="let action of allowedActions" pButton
+            [label]="action.libelle" [icon]="actionIcon(action)" [class]="actionClass(action)"
+            [pTooltip]="action.permission ? ('Rôle attendu : ' + action.permission) : ''"
+            (click)="executeAction.emit(action)"></button>
+        </ng-container>
+      </div>
+
+      <!-- Annoncé avant d'ouvrir le dialogue : le serveur refuse la décision tant que ces
+           champs ne sont pas renseignés, autant le dire à l'avance. -->
+      <span class="text-[11px] text-slate-400" *ngIf="canValidate && allowedActions.length && champsAttendus.length">
+        <i class="pi pi-info-circle mr-1"></i>
+        À renseigner pour décider : {{ champsAttendus.join(', ') }}
       </span>
-      <ng-container *ngIf="canValidate">
-        <button *ngFor="let action of allowedActions" pButton
-          [label]="action.libelle" [icon]="actionIcon(action)" [class]="actionClass(action)"
-          (click)="executeAction.emit(action)"></button>
-      </ng-container>
     </div>
   </div>
 </div>

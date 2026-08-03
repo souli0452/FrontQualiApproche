@@ -1,6 +1,6 @@
 <p-dialog [header]="'Exécuter l\'action : ' + (action?.libelle || '')"
   [visible]="visible" (visibleChange)="visible = $event; visibleChange.emit($event)"
-  [modal]="true" [style]="{ width: '40rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }">
+  [modal]="true" [style]="{ width: '42rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }">
 
   <div class="p-fluid mt-2" *ngIf="document">
     <div class="p-3 bg-slate-50 border border-slate-200 border-round mb-4 flex align-items-center justify-content-between flex-wrap gap-2">
@@ -17,15 +17,59 @@
       </div>
     </div>
 
-    <form [formGroup]="form" class="p-fluid">
-      <label class="block text-sm font-bold text-slate-700 mb-1.5">
-        Commentaires / observations <span class="text-red-500">*</span>
-      </label>
-      <textarea pTextarea formControlName="comments" rows="4"
-        placeholder="Motivez votre décision…" class="w-full"></textarea>
-      <small class="p-error block mt-1" *ngIf="form.get('comments')?.invalid && form.get('comments')?.touched">
-        Un commentaire est requis pour tracer la décision.
-      </small>
+    <form [formGroup]="form" class="p-fluid flex flex-column gap-4">
+
+      <!-- Champs exigés par l'étape courante. Le serveur refuse la décision tant qu'un champ
+           requis manque : les présenter ici évite un aller-retour perdu. -->
+      <ng-container *ngIf="stepFields.length">
+        <div class="flex flex-column gap-3">
+          <div class="text-xs font-bold uppercase text-slate-500">
+            Informations demandées à cette étape
+          </div>
+
+          <div *ngFor="let champ of stepFields" class="flex flex-column gap-1">
+            <label class="block text-sm font-bold text-slate-700">
+              {{ champ.fieldLabel || champ.fieldName }}
+              <span class="text-red-500" *ngIf="champ.required">*</span>
+            </label>
+
+            <ng-container [ngSwitch]="champ.type">
+              <textarea *ngSwitchCase="'TEXTAREA'" pTextarea rows="3" class="w-full"
+                [formControlName]="nomDeControle(champ)"></textarea>
+
+              <input *ngSwitchCase="'NUMERIC'" pInputText type="number" class="w-full"
+                [formControlName]="nomDeControle(champ)" />
+
+              <input *ngSwitchCase="'DATE'" pInputText type="date" class="w-full"
+                [formControlName]="nomDeControle(champ)" />
+
+              <select *ngSwitchCase="'SELECT'" class="p-inputtext w-full"
+                [formControlName]="nomDeControle(champ)">
+                <option value="">—</option>
+                <option *ngFor="let choix of choixDuChamp(champ)" [value]="choix">{{ choix }}</option>
+              </select>
+
+              <input *ngSwitchDefault pInputText type="text" class="w-full"
+                [formControlName]="nomDeControle(champ)" />
+            </ng-container>
+
+            <small class="p-error block" *ngIf="estInvalide(nomDeControle(champ))">
+              Ce champ est obligatoire pour valider cette étape.
+            </small>
+          </div>
+        </div>
+      </ng-container>
+
+      <div class="flex flex-column gap-1">
+        <label class="block text-sm font-bold text-slate-700">
+          Commentaires / observations <span class="text-red-500">*</span>
+        </label>
+        <textarea pTextarea formControlName="comments" rows="4"
+          placeholder="Motivez votre décision…" class="w-full"></textarea>
+        <small class="p-error block" *ngIf="estInvalide('comments')">
+          Un commentaire est requis pour tracer la décision.
+        </small>
+      </div>
     </form>
   </div>
 

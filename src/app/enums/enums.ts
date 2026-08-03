@@ -26,6 +26,30 @@ export enum TypeStructure {
     SERVICE = 'SERVICE'
 }
 
+/**
+ * Modules souscrits par la direction, tels qu'inscrits dans la licence. Recopie exacte de
+ * l'énumération `ModuleAbonnement` du back : ces noms voyagent chiffrés dans la licence, et un
+ * écart d'une lettre ferme un pan entier de l'application sans le moindre message.
+ *
+ * C'est précisément ce qui se produisait avec la chaîne libre `'AUTRE_MODULE'`, qui ne
+ * correspondait à aucun module : Audite, Réglementation et Critères d'évaluation étaient
+ * invisibles pour tout le monde. Passer par cette énumération rend l'erreur impossible.
+ */
+export enum ModuleAbonnement {
+    NON_CONFORMITE = 'NON_CONFORMITE',
+    DOCUMENTAIRE = 'DOCUMENTAIRE',
+    RECLAMATION = 'RECLAMATION',
+    RISQUE = 'RISQUE',
+    AUDIT = 'AUDIT',
+    FORMATION = 'FORMATION',
+    REGLEMENTATION = 'REGLEMENTATION',
+    EVALUATION = 'EVALUATION',
+    CONTEXTE = 'CONTEXTE'
+    // Pas de PLAN_ACTION : le plan d'action relève du traitement des non-conformités, donc du
+    // module NON_CONFORMITE. À ne pas confondre avec le `ResourceType` du même nom (workflow.model),
+    // qui désigne la famille de ressource d'un circuit de validation.
+}
+
 export enum NonConformStatus {
     PENDIND = 'PENDIND',
     NON_TRAITER = 'NON_TRAITER',
