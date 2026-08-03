@@ -10,7 +10,7 @@ import { Structure } from '../../parametrages/structure/structure-config/structu
 import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
 import { QmsDocumentType, DocumentWorkflow } from '../../../models/gestion-documentaire.model';
 import { AuthService } from '../../../services/auth-services/auth.service';
-import { WorkflowService } from '../../../services/module-gestion-documentaire/workflow.service';
+import { WorkflowService } from '../../../services/workflow.service';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({

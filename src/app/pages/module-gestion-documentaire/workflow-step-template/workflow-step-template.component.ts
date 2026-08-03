@@ -28,6 +28,10 @@ export class WorkflowStepTemplateComponent implements OnInit, OnDestroy {
 
     tableCols: TableColumn[] = [
         { field: 'nomEtape', header: "Nom de l'étape", type: 'string', filter: true },
+        // Le code est ce que l'entrée transmet aux circuits qui s'en inspirent : c'est lui qui fait
+        // qu'une même nature d'étape porte partout le même identifiant. L'écran le taisait, alors
+        // qu'il détermine le code de toute étape composée à partir du catalogue.
+        { field: 'code', header: 'Code', type: 'string', filter: true, width: '12rem' },
         { field: 'responsableRoleLabel', header: 'Rôle responsable', type: 'string', filter: true },
         { field: 'description', header: 'Description', type: 'string', filter: false },
 
@@ -62,9 +66,14 @@ export class WorkflowStepTemplateComponent implements OnInit, OnDestroy {
         this.fetchRoles();
     }
 
+    /**
+     * Les entrées d'avant la bascule portent encore un identifiant de rôle : on les affiche sous
+     * le nom correspondant plutôt que sous un UUID. Une entrée enregistrée depuis porte déjà le
+     * nom, et se retrouve ici inchangée.
+     */
     getRoleLabel(roleIdOrName: string | undefined | null): string {
         if (!roleIdOrName) return '';
-        const role = this.rolesList.find(r => r.value === roleIdOrName || r.label === roleIdOrName);
+        const role = this.rolesList.find(r => r.value === roleIdOrName || r.id === roleIdOrName);
         return role ? role.label : roleIdOrName;
     }
 
@@ -75,9 +84,17 @@ export class WorkflowStepTemplateComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (res) => {
                     if (res && res.data && res.data.content) {
+                        // La valeur retenue est le **nom** du rôle, comme dans l'éditeur de
+                        // circuits : c'est le nom qu'inscrivent les étapes, et sur son égalité
+                        // exacte que reposent l'habilitation à décider et la notification des
+                        // titulaires. Une entrée de catalogue enregistrée avec l'identifiant du
+                        // rôle ne désignait personne, et son étape n'avait plus ni décideur ni
+                        // destinataire. L'identifiant reste porté à côté, pour relire les entrées
+                        // enregistrées avant cette bascule.
                         this.rolesList = res.data.content.map((r: any) => ({
                             label: r.name || r.code || r.libelle || r.id,
-                            value: r.id
+                            value: r.name || r.code || r.libelle || r.id,
+                            id: r.id
                         }));
                         this.templates = this.templates.map(t => ({
                             ...t,
@@ -133,7 +150,10 @@ export class WorkflowStepTemplateComponent implements OnInit, OnDestroy {
         this.editingId = template.id;
         this.templateForm.patchValue({
             nomEtape: template.nomEtape,
-            responsableRole: template.responsableRole,
+            // Ramené au nom du rôle : sur une entrée d'avant la bascule, la liste — désormais
+            // indexée par nom — ne reconnaîtrait pas l'identifiant et présenterait un champ vide,
+            // que le premier enregistrement effacerait pour de bon.
+            responsableRole: this.getRoleLabel(template.responsableRole) || null,
             description: template.description
         });
         this.showDialog = true;

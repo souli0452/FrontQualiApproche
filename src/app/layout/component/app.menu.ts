@@ -5,9 +5,9 @@ import { MenuItem } from 'primeng/api';
 import { AppMenuitem } from './app.menuitem';
 import { AuthService } from '../../services/auth-services/auth.service';
 import { ChangeDetectorRef } from '@angular/core';
-import { ProcNonConformiteService } from '../../services/non-conformite/proc-non-conformite.service';
 import { NonConformiteService } from '../../services/non-conformite/non-conformite.service';
-import { hasAnyPermission, isLicenseActive, isModuleSubscribed } from '../../utils/auth/auth-utils';
+import { hasAnyPermission, hasMenuProfile, isLicenseActive, isModuleSubscribed } from '../../utils/auth/auth-utils';
+import { ModuleAbonnement } from '../../enums/enums';
 
 @Component({
     selector: 'app-menu',
@@ -32,201 +32,161 @@ import { hasAnyPermission, isLicenseActive, isModuleSubscribed } from '../../uti
 })
 export class AppMenu {
     model: MenuItem[] = [];
-    roles:any[]=[];
+    roles: any[] = [];
+
     constructor(
         private readonly nonConformiteService: NonConformiteService,
         private authService: AuthService,
         private cdr: ChangeDetectorRef
     ) {}
 
+    /**
+     * Une entrée de menu ne s'affiche que si les trois conditions sont réunies : licence active,
+     * module souscrit par la direction, et permission détenue par l'utilisateur.
+     *
+     * Le module est facultatif : toutes les rubriques ne relèvent pas d'un abonnement (l'accueil,
+     * la configuration). En exiger un là où il n'existe pas revenait à masquer l'entrée pour tout
+     * le monde — c'est ce que faisait le module fictif « AUTRE_MODULE », absent de l'énumération
+     * ModuleAbonnement du back : aucune direction ne pouvait y avoir souscrit.
+     */
+    private peutVoir(permissions: string[], module?: string): boolean {
+        if (!isLicenseActive()) return false;
+        if (module && !isModuleSubscribed(module)) return false;
+        return hasAnyPermission(permissions);
+    }
+
+    /**
+     * Visibilité d'une rubrique de premier niveau.
+     *
+     * Les permissions `menu-*` permettent de fermer une rubrique entière à un rôle, même s'il
+     * détient des permissions fonctionnelles à l'intérieur. Elles ne s'appliquent toutefois qu'aux
+     * profils qui en possèdent au moins une : un rôle créé sur mesure avant leur introduction n'en
+     * a aucune, et se verrait sinon privé de tout le menu du jour au lendemain. Pour ceux-là, la
+     * règle reste l'ancienne — la rubrique suit ses entrées.
+     */
+    private rubriqueVisible(permissionMenu: string, items: MenuItem[]): boolean {
+        const auMoinsUneEntree = items.some(item => item.visible !== false);
+        if (!auMoinsUneEntree) return false;
+        return hasMenuProfile() ? hasAnyPermission([permissionMenu]) : true;
+    }
+
+    /** Rubrique dont le libellé, l'icône et les entrées sont déjà arrêtés. */
+    private rubrique(label: string, icon: string, permissionMenu: string, items: MenuItem[]): MenuItem {
+        return {
+            label,
+            icon,
+            visible: this.rubriqueVisible(permissionMenu, items),
+            items: items.filter(item => item.visible !== false)
+        };
+    }
 
     ngOnInit() {
-        this.model = [
-            {
-                label: 'Accueil',
-                items: [{ label: 'Tableau de bord', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
-            },
+        const accueil = [
+            { label: 'Tableau de bord', icon: 'pi pi-fw pi-home', routerLink: ['/'], visible: isLicenseActive() }
+        ];
+
+        const documentaire = [
             {
                 label: 'Gestion documentaire',
                 icon: 'pi pi-fw pi-briefcase',
-                routerLink: ['/'],
-                items:[
-                    {
-                        label: 'Gestion documentaire',
-                        icon: 'pi pi-fw pi-briefcase',
-                        routerLink: ['/gestion-documentaire'],
-                    },
-                ]
-            },
-            {
-                label: 'Qualité & Conformité',
-                icon: 'pi pi-fw pi-briefcase',
-                routerLink: ['/'],
-                items: [
-                    { label: 'Audite', icon: 'pi pi-fw pi-eye', visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['AUDITE_READ']), routerLink: ['/audite'] },
-                    { label: 'Non-Conformités', icon: 'pi pi-fw pi-briefcase', visible: isLicenseActive() && isModuleSubscribed('NON_CONFORMITE') && hasAnyPermission(['SUBMIT_NC']), routerLink: ['/non-conformite'] },
-                    // =={ label: 'Non conformité', icon: 'pi pi-fw pi-times', visible: isLicenseActive() && isModuleSubscribed('NON_CONFORMITE') && hasAnyPermission(['SUBMIT_NC']), routerLink: ['/nc'] },
-                    { label: 'Réglementation', visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['REGLEMENTATION_READ']), icon: 'pi pi-fw pi-file-edit', routerLink: ['/reglementation'] },
-                    { label: "Critères d'évaluation", visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['CRITERE_EVAL_READ']), icon: 'pi pi-fw pi-file', routerLink: ['/critere-evaluation'] }
-                ]
-            },
-            // {
-            //     label: 'TRAITEMENTS DES DEMANDES',
-            //     icon: 'pi pi-fw pi-envelope',
-            //     visible: isLicenseActive() && isModuleSubscribed('NON_CONFORMITE'),
-            //     routerLink: ['/'],
-            //     items: [
-            //         {
-            //             label: 'Non-conformité',
-            //             icon: 'pi pi-fw pi-envelope',
-            //             visible: isModuleSubscribed('NON_CONFORMITE') && hasAnyPermission(['TRAITEMENT_NC']),
-            //             items: [
-            //                 {
-            //                     label: 'Analyse initiale du pilote ',
-            //                     icon: 'pi pi-fw pi-user-plus',
-            //                     routerLink: ['/reception'],
-            //                     visible: hasAnyPermission(['RECEPTION_NC'])
-            //                 },
-
-            //                 {
-            //                     label: 'Validation par  RQ ',
-            //                     icon: 'pi pi-fw pi-check',
-            //                     routerLink: ['/validation_rs'],
-            //                     visible: hasAnyPermission(['VALIDATION_RQ'])
-            //                 },
-
-            //                 {
-            //                     label: 'Affectation des responsables ',
-            //                     icon: 'pi pi-fw pi-arrow-up-right',
-            //                     routerLink: ['/imputation'],
-            //                     visible: hasAnyPermission(['IMPUTATION_NC'])
-            //                 },
-            //                 {
-            //                     label: 'Proposition d’actions correctives',
-            //                     icon: 'pi pi-fw pi-cog',
-            //                     routerLink: ['/traitement'],
-            //                     visible: hasAnyPermission(['TRAITEMENT_NC'])
-            //                 },
-            //                 {
-            //                     label: 'Validation des actions',
-            //                     icon: 'pi pi-fw pi-check',
-            //                     routerLink: ['/validation'],
-            //                     visible: isUserInRoles(['VALIDATION_CHEF'])
-            //                 },
-            //                 {
-            //                     label: 'Suivi par RQ',
-            //                     icon: 'pi pi-fw pi-bullseye',
-            //                     routerLink: ['/cloture'],
-            //                     visible: hasAnyPermission(['RQ_NC'])
-            //                 },
-            //                 {
-            //                     label: 'Suivi des non-conformités',
-            //                     icon: 'pi pi-fw pi-eye',
-            //                     routerLink: ['/consultation'],
-            //                     visible: hasAnyPermission(['CONSULTATION_NC'])
-            //                 }
-            //             ]
-            //         },
-            //         {
-            //             label: "Traitement des plans d'actions",
-            //             icon: 'pi pi-fw pi-cog',
-            //             visible: hasAnyPermission(['TRAITEMENT_PLAN']) && isModuleSubscribed('NON_CONFORMITE'),
-            //             routerLink: ['/traitement-action']
-            //         }
-            //     ]
-            // },
-            {
-                label: 'Gestion des Ressources',
-                icon: 'pi pi-fw pi-briefcase',
-                visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['RESOURCES_READ']),
-                routerLink: ['/'],
-                items: [
-                    { label: 'Formation', icon: 'pi pi-fw pi-book', routerLink: ['/formation'] },
-                    { label: 'Fournisseur', icon: 'pi pi-fw pi-users', routerLink: ['/fournisseur'] },
-                    { label: 'Prestataire', icon: 'pi pi-fw pi-user-plus', routerLink: ['/prestataire'] },
-                    { label: 'Produit', icon: 'pi pi-fw pi-box', routerLink: ['/produit'] }
-                    // {
-                    //     label: 'Crud',
-                    //     icon: 'pi pi-fw pi-pencil',
-                    //     routerLink: ['/pages/crud']
-                    // },
-                    // {
-                    //     label: 'Not Found',
-                    //     icon: 'pi pi-fw pi-exclamation-circle',
-                    //     routerLink: ['/pages/notfound']
-                    // },
-                    // {
-                    //     label: 'Empty',
-                    //     icon: 'pi pi-fw pi-circle-off',
-                    //     routerLink: ['/pages/empty']
-                    // }
-                ]
-            },
-            {
-                label: 'Gestion des Actions',
-                icon: 'pi pi-fw pi-briefcase',
-                visible: isLicenseActive() && isModuleSubscribed('AUTRE_MODULE') && hasAnyPermission(['ACTIONS_READ']),
-                routerLink: ['/'],
-                items: [
-                    { label: 'Action corrective et préventive', icon: 'pi pi-fw pi-list-check', routerLink: ['/action-corrective-preventive'] },
-                    { label: 'Réclamation', visible: isModuleSubscribed('RECLAMATION'), icon: 'pi pi-fw pi-exclamation-triangle', routerLink: ['/reclamation'] },
-                    { label: 'Risque', visible: isModuleSubscribed('RISQUE'), icon: 'pi pi-fw pi-ban', routerLink: ['/risque'] }
-                ]
-            },
-            // {
-            //     label: 'Configurations',
-            //     icon: 'pi pi-fw pi-briefcase',
-            //     visible: isLicenseActive() && hasAnyPermission(['CONFIG_READ']),
-            //     routerLink: ['/'],
-            //     items: [
-            //         { label: 'Services (Processus)', visible: isLicenseActive() && hasAnyPermission(['SERVICE_MANAGE']), icon: 'pi pi-building', routerLink: ['/service'] },
-            //         { label: 'Type  processus', visible: isLicenseActive() && hasAnyPermission(['TYPE_PROC_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/type-processus'] },
-            //         // { label: 'Config global', visible: isLicenseActive() && hasAnyPermission(['CONFIG_GLOBAL_MANAGE']), icon: 'pi pi-cog', routerLink: ['/page/config-global'] }
-            //     ]
-            // },
-            // {
-            //     label: 'Paramétrage Non-Conformité',
-            //     icon: 'pi pi-fw pi-cog',
-            //     visible: isLicenseActive() && isModuleSubscribed('NON_CONFORMITE') && hasAnyPermission(['CONFIG_READ']),
-            //     items: [
-            //         { label: 'Origine non-conformité', visible: isLicenseActive() && hasAnyPermission(['NC_ORIGIN_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/type-nc'] },
-            //         // { label: 'Niveau  non-conformité', visible: isLicenseActive() && hasAnyPermission(['NC_LEVEL_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/page/niveau-nc'] },
-            //         { label: 'Type action entreprise', visible: isLicenseActive() && hasAnyPermission(['ACTION_TYPE_MANAGE']), icon: 'pi pi-fw pi-cog', routerLink: ['/type-action'] }
-            //     ]
-            {
-                label: 'Configurations',
-                icon: 'pi pi-sliders-h',
-                visible: true,
-                items: [
-                    { label: 'Configurations Globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'], visible: true },
-                    { label: 'Paramétrage Type Document', icon: 'pi pi-fw pi-file-edit', routerLink: ['/parametrage-document'] },
-                    { label: 'Configuration Workflows', icon: 'pi pi-sitemap', routerLink: ['/configuration-workflow'] }
-                ]
+                routerLink: ['/gestion-documentaire'],
+                visible: this.peutVoir(['document-read', 'document-write', 'DOC_READ'], ModuleAbonnement.DOCUMENTAIRE)
             }
         ];
-            // On écoute les changements du badge !
-    this.nonConformiteService.notificationsNC$.subscribe((notifs: any) => {
+
+        const qualite = [
+            {
+                label: 'Audite', icon: 'pi pi-fw pi-eye', routerLink: ['/audite'],
+                visible: this.peutVoir(['AUDITE_READ'], ModuleAbonnement.AUDIT)
+            },
+            {
+                label: 'Non-Conformités', icon: 'pi pi-fw pi-briefcase', routerLink: ['/non-conformite'],
+                visible: this.peutVoir(['nc-read', 'nc-write', 'NC_READ', 'SUBMIT_NC'], ModuleAbonnement.NON_CONFORMITE)
+            },
+            {
+                label: 'Réglementation', icon: 'pi pi-fw pi-file-edit', routerLink: ['/reglementation'],
+                visible: this.peutVoir(['reglementation-read', 'REGLEMENTATION_READ'], ModuleAbonnement.REGLEMENTATION)
+            },
+            {
+                label: "Critères d'évaluation", icon: 'pi pi-fw pi-file', routerLink: ['/critere-evaluation'],
+                visible: this.peutVoir(['exigence-read', 'CRITERE_EVAL_READ'], ModuleAbonnement.EVALUATION)
+            }
+        ];
+
+        const ressources = [
+            {
+                label: 'Formation', icon: 'pi pi-fw pi-book', routerLink: ['/formation'],
+                visible: this.peutVoir(['formation-read', 'RESOURCES_READ'], ModuleAbonnement.FORMATION)
+            },
+            {
+                label: 'Fournisseur', icon: 'pi pi-fw pi-users', routerLink: ['/fournisseur'],
+                visible: this.peutVoir(['fournisseur-read', 'RESOURCES_READ'])
+            },
+            {
+                label: 'Prestataire', icon: 'pi pi-fw pi-user-plus', routerLink: ['/prestataire'],
+                visible: this.peutVoir(['prestataire-read', 'RESOURCES_READ'])
+            },
+            {
+                label: 'Produit', icon: 'pi pi-fw pi-box', routerLink: ['/produit'],
+                visible: this.peutVoir(['produit-read', 'RESOURCES_READ'])
+            }
+        ];
+
+        const actions = [
+            {
+                label: 'Action corrective et préventive', icon: 'pi pi-fw pi-list-check',
+                routerLink: ['/action-corrective-preventive'],
+                visible: this.peutVoir(['action-corrective-read', 'action-read', 'ACTIONS_READ'], ModuleAbonnement.NON_CONFORMITE)
+            },
+            {
+                label: 'Réclamation', icon: 'pi pi-fw pi-exclamation-triangle', routerLink: ['/reclamation'],
+                visible: this.peutVoir(['reclamation-read', 'RECLAMATION_READ'], ModuleAbonnement.RECLAMATION)
+            },
+            {
+                label: 'Risque', icon: 'pi pi-fw pi-ban', routerLink: ['/risque'],
+                visible: this.peutVoir(['risque-read', 'RISQUE_READ'], ModuleAbonnement.RISQUE)
+            }
+        ];
+
+        const configurations = [
+            {
+                label: 'Configurations Globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'],
+                visible: this.peutVoir(['config-global-read', 'config-global-write', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'])
+            },
+            {
+                label: 'Paramétrage Type Document', icon: 'pi pi-fw pi-file-edit', routerLink: ['/parametrage-document'],
+                visible: this.peutVoir(['document-type-read', 'document-type-write'], ModuleAbonnement.DOCUMENTAIRE)
+            },
+            {
+                label: 'Configuration Workflows', icon: 'pi pi-sitemap', routerLink: ['/configuration-workflow'],
+                visible: this.peutVoir(['workflow-read', 'workflow-write'])
+            }
+        ];
+
+        this.model = [
+            this.rubrique('Accueil', 'pi pi-fw pi-home', 'menu-accueil', accueil),
+            this.rubrique('Gestion documentaire', 'pi pi-fw pi-briefcase', 'menu-gestion-documentaire', documentaire),
+            this.rubrique('Qualité & Conformité', 'pi pi-fw pi-verified', 'menu-qualite', qualite),
+            this.rubrique('Gestion des Ressources', 'pi pi-fw pi-database', 'menu-ressources', ressources),
+            this.rubrique('Gestion des Actions', 'pi pi-fw pi-list-check', 'menu-actions', actions),
+            this.rubrique('Configurations', 'pi pi-sliders-h', 'menu-configuration', configurations)
+        ].filter(rubrique => rubrique.visible);
+
+        // On écoute les changements du badge !
+        this.nonConformiteService.notificationsNC$.subscribe((notifs: any) => {
             const total = notifs.total;
-            // On trouve l'élément "Non-conformité" dans l'arbre du menu
-            // On trouve la rubrique "Qualité & Conformité"
+            // La rubrique peut être masquée pour cet utilisateur : il n'y a alors pas de badge à poser.
             const menuQualite = this.model.find(m => m.label === 'Qualité & Conformité');
             if (menuQualite && menuQualite.items) {
-                // On trouve le sous-menu "Non-Conformités" (celui qui a la valise)
                 const menuNC = menuQualite.items.find(i => i.label === 'Non-Conformités');
 
                 if (menuNC) {
                     // PrimeNG permet d'ajouter un 'badge' sur n'importe quel MenuItem
-                    // On met le total (en string), ou rien s'il est à zéro
                     menuNC.badge = total > 0 ? total.toString() : undefined;
-
-                    // Optionnel : ajouter une classe CSS pour le rendre rouge par exemple
                     menuNC.badgeStyleClass = 'bg-red-500 text-white font-bold';
-
-                    // On force Angular à rafraîchir le composant
                     this.cdr.detectChanges();
                 }
             }
         });
     }
-
 }

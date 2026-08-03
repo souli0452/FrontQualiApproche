@@ -88,9 +88,19 @@
         <td>
           <div class="flex flex-column gap-1">
             <p-tag [value]="statusLabel(doc)" [severity]="statusSeverity(doc)" styleClass="text-xs w-fit"></p-tag>
-            <span class="text-xs text-slate-400" *ngIf="doc.currentEtape">
-              <i class="pi pi-arrow-right text-xs mr-1"></i>{{ doc.currentEtape }}
+
+            <!-- Étape telle que la connaît le moteur, à défaut celle recopiée sur le document. -->
+            <span class="text-xs text-slate-400" *ngIf="etapeDeCircuit(doc) && !circuitTermine(doc)">
+              <i class="pi pi-arrow-right text-xs mr-1"></i>{{ etapeDeCircuit(doc) }}
             </span>
+            <span class="text-xs text-emerald-600" *ngIf="circuitTermine(doc)">
+              <i class="pi pi-check-circle text-xs mr-1"></i>Circuit terminé
+            </span>
+
+            <!-- Le serveur ne rend que les actions ouvertes à l'appelant : cette pastille
+                 signale donc précisément les dossiers que cet utilisateur doit traiter. -->
+            <p-tag *ngIf="aUneDecisionAttendue(doc)" severity="warn" icon="pi pi-bell"
+              value="Action attendue" styleClass="text-xs w-fit"></p-tag>
           </div>
         </td>
 

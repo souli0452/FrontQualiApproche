@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject } from 'rxjs';
+import { Subject, forkJoin } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MessageService, MenuItem } from 'primeng/api';
 import { NgPrimeModule } from '../../../../prime-ng.module';
@@ -13,24 +13,25 @@ import {
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 import { Structure } from '../../parametrages/structure/structure-config/structure';
 import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
-import { WorkflowService } from '../../../services/module-gestion-documentaire/workflow.service';
+import { WorkflowError, WorkflowService } from '../../../services/workflow.service';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentType, QmsDocumentVersion, DocumentWorkflow, WorkflowStep } from '../../../models/gestion-documentaire.model';
-import { WorkflowStateDto, WorkflowActionDto } from '../../../models/workflow.model';
+import { WorkflowStateDto, WorkflowActionDto, ValidationHistoryDto } from '../../../models/workflow.model';
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
 import { QmsDocumentListComponent } from './components/qms-document-list.component';
 import { QmsDocumentDetailComponent } from './components/qms-document-detail.component';
 import { QmsDocumentHistoryComponent } from './components/qms-document-history.component';
 import { QmsDocumentAuditComponent } from './components/qms-document-audit.component';
 import { QmsTransitionDialogComponent, TransitionDecision } from './components/qms-transition-dialog.component';
-import { QmsWorkflowDecisionDialogComponent } from './components/qms-workflow-decision-dialog.component';
+import { DecisionConfirmee, QmsWorkflowDecisionDialogComponent } from './components/qms-workflow-decision-dialog.component';
+import { QmsWorkflowHistoriqueComponent } from './components/qms-workflow-historique.component';
 import { QmsAssignWorkflowDialogComponent } from './components/qms-assign-workflow-dialog.component';
 import { QmsDocumentAccessDialogComponent, AccessGrant } from './components/qms-document-access-dialog.component';
 
 @Component({
   selector: 'app-qms-document',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, QmsTransitionDialogComponent, QmsWorkflowDecisionDialogComponent, QmsAssignWorkflowDialogComponent, QmsDocumentAccessDialogComponent],
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, QmsTransitionDialogComponent, QmsWorkflowDecisionDialogComponent, QmsWorkflowHistoriqueComponent, QmsAssignWorkflowDialogComponent, QmsDocumentAccessDialogComponent],
   templateUrl: './qms-document.component.html',
   styleUrls: ['./qms-document.component.scss'],
   providers: [MessageService, DatePipe]
@@ -70,7 +71,11 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     { label: 'Modification', value: 'WRITE' }
   ];
 
-  currentView: 'list' | 'detail' | 'history' | 'audit' = 'list';
+  currentView: 'list' | 'detail' | 'history' | 'audit' | 'tracabilite' = 'list';
+  /** Décisions successives du circuit, distinctes des versions du fichier et des accès. */
+  validationHistory: ValidationHistoryDto[] = [];
+  /** États de circuit des documents listés, indexés par identifiant de document. */
+  workflowStates: Record<string, WorkflowStateDto> = {};
   actionMenuItems: MenuItem[] = [];
 
   // Selected object contexts
@@ -107,6 +112,9 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   readonly statusSeverityFn = (doc: DocumentQms) => this.getStatusSeverity(doc);
   readonly actionIconFn = (action: any) => this.getIconForAction(action);
   readonly actionClassFn = (action: any) => this.getClassForAction(action);
+  readonly etapeDeCircuitFn = (doc: DocumentQms) => this.etapeDeCircuit(doc);
+  readonly aUneDecisionAttendueFn = (doc: DocumentQms) => this.aUneDecisionAttendue(doc);
+  readonly circuitTermineFn = (doc: DocumentQms) => this.circuitTermine(doc);
 
   ngOnInit(): void {
     this.loadInitialData();
@@ -156,12 +164,62 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
         next: (docs: DocumentQms[]) => {
           this.documents = docs;
           this.loading = false;
+          this.chargerEtatsDeCircuit(docs);
         },
         error: (err: any) => {
           this.loading = false;
           showToast(StatusEnum.error, err.status, 'Erreur de chargement des documents', this.messageService, err);
         }
       });
+  }
+
+  /**
+   * État de circuit de chaque document affiché, en une requête groupée.
+   *
+   * <p>La liste ne montrait que l'étape recopiée sur le document ({@code currentEtape}), tenue à
+   * jour par notification : elle ne dit ni si le circuit est clos, ni — surtout — si une décision
+   * est attendue de l'utilisateur qui regarde. Le serveur, lui, filtre déjà les actions selon les
+   * habilitations de l'appelant ; c'est cette information qui manquait pour qu'on sache quoi
+   * traiter sans ouvrir chaque fiche.</p>
+   *
+   * <p>Un échec est silencieux : la liste reste exploitable avec l'étape recopiée, et cet
+   * enrichissement ne vaut pas de la faire échouer.</p>
+   */
+  private chargerEtatsDeCircuit(docs: DocumentQms[]): void {
+    const identifiants = docs.map((doc) => doc.id).filter((id): id is string => !!id);
+    if (identifiants.length === 0) {
+      this.workflowStates = {};
+      return;
+    }
+
+    // Le serveur borne le lot ; au-delà, la demande est découpée plutôt que refusée.
+    const lots: string[][] = [];
+    for (let i = 0; i < identifiants.length; i += WorkflowService.TAILLE_LOT_MAX) {
+      lots.push(identifiants.slice(i, i + WorkflowService.TAILLE_LOT_MAX));
+    }
+
+    forkJoin(lots.map((lot) => this.workflowService.getWorkflowStatesForResources(lot)))
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (resultats) => {
+          this.workflowStates = Object.assign({}, ...resultats);
+        },
+        error: () => console.warn("États de circuit indisponibles pour la liste des documents.")
+      });
+  }
+
+  /** Une décision est attendue de l'utilisateur courant sur ce document. */
+  aUneDecisionAttendue(doc: DocumentQms): boolean {
+    return (this.workflowStates[doc.id ?? '']?.allowedActions?.length ?? 0) > 0;
+  }
+
+  /** Étape courante telle que la connaît le moteur, à défaut celle recopiée sur le document. */
+  etapeDeCircuit(doc: DocumentQms): string | undefined {
+    return this.workflowStates[doc.id ?? '']?.currentStateName ?? doc.currentEtape;
+  }
+
+  circuitTermine(doc: DocumentQms): boolean {
+    return this.workflowStates[doc.id ?? '']?.status === 'TERMINE';
   }
 
   navigateToCreate(): void {
@@ -391,7 +449,13 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     this.showWorkflowModal = true;
   }
 
-  submitWorkflowDecision(comments: string): void {
+  /**
+   * Transmet la décision, commentaire et champs saisis compris.
+   *
+   * <p>Seul le commentaire partait jusqu'ici : une étape exigeant d'autres saisies se soldait par
+   * un refus en 400 que l'écran ne permettait pas de corriger, faute de présenter les champs.</p>
+   */
+  submitWorkflowDecision(decision: DecisionConfirmee): void {
     if (!this.selectedDocument || !this.selectedWorkflowAction) return;
 
     this.loading = true;
@@ -401,25 +465,83 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     // a changé d'étape entre-temps, ce qui neutralise aussi le second envoi d'un double clic.
     const expectedStateCode = this.workflowState?.currentStateCode;
 
-    this.workflowService.executeTransition(docId, actionCode, comments, expectedStateCode).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        this.loading = false;
-        this.showWorkflowModal = false;
-        this.selectedWorkflowAction = undefined;
-        this.refreshList();
-          this.loadInitialData();
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Action exécutée',
-          detail: 'L\'action a été enregistrée avec succès.'
-        });
-      },
-      error: (err: any) => {
-        this.loading = false;
-        const msg = err.error?.message || "Échec de l'action du workflow";
-        showToast(StatusEnum.error, err.status, msg, this.messageService, err);
-      }
+    this.workflowService
+      .executeTransition(docId, actionCode, {
+        comments: decision.comments,
+        expectedStateCode,
+        fields: decision.fields
+      })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.loading = false;
+          this.showWorkflowModal = false;
+          this.selectedWorkflowAction = undefined;
+          this.refreshList();
+          // La fiche reste affichée après la décision : sans relecture, elle continuerait à
+          // proposer les actions de l'étape précédente, que le serveur refuserait désormais.
+          if (this.currentView === 'detail' && this.selectedDocument) {
+            this.viewDetails(this.selectedDocument);
+          }
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Action exécutée',
+            detail: "L'action a été enregistrée avec succès."
+          });
+        },
+        error: (erreur: WorkflowError) => {
+          this.loading = false;
+          this.signalerErreurWorkflow(erreur);
+        }
+      });
+  }
+
+  /**
+   * Présente le message du serveur plutôt qu'un libellé générique.
+   *
+   * <p>workflow-service rédige des messages destinés à l'utilisateur, qui disent quoi faire :
+   * quels champs manquent, ou que le dossier a changé d'étape. Dans ce dernier cas l'écran est
+   * périmé — le dialogue est refermé et la fiche rechargée, sinon l'utilisateur réessaierait
+   * indéfiniment une action qui ne peut plus aboutir.</p>
+   */
+  private signalerErreurWorkflow(erreur: WorkflowError): void {
+    this.messageService.add({
+      severity: erreur.estInterdit ? 'warn' : 'error',
+      summary: erreur.estPerime ? 'Dossier modifié entre-temps' : "Action impossible",
+      detail: erreur.message,
+      life: 8000
     });
+
+    if (erreur.estPerime) {
+      this.showWorkflowModal = false;
+      this.selectedWorkflowAction = undefined;
+      if (this.selectedDocument) {
+        this.viewDetails(this.selectedDocument);
+      }
+      this.refreshList();
+    }
+  }
+
+  /** Décisions successives du circuit : qui a validé, quand, sur quels motifs. */
+  viewValidationHistory(doc: DocumentQms): void {
+    this.selectedDocument = doc;
+    this.validationHistory = [];
+    this.loading = true;
+    this.currentView = 'tracabilite';
+
+    this.workflowService
+      .getValidationHistory(doc.id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (historique) => {
+          this.validationHistory = historique;
+          this.loading = false;
+        },
+        error: (erreur: WorkflowError) => {
+          this.loading = false;
+          this.signalerErreurWorkflow(erreur);
+        }
+      });
   }
 
   /**

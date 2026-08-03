@@ -30,11 +30,12 @@ export class ConfigurationWorkflowLayoutComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.activeTab = this.router.url.split('?')[0];
+        // Une seule entrée pour les circuits : ils se configuraient auparavant dans deux écrans
+        // distincts selon le type de ressource, alors qu'ils partagent le même modèle.
         this.items = [
-            { label: 'Email Templates', icon: 'pi pi-envelope', routerLink: '/configuration-workflow/email-template' },
-            { label: 'Workflow Non-Conformité', icon: 'pi pi-exclamation-triangle', routerLink: '/configuration-workflow/non-conformite' },
-            { label: 'Workflow Documentaire', icon: 'pi pi-file', routerLink: '/configuration-workflow/document' },
+            { label: 'Circuits de validation', icon: 'pi pi-sitemap', routerLink: '/configuration-workflow/circuits' },
             { label: 'Catalogue des Étapes', icon: 'pi pi-list-check', routerLink: '/configuration-workflow/etapes' },
+            { label: 'Modèles d’e-mail', icon: 'pi pi-envelope', routerLink: '/configuration-workflow/email-template' },
         ];
     }
 

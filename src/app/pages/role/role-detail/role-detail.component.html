@@ -22,10 +22,21 @@
                     <div class="field w-full mb-4">
                         <label for="name" class="block layout-topbar-title font-bold text-gray-700 mb-2 uppercase text-xs">Identité du rôle</label>
                         <p-floatlabel variant="on" class="w-full block">
-                            <input pInputText id="name" type="text" formControlName="name" class="w-full" />
+                            <input pInputText id="name" type="text" formControlName="name" class="w-full"
+                                   [readonly]="isEdit" [class.surface-100]="isEdit" />
                             <label for="name">Libellé du rôle <span class="text-red-500">*</span></label>
                         </p-floatlabel>
-                        <small class="block mt-1 text-gray-500">Donnez un nom explicite pour identifier ce rôle dans la liste.</small>
+                        @if (isEdit) {
+                            <!-- Le serveur refuse le renommage en 409 : mieux vaut le dire ici que
+                                 de laisser découvrir le refus après coup. -->
+                            <small class="block mt-1 text-gray-500">
+                                Le nom d'un rôle publié n'est plus modifiable : les étapes des circuits, le
+                                catalogue d'étapes et les notifications désignent ce rôle par son nom. La
+                                description, elle, reste librement modifiable.
+                            </small>
+                        } @else {
+                            <small class="block mt-1 text-gray-500">Donnez un nom explicite pour identifier ce rôle dans la liste.</small>
+                        }
                     </div>
 
                     <div class="field w-full">

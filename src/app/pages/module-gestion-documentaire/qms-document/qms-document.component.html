@@ -12,6 +12,9 @@
       [selectedService]="selectedService"
       [statusLabel]="statusLabelFn"
       [statusSeverity]="statusSeverityFn"
+      [etapeDeCircuit]="etapeDeCircuitFn"
+      [aUneDecisionAttendue]="aUneDecisionAttendueFn"
+      [circuitTermine]="circuitTermineFn"
       (searchQueryChange)="searchQuery = $event"
       (selectedTypeChange)="selectedType = $event"
       (selectedServiceChange)="selectedService = $event"
@@ -53,6 +56,7 @@
   (downloadPdf)="downloadSecuredPdf($event)"
   (viewHistory)="viewVersionHistory($event)"
   (viewAudit)="viewAuditLogs($event)"
+  (viewValidationHistory)="viewValidationHistory($event)"
   (share)="openShareModal($event)"
   (executeAction)="executeDynamicAction($event)">
 </app-qms-document-detail>
@@ -73,6 +77,18 @@
   [auditLogs]="auditLogs"
   (close)="currentView = 'list'">
 </app-qms-document-audit>
+
+<!-- ========================================================================= -->
+<!-- 5 bis. TRAÇABILITÉ DU CIRCUIT DE VALIDATION -->
+<!-- Distincte des deux vues ci-dessus : celles-ci portent sur les versions du -->
+<!-- fichier et sur les accès, aucune ne disait qui avait validé, ni pourquoi. -->
+<!-- ========================================================================= -->
+<app-qms-workflow-historique *ngIf="currentView === 'tracabilite' && selectedDocument"
+  [document]="selectedDocument"
+  [historique]="validationHistory"
+  [loading]="loading"
+  (close)="currentView = 'list'">
+</app-qms-workflow-historique>
 
 </div>
 
@@ -115,6 +131,7 @@
   [document]="selectedDocument"
   [action]="selectedWorkflowAction"
   [loading]="loading"
+  [stepFields]="workflowState?.currentStepFields"
   [visible]="showWorkflowModal"
   (visibleChange)="showWorkflowModal = $event"
   (confirm)="submitWorkflowDecision($event)">
