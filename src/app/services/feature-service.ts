@@ -10,7 +10,7 @@ import { ReportingInput } from '../utils/fichier/fichier-utils';
 
 @Injectable({providedIn: 'root'})
 export class FeaturesService {
-    REPORTING_URL = `${SERVICE_PREFIX}/reports/reporting`;
+    REPORTING_URL = `${SERVICE_PREFIX}/api/v1/reports/reporting`;
 
     loader = new BehaviorSubject(false);
     private reaload = new Subject<boolean>();

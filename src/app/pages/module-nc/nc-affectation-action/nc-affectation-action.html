@@ -4,7 +4,7 @@
     <p>Espace dédié à l'affectation des non-conformités aux collaborateurs ou responsables.</p>
 </div>
 
-<app-nc-filter-bar (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
+<app-nc-filter-bar [showProcessus]="false" (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
 
     <!-- 1. Affichage normal du tableau (s'il y a des données) -->
     <div *ngIf="affectationData.length > 0">

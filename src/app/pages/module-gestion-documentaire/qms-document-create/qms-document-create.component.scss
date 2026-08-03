@@ -1,7 +1,33 @@
 /* ===================================================
    QMS Document Create - Simple form + Editor Dialog
    =================================================== */
+::ng-deep .custom-nc-upload {
+    /* Vos styles personnalisés (hauteur, fond gris, bouton personnalisé, etc.) */
+    background-color: var(--surface-ground) !important;
+    border: 2px dashed var(--surface-border) !important;
+}
 
+::ng-deep  .uploader-container {
+    height: 60% !important;
+    padding: 10px !important;
+    display: flex;
+    justify-content: center;
+
+    .file-list{
+        width: 100% !important;
+        display: flex;
+        justify-content: center;
+    }
+}
+
+::ng-deep .text-content {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: max-content !important;
+    opacity: .4 !important;
+}
 .qms-container {
   .card {
     border-radius: 8px;
@@ -24,18 +50,18 @@
   color: #64748b;
 
   &:hover {
-    border-color: #6366f1;
+    border-color: var(--primary-color);
     background: #f5f3ff;
-    color: #6366f1;
+    color: var(--primary-color);
   }
 
   &.mode-active {
-    border-color: #6366f1;
+    border-color: var(--primary-color);
     background: #eef2ff;
-    color: #6366f1;
+    color: var(--primary-color);
 
-    i { color: #6366f1; }
-    span:first-of-type { color: #4338ca; font-weight: 700; }
+    i { color: var(--primary-color); }
+    span:first-of-type { color: var(--primary-color); font-weight: 700; }
   }
 
   i { font-size: 22px; color: #94a3b8; transition: color 0.2s; }

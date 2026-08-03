@@ -224,17 +224,32 @@ export class TraitementGlobalComponent {
                     }
                 }
             }
-            if (process && process.id) {
-                if (item.typeProcessusId !== process.id) isValid = false;
+        // 1. Pour les Processus
+        if (process && process.length > 0) {
+            const selectedIds = process.map((p: any) => p.id);
+            if (!selectedIds.includes(item.typeProcessusId)) {
+                isValid = false;
             }
-            if (gravite && gravite.id) {
-                if (item.niveauNonConformiteId !== gravite.id) isValid = false;
+        }
+
+        // 2. Pour les Gravités
+        if (gravite && gravite.length > 0) {
+            const selectedIds = gravite.map((g: any) => g.id);
+            if (!selectedIds.includes(item.niveauNonConformiteId)) {
+                isValid = false;
             }
-            if (origine && origine.id) {
-                if (item.typeNonConformiteId !== origine.id) isValid = false;
+        }
+
+        // 3. Pour les Origines
+        if (origine && origine.length > 0) {
+            const selectedIds = origine.map((o: any) => o.id);
+            if (!selectedIds.includes(item.typeNonConformiteId)) {
+                isValid = false;
             }
-            return isValid;
-        };
+        }
+
+          return isValid;
+      };
 
         this.mesNonConformites = this.mesNonConformitesRaw.filter(filterFn);
     }

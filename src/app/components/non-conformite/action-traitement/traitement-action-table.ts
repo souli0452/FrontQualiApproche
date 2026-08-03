@@ -266,6 +266,12 @@ export class TraitementActionTable implements OnInit {
         }
     }
 
+    removeExistingFile(index: number) {
+        if (this.planAction.fichiers) {
+            this.planAction.fichiers.splice(index, 1);
+        }
+    }
+
     getSeverity(gravity: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
         if (!gravity) return 'secondary';
         

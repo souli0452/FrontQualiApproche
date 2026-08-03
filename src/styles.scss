@@ -10,55 +10,13 @@
     --info-color: #0084ca !important;
 }
 
-html {
-    font-size: 14px;
-}
 
-@font-face {
-    font-family: 'Poppins';
-    src: url('./assets/fonts/Poppins-Light.ttf') format('truetype');
-    font-weight: 300;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'Poppins';
-    src: url('./assets/fonts/Poppins-Regular.ttf') format('truetype');
-    font-weight: 400;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'Poppins';
-    src: url('./assets/fonts/Poppins-Medium.ttf') format('truetype');
-    font-weight: 500;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'Poppins';
-    src: url('./assets/fonts/Poppins-SemiBold.ttf') format('truetype');
-    font-weight: 600;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'Poppins';
-    src: url('./assets/fonts/Poppins-Bold.ttf') format('truetype');
-    font-weight: 700;
-    font-style: normal;
-}
-
-body {
-    font-family: 'Poppins', sans-serif;
-    font-size: 1rem;
-}
 
 .font-bold,
 .p-dialog-title,
 .p-fieldset-legend-label,
 .p-step-title {
-    font-weight: 700;
+    font-weight: 900;
 }
 
 .hidden{
@@ -491,4 +449,39 @@ p-button .p-button-info {
 
 .uploader-container{
   height: 145px !important;
+}
+
+
+
+
+.p-select-overlay {
+    cursor: default;
+    background: var(--p-select-overlay-background);
+    color: var(--p-select-overlay-color);
+    border: 1px solid var(--p-select-overlay-border-color);
+    border-radius: var(--p-select-overlay-border-radius);
+    box-shadow: none !important;
+}
+
+.p-inputtext:enabled:focus {
+    border-color: var(--secondary-color) !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.p-select-option:hover, .p-select-option.p-select-option-selected.p-focus {
+    background: var(--secondary-color) !important;
+    color: white !important;
+}
+
+.layout-menu ul ul.ng-trigger-children a .layout-menuitem-icon {
+    opacity: 0;
+}
+
+.p-datepicker-day-selected{
+    background: var(--secondary-color) !important;
+}
+
+.p-breadcrumb {
+    background: transparent !important;
 }

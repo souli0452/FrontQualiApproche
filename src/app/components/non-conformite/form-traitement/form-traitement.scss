@@ -420,3 +420,27 @@
         }
     }
 }
+
+
+
+.p-textarea:enabled:focus, .p-inputchips:focus {
+    border-color: var(--secondary-color) !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+.p-inputchips:not(.p-disabled):hover .p-inputchips-input:focus{
+    box-shadow: none !important;
+    outline: none !important;
+    border-color: var(--secondary-color) !important;
+}
+.p-textarea{
+    box-shadow: none !important;
+}
+.p-select-overlay {
+    cursor: default;
+    background: var(--p-select-overlay-background);
+    color: var(--p-select-overlay-color);
+    border: 1px solid var(--p-select-overlay-border-color);
+    border-radius: var(--p-select-overlay-border-radius);
+    box-shadow: none !important;
+}

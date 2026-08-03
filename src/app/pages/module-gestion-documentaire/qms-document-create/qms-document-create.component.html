@@ -1,180 +1,713 @@
 <p-toast></p-toast>
 
-<div class="qms-container p-4">
-
-  <!-- Page Header -->
-  <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 gap-3">
-    <div>
-      <div class="flex align-items-center gap-2 mb-1">
-        <button pButton pRipple icon="pi pi-arrow-left" class="p-button-rounded p-button-text p-button-secondary p-button-sm" (click)="goBack()"></button>
-        <h1 class="text-2xl font-bold text-slate-800 m-0">Nouveau Document QMS</h1>
-      </div>
-      <p class="text-sm text-slate-500 ml-6 m-0">Renseignez les informations du document et importez le fichier correspondant.</p>
-    </div>
-  </div>
-
-  <!-- Main Layout: Guide | Form -->
-  <div class="grid grid-cols-12 gap-4 align-items-start">
-
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- RIGHT PANEL: Formulaire                                -->
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <div class="col-span-12">
-      <div class="card p-4 shadow-sm border border-slate-200 bg-white">
-        <form [formGroup]="documentForm" class="p-fluid">
-
-          <!-- Section: Fichier -->
-          <div class="mb-4">
-            <h3 class="text-sm font-bold text-slate-700 flex align-items-center gap-2 mb-3 pb-2 border-bottom border-slate-100 mt-0">
-              <i class="pi pi-upload text-indigo-500"></i>
-              Fichier du document <span class="text-red-500">*</span>
-            </h3>
-            <div class="flex align-items-center gap-3 p-3 border border-dashed border-slate-300 rounded-lg bg-slate-50 cursor-pointer" onclick="document.getElementById('qmsFileInput').click()">
-              <input type="file" id="qmsFileInput" (change)="onFileSelected($event)" style="display: none;" />
-              <i class="pi pi-cloud-upload text-2xl text-slate-400"></i>
-              <div class="flex flex-column gap-1">
-                <p class="text-sm font-semibold text-slate-600 m-0">
-                  {{ selectedFile ? selectedFile.name : 'Cliquez pour choisir un fichier' }}
-                </p>
-                <p class="text-xs text-slate-400 m-0">
-                  {{ selectedFile ? ((selectedFile.size / 1024 | number:'1.0-1') + ' Ko') : 'Format PDF obligatoire pour les documents internes' }}
-                </p>
-              </div>
-              <i *ngIf="selectedFile" class="pi pi-check-circle text-green-500 text-xl ml-auto"></i>
-            </div>
+<form [formGroup]="documentForm" class="p-fluid">
+  <div class="flex flex-col md:flex-row">
+    <div class="w-full md:w-2/3 md:pr-4">
+      <div class="p-4 bg-gray-50 rounded-xl  border border-2 border-gray-100">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center bg-blue-50 text-blue-500 rounded-full" style="width: 3.5rem; height: 3.5rem">
+              <i class="pi text-2xl pi-plus-circle"></i>
           </div>
+          <div class="flex flex-col">
+              <span class="font-bold text-2xl text-900 mb-1">Nouveau Document QMS</span>
+              <span class="text-500 text-sm">Renseignez les informations du document et importez le fichier correspondant.</span>
+          </div>
+        </div>
+        <hr>
 
-          <!-- Section: Identification -->
-          <div class="mb-4">
-            <h3 class="text-sm font-bold text-slate-700 flex align-items-center gap-2 mb-3 pb-2 border-bottom border-slate-100 mt-0">
-              <i class="pi pi-id-card text-indigo-500"></i>
-              Identification du document
-            </h3>
-            <div class="grid grid-cols-12 gap-3">
-
-              <!-- Titre -->
-              <div class="col-span-12 md:col-span-6">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Titre du document <span class="text-red-500">*</span></label>
-                <input pInputText formControlName="titre" placeholder="Ex: Procédure de validation" class="w-full" />
+        <div class="flex flex-col md:flex-row justify-center p-0 gap-4">
+          <div class="w-full">
+            <div class="surface-section p-4 border-round shadow-1 h-full">
+              <div class="flex items-center mb-4 gap-2">
+                <i class="pi pi-id-card text-blue-500"></i>
+                <h3 class="text-xl font-bold text-900 my-0">Identification du document</h3>
               </div>
 
-              <!-- Type de document -->
-              <div class="col-span-12 md:col-span-6">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Type de document <span class="text-red-500">*</span></label>
-                <p-select [options]="documentTypes" formControlName="documentType" optionLabel="libelle" optionValue="code" placeholder="Sélectionner le type" class="w-full"></p-select>
-                <!-- Workflow associated preview -->
-                <div *ngIf="associatedWorkflow" class="mt-2 p-2.5 bg-indigo-50 border border-indigo-100 rounded flex align-items-center gap-2.5">
-                  <i class="pi pi-sitemap text-indigo-500 text-base"></i>
-                  <div class="text-left">
-                    <span class="text-[10px] text-indigo-700 font-bold uppercase block">Circuit de validation associé :</span>
-                    <span class="text-xs font-semibold text-slate-800">{{ associatedWorkflow.nom }} ({{ associatedWorkflow.steps?.length || 0 }} étapes)</span>
+              <div class="field mb-6 flex flex-col md:flex-row gap-4">
+                <div class="w-full md:w-1/2">
+                  <div class="flex items-center mb-2 gap-2">
+                    <label for="titre" class="font-semibold m-0">Titre du document <span class="text-red-500">*</span></label>
+                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="titreDocument.toggle($event)"></i>
+                  </div>
+                  <p-popover #titreDocument>
+                      <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                          Veuillez saisir le titre du document que vous souhaitez créer. Ex: Procédure de validation
+                      </div>
+                  </p-popover>
+                  <p-floatlabel variant="on">
+                    <input pInputText id="titre" formControlName="titre" class="w-full" />
+                    <label for="titre">Titre du document</label>
+                  </p-floatlabel>
+                </div>
+                <div class="w-full md:w-1/2">
+                  <div class="flex items-center mb-2 gap-2">
+                    <label for="titre" class="font-semibold m-0">Type de document <span class="text-red-500">*</span></label>
+                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="typeDocument.toggle($event)"></i>
+                  </div>
+                  <p-popover #typeDocument>
+                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                        Veuillez sélectionner le type de document que vous souhaitez créer.
+                    </div>
+                  </p-popover>
+                  <div class="flex-1 mt-2">
+                      <p-floatlabel variant="on" class="w-full">
+                          <p-select 
+                            id="documentType" 
+                            formControlName="documentType" 
+                            [options]="documentTypes"
+                            optionLabel="libelle"
+                            [filter]="true" 
+                            optionValue="code"
+                            class="w-full"
+                            [showClear]="true" 
+                            appendTo="body" 
+                            styleClass="w-full">
+                          </p-select>
+                          <label for="documentType">Sélectionner le type de document</label>
+                      </p-floatlabel>
+                  </div>
+                  <div *ngIf="associatedWorkflow" class="mt-2 p-2.5 bg-blue-50 border border-blue-100 rounded flex items-center gap-2.5">
+                    <i class="pi pi-sitemap text-blue-500 text-base"></i>
+                    <div class="text-left">
+                      <span class="text-[10px] text-blue-700 font-bold uppercase block">Circuit de validation associé :</span>
+                      <span class="text-xs font-semibold text-slate-800">{{ associatedWorkflow.nom }} ({{ associatedWorkflow.steps?.length || 0 }} étapes)</span>
+                    </div>
+                  </div>
+                  <!-- <div class="col-span-12 md:col-span-6">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Type de document <span class="text-red-500">*</span></label>
+                    <p-select [options]="documentTypes" formControlName="documentType" optionLabel="libelle" optionValue="code" placeholder="Sélectionner le type" class="w-full"></p-select>
+                    <div *ngIf="associatedWorkflow" class="mt-2 p-2.5 bg-blue-50 border border-blue-100 rounded flex items-center gap-2.5">
+                      <i class="pi pi-sitemap text-blue-500 text-base"></i>
+                      <div class="text-left">
+                        <span class="text-[10px] text-blue-700 font-bold uppercase block">Circuit de validation associé :</span>
+                        <span class="text-xs font-semibold text-slate-800">{{ associatedWorkflow.nom }} ({{ associatedWorkflow.steps?.length || 0 }} étapes)</span>
+                      </div>
+                    </div>
+                  </div> -->
+
+                </div>
+              </div>
+
+              <div class="field mb-6 flex flex-col md:flex-row gap-4">
+                <div class="w-full md:w-1/2">
+                  <div class="flex items-center mb-2 gap-2">
+                    <label for="titre" class="font-semibold m-0">Processus Émetteur <span class="text-red-500">*</span></label>
+                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="processusEmetteur.toggle($event)"></i>
+                  </div>
+                  <p-popover #processusEmetteur>
+                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                        Veuillez sélectionner le processus émetteur du document que vous souhaitez créer.
+                    </div>
+                  </p-popover>
+                  <div class="flex-1 mt-2">
+                      <p-floatlabel variant="on" class="w-full">
+                          <p-select 
+                            id="documentType" 
+                            formControlName="service" 
+                            [options]="structures"
+                            optionLabel="libelleLong"
+                            [filter]="true"
+                            class="w-full"
+                            [showClear]="true" 
+                            appendTo="body" 
+                            styleClass="w-full">
+                          </p-select>
+                          <label for="documentType">Sélectionner le processus émetteur</label>
+                      </p-floatlabel>
+                  </div>
+                  <div *ngIf="associatedWorkflow" class="mt-2 p-2.5 bg-blue-50 border border-blue-100 rounded flex items-center gap-2.5">
+                    <i class="pi pi-sitemap text-blue-500 text-base"></i>
+                    <div class="text-left">
+                      <span class="text-[10px] text-blue-700 font-bold uppercase block">Circuit de validation associé :</span>
+                      <span class="text-xs font-semibold text-slate-800">{{ associatedWorkflow.nom }} ({{ associatedWorkflow.steps?.length || 0 }} étapes)</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="w-full md:w-1/2">
+                  <div class="flex items-center mb-2 gap-2">
+                    <label for="titre" class="font-semibold m-0">Nom du Rédacteur  <span class="text-red-500">*</span></label>
+                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="redacteurDocument.toggle($event)"></i>
+                  </div>
+                  <p-popover #redacteurDocument>
+                      <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                          Veuillez saisir le nom du rédacteur du document que vous souhaitez créer. Ex: Jean Kaboré
+                      </div>
+                  </p-popover>
+                  <div class="flex-1 mt-2">
+                      <p-floatlabel variant="on" class="w-full">
+                          <input pInputText id="redacteur" formControlName="redacteur" class="w-full" />
+                          <label for="redacteur">Nom du Rédacteur</label>
+                      </p-floatlabel>
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="field mb-6 flex flex-col md:flex-row gap-4">
+                <div class="w-full md:w-1/2">
+                  <div class="flex items-center mb-2 gap-2">
+                    <label for="titre" class="font-semibold m-0">Périodicité de révision (mois)  <span class="text-red-500">*</span></label>
+                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="periodiciteRevision.toggle($event)"></i>
+                  </div>
+                  <p-popover #periodiciteRevision>
+                      <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                          Veuillez saisir la périodicité de révision du document que vous souhaitez créer. Ex: 12 mois
+                      </div>
+                  </p-popover>
+                  <div class="flex-1 mt-2">
+                      <p-floatlabel variant="on" class="w-full">
+                          <p-inputnumber id="periodiciteMois" formControlName="periodiciteMois" suffix=" mois" [min]="1" class="w-full" />
+                          <label for="periodiciteMois">Périodicité</label>
+                      </p-floatlabel>
                   </div>
                 </div>
               </div>
 
-              <!-- Processus émetteur -->
-              <div class="col-span-12 md:col-span-6">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Processus Émetteur <span class="text-red-500">*</span></label>
-                <p-select [options]="structures" formControlName="service" optionLabel="libelleLong" placeholder="Sélectionner le processus émetteur" [filter]="true" class="w-full"></p-select>
+
+
+              <div class="flex items-center mb-4 gap-2">
+                <i class="pi pi-tag text-blue-500"></i>
+                <h3 class="text-xl font-bold text-900 my-0">Métadonnées complémentaires</h3>
               </div>
 
-              <!-- Rédacteur -->
-              <div class="col-span-12 md:col-span-6">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Nom du Rédacteur <span class="text-red-500">*</span></label>
-                <input pInputText formControlName="redacteur" placeholder="Ex: Jean Kaboré" class="w-full" />
-              </div>
-
-              <!-- Périodicité -->
-              <div class="col-span-12 md:col-span-6">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Périodicité de révision (mois) <span class="text-red-500">*</span></label>
-                <p-inputNumber formControlName="periodiciteMois" suffix=" mois" [min]="1" class="w-full"></p-inputNumber>
-              </div>
-
-            </div>
-          </div>
-
-          <!-- Section: Métadonnées optionnelles -->
-          <div class="mb-4">
-            <h3 class="text-sm font-bold text-slate-700 flex align-items-center gap-2 mb-3 pb-2 border-bottom border-slate-100 mt-0">
-              <i class="pi pi-tags text-indigo-500"></i>
-              Métadonnées complémentaires
-            </h3>
-            <div class="grid grid-cols-12 gap-3">
-
-              <!-- Processus destinataire -->
-              <div class="col-span-12 md:col-span-6">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Processus Destinataire</label>
-                <p-select [options]="structures" formControlName="processusDest" optionLabel="libelleLong" placeholder="Sélectionner le processus destinataire" [showClear]="true" [filter]="true" class="w-full"></p-select>
-              </div>
-
-              <!-- Référence officielle -->
-              <div class="col-span-12 md:col-span-6">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Référence Officielle (ex: ISO 9001, ISO 9000...)</label>
-                <p-select [options]="referencesList" formControlName="referenceOfficielle" optionLabel="label" optionValue="value" placeholder="Sélectionner la référence" [showClear]="true" [filter]="true" class="w-full"></p-select>
-              </div>
-
-              <!-- Domaine -->
-              <div class="col-span-12 md:col-span-6">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Domaine d'application</label>
-                <p-select [options]="domainesList" formControlName="domaine" optionLabel="label" optionValue="value" placeholder="Sélectionner le domaine" [showClear]="true" class="w-full"></p-select>
-              </div>
-
-              <!-- Statut légal -->
-              <div class="col-span-12 md:col-span-6">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Statut Légal</label>
-                <p-select [options]="statutsList" formControlName="statutLegal" optionLabel="label" optionValue="value" placeholder="Sélectionner le statut" [showClear]="true" class="w-full"></p-select>
-              </div>
-
-            </div>
-          </div>
-
-          <!-- Section: Options -->
-          <div>
-            <h3 class="text-sm font-bold text-slate-700 flex align-items-center gap-2 mb-3 pb-2 border-bottom border-slate-100 mt-0">
-              <i class="pi pi-shield text-indigo-500"></i>
-              Options de diffusion
-            </h3>
-            <div class="flex gap-5 flex-wrap">
-              <div class="flex align-items-center gap-2">
-                <p-inputSwitch formControlName="confidentiel"></p-inputSwitch>
-                <div>
-                  <span class="text-sm font-semibold text-slate-700 block">Document Confidentiel</span>
-                  <span class="text-xs text-slate-400">Accès restreint aux utilisateurs autorisés</span>
+              <div class="field mb-6 flex flex-col md:flex-row gap-4">
+                <div class="w-full md:w-1/2">
+                  <div class="flex items-center mb-2 gap-2">
+                    <label for="titre" class="font-semibold m-0">Processus Destinataire <span class="text-red-500">*</span></label>
+                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="processusDestinataire.toggle($event)"></i>
+                  </div>
+                  <p-popover #processusDestinataire>
+                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                        Veuillez sélectionner le processus destinataire du document que vous souhaitez créer.
+                    </div>
+                  </p-popover>
+                  <div class="flex-1 mt-2">
+                      <p-floatlabel variant="on" class="w-full">
+                          <p-select 
+                            id="processusDestinataire" 
+                            [options]="structures" 
+                            formControlName="processusDest" 
+                            optionLabel="libelleLong"
+                            [filter]="true"
+                            class="w-full"
+                            [showClear]="true" 
+                            appendTo="body" 
+                            styleClass="w-full">
+                          </p-select>
+                          <label for="processusDestinataire">Sélectionner le processus destinataire</label>
+                      </p-floatlabel>
+                  </div>
+                </div>
+                
+                <div class="w-full md:w-1/2">
+                  <div class="flex items-center mb-2 gap-2">
+                    <label for="titre" class="font-semibold m-0">Référence Officielle (ex: ISO 9001, ISO 9000...) <span class="text-red-500">*</span></label>
+                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="referenceOfficielle.toggle($event)"></i>
+                  </div>
+                  <p-popover #referenceOfficielle>
+                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                        Veuillez sélectionner la référence officielle du document que vous souhaitez créer.
+                    </div>
+                  </p-popover>
+                  <div class="flex-1 mt-2">
+                      <p-floatlabel variant="on" class="w-full">
+                          <p-select 
+                            id="referenceOfficielle" 
+                            [options]="referencesList" 
+                            formControlName="referenceOfficielle" 
+                            optionLabel="label"
+                            [filter]="true"
+                            class="w-full"
+                            [showClear]="true" 
+                            appendTo="body" 
+                            styleClass="w-full">
+                          </p-select>
+                          <label for="referenceOfficielle">Sélectionner la référence officielle</label>
+                      </p-floatlabel>
+                  </div>
                 </div>
               </div>
-              <div class="flex align-items-center gap-2">
-                <p-inputSwitch formControlName="documentExterne"></p-inputSwitch>
-                <div>
-                  <span class="text-sm font-semibold text-slate-700 block">Document Externe</span>
-                  <span class="text-xs text-slate-400">Provient d'un organisme extérieur</span>
+
+              <div class="field mb-6 flex flex-col md:flex-row gap-4">
+                <div class="w-full md:w-1/2">
+                  <div class="flex items-center mb-2 gap-2">
+                    <label for="titre" class="font-semibold m-0">Domaine d'application <span class="text-red-500">*</span></label>
+                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="domaineApplication.toggle($event)"></i>
+                  </div>
+                  <p-popover #domaineApplication>
+                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                        Veuillez sélectionner le domaine d'application du document que vous souhaitez créer.
+                    </div>
+                  </p-popover>
+                  <div class="flex-1 mt-2">
+                      <p-floatlabel variant="on" class="w-full">
+                          <p-select 
+                            id="domaineApplication" 
+                            [options]="domainesList" 
+                            formControlName="domaine" 
+                            optionLabel="label"
+                            [filter]="true"
+                            class="w-full"
+                            [showClear]="true" 
+                            appendTo="body" 
+                            styleClass="w-full">
+                          </p-select>
+                          <label for="domaineApplication">Sélectionner le domaine d'application</label>
+                      </p-floatlabel>
+                  </div>
+                </div>
+                
+                <div class="w-full md:w-1/2">
+                  <div class="flex items-center mb-2 gap-2">
+                    <label for="titre" class="font-semibold m-0">Statut Légal <span class="text-red-500">*</span></label>
+                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="statutLegal.toggle($event)"></i>
+                  </div>
+                  <p-popover #statutLegal>
+                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                        Veuillez sélectionner le statut légal du document que vous souhaitez créer.
+                    </div>
+                  </p-popover>
+                  <div class="flex-1 mt-2">
+                      <p-floatlabel variant="on" class="w-full">
+                          <p-select 
+                            id="statutLegal" 
+                            [options]="statutsList" 
+                            formControlName="statutLegal" 
+                            optionLabel="label"
+                            [filter]="true"
+                            [showClear]="true" 
+                            appendTo="body" 
+                            class="w-full"
+                            styleClass="w-full">
+                          </p-select>
+                          <label for="statutLegal">Sélectionner le statut</label>
+                      </p-floatlabel>
+                  </div>
+                </div>
+              </div>
+
+
+              <div class="flex items-center mb-4 gap-2">
+                <i class="pi pi-shield text-blue-500"></i>
+                <h3 class="text-xl font-bold text-900 my-0">Options de diffusion</h3>
+              </div>
+
+              <div class="flex gap-5 flex-wrap">
+                <div class="flex items-center gap-2">
+                  <p-toggleswitch formControlName="confidentiel">
+                    <ng-template #handle>
+                        <i [ngClass]="['!text-xs', 'pi', checked ? 'pi-check' : 'pi-times']"></i>
+                    </ng-template>
+                  </p-toggleswitch>
+                  <div>
+                    <span class="text-sm font-semibold text-slate-700 block">Document Confidentiel</span>
+                    <span class="text-xs text-slate-400">Accès restreint aux utilisateurs autorisés</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <p-toggleswitch formControlName="documentExterne">
+                    <ng-template #handle>
+                        <i [ngClass]="['!text-xs', 'pi', checked ? 'pi-check' : 'pi-times']"></i>
+                    </ng-template>
+                  </p-toggleswitch>
+                  <div>
+                    <span class="text-sm font-semibold text-slate-700 block">Document Externe</span>
+                    <span class="text-xs text-slate-400">Provient d'un organisme extérieur</span>
+                  </div>
+                </div>
+              </div>
+
+            <div class="flex justify-between gap-2 mt-4 pt-4 border-slate-200">
+              <p-button label="Voir guide de saisie" severity="secondary" (click)="showGuideModal = true" />
+              <div class="flex gap-2">
+                <p-button label="Annuler" variant="outlined" severity="contrast" (click)="goBack()"/>
+                <p-button label="Enregistrer le document" severity="info" [disabled]="documentForm.invalid || !selectedFile" [loading]="loading" (click)="submitDocument()" />
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+    <!-- Main Layout: Guide | Form -->
+    <!-- <div class="grid grid-cols-12 gap-4 align-items-start">
+      <div class="col-span-12">
+        <div class="card p-4 shadow-sm border border-slate-200 bg-white">
+          <form [formGroup]="documentForm" class="p-fluid">
+
+            <div class="mb-4">
+              <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2 mb-3 pb-2 border-bottom border-slate-100 mt-0">
+                <i class="pi pi-upload text-blue-500"></i>
+                Fichier du document <span class="text-red-500">*</span>
+              </h3>
+              <div class="flex items-center gap-3 p-3 border border-dashed border-slate-300 rounded-lg bg-slate-50 cursor-pointer" onclick="document.getElementById('qmsFileInput').click()">
+                <input type="file" id="qmsFileInput" (change)="onFileSelected($event)" style="display: none;" />
+                <i class="pi pi-cloud-upload text-2xl text-slate-400"></i>
+                <div class="flex flex-column gap-1">
+                  <p class="text-sm font-semibold text-slate-600 m-0">
+                    {{ selectedFile ? selectedFile.name : 'Cliquez pour choisir un fichier' }}
+                  </p>
+                  <p class="text-xs text-slate-400 m-0">
+                    {{ selectedFile ? ((selectedFile.size / 1024 | number:'1.0-1') + ' Ko') : 'Format PDF obligatoire pour les documents internes' }}
+                  </p>
+                </div>
+                <i *ngIf="selectedFile" class="pi pi-check-circle text-green-500 text-xl ml-auto"></i>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2 mb-3 pb-2 border-bottom border-slate-100 mt-0">
+                <i class="pi pi-id-card text-blue-500"></i>
+                Identification du document
+              </h3>
+              <div class="grid grid-cols-12 gap-3">
+
+                <div class="col-span-12 md:col-span-6">
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Titre du document <span class="text-red-500">*</span></label>
+                  <input pInputText formControlName="titre" placeholder="Ex: Procédure de validation" class="w-full" />
+                </div>
+
+                <div class="col-span-12 md:col-span-6">
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Type de document <span class="text-red-500">*</span></label>
+                  <p-select [options]="documentTypes" formControlName="documentType" optionLabel="libelle" optionValue="code" placeholder="Sélectionner le type" class="w-full"></p-select>
+                  <div *ngIf="associatedWorkflow" class="mt-2 p-2.5 bg-blue-50 border border-blue-100 rounded flex items-center gap-2.5">
+                    <i class="pi pi-sitemap text-blue-500 text-base"></i>
+                    <div class="text-left">
+                      <span class="text-[10px] text-blue-700 font-bold uppercase block">Circuit de validation associé :</span>
+                      <span class="text-xs font-semibold text-slate-800">{{ associatedWorkflow.nom }} ({{ associatedWorkflow.steps?.length || 0 }} étapes)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-span-12 md:col-span-6">
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Processus Émetteur <span class="text-red-500">*</span></label>
+                  <p-select [options]="structures" formControlName="service" optionLabel="libelleLong" placeholder="Sélectionner le processus émetteur" [filter]="true" class="w-full"></p-select>
+                </div>
+
+                <div class="col-span-12 md:col-span-6">
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Nom du Rédacteur <span class="text-red-500">*</span></label>
+                  <input pInputText formControlName="redacteur" placeholder="Ex: Jean Kaboré" class="w-full" />
+                </div>
+
+                <div class="col-span-12 md:col-span-6">
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Périodicité de révision (mois) <span class="text-red-500">*</span></label>
+                  <p-inputNumber formControlName="periodiciteMois" suffix=" mois" [min]="1" class="w-full"></p-inputNumber>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2 mb-3 pb-2 border-bottom border-slate-100 mt-0">
+                <i class="pi pi-tags text-blue-500"></i>
+                Métadonnées complémentaires
+              </h3>
+              <div class="grid grid-cols-12 gap-3">
+
+                <div class="col-span-12 md:col-span-6">
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Processus Destinataire</label>
+                  <p-select [options]="structures" formControlName="processusDest" optionLabel="libelleLong" placeholder="Sélectionner le processus destinataire" [showClear]="true" [filter]="true" class="w-full"></p-select>
+                </div>
+
+                <div class="col-span-12 md:col-span-6">
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Référence Officielle (ex: ISO 9001, ISO 9000...)</label>
+                  <p-select [options]="referencesList" formControlName="referenceOfficielle" optionLabel="label" optionValue="value" placeholder="Sélectionner la référence" [showClear]="true" [filter]="true" class="w-full"></p-select>
+                </div>
+
+                <div class="col-span-12 md:col-span-6">
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Domaine d'application</label>
+                  <p-select [options]="domainesList" formControlName="domaine" optionLabel="label" optionValue="value" placeholder="Sélectionner le domaine" [showClear]="true" class="w-full"></p-select>
+                </div>
+
+                <div class="col-span-12 md:col-span-6">
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Statut Légal</label>
+                  <p-select [options]="statutsList" formControlName="statutLegal" optionLabel="label" optionValue="value" placeholder="Sélectionner le statut" [showClear]="true" class="w-full"></p-select>
+                </div>
+
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2 mb-3 pb-2 border-bottom border-slate-100 mt-0">
+                <i class="pi pi-shield text-blue-500"></i>
+                Options de diffusion
+              </h3>
+              <div class="flex gap-5 flex-wrap">
+                <div class="flex items-center gap-2">
+                  <p-inputSwitch formControlName="confidentiel"></p-inputSwitch>
+                  <div>
+                    <span class="text-sm font-semibold text-slate-700 block">Document Confidentiel</span>
+                    <span class="text-xs text-slate-400">Accès restreint aux utilisateurs autorisés</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <p-inputSwitch formControlName="documentExterne"></p-inputSwitch>
+                  <div>
+                    <span class="text-sm font-semibold text-slate-700 block">Document Externe</span>
+                    <span class="text-xs text-slate-400">Provient d'un organisme extérieur</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Buttons -->
-          <div class="flex justify-content-end gap-2 mt-4 pt-4 border-top border-slate-200">
-            <button pButton pRipple type="button" label="Voir guide de saisie" icon="pi pi-book" class="p-button-outlined p-button-info p-button-sm" (click)="showGuideModal = true"></button>
-            <button pButton pRipple type="button" label="Annuler" icon="pi pi-times" class="p-button-outlined p-button-secondary p-button-sm" (click)="goBack()"></button>
-            <button pButton pRipple type="button" label="Enregistrer le document" icon="pi pi-check" class="p-button-primary p-button-sm"
-              [disabled]="documentForm.invalid || !selectedFile" [loading]="loading" (click)="submitDocument()"></button>
-          </div>
+            <div class="flex justify-content-end gap-2 mt-4 pt-4 border-top border-slate-200">
+              <button pButton pRipple type="button" label="Voir guide de saisie" icon="pi pi-book" class="p-button-outlined p-button-info p-button-sm" (click)="showGuideModal = true"></button>
+              <button pButton pRipple type="button" label="Annuler" icon="pi pi-times" class="p-button-outlined p-button-secondary p-button-sm" (click)="goBack()"></button>
+              <button pButton pRipple type="button" label="Enregistrer le document" icon="pi pi-check" class="p-button-primary p-button-sm"
+                [disabled]="documentForm.invalid || !selectedFile" [loading]="loading" (click)="submitDocument()"></button>
+            </div>
 
-        </form>
+          </form>
+        </div>
+      </div>
+
+    </div> -->
       </div>
     </div>
+    </div>
 
+    <div class="w-full md:w-1/3 md:pl-4">
+      <div class="p-4 bg-gray-50 rounded-xl  border border-2 border-gray-100">
+          <div class="flex items-center mb-2 gap-2">
+              <h3 class="text-xl font-bold text-900 m-0">Fichier du document</h3>
+              <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoFichiers.toggle($event)"></i>
+          </div>
+          <p-popover #infoFichiers>
+              <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                  Veuillez importer le fichier officiel du document (Format PDF, Word, Excel ou PowerPoint, max. 20 Mo).
+              </div>
+          </p-popover>
+          
+          <app-file-upload 
+              styleClass="custom-nc-upload" 
+              [maxFiles]="1"
+              [maxFileSizeMB]="20"
+              [allowedExts]="['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']"
+              [existingFiles]="[]" 
+              (fileUploaded)="handleFileUpload($event)">
+          </app-file-upload>
+      </div>
+
+
+      <div class="p-4 bg-gray-50 rounded-xl mt-6 border border-2 border-gray-100">
+        <h3 class="text-xl font-bold text-900 mt-0 mb-4">Conseils de saisie</h3>
+        <div class="flex flex-col gap-3">
+            <div class="flex align-items-start gap-3">
+                <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+                <span class="text-700 line-height-3">Privilégiez le format <strong>PDF</strong> pour garantir que la mise en page officielle ne soit pas modifiée à la lecture.</span>
+            </div>
+
+            <div class="flex align-items-start gap-3">
+                <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+                <span class="text-700 line-height-3">Associez les bonnes <strong>références officielles</strong> (ex: ISO 9001) pour simplifier les prochains audits qualité.</span>
+            </div>
+
+            <div class="flex align-items-start gap-3">
+                <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+                <span class="text-700 line-height-3">Ciblez le bon <strong>processus émetteur</strong> afin que le document soit classé au bon endroit dans le QMS.</span>
+            </div>
+
+            <div class="flex align-items-start gap-3">
+                <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+                <span class="text-700 line-height-3">Définissez une <strong>périodicité de révision</strong> réaliste (ex: 12 ou 24 mois) pour maintenir sa conformité.</span>
+            </div>
+
+            <div class="flex align-items-start gap-3">
+                <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+                <span class="text-700 line-height-3">Vérifiez que le document ne contient pas de données confidentielles avant de désactiver l'option de restriction.</span>
+            </div>
+
+            <div class="flex align-items-start gap-3">
+                <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+                <span class="text-700 line-height-3">La taille maximale du fichier est de <strong>20 Mo</strong> pour assurer un chargement fluide pour tous les collaborateurs.</span>
+            </div>
+        </div>
+      </div>
+
+    </div>
   </div>
+</form>
+
+
+
+
+
+
+<!-- <div class="flex flex-col md:flex-row">
+    <div class="w-full md:w-2/3 md:pr-4">
+
+        <div class="p-4 bg-gray-50 rounded-xl  border border-2 border-gray-100">
+            <div class="flex items-center gap-3">
+              <div class="flex items-center justify-center bg-blue-50 text-blue-500 rounded-full" style="width: 3.5rem; height: 3.5rem">
+                  <i class="pi text-2xl pi-plus-circle"></i>
+              </div>
+              <div class="flex flex-col">
+                  <span class="font-bold text-2xl text-900 mb-1">Nouveau Document QMS</span>
+                  <span class="text-500 text-sm">Renseignez les informations du document et importez le fichier correspondant.</span>
+              </div>
+            </div>
+            <hr>
+            <div class="flex flex-col md:flex-row justify-center p-0 gap-4">
+
+                    <div class="w-full">
+                    <div class="surface-section p-4 border-round shadow-1 h-full">
+                        <div class="field mb-4">
+                            <div class="flex items-center mb-2 gap-2">
+                                <label for="justification" class="font-semibold m-0">Description détaillée de la non-conformité <span class="text-red-500">*</span></label>
+                                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoDesc.toggle($event)"></i>
+                            </div>
+                            <p-popover #infoDesc>
+                                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                                    Décrivez ici en détail le problème constaté, les circonstances de sa découverte et les éléments permettant de bien comprendre la nature de la non-conformité. Soyez le plus précis possible pour faciliter le traitement.
+                                </div>
+                            </p-popover>
+                            <textarea class="w-full" rows="5"cols="30" pTextarea [(ngModel)]="nonConformite.justification" [autoResize]="true" placeholder="Veuillez détailler le problème, les circonstances de son apparition et toute information utile pour l'analyse de la cause."></textarea>
+                        </div>
+                        <div class="flex flex-wrap gap-4 mt-4">
+                            <div class="flex-1 mt-2">
+                                <div class="flex items-center mb-2 gap-2">
+                                    <label for="justification" class="font-semibold m-0">Niveau de la non-conformité <span class="text-red-500">*</span></label>
+                                </div>
+                                <p-floatlabel variant="on" class="w-full">
+                                    <p-select id="niveauNonConformite" [(ngModel)]="nc.niveauNonConformite" [options]="niveauNcs"
+                                            optionLabel="libelle"
+                                            [filter]="true" [showClear]="true" appendTo="body" class="w-full" styleClass="w-full"
+                                            [class.p-invalid]="!nc.niveauNonConformite"></p-select>
+                                    <label for="niveauNonConformite">Sélectionner le niveau<span class="text-red-500">*</span></label>
+                                </p-floatlabel>
+                                <small *ngIf="!nc.niveauNonConformite&&formSubmitted" class="p-error">Ce champ est requis</small>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-4 mt-4">
+                            <div class="flex-1 mt-2">
+                                <div class="flex items-center mb-2 gap-2">
+                                    <label for="justification" class="font-semibold m-0">Origine de la non-conformité <span class="text-red-500">*</span></label>
+                                </div>
+                                <p-floatlabel variant="on" class="w-full">
+                                    <p-select id="origineService" [(ngModel)]="nc.typeNonformite" [options]="typesNcs"
+                                            optionLabel="libelle"
+                                            [filter]="true" [showClear]="true" appendTo="body" class="w-full" styleClass="w-full"
+                                            [class.p-invalid]="!nc.typeNonformite"></p-select>
+                                    <label for="typeNonformite">Sélectionner l'origine<span class="text-red-500">*</span></label>
+                                </p-floatlabel>
+                                <small *ngIf="!nc.typeNonformite&&formSubmitted" class="p-error">Ce champ est requis</small>
+                            </div>
+                        </div>
+
+                        <div class="field mt-5 mb-4">
+                            <div class="flex items-center mb-2 gap-2">
+                                <label for="desAction" class="font-normal m-0 font-semibold">Correction(s) entreprise(s) (Si disponible)</label>
+                                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCorrection.toggle($event)"></i>
+                            </div>
+                            <p-popover #infoCorrection>
+                                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                                    Si une action corrective a déjà été entreprise ou si le problème a été résolu de manière immédiate, décrivez ici les étapes suivies et les résultats obtenus. Laissez vide si aucune action n'a encore été menée.
+                                </div>
+                            </p-popover>
+                            <textarea class="w-full" rows="5"cols="30" pTextarea [(ngModel)]="nonConformite.actionDsc" [autoResize]="true" placeholder="Décrivez les actions correctives mises en œuvre pour résoudre la non-conformité et les résultats obtenus."></textarea>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="flex justify-between gap-2 mt-8">
+            <button pButton pRipple class="p-button-secondary font-bold" label="Annuler"
+                    (click)="goBack()">
+            </button>
+
+            <div class="flex items-center gap-2">
+                <button pButton pRipple class="p-button-primary font-bold" label="Enregistrer"
+                        *ngIf="!nonConformite.id || nonConformite.status === 'DRAFT'"
+                        [disabled]="!nc.typeNonformite||!nc.niveauNonConformite"
+                        (click)="onSave(false)">
+                </button>
+                <button pButton pRipple class="p-button-info font-bold" label="Publier"
+                        *ngIf="!nonConformite.id || nonConformite.status === 'DRAFT'"
+                        [disabled]="!nc.typeNonformite||!nc.niveauNonConformite"
+                        (click)="onSave(true)">
+                </button>
+                <button pButton pRipple class="p-button-primary font-bold" label="Modifier"
+                        *ngIf="nonConformite.id && nonConformite.status !== 'DRAFT'"
+                        [disabled]="!nc.typeNonformite||!nc.niveauNonConformite"
+                        (click)="onSave(false)">
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="w-full md:w-1/3 md:pl-4">
+        
+
+            <div class="p-4 bg-gray-50 rounded-xl  border border-2 border-gray-100">
+                <div class="flex items-center mb-2 gap-2">
+                    <h3 class="text-xl font-bold text-900 mt-0">Télécharger un fichier</h3>
+                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoFichiers.toggle($event)"></i>
+                </div>
+                <p-popover #infoFichiers>
+                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                        Vous pouvez ajouter des fichiers pour justifier la non-conformité ou documenter sa solution, dans la limite d'un total maximum de 5 fichiers.
+                    </div>
+                </p-popover>
+                
+                <app-file-upload 
+                    styleClass="custom-nc-upload" 
+                    [existingFiles]="nonConformite.fichiers || []" 
+                    (removeExisting)="removeExistingFile($event)"
+                    (fileUploaded)="handleFileUpload($event)">
+                </app-file-upload>
+            </div>
+
+            <div class="p-4 bg-gray-50 rounded-xl mt-6 border border-2 border-gray-100">
+    <h3 class="text-xl font-bold text-900 mt-0 mb-4">Conseils rapides</h3>
+    
+    <div class="flex flex-col gap-3">
+        <div class="flex align-items-start gap-3">
+            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+            <span class="text-700 line-height-3">Soyez factuel et précis dans votre description pour faciliter l'analyse.</span>
+        </div>
+
+        <div class="flex align-items-start gap-3">
+            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+            <span class="text-700 line-height-3">Identifiez correctement l'origine de l'écart pour cibler les bonnes équipes.</span>
+        </div>
+
+        <div class="flex align-items-start gap-3">
+            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+            <span class="text-700 line-height-3">Évaluez la criticité au plus juste (ni sous-estimée, ni surestimée).</span>
+        </div>
+
+        <div class="flex align-items-start gap-3">
+            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+            <span class="text-700 line-height-3">Joignez des preuves visuelles (photos, documents) pour appuyer vos faits.</span>
+        </div>
+
+        <div class="flex align-items-start gap-3">
+            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+            <span class="text-700 line-height-3">Mentionnez toute action corrective immédiate déjà entreprise.</span>
+        </div>
+
+        <div class="flex align-items-start gap-3">
+            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+            <span class="text-700 line-height-3">Sauvegardez en brouillon si vous êtes en attente d'informations complémentaires.</span>
+        </div>
+    </div>
 </div>
+    </div>
+</div> -->
+
+
+
 
 <!-- ========================================================================= -->
 <!-- MODAL: Guide Complet                                                      -->
 <!-- ========================================================================= -->
 <p-dialog header="Guide de saisie d'un Document QMS" [(visible)]="showGuideModal" [modal]="true" [style]="{ width: '50rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }" [maximizable]="true">
   
-  <div class="p-3 bg-indigo-50 border border-indigo-100 border-round mb-4 flex align-items-center gap-3">
-    <i class="pi pi-info-circle text-2xl text-indigo-500"></i>
-    <p class="text-sm text-indigo-900 m-0 leading-relaxed">
+  <div class="p-3 bg-blue-50 border border-blue-100 border-round mb-4 flex items-center gap-3">
+    <i class="pi pi-info-circle text-2xl text-blue-500"></i>
+    <p class="text-sm text-blue-900 m-0 leading-relaxed">
       Ce guide a pour but de vous accompagner dans la création d'un nouveau document Qualité. 
       Veuillez lire attentivement les indications ci-dessous pour assurer la conformité de vos enregistrements.
     </p>
@@ -223,6 +756,6 @@
   </div>
 
   <ng-template pTemplate="footer">
-    <button pButton label="J'ai compris" icon="pi pi-check" class="p-button-primary" (click)="showGuideModal = false"></button>
+    <button pButton label="J'ai compris" class="p-button-info" (click)="showGuideModal = false"></button>
   </ng-template>
 </p-dialog>

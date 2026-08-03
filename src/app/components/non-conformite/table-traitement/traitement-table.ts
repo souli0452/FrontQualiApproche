@@ -376,9 +376,12 @@ export class TraitementTableComponent implements OnInit {
             }
         });
     }
+    // editionNew() {
+    //     this.selectedDemandes.push(this.selectedDemande);
+    //     this.onEdition.emit(this.selectedDemandes);
+    // }
     editionNew() {
-        this.selectedDemandes.push(this.selectedDemande);
-        this.onEdition.emit(this.selectedDemandes);
+        this.onEdition.emit([this.selectedDemande]);
     }
 
     validation() {

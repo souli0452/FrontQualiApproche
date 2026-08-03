@@ -111,6 +111,89 @@ export default [
         canActivate: [permissionGuard],
         data: { permissions: ['exigence-read', 'exigence-write', 'CRITERE_EVAL_READ'], module: ModuleAbonnement.EVALUATION }
     },
+
+    // ------------------------------------------------------------------ adresses à plat
+    //
+    // Le menu remanié désigne ces écrans à la racine plutôt que sous `configurations` ou
+    // `parametrage-document`. Les adresses imbriquées sont conservées telles quelles plus bas :
+    // elles restent atteignables, et des liens comme des favoris pointent encore dessus.
+    //
+    // Chacune reçoit la garde et les permissions de son équivalent imbriqué — une route ouverte
+    // ici alors que son entrée de menu est masquée ailleurs s'ouvrirait à la simple saisie de
+    // l'URL.
+    {
+        path: 'utilisateurs', component: KcUserComponent, title: 'Gestion des utilisateurs',
+        canActivate: [permissionGuard],
+        data: { permissions: ['MANAGE_USER'] }
+    },
+    {
+        path: 'roles', component: RoleComponent, title: 'Gestion des rôles',
+        canActivate: [permissionGuard],
+        data: { permissions: ['ROLE_MANAGE'] }
+    },
+    {
+        path: 'roles/:id', component: RoleDetailComponent, title: 'Détail Rôle',
+        canActivate: [permissionGuard],
+        data: { permissions: ['ROLE_MANAGE'] }
+    },
+    {
+        path: 'origine-non-conformite', component: SourceNonConformite, title: 'Origine de Non-Conformité',
+        canActivate: [permissionGuard],
+        data: { permissions: ['type-nc-read', 'type-nc-write', 'NC_ORIGIN_MANAGE'], module: ModuleAbonnement.NON_CONFORMITE }
+    },
+    {
+        path: 'niveau-non-conformite', component: NiveauNonConformiteComponent, title: 'Niveau de Non-Conformité',
+        canActivate: [permissionGuard],
+        data: { permissions: ['niveau-nc-read', 'niveau-nc-write', 'NC_LEVEL_MANAGE'], module: ModuleAbonnement.NON_CONFORMITE }
+    },
+    // `type-processus` figure déjà plus bas à la racine : ne pas le redéclarer ici, la première
+    // déclaration l'emporterait et la seconde deviendrait du code mort.
+    {
+        path: 'direction', component: StructureComponent, title: 'Liste des Directions',
+        canActivate: [permissionGuard],
+        data: {
+            typeStructure: TypeStructure.DIRECTION,
+            permissions: ['structure-read', 'structure-write', 'STRUCT_MANAGE', 'SERVICE_MANAGE']
+        }
+    },
+    {
+        path: 'service', component: StructureComponent, title: 'Services',
+        canActivate: [permissionGuard],
+        data: {
+            typeStructure: TypeStructure.SERVICE,
+            permissions: ['structure-read', 'structure-write', 'STRUCT_MANAGE', 'SERVICE_MANAGE']
+        }
+    },
+    {
+        path: 'type-document',
+        component: QmsDocumentTypeComponent,
+        title: 'Types de documents',
+        canActivate: [permissionGuard],
+        data: {
+            breadcrumb: 'Types de Document QMS',
+            permissions: ['document-type-read', 'document-type-write'],
+            module: ModuleAbonnement.DOCUMENTAIRE
+        }
+    },
+    {
+        path: 'etapes-gestion-documentaire',
+        component: WorkflowStepTemplateComponent,
+        title: 'Étapes',
+        canActivate: [permissionGuard],
+        data: { breadcrumb: "Catalogue d'Étapes", permissions: ['workflow-read', 'workflow-write'] }
+    },
+    // Les deux écrans de circuits propres au documentaire (`workflow-config`, `workflow-detail`)
+    // n'existent plus : l'éditeur unique couvre les trois types de ressource. L'adresse est
+    // conservée — le menu et d'anciens liens la désignent — mais elle mène désormais à cet
+    // éditeur, et la consultation d'un circuit s'y fait sans écran séparé.
+    {
+        path: 'workflows-gestion-documentaire',
+        component: WorkflowEditorComponent,
+        title: 'Workflows documents',
+        canActivate: [permissionGuard],
+        data: { breadcrumb: 'Configuration des Workflows', permissions: ['workflow-read', 'workflow-write'] }
+    },
+    { path: 'workflows-gestion-documentaire/detail/:id', redirectTo: 'workflows-gestion-documentaire', pathMatch: 'full' },
     {
         path: 'configurations',
         component: ParametragesComponent,

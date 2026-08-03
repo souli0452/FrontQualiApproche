@@ -14,6 +14,10 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
 export class FileUploadComponent {
     @Input() styleClass: string = '';
     @Input() existingFiles: any[] = []; // 👈 Les fichiers déjà en base de données
+    @Input() maxFiles: number = 5;
+    @Input() maxFileSizeMB: number = 10;
+    @Input() allowedExts: string[] = ['doc', 'docx', 'xlsx', 'pdf', 'jpeg', 'jpg', 'txt', 'png'];
+
     @Output() fileUploaded = new EventEmitter<any>();
     @Output() removeExisting = new EventEmitter<number>(); // 👈 Événement de suppression d'un fichier existant
 
@@ -26,7 +30,6 @@ export class FileUploadComponent {
         icon: string;
     }[] = [];
 
-    allowedExts = ['doc', 'docx', 'xlsx', 'pdf', 'jpeg', 'jpg', 'txt', 'png'];
     isDragging: boolean = false;
 
     constructor(private messageService: MessageService) {}
@@ -62,12 +65,33 @@ export class FileUploadComponent {
     }
 
     private handleFiles(newFiles: File[]) {
-        // Limite max de 5 fichiers au total (existants + nouveaux)
-        const maxAllowedNew = 5 - this.existingFiles.length;
+        const maxAllowedNew = this.maxFiles - this.existingFiles.length;
 
         for (const file of newFiles) {
             const ext = file.name.split('.').pop()?.toLowerCase() || '';
-            if (this.allowedExts.includes(ext) && this.uploadedFiles.length < maxAllowedNew) {
+            const fileSizeMB = file.size / (1024 * 1024);
+
+            if (!this.allowedExts.includes(ext)) {
+                this.messageService.add({ 
+                    severity: 'error', 
+                    summary: 'Type non supporté', 
+                    detail: `L'extension .${ext} n'est pas autorisée.`, 
+                    life: 5000 
+                });
+                continue;
+            }
+
+            if (fileSizeMB > this.maxFileSizeMB) {
+                this.messageService.add({ 
+                    severity: 'error', 
+                    summary: 'Fichier trop lourd', 
+                    detail: `Le fichier dépasse la taille maximale autorisée de ${this.maxFileSizeMB} Mo.`, 
+                    life: 5000 
+                });
+                continue;
+            }
+
+            if (this.uploadedFiles.length < maxAllowedNew) {
                 const fileObj = {
                     file,
                     extension: ext,
@@ -84,7 +108,13 @@ export class FileUploadComponent {
                     this.fileUploaded.emit(this.uploadedFiles);
                 }, 1500);
             } else {
-                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Fichier non autorisé ou nombre maximal de 5 fichiers atteint.', life: 10000 });
+                this.messageService.add({ 
+                    severity: 'error', 
+                    summary: 'Limite atteinte', 
+                    detail: `Le nombre maximal de ${this.maxFiles} fichier(s) est atteint.`, 
+                    life: 5000 
+                });
+                break;
             }
         }
     }

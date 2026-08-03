@@ -70,6 +70,15 @@ export class AppMenu {
         return hasMenuProfile() ? hasAnyPermission([permissionMenu]) : true;
     }
 
+    /**
+     * Groupe d'entrées à l'intérieur d'une rubrique, masqué dès lors qu'aucune de ses entrées
+     * n'est visible — sans quoi l'utilisateur ouvrirait un intitulé pour n'y rien trouver.
+     */
+    private sousGroupe(label: string, icon: string, items: MenuItem[]): MenuItem {
+        const visibles = items.filter(item => item.visible !== false);
+        return { label, icon, visible: visibles.length > 0, items: visibles };
+    }
+
     /** Rubrique dont le libellé, l'icône et les entrées sont déjà arrêtés. */
     private rubrique(label: string, icon: string, permissionMenu: string, items: MenuItem[]): MenuItem {
         return {
@@ -148,19 +157,63 @@ export class AppMenu {
             }
         ];
 
+        // Les sous-groupes (comptes, non-conformités, organigramme, documentation) reprennent le
+        // découpage du menu remanié sur develop, mais chaque entrée passe par `peutVoir` : la
+        // version d'origine n'en soumettait aucune à une permission, et gardait trois entrées
+        // derrière le module fictif « AUTRE_MODULE », absent de l'énumération du back — donc
+        // invisibles pour tout le monde, faute d'une direction pouvant y souscrire.
+        //
+        // Elles vivent sous « Configurations » plutôt qu'en rubriques de premier niveau : une
+        // rubrique se ferme par une permission `menu-*`, et en inventer une que le dictionnaire du
+        // back ne connaît pas encore masquerait la rubrique pour tous, SUPER_ADMIN compris.
         const configurations = [
             {
                 label: 'Configurations Globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'],
                 visible: this.peutVoir(['config-global-read', 'config-global-write', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'])
             },
-            {
-                label: 'Paramétrage Type Document', icon: 'pi pi-fw pi-file-edit', routerLink: ['/parametrage-document'],
-                visible: this.peutVoir(['document-type-read', 'document-type-write'], ModuleAbonnement.DOCUMENTAIRE)
-            },
-            {
-                label: 'Configuration Workflows', icon: 'pi pi-sitemap', routerLink: ['/configuration-workflow'],
-                visible: this.peutVoir(['workflow-read', 'workflow-write'])
-            }
+            this.sousGroupe('Comptes utilisateurs', 'pi pi-fw pi-user', [
+                {
+                    label: 'Gestion des utilisateurs', icon: 'pi pi-fw pi-users', routerLink: ['/utilisateurs'],
+                    visible: this.peutVoir(['MANAGE_USER'])
+                },
+                {
+                    label: 'Gestion des rôles', icon: 'pi pi-fw pi-id-card', routerLink: ['/roles'],
+                    visible: this.peutVoir(['ROLE_MANAGE'])
+                }
+            ]),
+            this.sousGroupe('Non-Conformités', 'pi pi-fw pi-exclamation-triangle', [
+                {
+                    label: 'Niveau de Non-Conformité', routerLink: ['/niveau-non-conformite'],
+                    visible: this.peutVoir(['niveau-nc-read', 'niveau-nc-write', 'NC_LEVEL_MANAGE'], ModuleAbonnement.NON_CONFORMITE)
+                },
+                {
+                    label: 'Origine de Non-Conformité', routerLink: ['/origine-non-conformite'],
+                    visible: this.peutVoir(['type-nc-read', 'type-nc-write', 'NC_ORIGIN_MANAGE'], ModuleAbonnement.NON_CONFORMITE)
+                }
+            ]),
+            this.sousGroupe('Organigramme', 'pi pi-fw pi-sitemap', [
+                {
+                    label: 'Catégorie de processus', routerLink: ['/type-processus'],
+                    visible: this.peutVoir(['type-processus-read', 'type-processus-write', 'TYPE_PROC_MANAGE', 'CONFIG_READ'])
+                },
+                {
+                    label: 'Processus', routerLink: ['/service'],
+                    visible: this.peutVoir(['structure-read', 'structure-write', 'STRUCT_MANAGE', 'SERVICE_MANAGE'])
+                }
+            ]),
+            this.sousGroupe('Documentation', 'pi pi-fw pi-print', [
+                {
+                    label: 'Type de document', routerLink: ['/parametrage-document'],
+                    visible: this.peutVoir(['document-type-read', 'document-type-write'], ModuleAbonnement.DOCUMENTAIRE)
+                },
+                // Les circuits documentaires n'ont plus d'écran propre : l'éditeur unique couvre
+                // les trois types de ressource, et le catalogue d'étapes vit dans la même section.
+                // Deux entrées distinctes mèneraient au même endroit.
+                {
+                    label: 'Circuits de validation', routerLink: ['/configuration-workflow'],
+                    visible: this.peutVoir(['workflow-read', 'workflow-write'])
+                }
+            ])
         ];
 
         this.model = [

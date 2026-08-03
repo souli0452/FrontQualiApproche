@@ -69,18 +69,24 @@
 <!-- Bouton d'import au fond -->
 <div class="upload-btn mt-4 flex align-items-center cursor-pointer p-2 border-round-lg hover:surface-100 transition-colors" 
      (click)="fileInput.click()" 
-     *ngIf="uploadedFiles.length + existingFiles.length < 5">
+     *ngIf="uploadedFiles.length + existingFiles.length < maxFiles">
     <p-button [raised]="true" icon="pi pi-plus" [rounded]="true" severity="info" styleClass="w-3rem h-3rem mr-3 shadow-2"></p-button>
     <div class="flex flex-col gap-1">
-        <span class="font-semibold text-900 text-lg">Ajouter vos fichiers</span>
-        <span class="text-sm text-gray-500">Nombre max autorisé : {{ 5 - existingFiles.length }}.</span>
+        <span class="font-semibold text-900 text-lg">
+            {{ maxFiles === 1 ? 'Choisir le fichier' : 'Ajouter vos fichiers' }}
+        </span>
+        <span class="text-sm text-gray-500">
+            {{ maxFiles === 1 ? '1 fichier maximum autorisé (PDF conseillé)' : 'Nombre max autorisé : ' + (maxFiles - existingFiles.length) }}
+        </span>
     </div>
-    <input #fileInput type="file" multiple (change)="onFileSelected($event)" hidden />
+    <input #fileInput type="file" [multiple]="maxFiles > 1" (change)="onFileSelected($event)" hidden />
 </div>
 
-<!-- Limite globale de 5 fichiers atteinte -->
+<!-- Limite globale atteinte -->
 <div class="mt-4 flex align-items-center justify-content-center text-sm p-3 bg-blue-50/50 rounded-xl border border-blue-100" 
-     *ngIf="uploadedFiles.length + existingFiles.length >= 5">
+     *ngIf="uploadedFiles.length + existingFiles.length >= maxFiles">
     <i class="pi pi-info-circle text-blue-600 mr-2"></i>
-    <span class="text-blue-700 font-medium text-xs">Limite de 5 fichiers atteinte. Supprimez un fichier pour en ajouter un nouveau.</span>
+    <span class="text-blue-700 font-medium text-xs">
+        Limite de {{ maxFiles }} fichier(s) atteinte. Supprimez un fichier pour en ajouter un nouveau.
+    </span>
 </div>

@@ -261,11 +261,27 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
     // --- Shared Documents ---
 
     getMySharedDocuments(): Observable<SharedDocumentDto[]> {
-        return this.http.get<SharedDocumentDto[]>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/shared/me`);
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/shared/me`).pipe(
+            map(res => {
+                if (Array.isArray(res)) return res;
+                if (res?.data?.content) return res.data.content;
+                if (res?.data) return Array.isArray(res.data) ? res.data : [];
+                if (res?.content) return res.content;
+                return [];
+            })
+        );
     }
 
     getSharedDocumentsForUser(userId: string): Observable<SharedDocumentDto[]> {
-        return this.http.get<SharedDocumentDto[]>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/shared/${userId}`);
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/shared/${userId}`).pipe(
+            map(res => {
+                if (Array.isArray(res)) return res;
+                if (res?.data?.content) return res.data.content;
+                if (res?.data) return Array.isArray(res.data) ? res.data : [];
+                if (res?.content) return res.content;
+                return [];
+            })
+        );
     }
 
 }

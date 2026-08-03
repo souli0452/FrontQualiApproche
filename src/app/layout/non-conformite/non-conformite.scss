@@ -14,3 +14,12 @@
         }
     }
 }
+
+
+.p-tab-active {
+    border-bottom: 1px solid var(--secondary-color) !important;
+}
+
+.p-tab:hover{
+    background-color: var(--surface-ground) !important;
+}
