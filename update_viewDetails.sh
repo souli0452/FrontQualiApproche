@@ -1,0 +1,2 @@
+sed -i '' -e 's/this.workflowService.getWorkflowStateForResource(doc.id)/this.qmsService.getDocumentById(doc.id)/g' ./src/app/pages/module-gestion-documentaire/qms-document/qms-document.component.ts
+sed -i '' -e 's/next: (state: WorkflowStateDto) => this.workflowState = state/next: (fullDoc: any) => { this.selectedDocument = fullDoc; this.workflowState = fullDoc.workflowState; }/g' ./src/app/pages/module-gestion-documentaire/qms-document/qms-document.component.ts

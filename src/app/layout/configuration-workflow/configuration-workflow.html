@@ -3,10 +3,16 @@
     <div class="bg-primary-50 dark:bg-surface-800 p-5 flex justify-between items-center border-b border-surface-border">
         <div>
             <h1 class="text-2xl font-bold m-0 flex items-center gap-3 text-surface-900 dark:text-surface-50">
-                <i class="pi pi-file-edit text-primary dark:text-primary-400"></i>
-                Paramétrage Type Document
+                <i class="pi pi-sitemap text-primary dark:text-primary-400"></i>
+                Configuration Workflows
             </h1>
-            <p class="text-surface-500 dark:text-surface-400 mt-1 mb-0">Types de documents</p>
+            <p class="text-surface-500 dark:text-surface-400 mt-1 mb-0">Paramétrage des circuits de validation et des templates d'emails</p>
+        </div>
+        <div class="hidden md:block">
+            <p-iconfield iconPosition="left">
+                <p-inputicon styleClass="pi pi-search" />
+                <input pInputText type="text" placeholder="Rechercher..." class="w-full p-inputtext-sm border-none bg-transparent focus:ring-0 text-surface-900 dark:text-surface-50" />
+            </p-iconfield>
         </div>
     </div>
 
@@ -26,7 +32,7 @@
 
     <!-- Contenu dynamique (Router Outlet) -->
     <div class="bg-surface-50/50 dark:bg-surface-950/40 min-h-[500px]">
-        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl overflow-hidden">
+        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl overflow-hidden p-4">
             <router-outlet></router-outlet>
         </div>
     </div>
