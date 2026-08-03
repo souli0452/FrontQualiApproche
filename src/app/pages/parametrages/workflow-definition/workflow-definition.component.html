@@ -1,0 +1,142 @@
+<div class="card h-full flex flex-col justify-between">
+    <div class="h-full bg-white border-round pb-2">
+        <p-tabView styleClass="p-0">
+            <!-- TAB WORKFLOWS -->
+            <p-tabPanel header="Workflows">
+                <!-- HEADER -->
+                <div class="flex justify-content-between p-3" style="border-bottom: 1px solid var(--surface-d);">
+                    <div>
+                        <span class="text-xl font-medium text-900">Workflows</span>
+                        <div class="text-500 mt-1">Gérez les définitions de workflow et leurs étapes</div>
+                    </div>
+                    <div>
+                        <button pButton pRipple type="button" icon="pi pi-plus" label="Nouveau Workflow" class="p-button-primary" (click)="openCreateDialog()"></button>
+                    </div>
+                </div>
+
+                <!-- FILTERS & TABLE -->
+                <div class="p-3">
+                    <p-table #dtWorkflows [value]="workflows()" [loading]="loadingWorkflows()"
+                             [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+                             currentPageReportTemplate="Affichage {first} à {last} sur {totalRecords} éléments"
+                             [rowsPerPageOptions]="[10,25,50]"
+                             styleClass="p-datatable-sm p-datatable-striped">
+                        
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th pSortableColumn="nom" style="min-width: 200px">Nom <p-sortIcon field="nom"></p-sortIcon></th>
+                                <th pSortableColumn="description" style="min-width: 250px">Description <p-sortIcon field="description"></p-sortIcon></th>
+                                <th pSortableColumn="resourceType" style="min-width: 200px">Type de Ressource <p-sortIcon field="resourceType"></p-sortIcon></th>
+                                <th pSortableColumn="isActive" style="min-width: 100px">Statut <p-sortIcon field="isActive"></p-sortIcon></th>
+                                <th style="width: 150px; text-align: center">Actions</th>
+                            </tr>
+                            <tr>
+                                <th><p-columnFilter type="text" field="nom" display="menu"></p-columnFilter></th>
+                                <th><p-columnFilter type="text" field="description" display="menu"></p-columnFilter></th>
+                                <th><p-columnFilter type="text" field="resourceType" display="menu"></p-columnFilter></th>
+                                <th><p-columnFilter type="boolean" field="isActive" display="menu"></p-columnFilter></th>
+                                <th></th>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="body" let-workflow>
+                            <tr>
+                                <td>{{ workflow.nom }}</td>
+                                <td>{{ workflow.description }}</td>
+                                <td>
+                                    <span class="p-tag p-tag-info">{{ workflow.resourceType }}</span>
+                                </td>
+                                <td>
+                                    <span [class]="'p-tag ' + (workflow.isActive ? 'p-tag-success' : 'p-tag-danger')">
+                                        {{ workflow.isActive ? 'Actif' : 'Inactif' }}
+                                    </span>
+                                </td>
+                                <td style="text-align: center">
+                                    <button pButton pRipple type="button" icon="pi pi-eye" class="p-button-rounded p-button-text p-button-info mr-2" pTooltip="Détails" (click)="viewDetails(workflow)"></button>
+                                    <button pButton pRipple type="button" icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-secondary mr-2" pTooltip="Modifier" (click)="openEditDialog(workflow)"></button>
+                                    <button pButton pRipple type="button" icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" pTooltip="Supprimer" (click)="deleteWorkflow(workflow, $event)"></button>
+                                </td>
+                            </tr>
+                        </ng-template>
+                        
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="5" class="text-center p-4">
+                                    <div class="flex flex-column align-items-center">
+                                        <img src="assets/images/empty.svg" alt="Vide" style="width: 100px; opacity: 0.5; filter: grayscale(1);">
+                                        <span class="text-500 mt-3">Aucun workflow trouvé</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
+            </p-tabPanel>
+
+            <!-- TAB EMAIL TEMPLATES -->
+            <p-tabPanel header="Modèles d'Email">
+                <!-- HEADER -->
+                <div class="flex justify-content-between p-3" style="border-bottom: 1px solid var(--surface-d);">
+                    <div>
+                        <span class="text-xl font-medium text-900">Modèles d'Email</span>
+                        <div class="text-500 mt-1">Gérez les modèles de notifications utilisés dans les étapes du workflow</div>
+                    </div>
+                    <div>
+                        <button pButton pRipple type="button" icon="pi pi-plus" label="Nouveau Modèle" class="p-button-primary" (click)="openCreateTemplateDialog()"></button>
+                    </div>
+                </div>
+
+                <!-- FILTERS & TABLE -->
+                <div class="p-3">
+                    <p-table #dtTemplates [value]="emailTemplates()" [loading]="loadingTemplates()"
+                             [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+                             currentPageReportTemplate="Affichage {first} à {last} sur {totalRecords} éléments"
+                             [rowsPerPageOptions]="[10,25,50]"
+                             styleClass="p-datatable-sm p-datatable-striped">
+                        
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th pSortableColumn="code" style="min-width: 150px">Code <p-sortIcon field="code"></p-sortIcon></th>
+                                <th pSortableColumn="subject" style="min-width: 200px">Sujet <p-sortIcon field="subject"></p-sortIcon></th>
+                                <th pSortableColumn="description" style="min-width: 250px">Description <p-sortIcon field="description"></p-sortIcon></th>
+                                <th style="width: 150px; text-align: center">Actions</th>
+                            </tr>
+                            <tr>
+                                <th><p-columnFilter type="text" field="code" display="menu"></p-columnFilter></th>
+                                <th><p-columnFilter type="text" field="subject" display="menu"></p-columnFilter></th>
+                                <th><p-columnFilter type="text" field="description" display="menu"></p-columnFilter></th>
+                                <th></th>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="body" let-template>
+                            <tr>
+                                <td><span class="font-bold">{{ template.code }}</span></td>
+                                <td>{{ template.subject }}</td>
+                                <td>{{ template.description }}</td>
+                                <td style="text-align: center">
+                                    <button pButton pRipple type="button" icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-secondary mr-2" pTooltip="Modifier" (click)="openEditTemplateDialog(template)"></button>
+                                    <button pButton pRipple type="button" icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" pTooltip="Supprimer" (click)="deleteTemplate(template, $event)"></button>
+                                </td>
+                            </tr>
+                        </ng-template>
+                        
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="4" class="text-center p-4">
+                                    <div class="flex flex-column align-items-center">
+                                        <img src="assets/images/empty.svg" alt="Vide" style="width: 100px; opacity: 0.5; filter: grayscale(1);">
+                                        <span class="text-500 mt-3">Aucun modèle d'email trouvé</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
+            </p-tabPanel>
+        </p-tabView>
+    </div>
+</div>
+
+<p-confirmPopup></p-confirmPopup>
+

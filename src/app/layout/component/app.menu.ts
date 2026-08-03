@@ -199,7 +199,8 @@ export class AppMenu {
                 visible: true,
                 items: [
                     { label: 'Configurations Globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'], visible: true },
-                    { label: 'Paramétrage Document', icon: 'pi pi-fw pi-file-edit', routerLink: ['/parametrage-document'] }
+                    { label: 'Paramétrage Type Document', icon: 'pi pi-fw pi-file-edit', routerLink: ['/parametrage-document'] },
+                    { label: 'Configuration Workflows', icon: 'pi pi-sitemap', routerLink: ['/configuration-workflow'] }
                 ]
             }
         ];

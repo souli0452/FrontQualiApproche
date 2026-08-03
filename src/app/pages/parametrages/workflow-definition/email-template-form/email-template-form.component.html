@@ -1,0 +1,32 @@
+<form [formGroup]="form" (ngSubmit)="onSave()" class="flex flex-col gap-4 w-full">
+    <div class="grid grid-cols-1 gap-4">
+        <div class="flex flex-col gap-1">
+            <label for="code" class="font-medium text-sm">Code unique <span class="text-red-500">*</span></label>
+            <input pInputText id="code" formControlName="code" placeholder="Ex: EMAIL_NC_CREATION" class="w-full" />
+            <small class="text-gray-500">Ce code sera utilisé pour identifier ce modèle dans le workflow.</small>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label for="subject" class="font-medium text-sm">Sujet de l'email <span class="text-red-500">*</span></label>
+            <input pInputText id="subject" formControlName="subject" placeholder="Ex: Nouvelle Non-Conformité créée" class="w-full" />
+        </div>
+        
+        <div class="flex flex-col gap-1">
+            <label for="body" class="font-medium text-sm">Corps de l'email <span class="text-red-500">*</span></label>
+            <!-- Using simple textarea for now, could use p-editor if HTML is preferred -->
+            <textarea pInputTextarea id="body" formControlName="body" rows="6" placeholder="Bonjour,\n\nUne nouvelle non-conformité a été créée..." class="w-full font-mono"></textarea>
+            <small class="text-gray-500">Vous pouvez utiliser des variables comme &#123;&#123;numeroReference&#125;&#125; si le backend les supporte.</small>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label for="description" class="font-medium text-sm">Description</label>
+            <textarea pInputTextarea id="description" formControlName="description" rows="2" placeholder="Description de l'usage de cet email" class="w-full"></textarea>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-end gap-2 mt-4 pt-4 border-t">
+        <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="onCancel()" />
+        <p-button [label]="isEditMode() ? 'Enregistrer' : 'Créer'" type="submit" [loading]="isSaving()" [disabled]="form.invalid" icon="pi pi-save" />
+    </div>
+</form>

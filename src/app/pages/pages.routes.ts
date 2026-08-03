@@ -36,6 +36,8 @@ import { StructureComponent } from './parametrages/structure/structure-view/stru
 import { NcComposeComponent } from './module-nc/nc-compose/nc-compose.component';
 import { ValidationPilote } from './module-nc/nc-validation-pilote/nc-validation-pilote';
 import { AnalyseClotureComponent } from './module-nc/nc-analyse-cloture/nc-analyse-cloture';
+import { NcWorkflowFormComponent } from './configuration-workflow/non-conformite/nc-workflow-form/nc-workflow-form.component';
+import { NcWorkflowDetailComponent } from './configuration-workflow/non-conformite/nc-workflow-detail/nc-workflow-detail.component';
 import { QmsDocumentComponent } from './module-gestion-documentaire/qms-document/qms-document.component';
 import { QmsDocumentCreateComponent } from './module-gestion-documentaire/qms-document-create/qms-document-create.component';
 import { QmsDocumentTypeComponent } from './module-gestion-documentaire/qms-document-type/qms-document-type.component';
@@ -44,7 +46,11 @@ import { QmsVueEnsembleComponent } from './module-gestion-documentaire/qms-vue-e
 import { QmsDocumentsPartagesComponent } from './module-gestion-documentaire/qms-documents-partages/qms-documents-partages.component';
 import { GestionDocumentaireLayoutComponent } from '../layout/gestion-documentaire/gestion-documentaire';
 import { ParametrageDocumentComponent } from './parametrage-document/parametrage-document.component';
-
+import { WorkflowDetailComponent } from './module-gestion-documentaire/workflow/workflow-detail.component';
+import { ConfigurationWorkflowLayoutComponent } from '../layout/configuration-workflow/configuration-workflow';
+import { EmailTemplateWorkflowComponent } from './configuration-workflow/email-template/email-template.component';
+import { NcWorkflowDefinitionComponent } from './configuration-workflow/non-conformite/nc-workflow-definition.component';
+import { DocWorkflowDefinitionComponent } from './configuration-workflow/document/doc-workflow-definition.component';
 export default [
     { path: 'recherche', component: SearchResultsComponent, title: 'Résultats de recherche' },
     { path: 'documentation', component: Documentation },
@@ -81,7 +87,7 @@ export default [
     {
         path: 'parametrage-document',
         component: ParametrageDocumentComponent,
-        data: { breadcrumb: 'Paramétrage Document' },
+        data: { breadcrumb: 'Paramétrage Type Document' },
         children: [
             { path: '', redirectTo: 'types', pathMatch: 'full' },
             {
@@ -89,25 +95,28 @@ export default [
                 component: QmsDocumentTypeComponent,
                 title: 'Types de documents',
                 data: { breadcrumb: 'Types de Document QMS' }
-            },
+            }
+        ]
+    },
+    {
+        path: 'configuration-workflow',
+        component: ConfigurationWorkflowLayoutComponent,
+        data: { breadcrumb: 'Configuration Workflow' },
+        children: [
+            { path: '', redirectTo: 'email-template', pathMatch: 'full' },
+            { path: 'email-template', component: EmailTemplateWorkflowComponent, title: 'Email Templates' },
+            { path: 'non-conformite', component: NcWorkflowDefinitionComponent, title: 'Workflow Non-Conformité' },
+            { path: 'non-conformite/new', component: NcWorkflowFormComponent, title: 'Nouveau Workflow NC' },
+            { path: 'non-conformite/edit/:id', component: NcWorkflowFormComponent, title: 'Modifier Workflow NC' },
+            { path: 'non-conformite/detail/:id', component: NcWorkflowDetailComponent, title: 'Détail Workflow NC' },
+            { path: 'document', component: DocWorkflowDefinitionComponent, title: 'Workflow Documentaire' },
+            { path: 'document/detail/:id', component: WorkflowDetailComponent, title: 'Détail Workflow Document' },
             {
                 path: 'etapes',
                 component: WorkflowStepTemplateComponent,
-                title: 'Étapes',
+                title: 'Catalogue des Étapes',
                 data: { breadcrumb: "Catalogue d'Étapes" }
-            },
-            {
-                path: 'workflows',
-                loadComponent: () => import('./module-gestion-documentaire/workflow/workflow-config.component').then(c => c.WorkflowConfigComponent),
-                title: 'Workflows documents',
-                data: { breadcrumb: 'Configuration des Workflows' }
-            },
-            {
-                path: 'workflows/detail/:id',
-                loadComponent: () => import('./module-gestion-documentaire/workflow/workflow-detail.component').then(c => c.WorkflowDetailComponent),
-                title: 'Détails du Workflow',
-                data: { breadcrumb: 'Détails du Workflow' }
-            },
+            }
         ]
     },
 

@@ -1,22 +1,22 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
-import { NgPrimeModule } from '../../../prime-ng.module';
 import { MenuItem } from 'primeng/api';
+import { NgPrimeModule } from '../../../prime-ng.module';
 
 @Component({
-  selector: 'app-parametrage-document',
+  selector: 'app-configuration-workflow-layout',
   standalone: true,
   imports: [
     CommonModule,
-    NgPrimeModule,
     RouterModule,
+    NgPrimeModule
   ],
-  templateUrl: './parametrage-document.component.html',
-  styleUrl: './parametrage-document.component.scss'
+  templateUrl: './configuration-workflow.html',
+  styleUrl: './configuration-workflow.scss'
 })
-export class ParametrageDocumentComponent implements OnInit, OnDestroy {
-    items: MenuItem[] | undefined;
+export class ConfigurationWorkflowLayoutComponent implements OnInit, OnDestroy {
+    items: MenuItem[] = [];
     activeTab: string = '';
     routerSubscription: any;
 
@@ -31,7 +31,10 @@ export class ParametrageDocumentComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.activeTab = this.router.url.split('?')[0];
         this.items = [
-            { label: 'Types de documents', icon: 'pi pi-tags', routerLink: '/parametrage-document/types' }
+            { label: 'Email Templates', icon: 'pi pi-envelope', routerLink: '/configuration-workflow/email-template' },
+            { label: 'Workflow Non-Conformité', icon: 'pi pi-exclamation-triangle', routerLink: '/configuration-workflow/non-conformite' },
+            { label: 'Workflow Documentaire', icon: 'pi pi-file', routerLink: '/configuration-workflow/document' },
+            { label: 'Catalogue des Étapes', icon: 'pi pi-list-check', routerLink: '/configuration-workflow/etapes' },
         ];
     }
 

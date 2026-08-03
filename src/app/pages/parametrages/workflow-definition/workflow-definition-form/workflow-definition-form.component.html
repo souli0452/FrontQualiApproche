@@ -1,0 +1,140 @@
+<form [formGroup]="form" (ngSubmit)="onSave()" class="flex flex-col gap-4 w-full">
+    <div class="grid grid-cols-12 gap-4">
+        <!-- Informations Générales -->
+        <div class="col-span-12">
+            <h3 class="text-lg font-semibold border-b pb-2 mb-3">Informations Générales</h3>
+            <div class="grid grid-cols-12 gap-3">
+                <div class="col-span-12 md:col-span-6 flex flex-col gap-1">
+                    <label for="nom" class="font-medium text-sm">Nom du workflow <span class="text-red-500">*</span></label>
+                    <input pInputText id="nom" formControlName="nom" placeholder="Ex: Workflow Non Conformité" class="w-full" />
+                </div>
+                
+                <div class="col-span-12 md:col-span-6 flex flex-col gap-1">
+                    <label for="resourceType" class="font-medium text-sm">Type de Ressource <span class="text-red-500">*</span></label>
+                    <p-dropdown id="resourceType" formControlName="resourceType" [options]="resourceTypes" optionLabel="label" optionValue="value" placeholder="Sélectionnez le type de document" styleClass="w-full"></p-dropdown>
+                </div>
+                
+                <div class="col-span-12 flex flex-col gap-1">
+                    <label for="description" class="font-medium text-sm">Description</label>
+                    <textarea pInputTextarea id="description" formControlName="description" rows="2" placeholder="Description du workflow" class="w-full"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Étapes (Steps) -->
+        <div class="col-span-12 mt-4">
+            <div class="flex justify-between items-center border-b pb-2 mb-3">
+                <h3 class="text-lg font-semibold m-0">Étapes du Workflow</h3>
+                <button pButton pRipple type="button" icon="pi pi-plus" label="Ajouter une Étape" class="p-button-sm p-button-outlined" (click)="addStep()"></button>
+            </div>
+            
+            <p-accordion [multiple]="true" formArrayName="steps">
+                <p-accordionTab *ngFor="let stepGroup of steps.controls; let stepIndex = index" [formGroupName]="stepIndex">
+                    <ng-template pTemplate="header">
+                        <div class="flex justify-between items-center w-full">
+                            <span class="font-semibold text-primary">
+                                Étape {{ stepGroup.get('stepOrder')?.value }} : {{ stepGroup.get('nomEtape')?.value || 'Nouvelle Étape' }}
+                            </span>
+                        </div>
+                    </ng-template>
+
+                    <div class="flex justify-end mb-3">
+                        <button pButton pRipple type="button" icon="pi pi-trash" class="p-button-danger p-button-text p-button-sm" label="Supprimer l'étape" (click)="removeStep(stepIndex)"></button>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-3 mb-4">
+                        <div class="col-span-12 md:col-span-8 flex flex-col gap-1">
+                            <label class="font-medium text-sm">Nom de l'étape <span class="text-red-500">*</span></label>
+                            <input pInputText formControlName="nomEtape" placeholder="Ex: Création" class="w-full" />
+                        </div>
+                        <div class="col-span-12 md:col-span-4 flex flex-col gap-1">
+                            <label class="font-medium text-sm">Ordre <span class="text-red-500">*</span></label>
+                            <p-inputNumber formControlName="stepOrder" [min]="1" class="w-full" styleClass="w-full"></p-inputNumber>
+                        </div>
+                        <div class="col-span-12 md:col-span-6 flex flex-col gap-1">
+                            <label class="font-medium text-sm">Rôle Responsable</label>
+                            <input pInputText formControlName="responsableRole" placeholder="Ex: QUALITICIEN" class="w-full" />
+                        </div>
+                        <div class="col-span-12 md:col-span-6 flex flex-col gap-1">
+                            <label class="font-medium text-sm">Modèle d'Email</label>
+                            <p-dropdown formControlName="emailTemplateCode" [options]="emailTemplateOptions()" optionLabel="label" optionValue="value" placeholder="Sélectionnez un modèle" styleClass="w-full"></p-dropdown>
+                        </div>
+                        <div class="col-span-12 flex flex-col gap-1">
+                            <label class="font-medium text-sm">Description</label>
+                            <textarea pInputTextarea formControlName="description" rows="1" class="w-full"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Champs (Fields) -->
+                    <div class="border rounded-md p-3 mb-4 bg-gray-50">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-medium m-0">Champs Personnalisés</h4>
+                            <button pButton pRipple type="button" icon="pi pi-plus" class="p-button-sm p-button-text" label="Ajouter un champ" (click)="addField(stepIndex)"></button>
+                        </div>
+                        <div formArrayName="fields">
+                            <div *ngIf="stepFields(stepIndex).length === 0" class="text-center text-gray-500 py-3 text-sm italic">
+                                Aucun champ défini pour cette étape.
+                            </div>
+                            <div *ngFor="let fieldGroup of stepFields(stepIndex).controls; let fieldIndex = index" [formGroupName]="fieldIndex" class="grid grid-cols-12 gap-2 mb-2 items-center">
+                                <div class="col-span-3">
+                                    <input pInputText formControlName="fieldName" placeholder="Nom code (ex: cause)" class="w-full p-inputtext-sm" />
+                                </div>
+                                <div class="col-span-3">
+                                    <input pInputText formControlName="fieldLabel" placeholder="Libellé (ex: Cause Racine)" class="w-full p-inputtext-sm" />
+                                </div>
+                                <div class="col-span-2">
+                                    <p-dropdown formControlName="type" [options]="fieldTypes" optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full p-inputtext-sm"></p-dropdown>
+                                </div>
+                                <div class="col-span-2">
+                                    <input pInputText formControlName="options" placeholder="Options JSON" class="w-full p-inputtext-sm" />
+                                </div>
+                                <div class="col-span-1 flex justify-center">
+                                    <p-checkbox formControlName="required" [binary]="true" label="Requis"></p-checkbox>
+                                </div>
+                                <div class="col-span-1 flex justify-end">
+                                    <button pButton pRipple type="button" icon="pi pi-trash" class="p-button-danger p-button-text p-button-sm p-0 w-8 h-8" (click)="removeField(stepIndex, fieldIndex)"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transitions -->
+                    <div class="border rounded-md p-3 bg-gray-50">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-medium m-0">Transitions Sortantes</h4>
+                            <button pButton pRipple type="button" icon="pi pi-plus" class="p-button-sm p-button-text p-button-secondary" label="Ajouter une transition" (click)="addTransition(stepIndex)"></button>
+                        </div>
+                        <div formArrayName="transitions">
+                            <div *ngIf="stepTransitions(stepIndex).length === 0" class="text-center text-gray-500 py-3 text-sm italic">
+                                Aucune transition définie.
+                            </div>
+                            <div *ngFor="let transGroup of stepTransitions(stepIndex).controls; let transIndex = index" [formGroupName]="transIndex" class="grid grid-cols-12 gap-2 mb-2 items-center">
+                                <div class="col-span-3">
+                                    <input pInputText formControlName="label" placeholder="Libellé (ex: Valider)" class="w-full p-inputtext-sm" />
+                                </div>
+                                <div class="col-span-3">
+                                    <p-dropdown formControlName="decision" [options]="decisions" optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full p-inputtext-sm"></p-dropdown>
+                                </div>
+                                <div class="col-span-3">
+                                    <p-dropdown formControlName="toStepName" [options]="stepOptions()" optionLabel="label" optionValue="value" appendTo="body" placeholder="Vers l'étape..." styleClass="w-full p-inputtext-sm"></p-dropdown>
+                                </div>
+                                <div class="col-span-2">
+                                    <input pInputText formControlName="requiredRole" placeholder="Rôle requis" class="w-full p-inputtext-sm" />
+                                </div>
+                                <div class="col-span-1 flex justify-end">
+                                    <button pButton pRipple type="button" icon="pi pi-trash" class="p-button-danger p-button-text p-button-sm p-0 w-8 h-8" (click)="removeTransition(stepIndex, transIndex)"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </p-accordionTab>
+            </p-accordion>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-end gap-2 mt-4 pt-4 border-t">
+        <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="onCancel()" />
+        <p-button [label]="isEditMode() ? 'Enregistrer les modifications' : 'Créer le workflow'" type="submit" [loading]="isSaving()" [disabled]="form.invalid" icon="pi pi-save" />
+    </div>
+</form>

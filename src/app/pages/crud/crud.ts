@@ -233,7 +233,7 @@ export class Crud implements OnInit {
         private productService: ProductService,
         private messageService: MessageService,
         private confirmationService: ConfirmationService
-    ) {}
+    ) { }
 
     exportCSV() {
         this.dt.exportCSV();
