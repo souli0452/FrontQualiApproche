@@ -12,17 +12,20 @@ import { QmsDocumentType, DocumentWorkflow } from '../../../models/gestion-docum
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { WorkflowService } from '../../../services/workflow.service';
 import { Subject, takeUntil } from 'rxjs';
+import { ToggleSwitch } from 'primeng/toggleswitch';
+import { FileUploadComponent } from '../../../components/non-conformite/file-upload/file-upload.component';
 
 @Component({
   selector: 'app-qms-document-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule],
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, ToggleSwitch, FileUploadComponent],
   templateUrl: './qms-document-create.component.html',
   styleUrls: ['./qms-document-create.component.scss'],
   providers: [MessageService]
 })
 export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
   documentForm: FormGroup;
+  checked: boolean = false;
   documentTypes: QmsDocumentType[] = [];
   structures: Structure[] = [];
   loading = false;
@@ -201,6 +204,14 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
     const file = event.target.files[0];
     if (file) {
       this.selectedFile = file;
+    }
+  }
+
+  handleFileUpload(files: any[]) {
+    if (files && files.length > 0) {
+      this.selectedFile = files[0].file;
+    } else {
+      this.selectedFile = undefined;
     }
   }
 

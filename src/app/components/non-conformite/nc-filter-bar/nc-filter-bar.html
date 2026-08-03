@@ -1,94 +1,195 @@
-<div class="flex justify-between items-center gap-3 pt-4 overflow-x-auto whitespace-nowrap hide-scrollbar bg-surface-0 dark:bg-surface-900">
-    <!-- Date de début -->
-    <div class="filter-item shrink-0">
-        <p-floatlabel variant="on" class="w-48">
-            <p-datepicker 
-                [(ngModel)]="dateDebut" 
-                (onChange)="applyFilters()"  
-                inputId="start_label" 
-                appendTo="body"
-                showIcon 
-                iconDisplay="input"
-                styleClass="w-full border border-surface-border rounded-lg bg-transparent" />
-            <label for="start_label">Du</label>
-        </p-floatlabel>
+<div class="flex justify-end gap-3 p-4 overflow-x-auto whitespace-nowrap hide-scrollbar">
+    
+    <div class="filter-item-date shrink-0">
+        <!-- Le bouton déclencheur principal (affiche les dates sélectionnées) -->
+        <button pButton pRipple type="button" 
+                class="p-button-outlined p-button-secondary border-round-lg w-full flex items-center justify-between px-3 py-2 text-700 bg-transparent border-1 border-surface-border"
+                (click)="datePanel.toggle($event)">
+            <span class="flex items-center gap-2">
+                <i class="pi pi-calendar"></i>
+                <span>{{ getFormattedRangeLabel() }}</span>
+            </span>
+            <i class="pi pi-chevron-down text-xs text-500"></i>
+        </button>
+
+        <!-- Panel de sélection personnalisé -->
+        <p-popover #datePanel>
+            <div class="flex flex-col md:flex-row bg-white dark:bg-surface-900 overflow-hidden" style="max-width: 700px;">
+                
+                <!-- Barre latérale gauche : Raccourcis -->
+                <div class="flex flex-col border-r border-surface-border p-2 gap-1 bg-surface-50 dark:bg-surface-950 w-48">
+                    <button *ngFor="let preset of datePresets" 
+                        class="text-left w-full px-3 py-2 text-sm font-medium border-none border-round cursor-pointer transition-colors"
+                        [ngClass]="activePreset === preset.value ? 'active-preset text-white' : 'bg-transparent text-700 hover:bg-surface-100 dark:hover:bg-surface-800'"
+                        (click)="applyPreset(preset.value)">
+                        {{ preset.label }}
+                    </button>
+                </div>
+
+                <!-- Partie droite : Calendriers double inline et actions -->
+                <div class="flex flex-col">
+                    <!-- Les 2 calendriers -->
+                    <div class="p-2">
+                        <p-datePicker 
+                            [(ngModel)]="rangeDates" 
+                            selectionMode="range" 
+                            [inline]="true"
+                            [numberOfMonths]="2"
+                            [showWeek]="false"
+                            styleClass="border-none shadow-none">
+                        </p-datePicker>
+                    </div>
+
+                    <!-- Barre d'action inférieure -->
+                    <div class="flex items-center justify-between border-t border-surface-border p-3 bg-surface-0 dark:bg-surface-900 mt-2 gap-4">
+                        <!-- Date sélectionnée -->
+                        <span class="text-sm font-semibold text-700">
+                            {{ getFormattedRangeSubLabel() }}
+                        </span>
+                        <!-- Boutons Annuler / Appliquer -->
+                        <div class="flex gap-2">
+                            <button pButton pRipple label="Annuler" 
+                                    class="p-button-text p-button-secondary font-bold p-button-sm"
+                                    (click)="cancelDateSelection(datePanel)">
+                            </button>
+                            <p-button label="Appliquer" size="small" [disabled]="!rangeDates || !rangeDates[0] || !rangeDates[1]"
+                                    (click)="applyDateSelection(datePanel)" severity="info" />
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </p-popover>
     </div>
 
-    <!-- Date de fin -->
-    <div class="filter-item shrink-0">
-        <p-floatlabel variant="on" class="w-48">
-            <p-datepicker 
-                [(ngModel)]="dateFin" 
-                (onChange)="applyFilters()"  
-                [minDate]="dateDebut"
-                appendTo="body"
-                inputId="end_label" 
-                showIcon 
-                iconDisplay="input"
-                styleClass="w-full border border-surface-border rounded-lg bg-transparent" />
-            <label for="end_label">Au</label>
-        </p-floatlabel>
+    <!-- Le Bouton "Filtrer" pour les autres critères (Processus, Gravité, Origine) -->
+    <div class="shrink-0">
+        <button pButton pRipple type="button" 
+                class="p-button-outlined p-button-secondary border-round-lg flex items-center gap-2 px-4 py-2 text-700 bg-transparent border-1 border-surface-border"
+                (click)="filterPanel.toggle($event)">
+            <i class="pi pi-filter"></i>
+            <span>Filtrer</span>
+            <span *ngIf="getActiveFiltersCount() > 0" 
+                  class="ml-1 text-white text-xs px-2 py-0.5 rounded-full" 
+                  style="background-color: var(--secondary-color);">
+                {{ getActiveFiltersCount() }}
+            </span>
+        </button>
+
+        <p-popover #filterPanel>
+            <div class="flex flex-col bg-white dark:bg-surface-900 w-80 shadow-2 border-round-xl overflow-hidden">
+                
+                <!-- En-tête du filtre -->
+                <div class="flex items-center justify-between p-3 border-b border-surface-border">
+                    <span class="font-bold text-900 flex items-center gap-2">
+                        <i class="pi pi-filter text-primary"></i>
+                        Filtres
+                    </span>
+                    <button pButton pRipple type="button" icon="pi pi-times" 
+                            class="p-button-rounded p-button-text p-button-sm bouton-fermer"
+                            (click)="filterPanel.hide()">
+                    </button>
+                </div>
+
+                <!-- Liste des sections accordéons -->
+                <div class="flex flex-col p-3 gap-3 overflow-y-auto max-h-[350px]">
+                    
+                    <!-- Section Processus -->
+                    <div *ngIf="showProcessus" class="border-b border-surface-border pb-3">
+                        <button type="button" 
+                                class="w-full flex items-center justify-between font-semibold text-800 bg-transparent border-none cursor-pointer py-1 bouton-categorie-filtre"
+                                (click)="expandedProcessus = !expandedProcessus">
+                            <span class="flex items-center gap-2">
+                                <i class="pi text-xs text-500" [ngClass]="expandedProcessus ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
+                                Processus
+                            </span>
+                        </button>
+                        <div *ngIf="expandedProcessus" class="flex flex-col gap-2 mt-3 pl-6 max-h-40 overflow-y-auto bg-list">
+                            <div *ngFor="let item of processusList" class="flex items-center gap-3">
+                                <p-checkbox 
+                                    name="processusGroup" 
+                                    [value]="item" 
+                                    [(ngModel)]="selectedProcess" 
+                                    [inputId]="'proc_' + item.id">
+                                </p-checkbox>
+                                <label [for]="'proc_' + item.id" class="text-700 text-sm cursor-pointer select-none">
+                                    {{ item.libelleCourt }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section Gravité -->
+                    <div *ngIf="showGravite" class="border-b border-surface-border pb-3">
+                        <button type="button" 
+                                class="w-full flex items-center justify-between font-semibold text-800 bg-transparent border-none cursor-pointer py-1 bouton-categorie-filtre"
+                                (click)="expandedGravite = !expandedGravite">
+                            <span class="flex items-center gap-2">
+                            <i class="pi text-xs text-500" [ngClass]="expandedGravite ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
+                                Gravité
+                            </span>
+                        </button>
+                        <div *ngIf="expandedGravite" class="flex flex-col gap-2 mt-3 pl-6 max-h-40 overflow-y-auto bg-list">
+                            <div *ngFor="let item of graviteList" class="flex items-center gap-3">
+                                <p-checkbox 
+                                    name="graviteGroup" 
+                                    [value]="item" 
+                                    [(ngModel)]="selectedGravite" 
+                                    [inputId]="'grav_' + item.id">
+                                </p-checkbox>
+                                <label [for]="'grav_' + item.id" class="text-700 text-sm cursor-pointer select-none">
+                                    {{ item.libelle }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section Origine -->
+                    <div *ngIf="showOrigine" class="pb-2">
+                        <button type="button" 
+                                class="w-full flex items-center justify-between font-semibold text-800 bg-transparent border-none cursor-pointer py-1 bouton-categorie-filtre"
+                                (click)="expandedOrigine = !expandedOrigine">
+                            <span class="flex items-center gap-2">
+                            <i class="pi text-xs text-500" [ngClass]="expandedOrigine ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
+                                Origine des NC
+                            </span>
+                        </button>
+                        <div *ngIf="expandedOrigine" class="flex flex-col gap-2 mt-3 pl-6 max-h-40 overflow-y-auto bg-list">
+                            <div *ngFor="let item of origineList" class="flex items-center gap-3">
+                                <p-checkbox 
+                                    name="origineGroup" 
+                                    [value]="item" 
+                                    [(ngModel)]="selectedOrigine" 
+                                    [inputId]="'orig_' + item.id">
+                                </p-checkbox>
+                                <label [for]="'orig_' + item.id" class="text-700 text-sm cursor-pointer select-none">
+                                    {{ item.libelle }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Pied de page : Actions -->
+                <div class="flex items-center justify-between border-t border-surface-border p-3 bg-surface-50 dark:bg-surface-950 gap-2">
+                    <button 
+                        pButton pRipple label="Réinitialiser" 
+                        class="p-button-text p-button-secondary font-bold"
+                        (click)="resetFiltersInPanel(filterPanel)">
+                    </button>
+                    <p-button 
+                        label="Filtrer" class=""
+                        (click)="applyFiltersInPanel(filterPanel)" 
+                        severity="info" />
+                </div>
+
+            </div>
+        </p-popover>
     </div>
 
-    <!-- Processus -->
-    <div class="filter-item shrink-0" *ngIf="showProcessus">
-        <p-floatlabel class="w-56" variant="on">
-            <p-select 
-                [(ngModel)]="selectedProcess" 
-                (onChange)="applyFilters()" 
-                inputId="process_label" 
-                [showClear]="true" 
-                [options]="processusList" 
-                [filter]="false" 
-                appendTo="body"
-                filterBy="libelle" 
-                optionLabel="libelle" 
-                styleClass="w-full border border-surface-border rounded-lg bg-transparent" 
-                variant="filled" />
-            <label for="process_label">Processus</label>
-        </p-floatlabel>
-    </div>
-
-    <!-- Gravité -->
-    <div class="filter-item shrink-0" *ngIf="showGravite">
-        <p-floatlabel class="w-56" variant="on">
-            <p-select 
-                [(ngModel)]="selectedGravite" 
-                (onChange)="applyFilters()" 
-                inputId="gravite_label" 
-                [showClear]="true" 
-                [options]="graviteList" 
-                [filter]="false" 
-                appendTo="body"
-                filterBy="libelle" 
-                optionLabel="libelle" 
-                styleClass="w-full border border-surface-border rounded-lg bg-transparent" 
-                variant="filled" />
-            <label for="gravite_label">Gravité</label>
-        </p-floatlabel>
-    </div>
-
-    <!-- Origine NC -->
-    <div class="filter-item shrink-0" *ngIf="showOrigine">
-        <p-floatlabel class="w-56" variant="on">
-            <p-select 
-                [(ngModel)]="selectedOrigine" 
-                (onChange)="applyFilters()" 
-                inputId="origine_label" 
-                [showClear]="true" 
-                [options]="origineList" 
-                [filter]="true" 
-                appendTo="body"
-                filterBy="libelle" 
-                optionLabel="libelle" 
-                styleClass="w-full border border-surface-border rounded-lg bg-transparent" 
-                variant="filled" />
-            <label for="origine_label">Origine des NC</label>
-        </p-floatlabel>
-    </div>
-
-    <!-- Bouton Réinitialiser -->
-    <div class="filter-item text-right">
+    <!-- Bouton Réinitialiser Global -->
+    <!-- <div class="filter-item text-right ml-auto">
         <p-button label="Réinitialiser" icon="pi pi-refresh" severity="contrast" (click)="resetFilters()" />
-    </div>
+    </div> -->
 </div>

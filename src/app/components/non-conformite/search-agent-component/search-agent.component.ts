@@ -20,7 +20,7 @@ export class SearchAgentComponent implements OnInit {
 
     directionId: string | undefined;
     serviceId: string | undefined;
-    searchedAgent: AuthData | undefined;
+    searchedAgent: any;
     users: AuthData[] = [];
     agents: any[] = [];
     @Input() prefilledStructureId?: string;
@@ -70,8 +70,8 @@ export class SearchAgentComponent implements OnInit {
         this.authService.loadAgentPublicByService(structureId)
             .subscribe({
                 next: (data) => {
-                    this.agents = data.data.content.map(a => ({
-                        label:  a.user.lastName + ' ' + a.user.firstName,
+                    this.agents = data.data.content.map((a: any) => ({
+                        label: a.user ? `${a.lastName} ${a.firstName}` : `${a.lastName || ''} ${a.firstName || ''}`.trim() || 'Utilisateur inconnu',
                         value: a
                     }));
 

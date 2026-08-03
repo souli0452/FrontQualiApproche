@@ -13,16 +13,22 @@ import { StructureService } from '../parametrages/structure/structure-service/st
 import { ApiResponse } from '../../models/response.model';
 import { AppRole } from '../../models/role.model';
 import { DropdownSelector, FormGroupColumn, MultiSelectSelector, TableColumn } from '../../models/generique.model';
+import { Breadcrumb } from 'primeng/breadcrumb';
+import { RouterModule } from '@angular/router';
+import { MenuItem } from 'primeng/api';
 
 @Component({
     selector: 'app-kc-user',
     standalone:true,
     templateUrl: './kc-user.component.html',
-    imports: [AppCrudGenericComponent, NgPrimeModule],
+    imports: [AppCrudGenericComponent, NgPrimeModule, Breadcrumb, RouterModule],
     styleUrls: ['./kc-user.component.scss']
 })
 export class KcUserComponent implements OnInit, OnDestroy {
     @Input() notDelete: boolean = true;
+
+    home: MenuItem | undefined;
+    items: MenuItem[] | undefined;
 
     loading: boolean = true;
     destroy$: Subject<boolean> = new Subject<boolean>();
@@ -103,6 +109,8 @@ export class KcUserComponent implements OnInit, OnDestroy {
         this.rolesDropdown = { field: 'roles', multiselectEntries: this.rolesEntries };
         this.dropdownList.push(this.strcutureDropdown);
         this.multiSelectList.push(this.rolesDropdown);
+
+        this.items = [{ label: 'Dashboard', routerLink: '/' }, { label: 'Liste des utilisateurs', routerLink: '/utilisateurs' }];
     }
 
     loadRoles() {

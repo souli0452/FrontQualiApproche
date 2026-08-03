@@ -19,3 +19,16 @@
     width: max-content !important;
     opacity: .4 !important;
 }
+.p-textarea:enabled:focus {
+    border-color: var(--secondary-color) !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.p-textarea{
+    box-shadow: none !important;
+}
+
+h3{
+    margin: 0 !important;
+}

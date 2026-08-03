@@ -13,7 +13,8 @@
         transform var(--layout-section-transition-duration),
         left var(--layout-section-transition-duration);
     background-color: var(--primary-color);
-    padding: 1.5rem 0;
+    padding: 1.5rem 8px;
+    border-radius: 5px;
 }
 
 .layout-menu-logo {
@@ -63,10 +64,9 @@
             font-size: 0.8rem;
             text-transform: uppercase;
             font-weight: 500;
-            color: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.452);
             margin: 0.5rem 0 0.5rem 0;
             padding: 10px .5rem;
-            border-top: 1px solid #8080802b;
         }
 
         > a {
@@ -104,14 +104,21 @@
             outline: 0 none;
             color: rgba(255, 255, 255, 1);
             cursor: pointer;
-            padding: 0.75rem 0.5rem 0.75rem 2rem;
-            // border-radius: 8px;
+            padding: 0.35rem;
             transition:
                 background-color var(--element-transition-duration),
                 box-shadow var(--element-transition-duration);
 
             .layout-menuitem-icon {
                 margin-right: 0.5rem;
+                background-color: #0083ca0e;;
+                padding: 10px;
+                border-radius: 5px;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             .layout-submenu-toggler {
@@ -123,18 +130,27 @@
             &.active-route {
                 color: #00ddff !important;
                 background-color: #75c5ec38;
+                border-radius: 5px;
                 
                 .layout-menuitem-icon {
-                    color: #00ddff;
+                    color: white;
+                    background-color: #0084ca;
                 }
 
                 &:hover {
                     background-color: #75c5ec38;
+                    border-radius: 5px;
                 }
             }
 
             &:hover {
                 background-color: #75c5ec38;
+                border-radius: 5px;
+
+                .layout-menuitem-icon {
+                    color: white;
+                    background-color: #0084ca;
+                }
             }
 
             &:focus {

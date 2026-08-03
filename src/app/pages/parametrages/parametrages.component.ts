@@ -34,13 +34,6 @@ export class ParametragesComponent implements OnInit, OnDestroy {
         this.activeTab = this.router.url.split('?')[0];
         this.items = [
             { label: 'Configuration globale', icon: 'pi pi-cog', routerLink: '/configurations/config-systeme' },
-            { label: 'Utilisateurs', icon: 'pi pi-users', routerLink: '/configurations/utilisateurs' },
-            { label: 'Rôles & Permissions', icon: 'pi pi-lock', routerLink: '/configurations/roles' },
-            { label: 'Catégorie de Processus', icon: 'pi pi-cog', routerLink: '/configurations/type-processus' },
-            { label: 'Origine de Non-Conformité', icon: 'pi pi-list', routerLink: '/configurations/type-nc' },
-            { label: 'Niveau de Non-Conformité', icon: 'pi pi-sort-amount-up', routerLink: '/configurations/niveau-nc' },
-            // { label: 'Type d\'Action Corrective', icon: 'pi pi-bolt', routerLink: '/configurations/type-action' },
-            { label: 'Processus', icon: 'pi pi-map-marker', routerLink: '/configurations/service' }
         ];
     }
     onTabChange(url: any) {
