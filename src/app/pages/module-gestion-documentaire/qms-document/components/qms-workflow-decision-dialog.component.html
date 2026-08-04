@@ -1,33 +1,39 @@
-<p-dialog [header]="'Exécuter l\'action : ' + (action?.libelle || '')"
-  [visible]="visible" (visibleChange)="visible = $event; visibleChange.emit($event)"
-  [modal]="true" [style]="{ width: '42rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }">
+<p-dialog [visible]="visible" (visibleChange)="visible = $event; visibleChange.emit($event)"
+  [modal]="true" [style]="{ width: '44rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }"
+  [draggable]="false" styleClass="p-fluid">
 
-  <div class="p-fluid mt-2" *ngIf="document">
-    <div class="p-3 bg-slate-50 border border-slate-200 border-round mb-4 flex align-items-center justify-content-between flex-wrap gap-2">
-      <div class="flex align-items-center gap-2">
-        <span class="text-sm font-bold text-slate-500">Document :</span>
-        <span class="text-sm font-bold text-slate-700">
-          <i class="pi pi-file text-indigo-500 mr-1"></i>
+  <!-- En-tête porté par le contenu plutôt que par l'attribut `header` : la décision engage son
+       auteur, et le titre doit dire laquelle, sur quel document, et depuis quelle étape. -->
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-3">
+      <span class="flex items-center justify-center w-11 h-11 rounded-full bg-indigo-50 text-indigo-500 shrink-0">
+        <i class="pi pi-directions text-xl"></i>
+      </span>
+      <div class="min-w-0">
+        <div class="text-lg font-bold text-slate-900 leading-tight">
+          {{ action?.libelle || 'Décision' }}
+        </div>
+        <div class="text-xs text-slate-500 mt-0.5" *ngIf="document">
           {{ document.documentNumber }}
-        </span>
-      </div>
-      <div class="flex align-items-center gap-2">
-        <span class="text-sm font-bold text-slate-500">Action :</span>
-        <p-tag [value]="action?.libelle || ''" severity="info" styleClass="text-xs"></p-tag>
+          <span *ngIf="document.currentEtape"> — étape « {{ document.currentEtape }} »</span>
+        </div>
       </div>
     </div>
+  </ng-template>
 
-    <form [formGroup]="form" class="p-fluid flex flex-column gap-4">
+  <div class="mt-1" *ngIf="document">
+
+    <form [formGroup]="form" class="flex flex-col gap-5">
 
       <!-- Champs exigés par l'étape courante. Le serveur refuse la décision tant qu'un champ
            requis manque : les présenter ici évite un aller-retour perdu. -->
       <ng-container *ngIf="stepFields.length">
-        <div class="flex flex-column gap-3">
-          <div class="text-xs font-bold uppercase text-slate-500">
-            Informations demandées à cette étape
+        <div class="flex flex-col gap-3 rounded-lg border border-slate-200 p-4">
+          <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+            <i class="pi pi-pencil text-indigo-500"></i>Informations demandées à cette étape
           </div>
 
-          <div *ngFor="let champ of stepFields" class="flex flex-column gap-1">
+          <div *ngFor="let champ of stepFields" class="flex flex-col gap-1">
             <label class="block text-sm font-bold text-slate-700">
               {{ champ.fieldLabel || champ.fieldName }}
               <span class="text-red-500" *ngIf="champ.required">*</span>
@@ -60,26 +66,43 @@
         </div>
       </ng-container>
 
-      <div class="flex flex-column gap-1">
-        <label class="block text-sm font-bold text-slate-700">
-          Commentaires / observations <span class="text-red-500">*</span>
+      <!-- L'observation est la raison d'être de ce dialogue : c'est elle qui restera dans la
+           traçabilité, lue par qui reprendra le dossier ou l'auditera. Elle est donc présentée
+           comme telle — cadre à part, motif énoncé — et non comme un champ de plus en bas de
+           formulaire. -->
+      <div class="flex flex-col gap-2 rounded-lg border border-indigo-100 bg-indigo-50/40 p-4">
+        <label for="comments" class="flex items-center gap-2 text-sm font-bold text-slate-800">
+          <i class="pi pi-comment text-indigo-500"></i>
+          Observation <span class="text-red-500">*</span>
         </label>
-        <textarea pTextarea formControlName="comments" rows="4"
-          placeholder="Motivez votre décision…" class="w-full"></textarea>
-        <small class="p-error block" *ngIf="estInvalide('comments')">
-          Un commentaire est requis pour tracer la décision.
+        <p class="m-0 text-xs text-slate-500">
+          Elle est conservée avec la décision et apparaîtra dans la traçabilité du circuit, à côté
+          de votre nom et de la date.
+        </p>
+        <textarea pTextarea id="comments" formControlName="comments" rows="4"
+          [class.ng-invalid]="estInvalide('comments')"
+          placeholder="Ce qui motive cette décision : constat, réserve, consigne pour l'étape suivante…"
+          class="w-full"></textarea>
+        <small class="text-red-600" *ngIf="estInvalide('comments')">
+          <i class="pi pi-exclamation-circle mr-1"></i>
+          Sans observation, la décision ne peut pas être tracée : le serveur la refuserait.
         </small>
       </div>
     </form>
   </div>
 
   <ng-template pTemplate="footer">
-    <div class="flex justify-content-end gap-2">
-      <button pButton label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary"
-        (click)="fermer()"></button>
-      <button pButton [label]="'Confirmer ' + (action?.libelle || '')" icon="pi pi-check"
-        class="p-button-primary" [disabled]="form.invalid" [loading]="loading"
-        (click)="valider()"></button>
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <span class="text-xs text-slate-500 flex items-center gap-1">
+        <i class="pi pi-lock text-slate-400"></i>
+        Décision définitive : elle fait avancer le circuit et reste inscrite au dossier.
+      </span>
+      <div class="flex gap-2">
+        <p-button label="Annuler" icon="pi pi-times" severity="secondary" [text]="true"
+          (onClick)="fermer()"></p-button>
+        <p-button [label]="action?.libelle || 'Confirmer'" icon="pi pi-check"
+          [disabled]="form.invalid" [loading]="loading" (onClick)="valider()"></p-button>
+      </div>
     </div>
   </ng-template>
 </p-dialog>

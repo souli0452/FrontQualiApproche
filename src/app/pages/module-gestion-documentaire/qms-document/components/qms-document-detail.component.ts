@@ -28,6 +28,14 @@ export class QmsDocumentDetailComponent {
     @Input() canViewAudit = false;
     @Input() canValidate = false;
     @Input() canShare = false;
+    /**
+     * Peut déposer une demande de modification ou de suppression.
+     *
+     * <p>Ne dépend pas de la permission d'écriture : c'est précisément parce qu'on ne peut pas
+     * modifier soi-même qu'on en fait la demande. En revanche, le document doit relever de sa
+     * structure — le serveur refuse une demande sur un document reçu par simple partage.</p>
+     */
+    @Input() canRequestChange = false;
 
     @Input() statusLabel: (doc: DocumentQms) => string = () => '';
     @Input() statusSeverity: (doc: DocumentQms) => string = () => 'info';
@@ -41,6 +49,10 @@ export class QmsDocumentDetailComponent {
     @Output() viewAudit = new EventEmitter<DocumentQms>();
     /** Décisions du circuit — distinctes des versions du fichier et de la piste d'accès. */
     @Output() viewValidationHistory = new EventEmitter<DocumentQms>();
+    /** Demandes de modification et de suppression portées sur ce document. */
+    @Output() viewDemandes = new EventEmitter<DocumentQms>();
+    /** Dépôt d'une nouvelle demande sur ce document. */
+    @Output() requestChange = new EventEmitter<DocumentQms>();
     @Output() share = new EventEmitter<DocumentQms>();
     @Output() executeAction = new EventEmitter<WorkflowActionDto>();
 

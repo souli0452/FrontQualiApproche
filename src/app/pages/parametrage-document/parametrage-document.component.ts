@@ -1,9 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { RouterModule, Router, NavigationEnd } from '@angular/router';
-import { NgPrimeModule } from '../../../prime-ng.module';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
+import { NgPrimeModule } from '../../../prime-ng.module';
 
+/**
+ * Cadre du paramétrage documentaire : en-tête, onglets, contenu.
+ *
+ * <p>La barre d'onglets avait été retirée quand l'écran n'en portait plus qu'un — un onglet seul ne
+ * propose aucun choix. Elle reprend son sens maintenant que trois référentiels s'y règlent : les
+ * types de document, les priorités et les niveaux de confidentialité.</p>
+ */
 @Component({
   selector: 'app-parametrage-document',
   standalone: true,
@@ -16,9 +23,9 @@ import { MenuItem } from 'primeng/api';
   styleUrl: './parametrage-document.component.scss'
 })
 export class ParametrageDocumentComponent implements OnInit, OnDestroy {
-    items: MenuItem[] | undefined;
-    activeTab: string = '';
-    routerSubscription: any;
+    items: MenuItem[] = [];
+    activeTab = '';
+    private routerSubscription: any;
 
     constructor(private router: Router) {
         this.routerSubscription = this.router.events.subscribe((event) => {
@@ -31,7 +38,9 @@ export class ParametrageDocumentComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.activeTab = this.router.url.split('?')[0];
         this.items = [
-            { label: 'Types de documents', icon: 'pi pi-tags', routerLink: '/parametrage-document/types' }
+            { label: 'Types de documents', icon: 'pi pi-tags', routerLink: '/parametrage-document/types' },
+            { label: 'Priorités', icon: 'pi pi-flag', routerLink: '/parametrage-document/priorites' },
+            { label: 'Confidentialité', icon: 'pi pi-lock', routerLink: '/parametrage-document/confidentialite' }
         ];
     }
 

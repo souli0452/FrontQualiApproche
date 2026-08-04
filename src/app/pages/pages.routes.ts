@@ -42,9 +42,12 @@ import { QmsDocumentTypeComponent } from './module-gestion-documentaire/qms-docu
 import { WorkflowStepTemplateComponent } from './module-gestion-documentaire/workflow-step-template/workflow-step-template.component';
 import { QmsVueEnsembleComponent } from './module-gestion-documentaire/qms-vue-ensemble/qms-vue-ensemble.component';
 import { QmsDocumentsPartagesComponent } from './module-gestion-documentaire/qms-documents-partages/qms-documents-partages.component';
+import { QmsDemandesComponent } from './module-gestion-documentaire/qms-demandes/qms-demandes.component';
+import { QmsDemandeCreateComponent } from './module-gestion-documentaire/qms-demande-create/qms-demande-create.component';
 import { GestionDocumentaireLayoutComponent } from '../layout/gestion-documentaire/gestion-documentaire';
-import { ParametrageDocumentComponent } from './parametrage-document/parametrage-document.component';
-import { ConfigurationWorkflowLayoutComponent } from '../layout/configuration-workflow/configuration-workflow';
+import { DomaineApplicationComponent } from './parametrage-document/domaine-application/domaine-application.component';
+import { PrioriteDocumentComponent } from './parametrage-document/priorite-document/priorite-document.component';
+import { NiveauConfidentialiteComponent } from './parametrage-document/niveau-confidentialite/niveau-confidentialite.component';
 import { EmailTemplateWorkflowComponent } from './configuration-workflow/email-template/email-template.component';
 import { WorkflowEditorComponent } from './configuration-workflow/circuits/workflow-editor.component';
 import { permissionGuard } from '../components/auth/permission.guard';
@@ -186,14 +189,8 @@ export default [
     // n'existent plus : l'éditeur unique couvre les trois types de ressource. L'adresse est
     // conservée — le menu et d'anciens liens la désignent — mais elle mène désormais à cet
     // éditeur, et la consultation d'un circuit s'y fait sans écran séparé.
-    {
-        path: 'workflows-gestion-documentaire',
-        component: WorkflowEditorComponent,
-        title: 'Workflows documents',
-        canActivate: [permissionGuard],
-        data: { breadcrumb: 'Configuration des Workflows', permissions: ['workflow-read', 'workflow-write'] }
-    },
-    { path: 'workflows-gestion-documentaire/detail/:id', redirectTo: 'workflows-gestion-documentaire', pathMatch: 'full' },
+    { path: 'workflows-gestion-documentaire', redirectTo: '/configurations/circuits', pathMatch: 'full' },
+    { path: 'workflows-gestion-documentaire/detail/:id', redirectTo: '/configurations/circuits', pathMatch: 'full' },
     {
         path: 'configurations',
         component: ParametragesComponent,
@@ -208,7 +205,10 @@ export default [
                 'niveau-nc-read', 'niveau-nc-write', 'action-read', 'action-write',
                 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE', 'MANAGE_USER', 'ROLE_MANAGE',
                 'STRUCT_MANAGE', 'SERVICE_MANAGE', 'TYPE_PROC_MANAGE', 'NC_ORIGIN_MANAGE',
-                'NC_LEVEL_MANAGE', 'ACTION_TYPE_MANAGE'
+                'NC_LEVEL_MANAGE', 'ACTION_TYPE_MANAGE',
+                // Sans ces deux-là, le garde du parent fermerait la porte à qui ne détient que la
+                // configuration des circuits — et ses onglets avec.
+                'workflow-read', 'workflow-write'
             ]
         },
         children: [
@@ -269,71 +269,95 @@ export default [
                     permissions: ['structure-read', 'structure-write', 'STRUCT_MANAGE', 'SERVICE_MANAGE']
                 }
             },
-        ]
-    },
 
-    {
-        path: 'parametrage-document',
-        component: ParametrageDocumentComponent,
-        canActivate: [permissionGuard],
-        data: {
-            breadcrumb: 'Paramétrage Type Document',
-            permissions: ['document-type-read', 'document-type-write'],
-            module: ModuleAbonnement.DOCUMENTAIRE
-        },
-        children: [
-            { path: '', redirectTo: 'types', pathMatch: 'full' },
-            {
-                path: 'types',
-                component: QmsDocumentTypeComponent,
-                title: 'Types de documents',
-                canActivate: [permissionGuard],
-                data: {
-                    breadcrumb: 'Types de Document QMS',
-                    permissions: ['document-type-read', 'document-type-write'],
-                    module: ModuleAbonnement.DOCUMENTAIRE
-                }
-            }
-        ]
-    },
-    {
-        path: 'configuration-workflow',
-        component: ConfigurationWorkflowLayoutComponent,
-        canActivate: [permissionGuard],
-        data: {
-            breadcrumb: 'Configuration Workflow',
-            permissions: ['workflow-read', 'workflow-write']
-        },
-        children: [
-            { path: '', redirectTo: 'circuits', pathMatch: 'full' },
-            {
-                path: 'email-template', component: EmailTemplateWorkflowComponent, title: 'Email Templates',
-                canActivate: [permissionGuard],
-                data: { permissions: ['workflow-write'] }
-            },
-            // Éditeur unique : les circuits des trois types de ressource se configurent au même
-            // endroit. Les anciennes adresses, propres à un type, y redirigent — des liens et des
-            // favoris pointent encore dessus.
+            // Configuration des circuits de validation, désormais servie par les onglets du centre
+            // de configuration. Les trois écrans y sont repris ensemble : n'y déplacer que les
+            // circuits aurait laissé le catalogue d'étapes et les modèles d'e-mail sans aucun
+            // chemin depuis le menu.
             {
                 path: 'circuits', component: WorkflowEditorComponent, title: 'Circuits de validation',
                 canActivate: [permissionGuard],
                 data: { permissions: ['workflow-read', 'workflow-write'] }
             },
-            { path: 'non-conformite', redirectTo: 'circuits', pathMatch: 'full' },
-            { path: 'non-conformite/new', redirectTo: 'circuits', pathMatch: 'full' },
-            { path: 'non-conformite/edit/:id', redirectTo: 'circuits', pathMatch: 'full' },
-            { path: 'non-conformite/detail/:id', redirectTo: 'circuits', pathMatch: 'full' },
-            { path: 'document', redirectTo: 'circuits', pathMatch: 'full' },
-            { path: 'document/detail/:id', redirectTo: 'circuits', pathMatch: 'full' },
             {
-                path: 'etapes',
-                component: WorkflowStepTemplateComponent,
-                title: 'Catalogue des Étapes',
+                path: 'etapes-circuit', component: WorkflowStepTemplateComponent, title: "Catalogue des Étapes",
                 canActivate: [permissionGuard],
                 data: { breadcrumb: "Catalogue d'Étapes", permissions: ['workflow-write'] }
-            }
+            },
+            {
+                path: 'modeles-email', component: EmailTemplateWorkflowComponent, title: 'Modèles d’e-mail',
+                canActivate: [permissionGuard],
+                data: { permissions: ['workflow-write'] }
+            },
         ]
     },
+
+    // Paramétrage documentaire : trois écrans, trois pages.
+    //
+    // Ils étaient réunis sous une barre d'onglets, qui n'apportait rien ici — chacun est un
+    // référentiel complet, avec sa liste, sa saisie et ses conseils, et l'on n'y navigue pas d'un
+    // onglet à l'autre en cours de travail. L'ancienne adresse redirige vers les types de
+    // document, pour les liens et les favoris.
+    { path: 'parametrage-document', redirectTo: '/parametrage-document/types', pathMatch: 'full' },
+    {
+        path: 'parametrage-document/types',
+        component: QmsDocumentTypeComponent,
+        title: 'Types de documents',
+        canActivate: [permissionGuard],
+        data: {
+            breadcrumb: 'Types de Document QMS',
+            permissions: ['document-type-read', 'document-type-write'],
+            module: ModuleAbonnement.DOCUMENTAIRE
+        }
+    },
+    {
+        path: 'parametrage-document/priorites',
+        component: PrioriteDocumentComponent,
+        title: 'Priorités de document',
+        canActivate: [permissionGuard],
+        data: {
+            breadcrumb: 'Priorités',
+            permissions: ['priorite-document-read', 'priorite-document-write', 'CONFIG_READ'],
+            module: ModuleAbonnement.DOCUMENTAIRE
+        }
+    },
+    {
+        path: 'parametrage-document/domaines',
+        component: DomaineApplicationComponent,
+        title: "Domaines d'application",
+        canActivate: [permissionGuard],
+        data: {
+            breadcrumb: 'Domaines',
+            permissions: ['domaine-application-read', 'domaine-application-write', 'CONFIG_READ'],
+            module: ModuleAbonnement.DOCUMENTAIRE
+        }
+    },
+    {
+        path: 'parametrage-document/confidentialite',
+        component: NiveauConfidentialiteComponent,
+        title: 'Niveaux de confidentialité',
+        canActivate: [permissionGuard],
+        data: {
+            breadcrumb: 'Confidentialité',
+            permissions: ['niveau-confidentialite-read', 'niveau-confidentialite-write', 'CONFIG_READ'],
+            module: ModuleAbonnement.DOCUMENTAIRE
+        }
+    },
+
+    // Ancienne section « Configuration Workflow », absorbée par les onglets du centre de
+    // configuration. Ses adresses sont conservées en redirections : des liens et des favoris
+    // pointent encore dessus, y compris ceux d'avant l'éditeur unique, propres à un type de
+    // ressource.
+    { path: 'configuration-workflow', redirectTo: '/configurations/circuits', pathMatch: 'full' },
+    { path: 'configuration-workflow/circuits', redirectTo: '/configurations/circuits', pathMatch: 'full' },
+    { path: 'configuration-workflow/etapes', redirectTo: '/configurations/etapes-circuit', pathMatch: 'full' },
+    { path: 'configuration-workflow/email-template', redirectTo: '/configurations/modeles-email', pathMatch: 'full' },
+    { path: 'configuration-workflow/non-conformite', redirectTo: '/configurations/circuits', pathMatch: 'full' },
+    { path: 'configuration-workflow/non-conformite/new', redirectTo: '/configurations/circuits', pathMatch: 'full' },
+    { path: 'configuration-workflow/non-conformite/edit/:id', redirectTo: '/configurations/circuits', pathMatch: 'full' },
+    { path: 'configuration-workflow/non-conformite/detail/:id', redirectTo: '/configurations/circuits', pathMatch: 'full' },
+    { path: 'configuration-workflow/document', redirectTo: '/configurations/circuits', pathMatch: 'full' },
+    { path: 'configuration-workflow/document/detail/:id', redirectTo: '/configurations/circuits', pathMatch: 'full' },
 
     {
         path: 'non-conformite',
@@ -455,6 +479,22 @@ export default [
                 path: 'partages',
                 component: QmsDocumentsPartagesComponent,
                 title: 'Documents partagés',
+                canActivate: [permissionGuard],
+                data: { permissions: ['document-read', 'document-write', 'DOC_READ'], module: ModuleAbonnement.DOCUMENTAIRE }
+            },
+            {
+                path: 'demandes',
+                component: QmsDemandesComponent,
+                title: 'Demandes sur les documents',
+                canActivate: [permissionGuard],
+                // Déposer une demande relève de la lecture : c'est parce qu'on ne peut pas modifier
+                // soi-même qu'on en fait la demande.
+                data: { permissions: ['document-read', 'document-write', 'DOC_READ'], module: ModuleAbonnement.DOCUMENTAIRE }
+            },
+            {
+                path: 'demandes/nouvelle',
+                component: QmsDemandeCreateComponent,
+                title: 'Nouvelle demande sur un document',
                 canActivate: [permissionGuard],
                 data: { permissions: ['document-read', 'document-write', 'DOC_READ'], module: ModuleAbonnement.DOCUMENTAIRE }
             },

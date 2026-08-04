@@ -1,60 +1,111 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
-import { MessageService, ConfirmationService } from 'primeng/api';
+
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { InputTextarea } from 'primeng/inputtextarea';
 import { AppCrudGenericComponent } from '../../../components/app-crud-generic/app-crud-generic.component';
-import { TableColumn } from '../../../models/generique.model';
+import { DropdownSelector, FormGroupColumn, TableColumn } from '../../../models/generique.model';
 import { WorkflowStepTemplate } from '../../../models/gestion-documentaire.model';
 import { WorkflowStepTemplateService } from '../../../services/module-gestion-documentaire/workflow-step-template.service';
 import { AppRoleService } from '../../role/role-service/role.service';
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
+import { hasAnyPermission } from '../../../utils/auth/auth-utils';
 
+/**
+ * Catalogue d'étapes réutilisables entre circuits.
+ *
+ * <p>Même forme que l'écran des types de document : le tableau générique porte la liste, sa barre
+ * de recherche, son bouton d'ajout et son formulaire.</p>
+ *
+ * <p>Le code n'est pas saisissable : il naît du libellé, le serveur le normalise et le fige — les
+ * circuits déjà composés à partir d'une entrée en ont hérité, et le changer les désolidariserait
+ * du catalogue sans que rien ne le signale. Il figure en revanche au tableau, car c'est lui qui
+ * rend une même nature d'étape comparable d'un circuit à l'autre.</p>
+ */
 @Component({
     selector: 'app-workflow-step-template',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, InputTextarea, AppCrudGenericComponent],
-    providers: [MessageService, ConfirmationService],
-    templateUrl: './workflow-step-template.component.html'
+    imports: [CommonModule, AppCrudGenericComponent, NgPrimeModule],
+    providers: [MessageService],
+    template: `
+        <p-toast></p-toast>
+        <div class="page-layout">
+            <app-crud-generic
+                [addButtonLabel]="'Nouvelle étape'"
+                [dialogWidth]="'40rem'"
+                [loading]="loading"
+                [pageLabel]="pageLabel"
+                [tableCols]="tableCols"
+                [listeObject]="dataList"
+                [formGroup]="formGroup"
+                [formCols]="formCols"
+                [dropdownList]="dropdownList"
+                [isAffich]="true"
+                [closeDialog]="closeDialog"
+                [formHeader]="formHeader"
+                (newItemEvent)="onSave($event)"
+                (removeEvent)="onDelete($event)"
+                [isPagination]="false"
+                [consultation]="!peutEcrire"
+                [notModif]="!peutEcrire"
+                [notDelete]="!peutEcrire">
+            </app-crud-generic>
+        </div>
+    `
 })
 export class WorkflowStepTemplateComponent implements OnInit, OnDestroy {
+
     loading = true;
-    destroy$: Subject<boolean> = new Subject<boolean>();
+    dataList: WorkflowStepTemplate[] = [];
+    closeDialog = false;
+    peutEcrire = false;
 
-    templates: WorkflowStepTemplate[] = [];
-    rolesList: any[] = [];
+    readonly pageLabel = "Catalogue des étapes de circuit";
+    readonly formHeader = "Création et mise à jour d'une étape";
 
-    tableCols: TableColumn[] = [
-        { field: 'nomEtape', header: "Nom de l'étape", type: 'string', filter: true },
-        // Le code est ce que l'entrée transmet aux circuits qui s'en inspirent : c'est lui qui fait
-        // qu'une même nature d'étape porte partout le même identifiant. L'écran le taisait, alors
-        // qu'il détermine le code de toute étape composée à partir du catalogue.
-        { field: 'code', header: 'Code', type: 'string', filter: true, width: '12rem' },
-        { field: 'responsableRoleLabel', header: 'Rôle responsable', type: 'string', filter: true },
-        { field: 'description', header: 'Description', type: 'string', filter: false },
+    formGroup: UntypedFormGroup;
+    formCols: FormGroupColumn[];
+    tableCols: TableColumn[];
 
-    ];
+    dropdownList: DropdownSelector[] = [];
+    private readonly roleDropdown: DropdownSelector = { field: 'responsableRole', dropdownEntries: [] };
 
-    customButtons = [
-        { label: 'Modifier', icon: 'pi pi-pencil', action: 'edit' },
-        { label: 'Supprimer', icon: 'pi pi-trash', action: 'delete' }
-    ];
-
-    showDialog = false;
-    templateForm: FormGroup;
-    isEditMode = false;
-    editingId?: string;
+    private readonly destroy$ = new Subject<boolean>();
 
     constructor(
-        private fb: FormBuilder,
-        private stepTemplateService: WorkflowStepTemplateService,
-        private roleService: AppRoleService,
-        private messageService: MessageService,
-        private confirmationService: ConfirmationService
+        protected fb: UntypedFormBuilder,
+        protected messageService: MessageService,
+        protected service: WorkflowStepTemplateService,
+        private roleService: AppRoleService
     ) {
-        this.templateForm = this.fb.group({
+        this.formCols = [
+            { field: 'id', label: '', header: 'Id', type: 'string', visible: false, required: false },
+            {
+                field: 'nomEtape', label: "Libellé de l'étape (ex : Vérification)", header: "Nom de l'étape",
+                type: 'string', visible: true, required: true
+            },
+            {
+                field: 'responsableRole',
+                label: "Rôle habilité à décider sur cette étape, et destinataire de sa notification",
+                header: 'Rôle responsable', type: 'dropdown', visible: true, required: true
+            },
+            {
+                field: 'description', label: "Ce que l'étape attend de son titulaire",
+                header: 'Description', type: 'text', visible: true, required: false
+            }
+        ];
+
+        this.tableCols = [
+            { field: 'nomEtape', header: "Nom de l'étape", type: 'string', filter: true },
+            { field: 'code', header: 'Code', type: 'string', filter: true, width: '12rem' },
+            { field: 'responsableRole', header: 'Rôle responsable', type: 'string', filter: true, width: '14rem' },
+            { field: 'description', header: 'Description', type: 'string', filter: true }
+        ];
+
+        this.formGroup = this.fb.group({
+            id: [null],
             nomEtape: [null, Validators.required],
             responsableRole: [null, Validators.required],
             description: [null]
@@ -62,159 +113,82 @@ export class WorkflowStepTemplateComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.fetchTemplates();
-        this.fetchRoles();
-    }
-
-    /**
-     * Les entrées d'avant la bascule portent encore un identifiant de rôle : on les affiche sous
-     * le nom correspondant plutôt que sous un UUID. Une entrée enregistrée depuis porte déjà le
-     * nom, et se retrouve ici inchangée.
-     */
-    getRoleLabel(roleIdOrName: string | undefined | null): string {
-        if (!roleIdOrName) return '';
-        const role = this.rolesList.find(r => r.value === roleIdOrName || r.id === roleIdOrName);
-        return role ? role.label : roleIdOrName;
-    }
-
-    fetchRoles() {
-        this.roleService
-            .getAllRoles(0, 1000000)
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-                next: (res) => {
-                    if (res && res.data && res.data.content) {
-                        // La valeur retenue est le **nom** du rôle, comme dans l'éditeur de
-                        // circuits : c'est le nom qu'inscrivent les étapes, et sur son égalité
-                        // exacte que reposent l'habilitation à décider et la notification des
-                        // titulaires. Une entrée de catalogue enregistrée avec l'identifiant du
-                        // rôle ne désignait personne, et son étape n'avait plus ni décideur ni
-                        // destinataire. L'identifiant reste porté à côté, pour relire les entrées
-                        // enregistrées avant cette bascule.
-                        this.rolesList = res.data.content.map((r: any) => ({
-                            label: r.name || r.code || r.libelle || r.id,
-                            value: r.name || r.code || r.libelle || r.id,
-                            id: r.id
-                        }));
-                        this.templates = this.templates.map(t => ({
-                            ...t,
-                            responsableRoleLabel: this.getRoleLabel(t.responsableRole)
-                        }));
-                    }
-                },
-                error: () => {
-                    console.warn('Impossible de charger la liste des rôles/permissions.');
-                }
-            });
-    }
-
-    fetchTemplates() {
-        this.loading = true;
-        this.stepTemplateService
-            .getAll()
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-                next: (res) => {
-                    this.templates = (res || []).map((t) => ({
-                        ...t,
-                        responsableRoleLabel: this.getRoleLabel(t.responsableRole),
-                        createdAtFormatted: t.createdAt ? new Date(t.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'
-                    } as any));
-                    this.loading = false;
-                },
-                error: (err) => {
-                    this.loading = false;
-                    showToast(StatusEnum.error, err.status, 'Erreur lors du chargement des étapes', this.messageService, err);
-                }
-            });
-    }
-
-    handleCustomAction(event: { action: string; user: any }) {
-        const template = event.user;
-        if (event.action === 'edit') {
-            this.editTemplate(template);
-        } else if (event.action === 'delete') {
-            this.deleteTemplate(template);
-        }
-    }
-
-    openNew() {
-        this.isEditMode = false;
-        this.editingId = undefined;
-        this.templateForm.reset();
-        this.showDialog = true;
-    }
-
-    editTemplate(template: WorkflowStepTemplate) {
-        this.isEditMode = true;
-        this.editingId = template.id;
-        this.templateForm.patchValue({
-            nomEtape: template.nomEtape,
-            // Ramené au nom du rôle : sur une entrée d'avant la bascule, la liste — désormais
-            // indexée par nom — ne reconnaîtrait pas l'identifiant et présenterait un champ vide,
-            // que le premier enregistrement effacerait pour de bon.
-            responsableRole: this.getRoleLabel(template.responsableRole) || null,
-            description: template.description
-        });
-        this.showDialog = true;
-    }
-
-    hideDialog() {
-        this.showDialog = false;
-    }
-
-    saveTemplate() {
-        if (this.templateForm.invalid) {
-            this.messageService.add({ severity: 'warn', summary: 'Erreur', detail: 'Veuillez remplir tous les champs obligatoires' });
-            return;
-        }
-
-        const payload: WorkflowStepTemplate = this.templateForm.value;
-        this.loading = true;
-
-        const request = this.isEditMode && this.editingId
-            ? this.stepTemplateService.update(this.editingId, payload)
-            : this.stepTemplateService.create(payload);
-
-        request.pipe(takeUntil(this.destroy$)).subscribe({
-            next: () => {
-                this.messageService.add({ severity: 'success', summary: 'Succès', detail: this.isEditMode ? 'Étape mise à jour' : 'Étape créée' });
-                this.hideDialog();
-                this.fetchTemplates();
-            },
-            error: (err) => {
-                this.loading = false;
-                showToast(StatusEnum.error, err.status, "Erreur lors de l'enregistrement", this.messageService, err);
-            }
-        });
-    }
-
-    deleteTemplate(template: WorkflowStepTemplate) {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous vraiment supprimer cette étape du catalogue ?',
-            header: 'Confirmation',
-            icon: 'pi pi-exclamation-triangle',
-            accept: () => {
-                this.loading = true;
-                this.stepTemplateService
-                    .delete(template.id!)
-                    .pipe(takeUntil(this.destroy$))
-                    .subscribe({
-                        next: () => {
-                            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Étape supprimée' });
-                            this.fetchTemplates();
-                        },
-                        error: (err) => {
-                            this.loading = false;
-                            showToast(StatusEnum.error, err.status, 'Erreur lors de la suppression', this.messageService, err);
-                        }
-                    });
-            }
-        });
+        this.peutEcrire = hasAnyPermission(['workflow-write']);
+        this.dropdownList.push(this.roleDropdown);
+        this.chargerRoles();
+        this.fetchObject();
     }
 
     ngOnDestroy(): void {
         this.destroy$.next(true);
-        this.destroy$.unsubscribe();
+        this.destroy$.complete();
+    }
+
+    /**
+     * Rôles proposés, désignés par leur **nom**.
+     *
+     * <p>C'est le nom qu'inscrivent les étapes des circuits, et sur son égalité exacte que reposent
+     * l'habilitation à décider et la résolution des destinataires. Une entrée enregistrée avec
+     * l'identifiant du rôle ne désignerait personne.</p>
+     */
+    private chargerRoles(): void {
+        this.roleService.getAllRoles(0, 1000).pipe(takeUntil(this.destroy$)).subscribe({
+            next: (reponse: any) => {
+                const roles = reponse?.data?.content ?? reponse?.data ?? [];
+                this.roleDropdown.dropdownEntries = (roles as any[])
+                    .map((role) => ({ label: role.name ?? role.id, value: role.name ?? role.id }))
+                    .filter((option) => !!option.value);
+                this.dropdownList = [...this.dropdownList];
+            },
+            error: () => console.warn('Liste des rôles indisponible.')
+        });
+    }
+
+    fetchObject(): void {
+        this.loading = true;
+        this.service.getAll().pipe(takeUntil(this.destroy$)).subscribe({
+            next: (etapes) => {
+                this.dataList = etapes ?? [];
+                this.loading = false;
+            },
+            error: (error) => {
+                this.loading = false;
+                showToast(StatusEnum.error, error.status, 'Chargement des étapes impossible',
+                    this.messageService, error);
+            }
+        });
+    }
+
+    onSave(objet: WorkflowStepTemplate): void {
+        const requete = objet.id
+            ? this.service.update(objet.id, objet)
+            : this.service.create(objet);
+
+        requete.pipe(takeUntil(this.destroy$)).subscribe({
+            next: () => this.onSuccess(),
+            error: (error) => showToast(StatusEnum.error, error.status,
+                'Enregistrement impossible', this.messageService, error)
+        });
+    }
+
+    onDelete(objet: WorkflowStepTemplate): void {
+        this.service.delete(objet.id!).pipe(takeUntil(this.destroy$)).subscribe({
+            next: () => {
+                this.messageService.add({
+                    severity: 'success', summary: 'Supprimé',
+                    // Les circuits déjà composés gardent leur étape : ils en ont reçu une copie.
+                    detail: 'Étape retirée du catalogue. Les circuits déjà composés la conservent.'
+                });
+                this.fetchObject();
+            },
+            error: (error) => showToast(StatusEnum.error, error.status,
+                'Suppression impossible', this.messageService, error)
+        });
+    }
+
+    private onSuccess(): void {
+        this.closeDialog = true;
+        this.fetchObject();
+        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Opération réussie' });
     }
 }

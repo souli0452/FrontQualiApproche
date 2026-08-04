@@ -1,50 +1,17 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="card">
-    <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
-        <div>
-            <h2 class="font-semibold text-xl mb-1">
-                Circuits de validation
-                <span class="text-base text-surface-400">({{ circuits.length }})</span>
-            </h2>
-            <p class="text-surface-500 text-sm m-0">
-                Étapes, décisions et destinataires — pour les documents, les non-conformités et les plans d'action.
-            </p>
-        </div>
-        @if (peutEcrire) {
-            <p-button label="Nouveau circuit" icon="pi pi-plus" (onClick)="ouvrirCreation()"></p-button>
-        }
+@if (typesEnConflit.length) {
+    <!-- Le serveur n'ouvre qu'un circuit par type de ressource, dans un ordre non garanti :
+         le signaler vaut mieux que de laisser une configuration au résultat imprévisible. -->
+    <div class="flex items-start gap-2 mb-4 p-3 border-round bg-orange-50 text-orange-800 text-sm">
+        <i class="pi pi-exclamation-triangle mt-0.5"></i>
+        <span>
+            Plusieurs circuits sont actifs pour {{ typesEnConflit.join(', ') }} : un seul sera
+            réellement ouvert aux nouveaux dossiers.
+        </span>
     </div>
-
-    <!-- Filtres -->
-    <div class="flex flex-wrap items-center gap-2 mb-4">
-        <p-button label="Tous" size="small" [outlined]="typeFiltre !== null" (onClick)="filtrerParType(null)"></p-button>
-        @for (type of typesRessource; track type.value) {
-            <p-button [label]="type.label" size="small" severity="secondary"
-                      [outlined]="typeFiltre !== type.value" (onClick)="filtrerParType(type.value)"></p-button>
-        }
-        <div class="flex-1"></div>
-        <p-iconfield>
-            <p-inputicon><i class="pi pi-search text-primary"></i></p-inputicon>
-            <input pInputText type="text" [(ngModel)]="recherche" (input)="appliquerFiltres()"
-                   placeholder="Rechercher un circuit..." />
-        </p-iconfield>
-    </div>
-
-    @if (typesEnConflit.length) {
-        <!-- Le serveur n'ouvre qu'un circuit par type de ressource, dans un ordre non garanti :
-             le signaler vaut mieux que de laisser une configuration au résultat imprévisible. -->
-        <div class="flex items-start gap-2 mb-4 p-3 border-round bg-orange-50 text-orange-800 text-sm">
-            <i class="pi pi-exclamation-triangle mt-0.5"></i>
-            <span>
-                Plusieurs circuits sont actifs pour {{ typesEnConflit.join(', ') }} : un seul sera
-                réellement ouvert aux nouveaux dossiers.
-            </span>
-        </div>
-    }
-
-</div>
+}
 
 <!-- Tableau générique : même composant que le catalogue d'étapes et que les autres écrans de
      configuration. Il apporte sa propre carte, d'où la fermeture de celle de l'en-tête juste
@@ -52,9 +19,13 @@
      portées par le dialogue ci-dessous, qu'aucun formulaire générique ne saurait décrire (étapes,
      transitions, champs de saisie). -->
 <app-crud-generic [loading]="chargement" [tableCols]="colonnes" [listeObject]="circuits"
+                  [pageLabel]="titrePage" [addButtonLabel]="'Nouveau circuit'"
+                  [addFilter]="true" [searchField]="filtres" (filterEvent)="filtrerParType($event)"
+                  [ajoutExterne]="true" (ajoutDemande)="ouvrirCreation()"
                   [formGroup]="formulaireTableau" [formCols]="[]" [notModif]="true" [notDelete]="true"
                   [isAffich]="false" [asRoleEdit]="true" [customButtons]="actionsLigne"
                   (customActionEvent)="executerAction($event)"
+                  [consultation]="!peutEcrire"
                   [isPagination]="circuits.length > 10">
 </app-crud-generic>
 
@@ -72,7 +43,8 @@
             <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Type de ressource <span class="text-red-500">*</span></label>
                 <p-select formControlName="resourceType" [options]="typesRessource" optionLabel="label"
-                          optionValue="value" placeholder="Choisir un type"></p-select>
+                          optionValue="value" placeholder="Choisir un type"
+                          [filter]="true" appendTo="body"></p-select>
             </div>
             <div class="flex flex-col gap-1 md:col-span-2">
                 <label class="text-sm font-medium">Description</label>
@@ -133,7 +105,8 @@
                                         <label class="text-xs font-medium text-surface-600">Pré-remplir depuis le catalogue</label>
                                         <p-select [options]="modelesEtape" optionLabel="nomEtape" optionValue="id"
                                                   placeholder="Choisir un modèle d'étape (facultatif)" [showClear]="true"
-                                                  (onChange)="appliquerModeleEtape(i, $event.value)"></p-select>
+                                                  (onChange)="appliquerModeleEtape(i, $event.value)"
+                          [filter]="true" appendTo="body"></p-select>
                                     </div>
                                 }
                                 <div class="flex flex-col gap-1">
@@ -144,7 +117,8 @@
                                     <label class="text-xs font-medium text-surface-600">Rôle responsable <span class="text-red-500">*</span></label>
                                     <p-select formControlName="responsableRole" [options]="rolesDisponibles"
                                               optionLabel="label" optionValue="value" [filter]="true"
-                                              placeholder="Qui décide à cette étape ?"></p-select>
+                                              placeholder="Qui décide à cette étape ?"
+                          appendTo="body"></p-select>
                                 </div>
                                 <div class="flex flex-col gap-1">
                                     <label class="text-xs font-medium text-surface-600">État de traitement</label>
@@ -157,7 +131,8 @@
                                     <label class="text-xs font-medium text-surface-600">Notification à l'arrivée</label>
                                     <p-select formControlName="emailTemplateCode" [options]="modelesEmail"
                                               optionLabel="label" optionValue="value"
-                                              placeholder="Aucune notification"></p-select>
+                                              placeholder="Aucune notification"
+                          [filter]="true" appendTo="body"></p-select>
                                     <small class="text-surface-400 text-[11px]">
                                         Envoyée aux porteurs du rôle responsable.
                                     </small>
@@ -180,7 +155,8 @@
                                         </label>
                                         <p-select formControlName="cibleApprobation" [options]="ciblesPossibles(i)"
                                                   optionLabel="label" optionValue="value"
-                                                  placeholder="Fin du circuit"></p-select>
+                                                  placeholder="Fin du circuit"
+                          [filter]="true" appendTo="body"></p-select>
                                     </div>
                                     <div class="flex flex-col gap-1">
                                         <label class="text-xs font-medium text-surface-600">Libellé du bouton</label>
@@ -190,7 +166,8 @@
                                         <label class="text-xs font-medium text-surface-600">Rôle exigé (facultatif)</label>
                                         <p-select formControlName="roleApprobation" [options]="rolesDisponibles"
                                                   optionLabel="label" optionValue="value" [showClear]="true"
-                                                  placeholder="Celui de l'étape"></p-select>
+                                                  placeholder="Celui de l'étape"
+                          [filter]="true" appendTo="body"></p-select>
                                     </div>
                                 </div>
 
@@ -210,7 +187,8 @@
                                             </label>
                                             <p-select formControlName="cibleRejet" [options]="ciblesPossibles(i)"
                                                       optionLabel="label" optionValue="value"
-                                                      placeholder="Fin du circuit"></p-select>
+                                                      placeholder="Fin du circuit"
+                          [filter]="true" appendTo="body"></p-select>
                                         </div>
                                         <div class="flex flex-col gap-1">
                                             <label class="text-xs font-medium text-surface-600">Libellé du bouton</label>
@@ -220,7 +198,8 @@
                                             <label class="text-xs font-medium text-surface-600">Rôle exigé (facultatif)</label>
                                             <p-select formControlName="roleRejet" [options]="rolesDisponibles"
                                                       optionLabel="label" optionValue="value" [showClear]="true"
-                                                      placeholder="Celui de l'étape"></p-select>
+                                                      placeholder="Celui de l'étape"
+                          [filter]="true" appendTo="body"></p-select>
                                         </div>
                                     </div>
                                 }
@@ -256,7 +235,8 @@
                                                 <div class="md:col-span-2 flex flex-col gap-1">
                                                     <label class="text-[11px] text-surface-500">Type</label>
                                                     <p-select formControlName="type" [options]="typesChamp"
-                                                              optionLabel="label" optionValue="value"></p-select>
+                                                              optionLabel="label" optionValue="value"
+                          [filter]="true" appendTo="body"></p-select>
                                                 </div>
                                                 <div class="md:col-span-2 flex flex-col gap-1">
                                                     <label class="text-[11px] text-surface-500">Choix (séparés par des virgules)</label>

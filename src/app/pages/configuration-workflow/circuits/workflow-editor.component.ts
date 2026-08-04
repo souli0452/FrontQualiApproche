@@ -131,8 +131,28 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   circuits: LigneCircuit[] = [];
   private tousLesCircuits: WorkflowDto[] = [];
 
-  recherche = '';
   typeFiltre: string | null = null;
+
+  readonly titrePage = 'Circuits de validation';
+
+  /**
+   * Filtre servi par la barre du tableau générique. La recherche libre y est déjà, portée par le
+   * composant : n'y reste que ce qu'il ne sait pas faire seul, le filtre par type de ressource.
+   */
+  readonly filtres = [
+    {
+      field: 'resourceType',
+      label: 'Type de ressource',
+      placeHolder: 'Tous les types',
+      list: [
+        { label: 'Documents', value: 'DOCUMENT' },
+        { label: 'Non-conformités', value: 'NON_CONFORMITE' },
+        { label: "Plans d'action", value: 'PLAN_ACTION' },
+        { label: 'Demandes sur documents', value: 'DEMANDE_DOCUMENT' }
+      ],
+      value: null as string | null
+    }
+  ];
 
   /**
    * Colonnes du tableau générique — le même composant que le catalogue d'étapes et le reste des
@@ -318,16 +338,10 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   // ---------------------------------------------------------------- liste
 
   appliquerFiltres(): void {
-    const terme = this.recherche.trim().toLowerCase();
+    // La recherche libre est assurée par le tableau générique ; il ne reste ici que le filtre par
+    // type de ressource, qu'il ne sait pas exprimer seul.
     this.circuits = this.tousLesCircuits
-      .filter((circuit) => {
-        const correspondType = !this.typeFiltre || circuit.resourceType === this.typeFiltre;
-        const correspondTerme =
-          !terme ||
-          circuit.nom?.toLowerCase().includes(terme) ||
-          circuit.description?.toLowerCase().includes(terme);
-        return correspondType && correspondTerme;
-      })
+      .filter((circuit) => !this.typeFiltre || circuit.resourceType === this.typeFiltre)
       .map((circuit) => ({
         ...circuit,
         typeLibelle: this.libelleType(circuit.resourceType),
@@ -343,8 +357,9 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
       .map((type) => type.label);
   }
 
-  filtrerParType(type: string | null): void {
-    this.typeFiltre = type;
+  /** Reçoit l'entrée de filtre du tableau générique, qui y a posé la valeur choisie. */
+  filtrerParType(filtre: any): void {
+    this.typeFiltre = (typeof filtre === 'string' || filtre === null) ? filtre : (filtre?.value ?? null);
     this.appliquerFiltres();
   }
 

@@ -31,6 +31,14 @@ export interface TableColumn {
     width?: string;
     compute?: boolean;
     editable?: boolean;
+    /**
+     * Colonne de type `badge` : champ de la ligne portant la sévérité PrimeNG de la pastille
+     * (`success`, `warn`, `danger`, `info`, `secondary`). À défaut, la pastille est `info`.
+     *
+     * <p>La sévérité est portée par la donnée, non déduite du libellé de la colonne : deux écrans
+     * peuvent nommer « État » des choses qui ne se colorent pas de la même façon.</p>
+     */
+    severityField?: string;
 }
 
 export interface DropdownSelector {

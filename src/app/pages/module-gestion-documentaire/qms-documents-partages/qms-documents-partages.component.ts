@@ -46,6 +46,33 @@ export class QmsDocumentsPartagesComponent implements OnInit, OnDestroy {
             });
     }
 
+    /**
+     * Seule action offerte sur un document partagé : le télécharger.
+     *
+     * Le serveur applique la même règle — la consultation et le téléchargement passent, mais
+     * l'historique, la piste d'audit et les décisions du circuit sont refusés à qui n'appartient
+     * pas à la structure émettrice. L'écran ne propose donc rien d'autre, plutôt que d'ouvrir des
+     * portes qui se refermeraient.
+     */
+    telecharger(shared: SharedDocumentDto): void {
+        this.qmsService.exportSecuredPdf(shared.documentId)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const lien = document.createElement('a');
+                    lien.href = url;
+                    lien.download = `${shared.documentNumber || 'document'}.pdf`;
+                    lien.click();
+                    URL.revokeObjectURL(url);
+                },
+                error: (err: any) => {
+                    showToast(StatusEnum.error, err.status,
+                        'Téléchargement impossible', this.messageService, err);
+                }
+            });
+    }
+
     ngOnDestroy(): void {
         this.destroy$.next();
         this.destroy$.complete();

@@ -10,6 +10,12 @@
       [searchQuery]="searchQuery"
       [selectedType]="selectedType"
       [selectedService]="selectedService"
+      [priorites]="priorites"
+      [niveauxConfidentialite]="niveauxConfidentialite"
+      [domaines]="domaines"
+      [selectedPriorite]="selectedPriorite"
+      [selectedNiveauConfidentialite]="selectedNiveauConfidentialite"
+      [selectedDomaine]="selectedDomaine"
       [statusLabel]="statusLabelFn"
       [statusSeverity]="statusSeverityFn"
       [etapeDeCircuit]="etapeDeCircuitFn"
@@ -18,6 +24,9 @@
       (searchQueryChange)="searchQuery = $event"
       (selectedTypeChange)="selectedType = $event"
       (selectedServiceChange)="selectedService = $event"
+      (selectedPrioriteChange)="selectedPriorite = $event"
+      (selectedNiveauConfidentialiteChange)="selectedNiveauConfidentialite = $event"
+      (selectedDomaineChange)="selectedDomaine = $event"
       (refresh)="refreshList()"
       (open)="viewDetails($event)">
     </app-qms-document-list>
@@ -38,15 +47,21 @@
 
 <!-- ========================================================================= -->
 <!-- 3. DETAIL PAGE VIEW -->
-<!-- ========================================================================= -->
+<!-- =========================================================================
+     La permission seule ne suffit pas : sur un document reçu par partage, venu d'une autre
+     structure, le serveur refuse l'historique, la piste d'audit et les décisions du circuit.
+     `suiviInterneAutorise` est ce qu'il en dit, et l'écran s'y range — mieux vaut pas de bouton
+     qu'un bouton qui mène à un refus.
+     ========================================================================= -->
 <app-qms-document-detail *ngIf="currentView === 'detail' && selectedDocument"
   [document]="selectedDocument"
   [workflowState]="workflowState"
   [canDownload]="hasPermission('document-download')"
-  [canViewHistory]="hasPermission('document-history')"
-  [canViewAudit]="hasPermission('document-audit')"
-  [canValidate]="hasPermission('document-validate')"
-  [canShare]="hasPermission('document-write')"
+  [canViewHistory]="hasPermission('document-history') && selectedDocument.suiviInterneAutorise !== false"
+  [canViewAudit]="hasPermission('document-audit') && selectedDocument.suiviInterneAutorise !== false"
+  [canValidate]="hasPermission('document-validate') && selectedDocument.suiviInterneAutorise !== false"
+  [canShare]="hasPermission('document-write') && selectedDocument.suiviInterneAutorise !== false"
+  [canRequestChange]="selectedDocument.suiviInterneAutorise !== false"
   [statusLabel]="statusLabelFn"
   [statusSeverity]="statusSeverityFn"
   [actionIcon]="actionIconFn"
@@ -57,6 +72,8 @@
   (viewHistory)="viewVersionHistory($event)"
   (viewAudit)="viewAuditLogs($event)"
   (viewValidationHistory)="viewValidationHistory($event)"
+  (viewDemandes)="viewDemandes($event)"
+  (requestChange)="demanderUneModification($event)"
   (share)="openShareModal($event)"
   (executeAction)="executeDynamicAction($event)">
 </app-qms-document-detail>
@@ -90,6 +107,18 @@
   (close)="currentView = 'list'">
 </app-qms-workflow-historique>
 
+<!-- ========================================================================= -->
+<!-- 5 quater. DEMANDES PORTÉES SUR LE DOCUMENT                                -->
+<!-- Ni les versions, ni les accès, ni les décisions du circuit ne disaient ce  -->
+<!-- qu'on avait demandé à son sujet, ni ce qui en avait été décidé.            -->
+<!-- ========================================================================= -->
+<app-qms-document-demandes *ngIf="currentView === 'demandes' && selectedDocument"
+  [document]="selectedDocument"
+  [demandes]="demandesDuDocument"
+  [loading]="loading"
+  (close)="currentView = 'detail'">
+</app-qms-document-demandes>
+
 </div>
 
 <!-- ========================================================================= -->
@@ -105,9 +134,12 @@
   [loadingAccess]="loadingAccess"
   [visible]="showShareModal"
   (visibleChange)="showShareModal = $event"
+  [partagesStructure]="partagesStructure"
   (structureFilterChange)="onStructureFilterChange($event)"
   (grant)="submitPermissions($event)"
-  (revoke)="revokeAccess($event)">
+  (revoke)="revokeAccess($event)"
+  (partagerAvecStructure)="partagerAvecStructure($event)"
+  (retirerPartageStructure)="retirerPartageStructure($event)">
 </app-qms-document-access-dialog>
 
 <!-- ========================================================================= -->

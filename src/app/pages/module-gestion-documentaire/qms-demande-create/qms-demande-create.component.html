@@ -1,0 +1,337 @@
+<p-toast></p-toast>
+
+<form [formGroup]="formulaire" class="p-fluid">
+  <div class="flex flex-col md:flex-row">
+
+    <!-- ------------------------------------------------------------ saisie -->
+    <div class="w-full md:w-2/3 md:pr-4">
+      <div class="p-4 bg-gray-50 rounded-xl border border-2 border-gray-100">
+
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center bg-violet-50 text-violet-500 rounded-full"
+               style="width: 3.5rem; height: 3.5rem">
+            <i class="pi text-2xl pi-inbox"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-bold text-2xl text-900 mb-1">Nouvelle demande sur un document</span>
+            <span class="text-500 text-sm">
+              Demandez la modification ou la suppression d'un document. Votre demande sera instruite
+              au titre de la qualité avant toute suite.
+            </span>
+          </div>
+        </div>
+        <hr>
+
+        <div class="flex flex-col md:flex-row justify-center p-0 gap-4">
+          <div class="w-full">
+            <div class="surface-section p-4 border-round shadow-1 h-full">
+
+              <div class="flex items-center mb-4 gap-2">
+                <i class="pi pi-file text-violet-500"></i>
+                <h3 class="text-xl font-bold text-900 my-0">Objet de la demande</h3>
+              </div>
+
+              <!-- Document concerné et nature -->
+              <div class="field mb-6 flex flex-col md:flex-row gap-4">
+                <div class="w-full md:w-1/2">
+                  <div class="flex items-center mb-2 gap-2">
+                    <label for="documentId" class="font-semibold m-0">
+                      Document concerné <span class="text-red-500">*</span>
+                    </label>
+                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors"
+                       (click)="aideDocument.toggle($event)"></i>
+                  </div>
+                  <p-popover #aideDocument>
+                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 320px;">
+                      Seuls les documents de votre structure vous sont proposés : on ne demande pas
+                      la modification d'un document qu'on n'a pas le droit de voir.
+                    </div>
+                  </p-popover>
+                  <div class="flex-1 mt-2">
+                    <p-floatlabel variant="on" class="w-full">
+                      <p-select id="documentId" formControlName="documentId" [options]="documents"
+                                optionLabel="documentNumber" optionValue="id" [filter]="true"
+                                [showClear]="true" appendTo="body" styleClass="w-full" class="w-full"
+                                emptyMessage="Aucun document accessible">
+                      </p-select>
+                      <label for="documentId">Sélectionner le document</label>
+                    </p-floatlabel>
+                  </div>
+                  <div *ngIf="documentChoisi" class="mt-2 p-2.5 bg-blue-50 border border-blue-100 rounded flex items-center gap-2.5">
+                    <i class="pi pi-file text-blue-500 text-base"></i>
+                    <div class="text-left">
+                      <span class="text-[10px] text-blue-700 font-bold uppercase block">Document visé</span>
+                      <span class="text-xs font-semibold text-slate-800">
+                        {{ documentChoisi.titre || documentChoisi.documentNumber }}
+                        <span *ngIf="documentChoisi.versionMajeure !== undefined">
+                          (v{{ documentChoisi.versionMajeure }}.{{ documentChoisi.versionMineure }})
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="w-full md:w-1/2">
+                  <div class="flex items-center mb-2 gap-2">
+                    <label for="type" class="font-semibold m-0">
+                      Nature de la demande <span class="text-red-500">*</span>
+                    </label>
+                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors"
+                       (click)="aideNature.toggle($event)"></i>
+                  </div>
+                  <p-popover #aideNature>
+                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 340px;">
+                      <strong>Modification</strong> : une fois acceptée, vous déposerez le document
+                      remplaçant, publié en version majeure.<br><br>
+                      <strong>Suppression</strong> : une fois acceptée, le document est retiré du
+                      système. La demande et son circuit restent consultables, le contenu non.
+                    </div>
+                  </p-popover>
+                  <div class="flex-1 mt-2">
+                    <p-floatlabel variant="on" class="w-full">
+                      <p-select id="type" formControlName="type" [options]="typesDemande"
+                                optionLabel="label" optionValue="value" appendTo="body"
+                                styleClass="w-full" class="w-full">
+                      </p-select>
+                      <label for="type">Sélectionner la nature</label>
+                    </p-floatlabel>
+                  </div>
+
+                  <!-- Dit avant le dépôt ce que la décision produira : cela ne se défait pas. -->
+                  <div *ngIf="estUneSuppression"
+                       class="mt-2 p-2.5 bg-orange-50 border border-orange-100 rounded flex items-start gap-2.5">
+                    <i class="pi pi-exclamation-triangle text-orange-500 text-base mt-0.5"></i>
+                    <span class="text-xs text-orange-800">
+                      Si elle est acceptée, le document sera <strong>retiré du système</strong>.
+                      La demande et son circuit resteront consultables, le contenu non.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center mb-4 gap-2">
+                <i class="pi pi-pencil text-violet-500"></i>
+                <h3 class="text-xl font-bold text-900 my-0">Motif</h3>
+              </div>
+
+              <div class="field mb-6">
+                <div class="flex items-center mb-2 gap-2">
+                  <label for="objectif" class="font-semibold m-0">
+                    Objectif <span class="text-red-500">*</span>
+                  </label>
+                  <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors"
+                     (click)="aideObjectif.toggle($event)"></i>
+                </div>
+                <p-popover #aideObjectif>
+                  <div class="p-2 text-sm text-700 line-height-3" style="max-width: 320px;">
+                    En une phrase : ce que la demande cherche à obtenir. C'est la première chose que
+                    lira le responsable qualité, et souvent la seule qui figure dans les listes.
+                  </div>
+                </p-popover>
+                <div class="flex-1 mt-2">
+                  <p-floatlabel variant="on" class="w-full">
+                    <input pInputText id="objectif" formControlName="objectif" class="w-full" />
+                    <label for="objectif">Ex. : Mettre à jour la procédure d'accueil des nouveaux agents</label>
+                  </p-floatlabel>
+                </div>
+                <small class="p-error block mt-1"
+                       *ngIf="formulaire.get('objectif')?.touched && formulaire.get('objectif')?.invalid">
+                  L'objectif est nécessaire à l'instruction de la demande.
+                </small>
+              </div>
+
+              <div class="field mb-6">
+                <div class="flex items-center mb-2 gap-2">
+                  <label for="description" class="font-semibold m-0">Description</label>
+                  <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors"
+                     (click)="aideDescription.toggle($event)"></i>
+                </div>
+                <p-popover #aideDescription>
+                  <div class="p-2 text-sm text-700 line-height-3" style="max-width: 320px;">
+                    Ce qui motive la demande : constats, écarts relevés, évolution réglementaire,
+                    passages concernés. Plus c'est précis, plus l'instruction est rapide.
+                  </div>
+                </p-popover>
+                <div class="flex-1 mt-2">
+                  <textarea pTextarea id="description" formControlName="description" rows="6"
+                            class="w-full"
+                            placeholder="Contexte, constats, passages concernés, éléments à l'appui…"></textarea>
+                </div>
+              </div>
+
+              <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600">
+                <i class="pi pi-info-circle mr-1"></i>
+                Votre structure et votre nom sont repris de votre compte : une demande vaut par qui
+                la porte, et n'est pas saisissable au nom d'un autre.
+              </div>
+
+              <div class="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-200">
+                <button pButton pRipple type="button" label="Voir guide de saisie" icon="pi pi-book"
+                        class="p-button-outlined p-button-info p-button-sm"
+                        (click)="guideOuvert = true"></button>
+                <button pButton pRipple type="button" label="Annuler" icon="pi pi-times"
+                        class="p-button-outlined p-button-secondary p-button-sm"
+                        (click)="retour()"></button>
+                <button pButton pRipple type="button" label="Déposer la demande" icon="pi pi-check"
+                        class="p-button-primary p-button-sm"
+                        [disabled]="formulaire.invalid" [loading]="loading"
+                        (click)="soumettre()"></button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ------------------------------------------------------------ guide -->
+    <div class="w-full md:w-1/3 md:pl-4">
+
+      <div class="p-4 bg-gray-50 rounded-xl border border-2 border-gray-100">
+        <div class="flex items-center mb-2 gap-2">
+          <h3 class="text-xl font-bold text-900 m-0">Pièce jointe</h3>
+          <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors"
+             (click)="aidePiece.toggle($event)"></i>
+        </div>
+        <p-popover #aidePiece>
+          <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+            Facultative. Utile pour joindre ce qui appuie la demande : version annotée, courrier,
+            texte réglementaire. Ce n'est pas ici que se dépose le document remplaçant — cela se
+            fera une fois la demande acceptée.
+          </div>
+        </p-popover>
+
+        <app-file-upload
+            styleClass="custom-nc-upload"
+            [maxFiles]="1"
+            [maxFileSizeMB]="20"
+            [allowedExts]="['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'png', 'jpg']"
+            [existingFiles]="[]"
+            (fileUploaded)="handleFileUpload($event)">
+        </app-file-upload>
+      </div>
+
+      <div class="p-4 bg-gray-50 rounded-xl mt-6 border border-2 border-gray-100">
+        <h3 class="text-xl font-bold text-900 mt-0 mb-4">Conseils de saisie</h3>
+        <div class="flex flex-col gap-3">
+          <div class="flex items-start gap-3">
+            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+            <span class="text-700 line-height-3">
+              Formulez l'<strong>objectif</strong> en une phrase d'action : « mettre à jour »,
+              « retirer », « corriger ». C'est ce qui sera lu en premier.
+            </span>
+          </div>
+          <div class="flex items-start gap-3">
+            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+            <span class="text-700 line-height-3">
+              Citez les <strong>passages concernés</strong> plutôt que le document entier : une
+              demande précise s'instruit plus vite.
+            </span>
+          </div>
+          <div class="flex items-start gap-3">
+            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+            <span class="text-700 line-height-3">
+              Indiquez ce qui a <strong>déclenché</strong> la demande : audit, non-conformité,
+              évolution réglementaire, retour du terrain.
+            </span>
+          </div>
+          <div class="flex items-start gap-3">
+            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+            <span class="text-700 line-height-3">
+              Une <strong>suppression</strong> est irréversible : si le document a seulement cessé
+              d'être applicable, demandez plutôt sa modification.
+            </span>
+          </div>
+          <div class="flex items-start gap-3">
+            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
+            <span class="text-700 line-height-3">
+              Le <strong>document remplaçant</strong> ne se dépose pas ici : il vous sera demandé
+              une fois la modification acceptée.
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</form>
+
+<!-- ------------------------------------------------------------------ guide complet -->
+<p-dialog header="Guide de dépôt d'une demande" [(visible)]="guideOuvert" [modal]="true"
+          [style]="{ width: '50rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }"
+          [maximizable]="true">
+
+  <div class="p-3 bg-blue-50 border border-blue-100 rounded-lg mb-4 flex items-center gap-3">
+    <i class="pi pi-info-circle text-2xl text-blue-500"></i>
+    <p class="text-sm text-blue-900 m-0 leading-relaxed">
+      Une demande n'est pas une modification : c'est une proposition, qui sera instruite au titre de
+      la qualité avant toute suite. Ce guide indique ce qui en facilite l'examen.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-12 gap-4 px-2 pb-2">
+
+    <div class="col-span-12">
+      <h3 class="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2 mb-2">
+        1. Ce que devient votre demande
+      </h3>
+      <p class="text-sm text-slate-600 m-0 line-height-3">
+        Elle suit un circuit en trois temps : <strong>dépôt</strong>, <strong>instruction</strong>
+        par le responsable qualité, puis <strong>décision</strong>. À chaque étape, les personnes
+        concernées sont prévenues, et l'ensemble des décisions reste consultable depuis la fiche du
+        document.
+      </p>
+    </div>
+
+    <div class="col-span-12">
+      <h3 class="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2 mb-2">
+        2. Modification ou suppression
+      </h3>
+      <div class="flex flex-col gap-2 text-sm text-slate-600 line-height-3">
+        <div>
+          <strong>Modification</strong> — une fois la demande acceptée, il vous reviendra de déposer
+          le document remplaçant. Celui-ci est publié en <strong>version majeure</strong> (v1.3 →
+          v2.0) : le changement a été instruit et décidé, ce n'est pas une retouche.
+        </div>
+        <div>
+          <strong>Suppression</strong> — une fois acceptée, le document est retiré du système et son
+          fichier effacé du stockage. La demande, son circuit et la piste d'audit demeurent : ce qui
+          a été décidé, par qui et pourquoi ne disparaît pas avec le contenu.
+        </div>
+      </div>
+    </div>
+
+    <div class="col-span-12">
+      <h3 class="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2 mb-2">
+        3. Objectif et description
+      </h3>
+      <div class="flex flex-col gap-2 text-sm text-slate-600 line-height-3">
+        <div>
+          <strong>Objectif :</strong> une phrase, à l'infinitif de préférence. C'est ce qui figure
+          dans les listes et ce que lit d'abord l'instructeur.
+        </div>
+        <div>
+          <strong>Description :</strong> le contexte. Ce qui a déclenché la demande, les passages
+          concernés, les écarts constatés. Une demande argumentée s'instruit sans aller-retour.
+        </div>
+      </div>
+    </div>
+
+    <div class="col-span-12">
+      <h3 class="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2 mb-2">
+        4. Qui peut déposer, et sur quoi
+      </h3>
+      <p class="text-sm text-slate-600 m-0 line-height-3">
+        Sur les documents de votre structure, ceux que vous pouvez déjà consulter. Votre structure
+        et votre nom sont repris de votre compte et ne sont pas saisissables : une demande vaut par
+        qui la porte. Un document reçu par simple partage ne peut pas faire l'objet d'une demande —
+        il appartient à la structure qui l'a émis.
+      </p>
+    </div>
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton label="J'ai compris" class="p-button-info" (click)="guideOuvert = false"></button>
+  </ng-template>
+</p-dialog>

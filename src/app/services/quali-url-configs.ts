@@ -19,6 +19,9 @@ export class QualiUrlConfig {
     static readonly NIVEAU_NON_CONFORMITE_ROOT_URL = `${AMELIORATION_SERVICE}/niveau/non-conformite`;
     static readonly ACTION_NON_CONFORMITE_ROOT_URL = `${AMELIORATION_SERVICE}/actions`;
 
+    // Demandes de modification et de suppression de document (support-service).
+    static readonly DEMANDE_DOCUMENT_ROOT_URL = `${SUPPORT_SERVICE}/demandes-document`;
+
     // Referentiel Service
     static readonly PRESTATAIRE_ROOT_URL = `${REFERENTIEL_SERVICE}/prestataire`;
     static readonly FOURNISSEUR_ROOT_URL = `${REFERENTIEL_SERVICE}/fournisseur`;
@@ -28,6 +31,10 @@ export class QualiUrlConfig {
     static readonly Exigence_ROOT_URL = `${REFERENTIEL_SERVICE}/exigence`;
     static readonly FORMATION_ROOT_URL = `${REFERENTIEL_SERVICE}/formation`;
     static readonly CG_ROOT_URL = `${REFERENTIEL_SERVICE}/config-global`;
+    // Référentiels du module documentaire : priorité et niveau de confidentialité d'un document.
+    static readonly DOMAINE_APPLICATION_ROOT_URL = `${REFERENTIEL_SERVICE}/domaines-application`;
+    static readonly PRIORITE_DOCUMENT_ROOT_URL = `${REFERENTIEL_SERVICE}/priorites-document`;
+    static readonly NIVEAU_CONFIDENTIALITE_ROOT_URL = `${REFERENTIEL_SERVICE}/niveaux-confidentialite`;
     static readonly REGLEMENTATION_ROOT_URL = `${REFERENTIEL_SERVICE}/reglementation`;
 
     // Evaluation Service

@@ -10,7 +10,7 @@
         </div>
     </div>
 
-    <!-- Navigation Hub (Topbar) -->
+    <!-- Trois référentiels s'y règlent désormais : types de document, priorités, confidentialité. -->
     <div class="pt-2 bg-surface-0 dark:bg-surface-900 border-b border-surface-border">
         <p-tabs [value]="activeTab" [scrollable]="true" (valueChange)="onTabChange($event)">
             <p-tablist>
@@ -24,7 +24,7 @@
         </p-tabs>
     </div>
 
-    <!-- Contenu dynamique (Router Outlet) -->
+    <!-- Contenu (Router Outlet) -->
     <div class="bg-surface-50/50 dark:bg-surface-950/40 min-h-[500px]">
         <div class="bg-surface-0 dark:bg-surface-900 rounded-xl overflow-hidden">
             <router-outlet></router-outlet>

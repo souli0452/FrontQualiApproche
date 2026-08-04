@@ -56,6 +56,25 @@
                             <input pInputText id="ville" formControlName="ville" autocomplete="off" class="w-full" />
                             <label for="ville">Ville</label>
                         </p-floatlabel>
+
+                        <!-- Le serveur portait déjà la catégorie de processus (Structure.typeProcessus) :
+                             seule la saisie manquait. Facultative — toutes les structures n'en relèvent
+                             pas — d'où le showClear. -->
+                        <p-floatlabel variant="on" class="w-full block">
+                            <p-select formControlName="typeProcessusId"
+                                      inputId="typeProcessusId"
+                                      [options]="categoriesProcessus"
+                                      optionLabel="libelle"
+                                      optionValue="id"
+                                      emptyMessage="Aucune catégorie de processus paramétrée"
+                                      emptyFilterMessage="Aucun résultat trouvé"
+                                      appendTo="body"
+                                      [resetFilterOnHide]="true"
+                                      [showClear]="true"
+                                      [filter]="true"
+                                      styleClass="w-full" class="w-full" variant="filled" />
+                            <label for="typeProcessusId">Catégorie de processus</label>
+                        </p-floatlabel>
                     </div>
                 </div>
             </div>

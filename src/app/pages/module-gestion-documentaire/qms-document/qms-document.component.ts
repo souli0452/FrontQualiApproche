@@ -15,6 +15,12 @@ import { Structure } from '../../parametrages/structure/structure-config/structu
 import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
 import { WorkflowError, WorkflowService } from '../../../services/workflow.service';
 import { AuthService } from '../../../services/auth-services/auth.service';
+import {
+  DomaineApplicationService,
+  NiveauConfidentialiteService,
+  PrioriteDocumentService
+} from '../../../services/module-gestion-documentaire/referentiel-document.service';
+import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '../../../models/referentiel-document.model';
 import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentType, QmsDocumentVersion, DocumentWorkflow, WorkflowStep } from '../../../models/gestion-documentaire.model';
 import { WorkflowStateDto, WorkflowActionDto, ValidationHistoryDto } from '../../../models/workflow.model';
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
@@ -24,6 +30,9 @@ import { QmsDocumentHistoryComponent } from './components/qms-document-history.c
 import { QmsDocumentAuditComponent } from './components/qms-document-audit.component';
 import { QmsTransitionDialogComponent, TransitionDecision } from './components/qms-transition-dialog.component';
 import { DecisionConfirmee, QmsWorkflowDecisionDialogComponent } from './components/qms-workflow-decision-dialog.component';
+import { QmsDocumentDemandesComponent } from './components/qms-document-demandes.component';
+import { DemandeDocumentService } from '../../../services/module-gestion-documentaire/demande-document.service';
+import { DemandeDocumentDto } from '../../../models/demande-document.model';
 import { QmsWorkflowHistoriqueComponent } from './components/qms-workflow-historique.component';
 import { QmsAssignWorkflowDialogComponent } from './components/qms-assign-workflow-dialog.component';
 import { QmsDocumentAccessDialogComponent, AccessGrant } from './components/qms-document-access-dialog.component';
@@ -31,7 +40,7 @@ import { QmsDocumentAccessDialogComponent, AccessGrant } from './components/qms-
 @Component({
   selector: 'app-qms-document',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, QmsTransitionDialogComponent, QmsWorkflowDecisionDialogComponent, QmsWorkflowHistoriqueComponent, QmsAssignWorkflowDialogComponent, QmsDocumentAccessDialogComponent],
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, QmsTransitionDialogComponent, QmsWorkflowDecisionDialogComponent, QmsWorkflowHistoriqueComponent, QmsDocumentDemandesComponent, QmsAssignWorkflowDialogComponent, QmsDocumentAccessDialogComponent],
   templateUrl: './qms-document.component.html',
   styleUrls: ['./qms-document.component.scss'],
   providers: [MessageService, DatePipe]
@@ -51,6 +60,14 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   searchQuery = '';
   selectedType = '';
   selectedService = '';
+  selectedPriorite = '';
+  selectedNiveauConfidentialite = '';
+  selectedDomaine = '';
+
+  priorites: PrioriteDocument[] = [];
+  /** Niveaux permis à l'utilisateur, résolus par le serveur — voir `filtrables()`. */
+  niveauxConfidentialite: NiveauConfidentialite[] = [];
+  domaines: DomaineApplication[] = [];
   selectedStatuses: string[] = [];
   dateFrom: string = '';
   dateTo: string = '';
@@ -71,7 +88,10 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     { label: 'Modification', value: 'WRITE' }
   ];
 
-  currentView: 'list' | 'detail' | 'history' | 'audit' | 'tracabilite' = 'list';
+  currentView: 'list' | 'detail' | 'history' | 'audit' | 'tracabilite' | 'demandes' = 'list';
+
+  /** Demandes portées sur le document consulté. */
+  demandesDuDocument: DemandeDocumentDto[] = [];
   /** Décisions successives du circuit, distinctes des versions du fichier et des accès. */
   validationHistory: ValidationHistoryDto[] = [];
   /** États de circuit des documents listés, indexés par identifiant de document. */
@@ -95,7 +115,11 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private qmsService: QmsDocumentService,
     private workflowService: WorkflowService,
+    private demandeService: DemandeDocumentService,
     private structureService: StructureService,
+    private prioriteService: PrioriteDocumentService,
+    private niveauConfidentialiteService: NiveauConfidentialiteService,
+    private domaineService: DomaineApplicationService,
     private authService: AuthService,
     private ngxPermissionsService: NgxPermissionsService,
     private messageService: MessageService,
@@ -146,6 +170,21 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
         error: (err: any) => console.error('Failed to load structures', err)
       });
 
+    // Référentiels des filtres. Indisponibles, ils laissent le sélecteur vide plutôt que de
+    // bloquer la liste : la recherche reste utilisable sur les autres critères.
+    this.prioriteService.liste().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (liste) => (this.priorites = liste ?? []),
+      error: () => console.warn('Priorités indisponibles.')
+    });
+    this.niveauConfidentialiteService.filtrables().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (liste) => (this.niveauxConfidentialite = liste ?? []),
+      error: () => console.warn('Niveaux de confidentialité indisponibles.')
+    });
+    this.domaineService.liste().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (liste) => (this.domaines = liste ?? []),
+      error: () => console.warn("Domaines d'application indisponibles.")
+    });
+
     this.refreshList();
   }
 
@@ -155,6 +194,9 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
       query: this.searchQuery || undefined,
       documentType: this.selectedType || undefined,
       serviceId: this.selectedService || undefined,
+      prioriteId: this.selectedPriorite || undefined,
+      niveauConfidentialiteId: this.selectedNiveauConfidentialite || undefined,
+      domaineId: this.selectedDomaine || undefined,
       status: this.selectedStatuses.length ? this.selectedStatuses : undefined,
       createdAtFrom: this.dateFrom ? this.datePipe.transform(this.dateFrom, 'yyyy-MM-dd')! : undefined,
       createdAtTo: this.dateTo ? this.datePipe.transform(this.dateTo, 'yyyy-MM-dd')! : undefined
@@ -522,6 +564,49 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Ouvre le dépôt d'une demande sur ce document.
+   *
+   * <p>La page de dépôt reçoit le document en paramètre : on y arrive depuis sa fiche, il n'y a
+   * aucune raison de le rechercher dans une liste. La nature — modification ou suppression — s'y
+   * choisit, avec l'avertissement qui accompagne la seconde.</p>
+   */
+  demanderUneModification(doc: DocumentQms): void {
+    this.router.navigate(['/gestion-documentaire/demandes/nouvelle'],
+      { queryParams: { documentId: doc.id } });
+  }
+
+  /**
+   * Demandes de modification et de suppression portées sur ce document.
+   *
+   * <p>Quatrième regard sur le dossier : l'historique porte sur les versions, la piste d'audit sur
+   * les opérations, la traçabilité sur les décisions du circuit du document — aucune ne disait ce
+   * qu'on avait demandé à son sujet.</p>
+   */
+  viewDemandes(doc: DocumentQms): void {
+    this.selectedDocument = doc;
+    this.demandesDuDocument = [];
+    this.loading = true;
+    this.currentView = 'demandes';
+
+    this.demandeService
+      .parDocument(doc.id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (demandes) => {
+          this.demandesDuDocument = demandes ?? [];
+          this.loading = false;
+        },
+        error: (erreur: any) => {
+          this.loading = false;
+          this.messageService.add({
+            severity: 'error', summary: 'Demandes indisponibles',
+            detail: erreur.error?.message || "Les demandes de ce document n'ont pas pu être chargées."
+          });
+        }
+      });
+  }
+
   /** Décisions successives du circuit : qui a validé, quand, sur quels motifs. */
   viewValidationHistory(doc: DocumentQms): void {
     this.selectedDocument = doc;
@@ -638,7 +723,69 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     this.systemUsers = [];
     this.loadSystemUsers();
     this.loadDocumentAccess(doc);
+    this.chargerPartagesStructure(doc);
     this.showShareModal = true;
+  }
+
+  /** Structures déjà destinataires d'un partage sur ce document. */
+  partagesStructure: any[] = [];
+
+  chargerPartagesStructure(doc: DocumentQms): void {
+    this.qmsService.getPartagesStructure(doc.id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (partages) => (this.partagesStructure = partages ?? []),
+        error: () => (this.partagesStructure = [])
+      });
+  }
+
+  /**
+   * Partage le document avec une structure entière, à l'étape en cours.
+   *
+   * <p>Le serveur consigne l'étape et refuse le partage vers la structure émettrice ; l'écran ne
+   * la propose donc pas.</p>
+   */
+  partagerAvecStructure(choix: { structureId: string; structureLibelle: string }): void {
+    if (!this.selectedDocument?.id) {
+      return;
+    }
+    this.qmsService.partagerAvecStructureDestinataire(
+        this.selectedDocument.id, choix.structureId, choix.structureLibelle)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success', summary: 'Partagé',
+            detail: `Document ouvert à ${choix.structureLibelle || 'la structure choisie'}.`
+          });
+          this.chargerPartagesStructure(this.selectedDocument!);
+        },
+        error: (err: any) => this.messageService.add({
+          severity: 'error', summary: 'Partage impossible',
+          detail: err.error?.message || "Le partage n'a pas pu être enregistré."
+        })
+      });
+  }
+
+  retirerPartageStructure(partage: any): void {
+    if (!this.selectedDocument?.id) {
+      return;
+    }
+    this.qmsService.retirerPartageStructure(this.selectedDocument.id, partage.structureId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success', summary: 'Partage retiré',
+            detail: 'La structure n\'a plus accès à ce document.'
+          });
+          this.chargerPartagesStructure(this.selectedDocument!);
+        },
+        error: (err: any) => this.messageService.add({
+          severity: 'error', summary: 'Retrait impossible',
+          detail: err.error?.message || "Le partage n'a pas pu être retiré."
+        })
+      });
   }
 
   loadDocumentAccess(doc: DocumentQms): void {

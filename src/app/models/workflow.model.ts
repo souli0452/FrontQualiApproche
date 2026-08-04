@@ -157,6 +157,11 @@ export interface ValidationHistoryDto {
   decision: string;
   comments?: string;
   validatorUserId?: string;
+  /**
+   * Nom de l'auteur au moment de la décision. Absent des décisions prises avant que le serveur ne
+   * le consigne : l'identifiant technique reste alors le seul repère, et c'est lui qui s'affiche.
+   */
+  validatorFullName?: string;
   decisionDate?: string;
   fieldValues?: ValidationFieldValueDto[];
 }

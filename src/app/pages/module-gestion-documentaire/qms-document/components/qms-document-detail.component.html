@@ -1,14 +1,14 @@
 <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden fadein" *ngIf="document">
 
   <!-- En-tête : ce qui identifie le document, et où il en est -->
-  <div class="px-5 py-4 border-bottom border-slate-200 bg-slate-50">
-    <div class="flex flex-column lg:flex-row lg:items-start justify-content-between gap-4">
-      <div class="flex align-items-start gap-3 min-w-0">
+  <div class="px-5 py-4 border-b border-slate-200 bg-slate-50">
+    <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+      <div class="flex items-start gap-3 min-w-0">
         <button pButton pRipple icon="pi pi-arrow-left" class="p-button-text p-button-secondary shrink-0"
           pTooltip="Retour à la liste" (click)="close.emit()"></button>
         <div class="min-w-0">
           <h1 class="text-xl font-bold text-slate-900 m-0 tracking-tight">{{ document.titre || document.documentNumber }}</h1>
-          <div class="flex flex-wrap align-items-center gap-2 mt-2">
+          <div class="flex flex-wrap items-center gap-2 mt-2">
             <span class="font-mono text-xs text-slate-500 bg-white border border-slate-200 px-2 py-1 rounded">
               {{ document.documentNumber }}
             </span>
@@ -21,12 +21,12 @@
         </div>
       </div>
 
-      <div class="flex flex-column align-items-start lg:align-items-end gap-2 shrink-0">
+      <div class="flex flex-col items-start lg:items-end gap-2 shrink-0">
         <p-tag [value]="statusLabel(document)" [severity]="statusSeverity(document)"></p-tag>
         <span class="text-xs text-slate-500" *ngIf="document.currentEtape">
           Étape courante : <strong class="text-slate-700">{{ document.currentEtape }}</strong>
         </span>
-        <span class="text-xs text-red-600 font-semibold flex align-items-center gap-1" *ngIf="document.enRetardRevision">
+        <span class="text-xs text-red-600 font-semibold flex items-center gap-1" *ngIf="document.enRetardRevision">
           <i class="pi pi-exclamation-triangle"></i> Révision en retard
         </span>
       </div>
@@ -40,7 +40,7 @@
       <!-- Identification -->
       <div class="col-span-12 lg:col-span-6">
         <div class="h-full border border-slate-200 rounded-lg p-4">
-          <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-3 flex align-items-center gap-2">
+          <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-3 flex items-center gap-2">
             <i class="pi pi-info-circle text-indigo-500"></i> Identification
           </h3>
           <div class="grid grid-cols-12 gap-3">
@@ -56,6 +56,22 @@
             <div class="col-span-12 sm:col-span-6">
               <span class="block text-xs text-slate-400 mb-1">Processus destinataire</span>
               <span class="text-sm text-slate-700">{{ document.processusDestLibelle || '—' }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6" *ngIf="document.reference">
+              <span class="block text-xs text-slate-400 mb-1">Code</span>
+              <span class="text-sm font-mono text-slate-700">{{ document.reference }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6" *ngIf="document.prioriteLibelle">
+              <span class="block text-xs text-slate-400 mb-1">Priorité</span>
+              <span class="text-sm font-semibold text-slate-800">{{ document.prioriteLibelle }}</span>
+            </div>
+            <!-- Le niveau de confidentialité n'est pas un attribut d'affichage : il décide de qui
+                 voit ce document. Il est donc signalé, et non rangé parmi les libellés. -->
+            <div class="col-span-12 sm:col-span-6" *ngIf="document.niveauConfidentialiteLibelle">
+              <span class="block text-xs text-slate-400 mb-1">Confidentialité</span>
+              <span class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded font-semibold border bg-amber-50 text-amber-800 border-amber-100">
+                <i class="pi pi-lock"></i>{{ document.niveauConfidentialiteLibelle }}
+              </span>
             </div>
             <div class="col-span-12 sm:col-span-6">
               <span class="block text-xs text-slate-400 mb-1">Domaine</span>
@@ -84,7 +100,7 @@
       <!-- Cycle de vie -->
       <div class="col-span-12 lg:col-span-6">
         <div class="h-full border border-slate-200 rounded-lg p-4">
-          <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-3 flex align-items-center gap-2">
+          <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-3 flex items-center gap-2">
             <i class="pi pi-calendar text-indigo-500"></i> Cycle de vie et validité
           </h3>
           <div class="grid grid-cols-12 gap-3">
@@ -126,7 +142,7 @@
       <!-- Traçabilité -->
       <div class="col-span-12">
         <div class="border border-slate-200 rounded-lg p-4">
-          <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-3 flex align-items-center gap-2">
+          <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-3 flex items-center gap-2">
             <i class="pi pi-shield text-indigo-500"></i> Traçabilité
           </h3>
           <div class="grid grid-cols-12 gap-3">
@@ -138,10 +154,6 @@
               <span class="block text-xs text-slate-400 mb-1">Créé par</span>
               <span class="text-sm text-slate-700">{{ document.currentUserfullName || '—' }}</span>
             </div>
-            <div class="col-span-12 sm:col-span-4" *ngIf="document.currentFileHash">
-              <span class="block text-xs text-slate-400 mb-1">Empreinte du fichier</span>
-              <span class="text-xs font-mono text-slate-500 break-all">{{ document.currentFileHash }}</span>
-            </div>
           </div>
         </div>
       </div>
@@ -152,25 +164,60 @@
   <!-- Barre d'actions : consultation à gauche, décisions du circuit à droite.
        Chaque bouton dépend d'une permission ; les décisions sont celles que le
        serveur autorise à l'étape courante. -->
-  <div class="px-5 py-4 bg-slate-50 border-top border-slate-200 flex flex-wrap justify-content-between gap-3">
-    <div class="flex flex-wrap gap-2">
-      <button pButton label="Ouvrir" icon="pi pi-external-link" class="p-button-outlined p-button-sm"
-        *ngIf="canDownload" (click)="openDocument.emit(document)"></button>
-      <button pButton label="PDF" icon="pi pi-file-pdf" class="p-button-outlined p-button-danger p-button-sm"
-        *ngIf="canDownload" (click)="downloadPdf.emit(document)"></button>
-      <button pButton label="Historique" icon="pi pi-history" class="p-button-text p-button-secondary p-button-sm"
-        *ngIf="canViewHistory" (click)="viewHistory.emit(document)"></button>
-      <button pButton label="Piste d'audit" icon="pi pi-shield" class="p-button-text p-button-secondary p-button-sm"
-        *ngIf="canViewAudit" (click)="viewAudit.emit(document)"></button>
-      <button pButton label="Traçabilité" icon="pi pi-verified" class="p-button-text p-button-secondary p-button-sm"
-        *ngIf="canViewHistory" pTooltip="Qui a validé, quand et pourquoi"
-        (click)="viewValidationHistory.emit(document)"></button>
-      <button pButton label="Partage" icon="pi pi-users" class="p-button-text p-button-secondary p-button-sm"
-        *ngIf="canShare" (click)="share.emit(document)"></button>
+  <div class="px-5 py-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="flex flex-wrap gap-2">
+        <p-button label="Ouvrir" icon="pi pi-external-link" [outlined]="true" size="small"
+          *ngIf="canDownload" (onClick)="openDocument.emit(document)"></p-button>
+        <p-button label="PDF" icon="pi pi-file-pdf" severity="danger" [outlined]="true" size="small"
+          *ngIf="canDownload" (onClick)="downloadPdf.emit(document)"></p-button>
+      </div>
+
+      <!-- Consultation. Quatre vues aux noms voisins — historique, piste d'audit, traçabilité —
+           que quatre boutons gris identiques rendaient impossibles à distinguer : on ne savait
+           laquelle ouvrir sans les essayer. Elles forment désormais un bloc à part, distinct des
+           actions sur le fichier, où chacune porte son icône, sa couleur et une infobulle qui
+           énonce ce qu'elle montre. -->
+      <div class="inline-flex flex-wrap items-stretch rounded-lg border border-slate-200 bg-white overflow-hidden"
+        *ngIf="canViewHistory || canViewAudit || canShare">
+        <button type="button" *ngIf="canViewHistory" (click)="viewHistory.emit(document)"
+          class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 border-r border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+          pTooltip="Versions successives du fichier, et qui les a déposées" tooltipPosition="top">
+          <i class="pi pi-history text-blue-500"></i>Historique
+        </button>
+        <button type="button" *ngIf="canViewAudit" (click)="viewAudit.emit(document)"
+          class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 border-r border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+          pTooltip="Journal des accès et des opérations sur le document" tooltipPosition="top">
+          <i class="pi pi-shield text-amber-500"></i>Piste d'audit
+        </button>
+        <button type="button" *ngIf="canViewHistory" (click)="viewValidationHistory.emit(document)"
+          class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 border-r border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+          pTooltip="Décisions du circuit : qui a validé, quand, avec quel motif" tooltipPosition="top">
+          <i class="pi pi-sitemap text-indigo-500"></i>Traçabilité
+        </button>
+        <button type="button" *ngIf="canViewHistory" (click)="viewDemandes.emit(document)"
+          class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 border-r border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+          pTooltip="Modifications et suppressions demandées sur ce document" tooltipPosition="top">
+          <i class="pi pi-inbox text-violet-500"></i>Demandes
+        </button>
+        <button type="button" *ngIf="canShare" (click)="share.emit(document)"
+          class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+          pTooltip="Personnes et structures ayant accès à ce document" tooltipPosition="top">
+          <i class="pi pi-share-alt text-emerald-500"></i>Partage
+        </button>
+      </div>
+
+      <!-- Distinct des vues de consultation, et distinct des décisions du circuit à droite :
+           demander n'est ni consulter ni décider. C'est le geste de qui ne peut pas modifier
+           lui-même — il ne dépend donc pas de la permission d'écriture. -->
+      <p-button label="Demander une modification" icon="pi pi-inbox" severity="secondary"
+        [outlined]="true" size="small" *ngIf="canRequestChange"
+        pTooltip="Déposer une demande de modification ou de suppression, instruite au titre de la qualité"
+        tooltipPosition="top" (onClick)="requestChange.emit(document)"></p-button>
     </div>
 
-    <div class="flex flex-column align-items-end gap-1">
-      <div class="flex flex-wrap gap-2 align-items-center">
+    <div class="flex flex-col items-end gap-1">
+      <div class="flex flex-wrap gap-2 items-center">
         <span class="text-xs text-slate-500" *ngIf="canValidate && circuitTermine">
           <i class="pi pi-check-circle text-emerald-600 mr-1"></i>Circuit terminé.
         </span>

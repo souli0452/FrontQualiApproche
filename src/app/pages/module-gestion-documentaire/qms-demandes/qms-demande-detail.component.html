@@ -1,0 +1,174 @@
+<div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden" *ngIf="demande">
+
+  <!-- En-tête : ce que la demande porte, et où elle en est -->
+  <div class="px-5 py-4 border-b border-slate-200 bg-slate-50">
+    <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+      <div class="flex items-start gap-3 min-w-0">
+        <button pButton pRipple icon="pi pi-arrow-left" class="p-button-text p-button-secondary shrink-0"
+          pTooltip="Retour à la liste" (click)="close.emit()"></button>
+        <div class="min-w-0">
+          <h1 class="text-xl font-bold text-slate-900 m-0 tracking-tight">{{ demande.objectif }}</h1>
+          <div class="flex flex-wrap items-center gap-2 mt-2">
+            <span class="px-2 py-1 text-xs rounded font-semibold border bg-white text-slate-600 border-slate-200">
+              <i class="pi mr-1" [ngClass]="demande.type === 'SUPPRESSION' ? 'pi-trash' : 'pi-pencil'"></i>
+              {{ libelleType() }}
+            </span>
+            <span class="font-mono text-xs text-slate-500 bg-white border border-slate-200 px-2 py-1 rounded">
+              {{ demande.documentNumber }}
+            </span>
+            <span class="text-xs text-slate-500 bg-white border border-slate-200 px-2 py-1 rounded"
+              *ngIf="demande.documentTitre">{{ demande.documentTitre }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col items-start lg:items-end gap-2 shrink-0">
+        <span class="px-2 py-1 text-xs rounded font-semibold border" [ngClass]="couleurEtat()">
+          {{ libelleEtat() }}
+        </span>
+        <span class="text-xs text-slate-500" *ngIf="demande.currentEtape">
+          Étape courante : <strong class="text-slate-700">{{ demande.currentEtape }}</strong>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenu -->
+  <div class="p-5">
+    <div class="grid grid-cols-12 gap-4">
+
+      <div class="col-span-12 lg:col-span-6">
+        <div class="h-full border border-slate-200 rounded-lg p-4">
+          <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-3 flex items-center gap-2">
+            <i class="pi pi-user text-indigo-500"></i> Origine
+          </h3>
+          <div class="grid grid-cols-12 gap-3">
+            <div class="col-span-12 sm:col-span-6">
+              <span class="block text-xs text-slate-400 mb-1">Demandeur</span>
+              <span class="text-sm font-semibold text-slate-800">{{ demande.demandeurNom || '—' }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6">
+              <span class="block text-xs text-slate-400 mb-1">Structure</span>
+              <span class="text-sm text-slate-700">{{ demande.structureLibelle || '—' }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6">
+              <span class="block text-xs text-slate-400 mb-1">Déposée le</span>
+              <span class="text-sm text-slate-700">{{ demande.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
+            </div>
+            <div class="col-span-12 sm:col-span-6" *ngIf="demande.pieceJointeNom">
+              <span class="block text-xs text-slate-400 mb-1">Pièce jointe</span>
+              <span class="text-sm text-slate-700">
+                <i class="pi pi-paperclip mr-1"></i>{{ demande.pieceJointeNom }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-span-12 lg:col-span-6">
+        <div class="h-full border border-slate-200 rounded-lg p-4">
+          <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-3 flex items-center gap-2">
+            <i class="pi pi-flag text-indigo-500"></i> Suite donnée
+          </h3>
+          <div class="grid grid-cols-12 gap-3">
+            <div class="col-span-12 sm:col-span-6">
+              <span class="block text-xs text-slate-400 mb-1">Décidée le</span>
+              <span class="text-sm text-slate-700">
+                {{ (demande.dateDecision | date:'dd/MM/yyyy') || 'Pas encore décidée' }}
+              </span>
+            </div>
+            <div class="col-span-12 sm:col-span-6">
+              <span class="block text-xs text-slate-400 mb-1">Exécutée le</span>
+              <span class="text-sm text-slate-700">
+                {{ (demande.dateExecution | date:'dd/MM/yyyy à HH:mm') || '—' }}
+              </span>
+            </div>
+            <div class="col-span-12" *ngIf="demande.motifDecision">
+              <span class="block text-xs text-slate-400 mb-1">Motif de la décision</span>
+              <span class="text-sm text-slate-700">{{ demande.motifDecision }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-span-12" *ngIf="demande.description">
+        <div class="border border-slate-200 rounded-lg p-4">
+          <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-3 flex items-center gap-2">
+            <i class="pi pi-align-left text-indigo-500"></i> Description
+          </h3>
+          <p class="text-sm text-slate-700 m-0 whitespace-pre-line">{{ demande.description }}</p>
+        </div>
+      </div>
+
+      <!-- Décisions déjà prises sur ce circuit : qui, quand, pourquoi. -->
+      <div class="col-span-12" *ngIf="historique.length">
+        <div class="border border-slate-200 rounded-lg p-4">
+          <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-3 flex items-center gap-2">
+            <i class="pi pi-sitemap text-indigo-500"></i> Traçabilité de l'instruction
+          </h3>
+          <div class="flex flex-col gap-3">
+            <div *ngFor="let entree of historique" class="flex gap-3">
+              <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-50 border border-slate-200 shrink-0">
+                <i class="pi pi-check text-slate-400"></i>
+              </span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="font-bold text-slate-800 text-sm">{{ entree.decision }}</span>
+                  <span class="text-xs text-slate-400" *ngIf="entree.stepName">
+                    depuis « {{ entree.stepName }} »
+                  </span>
+                </div>
+                <div class="text-xs text-slate-500 mt-1 flex items-center gap-3 flex-wrap">
+                  <span *ngIf="entree.decisionDate">
+                    <i class="pi pi-clock mr-1"></i>{{ entree.decisionDate | date:'dd/MM/yyyy à HH:mm' }}
+                  </span>
+                  <span *ngIf="entree.validatorFullName || entree.validatorUserId">
+                    <i class="pi pi-user mr-1"></i>{{ entree.validatorFullName || entree.validatorUserId }}
+                  </span>
+                </div>
+                <p class="mt-2 mb-0 text-sm text-slate-700 bg-slate-50 rounded-lg p-2" *ngIf="entree.comments">
+                  {{ entree.comments }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Barre d'actions : ce que le serveur autorise à cette étape, et rien d'autre. -->
+  <div class="px-5 py-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+    <!-- Dire pourquoi rien n'est proposé : « aucune action » sans explication laisse croire à une
+         panne, alors que c'est le plus souvent l'étape qui attend quelqu'un d'autre. -->
+    <div class="text-xs text-slate-500">
+      <span *ngIf="circuitTermine">
+        <i class="pi pi-check-circle text-emerald-600 mr-1"></i>Instruction terminée.
+      </span>
+      <span *ngIf="!circuitTermine && etatIndisponible" class="text-orange-700">
+        <i class="pi pi-exclamation-triangle mr-1"></i>
+        L'état du circuit n'a pas pu être obtenu : aucune décision ne peut être proposée pour
+        l'instant.
+      </span>
+      <span *ngIf="!circuitTermine && !etatIndisponible && actionsAutorisees.length === 0">
+        Aucune décision n'est attendue de votre part à cette étape<span *ngIf="demande.currentEtape">
+          — « {{ demande.currentEtape }} » revient à un autre rôle</span>.
+      </span>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <!-- Dépôt du remplaçant : l'aboutissement d'une modification acceptée, que seul un humain
+           peut fournir. Il ne se confond pas avec une décision de circuit. -->
+      <p-button *ngIf="attendUnRemplacant && canDeposerRemplacant"
+        label="Déposer le document remplaçant" icon="pi pi-upload" severity="warn"
+        pTooltip="Publié en version majeure : le changement a été instruit et décidé"
+        tooltipPosition="top" (onClick)="deposerRemplacant.emit(demande)"></p-button>
+
+      <button *ngFor="let action of actionsAutorisees" pButton
+        [label]="action.libelle" [icon]="iconeAction(action)" [class]="classeAction(action)"
+        [pTooltip]="action.permission ? ('Rôle attendu : ' + action.permission) : ''"
+        (click)="executeAction.emit(action)"></button>
+    </div>
+  </div>
+</div>

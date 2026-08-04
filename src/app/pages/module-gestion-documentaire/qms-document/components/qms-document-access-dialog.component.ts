@@ -34,6 +34,8 @@ export class QmsDocumentAccessDialogComponent {
     @Input() roleOptions: any[] = [];
     @Input() loading = false;
     @Input() loadingAccess = false;
+    /** Structures déjà destinataires d'un partage, chargées par le parent. */
+    @Input() partagesStructure: any[] = [];
 
     @Input()
     set visible(valeur: boolean) {
@@ -42,6 +44,7 @@ export class QmsDocumentAccessDialogComponent {
             this.selectedStructureFilter = undefined;
             this.selectedUser = undefined;
             this.activeTab = 'access';
+            this.structurePartage = undefined;
         }
         this._visible = valeur;
     }
@@ -55,12 +58,36 @@ export class QmsDocumentAccessDialogComponent {
     @Output() structureFilterChange = new EventEmitter<string | undefined>();
     @Output() grant = new EventEmitter<AccessGrant>();
     @Output() revoke = new EventEmitter<DocumentUserAccess>();
+    /** Partage à une structure entière, décidé à l'étape en cours. */
+    @Output() partagerAvecStructure = new EventEmitter<{ structureId: string; structureLibelle: string }>();
+    @Output() retirerPartageStructure = new EventEmitter<any>();
 
-    activeTab: 'access' | 'grant' = 'access';
+    activeTab: 'access' | 'grant' | 'structure' = 'access';
+    structurePartage?: string;
     selectedStructureFilter?: string;
     selectedUser?: any;
 
     readonly form: FormGroup;
+
+    /**
+     * Structures proposables au partage : toutes sauf celle qui a émis le document — ses membres
+     * le voient déjà, et le serveur refuserait le partage.
+     */
+    get structuresPartageables(): any[] {
+        return (this.structures ?? []).filter(structure => structure?.id !== this.document?.serviceId);
+    }
+
+    partagerStructure(): void {
+        if (!this.structurePartage) {
+            return;
+        }
+        const structure = this.structures.find(s => s.id === this.structurePartage);
+        this.partagerAvecStructure.emit({
+            structureId: this.structurePartage,
+            structureLibelle: structure?.libelleLong || structure?.libelleCourt || ''
+        });
+        this.structurePartage = undefined;
+    }
 
     constructor(private fb: FormBuilder) {
         this.form = this.fb.group({

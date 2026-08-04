@@ -129,15 +129,15 @@ export class AppMenu {
             },
             {
                 label: 'Fournisseur', icon: 'pi pi-fw pi-users', routerLink: ['/fournisseur'],
-                visible: this.peutVoir(['fournisseur-read', 'RESOURCES_READ'])
+                visible: this.peutVoir(['fournisseur-read', 'RESOURCES_READ'],ModuleAbonnement.FORMATION)
             },
             {
                 label: 'Prestataire', icon: 'pi pi-fw pi-user-plus', routerLink: ['/prestataire'],
-                visible: this.peutVoir(['prestataire-read', 'RESOURCES_READ'])
+                visible: this.peutVoir(['prestataire-read', 'RESOURCES_READ'],ModuleAbonnement.FORMATION)
             },
             {
                 label: 'Produit', icon: 'pi pi-fw pi-box', routerLink: ['/produit'],
-                visible: this.peutVoir(['produit-read', 'RESOURCES_READ'])
+                visible: this.peutVoir(['produit-read', 'RESOURCES_READ'],ModuleAbonnement.FORMATION)
             }
         ];
 
@@ -145,7 +145,7 @@ export class AppMenu {
             {
                 label: 'Action corrective et préventive', icon: 'pi pi-fw pi-list-check',
                 routerLink: ['/action-corrective-preventive'],
-                visible: this.peutVoir(['action-corrective-read', 'action-read', 'ACTIONS_READ'], ModuleAbonnement.NON_CONFORMITE)
+                visible: this.peutVoir(['action-corrective-read', 'action-read', 'ACTIONS_READ'], ModuleAbonnement.AUDIT)
             },
             {
                 label: 'Réclamation', icon: 'pi pi-fw pi-exclamation-triangle', routerLink: ['/reclamation'],
@@ -201,17 +201,31 @@ export class AppMenu {
                     visible: this.peutVoir(['structure-read', 'structure-write', 'STRUCT_MANAGE', 'SERVICE_MANAGE'])
                 }
             ]),
+            // La configuration des circuits n'est plus une entrée de menu : elle est servie par les
+            // onglets du centre de configuration, avec le catalogue d'étapes et les modèles
+            // d'e-mail. « Configurations Globales » ci-dessus y mène.
             this.sousGroupe('Documentation', 'pi pi-fw pi-print', [
                 {
-                    label: 'Type de document', routerLink: ['/parametrage-document'],
+                    label: 'Type de document', routerLink: ['/parametrage-document/types'],
                     visible: this.peutVoir(['document-type-read', 'document-type-write'], ModuleAbonnement.DOCUMENTAIRE)
                 },
-                // Les circuits documentaires n'ont plus d'écran propre : l'éditeur unique couvre
-                // les trois types de ressource, et le catalogue d'étapes vit dans la même section.
-                // Deux entrées distinctes mèneraient au même endroit.
                 {
-                    label: 'Circuits de validation', routerLink: ['/configuration-workflow'],
-                    visible: this.peutVoir(['workflow-read', 'workflow-write'])
+                    label: 'Priorités', routerLink: ['/parametrage-document/priorites'],
+                    visible: this.peutVoir(
+                        ['priorite-document-read', 'priorite-document-write', 'CONFIG_READ'],
+                        ModuleAbonnement.DOCUMENTAIRE)
+                },
+                {
+                    label: "Domaines d'application", routerLink: ['/parametrage-document/domaines'],
+                    visible: this.peutVoir(
+                        ['domaine-application-read', 'domaine-application-write', 'CONFIG_READ'],
+                        ModuleAbonnement.DOCUMENTAIRE)
+                },
+                {
+                    label: 'Niveaux de confidentialité', routerLink: ['/parametrage-document/confidentialite'],
+                    visible: this.peutVoir(
+                        ['niveau-confidentialite-read', 'niveau-confidentialite-write', 'CONFIG_READ'],
+                        ModuleAbonnement.DOCUMENTAIRE)
                 }
             ])
         ];

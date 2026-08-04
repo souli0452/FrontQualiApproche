@@ -5,7 +5,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ActivatedRoute } from '@angular/router';
 import { TypeStructure } from '../../../../enums/enums';
-import { handleHttpErrors, showToast } from '../../../../utils/global/global-utils';
+import { handleHttpErrors, showToast, StatusEnum } from '../../../../utils/global/global-utils';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { CreationComponent } from '../structure-creation/creation.component';
@@ -14,6 +14,8 @@ import { MenuModule } from 'primeng/menu';
 import { StructureService } from '../structure-service/structure-service';
 import { Structure } from '../structure-config/structure';
 import { GlobalSearchService } from '../../../../services/non-conformite/global-search.service';
+import { CategorieProcessusService } from '../../../../services/non-conformite/type-processus.service';
+import { CategorieProcessus } from '../../../../models/categore-processus.model';
 @Component({
     selector: 'app-structure',
     templateUrl: './structure.component.html',
@@ -40,10 +42,14 @@ export class StructureComponent implements OnInit, OnDestroy {
     loading: boolean = false;
     typeStructure: TypeStructure = TypeStructure.SERVICE;
 
+    /** Catégories proposées à la saisie, servies par l'écran de paramétrage qui les administre. */
+    categoriesProcessus: CategorieProcessus[] = [];
+
     @ViewChild('dt') table!: Table;
 
     constructor(
         private structureService: StructureService,
+        private categorieProcessusService: CategorieProcessusService,
         private globalSearchService: GlobalSearchService,
         private activatedRoute: ActivatedRoute,
         private messageService: MessageService,
@@ -56,8 +62,9 @@ export class StructureComponent implements OnInit, OnDestroy {
         this.cols = [
             { field: 'libelleCourt', header: 'Sigle', type: 'string', filter: true, width: '10%', center: false },
             { field: 'libelleLong', header: 'Libellé', type: 'string', filter: true, width: '30%', center: false },
-            { field: 'ville', header: 'Ville', type: 'string', filter: true, width: '15%', center: false },
-            { field: 'email', header: 'Email', type: 'string', filter: true, width: '25%', center: false }
+            { field: 'typeProcessusLibelle', header: 'Catégorie de processus', type: 'string', filter: true, width: '20%', center: false },
+            { field: 'ville', header: 'Ville', type: 'string', filter: true, width: '12%', center: false },
+            { field: 'email', header: 'Email', type: 'string', filter: true, width: '20%', center: false }
         ];
 
         this.colsFilter = this.cols.map((value) => value.field);
@@ -77,6 +84,9 @@ export class StructureComponent implements OnInit, OnDestroy {
             autoriteSignataire: [null, Validators.required],
             titreHonorifiqueSignataire: [],
             typeStructureComptableId: [],
+            // Facultative : toutes les structures ne relèvent pas d'une catégorie de processus, et
+            // l'exiger fermerait la saisie tant que le paramétrage n'a pas été renseigné.
+            typeProcessusId: [],
             region: [null, Validators.required],
             email: [null, [Validators.required, Validators.email]],
             ville: [null, Validators.required],
@@ -89,6 +99,7 @@ export class StructureComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.loadStuctures();
+        this.loadCategoriesProcessus();
 
         // Écouter la barre de recherche globale
         this.globalSearchService.searchQuery$
@@ -116,6 +127,31 @@ export class StructureComponent implements OnInit, OnDestroy {
                 },
                 error: (error) => {
                     this.loading = false;
+                }
+            });
+    }
+
+    /**
+     * Catégories de processus proposées à la saisie.
+     *
+     * La liste est demandée en une fois : le sélecteur doit les présenter toutes, alors que le
+     * service pagine par défaut sur dix éléments — au-delà, une catégorie existante serait
+     * introuvable à l'écran sans que rien ne l'indique.
+     *
+     * Son indisponibilité n'empêche pas de saisir une structure : le champ est facultatif, et
+     * l'échec est signalé plutôt que de laisser une liste vide passer pour un paramétrage absent.
+     */
+    loadCategoriesProcessus() {
+        this.categorieProcessusService
+            .findAll(0, 1000)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (res: any) => {
+                    this.categoriesProcessus = res?.data?.content ?? res?.data ?? [];
+                },
+                error: (error: any) => {
+                    showToast(StatusEnum.error, error.status,
+                        'Catégories de processus indisponibles', this.messageService, error);
                 }
             });
     }
