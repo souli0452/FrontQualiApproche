@@ -95,6 +95,14 @@
                                             <span [innerHTML]="rowData[col.field]"></span>
                                         </ng-container>
                                     </span>
+                                    <!-- Pastille : la sévérité vient de la ligne, via `severityField`.
+                                         Jusqu'ici seuls deux en-têtes nommés « Réference » et « Statut »
+                                         produisaient une pastille — un badge dépendait donc du libellé
+                                         de la colonne, ce qu'aucun écran ne pouvait deviner. -->
+                                    <span *ngIf="col.type === 'badge'">
+                                        <p-tag [value]="rowData[col.field]"
+                                               [severity]="(col.severityField && rowData[col.severityField]) || 'info'" />
+                                    </span>
                                     <span
                                         *ngIf="col.type === 'number'"> {{ rowData[col.field] }}</span>
                                     <span

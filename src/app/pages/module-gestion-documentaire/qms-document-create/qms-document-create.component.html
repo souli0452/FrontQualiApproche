@@ -229,6 +229,30 @@
                 </div>
               </div>
 
+              <!-- Le code suit la convention de numérotation de l'organisation : il s'ajoute au
+                   numéro attribué par le système, il ne le remplace pas. -->
+              <div class="field mb-6 flex flex-col md:flex-row gap-4">
+                <div class="w-full md:w-1/2">
+                  <div class="flex items-center mb-2 gap-2">
+                    <label for="reference" class="font-semibold m-0">Code du document</label>
+                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="aideCode.toggle($event)"></i>
+                  </div>
+                  <p-popover #aideCode>
+                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 320px;">
+                      Code selon votre propre convention de numérotation. Il s'ajoute au numéro
+                      attribué automatiquement à l'enregistrement, il ne s'y substitue pas.
+                    </div>
+                  </p-popover>
+                  <div class="flex-1 mt-2">
+                    <p-floatlabel variant="on" class="w-full">
+                      <input pInputText id="reference" formControlName="reference" class="w-full" />
+                      <label for="reference">Code</label>
+                    </p-floatlabel>
+                  </div>
+                </div>
+
+              </div>
+
               <div class="field mb-6 flex flex-col md:flex-row gap-4">
                 <div class="w-full md:w-1/2">
                   <div class="flex items-center mb-2 gap-2">
@@ -237,21 +261,25 @@
                   </div>
                   <p-popover #domaineApplication>
                     <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                        Veuillez sélectionner le domaine d'application du document que vous souhaitez créer.
+                        Le champ d'activité que couvre ce document. Les domaines se paramètrent sous
+                        Paramétrage Document : la saisie libre faisait compter « RH » et
+                        « Ressources Humaines » comme deux domaines distincts dans les statistiques.
                     </div>
                   </p-popover>
                   <div class="flex-1 mt-2">
                       <p-floatlabel variant="on" class="w-full">
-                          <p-select 
-                            id="domaineApplication" 
-                            [options]="domainesList" 
-                            formControlName="domaine" 
-                            optionLabel="label"
+                          <p-select
+                            id="domaineApplication"
+                            [options]="domaines"
+                            formControlName="domaineId"
+                            optionLabel="libelle"
+                            optionValue="id"
                             [filter]="true"
                             class="w-full"
-                            [showClear]="true" 
-                            appendTo="body" 
-                            styleClass="w-full">
+                            [showClear]="true"
+                            appendTo="body"
+                            styleClass="w-full"
+                            emptyMessage="Aucun domaine paramétré">
                           </p-select>
                           <label for="domaineApplication">Sélectionner le domaine d'application</label>
                       </p-floatlabel>
@@ -293,30 +321,58 @@
                 <h3 class="text-xl font-bold text-900 my-0">Options de diffusion</h3>
               </div>
 
-              <div class="flex gap-5 flex-wrap">
-                <div class="flex items-center gap-2">
-                  <p-toggleswitch formControlName="confidentiel">
-                    <ng-template #handle>
-                        <i [ngClass]="['!text-xs', 'pi', checked ? 'pi-check' : 'pi-times']"></i>
-                    </ng-template>
-                  </p-toggleswitch>
-                  <div>
-                    <span class="text-sm font-semibold text-slate-700 block">Document Confidentiel</span>
-                    <span class="text-xs text-slate-400">Accès restreint aux utilisateurs autorisés</span>
+              <!-- Priorité et niveau de confidentialité rejoignent les interrupteurs : ce sont
+                   eux qui décident de qui verra le document, et à quel degré d'urgence il se lit.
+                   Les deux référentiels se paramètrent sous Paramétrage Document. -->
+              <div class="field mb-5 flex flex-col md:flex-row gap-4">
+                <div class="w-full md:w-1/2">
+                  <div class="flex items-center mb-2 gap-2">
+                    <label for="prioriteId" class="font-semibold m-0">Priorité</label>
+                  </div>
+                  <div class="flex-1 mt-2">
+                    <p-floatlabel variant="on" class="w-full">
+                      <p-select id="prioriteId" formControlName="prioriteId" [options]="priorites"
+                                optionLabel="libelle" optionValue="id" [showClear]="true"
+                                [filter]="true" appendTo="body" styleClass="w-full" class="w-full"
+                                emptyMessage="Aucune priorité paramétrée">
+                      </p-select>
+                      <label for="prioriteId">Sélectionner la priorité</label>
+                    </p-floatlabel>
                   </div>
                 </div>
-                <div class="flex items-center gap-2">
-                  <p-toggleswitch formControlName="documentExterne">
-                    <ng-template #handle>
-                        <i [ngClass]="['!text-xs', 'pi', checked ? 'pi-check' : 'pi-times']"></i>
-                    </ng-template>
-                  </p-toggleswitch>
-                  <div>
-                    <span class="text-sm font-semibold text-slate-700 block">Document Externe</span>
-                    <span class="text-xs text-slate-400">Provient d'un organisme extérieur</span>
+
+                <div class="w-full md:w-1/2">
+                  <div class="flex items-center mb-2 gap-2">
+                    <label for="niveauConfidentialiteId" class="font-semibold m-0">Niveau de confidentialité</label>
+                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="aideConfidentialite.toggle($event)"></i>
+                  </div>
+                  <p-popover #aideConfidentialite>
+                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 340px;">
+                      Chaque niveau désigne les rôles admis à consulter le document. La restriction
+                      s'ajoute à celle de la structure : il faudra relever de votre structure
+                      <em>et</em> détenir l'un de ces rôles. Sans niveau, le document reste visible
+                      de toute la structure émettrice.
+                    </div>
+                  </p-popover>
+                  <div class="flex-1 mt-2">
+                    <p-floatlabel variant="on" class="w-full">
+                      <p-select id="niveauConfidentialiteId" formControlName="niveauConfidentialiteId"
+                                [options]="niveauxConfidentialite" optionLabel="libelle" optionValue="id"
+                                [showClear]="true" [filter]="true" appendTo="body"
+                                styleClass="w-full" class="w-full"
+                                emptyMessage="Aucun niveau paramétré">
+                      </p-select>
+                      <label for="niveauConfidentialiteId">Sélectionner le niveau</label>
+                    </p-floatlabel>
                   </div>
                 </div>
               </div>
+
+              <!-- « Document confidentiel » et « Document externe » ont disparu : le premier disait
+                   moins bien ce que dit le niveau de confidentialité — lequel désigne les rôles
+                   admis, là où le booléen se contentait d'un oui ou d'un non que rien ne reliait à
+                   une habilitation. Le serveur établit désormais la confidentialité à partir du
+                   niveau choisi, si bien que deux réglages ne peuvent plus se contredire. -->
 
             <div class="flex justify-between gap-2 mt-4 pt-4 border-slate-200">
               <p-button label="Voir guide de saisie" severity="secondary" (click)="showGuideModal = true" />

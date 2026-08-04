@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { DocumentQms, QmsDocumentType } from '../../../../models/gestion-documentaire.model';
+import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '../../../../models/referentiel-document.model';
 
 /**
  * Liste des documents : recherche, filtres et tableau.
@@ -24,13 +25,28 @@ export class QmsDocumentListComponent {
     @Input() structures: any[] = [];
     @Input() loading = false;
 
+    @Input() priorites: PrioriteDocument[] = [];
+    /**
+     * Niveaux proposables : ceux que l'utilisateur a le droit de voir, résolus par le serveur.
+     * Un niveau qu'il n'a pas le droit de consulter ne rendrait aucun document, et le proposer
+     * révélerait un classement qui ne le regarde pas.
+     */
+    @Input() niveauxConfidentialite: NiveauConfidentialite[] = [];
+    @Input() domaines: DomaineApplication[] = [];
+
     @Input() searchQuery = '';
     @Input() selectedType = '';
     @Input() selectedService = '';
+    @Input() selectedPriorite = '';
+    @Input() selectedNiveauConfidentialite = '';
+    @Input() selectedDomaine = '';
 
     @Output() searchQueryChange = new EventEmitter<string>();
     @Output() selectedTypeChange = new EventEmitter<string>();
     @Output() selectedServiceChange = new EventEmitter<string>();
+    @Output() selectedPrioriteChange = new EventEmitter<string>();
+    @Output() selectedNiveauConfidentialiteChange = new EventEmitter<string>();
+    @Output() selectedDomaineChange = new EventEmitter<string>();
 
     /** Rechargement demandé : saisie validée, filtre modifié ou bouton Actualiser. */
     @Output() refresh = new EventEmitter<void>();

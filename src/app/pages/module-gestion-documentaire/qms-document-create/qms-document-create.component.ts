@@ -11,9 +11,26 @@ import { StructureService } from '../../parametrages/structure/structure-service
 import { QmsDocumentType, DocumentWorkflow } from '../../../models/gestion-documentaire.model';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { WorkflowService } from '../../../services/workflow.service';
+import {
+  DomaineApplicationService,
+  NiveauConfidentialiteService,
+  PrioriteDocumentService
+} from '../../../services/module-gestion-documentaire/referentiel-document.service';
+import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '../../../models/referentiel-document.model';
+
 import { Subject, takeUntil } from 'rxjs';
 import { ToggleSwitch } from 'primeng/toggleswitch';
 import { FileUploadComponent } from '../../../components/non-conformite/file-upload/file-upload.component';
+
+/**
+ * Libellé de l'entrée choisie, transmis avec l'identifiant.
+ *
+ * Le document conserve les deux : l'identifiant pour rattacher, le libellé pour s'afficher sans
+ * dépendre d'un appel au référentiel à chaque ligne de liste.
+ */
+function libelleDe(entrees: { id?: string; libelle: string }[], id: string): string {
+  return entrees.find(entree => entree.id === id)?.libelle ?? '';
+}
 
 @Component({
   selector: 'app-qms-document-create',
@@ -28,6 +45,10 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
   checked: boolean = false;
   documentTypes: QmsDocumentType[] = [];
   structures: Structure[] = [];
+  priorites: PrioriteDocument[] = [];
+  niveauxConfidentialite: NiveauConfidentialite[] = [];
+  domaines: DomaineApplication[] = [];
+
   loading = false;
   selectedFile?: File;
   showGuideModal = false;
@@ -55,16 +76,8 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
     { label: 'Norme Interne / Procédure de l\'entreprise', value: 'Norme Interne' }
   ];
 
-  domainesList = [
-    { label: 'Qualité (SMQ)', value: 'Qualité' },
-    { label: 'Environnement (SME)', value: 'Environnement' },
-    { label: 'Santé & Sécurité au Travail (SST)', value: 'Santé & Sécurité' },
-    { label: 'Sécurité de l\'Information (SMSI)', value: 'Sécurité de l\'information' },
-    { label: 'Sécurité Alimentaire (SMSDA - ISO 22000)', value: 'Sécurité Alimentaire' },
-    { label: 'Management Général', value: 'Management Général' },
-    { label: 'Ressources Humaines', value: 'Ressources Humaines' },
-    { label: 'Production & Opérations', value: 'Production & Opérations' }
-  ];
+  // La liste des domaines n'est plus codée ici : elle se paramètre, et le serveur en sème
+  // huit au premier démarrage.
 
   statutsList = [
     { label: 'Obligatoire (Réglementaire)', value: 'Obligatoire' },
@@ -79,6 +92,9 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
     private qmsService: QmsDocumentService,
     private workflowService: WorkflowService,
     private structureService: StructureService,
+    private prioriteService: PrioriteDocumentService,
+    private niveauConfidentialiteService: NiveauConfidentialiteService,
+    private domaineService: DomaineApplicationService,
     private authService: AuthService,
     private messageService: MessageService
   ) {
@@ -88,16 +104,37 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       service: [null, Validators.required],
       redacteur: [null, Validators.required],
       periodiciteMois: [12, [Validators.required, Validators.min(1)]],
-      confidentiel: [false],
-      documentExterne: [false],
       processusDest: [null],
+      // Code propre à l'organisation, distinct du numéro attribué par le système. Le champ
+      // existait en base et dans le contrat du serveur, sans qu'aucun écran ne l'offre.
+      reference: [null],
+      prioriteId: [null],
+      niveauConfidentialiteId: [null],
       referenceOfficielle: [null],
-      domaine: [null],
+      domaineId: [null],
       statutLegal: [null]
     });
   }
 
+  private chargerReferentiels(): void {
+    // Indisponibilité tolérée : ces deux champs sont facultatifs, et un référentiel muet ne doit
+    // pas empêcher de déposer un document.
+    this.prioriteService.liste().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (priorites) => (this.priorites = priorites ?? []),
+      error: () => console.warn('Priorités de document indisponibles.')
+    });
+    this.niveauConfidentialiteService.liste().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (niveaux) => (this.niveauxConfidentialite = niveaux ?? []),
+      error: () => console.warn('Niveaux de confidentialité indisponibles.')
+    });
+    this.domaineService.liste().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (domaines) => (this.domaines = domaines ?? []),
+      error: () => console.warn("Domaines d'application indisponibles.")
+    });
+  }
+
   ngOnInit(): void {
+    this.chargerReferentiels();
     this.loading = true;
 
     this.qmsService.typeDocumentQmsGetAll().subscribe({
@@ -244,15 +281,26 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       serviceSigle: serviceObj.libelleCourt || '',
       redacteur: formVal.redacteur,
       periodiciteMois: formVal.periodiciteMois,
-      confidentiel: formVal.confidentiel,
-      documentExterne: formVal.documentExterne,
+      // `confidentiel` n'est plus transmis : le serveur l'établit à partir du niveau choisi.
       ...(this.associatedWorkflow && { workflowId: this.associatedWorkflow.id }),
       ...(formVal.processusDest && {
         processusDestId: formVal.processusDest.id,
         processusDestLibelle: formVal.processusDest.libelleLong || formVal.processusDest.libelleCourt || ''
       }),
+      ...(formVal.reference && { reference: formVal.reference }),
+      ...(formVal.prioriteId && {
+        prioriteId: formVal.prioriteId,
+        prioriteLibelle: libelleDe(this.priorites, formVal.prioriteId)
+      }),
+      ...(formVal.niveauConfidentialiteId && {
+        niveauConfidentialiteId: formVal.niveauConfidentialiteId,
+        niveauConfidentialiteLibelle: libelleDe(this.niveauxConfidentialite, formVal.niveauConfidentialiteId)
+      }),
       ...(formVal.referenceOfficielle && { referenceOfficielle: formVal.referenceOfficielle }),
-      ...(formVal.domaine && { domaine: formVal.domaine }),
+      ...(formVal.domaineId && {
+        domaineId: formVal.domaineId,
+        domaine: libelleDe(this.domaines, formVal.domaineId)
+      }),
       ...(formVal.statutLegal && { statutLegal: formVal.statutLegal })
     }).subscribe({
       next: (doc) => {

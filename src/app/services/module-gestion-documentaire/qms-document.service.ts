@@ -214,6 +214,17 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
         );
     }
 
+    /**
+     * Dépôts par mois, mois vides compris. La portée est celle du serveur : sa structure, ou
+     * l'ensemble pour qui accompagne la qualité.
+     */
+    getDocumentsParMois(mois = 12): Observable<Record<string, number>> {
+        return this.http.get<any>(
+            `${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/stats/mensuel?mois=${mois}`).pipe(
+            map(res => res?.data ?? res ?? {})
+        );
+    }
+
     getDocumentStatsByDimension(dimension: string): Observable<Record<string, number>> {
         return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/stats/by/${dimension}`).pipe(
             map(res => {
@@ -245,6 +256,33 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
 
     revokeAccess(id: string, userId: string): Observable<void> {
         return this.http.delete<void>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/access/${userId}`);
+    }
+
+    /**
+     * Partage le document avec une structure entière : tous ses membres y accèdent en lecture et
+     * en téléchargement, sans avoir à être nommés un à un.
+     *
+     * La cible est choisie à l'étape où l'on décide de partager. Le serveur consigne cette étape
+     * et refuse le partage vers la structure émettrice, dont les membres voient déjà le document.
+     */
+    partagerAvecStructureDestinataire(id: string, structureId: string,
+                                      structureLibelle?: string): Observable<any> {
+        const params = new HttpParams()
+            .set('structureId', structureId)
+            .set('structureLibelle', structureLibelle ?? '');
+        return this.http.post<any>(
+            `${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/share/structure`, null, { params });
+    }
+
+    retirerPartageStructure(id: string, structureId: string): Observable<void> {
+        return this.http.delete<void>(
+            `${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/share/structure/${structureId}`);
+    }
+
+    getPartagesStructure(id: string): Observable<any[]> {
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/share/structure`).pipe(
+            map(res => res?.data?.content ?? res?.data ?? res ?? [])
+        );
     }
 
     getDocumentAccess(id: string): Observable<DocumentUserAccess[]> {

@@ -70,9 +70,30 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     rowData: any;
     lastTarget: any;
 
-    @Input() customButtons: { label: string; icon: string; action: string; color?: string; tooltip?: string; tooltipPosition?: string }[] = [];
+    /**
+     * Actions propres à l'écran, ajoutées au menu de chaque ligne.
+     *
+     * <p>`visible` permet de n'en proposer une que sur les lignes concernées : sans elle, une
+     * action qui ne vaut que pour quelques enregistrements devait être sortie du tableau, ou
+     * proposée partout pour n'aboutir nulle part.</p>
+     */
+    @Input() customButtons: {
+        label: string; icon: string; action: string;
+        color?: string; tooltip?: string; tooltipPosition?: string;
+        visible?: (rowData: any) => boolean;
+    }[] = [];
     @Input() isPagination: boolean = true;
     @Input() addButtonLabel: string = 'Ajouter';
+    /**
+     * Confie l'ajout à l'écran appelant plutôt qu'au formulaire intégré.
+     *
+     * <p>Certains objets ne se décrivent pas dans un `formCols` — un circuit de validation a des
+     * étapes, des transitions et des champs de saisie. Sans cette option, ces écrans devaient
+     * renoncer à la barre de titre du tableau et se dessiner un en-tête à part, ce qui les faisait
+     * diverger du reste de l'application.</p>
+     */
+    @Input() ajoutExterne = false;
+    @Output() ajoutDemande = new EventEmitter<void>();
     @Input() minWidth: string = '50rem';
     @Input() loadingRows: number = 10;
     @Output() customActionEvent = new EventEmitter<{ action: string; user: any }>();
@@ -199,6 +220,10 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     }
 
     openNew() {
+        if (this.ajoutExterne) {
+            this.ajoutDemande.emit();
+            return;
+        }
         this.rowData = null;
         this.formGroup.reset();
         // On force chaque champ à null pour être certain de vider les éditeurs/sélecteurs
@@ -329,15 +354,17 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
             });
         }
 
-        // Actions personnalisées
+        // Actions personnalisées, celles qui valent pour cette ligne.
         if (this.customButtons && this.customButtons.length > 0) {
-            this.customButtons.forEach((btn) => {
-                this.actionMenuItems.push({
-                    label: btn.label,
-                    icon: btn.icon,
-                    command: (event: any) => this.onCustomAction(btn.action, rowData, event.originalEvent)
+            this.customButtons
+                .filter((btn) => !btn.visible || btn.visible(rowData))
+                .forEach((btn) => {
+                    this.actionMenuItems.push({
+                        label: btn.label,
+                        icon: btn.icon,
+                        command: (event: any) => this.onCustomAction(btn.action, rowData, event.originalEvent)
+                    });
                 });
-            });
         }
 
         menu.toggle(event);

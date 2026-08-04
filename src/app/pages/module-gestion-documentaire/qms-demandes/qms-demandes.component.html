@@ -1,0 +1,81 @@
+<p-toast></p-toast>
+
+<!-- Liste ou fiche, comme sur l'écran des documents. -->
+<div *ngIf="vue === 'liste'">
+<!-- Menu d'actions conforme aux autres tableaux : « Détails » y ouvre la fiche, d'où l'on
+     instruit et décide. -->
+<app-crud-generic [loading]="loading" [tableCols]="colonnes" [listeObject]="demandes"
+                  [pageLabel]="titrePage" [addButtonLabel]="'Nouvelle demande'"
+                  [ajoutExterne]="true" (ajoutDemande)="ouvrirCreation()"
+                  [formGroup]="formulaireTableau" [formCols]="[]" [notModif]="true" [notDelete]="true"
+                  [isAffich]="false" [asRoleEdit]="true" [customButtons]="actionsLigne"
+                  (customActionEvent)="executerAction($event)"
+                  [minWidth]="'78rem'"
+                  [isPagination]="demandes.length > 10">
+</app-crud-generic>
+
+</div>
+
+<!-- ------------------------------------------------------------------ fiche d'une demande -->
+<app-qms-demande-detail *ngIf="vue === 'detail' && demandeSelectionnee"
+  [demande]="demandeSelectionnee"
+  [workflowState]="etatCircuit"
+  [historique]="historique"
+  [loading]="loading"
+  [canDeposerRemplacant]="peutDeposerRemplacant"
+  [etatIndisponible]="etatIndisponible"
+  (close)="fermerDetail()"
+  (executeAction)="ouvrirDecision($event)"
+  (deposerRemplacant)="ouvrirDepotRemplacant($event)">
+</app-qms-demande-detail>
+
+<!-- Décision de circuit : le même dialogue que pour un document, qui recueille l'observation
+     avant de transmettre. -->
+<app-qms-workflow-decision-dialog
+  [document]="documentDeLaDecision"
+  [action]="actionChoisie"
+  [loading]="enregistrement"
+  [stepFields]="etatCircuit?.currentStepFields"
+  [visible]="dialogueDecisionOuvert"
+  (visibleChange)="dialogueDecisionOuvert = $event"
+  (confirm)="soumettreDecision($event)">
+</app-qms-workflow-decision-dialog>
+
+<!-- ------------------------------------------------------------------ dépôt du remplaçant -->
+<p-dialog [(visible)]="dialogueRemplacantOuvert" [modal]="true" [style]="{ width: '40rem' }"
+          [draggable]="false" header="Déposer le document remplaçant">
+    <div class="flex flex-col gap-4 mt-2" *ngIf="demandeEnCours">
+        <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-sm">
+            <div class="font-semibold text-slate-800">{{ demandeEnCours.documentNumber }}</div>
+            <div class="text-slate-500 mt-1">{{ demandeEnCours.objectif }}</div>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label for="remplacant" class="text-sm font-bold text-slate-700">
+                Fichier <span class="text-red-500">*</span>
+            </label>
+            <input type="file" id="remplacant" (change)="onFichierRemplacant($event)"
+                   class="text-sm text-slate-600" />
+            <small class="text-slate-500" *ngIf="fichierRemplacant">{{ fichierRemplacant.name }}</small>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label for="commentaireRemplacant" class="text-sm font-bold text-slate-700">Commentaire</label>
+            <textarea pTextarea id="commentaireRemplacant" [(ngModel)]="commentaireRemplacant" rows="3"
+                      class="w-full" placeholder="Ce que change cette version…"></textarea>
+        </div>
+
+        <div class="text-xs text-amber-800 p-3 rounded-lg bg-amber-50 border border-amber-100">
+            <i class="pi pi-info-circle mr-1"></i>
+            Le dépôt publie une <strong>version majeure</strong> : le changement a été instruit et
+            décidé, ce n'est pas une retouche.
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Annuler" icon="pi pi-times" severity="secondary" [text]="true"
+                  (onClick)="dialogueRemplacantOuvert = false"></p-button>
+        <p-button label="Déposer" icon="pi pi-upload" [disabled]="!fichierRemplacant"
+                  [loading]="enregistrement" (onClick)="deposerRemplacant()"></p-button>
+    </ng-template>
+</p-dialog>

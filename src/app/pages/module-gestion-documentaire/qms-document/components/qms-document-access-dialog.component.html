@@ -2,24 +2,25 @@
   <div class="p-fluid mt-2" *ngIf="document">
 
     <!-- Info Alert Box -->
-    <div class="p-3 bg-slate-50 border border-slate-200 border-round mb-4 flex align-items-center justify-content-between">
-      <div class="flex align-items-center gap-2">
+    <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg mb-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
         <span class="text-sm font-bold text-slate-500">Document :</span>
         <span class="text-sm font-bold text-slate-700">
           <i class="pi pi-file text-indigo-500 mr-1"></i>
           {{ document.documentNumber }}
         </span>
       </div>
-      <div class="flex align-items-center gap-2 ml-3">
+      <div class="flex items-center gap-2 ml-3">
         <span class="text-sm font-bold text-slate-500">Rédacteur :</span>
         <span class="text-sm font-bold text-slate-700">{{ document.redacteur }}</span>
       </div>
     </div>
 
     <!-- Custom Button Tabs -->
-    <div class="flex border-bottom border-slate-200 mb-4 gap-2">
+    <div class="flex border-b border-slate-200 mb-4 gap-2">
       <button pButton type="button" label="Accès utilisateurs" class="p-button-text p-button-sm mr-2" [ngClass]="{'p-button-primary font-bold border-bottom-2 border-primary': activeTab === 'access'}" (click)="activeTab = 'access'"></button>
       <button pButton type="button" label="Ajouter un accès" class="p-button-text p-button-sm" [ngClass]="{'p-button-primary font-bold border-bottom-2 border-primary': activeTab === 'grant'}" (click)="activeTab = 'grant'"></button>
+      <button pButton type="button" label="Partager à une structure" class="p-button-text p-button-sm" [ngClass]="{'p-button-primary font-bold border-bottom-2 border-primary': activeTab === 'structure'}" (click)="activeTab = 'structure'"></button>
     </div>
 
     <!-- Tab 1: Liste des accès existants -->
@@ -103,16 +104,73 @@
             <p-select [options]="roleOptions" formControlName="role" optionLabel="label" optionValue="value" appendTo="body" placeholder="Choisir un rôle" class="w-full"></p-select>
           </div>
 
-          <div class="col-span-12 flex justify-content-end mt-4">
+          <div class="col-span-12 flex justify-end mt-4">
             <button pButton type="submit" label="Accorder l'accès" icon="pi pi-check" class="p-button-primary w-auto shadow-sm" [disabled]="form.invalid"></button>
           </div>
         </div>
       </form>
     </div>
 
+    <!-- Partage à une structure entière. Le destinataire se choisit ici, à l'étape où l'on juge
+         utile de montrer le document — et non à la soumission, où l'on ne sait pas encore à qui
+         il devra être communiqué. -->
+    <div *ngIf="activeTab === 'structure'" class="py-2">
+      <p class="text-sm text-slate-500 mb-4">
+        Ouvre le document à <strong>tous les membres</strong> de la structure choisie, sans avoir à
+        les nommer un à un. L'accès obtenu est volontairement étroit : consultation et
+        téléchargement, sans historique ni suivi interne.
+      </p>
+
+      <div class="grid grid-cols-12 gap-3">
+        <div class="col-span-12 md:col-span-8">
+          <label class="block text-xs font-semibold text-slate-600 mb-1">
+            Structure destinataire <span class="text-red-500">*</span>
+          </label>
+          <p-select [options]="structuresPartageables" [(ngModel)]="structurePartage"
+                    [ngModelOptions]="{standalone: true}" optionLabel="libelleLong" optionValue="id"
+                    placeholder="Choisir la structure…" class="w-full" appendTo="body"
+                    [filter]="true" [showClear]="true"></p-select>
+          <small class="block mt-1 text-slate-500">
+            La structure émettrice n'y figure pas : ses membres voient déjà ce document.
+          </small>
+        </div>
+        <div class="col-span-12 md:col-span-4 flex items-end">
+          <button pButton type="button" label="Partager" icon="pi pi-share-alt"
+                  class="p-button-primary w-auto shadow-sm" [disabled]="!structurePartage"
+                  (click)="partagerStructure()"></button>
+        </div>
+      </div>
+
+      <div class="mt-5" *ngIf="partagesStructure.length">
+        <div class="text-xs font-bold uppercase text-slate-500 mb-2">Structures déjà destinataires</div>
+        <p-table [value]="partagesStructure" styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Structure</th>
+              <th>Partagé par</th>
+              <th>À l'étape</th>
+              <th class="text-center">Action</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-partage>
+            <tr>
+              <td class="font-semibold text-slate-800">{{ partage.structureLibelle || partage.structureId }}</td>
+              <td class="text-sm text-slate-500">{{ partage.sharedByFullName || '—' }}</td>
+              <td class="text-sm text-slate-500">{{ partage.etapeCode || '—' }}</td>
+              <td class="text-center">
+                <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
+                        pTooltip="Retirer ce partage"
+                        (click)="retirerPartageStructure.emit(partage)"></button>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+
   </div>
   <ng-template pTemplate="footer">
-    <div class="flex justify-content-end">
+    <div class="flex justify-end">
       <button pButton label="Fermer" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="fermer()"></button>
     </div>
   </ng-template>

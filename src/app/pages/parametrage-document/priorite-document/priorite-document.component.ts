@@ -7,21 +7,20 @@ import { Subject, takeUntil } from 'rxjs';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { AppCrudGenericComponent } from '../../../components/app-crud-generic/app-crud-generic.component';
 import { FormGroupColumn, TableColumn } from '../../../models/generique.model';
-import { EmailTemplateDto } from '../../../models/workflow.model';
-import { WorkflowService } from '../../../services/workflow.service';
+import { PrioriteDocument } from '../../../models/referentiel-document.model';
+import { PrioriteDocumentService } from '../../../services/module-gestion-documentaire/referentiel-document.service';
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 import { hasAnyPermission } from '../../../utils/auth/auth-utils';
 
 /**
- * Modèles d'e-mail des circuits de validation.
+ * Référentiel des priorités de document.
  *
- * <p>Même forme que l'écran des types de document : le tableau générique porte la liste, sa barre
- * de recherche, son bouton d'ajout et son formulaire. Le tableau, la recherche locale et le
- * dialogue écrits à la main disparaissent — ils refaisaient, en moins bien, ce que le composant
- * partagé fait déjà.</p>
+ * <p>Même forme que l'écran des types de document : le tableau générique porte la liste, sa
+ * barre de recherche, son bouton d'ajout et son formulaire. Un dialogue écrit à la main n'aurait
+ * rien apporté qu'une seconde manière de faire la même chose.</p>
  */
 @Component({
-    selector: 'app-email-template',
+    selector: 'app-priorite-document',
     standalone: true,
     imports: [CommonModule, AppCrudGenericComponent, NgPrimeModule],
     providers: [MessageService],
@@ -29,8 +28,8 @@ import { hasAnyPermission } from '../../../utils/auth/auth-utils';
         <p-toast></p-toast>
         <div class="page-layout">
             <app-crud-generic
-                [addButtonLabel]="'Nouveau modèle'"
-                [dialogWidth]="'46rem'"
+                [addButtonLabel]="'Nouvelle priorité'"
+                [dialogWidth]="'40rem'"
                 [loading]="loading"
                 [pageLabel]="pageLabel"
                 [tableCols]="tableCols"
@@ -50,15 +49,15 @@ import { hasAnyPermission } from '../../../utils/auth/auth-utils';
         </div>
     `
 })
-export class EmailTemplateWorkflowComponent implements OnInit, OnDestroy {
+export class PrioriteDocumentComponent implements OnInit, OnDestroy {
 
     loading = true;
-    dataList: EmailTemplateDto[] = [];
+    dataList: PrioriteDocument[] = [];
     closeDialog = false;
     peutEcrire = false;
 
-    readonly pageLabel = "Modèles d'e-mail des circuits";
-    readonly formHeader = "Création et mise à jour d'un modèle d'e-mail";
+    readonly pageLabel = 'Priorités de document';
+    readonly formHeader = 'Création et mise à jour d\'une priorité';
 
     formGroup: UntypedFormGroup;
     formCols: FormGroupColumn[];
@@ -69,47 +68,45 @@ export class EmailTemplateWorkflowComponent implements OnInit, OnDestroy {
     constructor(
         protected fb: UntypedFormBuilder,
         protected messageService: MessageService,
-        protected workflowService: WorkflowService
+        protected service: PrioriteDocumentService
     ) {
         this.formCols = [
             { field: 'id', label: '', header: 'Id', type: 'string', visible: false, required: false },
             {
-                // C'est ce code que désignent les étapes des circuits (`emailTemplateCode`) : le
-                // changer prive de notification celles qui s'y réfèrent, sans que rien ne le dise.
-                field: 'code', label: 'Code désigné par les étapes (ex : validationRq)', header: 'Code',
+                field: 'libelle', label: 'Libellé (ex : Urgent, Normal)', header: 'Libellé',
                 type: 'string', visible: true, required: true
             },
             {
-                field: 'subject', label: "Objet de l'e-mail", header: 'Objet',
-                type: 'string', visible: true, required: true
+                field: 'ordre', label: 'Rang d\'affichage, du plus urgent au moins urgent',
+                header: 'Rang', type: 'number', visible: true, required: false
             },
             {
-                field: 'description', label: 'À quoi sert ce modèle', header: 'Description',
+                field: 'couleur', label: 'Couleur d\'affichage (ex : #dc2626)', header: 'Couleur',
                 type: 'string', visible: true, required: false
             },
             {
-                field: 'body', label: 'Corps du message', header: 'Corps',
-                type: 'text', visible: true, required: true
+                field: 'description', label: 'Ce que ce niveau signifie pour vos équipes',
+                header: 'Description', type: 'text', visible: true, required: false
             }
         ];
 
         this.tableCols = [
-            { field: 'code', header: 'Code', type: 'string', filter: true, width: '14rem' },
-            { field: 'subject', header: 'Objet', type: 'string', filter: true },
+            { field: 'ordre', header: 'Rang', type: 'number', filter: false, width: '6rem' },
+            { field: 'libelle', header: 'Libellé', type: 'string', filter: true },
             { field: 'description', header: 'Description', type: 'string', filter: true }
         ];
 
         this.formGroup = this.fb.group({
             id: [null],
-            code: [null, Validators.required],
-            subject: [null, Validators.required],
-            description: [null],
-            body: [null, Validators.required]
+            libelle: [null, Validators.required],
+            ordre: [null],
+            couleur: [null],
+            description: [null]
         });
     }
 
     ngOnInit(): void {
-        this.peutEcrire = hasAnyPermission(['workflow-write']);
+        this.peutEcrire = hasAnyPermission(['priorite-document-write', 'CONFIG_GLOBAL_MANAGE']);
         this.fetchObject();
     }
 
@@ -120,46 +117,42 @@ export class EmailTemplateWorkflowComponent implements OnInit, OnDestroy {
 
     fetchObject(): void {
         this.loading = true;
-        this.workflowService.getAllEmailTemplates().pipe(takeUntil(this.destroy$)).subscribe({
-            next: (modeles) => {
-                this.dataList = modeles ?? [];
+        this.service.liste().pipe(takeUntil(this.destroy$)).subscribe({
+            next: (priorites) => {
+                this.dataList = priorites ?? [];
                 this.loading = false;
             },
-            error: (error: any) => {
+            error: (error) => {
                 this.loading = false;
-                showToast(StatusEnum.error, error.status, 'Chargement des modèles impossible',
+                showToast(StatusEnum.error, error.status, 'Chargement des priorités impossible',
                     this.messageService, error);
             }
         });
     }
 
-    onSave(objet: EmailTemplateDto): void {
+    onSave(objet: PrioriteDocument): void {
         const requete = objet.id
-            ? this.workflowService.updateEmailTemplate(objet.id, objet)
-            : this.workflowService.createEmailTemplate(objet);
+            ? this.service.updateObject(objet.id, objet)
+            : this.service.create(objet);
 
         requete.pipe(takeUntil(this.destroy$)).subscribe({
             next: () => this.onSuccess(),
-            error: (error: any) => showToast(StatusEnum.error, error.status,
+            error: (error) => showToast(StatusEnum.error, error.status,
                 'Enregistrement impossible', this.messageService, error)
         });
     }
 
-    onDelete(objet: EmailTemplateDto): void {
-        if (!objet.id) {
-            return;
-        }
-        this.workflowService.deleteEmailTemplate(objet.id).pipe(takeUntil(this.destroy$)).subscribe({
+    onDelete(objet: PrioriteDocument): void {
+        this.service.delete(objet.id!).pipe(takeUntil(this.destroy$)).subscribe({
             next: () => {
                 this.messageService.add({
                     severity: 'success', summary: 'Supprimé',
-                    // Conséquence énoncée : une étape qui désignait ce code ne notifiera plus.
-                    detail: `Modèle supprimé. Les étapes qui désignaient « ${objet.code} » `
-                        + 'ne notifieront plus personne.'
+                    // Conséquence énoncée : les documents qui la portent n'afficheront plus rien.
+                    detail: 'Priorité supprimée. Les documents qui la portaient n\'en affichent plus.'
                 });
                 this.fetchObject();
             },
-            error: (error: any) => showToast(StatusEnum.error, error.status,
+            error: (error) => showToast(StatusEnum.error, error.status,
                 'Suppression impossible', this.messageService, error)
         });
     }

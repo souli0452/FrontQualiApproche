@@ -35,7 +35,8 @@ export class GestionDocumentaireLayoutComponent implements OnInit, OnDestroy {
         this.items = [
             { label: "Vue d'ensemble", icon: 'pi pi-chart-bar', routerLink: '/gestion-documentaire/vue-ensemble' },
             { label: 'Documents', icon: 'pi pi-file', routerLink: '/gestion-documentaire/documents' },
-            { label: 'Documents partagés avec moi', icon: 'pi pi-share-alt', routerLink: '/gestion-documentaire/partages' }
+            { label: 'Documents partagés avec moi', icon: 'pi pi-share-alt', routerLink: '/gestion-documentaire/partages' },
+            { label: 'Demandes', icon: 'pi pi-inbox', routerLink: '/gestion-documentaire/demandes' }
         ];
     }
 

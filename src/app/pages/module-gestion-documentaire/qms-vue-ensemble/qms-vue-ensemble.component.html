@@ -1,5 +1,13 @@
 <p-card>
 <div class="">
+
+    <!-- La portée est annoncée : un total dont on ignore l'étendue n'est pas un chiffre. -->
+    <div class="flex items-center gap-2 mb-4 text-sm text-surface-500">
+        <i class="pi pi-eye"></i>
+        <span *ngIf="porteeGlobale">Chiffres portant sur <strong>toutes les structures</strong>.</span>
+        <span *ngIf="!porteeGlobale">Chiffres portant sur <strong>votre structure</strong>.</span>
+    </div>
+
     <div class="grid grid-cols-12 gap-4 mb-4">
         <div class="col-span-12 sm:col-span-6 lg:col-span-3">
             <app-doc-stats-card
@@ -19,26 +27,74 @@
                 [loading]="loading">
             </app-doc-stats-card>
         </div>
+        <!-- Les deux compteurs suivants portent sur ce qui appelle un geste, non sur un état de
+             fait : ce sont eux qu'on regarde pour savoir quoi faire aujourd'hui. -->
         <div class="col-span-12 sm:col-span-6 lg:col-span-3">
             <app-doc-stats-card
-                label="Confidentiels"
-                icon="pi pi-lock"
+                label="Demandes en attente"
+                icon="pi pi-inbox"
                 color="orange"
-                [value]="stats?.documentsConfidentiels || 0"
+                [value]="demandesEnAttente"
                 [loading]="loading">
             </app-doc-stats-card>
         </div>
         <div class="col-span-12 sm:col-span-6 lg:col-span-3">
             <app-doc-stats-card
-                label="Externes"
-                icon="pi pi-globe"
+                label="Demandes déposées"
+                icon="pi pi-send"
                 color="green"
-                [value]="stats?.documentsExternes || 0"
+                [value]="demandesTotal"
                 [loading]="loading">
             </app-doc-stats-card>
         </div>
     </div>
 
+    <!-- Évolution : douze mois glissants, mois vides compris — une courbe qui saute les mois
+         creux déforme la pente et laisse croire à une activité continue. -->
+    <div class="card border border-surface-border p-4 mb-4">
+        <h3 class="text-base font-bold m-0 mb-1">Dépôts des douze derniers mois</h3>
+        <p class="text-sm text-surface-500 m-0 mb-3">
+            Documents déposés et demandes de modification ou de suppression, mois par mois.
+        </p>
+        <div style="height: 20rem">
+            <p-chart type="line" [data]="donneesCourbe" [options]="optionsCourbe"
+                     styleClass="h-full"></p-chart>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-12 gap-4 mb-4">
+        <div class="col-span-12 lg:col-span-6">
+            <div class="card border border-surface-border p-4 h-full">
+                <h3 class="text-base font-bold m-0 mb-1">Documents par statut</h3>
+                <p class="text-sm text-surface-500 m-0 mb-3">Où en sont les documents de votre périmètre.</p>
+                <div style="height: 18rem">
+                    <p-chart type="doughnut" [data]="donneesStatut" [options]="optionsCamembert"
+                             styleClass="h-full"></p-chart>
+                </div>
+            </div>
+        </div>
+        <div class="col-span-12 lg:col-span-6">
+            <div class="card border border-surface-border p-4 h-full">
+                <h3 class="text-base font-bold m-0 mb-1">Demandes par état</h3>
+                <p class="text-sm text-surface-500 m-0 mb-3">
+                    Ce qui est en instruction, décidé, ou reste à exécuter.
+                </p>
+                <div style="height: 18rem" *ngIf="demandesParEtat.length">
+                    <p-chart type="doughnut" [data]="donneesDemandes" [options]="optionsCamembert"
+                             styleClass="h-full"></p-chart>
+                </div>
+                <div class="flex flex-col items-center gap-2 py-12 text-surface-400"
+                     *ngIf="!loading && !demandesParEtat.length">
+                    <i class="pi pi-inbox text-3xl"></i>
+                    <span class="text-sm">Aucune demande déposée à ce jour.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Les tableaux restent : ils donnent les valeurs exactes que le camembert ne peut que
+         suggérer, et servent de recours quand deux teintes voisines se distinguent mal — la
+         palette claire passe sous le seuil de contraste pour trois de ses teintes. -->
     <div class="grid grid-cols-12 gap-4">
         <div class="col-span-12 lg:col-span-6">
             <div class="card border border-surface-border p-4">
@@ -74,5 +130,4 @@
         </div>
     </div>
 </div>
-
 </p-card>

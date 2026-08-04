@@ -29,11 +29,24 @@ export interface QmsDocumentType {
 
 export interface DocumentQms {
   workflowState?: any;
+  /**
+   * L'appelant relève-t-il de la structure du document (ou l'accompagne-t-il au titre de la
+   * qualité) ? Faux lorsqu'il n'y accède que par un partage : le serveur lui refuse alors
+   * l'historique, la piste d'audit et les décisions du circuit.
+   */
+  suiviInterneAutorise?: boolean;
+  /** Priorité et niveau de confidentialité : l'identifiant rattache, le libellé s'affiche. */
+  prioriteId?: string;
+  prioriteLibelle?: string;
+  niveauConfidentialiteId?: string;
+  niveauConfidentialiteLibelle?: string;
+
   id?: string;
   documentNumber?: string;
   /** Champs renvoyés par le serveur mais absents du modèle : le titre notamment, alors qu'il
       identifie le document pour l'utilisateur bien mieux que son numéro. */
   titre?: string;
+  /** Code saisi par l'auteur, selon la convention de numérotation de l'organisation. */
   reference?: string;
   description?: string;
   documentType: string;
@@ -116,11 +129,37 @@ export interface DocumentUserAccess {
   grantedBy?: string;
 }
 
+/**
+ * Document partagé avec l'utilisateur connecté, tel que le sert `GET /documents/shared/me`.
+ *
+ * Les champs du document sont **à plat** : le modèle les logeait sous un objet `document`, que le
+ * serveur n'a jamais envoyé — l'écran « Partagés avec moi » n'affichait donc que des cellules
+ * vides, quel que soit le nombre de partages reçus.
+ */
 export interface SharedDocumentDto {
-  document: DocumentQms;
+  documentId: string;
+  documentNumber?: string;
+  titre?: string;
+  documentType?: string;
+  status?: string;
+  serviceLibelle?: string;
+  serviceSigle?: string;
+  redacteur?: string;
+  domaine?: string;
+  versionLabel?: string;
+  dateVigueur?: string;
+  dateProchRevision?: string;
+  confidentiel?: boolean;
+
   accessRole: string; // READ_ONLY | WRITE
-  grantedAt?: string;
-  grantedBy?: string;
+  userId?: string;
+  userFullName?: string;
+  userEmail?: string;
+
+  /** Vrai lorsque l'accès vient d'un partage consenti à toute la structure, sans nomination. */
+  partageStructure?: boolean;
+  /** Qui a partagé, lorsque le partage vise la structure. */
+  partagePar?: string;
 }
 
 /**
