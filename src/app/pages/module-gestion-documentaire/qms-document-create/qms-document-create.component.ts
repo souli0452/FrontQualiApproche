@@ -35,7 +35,7 @@ function libelleDe(entrees: { id?: string; libelle: string }[], id: string): str
 @Component({
   selector: 'app-qms-document-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, ToggleSwitch, FileUploadComponent],
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, FileUploadComponent],
   templateUrl: './qms-document-create.component.html',
   styleUrls: ['./qms-document-create.component.scss'],
   providers: [MessageService]
@@ -158,9 +158,9 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
     });
 
     this.structureService.getAllStructures().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (res: any) => { 
-        this.structures = res.data?.content || res.content || []; 
-        this.loading = false; 
+      next: (res: any) => {
+        this.structures = res.data?.content || res.content || [];
+        this.loading = false;
         this.trySetUserStructure();
       },
       error: () => this.loading = false
@@ -212,7 +212,7 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
 
   trySetUserStructure(): void {
     if (this.currentUserStructureId && this.structures.length > 0) {
-      const userStructure = this.structures.find(s => 
+      const userStructure = this.structures.find(s =>
         s.id === this.currentUserStructureId ||
         s.libelleCourt === this.currentUserStructureId ||
         s.libelleLong === this.currentUserStructureId ||
