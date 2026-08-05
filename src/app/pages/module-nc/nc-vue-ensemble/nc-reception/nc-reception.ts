@@ -10,7 +10,6 @@ import { TraitementTableComponent } from '../../../../components/non-conformite/
 import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { FeaturesService } from '../../../../services/feature-service';
 import { TypeDemande } from '../../../../utils/global/global-utils';
-import { NCRejetComponent } from '../../nc-rejet/nc-rejet';
 import { Structure } from '../../../parametrages/structure/structure-config/structure';
 import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
 import { NonConformiteService } from '../../../../services/non-conformite/non-conformite.service';
@@ -24,8 +23,7 @@ import { generateReportFile, ReportFormat, ReportingInput } from '../../../../ut
     imports: [
         CommonModule,
         NgPrimeModule,
-        TraitementTableComponent,
-        NCRejetComponent
+        TraitementTableComponent
     ],
     providers: [MessageService]
 })
@@ -63,7 +61,6 @@ export class ReceptionComponent {
     @ViewChild(TraitementTableComponent) dmdTraitement!: TraitementTableComponent;
 
     protected readonly BtnActions = EtapeTraitement;
-    motifRejetDialog: boolean=false;
     
     ngOnInit() {
     }
@@ -107,10 +104,6 @@ export class ReceptionComponent {
         this.featureService.onReloadRequested(true);
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'opération a réussie !", life: 5000 });
         this.dmdTraitement.closeDetailsDialog();
-    }
-    rejet(demande: any) {
-        this.demande = demande;
-        this.motifRejetDialog = true;
     }
     reception(dmd:any) {
         this.nonConformiteService.nonConformiteUpdate(dmd).subscribe({

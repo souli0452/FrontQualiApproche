@@ -8,21 +8,19 @@ import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
 import { FeaturesService } from '../../../../services/feature-service';
 import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
-import { NCRejetComponent } from '../../nc-rejet/nc-rejet';
 
 @Component({
     selector: 'app-nc-cloture',
     templateUrl: './nc-cloture.html',
     standalone: true,
     providers: [MessageService],
-    imports: [CommonModule, NgPrimeModule, TraitementTableComponent, NCRejetComponent]
+    imports: [CommonModule, NgPrimeModule, TraitementTableComponent]
 })
 export class NcClotureComponent {
     @Input() demandeList: any = [];
 
     cols: any[] = [];
     protected demande: any;
-    motifRejetDialog: boolean = false;
     loading: boolean = false;
     title = 'Suivi des non-conformités';
     constructor(
@@ -93,9 +91,5 @@ export class NcClotureComponent {
             this.dmdTraitement.displayDetails();
             this.featureService.onReloadRequested(true);
         }
-    }
-    rejet(demande: any) {
-        this.demande = demande;
-        this.motifRejetDialog = true;
     }
 }

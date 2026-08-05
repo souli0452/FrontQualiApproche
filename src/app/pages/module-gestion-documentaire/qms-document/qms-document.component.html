@@ -4,15 +4,15 @@
   <div *ngIf="currentView === 'list'">
     <app-qms-document-list
       [documents]="documents"
-      [documentTypes]="documentTypes"
-      [structures]="structures"
+      [chargerTypes]="qmsService.chargerOptionsTypes"
+      [chargerStructures]="structureService.chargerOptions"
       [loading]="loading"
       [searchQuery]="searchQuery"
       [selectedType]="selectedType"
       [selectedService]="selectedService"
-      [priorites]="priorites"
-      [niveauxConfidentialite]="niveauxConfidentialite"
-      [domaines]="domaines"
+      [chargerPriorites]="prioriteService.chargerOptions"
+      [chargerNiveauxConfidentialite]="niveauConfidentialiteService.chargerOptionsFiltrables"
+      [chargerDomaines]="domaineService.chargerOptions"
       [selectedPriorite]="selectedPriorite"
       [selectedNiveauConfidentialite]="selectedNiveauConfidentialite"
       [selectedDomaine]="selectedDomaine"
@@ -27,7 +27,11 @@
       (selectedPrioriteChange)="selectedPriorite = $event"
       (selectedNiveauConfidentialiteChange)="selectedNiveauConfidentialite = $event"
       (selectedDomaineChange)="selectedDomaine = $event"
-      (refresh)="refreshList()"
+      [totalDocuments]="totalDocuments"
+      [premiereLigne]="premiereLigne"
+      [taillePage]="taillePage"
+      (pageChange)="changerDePage($event)"
+      (refresh)="refreshList(true)"
       (open)="viewDetails($event)">
     </app-qms-document-list>
   </div>
@@ -157,15 +161,28 @@
 </app-qms-assign-workflow-dialog>
 
 <!-- ========================================================================= -->
+<!-- 7 bis. RECLASSEMENT : NIVEAU DE CONFIDENTIALITÉ -->
+<!-- ========================================================================= -->
+<app-qms-reclassement-dialog
+  [document]="selectedDocument"
+  [loading]="loading"
+  [chargerNiveaux]="niveauConfidentialiteService.chargerOptions"
+  [visible]="dialogueReclassementOuvert"
+  (visibleChange)="dialogueReclassementOuvert = $event"
+  (confirm)="appliquerReclassement($event)">
+</app-qms-reclassement-dialog>
+
+<!-- ========================================================================= -->
 <!-- 8. WORKFLOW STEP DECISION DIALOG -->
 <!-- ========================================================================= -->
-<app-qms-workflow-decision-dialog
-  [document]="selectedDocument"
+<app-workflow-decision-dialog
+  [reference]="selectedDocument?.documentNumber"
+  [etapeCourante]="selectedDocument?.currentEtape"
   [action]="selectedWorkflowAction"
   [loading]="loading"
   [stepFields]="workflowState?.currentStepFields"
   [visible]="showWorkflowModal"
   (visibleChange)="showWorkflowModal = $event"
   (confirm)="submitWorkflowDecision($event)">
-</app-qms-workflow-decision-dialog>
+</app-workflow-decision-dialog>
 

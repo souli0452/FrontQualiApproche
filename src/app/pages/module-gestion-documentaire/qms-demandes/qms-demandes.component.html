@@ -31,15 +31,15 @@
 
 <!-- Décision de circuit : le même dialogue que pour un document, qui recueille l'observation
      avant de transmettre. -->
-<app-qms-workflow-decision-dialog
-  [document]="documentDeLaDecision"
+<app-workflow-decision-dialog
+  [reference]="documentDeLaDecision"
   [action]="actionChoisie"
   [loading]="enregistrement"
   [stepFields]="etatCircuit?.currentStepFields"
   [visible]="dialogueDecisionOuvert"
   (visibleChange)="dialogueDecisionOuvert = $event"
   (confirm)="soumettreDecision($event)">
-</app-qms-workflow-decision-dialog>
+</app-workflow-decision-dialog>
 
 <!-- ------------------------------------------------------------------ dépôt du remplaçant -->
 <p-dialog [(visible)]="dialogueRemplacantOuvert" [modal]="true" [style]="{ width: '40rem' }"

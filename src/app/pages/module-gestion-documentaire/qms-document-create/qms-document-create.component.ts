@@ -20,22 +20,13 @@ import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '../
 
 import { Subject, takeUntil } from 'rxjs';
 import { ToggleSwitch } from 'primeng/toggleswitch';
+import { SelectInputComponent } from '../../../shared';
 import { FileUploadComponent } from '../../../components/non-conformite/file-upload/file-upload.component';
-
-/**
- * Libellé de l'entrée choisie, transmis avec l'identifiant.
- *
- * Le document conserve les deux : l'identifiant pour rattacher, le libellé pour s'afficher sans
- * dépendre d'un appel au référentiel à chaque ligne de liste.
- */
-function libelleDe(entrees: { id?: string; libelle: string }[], id: string): string {
-  return entrees.find(entree => entree.id === id)?.libelle ?? '';
-}
 
 @Component({
   selector: 'app-qms-document-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, FileUploadComponent],
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, FileUploadComponent, SelectInputComponent],
   templateUrl: './qms-document-create.component.html',
   styleUrls: ['./qms-document-create.component.scss'],
   providers: [MessageService]
@@ -45,6 +36,18 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
   checked: boolean = false;
   documentTypes: QmsDocumentType[] = [];
   structures: Structure[] = [];
+
+  /*
+   * Options retenues dans les trois référentiels paginés.
+   *
+   * Le libellé accompagne l'identifiant jusqu'en base, pour que les listes s'affichent sans
+   * réinterroger le référentiel. Il était retrouvé dans un tableau chargé d'avance ; ces
+   * référentiels arrivant maintenant page par page, l'option est conservée telle qu'elle a été
+   * choisie — sans quoi le libellé partait vide.
+   */
+  prioriteChoisie?: { id?: string; libelle?: string } | null;
+  niveauChoisi?: { id?: string; libelle?: string } | null;
+  domaineChoisi?: { id?: string; libelle?: string } | null;
   priorites: PrioriteDocument[] = [];
   niveauxConfidentialite: NiveauConfidentialite[] = [];
   domaines: DomaineApplication[] = [];
@@ -89,12 +92,12 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private qmsService: QmsDocumentService,
+    protected qmsService: QmsDocumentService,
     private workflowService: WorkflowService,
-    private structureService: StructureService,
-    private prioriteService: PrioriteDocumentService,
-    private niveauConfidentialiteService: NiveauConfidentialiteService,
-    private domaineService: DomaineApplicationService,
+    protected structureService: StructureService,
+    protected prioriteService: PrioriteDocumentService,
+    protected niveauConfidentialiteService: NiveauConfidentialiteService,
+    protected domaineService: DomaineApplicationService,
     private authService: AuthService,
     private messageService: MessageService
   ) {
@@ -104,7 +107,6 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       service: [null, Validators.required],
       redacteur: [null, Validators.required],
       periodiciteMois: [12, [Validators.required, Validators.min(1)]],
-      processusDest: [null],
       // Code propre à l'organisation, distinct du numéro attribué par le système. Le champ
       // existait en base et dans le contrat du serveur, sans qu'aucun écran ne l'offre.
       reference: [null],
@@ -116,28 +118,14 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
     });
   }
 
-  private chargerReferentiels(): void {
-    // Indisponibilité tolérée : ces deux champs sont facultatifs, et un référentiel muet ne doit
-    // pas empêcher de déposer un document.
-    this.prioriteService.liste().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (priorites) => (this.priorites = priorites ?? []),
-      error: () => console.warn('Priorités de document indisponibles.')
-    });
-    this.niveauConfidentialiteService.liste().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (niveaux) => (this.niveauxConfidentialite = niveaux ?? []),
-      error: () => console.warn('Niveaux de confidentialité indisponibles.')
-    });
-    this.domaineService.liste().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (domaines) => (this.domaines = domaines ?? []),
-      error: () => console.warn("Domaines d'application indisponibles.")
-    });
-  }
-
   ngOnInit(): void {
-    this.chargerReferentiels();
+    // Priorités, niveaux de confidentialité et domaines ne sont plus chargés ici : chaque liste
+    // déroulante charge le sien, page par page, et cherche auprès du serveur.
     this.loading = true;
 
-    this.qmsService.typeDocumentQmsGetAll().subscribe({
+    // Le référentiel entier, et non sa première page : c'est lui qui sert à retrouver le
+    // circuit associé au type choisi, y compris pour un type situé au-delà de la page 1.
+    this.qmsService.typeDocumentQmsGetAll(0, 1000).subscribe({
       next: (res: any) => {
         this.documentTypes = res.data?.content || [];
         this.findAssociatedWorkflow(this.documentForm.get('documentType')?.value);
@@ -157,7 +145,8 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       this.findAssociatedWorkflow(typeCode);
     });
 
-    this.structureService.getAllStructures().pipe(takeUntil(this.destroy$)).subscribe({
+    // De même pour les structures : trySetUserStructure y cherche celle de l'utilisateur.
+    this.structureService.getAllStructures(0, 1000).pipe(takeUntil(this.destroy$)).subscribe({
       next: (res: any) => {
         this.structures = res.data?.content || res.content || [];
         this.loading = false;
@@ -208,6 +197,19 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       this.currentUserStructureId = typeof structVal === 'object' ? (structVal.id || structVal.code) : structVal;
       this.trySetUserStructure();
     }
+  }
+
+  /**
+   * Structure déjà retenue par un champ, à réinjecter dans sa liste déroulante.
+   *
+   * <p>Ces champs portent l'objet entier, pas son identifiant. En mode paresseux, la structure
+   * pré-remplie — celle de l'utilisateur, ou celle d'un document repris — n'est pas
+   * nécessairement en première page : sans cet apport, le champ paraîtrait vide alors qu'il
+   * porte une valeur.</p>
+   */
+  structureRetenue(champ: string): any[] {
+    const valeur = this.documentForm?.get(champ)?.value;
+    return valeur ? [valeur] : [];
   }
 
   trySetUserStructure(): void {
@@ -283,29 +285,37 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       periodiciteMois: formVal.periodiciteMois,
       // `confidentiel` n'est plus transmis : le serveur l'établit à partir du niveau choisi.
       ...(this.associatedWorkflow && { workflowId: this.associatedWorkflow.id }),
-      ...(formVal.processusDest && {
-        processusDestId: formVal.processusDest.id,
-        processusDestLibelle: formVal.processusDest.libelleLong || formVal.processusDest.libelleCourt || ''
-      }),
       ...(formVal.reference && { reference: formVal.reference }),
       ...(formVal.prioriteId && {
         prioriteId: formVal.prioriteId,
-        prioriteLibelle: libelleDe(this.priorites, formVal.prioriteId)
+        prioriteLibelle: this.prioriteChoisie?.libelle ?? ''
       }),
       ...(formVal.niveauConfidentialiteId && {
         niveauConfidentialiteId: formVal.niveauConfidentialiteId,
-        niveauConfidentialiteLibelle: libelleDe(this.niveauxConfidentialite, formVal.niveauConfidentialiteId)
+        niveauConfidentialiteLibelle: this.niveauChoisi?.libelle ?? ''
       }),
       ...(formVal.referenceOfficielle && { referenceOfficielle: formVal.referenceOfficielle }),
       ...(formVal.domaineId && {
         domaineId: formVal.domaineId,
-        domaine: libelleDe(this.domaines, formVal.domaineId)
+        domaine: this.domaineChoisi?.libelle ?? ''
       }),
       ...(formVal.statutLegal && { statutLegal: formVal.statutLegal })
     }).subscribe({
       next: (doc) => {
         this.loading = false;
         this.messageService.add({ severity: 'success', summary: 'Document créé', detail: `Le document ${doc.documentNumber} a été enregistré avec succès.` });
+
+        // Le classement peut fermer le circuit du document : le dépôt aboutit, mais aucun de ses
+        // décideurs ne le verra. L'avertissement reste affiché jusqu'à ce qu'on le referme, et
+        // retarde la redirection — le passer en même temps que la confirmation le ferait manquer.
+        if (doc.avertissementConfidentialite) {
+          this.messageService.add({
+            severity: 'warn', summary: 'Classement à revoir',
+            detail: doc.avertissementConfidentialite, life: 15000, sticky: true
+          });
+          setTimeout(() => this.router.navigate(['/gestion-documentaire/documents']), 6000);
+          return;
+        }
         setTimeout(() => this.router.navigate(['/gestion-documentaire/documents']), 1500);
       },
       error: (err: any) => {

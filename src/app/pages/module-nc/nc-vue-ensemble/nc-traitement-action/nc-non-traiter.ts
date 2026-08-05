@@ -67,21 +67,6 @@ user: any = {};
         this.destroy$.unsubscribe();
     }
 
-    traiter(rowdata: any): void {
-        rowdata.status=NonConformStatus.TRAITER
-      this.nonConformiteService.nonConformiteUpdatePlanAction(rowdata).pipe().subscribe({
-          next: (data) => {
-             this.featureService.onReloadRequested(true);
-              showToast(StatusEnum.success, data.status, null, this.messageService);
-                 this.goBack();
-          },
-          error:(error)=>{
-              showToast(StatusEnum.error,error.status, null, this.messageService, error);
-
-          }
-      })
-    }
-
     delete(rowdata: any) {
     }
     protected readonly NonConformStatus = NonConformStatus;

@@ -7,7 +7,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ViewChild } from '@angular/core';
 import { LightboxComponent } from '../../../components/non-conformite/lightbox/lightbox';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
-import { downloadAttachment, downloadFile, viewAttachment } from '../../../utils/fichier/fichier-utils';
+import { PieceJointeFichierService } from '../../../services/non-conformite/piece-jointe-fichier.service';
 
 @Component({
     selector: 'app-nc-detail',
@@ -28,7 +28,8 @@ export class NcDetailComponent {
         private sanitizer: DomSanitizer,
         private route: ActivatedRoute,
         private nonConformiteService: NonConformiteService,
-        private location: Location
+        private location: Location,
+        private fichiers: PieceJointeFichierService
     ) {}
 
     lightboxVisible: boolean = false;
@@ -101,12 +102,22 @@ export class NcDetailComponent {
     protected readonly EtapeTraitement = EtapeTraitement;
     protected readonly getStatusSeverity = getStatusSeverity;
 
+    /**
+     * Télécharge une pièce jointe.
+     *
+     * <p>Le contenu ne voyage plus avec la fiche : il est demandé au serveur au moment du clic.</p>
+     */
     downloadFile(fichier: any) {
-        downloadFile(fichier.nomFichier,fichier.fichierBase64);
+        this.fichiers.telecharger(fichier);
     }
 
-    protected readonly downloadAttachment = downloadAttachment;
-    protected readonly viewAttachment = viewAttachment;
+    downloadAttachment(fichier: any) {
+        this.fichiers.telecharger(fichier);
+    }
+
+    viewAttachment(fichier: any) {
+        this.fichiers.visualiser(fichier);
+    }
 
     getFileIcon(filename: string): string {
         if (!filename) return 'assets/images/unknown-file.png';

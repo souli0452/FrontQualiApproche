@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { ApiItemResponse, ApiResponse } from '../models/response.model';
+import { OptionsLoadEvent, OptionsLoadResult } from '../shared/ui/lazy-options.model';
 
 export abstract class BaseCrudService<T, ID = string> {
     protected constructor(
@@ -225,4 +226,45 @@ export abstract class BaseCrudService<T, ID = string> {
         );
     }
 
+    /**
+     * Endpoint paginé interrogé par `chargerOptions`.
+     *
+     * <p>La racine du service par défaut : c'est elle qui accepte `page`, `size` et `search`.
+     * `/all` sert la liste entière et ignore la pagination — à ne pas confondre. Un service dont
+     * la liste vit ailleurs redéfinit cette méthode.</p>
+     */
+    protected urlDesOptions(): string {
+        return this.uri;
+    }
+
+    /**
+     * Alimente une liste déroulante page par page, à brancher tel quel sur `app-select-input`
+     * et `app-multiselect-input` : `[loadOptions]="service.chargerOptions"`.
+     *
+     * <p>Fonction fléchée, donc toujours liée au service même passée en simple référence — un
+     * `service.chargerOptions` transmis en entrée de composant perdrait sinon son `this`.</p>
+     *
+     * <p>Elle accepte les deux formes que rend le serveur : la réponse paginée habituelle, et la
+     * liste nue des endpoints qui ne paginent pas — traitée alors comme une page unique.</p>
+     */
+    readonly chargerOptions = (event: OptionsLoadEvent): Observable<OptionsLoadResult<T>> =>
+        this.http
+            .get<ApiResponse<T>>(this.urlDesOptions(), {
+                params: this.buildParams({ page: event.page, size: event.limit, search: event.search })
+            })
+            .pipe(
+                map((res: any) => {
+                    const donnees = res?.data ?? res;
+                    if (Array.isArray(donnees)) {
+                        return { options: donnees as T[], totalRecords: donnees.length, hasMore: false };
+                    }
+                    const options = (donnees?.content ?? []) as T[];
+                    return {
+                        options,
+                        totalRecords: donnees?.totalElements ?? options.length,
+                        // `last` vient du serveur : il sait mieux que le total s'il reste des pages.
+                        hasMore: donnees?.last === undefined ? undefined : !donnees.last
+                    };
+                })
+            );
 }

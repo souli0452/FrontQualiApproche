@@ -2,7 +2,6 @@ import { Component, Input, ViewChild } from '@angular/core';
 import { TabViewModule } from 'primeng/tabview';
 import { FormArray, FormBuilder, FormGroup, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { Chips } from 'primeng/chips';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { EtapeTraitement } from '../../../enums/enums';
 import { AuthService } from '../../../services/auth-services/auth.service';
@@ -17,13 +16,18 @@ import { ProcNonConformiteService } from '../../../services/non-conformite/proc-
 import { nonConformiteForm } from '../config/proc-non-conformite.data';
 import { ApiResponse } from '../../../models/response.model';
 import { ActionNonConformite } from '../../../models/non-conformite.model';
-import { downloadFile } from '../../../utils/fichier/fichier-utils';
+import { PieceJointeFichierService } from '../../../services/non-conformite/piece-jointe-fichier.service';
+import { PlanActionService } from '../../../services/non-conformite/planAction.service';
+import { WorkflowActionsComponent } from '../../../shared/workflow/workflow-actions.component';
+import { WorkflowGuidanceComponent } from '../../../shared/workflow/workflow-guidance.component';
+import { WorkflowHistoriqueComponent } from '../../../shared/workflow/workflow-historique.component';
 import { formatDateToDDMMYYYY } from '../../../utils/formatage/formatage-utils';
 
 @Component({
     selector: 'app-form-traitement',
     standalone: true,
-    imports: [NgPrimeModule, TabViewModule, DetailsDialogComponent, Chips, LightboxComponent],
+    imports: [NgPrimeModule, TabViewModule, DetailsDialogComponent, LightboxComponent, WorkflowActionsComponent,
+        WorkflowGuidanceComponent, WorkflowHistoriqueComponent],
     templateUrl: './form-traitement.html',
     styleUrl: './form-traitement.scss'
 })
@@ -31,6 +35,7 @@ export class FormTraitementComponent {
     @Input()
     selectedData: any;
     @ViewChild(LightboxComponent) maLightbox!: LightboxComponent;
+
     @Input() demande: any;
     editForm!: UntypedFormGroup;
     responsable: any;
@@ -40,8 +45,6 @@ export class FormTraitementComponent {
     actions: FormArray;
     user: any = {};
 
-    isAllSelected: boolean = false;
-    selectedPlans: any = [];
     isEdit: boolean = false;
     submitted = false;
     displayDialog: boolean = false;
@@ -49,6 +52,13 @@ export class FormTraitementComponent {
     participants: any[] = [];
     users: any = [];
     usersByStructure: any[] = [];
+    /**
+     * Rang saisi pour l'action en cours de définition.
+     *
+     * <p>Séparé de {@code planAction.numeroOdre}, que le serveur écrit en chaîne : laissé vide, il
+     * place l'action à la suite des autres.</p>
+     */
+    ordreSaisi: number | null = null;
     afficheDialog: boolean = false;
     structures: Structure[] = [];
     typesActions: ActionNonConformite[] = [];
@@ -59,6 +69,8 @@ export class FormTraitementComponent {
         private messageService: MessageService,
         private structureService: StructureService,
         private actionNonConformiteService: ActionNonConformiteService,
+        private fichiers: PieceJointeFichierService,
+        private planActionService: PlanActionService,
     ) {
 
 
@@ -165,21 +177,6 @@ export class FormTraitementComponent {
     setCircuit(value: string) {
         this.editForm.get('circuit')?.setValue(value);
         this.onInputChange();
-    }
-
-    toggleAllPlans(checked: boolean) {
-        if (checked) {
-            this.selectedPlans = [...this.demande.planActions];
-            this.isAllSelected = true;
-        } else {
-            this.selectedPlans = [];
-            this.isAllSelected = false;
-        }
-    }
-
-    onLineChange() {
-        const selectablePlans = this.planActions.filter(plan => plan.status !== 'NON_TRAITER' && plan.status !== 'TRAITER');
-        this.isAllSelected = selectablePlans.length > 0 && this.selectedPlans.length === selectablePlans.length;
     }
 
     createAction(): FormGroup {
@@ -342,32 +339,16 @@ loadStuctures() {
         this.isEdit = false;
         this.user = undefined;
         
-        let maxNumber = 0;
-        const plans = this.demande.planActions || [];
-        console.log("Plan d'action : ", plans);
-        
-        plans.forEach((p: any) => {
-            if (p.numeroOdre && p.numeroOdre.startsWith('P-A-')) {
-                const num = parseInt(p.numeroOdre.substring(4), 10);
-                if (!isNaN(num) && num > maxNumber) {
-                    maxNumber = num;
-                }
-            } else if (p.numeroOdre) {
-                // S'il y a déjà des numéros qui ne sont pas au format P-A-X (ex: 1, 2)
-                const num = parseInt(p.numeroOdre, 10);
-                if (!isNaN(num) && num > maxNumber) {
-                    maxNumber = num;
-                }
-            }
-        });
-        
-        this.planAction = {
-            numeroOdre: `P-A-${maxNumber + 1}`
-        };
+        // Le rang est attribué par le serveur à l'enregistrement, à moins qu'on ne le saisisse.
+        // Le calculer ici revenait à le déduire de ce que cet écran a sous les yeux, et un plan
+        // créé autrement n'en recevait aucun.
+        this.planAction = {};
+        this.ordreSaisi = null;
     }
     edit(plan: any) {
         // Create a copy so we don't mutate the original directly if the user cancels
-        this.planAction = { ...plan }; 
+        this.planAction = { ...plan };
+        this.ordreSaisi = this.rangDe(plan.numeroOdre);
         
         // Convert string to a real Date object for the p-datePicker
         if (this.planAction.dateEcheance) {
@@ -396,31 +377,58 @@ loadStuctures() {
 
     }
     save() {
-        if (!this.user) {
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Veuillez sélectionner un responsable pour ce plan d'action.", life: 3000 });
-            return;
+        // Le responsable n'est plus exigé à l'écriture de l'action : l'agent imputé peut le
+        // désigner s'il le connaît, et le pilote le désigne ou le corrige à la validation. Le
+        // circuit, lui, refuse de valider tant qu'une action reste sans responsable — la règle est
+        // portée là où elle vaut pour tout le dossier, non par un écran de saisie.
+        if (this.user) {
+            this.planAction.responsableEmail = this.user.email;
+            this.planAction.responsableNomComplet = this.user.firstName + ' ' + this.user.lastName;
+            this.planAction.responsableId = this.user.id;
         }
-
-        this.planAction.responsableEmail = this.user.email;
-        this.planAction.responsableNomComplet = this.user.firstName + ' ' + this.user.lastName;
-        this.planAction.responsableId = this.user.id;
         
         // Toujours formater la date pour le backend, qu'on soit en création ou en modification
         this.planAction.dateEcheance = formatDateToDDMMYYYY(this.planAction.dateEcheance);
 
+        // Vide, le serveur place l'action à la suite des autres.
+        this.planAction.numeroOdre = this.ordreSaisi != null ? String(this.ordreSaisi) : null;
+
         if (!this.isEdit) {
+            // Enregistré tout de suite, et non gardé en mémoire jusqu'à la soumission : le bouton
+            // qui persistait la fiche a cédé la place à la décision du circuit, et une saisie
+            // seulement locale aurait été perdue sans que rien ne le dise.
             this.planAction.status = "INACTIF";
-            this.planActions.push(this.planAction);
-            this.demande.planActions = this.planActions;
-            this.displayDialog = false;
+            this.planAction.nonConformeId = this.demande.id;
+            this.service.createPlanAction(this.planAction).subscribe({
+                next: (reponse: any) => {
+                    // Le serveur enveloppe ses réponses : sans déballer `data`, c'est l'enveloppe
+                    // qui atterrissait dans le tableau — une ligne apparaissait, vide de tout.
+                    const enregistre = reponse?.body?.data ?? reponse?.body ?? this.planAction;
+                    this.demande.planActions = [...(this.demande.planActions ?? []), enregistre];
+                    this.planActions = this.demande.planActions;
+                    this.displayDialog = false;
+                    this.messageService.add({
+                        severity: 'success', summary: 'Plan d\'action enregistré',
+                        detail: "Il sera soumis au pilote avec le traitement.", life: 4000
+                    });
+                },
+                error: () => {
+                    this.messageService.add({
+                        severity: 'error', summary: 'ERREUR',
+                        detail: "Le plan d'action n'a pas pu être enregistré.", life: 5000
+                    });
+                }
+            });
         } else {
             if (this.planAction.id) {
                 this.service.updatePlanAction(this.planAction).subscribe({
-                    next: (data) => {
-                        // Update the array with the new value
-                        const index = this.demande.planActions.findIndex((p: any) => p.numeroOdre === this.planAction.numeroOdre);
+                    next: (reponse: any) => {
+                        // Par l'identifiant, et non par le numéro d'ordre : celui-ci n'est qu'un
+                        // rang, que deux plans peuvent partager — la modification retombait alors
+                        // sur la mauvaise ligne.
+                        const index = this.demande.planActions.findIndex((p: any) => p.id === this.planAction.id);
                         if (index !== -1) {
-                            this.demande.planActions[index] = this.planAction;
+                            this.demande.planActions[index] = reponse?.body?.data ?? this.planAction;
                         }
                         this.displayDialog = false;
                         this.messageService.add({ severity: 'success', summary: 'Réussi', detail: "L'opération a réussi !", life: 3000 });
@@ -440,45 +448,136 @@ loadStuctures() {
         }
 
     }
+    /**
+     * Retire un plan d'action qui vient d'être défini.
+     *
+     * <p>Le plan est enregistré dès son ajout : le retirer du seul tableau affiché le laissait en
+     * base, et il réapparaissait au rechargement. Un plan déjà confié à son responsable n'est plus
+     * retirable — le serveur le refuse, et le bouton ne s'affiche pas.</p>
+     */
     delete(plan: any) {
-        this.demande.planActions = this.demande.planActions.filter((p: any) => p !== plan);
+        if (!plan?.id) {
+            this.demande.planActions = this.demande.planActions.filter((p: any) => p !== plan);
+            return;
+        }
+        this.service.deletePlanAction(plan.id).subscribe({
+            next: () => {
+                this.demande.planActions = this.demande.planActions.filter((p: any) => p.id !== plan.id);
+                this.planActions = this.demande.planActions;
+                this.messageService.add({
+                    severity: 'success', summary: 'Plan d\'action retiré',
+                    detail: "L'action a été retirée du dossier.", life: 3000
+                });
+            },
+            error: (erreur: any) => {
+                this.messageService.add({
+                    severity: 'error', summary: 'Retrait impossible',
+                    detail: erreur?.error?.message || "Ce plan d'action ne peut plus être retiré.",
+                    life: 6000
+                });
+            }
+        });
+    }
+
+    /**
+     * Où en est une action, dit en clair.
+     *
+     * <p>Avant d'être confiée à son responsable, une action n'a pas de circuit : la colonne
+     * affichait alors un statut technique — {@code INACTIF} — qui ne veut rien dire pour qui lit la
+     * fiche. Une action proposée n'est pas une action en panne, c'est une action qui attend la
+     * validation qualité pour être engagée.</p>
+     */
+    etapeDuPlan(plan: any): string {
+        if (!plan?.workflowId) {
+            return 'Proposée';
+        }
+        return plan.workflowState?.currentStateName || plan.workflowStatus || plan.status || 'En cours';
+    }
+
+    /** Couleur de la pastille d'étape : neutre tant que l'action n'est pas engagée. */
+    couleurEtapeDuPlan(plan: any): string {
+        return plan?.workflowId ? getStatusSeverity(plan.status) : 'secondary';
+    }
+
+    /**
+     * Relit une action après une décision de son circuit.
+     *
+     * <p>Les actions ouvertes à l'appelant changent avec l'étape : sans relecture, la fiche
+     * proposerait encore la décision qui vient d'être prise.</p>
+     */
+    apresDecisionSurLePlan(plan: any) {
+        if (!plan?.id) {
+            return;
+        }
+        this.planActionService.relire(plan.id).subscribe({
+            next: (relu: any) => {
+                const index = this.demande.planActions.findIndex((p: any) => p.id === plan.id);
+                if (index !== -1 && relu) {
+                    this.demande.planActions[index] = { ...this.demande.planActions[index], ...relu };
+                    this.planAction = this.demande.planActions[index];
+                }
+            },
+            error: () => this.messageService.add({
+                severity: 'warn', summary: 'Actualisation impossible',
+                detail: "La décision est enregistrée, mais l'action affichée n'a pas pu être relue.",
+                life: 5000
+            })
+        });
+    }
+
+    /** Rang lisible dans un numéro d'ordre, y compris hérité du format « P-A-3 ». */
+    private rangDe(numero: any): number | null {
+        if (numero === null || numero === undefined) {
+            return null;
+        }
+        const chiffres = String(numero).replace(/\D/g, '');
+        return chiffres ? Number(chiffres) : null;
+    }
+
+    /**
+     * Un plan est-il encore modifiable depuis la fiche ?
+     *
+     * <p>Deux conditions, et elles ne disent pas la même chose. Le plan doit être une
+     * <b>proposition</b> — non encore confié à son responsable, sans quoi le corriger ici
+     * déplacerait la responsabilité sans que le circuit en sache rien. Et l'on doit se trouver à
+     * l'étape où le dossier se traite : les autres étapes affichent les plans pour qu'on en juge,
+     * non pour qu'on les réécrive. Voir n'est pas décider.</p>
+     */
+    estModifiable(plan: any): boolean {
+        if (plan?.workflowId) {
+            return false;
+        }
+        // L'agent écrit l'action au traitement ; le pilote la relit et désigne son responsable à la
+        // validation. Passé ces deux étapes, l'action est engagée et relève de son propre circuit.
+        return this.demande?.etatTraitement === this.BtnActions.TRAITEMENT
+            || this.demande?.etatTraitement === this.BtnActions.VALIDATION;
+    }
+
+    /** À la validation, le pilote ne reprend pas la description de l'action : il en nomme le responsable. */
+    get designationSeule(): boolean {
+        return this.demande?.etatTraitement === this.BtnActions.VALIDATION;
     }
     hideDialog() {
         this.displayDialog = false;
     }
     affich(action: any) {
         this.planAction = action;
-        this.planAction.dateEcheance = action.dateEcheance.replace(/-/g, '/');
+        // Une action sans échéance ne doit pas empêcher d'ouvrir son détail : la lecture n'a pas à
+        // exiger ce que la saisie n'a pas encore fourni.
+        if (typeof action?.dateEcheance === 'string') {
+            this.planAction.dateEcheance = action.dateEcheance.replace(/-/g, '/');
+        }
         this.afficheDialog = true;
     }
-    validerPlans() {
-        // Traitement des plans sélectionnés
-        console.log('Plans à valider :', this.selectedPlans);
-        const dmd = {
-            nonConformiteId: this.demande.id,
-            planIds: this.selectedPlans.map((plan: { id: any; }) => plan.id)
-        }
-        this.service.validatePlanAction(dmd).subscribe({
-            next: (data) => {
-                this.messageService.add({ severity: 'success', summary: 'Réussi', detail: "L'oppération à réussie !", life: 3000 });
-                window.location.reload();
-
-            },
-            error: (error) => {
-                this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 6", life: 3000 });
-            }
-
-        });
-    }
+    /**
+     * Télécharge une pièce jointe.
+     *
+     * <p>Le contenu ne voyage plus avec le dossier : il est demandé au serveur au moment du clic.
+     * Le service accepte aussi une pièce que l'utilisateur vient de choisir, laquelle n'est pas
+     * encore enregistrée et n'a donc rien à demander.</p>
+     */
     downloadFile(fichier: any) {
-        const nom = fichier.nom || fichier.nomFichier;
-        const base64 = fichier.fichier || fichier.fichierBase64;
-        if (base64) {
-            downloadFile(nom, base64);
-        } else {
-            console.error('Aucun contenu base64 trouvé pour ce fichier', fichier);
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Le fichier est introuvable ou vide.', life: 3000 });
-        }
+        this.fichiers.telecharger(fichier);
     }
     
     openLightbox(file: any) {

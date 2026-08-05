@@ -7,7 +7,6 @@ import { Subject, takeUntil } from 'rxjs';
 import { NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
-import { NCRejetComponent } from '../nc-rejet/nc-rejet';
 import { MessageService } from 'primeng/api';
 import { FeaturesService } from '../../../services/feature-service';
 import { Router } from '@angular/router';
@@ -19,8 +18,7 @@ import { Router } from '@angular/router';
       CommonModule, 
       NgPrimeModule, 
       NcFilterBarComponent,
-      TraitementTableComponent, 
-      NCRejetComponent,
+      TraitementTableComponent,
   ],
   templateUrl: './nc-analyse-validation.html',
   styleUrl: './nc-analyse-validation.scss'
@@ -50,7 +48,6 @@ export class AnalyseValidationComponent implements OnInit, OnDestroy {
   protected readonly BtnActions = EtapeTraitement;
 
   cols: any[] = [];
-  motifRejetDialog: boolean = false;
 
   constructor(
     public roleService: RoleService,
@@ -201,14 +198,7 @@ export class AnalyseValidationComponent implements OnInit, OnDestroy {
       });
   }
 
-  rejet(demande: any) {
-      this.demande = demande;
-      this.motifRejetDialog = true;
-      // Note: Il faudra ajouter le composant app-nc-rejet dans le template HTML
-      // si tu veux que la pop-up de rejet s'affiche !
-  }
-
-  ngOnDestroy() {
+    ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
   }

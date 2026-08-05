@@ -28,6 +28,12 @@ export interface QmsDocumentType {
 }
 
 export interface DocumentQms {
+  /**
+   * Avertissement rendu au dépôt ou au reclassement : le niveau retenu n'admet aucun des rôles
+   * qui décident des étapes du circuit. Le document est enregistré malgré tout — ses décideurs
+   * ne le verront simplement pas tant que le classement ou le circuit n'aura pas été ajusté.
+   */
+  avertissementConfidentialite?: string | null;
   workflowState?: any;
   /**
    * L'appelant relève-t-il de la structure du document (ou l'accompagne-t-il au titre de la
@@ -58,8 +64,14 @@ export interface DocumentQms {
   enRetardRevision?: boolean;
   obsolete?: boolean;
 
-  versionMajeure?: number;
-  versionMineure?: number;
+  /**
+   * Rang de révision, à partir de zéro.
+   *
+   * Un document déposé est en v0 ; chaque modification aboutie d'une demande le fait passer au
+   * rang suivant. Une correction pendant le circuit ne le change pas : la révision doit avoir
+   * été demandée, instruite et acceptée.
+   */
+  numeroVersion?: number;
   dateVigueur?: string;
   dateProchRevision?: string;
   periodiciteMois?: number;

@@ -6,6 +6,7 @@ import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '../../../../prime-ng.module';
+import { SelectInputComponent } from '../../../shared';
 import { FileUploadComponent } from '../../../components/non-conformite/file-upload/file-upload.component';
 import { DocumentQms } from '../../../models/gestion-documentaire.model';
 import { TypeDemande } from '../../../models/demande-document.model';
@@ -25,14 +26,15 @@ import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 @Component({
     selector: 'app-qms-demande-create',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, FileUploadComponent],
+    imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, FileUploadComponent, SelectInputComponent],
     providers: [MessageService],
     templateUrl: './qms-demande-create.component.html'
 })
 export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
 
     formulaire: FormGroup;
-    documents: DocumentQms[] = [];
+    /** Document choisi, pour le rappeler à l'écran sans le rechercher. */
+    documentChoisi?: DocumentQms;
     pieceJointe?: File;
 
     loading = false;
@@ -50,7 +52,7 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
         private readonly router: Router,
         private readonly route: ActivatedRoute,
         private readonly demandeService: DemandeDocumentService,
-        private readonly documentService: QmsDocumentService,
+        protected readonly documentService: QmsDocumentService,
         private readonly messageService: MessageService
     ) {
         this.formulaire = this.fb.group({
@@ -62,7 +64,6 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.chargerDocuments();
 
         // Une demande se dépose souvent depuis la fiche du document : l'y pré-remplir évite de le
         // rechercher dans une liste où il figure déjà.
@@ -77,10 +78,21 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
         this.destroy$.complete();
     }
 
-    private chargerDocuments(): void {
-        this.documentService.searchDocuments({}).pipe(takeUntil(this.destroy$)).subscribe({
-            next: (documents) => (this.documents = documents ?? []),
-            error: () => console.warn('Liste des documents indisponible.')
+    /**
+     * Prend note du document retenu.
+     *
+     * <p>La liste n'est plus chargée d'un bloc — elle ne l'était d'ailleurs qu'à hauteur de dix
+     * documents — si bien que l'écran ne peut plus retrouver le choix dans un tableau local. Le
+     * document est donc relu à la sélection, une fois, pour l'encart de rappel.</p>
+     */
+    onDocumentChoisi(id: string | null): void {
+        if (!id) {
+            this.documentChoisi = undefined;
+            return;
+        }
+        this.documentService.getDocumentById(id).pipe(takeUntil(this.destroy$)).subscribe({
+            next: (document) => (this.documentChoisi = document),
+            error: () => (this.documentChoisi = undefined)
         });
     }
 
@@ -89,11 +101,7 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
         return this.formulaire.get('type')?.value === 'SUPPRESSION';
     }
 
-    /** Document choisi, pour le rappeler à l'écran sans le rechercher. */
-    get documentChoisi(): DocumentQms | undefined {
-        const id = this.formulaire.get('documentId')?.value;
-        return this.documents.find(document => document.id === id);
-    }
+
 
     handleFileUpload(fichiers: any[]): void {
         this.pieceJointe = fichiers?.length ? fichiers[0].file : undefined;

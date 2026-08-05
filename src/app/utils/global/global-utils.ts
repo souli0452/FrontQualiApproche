@@ -241,30 +241,42 @@ export function transformerEnStats(nonConformites: any[]): NcStats[] {
     return Array.from(statsMap.entries()).map(([status, count]) => ({ status, count }));
 }
 
+/**
+ * Couleur d'une pastille de statut.
+ *
+ * <p>Les valeurs étaient comparées en minuscules à des libellés écrits en majuscules
+ * ({@code 'NON_TRAITER'}, {@code 'TRAITER'}) : ces branches ne pouvaient jamais être atteintes, et
+ * tous les statuts d'action corrective retombaient sur le bleu par défaut — la pastille ne
+ * distinguait donc rien.</p>
+ */
 export function getStatusSeverity(status: string): string {
     if (!status) return 'info';
 
     const statusLower = status.toLowerCase();
 
     switch (statusLower) {
-        case 'NON_TRAITER':
-        case 'PENDING':
-        case 'DRAFT':
-            return 'warning';  // Jaune/orange
-        case 'TRAITER':
-        case 'IN_PROGRESS':
-        case 'APPROVED':
+        case 'non_traiter':
+        case 'pending':
+        case 'pendind':
+        case 'draft':
+            return 'warn';      // Jaune/orange — l'action reste à mener
+        // Réalisée, mais rien n'est encore acquis : le constat et la mesure d'efficacité restent
+        // à faire, et l'action peut repartir chez son responsable.
+        case 'en_verification':
+        case 'efficacite_a_mesurer':
+        case 'in_progress':
+        case 'en attente':
+        case 'on hold':
+            return 'info';      // Bleu — en cours d'appréciation
+        case 'traiter':
+        case 'approved':
         case 'validé':
         case 'oui':
-            return 'success';  // Vert
+            return 'success';   // Vert — réalisée et reconnue efficace
         case 'rejeté':
         case 'rejected':
         case 'annulé':
         case 'non':
-            return 'danger';   // Rouge
-        case 'en attente':
-        case 'on hold':
-            return 'info';      // Bleu
         case 'en retard':
         case 'late':
             return 'danger';    // Rouge

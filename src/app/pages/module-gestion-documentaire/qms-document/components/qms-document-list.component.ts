@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { DocumentQms, QmsDocumentType } from '../../../../models/gestion-documentaire.model';
 import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '../../../../models/referentiel-document.model';
+import { OptionsLoader, SelectInputComponent } from '../../../../shared';
 
 /**
  * Liste des documents : recherche, filtres et tableau.
@@ -16,23 +17,41 @@ import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '../
 @Component({
     selector: 'app-qms-document-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, NgPrimeModule],
+    imports: [CommonModule, FormsModule, NgPrimeModule, SelectInputComponent],
     templateUrl: './qms-document-list.component.html'
 })
 export class QmsDocumentListComponent {
     @Input() documents: DocumentQms[] = [];
-    @Input() documentTypes: QmsDocumentType[] = [];
-    @Input() structures: any[] = [];
     @Input() loading = false;
 
-    @Input() priorites: PrioriteDocument[] = [];
+    /*
+     * Pagination portée par le serveur : le tableau n'affiche que la page reçue et s'en remet au
+     * total pour dimensionner sa barre. Il paginait auparavant les seuls documents qu'on lui
+     * avait donnés, en les présentant comme le fonds entier.
+     */
+    @Input() totalDocuments = 0;
+    @Input() premiereLigne = 0;
+    @Input() taillePage = 15;
+    @Output() pageChange = new EventEmitter<{ first: number; rows: number }>();
+
+    /*
+     * Les filtres reçoivent un chargeur, non une liste toute faite.
+     *
+     * Ces référentiels sont servis paginés : les charger d'avance revenait à n'en afficher que
+     * la première page, sans que rien ne signale les valeurs manquantes. Chaque liste déroulante
+     * charge donc la sienne — première page à l'ouverture, suivantes à la demande, recherche
+     * servie par le serveur.
+     */
+    @Input() chargerTypes?: OptionsLoader<QmsDocumentType>;
+    @Input() chargerStructures?: OptionsLoader<any>;
+    @Input() chargerPriorites?: OptionsLoader<PrioriteDocument>;
     /**
      * Niveaux proposables : ceux que l'utilisateur a le droit de voir, résolus par le serveur.
      * Un niveau qu'il n'a pas le droit de consulter ne rendrait aucun document, et le proposer
      * révélerait un classement qui ne le regarde pas.
      */
-    @Input() niveauxConfidentialite: NiveauConfidentialite[] = [];
-    @Input() domaines: DomaineApplication[] = [];
+    @Input() chargerNiveauxConfidentialite?: OptionsLoader<NiveauConfidentialite>;
+    @Input() chargerDomaines?: OptionsLoader<DomaineApplication>;
 
     @Input() searchQuery = '';
     @Input() selectedType = '';

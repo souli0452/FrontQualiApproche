@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NgPrimeModule } from '../../../../prime-ng.module';
+import { PieceJointeFichierService } from '../../../services/non-conformite/piece-jointe-fichier.service';
 
 @Component({
     selector: 'app-lightbox',
@@ -47,32 +48,39 @@ export class LightboxComponent {
     isImage: boolean = false;
     isPdf: boolean = false;
 
-    constructor(private sanitizer: DomSanitizer) {}
+    constructor(
+        private sanitizer: DomSanitizer,
+        private fichiers: PieceJointeFichierService
+    ) {}
 
+    /**
+     * Ouvre l'aperçu d'une pièce jointe.
+     *
+     * <p>Le contenu est demandé au serveur : les listes de dossiers ne le portent plus. Une pièce
+     * que l'utilisateur vient de choisir à l'écran, elle, l'a encore en mémoire — le service
+     * distingue les deux cas.</p>
+     */
     public open(pj: any) {
         if (!pj) return;
-        const fichierBase64 = pj.fichier || pj.fichierBase64;
-        if (!fichierBase64) return;
-        
+
         const nomBrut = pj.nom || pj.nomFichier;
         const nom = nomBrut ? nomBrut.toLowerCase() : '';
         this.isImage = nom.endsWith('.png') || nom.endsWith('.jpg') || nom.endsWith('.jpeg');
         this.isPdf = nom.endsWith('.pdf');
-        
-        const byteCharacters = atob(fichierBase64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const blob = new Blob([new Uint8Array(byteNumbers)], { type: pj.type || 'application/octet-stream' });
-        const objectUrl = window.URL.createObjectURL(blob);
-        
-        if (!this.isImage && !this.isPdf) {
-            window.open(objectUrl, '_blank');
-            return;
-        }
 
-        this.url = this.sanitizer.bypassSecurityTrustResourceUrl(objectUrl);
-        this.visible = true;
+        this.fichiers.contenu(pj).subscribe({
+            next: (blob) => {
+                const objectUrl = window.URL.createObjectURL(blob);
+
+                if (!this.isImage && !this.isPdf) {
+                    window.open(objectUrl, '_blank');
+                    return;
+                }
+
+                this.url = this.sanitizer.bypassSecurityTrustResourceUrl(objectUrl);
+                this.visible = true;
+            },
+            error: (erreur) => console.error('Aperçu impossible', erreur)
+        });
     }
 }

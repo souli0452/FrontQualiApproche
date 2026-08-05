@@ -11,11 +11,9 @@
         *ngIf="suiviRqData.length > 0"
         [btnActions]="BtnActions.SUIVI_RQ"
         [demandeList]="suiviRqData"
-        (onRejet)="rejet($event)"
         [cols]="cols"
         [paginator]="false"
         [showGridlines]="false"
-        (onCloture)="cloture($event)"
         [loading]="loading"
         [title]="title"
         (pageChangeEvent)="onPageChange($event)"
@@ -46,4 +44,3 @@
 
     </div>
 
-<app-nc-rejet  [motifRejetDialog]="motifRejetDialog" [demande]="demande" (onSuccess)="hideDialog($event)" (onClose)="motifRejetDialog = false"></app-nc-rejet>

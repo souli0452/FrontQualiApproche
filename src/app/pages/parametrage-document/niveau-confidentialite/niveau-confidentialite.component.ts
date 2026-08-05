@@ -93,7 +93,7 @@ export class NiveauConfidentialiteComponent implements OnInit, OnDestroy {
             },
             {
                 field: 'rolesAutorises',
-                label: 'Rôles admis à consulter les documents de ce niveau — aucun rôle : le niveau ne restreint rien',
+                label: 'Rôles admis à consulter les documents de ce niveau, au sein des structures qui y ont déjà accès — ce choix restreint, il n\'ouvre pas : un utilisateur d\'une autre structure ne verra toujours rien sans partage. Aucun rôle : le niveau ne restreint rien',
                 header: 'Rôles admis', type: 'multiselect', visible: true, required: false,
                 optionLabel: 'label'
             },

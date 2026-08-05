@@ -8,7 +8,6 @@ import { FeaturesService } from '../../../../services/feature-service';
 import { TraitementTableComponent } from '../../../../components/non-conformite/table-traitement/traitement-table';
 import { EtapeTraitement } from '../../../../enums/enums';
 import { Structure } from '../../../parametrages/structure/structure-config/structure';
-import { FormRejetComponent } from '../../../../components/non-conformite/form-rejet/form-rejet';
 import { NonConformiteService } from '../../../../services/non-conformite/non-conformite.service';
 
 @Component({
@@ -16,11 +15,10 @@ import { NonConformiteService } from '../../../../services/non-conformite/non-co
     templateUrl: './nc-validation-pilote.html',
     providers: [MessageService],
     standalone: true,
-    imports: [CommonModule, NgPrimeModule, TraitementTableComponent, FormRejetComponent]
+    imports: [CommonModule, NgPrimeModule, TraitementTableComponent]
 })
 export class ValidationPiloteComponent {
     @Input() demandeList: any[] = [];
-    motifRejetDialog: boolean=false;
     protected demande: any;
     loading: boolean = false;
     title = 'Validations des non-conformités';
@@ -83,9 +81,5 @@ export class ValidationPiloteComponent {
             this.dmdTraitement.displayDetails();
             this.featureService.onReloadRequested(true);
         }
-    }
-    rejet(demande: any) {
-        this.demande = demande;
-        this.motifRejetDialog = true;
     }
 }

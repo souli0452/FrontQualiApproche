@@ -7,21 +7,19 @@ import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { EtapeTraitement } from '../../../../enums/enums';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
 import { FeaturesService } from '../../../../services/feature-service';
-import { FormRejetComponent } from '../../../../components/non-conformite/form-rejet/form-rejet';
 import { Structure } from '../../../parametrages/structure/structure-config/structure';
 import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
 import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-nc-affectation',
-    imports: [CommonModule, NgPrimeModule, TraitementTableComponent, FormRejetComponent],
+    imports: [CommonModule, NgPrimeModule, TraitementTableComponent],
     providers: [MessageService],
     templateUrl: './nc-affectation.html'
 })
 export class NcAffectationComponent {
      @Input() demandeList: any = [];
     protected demande: any;
-    motifRejetDialog: boolean=false;
     loading: boolean = false;
     title = 'Affectations des non-conformités';
     @ViewChild(TraitementTableComponent) dmdTraitement!: TraitementTableComponent;
@@ -73,9 +71,5 @@ export class NcAffectationComponent {
             this.dmdTraitement.displayDetails();
             this.featureService.onReloadRequested(true);
         }
-    }
-    rejet(demande: any) {
-        this.demande = demande;
-        this.motifRejetDialog = true;
     }
 }
