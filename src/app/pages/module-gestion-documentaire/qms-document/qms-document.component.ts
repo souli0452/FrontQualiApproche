@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MessageService, MenuItem } from 'primeng/api';
+import { isUserInRoles } from '../../../utils/auth/auth-utils';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import {
   QmsDocumentService,
@@ -29,18 +30,20 @@ import { QmsDocumentDetailComponent } from './components/qms-document-detail.com
 import { QmsDocumentHistoryComponent } from './components/qms-document-history.component';
 import { QmsDocumentAuditComponent } from './components/qms-document-audit.component';
 import { QmsTransitionDialogComponent, TransitionDecision } from './components/qms-transition-dialog.component';
-import { DecisionConfirmee, QmsWorkflowDecisionDialogComponent } from './components/qms-workflow-decision-dialog.component';
+import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '../../../shared';
 import { QmsDocumentDemandesComponent } from './components/qms-document-demandes.component';
 import { DemandeDocumentService } from '../../../services/module-gestion-documentaire/demande-document.service';
 import { DemandeDocumentDto } from '../../../models/demande-document.model';
 import { QmsWorkflowHistoriqueComponent } from './components/qms-workflow-historique.component';
 import { QmsAssignWorkflowDialogComponent } from './components/qms-assign-workflow-dialog.component';
+import { QmsReclassementDialogComponent } from './components/qms-reclassement-dialog.component';
 import { QmsDocumentAccessDialogComponent, AccessGrant } from './components/qms-document-access-dialog.component';
 
 @Component({
   selector: 'app-qms-document',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, QmsTransitionDialogComponent, QmsWorkflowDecisionDialogComponent, QmsWorkflowHistoriqueComponent, QmsDocumentDemandesComponent, QmsAssignWorkflowDialogComponent, QmsDocumentAccessDialogComponent],
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, QmsTransitionDialogComponent, WorkflowDecisionDialogComponent, QmsWorkflowHistoriqueComponent, QmsDocumentDemandesComponent, QmsAssignWorkflowDialogComponent,
+    QmsReclassementDialogComponent, QmsDocumentAccessDialogComponent],
   templateUrl: './qms-document.component.html',
   styleUrls: ['./qms-document.component.scss'],
   providers: [MessageService, DatePipe]
@@ -48,6 +51,13 @@ import { QmsDocumentAccessDialogComponent, AccessGrant } from './components/qms-
 export class QmsDocumentComponent implements OnInit, OnDestroy {
   documents: DocumentQms[] = [];
   documentTypes: QmsDocumentType[] = [];
+  /** Total du fonds visible, pour que le tableau sache combien de pages il reste. */
+  totalDocuments = 0;
+  /** Index de la première ligne affichée, dans le référentiel du tableau. */
+  premiereLigne = 0;
+  taillePage = 15;
+  /** Une page a déjà été demandée : les bornes inchangées ne relancent plus rien. */
+  private pageDejaChargee = false;
   structures: Structure[] = [];
   systemUsers: any[] = [];
   filteredUsers: any[] = [];
@@ -97,6 +107,8 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   /** États de circuit des documents listés, indexés par identifiant de document. */
   workflowStates: Record<string, WorkflowStateDto> = {};
   actionMenuItems: MenuItem[] = [];
+  /** Dialogue de reclassement : ouverture et document concerné. */
+  dialogueReclassementOuvert = false;
 
   // Selected object contexts
   selectedDocument?: DocumentQms;
@@ -113,13 +125,13 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private router: Router,
     private route: ActivatedRoute,
-    private qmsService: QmsDocumentService,
+    protected qmsService: QmsDocumentService,
     private workflowService: WorkflowService,
     private demandeService: DemandeDocumentService,
-    private structureService: StructureService,
-    private prioriteService: PrioriteDocumentService,
-    private niveauConfidentialiteService: NiveauConfidentialiteService,
-    private domaineService: DomaineApplicationService,
+    protected structureService: StructureService,
+    protected prioriteService: PrioriteDocumentService,
+    protected niveauConfidentialiteService: NiveauConfidentialiteService,
+    protected domaineService: DomaineApplicationService,
     private authService: AuthService,
     private ngxPermissionsService: NgxPermissionsService,
     private messageService: MessageService,
@@ -152,45 +164,40 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   loadInitialData(): void {
     this.loading = true;
 
-    // Load dynamic Document Types from DB
-    this.qmsService.typeDocumentQmsGetAll()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (res: any) => this.documentTypes = res.data.content || [],
-        error: (err: any) => showToast(StatusEnum.error, err.status, null, this.messageService, err)
-      });
+    // Les référentiels des filtres ne sont plus chargés ici : chaque liste déroulante charge le
+    // sien, page par page. Les charger d'avance n'en ramenait que la première page — le reste
+    // restait hors d'atteinte sans que rien ne le signale.
 
-
-
-    // Load Structures/Services from DB
-    this.structureService.getAllStructures()
+    // Les structures, elles, servent encore au dialogue de partage.
+    this.structureService.getAllStructures(0, 1000)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res: any) => this.structures = res.data.content || [],
         error: (err: any) => console.error('Failed to load structures', err)
       });
 
-    // Référentiels des filtres. Indisponibles, ils laissent le sélecteur vide plutôt que de
-    // bloquer la liste : la recherche reste utilisable sur les autres critères.
-    this.prioriteService.liste().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (liste) => (this.priorites = liste ?? []),
-      error: () => console.warn('Priorités indisponibles.')
-    });
-    this.niveauConfidentialiteService.filtrables().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (liste) => (this.niveauxConfidentialite = liste ?? []),
-      error: () => console.warn('Niveaux de confidentialité indisponibles.')
-    });
-    this.domaineService.liste().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (liste) => (this.domaines = liste ?? []),
-      error: () => console.warn("Domaines d'application indisponibles.")
-    });
-
     this.refreshList();
   }
 
-  refreshList(): void {
+  /**
+   * Recharge la page courante du tableau.
+   *
+   * <p>La pagination est portée par le serveur : le tableau ne détient que la page affichée, et
+   * le total lui dit combien il en reste. Il chargeait auparavant ce que le serveur voulait bien
+   * lui donner — dix documents — et paginait cette poignée comme si elle était le fonds
+   * entier.</p>
+   *
+   * @param remonter vrai lorsqu'un critère change : la page courante n'a alors plus de sens, et
+   *                 rester en page 4 d'une recherche qui n'en compte qu'une afficherait un vide
+   */
+  refreshList(remonter = false): void {
+    if (remonter) {
+      this.premiereLigne = 0;
+    }
     this.loading = true;
-    this.qmsService.searchDocuments({
+    this.qmsService.rechercherDocumentsPagines({
+      page: Math.floor(this.premiereLigne / this.taillePage),
+      size: this.taillePage,
       query: this.searchQuery || undefined,
       documentType: this.selectedType || undefined,
       serviceId: this.selectedService || undefined,
@@ -203,16 +210,83 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (docs: DocumentQms[]) => {
-          this.documents = docs;
+        next: ({ contenu, total }) => {
+          this.documents = contenu;
+          this.totalDocuments = total;
+          this.pageDejaChargee = true;
           this.loading = false;
-          this.chargerEtatsDeCircuit(docs);
+          // Les états de circuit ne sont demandés que pour la page affichée : les réclamer pour
+          // tout le fonds était le prix caché du chargement en bloc.
+          this.chargerEtatsDeCircuit(contenu);
         },
         error: (err: any) => {
           this.loading = false;
           showToast(StatusEnum.error, err.status, 'Erreur de chargement des documents', this.messageService, err);
         }
       });
+  }
+
+  ouvrirReclassement(doc: DocumentQms): void {
+    this.selectedDocument = doc;
+    this.dialogueReclassementOuvert = true;
+  }
+
+  /**
+   * Applique le nouveau classement.
+   *
+   * <p>Le serveur peut avertir que le niveau retenu ferme le circuit du document : le classement
+   * est appliqué malgré tout, mais l'avertissement reste affiché — un document immobile dont
+   * personne ne comprend la cause coûte plus cher qu'un message de trop.</p>
+   */
+  appliquerReclassement(choix: { id: string | null; libelle: string | null }): void {
+    if (!this.selectedDocument) {
+      return;
+    }
+    this.loading = true;
+    this.qmsService.reclasser(this.selectedDocument.id!, choix.id, choix.libelle)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (avertissement) => {
+          this.loading = false;
+          this.dialogueReclassementOuvert = false;
+          this.messageService.add({
+            severity: 'success',
+            summary: choix.id ? 'Document classé' : 'Document déclassé',
+            detail: choix.id
+              ? `Le document est désormais classé « ${choix.libelle} ».`
+              : "Le document n'est plus classé."
+          });
+          if (avertissement) {
+            this.messageService.add({
+              severity: 'warn', summary: 'Classement à revoir', detail: avertissement, sticky: true
+            });
+          }
+          this.refreshList();
+        },
+        error: (err: any) => {
+          this.loading = false;
+          showToast(StatusEnum.error, err.status, "Le classement n'a pas pu être appliqué",
+            this.messageService, err);
+        }
+      });
+  }
+
+  /**
+   * Changement de page ou de taille de page demandé par le tableau.
+   *
+   * <p>Un tableau paresseux émet cet événement dès son affichage, puis chaque fois que ses
+   * bornes changent — y compris quand c'est nous qui les avons remises à zéro en changeant de
+   * filtre. Sans ce garde-fou, chaque recherche partait en double.</p>
+   */
+  changerDePage(evenement: { first: number; rows: number }): void {
+    const premiere = evenement.first ?? 0;
+    const taille = evenement.rows ?? this.taillePage;
+    if (this.pageDejaChargee && premiere === this.premiereLigne && taille === this.taillePage) {
+      return;
+    }
+    this.premiereLigne = premiere;
+    this.taillePage = taille;
+    this.refreshList();
   }
 
   /**
@@ -471,6 +545,19 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
         label: 'Partage & Permissions',
         icon: 'pi pi-share-alt',
         command: () => this.openShareModal(doc)
+      });
+    }
+
+    // Le classement décide de qui voit le document : seules l'administration générale et la
+    // qualité le révisent. Le serveur le vérifie de son côté ; l'écran se borne à ne pas
+    // proposer une action qui serait refusée.
+    if (isUserInRoles(['SUPER_ADMIN', 'SUPERADMIN', 'ADMIN', 'RESPONSABLE_QUALITE'])) {
+      items.push({
+        label: doc.niveauConfidentialiteId
+          ? 'Changer le niveau de confidentialité'
+          : 'Classer le document',
+        icon: 'pi pi-shield',
+        command: () => this.ouvrirReclassement(doc)
       });
     }
 

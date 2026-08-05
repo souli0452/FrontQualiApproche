@@ -50,21 +50,13 @@
                     </div>
                   </p-popover>
                   <div class="flex-1 mt-2">
-                      <p-floatlabel variant="on" class="w-full">
-                          <p-select 
-                            id="documentType" 
-                            formControlName="documentType" 
-                            [options]="documentTypes"
-                            optionLabel="libelle"
-                            [filter]="true" 
-                            optionValue="code"
-                            class="w-full"
-                            [showClear]="true" 
-                            appendTo="body" 
-                            styleClass="w-full">
-                          </p-select>
-                          <label for="documentType">Sélectionner le type de document</label>
-                      </p-floatlabel>
+                      <app-select-input
+                        formControlName="documentType"
+                        optionLabel="libelle"
+                        optionValue="code"
+                        placeholder="Sélectionner le type de document"
+                        [lazy]="true"
+                        [loadOptions]="qmsService.chargerOptionsTypes"></app-select-input>
                   </div>
                   <div *ngIf="associatedWorkflow" class="mt-2 p-2.5 bg-blue-50 border border-blue-100 rounded flex items-center gap-2.5">
                     <i class="pi pi-sitemap text-blue-500 text-base"></i>
@@ -100,20 +92,13 @@
                     </div>
                   </p-popover>
                   <div class="flex-1 mt-2">
-                      <p-floatlabel variant="on" class="w-full">
-                          <p-select 
-                            id="documentType" 
-                            formControlName="service" 
-                            [options]="structures"
-                            optionLabel="libelleLong"
-                            [filter]="true"
-                            class="w-full"
-                            [showClear]="true" 
-                            appendTo="body" 
-                            styleClass="w-full">
-                          </p-select>
-                          <label for="documentType">Sélectionner le processus émetteur</label>
-                      </p-floatlabel>
+                      <app-select-input
+                        formControlName="service"
+                        optionLabel="libelleLong"
+                        placeholder="Sélectionner le processus émetteur"
+                        [lazy]="true"
+                        [loadOptions]="structureService.chargerOptions"
+                        [selectedOptions]="structureRetenue('service')"></app-select-input>
                   </div>
                   <div *ngIf="associatedWorkflow" class="mt-2 p-2.5 bg-blue-50 border border-blue-100 rounded flex items-center gap-2.5">
                     <i class="pi pi-sitemap text-blue-500 text-base"></i>
@@ -174,34 +159,6 @@
               <div class="field mb-6 flex flex-col md:flex-row gap-4">
                 <div class="w-full md:w-1/2">
                   <div class="flex items-center mb-2 gap-2">
-                    <label for="titre" class="font-semibold m-0">Processus Destinataire <span class="text-red-500">*</span></label>
-                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="processusDestinataire.toggle($event)"></i>
-                  </div>
-                  <p-popover #processusDestinataire>
-                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                        Veuillez sélectionner le processus destinataire du document que vous souhaitez créer.
-                    </div>
-                  </p-popover>
-                  <div class="flex-1 mt-2">
-                      <p-floatlabel variant="on" class="w-full">
-                          <p-select 
-                            id="processusDestinataire" 
-                            [options]="structures" 
-                            formControlName="processusDest" 
-                            optionLabel="libelleLong"
-                            [filter]="true"
-                            class="w-full"
-                            [showClear]="true" 
-                            appendTo="body" 
-                            styleClass="w-full">
-                          </p-select>
-                          <label for="processusDestinataire">Sélectionner le processus destinataire</label>
-                      </p-floatlabel>
-                  </div>
-                </div>
-                
-                <div class="w-full md:w-1/2">
-                  <div class="flex items-center mb-2 gap-2">
                     <label for="titre" class="font-semibold m-0">Référence Officielle (ex: ISO 9001, ISO 9000...) <span class="text-red-500">*</span></label>
                     <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="referenceOfficielle.toggle($event)"></i>
                   </div>
@@ -217,6 +174,7 @@
                             [options]="referencesList" 
                             formControlName="referenceOfficielle" 
                             optionLabel="label"
+                            optionValue="value"
                             [filter]="true"
                             class="w-full"
                             [showClear]="true" 
@@ -267,22 +225,14 @@
                     </div>
                   </p-popover>
                   <div class="flex-1 mt-2">
-                      <p-floatlabel variant="on" class="w-full">
-                          <p-select
-                            id="domaineApplication"
-                            [options]="domaines"
-                            formControlName="domaineId"
-                            optionLabel="libelle"
-                            optionValue="id"
-                            [filter]="true"
-                            class="w-full"
-                            [showClear]="true"
-                            appendTo="body"
-                            styleClass="w-full"
-                            emptyMessage="Aucun domaine paramétré">
-                          </p-select>
-                          <label for="domaineApplication">Sélectionner le domaine d'application</label>
-                      </p-floatlabel>
+                      <app-select-input
+                        formControlName="domaineId"
+                        optionLabel="libelle"
+                        optionValue="id"
+                        placeholder="Sélectionner le domaine d'application"
+                        [lazy]="true"
+                        [loadOptions]="domaineService.chargerOptions"
+                        (optionChange)="domaineChoisi = $event"></app-select-input>
                   </div>
                 </div>
                 
@@ -303,6 +253,7 @@
                             [options]="statutsList" 
                             formControlName="statutLegal" 
                             optionLabel="label"
+                            optionValue="value"
                             [filter]="true"
                             [showClear]="true" 
                             appendTo="body" 
@@ -330,14 +281,12 @@
                     <label for="prioriteId" class="font-semibold m-0">Priorité</label>
                   </div>
                   <div class="flex-1 mt-2">
-                    <p-floatlabel variant="on" class="w-full">
-                      <p-select id="prioriteId" formControlName="prioriteId" [options]="priorites"
-                                optionLabel="libelle" optionValue="id" [showClear]="true"
-                                [filter]="true" appendTo="body" styleClass="w-full" class="w-full"
-                                emptyMessage="Aucune priorité paramétrée">
-                      </p-select>
-                      <label for="prioriteId">Sélectionner la priorité</label>
-                    </p-floatlabel>
+                    <app-select-input formControlName="prioriteId"
+                      optionLabel="libelle" optionValue="id"
+                      placeholder="Sélectionner la priorité"
+                      [lazy]="true"
+                      [loadOptions]="prioriteService.chargerOptions"
+                      (optionChange)="prioriteChoisie = $event"></app-select-input>
                   </div>
                 </div>
 
@@ -355,15 +304,12 @@
                     </div>
                   </p-popover>
                   <div class="flex-1 mt-2">
-                    <p-floatlabel variant="on" class="w-full">
-                      <p-select id="niveauConfidentialiteId" formControlName="niveauConfidentialiteId"
-                                [options]="niveauxConfidentialite" optionLabel="libelle" optionValue="id"
-                                [showClear]="true" [filter]="true" appendTo="body"
-                                styleClass="w-full" class="w-full"
-                                emptyMessage="Aucun niveau paramétré">
-                      </p-select>
-                      <label for="niveauConfidentialiteId">Sélectionner le niveau</label>
-                    </p-floatlabel>
+                    <app-select-input formControlName="niveauConfidentialiteId"
+                      optionLabel="libelle" optionValue="id"
+                      placeholder="Sélectionner le niveau"
+                      [lazy]="true"
+                      [loadOptions]="niveauConfidentialiteService.chargerOptions"
+                      (optionChange)="niveauChoisi = $event"></app-select-input>
                   </div>
                 </div>
               </div>

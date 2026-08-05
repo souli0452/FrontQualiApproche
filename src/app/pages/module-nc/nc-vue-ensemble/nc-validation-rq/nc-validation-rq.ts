@@ -8,20 +8,18 @@ import { EtapeTraitement } from '../../../../enums/enums';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
 import { FeaturesService } from '../../../../services/feature-service';
 import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
-import { NCRejetComponent } from '../../nc-rejet/nc-rejet';
 import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-nc-validation-rq',
     standalone: true,
-    imports: [CommonModule, NgPrimeModule, TraitementTableComponent, NCRejetComponent],
+    imports: [CommonModule, NgPrimeModule, TraitementTableComponent],
     providers: [MessageService],
     templateUrl: './nc-validation-rq.html'
 })
 export class ValidationRQComponent {
     @Input() demandeList: any = [];
     protected demande: any;
-    motifRejetDialog: boolean=false;
     loading: boolean = false;
     title = 'Validations des non-conformités';
     @ViewChild(TraitementTableComponent) dmdTraitement!: TraitementTableComponent;
@@ -140,9 +138,5 @@ export class ValidationRQComponent {
             this.dmdTraitement.displayDetails();
             this.featureService.onReloadRequested(true);
         }
-    }
-    rejet(demande: any) {
-        this.demande = demande;
-        this.motifRejetDialog = true;
     }
 }

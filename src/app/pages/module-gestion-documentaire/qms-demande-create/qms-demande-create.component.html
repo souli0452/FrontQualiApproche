@@ -48,14 +48,13 @@
                     </div>
                   </p-popover>
                   <div class="flex-1 mt-2">
-                    <p-floatlabel variant="on" class="w-full">
-                      <p-select id="documentId" formControlName="documentId" [options]="documents"
-                                optionLabel="documentNumber" optionValue="id" [filter]="true"
-                                [showClear]="true" appendTo="body" styleClass="w-full" class="w-full"
-                                emptyMessage="Aucun document accessible">
-                      </p-select>
-                      <label for="documentId">Sélectionner le document</label>
-                    </p-floatlabel>
+                    <app-select-input formControlName="documentId"
+                      optionLabel="documentNumber" optionValue="id"
+                      placeholder="Sélectionner le document"
+                      [lazy]="true"
+                      [loadOptions]="documentService.chargerOptionsDocuments"
+                      [selectedOptions]="documentChoisi ? [documentChoisi] : []"
+                      (selectionChange)="onDocumentChoisi($event)"></app-select-input>
                   </div>
                   <div *ngIf="documentChoisi" class="mt-2 p-2.5 bg-blue-50 border border-blue-100 rounded flex items-center gap-2.5">
                     <i class="pi pi-file text-blue-500 text-base"></i>
@@ -63,8 +62,8 @@
                       <span class="text-[10px] text-blue-700 font-bold uppercase block">Document visé</span>
                       <span class="text-xs font-semibold text-slate-800">
                         {{ documentChoisi.titre || documentChoisi.documentNumber }}
-                        <span *ngIf="documentChoisi.versionMajeure !== undefined">
-                          (v{{ documentChoisi.versionMajeure }}.{{ documentChoisi.versionMineure }})
+                        <span *ngIf="documentChoisi.numeroVersion !== undefined">
+                          (v{{ documentChoisi.numeroVersion }})
                         </span>
                       </span>
                     </div>

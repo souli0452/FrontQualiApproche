@@ -8,7 +8,6 @@ import { EtapeTraitement } from '../../../../enums/enums';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { TraitementTableComponent } from '../../../../components/non-conformite/table-traitement/traitement-table';
 import { ProcNonConformiteService } from '../../../../services/non-conformite/proc-non-conformite.service';
-import { NCRejetComponent } from '../../nc-rejet/nc-rejet';
 import { NonConformiteService } from '../../../../services/non-conformite/non-conformite.service';
 import { currentUserState } from '../../../../services/auth-services/auth.state';
 import { AuthData } from '../../../../models/auth.model';
@@ -19,12 +18,11 @@ import { AuthData } from '../../../../models/auth.model';
     styleUrl: './nc-imputation.scss',
     standalone: true,
     providers: [MessageService],
-    imports: [CommonModule, NgPrimeModule, TraitementTableComponent, NCRejetComponent]
+    imports: [CommonModule, NgPrimeModule, TraitementTableComponent]
 })
 export class VueEnsembleImputationComponent {
     @Input() demandeList: any = [];
     protected demande: any;
-    motifRejetDialog: boolean=false;
     loading: boolean = false;
     title = 'Traitements des non-conformités';
     user!: any;
@@ -102,9 +100,5 @@ export class VueEnsembleImputationComponent {
         if (event) {
             this.traitementDemandeTable.displayDetails();
         }
-    }
-    rejet(demande: any) {
-        this.demande = demande;
-        this.motifRejetDialog = true;
     }
 }

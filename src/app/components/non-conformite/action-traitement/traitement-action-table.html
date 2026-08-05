@@ -8,7 +8,6 @@
     [rows]="10" 
     [rowsPerPageOptions]="[10, 25, 50]"
     [globalFilterFields]="['numeroOdre', 'numeroNc', 'procEmetteur', 'dateEcheance']" 
-    [(selection)]="selectedNonConformite" 
     [paginator]="paginator" 
     [showGridlines]="showGridlines"
     [loading]="loading"
@@ -30,7 +29,7 @@
                 </div>
                 <div>
                     <h5 class="m-0 font-bold text-surface-900 dark:text-surface-0 text-lg flex items-center gap-2">
-                        Plans d'actions à traiter
+                        Actions correctives à traiter
                         <p-badge [value]="nonTraiterData ? nonTraiterData.length.toString() : '0'" styleClass="ml-1" severity="info"></p-badge>
                     </h5>
                     <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5 m-0">Ces plans d'actions sont en attente de traitement.</p>
@@ -45,23 +44,12 @@
                         class="w-full p-inputtext-sm border border-surface-200 dark:border-surface-700 rounded-lg bg-surface-50/50 dark:bg-surface-900 hover:bg-surface-50 dark:hover:bg-surface-800 focus:bg-surface-0 dark:focus:bg-surface-900 transition-colors py-2 px-3 pl-8 focus:ring-1 focus:ring-primary focus:border-primary text-surface-900 dark:text-surface-0" />
                 </span>
                 
-                <button pButton pRipple
-                    label="Options"
-                    icon="pi pi-bars"
-                    class="p-button-primary p-button-sm ml-2 whitespace-nowrap"
-                    (click)="menu.toggle($event)"
-                    [disabled]="selectedNonConformite.length === 0">
-                </button>
-                <p-menu #menu [model]="menuItems" [appendTo]="dt" [popup]="true" [style]="{display: selectedNonConformite.length > 0 ? 'block': 'none'}"></p-menu>
             </div>
         </div>
     </ng-template>
 
     <ng-template pTemplate="header" let-columns>
         <tr>
-            <th pFrozenColumn alignFrozen="left" class="!py-4 first:rounded-l-lg text-center !bg-slate-100 dark:!bg-surface-800 border-b border-surface-200">
-                <p-tableHeaderCheckbox/>
-            </th>
             @for (col of columns; track col) {
                 <th pFrozenColumn [frozen]="col.field === 'numeroOdre'" alignFrozen="left"
                     [pSortableColumn]="col.field"
@@ -84,9 +72,6 @@
 
     <ng-template pTemplate="body" let-nonConformite let-columns="columns">
         <tr class="hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors cursor-pointer" (click)="onRowSelect(nonConformite.id)">
-            <td pFrozenColumn alignFrozen="left" class="py-3 !text-left bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
-                <p-tableCheckbox [value]="nonConformite" (click)="$event.stopPropagation()"/>
-            </td>
             @for (col of columns; track col) {
                 <td pFrozenColumn [frozen]="col.field === 'numeroOdre'" alignFrozen="left"
                     [style.min-width]="col.width"
@@ -129,8 +114,8 @@
             <td pFrozenColumn alignFrozen="right" class="text-right bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
                 <div class="flex gap-1 justify-end">
                     <button pButton pRipple icon="pi pi-cog" class="p-button-rounded p-button-text p-button-primary h-2rem w-2rem"
-                            (click)="$event.stopPropagation(); onPublish($event, nonConformite)" pTooltip="Traiter"
-                            tooltipPosition="top" type="button" *ngIf="status === 'NON_TRAITER'">
+                            (click)="$event.stopPropagation(); onPublish($event, nonConformite)" pTooltip="Ouvrir le plan"
+                            tooltipPosition="top" type="button">
                     </button>
                 </div>
             </td>
@@ -230,23 +215,75 @@
     </ng-template>
     
     <ng-template pTemplate="content">
+        <!-- Ce que le circuit attend de celui qui ouvre cette action : la réaliser, en constater la
+             réalisation, en mesurer l'efficacité ou la ré-attribuer. -->
+        <app-workflow-guidance class="block mb-4"
+            [state]="planAction.workflowState"
+            objet="cette action"
+            messageSansCircuit="Cette action est proposée : elle sera confiée à son responsable à la validation qualité du dossier."></app-workflow-guidance>
+
+        <!-- Ce sur quoi le responsable a été engagé : il le lit, il ne le modifie pas. L'action et
+             son critère ont été arrêtés à la définition du plan, puis validés. -->
+        <div class="mb-4 p-3 rounded-xl bg-surface-50 dark:bg-surface-900 border border-surface-200 dark:border-surface-700">
+            <div class="flex items-center gap-2 mb-2 text-primary">
+                <i class="pi pi-flag"></i>
+                <span class="font-bold text-sm">Action corrective à mener</span>
+            </div>
+            <div [innerHTML]="planAction.actionCorrective || '<span class=\'italic text-500\'>Action non décrite</span>'" class="line-height-3 text-700 m-0"></div>
+            <div class="mt-3" *ngIf="planAction.critereEfficacite">
+                <span class="text-500 text-xs block mb-1">Critère d'efficacité attendu</span>
+                <div [innerHTML]="planAction.critereEfficacite" class="line-height-3 text-700 m-0"></div>
+            </div>
+        </div>
+
+        <!-- Traiter une action, c'est rendre compte de ce qu'on en a fait — et pour cela il faut
+             pouvoir relire ce qui a été demandé, par qui, et pourquoi l'action est revenue.
+             L'historique n'était visible nulle part. -->
+        <p-tabs value="traitement">
+            <p-tablist>
+                <p-tab value="traitement"><i class="pi pi-pencil mr-2"></i>Traitement</p-tab>
+                <p-tab value="historique"><i class="pi pi-history mr-2"></i>Historique</p-tab>
+            </p-tablist>
+            <p-tabpanels>
+                <p-tabpanel value="traitement">
+                    <!-- Trois lectures d'un même écran. Celui qui mène l'action en rend compte ;
+                         le pilote qui en constate la réalisation peut la confier à quelqu'un
+                         d'autre ; tous les autres la consultent. Ce qu'un responsable a écrit est
+                         ce sur quoi le pilote puis le responsable qualité se prononcent : le
+                         laisser réécrire après coup viderait leur avis de son sens. -->
+                    @if (peutRendreCompte) {
         <div class="flex flex-col md:flex-row justify-center gap-4">
-            
-            <div class="md:w-1/2 w-full pt-4 pb-2 field">
-                <div class="flex align-items-center mb-2 gap-2">
-                    <label for="planActionCauses" class="font-normal m-0 font-semibold">Observations <span class="text-red-500">*</span></label>
-                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoPlanActionCauses.toggle($event)"></i>
-                </div>
-                <p-popover #infoPlanActionCauses>
-                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                        Utilisez cet espace pour documenter le déroulement réel de l'action corrective. Vous pouvez y inscrire les retours d'expérience des équipes de terrain, les ajustements techniques de dernière minute, ou toute information pertinente qui facilitera le travail du Responsable Qualité (RQ) lors de la vérification finale de l'efficacité de l'action.
+
+            <div class="md:w-1/2 w-full pb-2 field flex flex-col gap-4">
+                <!-- Ce qui a réellement été constaté et fait. Ces deux champs étaient demandés à la
+                     définition du plan, avant que quiconque ait travaillé dessus : on y notait une
+                     intention que rien n'obligeait ensuite à confronter au résultat. -->
+                <div>
+                    <div class="flex align-items-center mb-2 gap-2">
+                        <label for="planActionCauses" class="font-normal m-0 font-semibold">Causes identifiées</label>
+                        <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCauses.toggle($event)"></i>
                     </div>
-                </p-popover>
-                <textarea class="w-full" rows="8"cols="30" pTextarea [(ngModel)]="planAction.observation" [autoResize]="true" placeholder="Observations liées à l'exécution de l'action"></textarea>
-                <!-- <p-floatlabel variant="in">
-                    <textarea pTextarea id="planActionCauses" [(ngModel)]="planAction.observation" rows="10" cols="30" class="w-full"></textarea>
-                    <label for="planActionCauses">Observations liées à l'exécution de l'action</label>
-                </p-floatlabel> -->
+                    <p-popover #infoCauses>
+                        <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                            Expliquez la source réelle du problème, telle que le traitement l'a révélée : absence de procédure, panne d'équipement, défaut de communication, écart de formation. C'est elle qui justifie la solution retenue.
+                        </div>
+                    </p-popover>
+                    <textarea class="w-full" rows="4" cols="30" pTextarea id="planActionCauses" [(ngModel)]="planAction.causeIdentifiees" [autoResize]="true" placeholder="Causes réellement identifiées lors du traitement"></textarea>
+                </div>
+
+                <div>
+                    <div class="flex align-items-center mb-2 gap-2">
+                        <label for="planActionSolution" class="font-normal m-0 font-semibold">Solution retenue <span class="text-red-500">*</span></label>
+                        <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoSolution.toggle($event)"></i>
+                    </div>
+                    <p-popover #infoSolution>
+                        <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                            Décrivez ce qui a effectivement été mis en place, et non ce qui était prévu. C'est sur cette description que le responsable qualité appréciera l'efficacité de l'action.
+                        </div>
+                    </p-popover>
+                    <textarea class="w-full" rows="4" cols="30" pTextarea id="planActionSolution" [(ngModel)]="planAction.solutionRetenues" [autoResize]="true" placeholder="Ce qui a été mis en place pour traiter la cause"></textarea>
+                </div>
+
             </div>
 
             <div class="md:w-1/2 w-full rounded-xl">
@@ -277,14 +314,88 @@
             </div>
         
         </div>
+                    } @else if (peutChangerLeResponsable) {
+                        <div class="p-2">
+                            <div class="field mb-4">
+                                <label class="font-normal m-0 font-semibold block mb-2">
+                                    Confier cette action à quelqu'un d'autre
+                                </label>
+                                <p-select [options]="utilisateursDeMaStructure" optionLabel="label"
+                                          optionValue="value" [(ngModel)]="nouveauResponsable"
+                                          [filter]="true" [showClear]="true" appendTo="body"
+                                          placeholder="Responsable actuel : {{ planAction.responsableNomComplet || 'non désigné' }}"
+                                          styleClass="w-full"></p-select>
+                                <small class="text-500 text-sm block mt-2">
+                                    C'est le seul moment où l'action peut changer de porteur sans
+                                    repasser par un refus : vous venez d'en constater la réalisation.
+                                    Le circuit suivra la désignation.
+                                </small>
+                            </div>
+
+                            <div class="p-3 rounded-lg bg-surface-50 border border-surface-200">
+                                <span class="text-500 text-sm block mb-2">Compte rendu du responsable</span>
+                                <div class="mb-3" *ngIf="planAction.causeIdentifiees">
+                                    <span class="text-500 text-xs block mb-1">Causes identifiées</span>
+                                    <div [innerHTML]="planAction.causeIdentifiees" class="line-height-3 text-700 m-0"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <span class="text-500 text-xs block mb-1">Solution retenue</span>
+                                    <div [innerHTML]="planAction.solutionRetenues || '<span class=\'italic text-500\'>Aucune solution rapportée</span>'" class="line-height-3 text-700 m-0"></div>
+                                </div>
+                                <div *ngIf="planAction.observation">
+                                    <span class="text-500 text-xs block mb-1">Observations</span>
+                                    <div [innerHTML]="planAction.observation" class="line-height-3 text-700 m-0"></div>
+                                </div>
+                            </div>
+                        </div>
+                    } @else {
+                        <div class="p-2">
+                            <div class="p-3 rounded-lg bg-surface-50 border border-surface-200">
+                                <span class="text-500 text-sm block mb-2">Compte rendu du responsable</span>
+                                <div class="mb-3" *ngIf="planAction.causeIdentifiees">
+                                    <span class="text-500 text-xs block mb-1">Causes identifiées</span>
+                                    <div [innerHTML]="planAction.causeIdentifiees" class="line-height-3 text-700 m-0"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <span class="text-500 text-xs block mb-1">Solution retenue</span>
+                                    <div [innerHTML]="planAction.solutionRetenues || '<span class=\'italic text-500\'>Cette action n\'a pas encore été traitée par son responsable.</span>'" class="line-height-3 text-700 m-0"></div>
+                                </div>
+                                <div *ngIf="planAction.observation">
+                                    <span class="text-500 text-xs block mb-1">Observations</span>
+                                    <div [innerHTML]="planAction.observation" class="line-height-3 text-700 m-0"></div>
+                                </div>
+                                <div class="mt-3" *ngIf="planAction.constatEfficacite">
+                                    <span class="text-500 text-xs block mb-1">Constat d'efficacité</span>
+                                    <div [innerHTML]="planAction.constatEfficacite" class="line-height-3 text-700 m-0"></div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </p-tabpanel>
+                <p-tabpanel value="historique">
+                    <app-workflow-historique [resourceId]="planAction.id" objet="cette action"></app-workflow-historique>
+                </p-tabpanel>
+            </p-tabpanels>
+        </p-tabs>
     </ng-template>
-    
+
     <ng-template pTemplate="footer">
-        <div class="flex justify-end gap-3 border-t border-surface-200 dark:border-surface-700 pt-4 mt-2">
+        <div class="flex flex-wrap justify-end items-center gap-3 border-t border-surface-200 dark:border-surface-700 pt-4 mt-2">
             <button size="small" type="button" pRipple pButton icon="pi pi-times" (click)="displayDialog = false" label="Fermer"
                     class="p-button-text p-button-secondary font-semibold hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"></button>
-            <p-button severity="info" pRipple (click)="soumettre($event)" label="Soumettre"
-                    class="font-semibold rounded-lg" [disabled]="!planAction.observation"></p-button>
+            <p-button *ngIf="peutRendreCompte" severity="secondary" [outlined]="true" pRipple (click)="enregistrer()"
+                    label="Enregistrer" icon="pi pi-save" class="font-semibold rounded-lg"
+                    [disabled]="enregistrement || !planAction.solutionRetenues"></p-button>
+            <p-button *ngIf="peutChangerLeResponsable" severity="secondary" [outlined]="true" pRipple (click)="enregistrer()"
+                    label="Confier" icon="pi pi-user-edit" class="font-semibold rounded-lg"
+                    [disabled]="enregistrement || !nouveauResponsable"></p-button>
+            <!-- Les décisions viennent du moteur : aucun bouton ne fait avancer un plan de sa
+                 propre initiative, sans quoi l'écran et le circuit finissent par diverger. -->
+            <app-workflow-actions
+                [resourceId]="planAction.id"
+                [reference]="planAction.numeroOdre"
+                [state]="planAction.workflowState"
+                (executed)="apresDecision()"></app-workflow-actions>
         </div>
     </ng-template>
 </p-dialog>

@@ -5,7 +5,6 @@
         [btnActions]="BtnActions.VALIDATION"
         [demandeList]="demandeList"
         [cols]="cols"
-        (onRejet)="rejet($event)"
         (onValidation)="validation($event)"
         [loading]="loading"
         [paginator]="false"
@@ -13,4 +12,3 @@
         [title]="title">
     </app-traitement-table>
 </div>
-<app-form-rejet  [motifRejetDialog]="motifRejetDialog" [demande]="demande" (onSuccess)="hideDialog($event)"></app-form-rejet>

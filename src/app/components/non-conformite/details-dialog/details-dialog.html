@@ -1,4 +1,27 @@
+<!-- La fiche s'ouvre en deux onglets : ce que dit le dossier, et ce qu'on en a décidé.
+     L'historique vient du moteur — auteurs, dates, commentaires et valeurs saisies à chaque
+     étape — et n'est offert qu'à qui a le droit de le lire : il nomme des personnes et rapporte
+     leurs appréciations. -->
+<p-tabs value="detail">
+    <p-tablist>
+        <p-tab value="detail"><i class="pi pi-file mr-2"></i>Détails de la demande</p-tab>
+        @if (peutVoirHistorique) {
+            <p-tab value="historique"><i class="pi pi-history mr-2"></i>Historique</p-tab>
+        }
+    </p-tablist>
+
+    <p-tabpanels>
+        <p-tabpanel value="detail">
 <div class="nc-detail-container">
+
+    <!-- Où en est le dossier, et ce qu'on attend de celui qui le regarde. La fiche montrait une
+         étape et parfois des boutons, sans jamais dire s'il fallait agir, attendre ou relancer
+         quelqu'un. Le message se déduit de ce que le circuit rend, non d'une table d'états. -->
+    <app-workflow-guidance class="block mb-4"
+        [state]="demande.workflowState"
+        objet="cette non-conformité"
+        messageSansCircuit="Cette non-conformité n'est pas encore suivie par un circuit de validation."></app-workflow-guidance>
+
     <!-- Section Principale -->
     <div class="grid">
         <div class="field mt-5 mb-4"
@@ -427,6 +450,16 @@
 
     </div>
 </div>
+        </p-tabpanel>
+
+        @if (peutVoirHistorique) {
+        <p-tabpanel value="historique">
+            <app-workflow-historique [resourceId]="demande.id" objet="ce dossier"></app-workflow-historique>
+        </p-tabpanel>
+        }
+    </p-tabpanels>
+</p-tabs>
+
 
 <!-- Dialog Modification Plan d'action -->
 <p-dialog [(visible)]="motifRejetDialog" [modal]="true"
@@ -746,8 +779,9 @@
     <ng-template pTemplate="footer">
         <button type="button" size="small" pRipple pButton icon="pi pi-times" (click)="displayDialog = false" label="Fermer"
             class="p-button-secondary"></button>
-        <button type="button" size="small" pRipple pButton icon="pi pi-ban" (click)="rejet()" label="Confirmer le rejet"
-            class="p-button-danger" [disabled]="!planAction.observationRejet"></button>
+        <!-- Le rejet d'un plan est une décision de son propre circuit, prise depuis la fiche du
+             plan d'action. Ce bouton appelait un point d'entrée qui n'existait pas : la demande
+             partait en 404 et l'écran annonçait pourtant un succès. -->
     </ng-template>
 </p-dialog>
 

@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import {HttpClient, HttpParams, HttpResponse} from "@angular/common/http";
 import {Observable} from "rxjs";
+import {map} from "rxjs/operators";
 import { EtapeTraitement } from '../../enums/enums';
 import { BehaviorSubject } from 'rxjs';
 import { NonConformiteUrlConfig } from '../../components/non-conformite/config/proc-non-conformite.urls.configs';
-import { ApiResponse } from '../../models/response.model';
+import { ApiItemResponse, ApiResponse } from '../../models/response.model';
 import { NonConformite } from '../../models/non-conformite.model';
 
 @Injectable({
@@ -84,11 +85,30 @@ export class ProcNonConformiteService {
     getPlanActionsAll(email:string): Observable<HttpResponse<Array<any>>> {
         return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_PLAN_ACTION_ALL+email, {observe: 'response'});
     }
+    /**
+     * Enregistre un plan d'action proposé sur une non-conformité.
+     *
+     * <p>Écrit dès que l'agent le valide, et non gardé en mémoire jusqu'à la soumission : les plans
+     * s'accumulaient auparavant dans l'objet de la fiche, et n'étaient persistés que par le bouton
+     * de soumission. Ce bouton ayant cédé la place à la décision du circuit, une saisie non
+     * enregistrée aurait été perdue sans que rien ne le dise.</p>
+     */
+    createPlanAction(planAction: any): Observable<HttpResponse<any>> {
+        return this.http.post<any>(NonConformiteUrlConfig.CREATE_PLAN_ACTION, planAction, { observe: 'response' });
+    }
+
+    /**
+     * Supprime un plan d'action qui n'a pas encore été confié à son responsable.
+     *
+     * <p>Le serveur refuse la suppression d'un plan engagé : il pilote un circuit et porte
+     * l'historique des décisions prises sur lui.</p>
+     */
+    deletePlanAction(id: string): Observable<HttpResponse<any>> {
+        return this.http.delete<any>(`${NonConformiteUrlConfig.DELETE_PLAN_ACTION}/${id}`, { observe: 'response' });
+    }
+
     updatePlanAction(demande: any): Observable<HttpResponse<any>> {
         return this.http.put<any>(NonConformiteUrlConfig.UPDATE_PLAN_ACTION , demande, {observe: 'response'});
-    }
-    rejectNc(demande: any): Observable<HttpResponse<any>> {
-        return this.http.put<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_REJECT , demande, {observe: 'response'});
     }
     getStatsNfStruct(anne:any): Observable<HttpResponse<any>> {
         return this.http.get<any>(NonConformiteUrlConfig.GET_Stat_BY_STATUS_ROOT_URL+`/${anne}`, {observe: 'response'});
@@ -99,9 +119,6 @@ export class ProcNonConformiteService {
     getStatsMensuelStatus(anne:any): Observable<HttpResponse<any>> {
         return this.http.get<any>(NonConformiteUrlConfig.GET_Stat_MENSUEL_STATUS_ROOT_URL+anne, {observe: 'response'});
     }
-    rejetPlanAction(demande: any): Observable<HttpResponse<any>> {
-        return this.http.put<any>(NonConformiteUrlConfig.REJET_PLAN_ACTION , demande, {observe: 'response'});
-    }
     getStatsMensuelService(anne:any,serviceId:any): Observable<HttpResponse<any>> {
         return this.http.get<any>(NonConformiteUrlConfig.GET_Stat_MENSUEL_STATUS_ROOT_URL+anne+"/"+serviceId, {observe: 'response'});
     }
@@ -110,9 +127,6 @@ export class ProcNonConformiteService {
     }
     getStatsPlanAction(anne:any): Observable<HttpResponse<any>> {
         return this.http.get<any>(NonConformiteUrlConfig.STAT_PLAN_ACTION_ALL+anne, {observe: 'response'});
-    }
-    validatePlanAction(demande: any): Observable<HttpResponse<any>> {
-        return this.http.put<any>(NonConformiteUrlConfig.VALIDATE_NON_CONFORMITE_ALL , demande, {observe: 'response'});
     }
     getStatsByNiveau(anne:any,id:any): Observable<HttpResponse<any>> {
         return this.http.get<any>(NonConformiteUrlConfig.GET_Stat_MENSUEL_NIVEAU_ROOT_URL+anne+"/service/"+id, {observe: 'response'});
@@ -156,6 +170,27 @@ export class ProcNonConformiteService {
 
     getByNiveau(niveauId: string): Observable<HttpResponse<any>> {
         return this.http.get<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL + "by-niveau/" + niveauId, { observe: 'response' });
+    }
+
+    /**
+     * Dépose un fichier sur une non-conformité et rend la référence de l'objet créé.
+     *
+     * <p>C'est le contrat attendu par le dialogue de décision du circuit : « déposer d'abord,
+     * référencer ensuite ». Le fichier part en multipart et rejoint le serveur d'objets, rangé par
+     * le serveur sous le sigle de la structure — les fichiers de la non-conformité transitaient
+     * jusqu'ici en base64 dans le corps de la requête, pour finir sur le disque du service.</p>
+     */
+    deposerFichier(nonConformiteId: string, fichier: File): Observable<string> {
+        const corps = new FormData();
+        corps.append('file', fichier);
+        return this.http
+            .post<ApiItemResponse<string>>(NonConformiteUrlConfig.fichiers(nonConformiteId), corps)
+            .pipe(map((reponse) => reponse.data));
+    }
+
+    /** Adresse de téléchargement d'un fichier déposé, désigné par sa référence. */
+    urlFichier(nonConformiteId: string, reference: string): string {
+        return `${NonConformiteUrlConfig.fichiers(nonConformiteId)}/contenu?reference=${encodeURIComponent(reference)}`;
     }
 
 }

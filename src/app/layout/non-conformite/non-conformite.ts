@@ -135,10 +135,10 @@ export class NonConformiteLayoutComponent implements OnInit, OnDestroy {
         // 4. On rajoute les autres menus pour tout le monde
         this.items.push(
 
-            { 
-                label: 'Mes Non-Conformités publiées', 
-                icon: 'pi pi-calendar', 
-                routerLink: '/non-conformite/publiees' 
+            {
+                label: 'Mes Non-Conformités publiées',
+                icon: 'pi pi-calendar',
+                routerLink: '/non-conformite/publiees'
             }
         );
     }

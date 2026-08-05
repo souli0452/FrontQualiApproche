@@ -11,7 +11,8 @@ import {
   WorkflowDto,
   WorkflowInstanceDto,
   WorkflowStateDto,
-  WorkflowValidationRequestDto
+  WorkflowValidationRequestDto,
+  ResultatDecisionDto
 } from '../models/workflow.model';
 
 /**
@@ -176,6 +177,30 @@ export class WorkflowService {
   }
 
   /**
+   * Prend la même décision sur plusieurs dossiers.
+   *
+   * <p>Le serveur juge chacun pour lui-même et rend un compte rendu : une partie de la sélection
+   * peut être refusée — habilitation manquante, dossier ayant changé d'étape entre l'affichage de
+   * la liste et l'envoi. Un simple « c'est fait » laisserait croire que tout est passé.</p>
+   */
+  decideEnLot(
+    resourceIds: string[],
+    decision: 'APPROUVE' | 'REJETE',
+    requete: WorkflowValidationRequestDto
+  ): Observable<ResultatDecisionDto[]> {
+    let params = new HttpParams().set('decision', decision);
+    for (const id of resourceIds) {
+      params = params.append('resourceIds', id);
+    }
+    return this.http
+      .post<ResultatDecisionDto[]>(`${this.workflowsUrl}/decisions-groupees`, requete, { params })
+      .pipe(
+        map((resultats) => resultats ?? []),
+        catchError(this.enErreurMetier)
+      );
+  }
+
+  /**
    * Franchit une transition désignée par son code, tel que rendu dans `allowedActions[].code`.
    * À préférer à `validateStep` / `rejectStep` dès qu'une étape offre plus de deux issues.
    */
@@ -192,6 +217,20 @@ export class WorkflowService {
   }
 
   // -------------------------------------------------------------- modèles d'e-mail
+
+  /**
+   * Faits déjà connus de la plateforme, à proposer comme condition de transition.
+   *
+   * <p>Le moteur ne les décrète pas : il rend ce que des transitions exigent déjà et ce que des
+   * dossiers portent déjà. L'éditeur reste donc ouvert à un fait inédit, sans quoi le premier
+   * usage d'un nouveau fait serait impossible à déclarer.</p>
+   */
+  getFaitsConnus(): Observable<string[]> {
+    return this.http.get<any>(`${this.workflowsUrl}/faits`).pipe(
+      map((reponse) => reponse?.data ?? reponse ?? []),
+      catchError(this.enErreurMetier)
+    );
+  }
 
   getAllEmailTemplates(): Observable<EmailTemplateDto[]> {
     return this.http.get<EmailTemplateDto[]>(this.emailTemplatesUrl).pipe(

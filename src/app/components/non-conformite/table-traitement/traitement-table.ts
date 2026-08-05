@@ -5,7 +5,10 @@ import { FeaturesService } from "../../../services/feature-service";
 import { TypeDemande } from "../../../utils/global/global-utils";
 import { EtapeTraitement, StatusEnum } from '../../../enums/enums';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { SearchAgentComponent } from '../search-agent-component/search-agent.component';
+import { WorkflowActionsComponent, WorkflowDecisionDialogComponent, DecisionConfirmee } from '../../../shared';
+import { WorkflowService } from '../../../services/workflow.service';
+import { ResultatDecisionDto, WorkflowActionDto } from '../../../models/workflow.model';
+import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 
 
 @Component({
@@ -14,7 +17,7 @@ import { SearchAgentComponent } from '../search-agent-component/search-agent.com
     styleUrl: './traitement-table.scss',
     providers: [DatePipe],
     standalone: true,
-    imports: [CommonModule, NgPrimeModule, SearchAgentComponent]
+    imports: [CommonModule, NgPrimeModule, WorkflowActionsComponent, WorkflowDecisionDialogComponent]
 })
 export class TraitementTableComponent implements OnInit {
     @Input() demandeList: Array<any> = [];
@@ -36,14 +39,8 @@ export class TraitementTableComponent implements OnInit {
     @Output() onValidation = new EventEmitter<any>();
     @Output() onStructureValidation = new EventEmitter<any>();
     @Output() onEdition = new EventEmitter<any>();
-    @Output() onSignature = new EventEmitter<any>();
     @Output() onSaveEntity = new EventEmitter<any>();
-    @Output() onSubmission = new EventEmitter<any>();
     @Output() onReceptionner = new EventEmitter<any>();
-    @Output() onValidationRS = new EventEmitter<any>();
-    @Output() onRejet = new EventEmitter<any>();
-    @Output() onEditResult = new EventEmitter<any>();
-    @Output() onCloture = new EventEmitter<any>();
 
     @ViewChild('detailContainer', { read: ViewContainerRef, static: true }) detailContainer?: ViewContainerRef;
 
@@ -52,9 +49,6 @@ export class TraitementTableComponent implements OnInit {
     imputationKey = 'imputationKey_' + Math.random().toString(36).substr(2, 9);
     @Input() cols: any[] = [];
     colsFilter: any[] = [];
-    searchedAgent: any;
-    selectedDemandes: Array<any> = [];
-    display: boolean = false;
     agentSeachError: boolean = false;
     isAgentSeach: boolean = false;
     numerMatricule?: string;
@@ -71,8 +65,163 @@ export class TraitementTableComponent implements OnInit {
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         private featureService: FeaturesService,
-        private datePipe: DatePipe
+        private datePipe: DatePipe,
+        private nonConformiteService: ProcNonConformiteService,
+        private workflowService: WorkflowService
     ) {
+    }
+
+    /**
+     * Dépôt d'une pièce exigée par une étape du circuit, remis au moteur sous forme de référence.
+     *
+     * <p>Champ plutôt que méthode : la fonction est appelée depuis le dialogue de décision, hors
+     * de tout contexte d'instance, et y perdrait son {@code this}.</p>
+     */
+    deposerFichier = (fichier: File) => this.nonConformiteService.deposerFichier(this.selectedDemande?.id, fichier);
+
+    /**
+     * Une décision du circuit vient d'être prise : la fiche se referme et la liste se recharge.
+     *
+     * <p>Recharger plutôt que corriger la ligne en mémoire : l'étape atteinte, les actions
+     * désormais ouvertes et l'état du dossier sont décidés par le serveur. Les déduire ici aurait
+     * recréé la seconde source de vérité dont on vient de se défaire.</p>
+     */
+    // ------------------------------------------------------------------ décision groupée
+
+    /** Dossiers cochés. */
+    selectionMultiple: any[] = [];
+
+    /** Décision en cours d'application sur le lot : le dialogue et les boutons l'attendent. */
+    lotEnCours = false;
+    decisionGroupeeOuverte = false;
+    actionGroupee?: WorkflowActionDto;
+
+    /**
+     * Décisions que le moteur ouvre sur <b>tous</b> les dossiers cochés.
+     *
+     * <p>L'intersection, et non l'union : proposer une action qu'un seul dossier autorise
+     * garantissait un refus sur les autres. C'est ce que faisait l'ancien traitement groupé, qui
+     * poussait la même charge utile sur toute la sélection.</p>
+     */
+    get actionsCommunes(): WorkflowActionDto[] {
+        if (!this.selectionMultiple.length) {
+            return [];
+        }
+        const [premier, ...autres] = this.selectionMultiple;
+        const actions: WorkflowActionDto[] = premier?.workflowState?.allowedActions ?? [];
+        return actions.filter((action) =>
+            autres.every((dossier) =>
+                (dossier?.workflowState?.allowedActions ?? []).some((a: WorkflowActionDto) => a.code === action.code)));
+    }
+
+    /** Étape des dossiers cochés : ils la partagent, l'action commune en découle. */
+    get etapeDeLaSelection(): string | undefined {
+        return this.selectionMultiple[0]?.workflowState?.currentStateName;
+    }
+
+    get champsDeLaSelection(): any[] {
+        return this.selectionMultiple[0]?.workflowState?.currentStepFields ?? [];
+    }
+
+    get referenceDeLaSelection(): string {
+        return `${this.selectionMultiple.length} dossier(s) sélectionné(s)`;
+    }
+
+    /**
+     * Ce qu'il faut dire quand la sélection n'ouvre aucune décision commune.
+     *
+     * <p>Sans message, aucun bouton n'apparaissait et rien ne l'expliquait : l'utilisateur pouvait
+     * croire à un écran qui ne répond pas, et cocher encore. La cause n'est pas la même selon qu'il
+     * a coché un dossier ou plusieurs — l'un n'offre rien, les autres n'offrent rien
+     * <b>ensemble</b>.</p>
+     */
+    get messageSansActionCommune(): string | null {
+        if (!this.selectionMultiple.length || this.actionsCommunes.length) {
+            return null;
+        }
+        if (this.selectionMultiple.length === 1) {
+            return "Aucune décision ne vous est ouverte sur ce dossier à son étape actuelle.";
+        }
+        return "Ces dossiers n'ont aucune décision en commun : ils ne sont pas à la même étape, "
+            + "ou toutes ne vous sont pas ouvertes. Traitez-les séparément, ou restreignez la "
+            + "sélection.";
+    }
+
+    severiteDe(action: WorkflowActionDto): any {
+        return action.severity ?? (action.decision === 'REJETE' ? 'danger' : 'success');
+    }
+
+    ouvrirDecisionGroupee(action: WorkflowActionDto) {
+        this.actionGroupee = action;
+        this.decisionGroupeeOuverte = true;
+    }
+
+    /**
+     * Applique la décision à la sélection, puis rend compte de ce qui est passé.
+     *
+     * <p>Le serveur juge chaque dossier séparément : une partie peut être refusée. Annoncer un
+     * succès global laisserait l'utilisateur croire que tout est fait, alors que des dossiers
+     * seraient restés en place sans qu'il le sache.</p>
+     */
+    executerDecisionGroupee(decision: DecisionConfirmee) {
+        const identifiants = this.selectionMultiple.map((d) => d.id).filter(Boolean);
+        const sens = this.actionGroupee?.decision === 'REJETE' ? 'REJETE' : 'APPROUVE';
+        if (!identifiants.length) {
+            return;
+        }
+
+        this.lotEnCours = true;
+        this.workflowService.decideEnLot(identifiants, sens, {
+            comments: decision.comments,
+            fields: decision.fields
+        }).subscribe({
+            next: (resultats) => {
+                this.lotEnCours = false;
+                this.decisionGroupeeOuverte = false;
+                this.actionGroupee = undefined;
+                this.selectionMultiple = [];
+                this.rendreCompteDuLot(resultats);
+                this.featureService.onReloadRequested(true);
+            },
+            error: (erreur: any) => {
+                this.lotEnCours = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Décision groupée refusée',
+                    detail: erreur?.message || "Aucune décision n'a pu être enregistrée.",
+                    life: 8000
+                });
+            }
+        });
+    }
+
+    private rendreCompteDuLot(resultats: ResultatDecisionDto[]) {
+        const abouties = resultats.filter((r) => r.aboutie).length;
+        const refusees = resultats.filter((r) => !r.aboutie);
+
+        if (abouties) {
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Décisions enregistrées',
+                detail: `${abouties} dossier(s) traité(s).`,
+                life: 5000
+            });
+        }
+        // Les refus sont énoncés un par un, avec leur motif : « 3 refusés » n'apprendrait rien à
+        // qui doit décider quoi faire ensuite.
+        for (const refus of refusees) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Dossier non traité',
+                detail: refus.motif || 'La décision a été refusée sur ce dossier.',
+                life: 10000
+            });
+        }
+    }
+
+    circuitAvance() {
+        this.closeDetailsDialog();
+        this.featureService.onReloadRequested(true);
     }
 
     ngOnInit() {
@@ -83,7 +232,6 @@ export class TraitementTableComponent implements OnInit {
         this.displayDetail = false;
         this.detailContainer?.clear();
 
-        this.selectedDemandes = [];
     }
     displayDetails(rowData?: any) {
         if (this.displayDetail) {
@@ -109,15 +257,6 @@ export class TraitementTableComponent implements OnInit {
 
             componentRef!.instance.demande = this.selectedDemande;
             this.componentRef = componentRef;
-        }
-    }
-
-    onDisplay() {
-        if (this.display) {
-            this.display = false;
-            this.searchedAgent = undefined;
-        } else {
-            this.display = true;
         }
     }
 
@@ -156,253 +295,9 @@ export class TraitementTableComponent implements OnInit {
         }
     }
 
-    get btnObject() {
-        if (this.btnActions === EtapeTraitement.TRAITEMENT || this.btnActions == EtapeTraitement.CLOTURE || this.btnActions == EtapeTraitement.SUIVI_RQ || this.btnActions === EtapeTraitement.VALIDATION_RS) {
-            return null;
-        }
-        if (this.btnActions === EtapeTraitement.VALIDATION) {
-            return {
-                label: 'Valider',
-                icon: 'pi pi-check',
-                tooltip: 'Valider la sélection'
-            };
-        } else if (this.btnActions === EtapeTraitement.RECEPTION) {
-            return {
-                label: 'Réception',
-                icon: 'pi pi-telegram',
-                tooltip: 'Imputer la sélection à un agent'
-            };
-        } else
-            return {
-                label: 'Imputer',
-                icon: 'pi pi-telegram',
-                tooltip: 'Imputer la sélection à un agent'
-            };
-    }
-
-    doAction() {
-        if (this.btnActions === EtapeTraitement.RECEPTION) {
-            this.receptionner();
-        } else if (this.btnActions === EtapeTraitement.VALIDATION || this.btnActions === EtapeTraitement.VALIDATION_RS) {
-            this.validate();
-        } else {
-            this.onDisplay();
-        }
-    }
-
-    protected validate() {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous valider la sélection ?',
-            key: this.imputationKey,
-            accept: () => {
-                if (this.btnActions == EtapeTraitement.VALIDATION) {
-                    if (this.selectedDemandes.length > 0) {
-                        this.selectedDemandes.map((item) => {
-                            item.etatTraitement = this.BtnActions.SUIVI_RQ;
-                        });
-                    } else {
-                        this.selectedDemande.etatTraitement = this.BtnActions.SUIVI_RQ;
-
-                        this.selectedDemandes.push(this.selectedDemande);
-                    }
-
-                    this.onValidation.emit(this.selectedDemandes);
-                } else {
-                    if (this.selectedDemandes.length > 0) {
-                        this.selectedDemandes.map((item) => {
-                            item.etatTraitement = this.BtnActions.IMPUTATION;
-                        });
-                    } else {
-                        this.selectedDemande.etatTraitement = this.BtnActions.IMPUTATION;
-
-                        this.selectedDemandes.push(this.selectedDemande);
-                    }
-                }
-            }
-        });
-    }
-
-    rejet() {
-        this.confirmationService.confirm({
-            message: `Voulez-vous réjeter la demande n°: ${this.selectedDemande?.numeroReference} ?`,
-            key: this.imputationKey,
-            accept: () => {
-                this.onRejet.emit(this.selectedDemande);
-            }
-        });
-    }
-    imputer() {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous imputer la sélection ?',
-            key: this.imputationKey,
-            accept: () => {
-                if (this.selectedDemandes.length == 0) {
-                    this.selectedDemandes.push(this.selectedDemande);
-                }
-                this.selectedDemandes.map((item) => {
-                    item.status = StatusEnum.IN_PROGRESS;
-                    item.userImputId = this.searchedAgent?.id;
-                    item.userImputeEmail = this.searchedAgent?.email;
-                    item.userImputFullName = this.searchedAgent.lastName + ' ' + this.searchedAgent.firstName;
-                    item.etatTraitement = EtapeTraitement.TRAITEMENT;
-                });
-
-                this.onImputation.emit(this.selectedDemandes);
-                this.onDisplay();
-            }
-        });
-    }
-
-    receptionner() {
-        let message = '';
-        if (this.selectedDemandes && this.selectedDemandes.length > 1) {
-            message = `Voulez-vous vraiment réceptionner ces ${this.selectedDemandes.length} demandes sélectionnées ?`;
-        } else if (this.selectedDemandes && this.selectedDemandes.length === 1) {
-            message = `Voulez-vous réceptionner la demande n°: ${this.selectedDemandes[0].numeroReference} pour validation ?`;
-        } else {
-            message = `Voulez-vous réceptionner la demande n°: ${this.selectedDemande?.numeroReference} pour validation ?`;
-        }
-        this.confirmationService.confirm({
-            message: message,
-            key: this.imputationKey,
-            accept: () => {
-                if (this.selectedDemandes.length > 0) {
-                    this.selectedDemandes.map((item) => {
-                        item.status = StatusEnum.IN_PROGRESS;
-                        item.etatTraitement = this.BtnActions.VALIDATION_RS;
-                        delete item.btnActions;
-                    });
-                } else {
-                    this.selectedDemande.etatTraitement = this.BtnActions.VALIDATION_RS;
-                    this.selectedDemande.status = StatusEnum.IN_PROGRESS;
-                    delete this.selectedDemande.btnActions;
-                    this.selectedDemandes.push(this.selectedDemande);
-                }
-
-                console.log('PAYLOAD ENVOYÉ AU BACKEND (RECEPTION) :', this.selectedDemandes);
-                this.onReceptionner.emit(this.selectedDemandes);
-            }
-        });
-    }
-    validationRS() {
-        let message = `Voulez-vous valider la demande n°: ${this.selectedDemande?.numeroReference} pour validation ?`;
-        this.confirmationService.confirm({
-            message: message,
-            key: this.imputationKey,
-            accept: () => {
-                if (this.selectedDemandes.length > 0) {
-                    this.selectedDemandes.map((item) => {
-                        item.etatTraitement = this.BtnActions.IMPUTATION;
-                    });
-                } else {
-                    this.selectedDemande.etatTraitement = this.BtnActions.IMPUTATION;
-
-                    this.selectedDemandes.push(this.selectedDemande);
-                }
-
-                this.onValidationRS.emit(this.selectedDemandes);
-            }
-        });
-    }
-
-    soumettre() {
-        let message = `Voulez-vous soumettre la demande n°: ${this.selectedDemande?.numeroReference} pour validation ?`;
-        console.log("this.selectedDemande", this.selectedDemande);
-
-        this.confirmationService.confirm({
-            message: message,
-            key: this.imputationKey,
-            accept: () => {
-                if (this.selectedDemandes.length > 0) {
-                    this.selectedDemandes.map((item) => {
-                        item.status = StatusEnum.IN_PROGRESS;
-                        item.etatTraitement = this.BtnActions.VALIDATION;
-                    });
-                } else {
-                    this.selectedDemande.etatTraitement = this.BtnActions.VALIDATION;
-                    this.selectedDemande.status = StatusEnum.IN_PROGRESS;
-                    this.selectedDemandes.push(this.selectedDemande);
-                }
-                this.onSubmission.emit(this.selectedDemandes);
-            }
-        });
-    }
-
-    saveEntity() {
-        this.confirmationService.confirm({
-            message: `Voulez-vous réceptionner  la demande n°: ${this.selectedDemande?.numeroReference} ?`,
-            key: this.imputationKey,
-            accept: () => {
-                if (this.selectedDemandes.length > 0) {
-                    this.selectedDemandes.map((item) => {
-                        item.status = StatusEnum.IN_PROGRESS;
-                    });
-                } else {
-                    this.selectedDemande.status = StatusEnum.IN_PROGRESS;
-
-                    this.selectedDemandes.push(this.selectedDemande);
-                }
-                this.onSaveEntity.emit(this.selectedDemandes);
-            }
-        });
-    }
-
-    cloture() {
-        let message = '';
-        if (this.selectedDemandes.length > 0) {
-            message = `Voulez-vous cloturer la sélection?`;
-        } else {
-            message = `Voulez-vous cloturer la demande n°: ${this.selectedDemande?.numeroReference}  ?`;
-        }
-
-        this.confirmationService.confirm({
-            message: message,
-            key: this.imputationKey,
-            accept: () => {
-                if (this.selectedDemandes.length > 0) {
-                    this.selectedDemandes.map((item) => {
-                        item.etatTraitement = this.BtnActions.CLOTURE;
-                        item.status = StatusEnum.APPROVED;
-                    });
-                    console.log("ici 1 : ", this.selectedDemandes);
-
-                } else {
-                    this.selectedDemande.etatTraitement = this.BtnActions.CLOTURE;
-                    this.selectedDemande.status = StatusEnum.APPROVED;
-                    this.selectedDemandes.push(this.selectedDemande);
-                    console.log("ici 2 : ", this.selectedDemandes);
-                }
-                this.onCloture.emit(this.selectedDemandes);
-            }
-        });
-    }
-    // editionNew() {
-    //     this.selectedDemandes.push(this.selectedDemande);
     //     this.onEdition.emit(this.selectedDemandes);
-    // }
     editionNew() {
         this.onEdition.emit([this.selectedDemande]);
-    }
-
-    validation() {
-        let message = `Voulez-vous valider la demande n°: ${this.selectedDemande?.numeroReference} pour validation ?`;
-        this.confirmationService.confirm({
-            message: message,
-            key: this.imputationKey,
-            accept: () => {
-                if (this.selectedDemandes.length > 0) {
-                    this.selectedDemandes.map((item) => {
-                        item.etatTraitement = this.BtnActions.SUIVI_RQ;
-                    });
-                } else {
-                    this.selectedDemande.etatTraitement = this.BtnActions.SUIVI_RQ;
-
-                    this.selectedDemandes.push(this.selectedDemande);
-                }
-
-                this.onValidation.emit(this.selectedDemandes);
-            }
-        });
     }
 
     protected readonly TypeDemande = TypeDemande;
@@ -415,34 +310,4 @@ export class TraitementTableComponent implements OnInit {
         return stripped.length === 0;
     }
 
-    isActionDisabled(): boolean {
-        if (!this.selectedDemande) return false;
-
-        switch (this.btnActions) {
-            case EtapeTraitement.RECEPTION:
-                return !this.selectedDemande.pertinancePilote || this.isContentEmpty(this.selectedDemande.justificationPilote);
-            case EtapeTraitement.VALIDATION_RS:
-                const hasBasicInfo = !this.isContentEmpty(this.selectedDemande.justificationRs) && this.selectedDemande.pertinanceRs;
-                const hasCircuitInfo = this.selectedDemande.circuit && this.selectedDemande.origineId;
-                return !hasBasicInfo || !hasCircuitInfo;
-            case EtapeTraitement.TRAITEMENT:
-                // Pour le traitement, on veut au moins un plan d'action
-                const hasPlanActions = this.selectedDemande.planActions && this.selectedDemande.planActions.length > 0;
-                return !hasPlanActions;
-            default:
-                return false;
-        }
-    }
-
-    isActionDisabledClotureRQ(): boolean {
-        if (!this.selectedDemande) return false;
-
-        switch (this.btnActions) {
-            case EtapeTraitement.VALIDATION_RS:
-                const hasBasicInfo = !this.isContentEmpty(this.selectedDemande.justificationRs) && this.selectedDemande.pertinanceRs;
-                return !hasBasicInfo;
-            default:
-                return false;
-        }
-    }
 }

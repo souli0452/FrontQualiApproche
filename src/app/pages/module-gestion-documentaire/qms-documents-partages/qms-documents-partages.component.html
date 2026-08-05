@@ -33,7 +33,7 @@
                     <td>
                         {{ shared.titre || '—' }}
                         <span class="block text-xs text-slate-400" *ngIf="shared.versionLabel">
-                            v{{ shared.versionLabel }}
+                            {{ shared.versionLabel }}
                         </span>
                     </td>
                     <td>{{ shared.serviceSigle || shared.serviceLibelle || '—' }}</td>

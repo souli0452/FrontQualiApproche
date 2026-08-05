@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { Table } from 'primeng/table';
 
 import { Location } from '@angular/common';
@@ -14,16 +14,23 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
+import { WorkflowActionsComponent } from '../../../shared/workflow/workflow-actions.component';
+import { WorkflowGuidanceComponent } from '../../../shared/workflow/workflow-guidance.component';
+import { WorkflowHistoriqueComponent } from '../../../shared/workflow/workflow-historique.component';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { GlobalSearchService } from '../../../services/non-conformite/global-search.service';
-import { convertFilesToBase64 } from '../../../utils/fichier/fichier-utils';
+import { forkJoin } from 'rxjs';
+import { PlanActionService } from '../../../services/non-conformite/planAction.service';
+import { ChoixDeChampService } from '../../../shared/workflow/choix-de-champ.service';
+import { PieceJointeFichierService } from '../../../services/non-conformite/piece-jointe-fichier.service';
 
 @Component({
     selector: 'app-traitement-action',
     templateUrl: './traitement-action-table.html',
     styleUrl: './traitement-action-table.scss',
     standalone: true,
-    imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent]
+    imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent, WorkflowActionsComponent, WorkflowGuidanceComponent,
+        WorkflowHistoriqueComponent]
 })
 export class TraitementActionTable implements OnInit {
 
@@ -32,7 +39,6 @@ export class TraitementActionTable implements OnInit {
     @Input() status!: NonConformStatus;
     @Input() cols!: any[];
     @Input() colDetails!: any[];
-    @Output() publish = new EventEmitter<any>();
     @Output() delete = new EventEmitter<any>();
     @Output() archive = new EventEmitter<any>();
     @Input() paginator: boolean = true;
@@ -44,12 +50,15 @@ export class TraitementActionTable implements OnInit {
     @Output() pageChangeEvent = new EventEmitter<{ page: number, size: number }>();
 
 
-    menuItems: MenuItem[] = [];
     uploadedFiles: any[] = [];
     confirmKey = 'confirmKey';
-    selectedNonConformite: any[] = [];
     planAction:any={};
     displayDialog:boolean=false;
+    enregistrement:boolean=false;
+    depotEnCours:boolean=false;
+    /** Personne à qui le pilote confie l'action au moment d'en constater la réalisation. */
+    nouveauResponsable:string|null=null;
+    utilisateursDeMaStructure:any[]=[];
 
     @ViewChild('dt') table!: Table;
     private destroy$: Subject<boolean> = new Subject<boolean>();
@@ -61,7 +70,10 @@ export class TraitementActionTable implements OnInit {
     private featureService: FeaturesService,
     private confirmationService: ConfirmationService,
     private location: Location,
-    private globalSearchService: GlobalSearchService
+    private globalSearchService: GlobalSearchService,
+    private planActionService: PlanActionService,
+    private choixService: ChoixDeChampService,
+    private pieceJointeService: PieceJointeFichierService
     ) {}
 
     ngOnInit(): void {
@@ -74,13 +86,6 @@ export class TraitementActionTable implements OnInit {
                 }
             });
 
-        this.menuItems = [
-            {
-                label: 'Soumettre', icon: 'pi pi-fw pi-ban',
-                visible: this.status == NonConformStatus.NON_TRAITER,
-                command: () => this.onPublishMultiple()
-            },
-        ];
     }
 
     goBack() {
@@ -97,78 +102,8 @@ export class TraitementActionTable implements OnInit {
         });
     }
 
-    onDeleteMultiple() {
-        if (this.selectedNonConformite && this.selectedNonConformite.length > 0) {
-            this.confirmationService.confirm({
-                message: `Voulez-vous supprimer la sélection 1? `,
-                key: this.confirmKey,
-                accept: () => {
-                    this.nonConformiteService.deleteMany(this.selectedNonConformite).subscribe({
-                        next: (data) => {
-                            this.featureService.onReloadRequested(true);
-                            showToast(StatusEnum.success, data.statusCode, 'Opération succès', this.messageService);
-                            this.goBack();
-                        },
-                        error: error => {
-                            showToast(StatusEnum.error, error.status, 'Une erreur est survenue', this.messageService, error);
-                        }
-                    });
-                },
-                reject: () => {
-                    this.goBack();
-                }
-            });
-        }
-    }
 
-    onArchiveMultiple() {
-        if (this.selectedNonConformite && this.selectedNonConformite.length > 0) {
-            this.confirmationService.confirm({
-                message: `Voulez-vous archiver la sélection ? `,
-                key: this.confirmKey,
-                accept: () => {
-                    this.nonConformiteService.updateManyStatus(this.selectedNonConformite, NonConformStatus.ARCHIVED).subscribe({
-                        next: (data) => {
-                            this.featureService.onReloadRequested(true);
-                            showToast(StatusEnum.success, data.statusCode, 'Opération succès', this.messageService);
-                            this.goBack();
-                        },
-                        error: error => {
-                            showToast(StatusEnum.error, error.status, 'Une erreur est survenue', this.messageService, error);
-                        }
-                    });
 
-                },
-                reject: () => {
-                    this.goBack();
-                }
-            });
-        }
-    }
-
-    private onPublishMultiple() {
-        if (this.selectedNonConformite && this.selectedNonConformite.length > 0) {
-            this.confirmationService.confirm({
-                message: `Voulez-vous publier la sélection ? `,
-                key: this.confirmKey,
-                accept: () => {
-                    this.nonConformiteService.updateManyStatus(this.selectedNonConformite, NonConformStatus.PUBLISHED).subscribe({
-                        next: (data) => {
-                            this.featureService.onReloadRequested(true);
-                            showToast(StatusEnum.success, data.statusCode, 'Opération succès', this.messageService);
-                            this.goBack();
-                        },
-                        error: error => {
-                            showToast(StatusEnum.error, error.status, 'Une erreur est survenue', this.messageService, error);
-                        }
-                    });
-                },
-                reject: () => {
-                    this.goBack();
-                }
-            });
-        }
-    }
 
     onArchive(event: Event, rowdata: any) {
         event.stopPropagation();
@@ -204,6 +139,10 @@ export class TraitementActionTable implements OnInit {
     onPublish(event: Event, rowdata: any) {
         event.stopPropagation();
         this.planAction=rowdata;
+        this.nouveauResponsable=null;
+        if (this.peutChangerLeResponsable && !this.utilisateursDeMaStructure.length) {
+            this.chargerLesCollegues();
+        }
         console.log( this.planAction);
         this.displayDialog=true;
 
@@ -232,44 +171,131 @@ export class TraitementActionTable implements OnInit {
 
     protected readonly NonConformStatus = NonConformStatus;
 
-    soumettre(event:any) {
-        event.stopPropagation();
-        this.confirmationService.confirm({
-            message: `Voulez-vous soummettre le plan d'action N° ${this.planAction.numeroOdre} ? `,
-            key: this.confirmKey,
-            accept: () => {
+    /**
+     * L'utilisateur peut-il rendre compte du traitement de cette action ?
+     *
+     * <p>Seulement celui qui la mène, et seulement pendant qu'il la mène. « Peut agir » vient du
+     * circuit — c'est lui qui sait que l'étape est réservée au responsable de l'action — et l'étape
+     * vient du statut que les décisions propagent. Une fois l'action déclarée réalisée, ce qui a été
+     * écrit est ce sur quoi le pilote puis le responsable qualité se prononcent : le laisser
+     * réécrire après coup viderait leur avis de son sens.</p>
+     */
+    get peutRendreCompte(): boolean {
+        return this.planAction?.status === 'NON_TRAITER' && this.actionsOuvertes;
+    }
 
-                this.publish.emit(this.planAction);
-                event.stopPropagation();
+    /**
+     * L'utilisateur peut-il confier cette action à quelqu'un d'autre ?
+     *
+     * <p>Au moment où le pilote constate la réalisation, et là seulement : c'est le point où il peut
+     * juger qu'elle relève de quelqu'un d'autre. Le reste du temps, l'action est en cours ou déjà
+     * jugée.</p>
+     */
+    get peutChangerLeResponsable(): boolean {
+        return this.planAction?.status === 'EN_VERIFICATION' && this.actionsOuvertes;
+    }
+
+    /**
+     * Collègues à qui l'action peut être confiée.
+     *
+     * <p>La même source que celle des champs de circuit : les agents de la structure de l'appelant.
+     * L'annuaire entier laisserait désigner quelqu'un qui ne relève pas de lui.</p>
+     */
+    private chargerLesCollegues() {
+        this.choixService.choix('@UTILISATEURS_MA_STRUCTURE').subscribe({
+            next: (options: any[]) => this.utilisateursDeMaStructure = options ?? [],
+            error: () => this.utilisateursDeMaStructure = []
+        });
+    }
+
+    /** Le circuit ouvre-t-il une décision à l'appelant sur cette action ? */
+    private get actionsOuvertes(): boolean {
+        return (this.planAction?.workflowState?.allowedActions?.length ?? 0) > 0;
+    }
+
+    /**
+     * Enregistre la saisie du plan sans le faire avancer.
+     *
+     * <p>La correction et la décision étaient jusqu'ici le même geste : « Soumettre » écrivait le
+     * statut <i>Traité</i> depuis l'écran. Le plan changeait d'état sans que son circuit en sache
+     * rien, si bien que l'étape affichée et l'étape réelle divergeaient dès la première
+     * soumission.</p>
+     */
+    enregistrer() {
+        // Seul l'identifiant part : le serveur lit le nom et l'adresse à leur source, un libellé
+        // recopié se périmant au premier changement d'état civil.
+        if (this.peutChangerLeResponsable && this.nouveauResponsable) {
+            this.planAction.responsableId = this.nouveauResponsable;
+        }
+        this.enregistrement = true;
+        this.nonConformiteService.nonConformiteUpdatePlanAction(this.planAction).subscribe({
+            next: (data) => {
+                this.enregistrement = false;
+                showToast(StatusEnum.success, data.status, 'Saisie enregistrée', this.messageService);
             },
-            reject:()=>{
-                this.goBack();
+            error: (error) => {
+                this.enregistrement = false;
+                showToast(StatusEnum.error, error.status, 'Une erreur est survenue', this.messageService, error);
             }
         });
     }
-    async handleFileUpload(files: any[]) {
-        this.uploadedFiles = files;
-        if (this.uploadedFiles && this.uploadedFiles.length > 0) {
-            try {
-                const base64Files = await convertFilesToBase64(this.uploadedFiles);
-                this.planAction.fichiers = base64Files.map(fileData => ({
-                    fichier: fileData.fichierBase64,
-                    nom: fileData.nomFichier,
-                    type: fileData.typeFichier
-                }));
-            } catch (error) {
-                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la conversion des fichiers.' });
-                return;
-            }
-        } else {
-            this.planAction.fichiers = [];
+
+    /** Le circuit a franchi une étape : la liste ne reflète plus l'état réel du plan. */
+    apresDecision() {
+        this.displayDialog = false;
+        this.featureService.onReloadRequested(true);
+    }
+    /**
+     * Dépose les fichiers choisis sur le serveur.
+     *
+     * <p>Ils étaient convertis en base64 et posés sur l'objet local : rien côté serveur ne les
+     * enregistrait, et la pièce disparaissait au rechargement de la liste. Chaque fichier part
+     * maintenant vers le stockage, et la liste affichée est celle que le serveur rend.</p>
+     */
+    handleFileUpload(files: any[]) {
+        this.uploadedFiles = files ?? [];
+        if (!this.uploadedFiles.length || !this.planAction?.id) {
+            return;
         }
+
+        this.depotEnCours = true;
+        const depots = this.uploadedFiles.map((fichier: File) =>
+            this.planActionService.deposerFichier(this.planAction.id, fichier)
+        );
+        forkJoin(depots).subscribe({
+            next: (pieces: any[]) => {
+                this.depotEnCours = false;
+                this.uploadedFiles = [];
+                this.planAction.fichiers = [...(this.planAction.fichiers ?? []), ...pieces.filter(Boolean)];
+                showToast(StatusEnum.success, 200, 'Justificatif(s) déposé(s)', this.messageService);
+            },
+            error: (error) => {
+                this.depotEnCours = false;
+                showToast(StatusEnum.error, error.status, "Le dépôt n'a pas abouti", this.messageService, error);
+            }
+        });
     }
 
+    /**
+     * Retire une pièce déjà déposée.
+     *
+     * <p>La retirer du seul tableau affiché laissait le fichier sur le stockage et le rattachement
+     * en base : elle réapparaissait au rechargement.</p>
+     */
     removeExistingFile(index: number) {
-        if (this.planAction.fichiers) {
-            this.planAction.fichiers.splice(index, 1);
+        const piece = this.planAction?.fichiers?.[index];
+        if (!piece) {
+            return;
         }
+        if (!piece.id) {
+            this.planAction.fichiers.splice(index, 1);
+            return;
+        }
+        this.pieceJointeService.supprimer(piece.id).subscribe({
+            next: () => this.planAction.fichiers.splice(index, 1),
+            error: (error) => showToast(StatusEnum.error, error.status,
+                "La pièce n'a pas pu être supprimée", this.messageService, error)
+        });
     }
 
     getSeverity(gravity: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {

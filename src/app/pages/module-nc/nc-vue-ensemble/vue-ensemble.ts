@@ -10,6 +10,7 @@ import { VueEnsembleImputationComponent } from './nc-imputation/nc-imputation';
 import { AlerteTraitement } from '../../../components/non-conformite/alerte-traitement/alerte-traitement';
 import { FeaturesService } from '../../../services/feature-service';
 import { ReceptionComponent } from './nc-reception/nc-reception';
+import { ValidationRqAffectationComponent } from './nc-validation-rq-affectation/nc-validation-rq-affectation';
 import { ValidationRQComponent } from './nc-validation-rq/nc-validation-rq';
 import { NcAffectationComponent } from './nc-affectation/nc-affectation';
 import { ValidationPiloteComponent } from './nc-validation-pilote/nc-validation-pilote';
@@ -37,6 +38,7 @@ import { AuthData } from '../../../models/auth.model';
                 AlerteTraitement,
                 ReceptionComponent,
                 ValidationRQComponent,
+                ValidationRqAffectationComponent,
                 NcAffectationComponent,
                 ValidationPiloteComponent,
                 NcClotureComponent,
@@ -55,6 +57,8 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     countImputees: number = 0;
     countReception: number = 0;
     countValidationRQ: number = 0;
+    /** Dossiers en attente de validation et d'affectation par le responsable qualité. */
+    countValidationRqAffectation: number = 0;
     countAffectation: number = 0;
     countValidationPilote: number = 0;
     countCloture: number = 0;
@@ -73,7 +77,8 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         return this.countBrouillon + 
                this.countImputees + 
                this.countReception + 
-               this.countValidationRQ + 
+               this.countValidationRQ +
+               this.countValidationRqAffectation + 
                this.countAffectation + 
                this.countValidationPilote + 
                this.countCloture + 
@@ -84,6 +89,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     imputationsData: any[] = [];
     receptionData: any[] = [];
     validationRqData: any[] = [];
+    validationRqAffectationData: any[] = [];
     affectationData: any[] = [];
     currentUser: AuthData | null = null;
     userStructure: any = {};
@@ -142,6 +148,8 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
 
         this.countValidationRQ = 0;
         this.validationRqData = [];
+        this.countValidationRqAffectation = 0;
+        this.validationRqAffectationData = [];
 
         this.countCloture = 0;
         this.clotureData = [];
@@ -374,6 +382,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
             this.affectationData = data.affectationData;
             this.validationPiloteData = data.validationPiloteData;
             this.validationRqData = data.validationRqData;
+            this.validationRqAffectationData = data.validationRqAffectationData;
             this.clotureData = data.clotureData;
             this.nonConformiteClotureeData = data.nonConformiteClotureeData;
             this.nonTraiterData = data.nonTraiterData;
@@ -385,6 +394,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
             this.countAffectation = this.affectationData.length;
             this.countValidationPilote = this.validationPiloteData.length;
             this.countValidationRQ = this.validationRqData.length;
+            this.countValidationRqAffectation = this.validationRqAffectationData.length;
             this.countCloture = this.clotureData.length;
             this.countNonConformiteCloturee = this.nonConformiteClotureeData.length;
             this.countNonTraiter = this.nonTraiterData.length;

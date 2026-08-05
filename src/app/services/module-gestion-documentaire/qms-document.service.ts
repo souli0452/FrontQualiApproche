@@ -5,6 +5,7 @@ import { QualiUrlConfig } from '../quali-url-configs';
 import { BaseCrudService } from '../base-crud.service';
 import { DocumentQms, QmsDocumentType, QmsDocumentVersion, QmsAuditLog, DocumentStatsDto, DocumentUserAccess, SharedDocumentDto } from '../../models/gestion-documentaire.model';
 import { ApiItemResponse, ApiResponse } from '../../models/response.model';
+import { OptionsLoadEvent, OptionsLoader } from '../../shared/ui/lazy-options.model';
 
 
 @Injectable({
@@ -95,6 +96,24 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
         return this.http.get<ApiResponse<any>>(QualiUrlConfig.QMS_DOCUMENT_TYPE_ROOT_URL, {params, headers: httpHeaders});
     }
 
+    /**
+     * Chargeur des types documentaires pour les listes déroulantes : page par page, recherche
+     * servie par le serveur. `chargerOptions` hérité ne convient pas ici — l'URL de ce service
+     * pointe déjà sur les types, mais la forme attendue reste la même.
+     */
+    readonly chargerOptionsTypes: OptionsLoader<QmsDocumentType> = (event: OptionsLoadEvent) =>
+        this.typeDocumentQmsGetAll(event.page, event.limit, { search: event.search }).pipe(
+            map((res: any) => {
+                const donnees = res?.data ?? res;
+                const options = (donnees?.content ?? (Array.isArray(donnees) ? donnees : [])) as QmsDocumentType[];
+                return {
+                    options,
+                    totalRecords: donnees?.totalElements ?? options.length,
+                    hasMore: donnees?.last === undefined ? undefined : !donnees.last
+                };
+            })
+        );
+
     typeDocumentQmsCreate
         (type: QmsDocumentType): 
         Observable<QmsDocumentType> {
@@ -123,6 +142,21 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
     }
 
     // --- NOUVEAUX ENDPOINTS ALIGNÉS SUR QmsDocumentController ---
+
+    /**
+     * Change le niveau de confidentialité d'un document déposé.
+     *
+     * <p>Réservé à l'administration générale et au responsable qualité. Rend l'avertissement du
+     * serveur lorsque le nouveau niveau ferme le circuit du document, ou `null` sinon.</p>
+     */
+    reclasser(id: string, niveauId: string | null, niveauLibelle: string | null): Observable<string | null> {
+        const params = new HttpParams()
+            .set('niveauConfidentialiteId', niveauId ?? '')
+            .set('niveauConfidentialiteLibelle', niveauLibelle ?? '');
+        return this.http
+            .put<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/niveau-confidentialite`, null, { params })
+            .pipe(map((res: any) => res?.data ?? null));
+    }
 
     createDocument(file: File, documentData: Record<string, any>): Observable<DocumentQms> {
         const formData = new FormData();
@@ -184,6 +218,64 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
                 return [];
             })
         );
+    }
+
+    /**
+     * Chargeur des documents accessibles pour les listes déroulantes : page par page, la saisie
+     * portée au serveur par le critère `query`.
+     *
+     * <p>Sans lui, le sélecteur n'offrait que les dix premiers documents — la recherche étant
+     * paginée d'office — et aucun moyen d'atteindre les autres.</p>
+     */
+    readonly chargerOptionsDocuments: OptionsLoader<DocumentQms> = (event: OptionsLoadEvent) =>
+        this.http
+            .get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/search`, {
+                params: this.buildParams({ page: event.page, size: event.limit, query: event.search })
+            })
+            .pipe(
+                map((res: any) => {
+                    const donnees = res?.data ?? res;
+                    const options = (donnees?.content ?? (Array.isArray(donnees) ? donnees : [])) as DocumentQms[];
+                    return {
+                        options,
+                        totalRecords: donnees?.totalElements ?? options.length,
+                        hasMore: donnees?.last === undefined ? undefined : !donnees.last
+                    };
+                })
+            );
+
+    /**
+     * Recherche paginée : le contenu de la page et le total du fonds visible.
+     *
+     * <p>Distincte de `searchDocuments`, qui ne rend que le contenu. Un tableau qui pagine côté
+     * serveur a besoin du total pour dimensionner sa barre de pagination — sans lui, il ne peut
+     * pas savoir qu'il existe une page suivante.</p>
+     */
+    rechercherDocumentsPagines(filters: Record<string, any>): Observable<{ contenu: DocumentQms[]; total: number }> {
+        // `buildParams` écraserait un critère multivalué comme `status` : chaque valeur doit être
+        // répétée dans la requête, non concaténée.
+        let params = new HttpParams();
+        Object.keys(filters).forEach((cle) => {
+            const valeur = filters[cle];
+            if (valeur === null || valeur === undefined || valeur === '') {
+                return;
+            }
+            if (Array.isArray(valeur)) {
+                valeur.forEach((v: any) => (params = params.append(cle, v)));
+            } else {
+                params = params.set(cle, valeur.toString());
+            }
+        });
+
+        return this.http
+            .get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/search`, { params })
+            .pipe(
+                map((res: any) => {
+                    const donnees = res?.data ?? res;
+                    const contenu = (donnees?.content ?? (Array.isArray(donnees) ? donnees : [])) as DocumentQms[];
+                    return { contenu, total: donnees?.totalElements ?? contenu.length };
+                })
+            );
     }
 
     searchDocuments(filters: Record<string, any>): Observable<DocumentQms[]> {

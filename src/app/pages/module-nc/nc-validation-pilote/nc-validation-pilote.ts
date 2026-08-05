@@ -15,7 +15,6 @@ import { ProcNonConformiteService } from '../../../services/non-conformite/proc-
 import { NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
-import { NCRejetComponent } from '../nc-rejet/nc-rejet';
 import { MessageService } from 'primeng/api';
 import { FeaturesService } from '../../../services/feature-service';
 import { Router } from '@angular/router';
@@ -28,8 +27,7 @@ import { ApiItemResponse } from '../../../models/response.model';
       CommonModule, 
       NgPrimeModule, 
       NcFilterBarComponent,
-      TraitementTableComponent, 
-      NCRejetComponent,
+      TraitementTableComponent,
   ],
   templateUrl: './nc-validation-pilote.html',
   styleUrl: './nc-validation-pilote.scss'
@@ -56,7 +54,6 @@ export class ValidationPilote implements OnInit, OnDestroy {
   protected readonly BtnActions = EtapeTraitement;
 
   cols: any[] = [];
-  motifRejetDialog: boolean = false;
 
   constructor(
     public roleService: RoleService,
@@ -279,17 +276,7 @@ export class ValidationPilote implements OnInit, OnDestroy {
         });
     }
 
-  rejet(demande: any) {
-      this.demande = demande;
-      console.log("MOTIF REJET DEMANDEE 1 ", this.motifRejetDialog);
-      this.motifRejetDialog = true;
-      console.log("MOTIF REJET DEMANDEE 2 ", this.motifRejetDialog);
-      
-      // Note: Il faudra ajouter le composant app-nc-rejet dans le template HTML
-      // si tu veux que la pop-up de rejet s'affiche !
-  }
-
-  ngOnDestroy() {
+    ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
   }

@@ -13,15 +13,15 @@
         <div class="text-lg font-bold text-slate-900 leading-tight">
           {{ action?.libelle || 'Décision' }}
         </div>
-        <div class="text-xs text-slate-500 mt-0.5" *ngIf="document">
-          {{ document.documentNumber }}
-          <span *ngIf="document.currentEtape"> — étape « {{ document.currentEtape }} »</span>
+        <div class="text-xs text-slate-500 mt-0.5" *ngIf="reference">
+          {{ reference }}
+          <span *ngIf="etapeCourante"> — étape « {{ etapeCourante }} »</span>
         </div>
       </div>
     </div>
   </ng-template>
 
-  <div class="mt-1" *ngIf="document">
+  <div class="mt-1">
 
     <form [formGroup]="form" class="flex flex-col gap-5">
 
@@ -52,8 +52,37 @@
               <select *ngSwitchCase="'SELECT'" class="p-inputtext w-full"
                 [formControlName]="nomDeControle(champ)">
                 <option value="">—</option>
-                <option *ngFor="let choix of choixDuChamp(champ)" [value]="choix">{{ choix }}</option>
+                <option *ngFor="let choix of choixDuChamp(champ)" [value]="choix.value">{{ choix.label }}</option>
               </select>
+
+              <!-- Le moteur ne transporte que des chaînes : le fichier est déposé d'abord, et
+                   c'est sa référence qui devient la valeur du champ. -->
+              <div *ngSwitchCase="'FILE'" class="flex flex-col gap-1">
+                <ng-container *ngIf="deposerFichier; else depotIndisponible">
+                  <input type="file" class="w-full text-sm"
+                    [disabled]="depotsEnCours.has(nomDeControle(champ))"
+                    (change)="choisirFichier($event, nomDeControle(champ))" />
+
+                  <small class="text-slate-500 flex items-center gap-1"
+                    *ngIf="depotsEnCours.has(nomDeControle(champ))">
+                    <i class="pi pi-spinner pi-spin text-xs"></i> Dépôt en cours…
+                  </small>
+                  <small class="text-emerald-700 flex items-center gap-1"
+                    *ngIf="fichiersDeposes[nomDeControle(champ)] && !depotsEnCours.has(nomDeControle(champ))">
+                    <i class="pi pi-check text-xs"></i> {{ fichiersDeposes[nomDeControle(champ)] }}
+                  </small>
+                  <small class="p-error" *ngIf="depotsEnEchec.has(nomDeControle(champ))">
+                    Le dépôt a échoué : la pièce n'est pas jointe. Réessayez.
+                  </small>
+                </ng-container>
+
+                <ng-template #depotIndisponible>
+                  <input type="file" class="w-full text-sm" disabled />
+                  <small class="p-error">
+                    Cet écran ne sait pas encore déposer de pièce jointe pour cette étape.
+                  </small>
+                </ng-template>
+              </div>
 
               <input *ngSwitchDefault pInputText type="text" class="w-full"
                 [formControlName]="nomDeControle(champ)" />
@@ -101,7 +130,8 @@
         <p-button label="Annuler" icon="pi pi-times" severity="secondary" [text]="true"
           (onClick)="fermer()"></p-button>
         <p-button [label]="action?.libelle || 'Confirmer'" icon="pi pi-check"
-          [disabled]="form.invalid" [loading]="loading" (onClick)="valider()"></p-button>
+          [disabled]="form.invalid || depotEnCours" [loading]="loading || depotEnCours"
+          (onClick)="valider()"></p-button>
       </div>
     </div>
   </ng-template>

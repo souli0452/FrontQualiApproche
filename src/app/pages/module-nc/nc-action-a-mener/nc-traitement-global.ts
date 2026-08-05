@@ -53,7 +53,6 @@ export class TraitementGlobalComponent {
     private destroy$ = new Subject<void>();
 
     currentFilters: NcFilter | undefined;
-    motifRejetDialog: boolean=false;
     loading: boolean = false;
     title = 'Traitements des non-conformités';
     user!: any;
@@ -252,21 +251,6 @@ export class TraitementGlobalComponent {
       };
 
         this.mesNonConformites = this.mesNonConformitesRaw.filter(filterFn);
-    }
-
-    traiter(rowdata: any): void {
-        rowdata.status= NonConformStatus.TRAITER
-        this.nonConformiteService.nonConformiteUpdatePlanAction(rowdata).pipe().subscribe({
-            next: (data) => {
-                this.featureService.onReloadRequested(true);
-                showToast(StatusEnum.success, data.status, null, this.messageService);
-                    this.goBack();
-            },
-            error:(error)=>{
-                showToast(StatusEnum.error,error.status, null, this.messageService, error);
-
-            }
-        })
     }
 
     goBack() {

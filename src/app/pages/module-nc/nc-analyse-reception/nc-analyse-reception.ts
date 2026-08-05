@@ -13,7 +13,6 @@ import { NonConformiteService } from '../../../services/non-conformite/non-confo
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
 import { MessageService } from 'primeng/api';
 import { FeaturesService } from '../../../services/feature-service';
-import { NCRejetComponent } from '../nc-rejet/nc-rejet';
 import { ApiItemResponse } from '../../../models/response.model';
 
 @Component({
@@ -23,8 +22,7 @@ import { ApiItemResponse } from '../../../models/response.model';
       CommonModule, 
       NgPrimeModule, 
       NcFilterBarComponent,
-      TraitementTableComponent, 
-      NCRejetComponent
+      TraitementTableComponent
   ],
   providers: [MessageService], // Essentiel pour les toasts
   templateUrl: './nc-analyse-reception.html',
@@ -48,7 +46,6 @@ export class AnalyseReceptionComponent implements OnInit, OnDestroy {
   // Propriétés du tableau
   protected readonly BtnActions = EtapeTraitement;
   cols: any[] = [];
-  motifRejetDialog: boolean = false;
   demande: any;
 
   @ViewChild(TraitementTableComponent) dmdTraitement!: TraitementTableComponent;
@@ -199,13 +196,6 @@ export class AnalyseReceptionComponent implements OnInit, OnDestroy {
 //           }
 //       });
 //   }
-
-  rejet(demande: any) {
-      this.demande = demande;
-      this.motifRejetDialog = true;
-      // Note: Il faudra ajouter le composant app-nc-rejet dans le template HTML
-      // si tu veux que la pop-up de rejet s'affiche !
-  }
 
     onSuccess(res: ApiItemResponse<any>) {
         this.dmdTraitement.closeDetailsDialog();

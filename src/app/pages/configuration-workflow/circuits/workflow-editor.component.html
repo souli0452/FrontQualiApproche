@@ -141,6 +141,21 @@
                                     <label class="text-xs font-medium text-surface-600">Description</label>
                                     <input pInputText formControlName="description" placeholder="Ce qui est attendu à cette étape" />
                                 </div>
+                                <!-- Nommer quelqu'un plutôt que d'inventer un rôle : la valeur saisie
+                                     dans ce champ devient le titulaire du dossier, à qui les étapes
+                                     suivantes pourront être réservées. Un rôle « agent imputé » aurait
+                                     ouvert le traitement de tout dossier à tout agent imputable. -->
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-xs font-medium text-surface-600">Champ désignant le titulaire</label>
+                                    <p-select formControlName="champTitulaire" [options]="champsDesignables(i)"
+                                              optionLabel="label" optionValue="value" [showClear]="true"
+                                              placeholder="Cette étape ne désigne personne"
+                                              [filter]="true" appendTo="body"></p-select>
+                                    <small class="text-[11px] text-surface-400">
+                                        La personne saisie dans ce champ devient le titulaire du dossier ;
+                                        les étapes réservées au titulaire ne s'ouvriront qu'à elle.
+                                    </small>
+                                </div>
                             </div>
 
                             <!-- Décisions -->
@@ -168,6 +183,66 @@
                                                   optionLabel="label" optionValue="value" [showClear]="true"
                                                   placeholder="Celui de l'étape"
                           [filter]="true" appendTo="body"></p-select>
+                                    </div>
+                                </div>
+
+                                <!-- Apparence du bouton. Laissée vide, la décision fournit la sienne :
+                                     une coche verte pour approuver, une croix rouge pour rejeter. -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-xs font-medium text-surface-600">Icône du bouton</label>
+                                        <p-select formControlName="iconeApprobation" [options]="iconesAction"
+                                                  optionLabel="label" optionValue="value" [showClear]="true"
+                                                  [editable]="true" placeholder="pi pi-check"
+                                                  [filter]="true" appendTo="body">
+                                            <ng-template let-choix pTemplate="item">
+                                                <span class="inline-flex items-center gap-2">
+                                                    <i [class]="choix.value"></i><span>{{ choix.label }}</span>
+                                                </span>
+                                            </ng-template>
+                                        </p-select>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-xs font-medium text-surface-600">Couleur du bouton</label>
+                                        <p-select formControlName="severiteApprobation" [options]="severitesAction"
+                                                  optionLabel="label" optionValue="value" [showClear]="true"
+                                                  placeholder="Vert — aboutissement"
+                                                  [filter]="true" appendTo="body">
+                                            <ng-template let-choix pTemplate="item">
+                                                <span class="inline-flex items-center gap-2">
+                                                    <p-tag [severity]="choix.value" value=" "></p-tag>
+                                                    <span>{{ choix.label }}</span>
+                                                </span>
+                                            </ng-template>
+                                        </p-select>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-xs font-medium text-surface-600">Aperçu</label>
+                                        <p-button
+                                            [label]="etape.get('libelleApprobation')?.value || 'Approuver'"
+                                            [icon]="apercuIcone(etape.get('iconeApprobation')?.value, 'APPROUVE')"
+                                            [severity]="apercuSeverite(etape.get('severiteApprobation')?.value, 'APPROUVE')"
+                                            size="small" [disabled]="true"></p-button>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-xs font-medium text-surface-600">Condition à remplir (facultatif)</label>
+                                        <p-select formControlName="conditionApprobation" [options]="faitsConnus"
+                                                  optionLabel="label" optionValue="value" [showClear]="true"
+                                                  [editable]="true" placeholder="Aucune condition"
+                                                  [filter]="true" appendTo="body"></p-select>
+                                        <small class="text-[11px] text-surface-400">
+                                            Fait que le dossier doit porter pour que cette décision soit possible —
+                                            « PLANS_ACTION_SOLDES », par exemple. C'est le module métier qui le déclare.
+                                        </small>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-xs font-medium text-surface-600">Ce que la condition veut dire</label>
+                                        <input pInputText formControlName="conditionLibelleApprobation"
+                                               placeholder="toutes les actions correctives ont été reconnues efficaces" />
+                                        <small class="text-[11px] text-surface-400">
+                                            Phrase affichée à qui attend que le dossier avance. Sans elle, l'écran ne peut montrer
+                                            que le nom technique du fait.
+                                        </small>
                                     </div>
                                 </div>
 
@@ -200,6 +275,68 @@
                                                       optionLabel="label" optionValue="value" [showClear]="true"
                                                       placeholder="Celui de l'étape"
                           [filter]="true" appendTo="body"></p-select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Un renvoi en correction et un refus ferme sont deux rejets :
+                                         la couleur est ce qui les distingue à l'écran. -->
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-xs font-medium text-surface-600">Icône du bouton</label>
+                                            <p-select formControlName="iconeRejet" [options]="iconesAction"
+                                                      optionLabel="label" optionValue="value" [showClear]="true"
+                                                      [editable]="true" placeholder="pi pi-times"
+                                                      [filter]="true" appendTo="body">
+                                                <ng-template let-choix pTemplate="item">
+                                                    <span class="inline-flex items-center gap-2">
+                                                        <i [class]="choix.value"></i><span>{{ choix.label }}</span>
+                                                    </span>
+                                                </ng-template>
+                                            </p-select>
+                                        </div>
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-xs font-medium text-surface-600">Couleur du bouton</label>
+                                            <p-select formControlName="severiteRejet" [options]="severitesAction"
+                                                      optionLabel="label" optionValue="value" [showClear]="true"
+                                                      placeholder="Rouge — refus ferme"
+                                                      [filter]="true" appendTo="body">
+                                                <ng-template let-choix pTemplate="item">
+                                                    <span class="inline-flex items-center gap-2">
+                                                        <p-tag [severity]="choix.value" value=" "></p-tag>
+                                                        <span>{{ choix.label }}</span>
+                                                    </span>
+                                                </ng-template>
+                                            </p-select>
+                                        </div>
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-xs font-medium text-surface-600">Aperçu</label>
+                                            <p-button
+                                                [label]="etape.get('libelleRejet')?.value || 'Rejeter'"
+                                                [icon]="apercuIcone(etape.get('iconeRejet')?.value, 'REJETE')"
+                                                [severity]="apercuSeverite(etape.get('severiteRejet')?.value, 'REJETE')"
+                                                size="small" [disabled]="true"></p-button>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-xs font-medium text-surface-600">Condition à remplir (facultatif)</label>
+                                            <p-select formControlName="conditionRejet" [options]="faitsConnus"
+                                                      optionLabel="label" optionValue="value" [showClear]="true"
+                                                      [editable]="true" placeholder="Aucune condition"
+                                                      [filter]="true" appendTo="body"></p-select>
+                                            <small class="text-[11px] text-surface-400">
+                                                Fait que le dossier doit porter pour que ce rejet soit possible.
+                                            </small>
+                                        </div>
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-xs font-medium text-surface-600">Ce que la condition veut dire</label>
+                                            <input pInputText formControlName="conditionLibelleRejet"
+                                                   placeholder="toutes les actions correctives ont été reconnues efficaces" />
+                                            <small class="text-[11px] text-surface-400">
+                                                Phrase affichée à qui attend que le dossier avance. Sans elle, l'écran ne peut montrer
+                                                que le nom technique du fait.
+                                            </small>
                                         </div>
                                     </div>
                                 }
@@ -238,11 +375,28 @@
                                                               optionLabel="label" optionValue="value"
                           [filter]="true" appendTo="body"></p-select>
                                                 </div>
+                                                @if (champ.get('type')?.value === 'SELECT') {
+                                                    <div class="md:col-span-2 flex flex-col gap-1">
+                                                        <label class="text-[11px] text-surface-500">Valeurs proposées</label>
+                                                        <p-select formControlName="source" [options]="sourcesDeChoix"
+                                                                  optionLabel="label" optionValue="value"
+                                                                  appendTo="body"></p-select>
+                                                    </div>
+                                                    <!-- Une liste écrite à la main ne vaut que pour des choix figés.
+                                                         Adossée au référentiel, elle suit les créations et les
+                                                         corrections de libellé sans qu'on remanie le circuit. -->
+                                                    @if (!champ.get('source')?.value) {
+                                                        <div class="md:col-span-2 flex flex-col gap-1">
+                                                            <label class="text-[11px] text-surface-500">Choix (séparés par des virgules)</label>
+                                                            <input pInputText formControlName="options" placeholder="Oui,Non" />
+                                                        </div>
+                                                    }
+                                                }
                                                 <div class="md:col-span-2 flex flex-col gap-1">
-                                                    <label class="text-[11px] text-surface-500">Choix (séparés par des virgules)</label>
-                                                    <input pInputText formControlName="options"
-                                                           [disabled]="champ.get('type')?.value !== 'SELECT'"
-                                                           placeholder="Oui,Non" />
+                                                    <label class="text-[11px] text-surface-500">Demandé lors de</label>
+                                                    <p-select formControlName="decision" [options]="porteesChamp"
+                                                              optionLabel="label" optionValue="value"
+                                                              appendTo="body"></p-select>
                                                 </div>
                                                 <div class="md:col-span-1 flex items-center gap-1 pb-2">
                                                     <p-checkbox formControlName="required" [binary]="true"></p-checkbox>
@@ -310,17 +464,22 @@
                     }
 
                     <div class="flex flex-col gap-1">
+                        <!-- Le bouton est montré tel qu'il apparaîtra au décideur : c'est la seule
+                             façon de vérifier une apparence sans dérouler le circuit en vrai. -->
                         @for (transition of etape.transitions; track transition.decision) {
                             <div class="flex items-center gap-2 text-xs">
-                                @if (transition.decision === 'APPROUVE') {
-                                    <i class="pi pi-check-circle text-emerald-600"></i>
-                                } @else {
-                                    <i class="pi pi-times-circle text-red-600"></i>
-                                }
-                                <span class="font-medium">{{ transition.label || transition.decision }}</span>
+                                <p-button
+                                    [label]="transition.label || transition.decision"
+                                    [icon]="apercuIcone(transition.icon ?? null, transition.decision === 'APPROUVE' ? 'APPROUVE' : 'REJETE')"
+                                    [severity]="apercuSeverite(transition.severity ?? null, transition.decision === 'APPROUVE' ? 'APPROUVE' : 'REJETE')"
+                                    size="small" [disabled]="true"></p-button>
                                 <span class="text-surface-500">{{ descriptionTransition(transition, circuitConsulte) }}</span>
                                 @if (transition.requiredRole) {
                                     <p-tag severity="secondary" [value]="transition.requiredRole"></p-tag>
+                                }
+                                @if (transition.conditionRequise) {
+                                    <p-tag severity="warn" icon="pi pi-lock"
+                                           [value]="'si ' + transition.conditionRequise"></p-tag>
                                 }
                             </div>
                         }

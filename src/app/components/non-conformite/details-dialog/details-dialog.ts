@@ -1,5 +1,6 @@
-import { Component, Input, ViewChild } from '@angular/core';
-import { DatePipe, formatDate } from '@angular/common';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { CommonModule, DatePipe, formatDate } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Tag } from 'primeng/tag';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { NgPrimeModule } from '../../../../prime-ng.module';
@@ -8,28 +9,40 @@ import { FeaturesService } from '../../../services/feature-service';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { EtapeTraitement } from '../../../enums/enums';
 import { LightboxComponent } from '../lightbox/lightbox';
+import { WorkflowGuidanceComponent } from '../../../shared/workflow/workflow-guidance.component';
+import { WorkflowHistoriqueComponent } from '../../../shared/workflow/workflow-historique.component';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
-import { convertFilesToBase64, downloadAttachment, downloadFile } from '../../../utils/fichier/fichier-utils';
+import { convertFilesToBase64 } from '../../../utils/fichier/fichier-utils';
+import { PieceJointeFichierService } from '../../../services/non-conformite/piece-jointe-fichier.service';
 import { formatDateToDDMMYYYY } from '../../../utils/formatage/formatage-utils';
+import { hasAnyPermission } from '../../../utils/auth/auth-utils';
 
 @Component({
     selector: 'app-details-dialog',
     templateUrl: './details-dialog.html',
-    imports: [NgPrimeModule, FileUploadComponent, LightboxComponent],
+    imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent, LightboxComponent,
+        WorkflowGuidanceComponent, WorkflowHistoriqueComponent],
     standalone: true,
     styleUrl: './details-dialog.scss'
 })
 export class DetailsDialogComponent {
-    @Input() demande: any = {};
+    @Input() set demande(valeur: any) {
+        this._demande = valeur ?? {};
+    }
+    get demande(): any {
+        return this._demande;
+    }
+    private _demande: any = {};
+
+    /**
+     * L'historique nomme des personnes et rapporte leurs appréciations : il ne s'ouvre qu'à qui a
+     * le droit de lire le circuit. À défaut, l'onglet n'existe pas — plutôt qu'un onglet visible
+     * menant à un refus.
+     */
+    readonly peutVoirHistorique = hasAnyPermission(['workflow-read', 'workflow-validate', 'nc-validate']);
+
     @ViewChild(LightboxComponent) maLightbox!: LightboxComponent;
     private uploadedFiles: any[] = [];
-    constructor(
-        private featureService: FeaturesService,
-        private confirmationService: ConfirmationService,
-        private service: ProcNonConformiteService,
-        private messageService: MessageService,
-        private authService: AuthService
-    ) {}
 
     motifRejetDialog: boolean = false;
     afficheDialog: boolean = false;
@@ -40,9 +53,15 @@ export class DetailsDialogComponent {
     isConsultation: boolean = false;
     confirmKey = 'confirmKey';
 
-    ngOnInit() {
-        console.log(this.demande);
-    }
+    constructor(
+        private featureService: FeaturesService,
+        private confirmationService: ConfirmationService,
+        private service: ProcNonConformiteService,
+        private messageService: MessageService,
+        private authService: AuthService,
+        private fichiers: PieceJointeFichierService
+    ) {}
+
     hideDialog() {
         this.motifRejetDialog = false;
     }
@@ -116,15 +135,20 @@ export class DetailsDialogComponent {
             }
         });
     }
+    /**
+     * Télécharge une pièce jointe.
+     *
+     * <p>Le contenu ne voyage plus avec la fiche : il est demandé au serveur au moment du clic.
+     * Le service accepte aussi une pièce que l'utilisateur vient de choisir, laquelle n'est pas
+     * encore enregistrée et n'a donc rien à demander.</p>
+     */
     downloadFile(fichier: any) {
-        const nom = fichier.nom || fichier.nomFichier;
-        const base64 = fichier.fichier || fichier.fichierBase64;
-        if (base64) {
-            downloadFile(nom, base64);
-        } else {
-            console.error('Aucun contenu base64 trouvé pour ce fichier', fichier);
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Le fichier est introuvable ou vide.', life: 3000 });
-        }
+        this.fichiers.telecharger(fichier);
+    }
+
+    /** Même chose : les gabarits appellent encore ce nom sur les listes de pièces jointes. */
+    downloadAttachment(fichier: any) {
+        this.fichiers.telecharger(fichier);
     }
     telechargerTout(fichiers: any[]) {
         fichiers?.forEach((fichier) => {
@@ -152,24 +176,6 @@ export class DetailsDialogComponent {
     }
 
     protected readonly EtapeTraitement = EtapeTraitement;
-
-    rejet() {
-        this.confirmationService.confirm({
-            message: `Voulez-vous vraiment rejeter le plan d'action n°: ${this.planAction.numeroOdre} ?`,
-            key: this.confirmKey,
-            accept: () => {
-                this.service.rejetPlanAction(this.planAction).subscribe({
-                    next: (data) => {
-                        this.displayDialog = false;
-                        this.messageService.add({ severity: 'success', summary: 'Réussi', detail: "L'oppération à réussie !", life: 3000 });
-                    },
-                    error: (error) => {
-                        this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 4", life: 3000 });
-                    }
-                });
-            }
-        });
-    }
 
     getStatusSeverity(gravity: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
         if (!gravity) return 'secondary';
@@ -200,5 +206,4 @@ export class DetailsDialogComponent {
         this.planAction.docRejet = fichiers[0];
     }
 
-    protected readonly downloadAttachment = downloadAttachment;
 }

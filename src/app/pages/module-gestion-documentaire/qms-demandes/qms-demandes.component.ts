@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '../../../shared';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -12,7 +13,6 @@ import { DemandeDocumentDto } from '../../../models/demande-document.model';
 import { DemandeDocumentService } from '../../../services/module-gestion-documentaire/demande-document.service';
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 import { QmsDemandeDetailComponent } from './qms-demande-detail.component';
-import { QmsWorkflowDecisionDialogComponent } from '../qms-document/components/qms-workflow-decision-dialog.component';
 import { WorkflowService } from '../../../services/workflow.service';
 import { ValidationHistoryDto, WorkflowActionDto, WorkflowStateDto } from '../../../models/workflow.model';
 import { hasAnyPermission } from '../../../utils/auth/auth-utils';
@@ -40,7 +40,7 @@ type LigneDemande = DemandeDocumentDto & {
     selector: 'app-qms-demandes',
     standalone: true,
     imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, AppCrudGenericComponent,
-        QmsDemandeDetailComponent, QmsWorkflowDecisionDialogComponent],
+        QmsDemandeDetailComponent, WorkflowDecisionDialogComponent],
     providers: [MessageService],
     templateUrl: './qms-demandes.component.html'
 })

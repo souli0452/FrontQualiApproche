@@ -267,6 +267,16 @@
     </div>
 </div>
 
+<p-divider *ngIf="countValidationRqAffectation > 0" />
+
+<!-- Validation du responsable qualité : il valide le signalement et désigne la structure en
+     charge. Placée après la réception et avant l'imputation, comme dans le circuit. -->
+<div *ngIf="countValidationRqAffectation > 0" class="mt-6 bg-surface-0 dark:bg-surface-900 p-4 border border-surface-200 dark:border-surface-700 rounded-xl shadow-sm">
+    <div>
+        <app-nc-validation-rq-affectation [demandeList]="validationRqAffectationData"></app-nc-validation-rq-affectation>
+    </div>
+</div>
+
 <p-divider *ngIf="countImputees > 0" />
 
 <!-- Section des Imputations en cours -->

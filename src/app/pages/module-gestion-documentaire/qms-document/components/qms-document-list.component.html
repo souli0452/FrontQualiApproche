@@ -24,42 +24,42 @@
 
     <div class="col-span-12 sm:col-span-6 lg:col-span-3">
       <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Type</label>
-      <p-select [options]="documentTypes" [ngModel]="selectedType" (ngModelChange)="selectedTypeChange.emit($event)"
-        optionLabel="libelle" optionValue="code" placeholder="Tous les types" class="w-full"
-        [filter]="true" [showClear]="true" appendTo="body" (onChange)="refresh.emit()"></p-select>
+      <app-select-input [ngModel]="selectedType" (ngModelChange)="selectedTypeChange.emit($event)"
+        optionLabel="libelle" optionValue="code" placeholder="Tous les types"
+        [lazy]="true" [loadOptions]="chargerTypes" (selectionChange)="refresh.emit()"></app-select-input>
     </div>
 
     <div class="col-span-12 sm:col-span-6 lg:col-span-3">
       <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Processus émetteur</label>
-      <p-select [options]="structures" [ngModel]="selectedService" (ngModelChange)="selectedServiceChange.emit($event)"
-        optionLabel="libelleLong" optionValue="id" placeholder="Tous les services" class="w-full"
-        [filter]="true" [showClear]="true" appendTo="body" (onChange)="refresh.emit()"></p-select>
+      <app-select-input [ngModel]="selectedService" (ngModelChange)="selectedServiceChange.emit($event)"
+        optionLabel="libelleLong" optionValue="id" placeholder="Tous les services"
+        [lazy]="true" [loadOptions]="chargerStructures" (selectionChange)="refresh.emit()"></app-select-input>
     </div>
 
     <div class="col-span-12 sm:col-span-6 lg:col-span-4">
       <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Priorité</label>
-      <p-select [options]="priorites" [ngModel]="selectedPriorite"
+      <app-select-input [ngModel]="selectedPriorite"
         (ngModelChange)="selectedPrioriteChange.emit($event)"
-        optionLabel="libelle" optionValue="id" placeholder="Toutes les priorités" class="w-full"
-        [filter]="true" [showClear]="true" appendTo="body" (onChange)="refresh.emit()"></p-select>
+        optionLabel="libelle" optionValue="id" placeholder="Toutes les priorités"
+        [lazy]="true" [loadOptions]="chargerPriorites" (selectionChange)="refresh.emit()"></app-select-input>
     </div>
 
     <!-- Seuls les niveaux permis à l'utilisateur sont proposés : filtrer sur un niveau classé
          au-dessus de ses droits ne rendrait rien, le serveur ayant déjà écarté ces documents. -->
     <div class="col-span-12 sm:col-span-6 lg:col-span-4">
       <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Confidentialité</label>
-      <p-select [options]="niveauxConfidentialite" [ngModel]="selectedNiveauConfidentialite"
+      <app-select-input [ngModel]="selectedNiveauConfidentialite"
         (ngModelChange)="selectedNiveauConfidentialiteChange.emit($event)"
-        optionLabel="libelle" optionValue="id" placeholder="Tous les niveaux" class="w-full"
-        [filter]="true" [showClear]="true" appendTo="body" (onChange)="refresh.emit()"></p-select>
+        optionLabel="libelle" optionValue="id" placeholder="Tous les niveaux"
+        [lazy]="true" [loadOptions]="chargerNiveauxConfidentialite" (selectionChange)="refresh.emit()"></app-select-input>
     </div>
 
     <div class="col-span-12 sm:col-span-6 lg:col-span-3">
       <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Domaine</label>
-      <p-select [options]="domaines" [ngModel]="selectedDomaine"
+      <app-select-input [ngModel]="selectedDomaine"
         (ngModelChange)="selectedDomaineChange.emit($event)"
-        optionLabel="libelle" optionValue="id" placeholder="Tous les domaines" class="w-full"
-        [filter]="true" [showClear]="true" appendTo="body" (onChange)="refresh.emit()"></p-select>
+        optionLabel="libelle" optionValue="id" placeholder="Tous les domaines"
+        [lazy]="true" [loadOptions]="chargerDomaines" (selectionChange)="refresh.emit()"></app-select-input>
     </div>
 
     <div class="col-span-12 sm:col-span-6 lg:col-span-1">
@@ -71,7 +71,9 @@
 
 <!-- Tableau -->
 <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-  <p-table [value]="documents" [loading]="loading" [paginator]="true" [rows]="15"
+  <p-table [value]="documents" [loading]="loading" [paginator]="true"
+    [lazy]="true" [totalRecords]="totalDocuments" [first]="premiereLigne" [rows]="taillePage"
+    (onLazyLoad)="pageChange.emit({ first: $event.first ?? 0, rows: $event.rows ?? taillePage })"
     [rowsPerPageOptions]="[15, 30, 50]" [responsiveLayout]="'scroll'"
     currentPageReportTemplate="{first}–{last} sur {totalRecords} documents" [showCurrentPageReport]="true"
     styleClass="p-datatable-sm">
@@ -107,7 +109,7 @@
 
         <td class="text-center">
           <span class="font-mono text-xs bg-slate-100 text-slate-600 border border-slate-200 px-2 py-1 rounded">
-            v{{ doc.versionMajeure }}.{{ doc.versionMineure }}
+            v{{ doc.numeroVersion ?? 0 }}
           </span>
         </td>
 

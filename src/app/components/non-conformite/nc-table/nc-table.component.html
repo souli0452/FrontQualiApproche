@@ -161,7 +161,19 @@
                             </p-tag>
                         </span>
                         
-                        <span *ngIf="col.type === 'enum' && actuality[col.field]" class="flex justify-center w-full">
+                        <!-- L'étape courante est nommée par le circuit, pas traduite ici : les
+                             valeurs d'étape n'ont aucune correspondance dans la liste ci-dessous,
+                             et la cellule serait restée vide. -->
+                        <span *ngIf="col.type === 'enum' && col.field === 'etatTraitement'" class="flex justify-center w-full">
+                            <p-tag *ngIf="actuality.workflowState?.currentStateName"
+                                [style]="{'font-weight': 'normal'}" severity="info"
+                                [value]="actuality.workflowState.currentStateName"></p-tag>
+                            <span *ngIf="!actuality.workflowState?.currentStateName" class="text-500 text-sm">
+                                {{ actuality[col.field] }}
+                            </span>
+                        </span>
+
+                        <span *ngIf="col.type === 'enum' && col.field !== 'etatTraitement' && actuality[col.field]" class="flex justify-center w-full">
                             <span *ngIf="actuality[col.field]==='DRAFT'" class="p-badge p-badge-secondary">Brouillon</span>
                             <span *ngIf="actuality[col.field]==='PUBLISHED'" class="p-badge p-badge-info">Publiée</span>
                             <span *ngIf="actuality[col.field]==='PENDING'" class="p-badge p-badge-warning">En attente</span>

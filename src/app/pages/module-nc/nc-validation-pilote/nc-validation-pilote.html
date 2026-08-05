@@ -20,7 +20,6 @@
         [btnActions]="BtnActions.VALIDATION"
         [demandeList]="validationPiloteData"
         [cols]="cols"
-        (onRejet)="rejet($event)"
         (onValidation)="validation($event)"
         [loading]="loading"
         [paginator]="false"
@@ -36,9 +35,7 @@
     <!-- <app-traitement-table
         [btnActions]="BtnActions.VALIDATION_RS"
         [demandeList]="validationRqData"
-        (onValidationRS)="validationRs($event)"
         [cols]="cols"
-        (onRejet)="rejet($event)"
         [paginator]="false" 
         [showGridlines]="false"
         [title]="title"
@@ -74,4 +71,3 @@
 
     </div>
 
-<app-nc-rejet  [motifRejetDialog]="motifRejetDialog" [demande]="demande" (onSuccess)="hideDialog($event)" (onClose)="motifRejetDialog = false"></app-nc-rejet>

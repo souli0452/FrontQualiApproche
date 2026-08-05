@@ -54,6 +54,12 @@ export interface WorkflowStepDto {
   emailTemplateCode?: string | null;
   /** Modèle du catalogue ayant servi à pré-remplir l'étape. Simple référence, sans lien JPA. */
   stepTemplateId?: string | null;
+  /**
+   * Nom du champ dont la valeur désigne le titulaire du dossier — la personne à qui les étapes
+   * suivantes seront réservées. Doit être renvoyé tel quel : omis, le serveur l'efface, l'étape
+   * cesse de nommer quelqu'un et les étapes réservées au titulaire deviennent indécidables.
+   */
+  champTitulaire?: string | null;
   transitions?: WorkflowTransitionDto[];
   fields?: WorkflowStepFieldDto[];
 }
@@ -62,9 +68,30 @@ export interface WorkflowTransitionDto {
   id?: number;
   /** Libellé du bouton. Null accepté : le serveur retombe alors sur le nom de la décision. */
   label?: string | null;
+  /**
+   * Icône du bouton, en classe PrimeIcons (`pi pi-check`). Null accepté : le serveur retombe
+   * alors sur celle que porte la décision.
+   */
+  icon?: string | null;
+  /**
+   * Couleur du bouton, dans le vocabulaire PrimeNG : `success`, `info`, `warn`, `danger`,
+   * `secondary`, `contrast`, `help`, `primary`. Null accepté, même repli que l'icône.
+   *
+   * Elle ne double pas la décision : « Retourner au rédacteur » et « Refuser la demande » sont
+   * deux rejets, mais l'un invite à corriger quand l'autre arrête le dossier.
+   */
+  severity?: string | null;
   decision: StepDecision | string;
   /** Habilitation propre à la transition ; à défaut, celle de l'étape d'origine s'applique. */
   requiredRole?: string | null;
+  /**
+   * Fait que le dossier doit porter pour que la transition soit franchissable, ou vide si elle
+   * l'est sans condition. Le circuit exige un fait sans savoir ce qu'il recouvre ; le module
+   * métier le déclare sans savoir quelle transition l'attend.
+   */
+  conditionRequise?: string | null;
+  /** Ce que la condition veut dire, en clair, pour l'afficher à qui attend que le dossier avance. */
+  conditionLibelle?: string | null;
   /** Destination désignée par code : seule clé à la fois stable et connue avant enregistrement. */
   toStepCode?: string | null;
   toStepId?: number | null;
@@ -89,6 +116,11 @@ export interface WorkflowStepFieldDto {
   required: boolean;
   /** Valeurs proposées pour un champ de type liste, séparées par des virgules. */
   options?: string | null;
+  /**
+   * Décision à laquelle ce champ se rapporte (`APPROUVE`, `REJETE`), ou absent s'il vaut quelle que
+   * soit la décision. Un justificatif de rejet n'a pas à être demandé à qui approuve.
+   */
+  decision?: string | null;
 }
 
 export interface EmailTemplateDto {
@@ -118,12 +150,33 @@ export interface WorkflowStateDto {
    */
   currentStateCode?: string;
   currentStateName?: string;
+  /**
+   * Habilitation attendue à l'étape courante — un rôle, ou `@TITULAIRE` quand l'étape est réservée
+   * à la personne désignée sur le dossier. Sert à dire qui l'on attend lorsque l'appelant, lui,
+   * n'a rien à décider.
+   */
+  currentStepRole?: string | null;
   allowedActions: WorkflowActionDto[];
   /**
    * Champs à saisir avant de décider sur l'étape courante. Le serveur refuse la décision en 400
    * si un champ requis manque — les présenter à l'utilisateur évite un aller-retour perdu.
    */
   currentStepFields?: WorkflowStepFieldDto[];
+  /**
+   * Décisions que l'étape prévoit mais qu'une condition non remplie retient. Le moteur les retire
+   * des actions offertes — proposer une clôture que le dossier n'admet pas ne mènerait qu'à un
+   * refus — mais rien ne les mentionnait ensuite, et le dossier paraissait arrêté sans raison.
+   */
+  pendingDecisions?: DecisionEnAttenteDto[];
+}
+
+/** Une décision prévue par l'étape, et la condition qui lui manque. */
+export interface DecisionEnAttenteDto {
+  libelle?: string;
+  /** Nom technique du fait exigé. */
+  condition?: string;
+  /** Ce que la condition veut dire, tel que l'auteur du circuit l'a écrit. */
+  conditionLibelle?: string;
 }
 
 export interface WorkflowActionDto {
@@ -132,8 +185,19 @@ export interface WorkflowActionDto {
   libelle: string;
   /** Rôle exigé pour franchir. Informatif : le serveur tranche, l'écran ne fait que l'indiquer. */
   permission?: string;
-  /** Décision portée par l'action : détermine son apparence (approbation / rejet). */
+  /** Décision portée par l'action, pour distinguer une approbation d'un rejet. */
   decision?: StepDecision | string;
+  /**
+   * Icône du bouton, en classe PrimeIcons, telle que le circuit la déclare. Le serveur retombe
+   * sur celle de la décision quand elle n'est pas configurée : la valeur est donc toujours
+   * exploitable.
+   */
+  icon?: string;
+  /**
+   * Couleur du bouton, dans le vocabulaire PrimeNG (`success`, `warn`, `danger`…), utilisable
+   * telle quelle dans `[severity]`. Même repli que l'icône.
+   */
+  severity?: string;
 }
 
 /** Corps d'une demande de décision. */
@@ -170,4 +234,16 @@ export interface ValidationFieldValueDto {
   fieldCode?: string;
   fieldName?: string;
   value?: string;
+}
+
+/**
+ * Sort d'un dossier dans une décision groupée.
+ *
+ * <p>Une décision groupée n'est pas une décision sur N dossiers : ce sont N décisions, dont
+ * certaines peuvent échouer. Le motif est destiné à l'utilisateur.</p>
+ */
+export interface ResultatDecisionDto {
+  resourceId: string;
+  aboutie: boolean;
+  motif?: string | null;
 }

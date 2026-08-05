@@ -395,6 +395,34 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
     getNonConformiteImputed(userId :string,etapeTraitement :EtapeTraitement): Observable<HttpResponse<Array<any>>> {
         return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_IMPUTED+userId+`/${etapeTraitement}`, {observe: 'response', headers: {'X-Skip-Loader': 'true'}});
     }
+
+    /**
+     * Non-conformités sur lesquelles l'utilisateur a une décision à prendre.
+     *
+     * <p>Une seule requête remplace le croisement rôle × état que le front composait lui-même :
+     * c'est le circuit qui porte l'habilitation de chaque étape, et lui seul sait donc qui peut
+     * agir sur quoi. Chaque ligne rendue porte l'état de son circuit, actions comprises.</p>
+     *
+     * <p>La taille par défaut est large : cette liste alimente des onglets regroupés par étape, et
+     * une pagination à dix aurait vidé la plupart d'entre eux.</p>
+     */
+    nonConformiteATraiter(page: number = 0, size: number = 200): Observable<NonConformite[]> {
+        return this.getListFromUrl(NonConformiteUrlConfig.NON_CONFORMITE_A_TRAITER, { page, size });
+    }
+
+    /**
+     * Actions correctives sur lesquelles l'utilisateur a une décision à prendre.
+     *
+     * <p>Remplace le croisement « mes actions par courriel, au statut NON_TRAITER » : celui-ci ne
+     * montrait que les actions à réaliser par leur responsable. Une action revenue chez le pilote
+     * pour être vérifiée, ou déclinée et à ré-attribuer, n'apparaissait dans aucune liste — il
+     * fallait ouvrir la non-conformité et en parcourir les actions pour la retrouver.</p>
+     */
+    planActionsATraiter(page: number = 0, size: number = 200): Observable<any[]> {
+        return this.getListFromUrl(NonConformiteUrlConfig.PLAN_ACTION_A_TRAITER, { page, size });
+    }
+
+
 }
 
     

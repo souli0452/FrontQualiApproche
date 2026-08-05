@@ -4,6 +4,7 @@ import { Observable, map } from 'rxjs';
 import { BaseCrudService } from '../base-crud.service';
 import { QualiUrlConfig } from '../quali-url-configs';
 import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '../../models/referentiel-document.model';
+import { OptionsLoadEvent, OptionsLoader } from '../../shared/ui/lazy-options.model';
 
 /**
  * Les deux services reprennent `BaseCrudService` — mêmes chemins que les autres référentiels — et
@@ -50,6 +51,22 @@ export class NiveauConfidentialiteService extends BaseCrudService<NiveauConfiden
             .get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/filtres/niveaux-confidentialite`)
             .pipe(map(res => res?.data ?? res ?? []));
     }
+
+    /**
+     * Chargeur pour les listes déroulantes de recherche : les seuls niveaux permis à l'appelant.
+     *
+     * <p>Le filtre s'applique ici et non au serveur, contrairement aux autres référentiels : cette
+     * liste-là est servie entière — elle est courte et déjà restreinte aux droits de l'appelant —
+     * si bien que chercher dedans ne peut rien laisser hors de portée.</p>
+     */
+    readonly chargerOptionsFiltrables: OptionsLoader<NiveauConfidentialite> = (event: OptionsLoadEvent) =>
+        this.filtrables().pipe(
+            map((niveaux) => {
+                const terme = (event.search ?? '').trim().toLowerCase();
+                const retenus = terme ? niveaux.filter((n) => (n.libelle ?? '').toLowerCase().includes(terme)) : niveaux;
+                return { options: retenus, totalRecords: retenus.length, hasMore: false };
+            })
+        );
 }
 
 @Injectable({ providedIn: 'root' })

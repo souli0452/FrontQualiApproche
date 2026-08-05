@@ -108,6 +108,9 @@ function codeDisponible(base: string, dejaPris: Set<string>): string {
  * - `etatTraitement` — l'état métier propagé au service propriétaire du dossier ;
  * - les champs de saisie exigés à chaque étape.
  */
+/** Jetons de couleur admis par `p-button`, et par le serveur. */
+type SeveriteBouton = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'help' | 'contrast' | 'primary';
+
 @Component({
   selector: 'app-workflow-editor',
   standalone: true,
@@ -207,6 +210,13 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   typesEnConflit: string[] = [];
 
   rolesDisponibles: Option[] = [];
+  /**
+   * Faits qu'une transition peut exiger du dossier.
+   *
+   * <p>Le champ reste saisissable : la liste n'est qu'un rappel de ce qui existe déjà, et un fait
+   * tout neuf doit pouvoir être posé avant que quiconque ne l'ait déclaré.</p>
+   */
+  faitsConnus: Option<string | null>[] = [];
   modelesEmail: Option<string | null>[] = [];
   modelesEtape: WorkflowStepTemplate[] = [];
 
@@ -214,6 +224,93 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     { label: 'Documents', value: 'DOCUMENT' },
     { label: 'Non-conformités', value: 'NON_CONFORMITE' },
     { label: "Plans d'action", value: 'PLAN_ACTION' }
+  ];
+
+  /**
+   * Icônes proposées pour les boutons d'action, en classes PrimeIcons.
+   *
+   * <p>Une liste courte et parlante plutôt que le catalogue entier : les circuits enchaînent
+   * toujours les mêmes gestes — soumettre, prendre en charge, approuver, renvoyer, refuser,
+   * clôturer. Le champ reste ouvert à la saisie pour une icône qui n'y figurerait pas.</p>
+   */
+  readonly iconesAction: Option[] = [
+    { label: 'Envoyer', value: 'pi pi-send' },
+    { label: 'Flèche droite', value: 'pi pi-arrow-right' },
+    { label: 'Prendre en charge', value: 'pi pi-inbox' },
+    { label: 'Attribuer', value: 'pi pi-user-edit' },
+    { label: 'Valider', value: 'pi pi-check' },
+    { label: 'Approuver', value: 'pi pi-check-circle' },
+    { label: 'Clôturer', value: 'pi pi-lock' },
+    { label: 'Retourner', value: 'pi pi-undo' },
+    { label: 'Demander une correction', value: 'pi pi-replay' },
+    { label: 'Réattribuer', value: 'pi pi-refresh' },
+    { label: 'Refuser', value: 'pi pi-times-circle' },
+    { label: 'Interdire', value: 'pi pi-ban' }
+  ];
+
+  /**
+   * Couleurs de bouton, dans le vocabulaire PrimeNG que le serveur accepte tel quel.
+   *
+   * <p>Le classement suit l'effet sur le dossier, non la décision : un renvoi en correction
+   * (`warn`) et un refus ferme (`danger`) sont tous deux des rejets, mais l'un invite à
+   * reprendre quand l'autre arrête.</p>
+   */
+  readonly severitesAction: Option[] = [
+    { label: 'Vert — aboutissement', value: 'success' },
+    { label: 'Bleu — pas en avant', value: 'info' },
+    { label: 'Orange — renvoi en correction', value: 'warn' },
+    { label: 'Rouge — refus ferme', value: 'danger' },
+    { label: 'Gris — action secondaire', value: 'secondary' },
+    { label: 'Violet — aide', value: 'help' },
+    { label: 'Noir — contraste', value: 'contrast' },
+    { label: 'Couleur principale', value: 'primary' }
+  ];
+
+  /** Apparence retenue par le serveur quand rien n'est saisi, reproduite pour l'aperçu. */
+  private static readonly APPARENCE_PAR_DEFAUT: Record<string, { icone: string; severite: string }> = {
+    APPROUVE: { icone: 'pi pi-check', severite: 'success' },
+    REJETE: { icone: 'pi pi-times', severite: 'danger' }
+  };
+
+  /** Icône telle qu'elle s'affichera : celle saisie, ou celle que porte la décision. */
+  apercuIcone(valeur: string | null, decision: 'APPROUVE' | 'REJETE'): string {
+    return valeur || WorkflowEditorComponent.APPARENCE_PAR_DEFAUT[decision].icone;
+  }
+
+  /**
+   * Couleur telle qu'elle s'affichera : celle saisie, ou celle que porte la décision.
+   *
+   * <p>Le type est celui qu'attend `p-button` — c'est bien ce même jeton que le serveur
+   * enregistre, ce qui garantit que l'aperçu montre le bouton tel qu'il sera rendu.</p>
+   */
+  apercuSeverite(valeur: string | null, decision: 'APPROUVE' | 'REJETE'): SeveriteBouton {
+    return (valeur || WorkflowEditorComponent.APPARENCE_PAR_DEFAUT[decision].severite) as SeveriteBouton;
+  }
+
+  /**
+   * Décision à laquelle un champ se rapporte.
+   *
+   * <p>Sans cette portée, un justificatif de rejet se présentait aussi à qui approuvait : on lui
+   * demandait de motiver un refus qu'il n'était pas en train de prononcer.</p>
+   */
+  readonly porteesChamp: Option<string | null>[] = [
+    { label: 'Toutes les décisions', value: null },
+    { label: 'Approbation seulement', value: 'APPROUVE' },
+    { label: 'Rejet seulement', value: 'REJETE' }
+  ];
+
+  /**
+   * Provenance des valeurs d'une liste de choix.
+   *
+   * <p>Une liste écrite à la main convient à « Oui, Non ». Elle ne convient pas aux structures ni
+   * aux utilisateurs, qui vivent au référentiel et changent sans qu'on remanie le circuit : une
+   * structure créée après coup n'y aurait jamais figuré.</p>
+   */
+  readonly sourcesDeChoix: Option<string | null>[] = [
+    { label: 'Liste que je saisis', value: null },
+    { label: 'Structures du référentiel', value: '@STRUCTURES' },
+    { label: 'Utilisateurs', value: '@UTILISATEURS' },
+    { label: 'Agents de ma structure', value: '@UTILISATEURS_MA_STRUCTURE' }
   ];
 
   readonly typesChamp: Option[] = [
@@ -263,6 +360,7 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     this.chargerRoles();
     this.chargerModelesEmail();
     this.chargerModelesEtape();
+    this.chargerFaits();
   }
 
   ngOnDestroy(): void {
@@ -304,6 +402,33 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
             .filter((option) => !!option.value);
         },
         error: () => console.warn('Liste des rôles indisponible.')
+      });
+  }
+
+  /**
+   * Champs de l'étape pouvant désigner le titulaire du dossier.
+   *
+   * <p>La valeur saisie dans ce champ devient la personne à qui les étapes suivantes seront
+   * réservées. C'est ainsi qu'une imputation nomme quelqu'un sans qu'il faille inventer un rôle
+   * « agent imputé », lequel ouvrirait le traitement de tout dossier à tout agent imputable.</p>
+   */
+  champsDesignables(indexEtape: number): Option<string | null>[] {
+    const champs = (this.etapes.at(indexEtape).get('fields') as FormArray | null)?.controls ?? [];
+    return champs
+      .map((champ) => champ.get('fieldName')?.value)
+      .filter((nom: string) => !!nom)
+      .map((nom: string) => ({ label: nom, value: nom }));
+  }
+
+  private chargerFaits(): void {
+    this.workflowService
+      .getFaitsConnus()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (faits) => {
+          this.faitsConnus = (faits ?? []).map((fait) => ({ label: fait, value: fait }));
+        },
+        error: () => console.warn('Liste des faits indisponible.')
       });
   }
 
@@ -471,14 +596,23 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
           responsableRole: [etape.responsableRole ?? null, Validators.required],
           etatTraitement: [etape.etatTraitement ?? null],
           emailTemplateCode: [etape.emailTemplateCode ?? null],
+          champTitulaire: [etape.champTitulaire ?? null],
           description: [etape.description ?? null],
           cibleApprobation: [this.cibleDe(approbation, identifiantParCode)],
           libelleApprobation: [approbation?.label ?? null],
+          iconeApprobation: [approbation?.icon ?? null],
+          severiteApprobation: [approbation?.severity ?? null],
           roleApprobation: [approbation?.requiredRole ?? null],
+          conditionApprobation: [approbation?.conditionRequise ?? null],
+          conditionLibelleApprobation: [approbation?.conditionLibelle ?? null],
           avecRejet: [!!rejet],
           cibleRejet: [this.cibleDe(rejet, identifiantParCode)],
           libelleRejet: [rejet?.label ?? null],
+          iconeRejet: [rejet?.icon ?? null],
+          severiteRejet: [rejet?.severity ?? null],
           roleRejet: [rejet?.requiredRole ?? null],
+          conditionRejet: [rejet?.conditionRequise ?? null],
+          conditionLibelleRejet: [rejet?.conditionLibelle ?? null],
           fields: this.fb.array(
             (etape.fields ?? []).map((champ) =>
               this.fb.group({
@@ -487,7 +621,11 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
                 fieldLabel: [champ.fieldLabel, Validators.required],
                 type: [champ.type || 'TEXT', Validators.required],
                 required: [champ.required ?? false],
-                options: [champ.options ?? null]
+                decision: [champ.decision ?? null],
+                // La source et la liste littérale occupent le même emplacement côté serveur :
+                // séparées ici pour que l'écran présente l'une ou l'autre, jamais les deux.
+                source: [this.sourceDepuisOptions(champ.options)],
+                options: [this.sourceDepuisOptions(champ.options) ? null : (champ.options ?? null)]
               })
             )
           )
@@ -523,16 +661,25 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
         responsableRole: [null, Validators.required],
         etatTraitement: [null],
         emailTemplateCode: [null],
+        champTitulaire: [null],
         description: [null],
         // Une étape ajoutée l'est en fin de circuit : approuver la clôt, rejeter renvoie à la
         // précédente. Les destinations des autres étapes ne sont jamais réécrites.
         cibleApprobation: [null],
         libelleApprobation: [null],
+        iconeApprobation: [null],
+        severiteApprobation: [null],
         roleApprobation: [null],
+        conditionApprobation: [null],
+        conditionLibelleApprobation: [null],
         avecRejet: [true],
         cibleRejet: [precedente ? precedente.get('identifiantLocal')?.value : null],
         libelleRejet: [null],
+        iconeRejet: [null],
+        severiteRejet: [null],
         roleRejet: [null],
+        conditionRejet: [null],
+        conditionLibelleRejet: [null],
         fields: this.fb.array([])
       })
     );
@@ -609,9 +756,17 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
         fieldLabel: [null, Validators.required],
         type: ['TEXT', Validators.required],
         required: [false],
+        decision: [null],
+        source: [null],
         options: [null]
       })
     );
+  }
+
+  /** La valeur d'{@code options} désigne-t-elle une source, ou est-ce une liste littérale ? */
+  private sourceDepuisOptions(options?: string | null): string | null {
+    const valeur = (options ?? '').trim();
+    return valeur.startsWith('@') ? valeur : null;
   }
 
   supprimerChamp(indexEtape: number, indexChamp: number): void {
@@ -697,7 +852,11 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
       decision: StepDecision,
       cible: string | null,
       role: string | null,
-      libelle: string | null
+      libelle: string | null,
+      icone: string | null,
+      severite: string | null,
+      condition: string | null,
+      conditionLibelle: string | null
     ): WorkflowTransitionDto => ({
       decision,
       toStepCode: cible ? (codeParIdentifiant.get(cible) ?? null) : null,
@@ -706,7 +865,16 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
       // de circuit que personne n'a demandée.
       terminal: !cible,
       requiredRole: role || null,
-      label: libelle || null
+      label: libelle || null,
+      // Laissés vides, le serveur reprend l'icône et la couleur que porte la décision.
+      icon: icone || null,
+      severity: severite || null,
+      // Vide, la transition est franchissable sans condition — c'est le cas de la plupart.
+      conditionRequise: condition || null,
+      // Ce que la condition veut dire : c'est la phrase que verra celui qui attend que le dossier
+      // avance. Le nom du fait est technique, et l'écran ne peut pas le traduire sans se doter
+      // d'une table de correspondance qui mentirait au premier fait nouveau.
+      conditionLibelle: conditionLibelle || null
     });
 
     const circuit: WorkflowDto = {
@@ -723,6 +891,8 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
         etatTraitement: etape.etatTraitement || null,
         emailTemplateCode: etape.emailTemplateCode || null,
         stepTemplateId: etape.stepTemplateId || null,
+        // Renvoyé tel quel : omis, le serveur l'efface et l'étape cesse de désigner le titulaire.
+        champTitulaire: etape.champTitulaire || null,
         description: etape.description,
         fields: (etape.fields ?? []).map((champ: any) => ({
           id: champ.id ?? null,
@@ -730,14 +900,21 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
           fieldLabel: champ.fieldLabel,
           type: champ.type,
           required: !!champ.required,
-          options: champ.options || null
+          decision: champ.decision || null,
+          // Une seule colonne côté serveur : la source, si elle est choisie, y prend la place de
+          // la liste saisie à la main.
+          options: champ.source || champ.options || null
         })),
         transitions: [
-          construireTransition('APPROUVE', etape.cibleApprobation, etape.roleApprobation, etape.libelleApprobation),
+          construireTransition('APPROUVE', etape.cibleApprobation, etape.roleApprobation,
+            etape.libelleApprobation, etape.iconeApprobation, etape.severiteApprobation,
+            etape.conditionApprobation, etape.conditionLibelleApprobation),
           // Le rejet n'est émis que s'il est voulu : émettre une transition de rejet sans
           // destination ne la supprime pas, elle devient une clôture du dossier.
           ...(etape.avecRejet
-            ? [construireTransition('REJETE', etape.cibleRejet, etape.roleRejet, etape.libelleRejet)]
+            ? [construireTransition('REJETE', etape.cibleRejet, etape.roleRejet,
+                etape.libelleRejet, etape.iconeRejet, etape.severiteRejet,
+                etape.conditionRejet, etape.conditionLibelleRejet)]
             : [])
         ]
       }))

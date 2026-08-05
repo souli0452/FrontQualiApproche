@@ -1,0 +1,58 @@
+<p-dialog [visible]="visible" (visibleChange)="visible = $event; visibleChange.emit($event)"
+  [modal]="true" [draggable]="false" [style]="{ width: '34rem' }"
+  header="Niveau de confidentialité">
+
+  <div *ngIf="document" class="flex flex-col gap-4">
+
+    <div class="bg-slate-50 border border-slate-200 rounded p-3">
+      <div class="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1">Document</div>
+      <div class="font-semibold text-slate-800">{{ document.titre || document.documentNumber }}</div>
+      <div class="text-xs text-slate-400 font-mono mt-0.5">{{ document.documentNumber }}</div>
+      <div class="mt-2 text-sm">
+        <span class="text-slate-500">Classement actuel :</span>
+        <p-tag *ngIf="document.niveauConfidentialiteId" severity="warn" styleClass="ml-2 text-xs"
+          [value]="document.niveauConfidentialiteLibelle || 'Classé'"></p-tag>
+        <span *ngIf="!document.niveauConfidentialiteId" class="ml-2 text-slate-600">Aucun</span>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+        Nouveau niveau
+      </label>
+      <app-select-input [(ngModel)]="niveauId"
+        optionLabel="libelle" optionValue="id"
+        placeholder="Aucun — le document n'est pas classé"
+        [lazy]="true" [loadOptions]="chargerNiveaux"
+        [selectedOptions]="niveauxPreSelectionnes"
+        (optionChange)="niveauRetenu = $event"></app-select-input>
+      <small class="block mt-1 text-slate-500">
+        Laisser vide déclasse le document : il redevient visible de toute sa structure émettrice.
+      </small>
+    </div>
+
+    <!-- Le geste retire la vue du document à qui n'a pas les rôles admis — y compris au
+         responsable qualité, qui s'affranchit des structures et non des classements. -->
+    <div *ngIf="niveauId && !estInchange"
+      class="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded p-3 text-sm text-amber-900">
+      <i class="pi pi-exclamation-triangle mt-0.5"></i>
+      <span>
+        Seuls les titulaires des rôles admis par ce niveau verront désormais ce document. Si les
+        rôles qui décident des étapes de son circuit n'en font pas partie, il n'avancera plus.
+      </span>
+    </div>
+
+    <div *ngIf="estUnDeclassement"
+      class="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-900">
+      <i class="pi pi-info-circle mt-0.5"></i>
+      <span>Le document sera déclassé : toute sa structure émettrice y aura de nouveau accès.</span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Annuler" icon="pi pi-times"
+      class="p-button-text p-button-secondary" (click)="fermer()"></button>
+    <button pButton type="button" label="Appliquer le classement" icon="pi pi-shield"
+      [disabled]="loading || estInchange" [loading]="loading" (click)="valider()"></button>
+  </ng-template>
+</p-dialog>

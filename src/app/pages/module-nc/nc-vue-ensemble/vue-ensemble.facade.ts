@@ -45,102 +45,76 @@ export class NcVueEnsembleFacade {
   }
 
   private extractNcResponses(res: any) {
-
     return {
+      aTraiter: this.extractArray(res.aTraiterRes),
       allUserNcs: this.extractArray(res.userNcsRes),
-      allImputations: this.extractArray(res.imputationsRes),
-      allReceptions: this.extractArray(res.receptionRes),
-      allValidationRq: this.extractArray(res.validationRqRes),
-      allAffectations: this.extractArray(res.affectationRes),
-      allValidationPilotes: this.extractArray(res.validationPiloteRes),
-      allClotures: this.extractArray(res.clotureRes),
-      allNcNonTraiter: this.extractArray(res.ncNonTraiterRes),
-      allNcNonConformiteCloturee: this.extractArray(res.nonConformiteClotureeRes)
+      allNcNonTraiter: this.extractArray(res.ncNonTraiterRes)
     };
   }
 
-  private buildUserNcRequests(user: any, roleService: RoleService, userStructure: any): any {
-
-  const requests: any = {
-    userNcsRes: this.nonConformiteService.nonConformiteParUtilisateurGetPagination(user.userId),
-    imputationsRes: this.nonConformiteService.nonConformiteImputeParUtilisateur(user.userId),
-    ncNonTraiterRes: this.nonConformiteService.nonConformitePlanActionsGetPagination(user.email, "NON_TRAITER")
-  };
-
-    if (userStructure?.id && (roleService.isChef || roleService.isRQ))  {
-
-    requests.receptionRes =
-      this.nonConformiteService.nonConformiteParStructureEtTraitementGet(
-        EtapeTraitement.RECEPTION,
-        userStructure.id
-      );
-
-    requests.affectationRes =
-      this.nonConformiteService.nonConformiteParStructureEtOrigineGet(
-        EtapeTraitement.IMPUTATION,
-        userStructure.id
-      );
-
-    requests.validationPiloteRes =
-      this.nonConformiteService.nonConformiteParStructureEtOrigineGet(
-        EtapeTraitement.VALIDATION,
-        userStructure.id
-      );
+  /**
+   * Les non-conformités que l'utilisateur a à traiter, et l'état de ses propres plans d'action.
+   *
+   * <p>Le croisement rôle × étape que composait ce fichier — chef et RQ voient la réception, le RQ
+   * seul voit la validation RS et la clôture… — dupliquait en TypeScript les habilitations que le
+   * circuit porte déjà. Les deux tables divergeaient sans que rien ne le signale : un utilisateur
+   * voyait des dossiers que le moteur lui refusait ensuite, et manquait ceux qu'un circuit remanié
+   * lui avait confiés. Le serveur les désigne maintenant, et lui seul.</p>
+   */
+  private buildUserNcRequests(user: any): any {
+    return {
+      aTraiterRes: this.nonConformiteService.nonConformiteATraiter(),
+      userNcsRes: this.nonConformiteService.nonConformiteParUtilisateurGetPagination(user.userId),
+      // Les actions correctives que le circuit ouvre à l'utilisateur, et non celles qu'un
+      // croisement « mon courriel × statut NON_TRAITER » lui attribuait : ce dernier ignorait les
+      // actions revenues chez le pilote pour vérification ou ré-attribution.
+      ncNonTraiterRes: this.nonConformiteService.planActionsATraiter()
+    };
   }
 
-  if (roleService.isRQ) {
-    requests.validationRqRes =
-      this.nonConformiteService.nonConformiteParEtapeGet(
-        EtapeTraitement.VALIDATION_RS
-      );
+  /**
+   * Répartit dans les onglets les dossiers que le moteur a désignés, selon l'étape où ils se
+   * trouvent.
+   *
+   * <p>Le regroupement reste sur l'étape de traitement : c'est ce que les onglets affichent. Mais
+   * il ne décide plus de rien — un dossier absent de la liste n'apparaît nulle part, quelle que
+   * soit son étape.</p>
+   */
+  private repartirParEtape(aTraiter: any[]) {
+    const parEtape = (etape: EtapeTraitement) =>
+      this.safeArray(aTraiter).filter((nc: any) => nc?.etatTraitement === etape);
 
-    requests.clotureRes =
-      this.nonConformiteService.nonConformiteParEtapeGet(
-        EtapeTraitement.SUIVI_RQ
-      );
-
-    requests.nonConformiteClotureeRes =
-      this.nonConformiteService.nonConformiteParEtapeGet(
-        EtapeTraitement.CLOTURE
-      );
+    return {
+      receptionData: parEtape(EtapeTraitement.RECEPTION),
+      rejectByRqData: parEtape(EtapeTraitement.RECEPTION),
+      // Validation du responsable qualité : c'est là qu'il valide le signalement et désigne la
+      // structure qui le traitera. Sans cet onglet, les dossiers qu'il doit affecter n'apparaissent
+      // nulle part et le circuit s'arrête après la réception.
+      validationRqAffectationData: parEtape(EtapeTraitement.VALIDATION_RQ),
+      affectationData: parEtape(EtapeTraitement.IMPUTATION),
+      validationPiloteData: parEtape(EtapeTraitement.VALIDATION),
+      validationRqData: parEtape(EtapeTraitement.VALIDATION_RS),
+      clotureData: parEtape(EtapeTraitement.SUIVI_RQ),
+      nonConformiteClotureeData: parEtape(EtapeTraitement.CLOTURE),
+      imputationsData: parEtape(EtapeTraitement.TRAITEMENT)
+    };
   }
-  return requests;
-}
 
-private populateData(data: any) {
+  private populateData(data: any) {
+    return {
+      // Les brouillons restent ceux de l'utilisateur : un dossier qu'il n'a pas soumis n'est
+      // encore entré dans aucun circuit, le moteur n'a donc rien à en dire.
+      brouillonData: this.safeArray(data.allUserNcs).filter((nc: any) => nc?.status === 'DRAFT'),
+      nonTraiterData: this.safeArray(data.allNcNonTraiter),
+      ...this.repartirParEtape(data.aTraiter)
+    };
+  }
 
-  const userNcs = this.safeArray(data.allUserNcs);
-  const imputations = this.safeArray(data.allImputations);
-  const receptions = this.safeArray(data.allReceptions);
-
-  // const receptions = data.allReceptions && data.allReceptions.length > 0 
-  //   ? data.allReceptions 
-  //   : imputations.filter((imp: any) => imp?.etatTraitement === EtapeTraitement.RECEPTION);
-
-  return {
-    brouillonData: userNcs.filter((nc: any) => nc?.status === 'DRAFT'),
-    imputationsData: imputations.filter((imp: any) => imp?.etatTraitement === EtapeTraitement.TRAITEMENT),
-    receptionData: receptions.filter((reception: any) => reception?.etatTraitement === EtapeTraitement.RECEPTION),
-    rejectByRqData: receptions.filter((reception: any) => reception?.etatTraitement === EtapeTraitement.RECEPTION),
-    affectationData: this.safeArray(data.allAffectations),
-    validationPiloteData: this.safeArray(data.allValidationPilotes),
-    validationRqData: this.safeArray(data.allValidationRq),
-    clotureData: this.safeArray(data.allClotures),
-    nonConformiteClotureeData: this.safeArray(data.allNcNonConformiteCloturee),
-    nonTraiterData: this.safeArray(data.allNcNonTraiter)
-  };
-}
-
-private enrichNonTraiterData(data: any, nonTraiterData: any[]) {
+  private enrichNonTraiterData(data: any, nonTraiterData: any[]) {
 
   const allNCs = [
-    ...this.safeArray(data.allUserNcs),
-    ...this.safeArray(data.allImputations),
-    ...this.safeArray(data.allReceptions),
-    ...this.safeArray(data.allValidationRq),
-    ...this.safeArray(data.allAffectations),
-    ...this.safeArray(data.allValidationPilotes),
-    ...this.safeArray(data.allClotures)
+    ...this.safeArray(data.aTraiter),
+    ...this.safeArray(data.allUserNcs)
   ];
 
   return nonTraiterData.map((planAction: any) => {
@@ -163,9 +137,14 @@ private enrichNonTraiterData(data: any, nonTraiterData: any[]) {
   }
 
 
-  loadUserNcData(user: any, roleService: RoleService, userStructure: any) {
+  /**
+   * Signature inchangée : les écrans appelants passent encore le rôle et la structure, dont la
+   * liste de travail n'a plus besoin — c'est le circuit qui décide. Les retirer aurait obligé à
+   * reprendre chaque appelant dans le même changement.
+   */
+  loadUserNcData(user: any, _roleService?: RoleService, _userStructure?: any) {
 
-    const requests = this.buildUserNcRequests(user, roleService, userStructure);
+    const requests = this.buildUserNcRequests(user);
 
     return forkJoin(requests).pipe(
       map((res: any) => {

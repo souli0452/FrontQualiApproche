@@ -7,6 +7,7 @@ import { createRequestOption } from '../../../../utils/global/global-utils';
 import { TypeStructure } from '../../../../enums/enums';
 import { ApiResponse, PaginatedData } from '../../../../models/response.model';
 import { formatUrl } from '../../../../utils/formatage/formatage-utils';
+import { OptionsLoadEvent, OptionsLoader } from '../../../../shared/ui/lazy-options.model';
 
 
 @Injectable({providedIn: 'root'})
@@ -41,6 +42,30 @@ export class StructureService {
     public getAllStructures(page: number = 0, size: number = 10): Observable<ApiResponse<Structure>> {
         return this.http.get<ApiResponse<Structure>>(`${StructureEndpoint.STRUCTURE_ROOT_URL}?page=${page}&size=${size}`);
     }
+
+    /**
+     * Chargeur des structures pour les listes déroulantes : page par page, recherche servie par
+     * le serveur sur le libellé long comme sur le libellé court.
+     *
+     * <p>Fonction fléchée, donc utilisable telle quelle en entrée de composant :
+     * `[loadOptions]="structureService.chargerOptions"`.</p>
+     */
+    readonly chargerOptions: OptionsLoader<Structure> = (event: OptionsLoadEvent) =>
+        this.http
+            .get<ApiResponse<Structure>>(StructureEndpoint.STRUCTURE_ROOT_URL, {
+                params: { page: event.page, size: event.limit, ...(event.search ? { search: event.search } : {}) }
+            })
+            .pipe(
+                map((res: any) => {
+                    const donnees = res?.data ?? res;
+                    const options = (donnees?.content ?? (Array.isArray(donnees) ? donnees : [])) as Structure[];
+                    return {
+                        options,
+                        totalRecords: donnees?.totalElements ?? options.length,
+                        hasMore: donnees?.last === undefined ? undefined : !donnees.last
+                    };
+                })
+            );
 
     public getAllDirections(typeStructure?: TypeStructure): Observable<HttpResponse<Array<Structure>>> {
         const params = createRequestOption({typeStructure});
