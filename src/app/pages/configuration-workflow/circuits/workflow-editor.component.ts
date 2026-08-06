@@ -12,6 +12,7 @@ import { AppRoleService } from '../../role/role-service/role.service';
 import { WorkflowStepTemplateService } from '../../../services/module-gestion-documentaire/workflow-step-template.service';
 import { WorkflowError, WorkflowService } from '../../../services/workflow.service';
 import { WorkflowStepTemplate } from '../../../models/gestion-documentaire.model';
+import { WorkflowConfigurationGuideComponent } from './workflow-configuration-guide.component';
 import {
   EmailTemplateDto,
   StepDecision,
@@ -114,7 +115,8 @@ type SeveriteBouton = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'he
 @Component({
   selector: 'app-workflow-editor',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgPrimeModule, AppCrudGenericComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgPrimeModule, AppCrudGenericComponent,
+    WorkflowConfigurationGuideComponent],
   providers: [MessageService, ConfirmationService],
   templateUrl: './workflow-editor.component.html'
 })
@@ -200,12 +202,15 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   peutEcrire = false;
 
   /**
-   * Types de ressource pour lesquels plusieurs circuits sont actifs à la fois.
+   * Types de ressource pour lesquels plusieurs circuits sont ouvrables à la fois.
    *
-   * Le serveur n'en ouvre qu'un — le premier rendu, dans un ordre non garanti. C'est donc une
-   * configuration à l'effet imprévisible, et l'écran doit le dire. L'alerte se lisait auparavant
-   * ligne par ligne ; le tableau générique n'ayant pas de gabarit de cellule, elle est portée par
-   * un bandeau, ce qui la rend au passage visible sans survol.
+   * Ce n'est plus une anomalie : un type de document peut désigner son propre circuit, et celui-ci
+   * doit être actif pour servir — le moteur refuse d'ouvrir un circuit désactivé. Plusieurs circuits
+   * documentaires actifs sont donc la règle dès qu'on en attribue par type.
+   *
+   * Reste une chose à dire, et le bandeau la dit : lequel s'applique aux dossiers qui ne désignent
+   * aucun circuit. C'est le plus ancien des circuits actifs de la famille, et non plus le premier
+   * rendu par la base.
    */
   typesEnConflit: string[] = [];
 
@@ -272,9 +277,21 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     REJETE: { icone: 'pi pi-times', severite: 'danger' }
   };
 
-  /** Icône telle qu'elle s'affichera : celle saisie, ou celle que porte la décision. */
-  apercuIcone(valeur: string | null, decision: 'APPROUVE' | 'REJETE'): string {
-    return valeur || WorkflowEditorComponent.APPARENCE_PAR_DEFAUT[decision].icone;
+  /**
+   * Nature d'une action : elle fait avancer le dossier, ou elle le renvoie en arrière.
+   *
+   * <p>Ce n'est plus son identité — plusieurs actions d'une même étape peuvent approuver — mais
+   * c'est ce qui donne son sens à un franchissement : la couleur du bouton par défaut, l'issue
+   * publiée aux modules métier à la fin du circuit, et la portée des champs demandés.</p>
+   */
+  readonly naturesAction: Option<string>[] = [
+    { label: 'Approbation — le dossier avance', value: 'APPROUVE' },
+    { label: 'Rejet — le dossier revient en arrière', value: 'REJETE' }
+  ];
+
+  /** Icône telle qu'elle s'affichera : celle saisie, ou celle que porte la nature de l'action. */
+  apercuIcone(valeur: string | null, decision: string): string {
+    return valeur || WorkflowEditorComponent.APPARENCE_PAR_DEFAUT[decision]?.icone || 'pi pi-check';
   }
 
   /**
@@ -283,8 +300,9 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
    * <p>Le type est celui qu'attend `p-button` — c'est bien ce même jeton que le serveur
    * enregistre, ce qui garantit que l'aperçu montre le bouton tel qu'il sera rendu.</p>
    */
-  apercuSeverite(valeur: string | null, decision: 'APPROUVE' | 'REJETE'): SeveriteBouton {
-    return (valeur || WorkflowEditorComponent.APPARENCE_PAR_DEFAUT[decision].severite) as SeveriteBouton;
+  apercuSeverite(valeur: string | null, decision: string): SeveriteBouton {
+    return (valeur || WorkflowEditorComponent.APPARENCE_PAR_DEFAUT[decision]?.severite
+      || 'success') as SeveriteBouton;
   }
 
   /**
@@ -331,6 +349,15 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   // Consultation
   dialogueDetailOuvert = false;
   circuitConsulte?: WorkflowDto;
+
+  /**
+   * Guide de configuration, ouvrable depuis la liste comme depuis la saisie.
+   *
+   * Il est porté par l'écran et non par le dialogue d'édition : l'auteur d'un circuit a besoin de
+   * s'y reporter au moment où il hésite sur un réglage, sans fermer le circuit en cours et perdre
+   * ce qu'il a saisi.
+   */
+  guideOuvert = false;
 
   constructor() {
     this.formulaire = this.fb.group({
@@ -527,6 +554,63 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     return this.etapes.at(index).get('fields') as FormArray;
   }
 
+  /** Actions proposées par une étape. Il y en a au moins une, jamais un nombre fixe. */
+  actionsDeLEtape(index: number): FormArray {
+    return this.etapes.at(index).get('actions') as FormArray;
+  }
+
+  /**
+   * Le formulaire d'une action, qu'elle vienne du serveur ou qu'on l'ajoute.
+   *
+   * <p>Le code est saisissable : c'est lui qui identifie l'action dans son étape, qui l'apparie
+   * d'un enregistrement à l'autre, et par lequel un champ se rattache à elle. Laissé vide, le
+   * serveur reprend le nom de la décision — ce qui suffit tant que l'étape n'offre qu'une action
+   * de cette nature.</p>
+   */
+  private groupeAction(transition: Partial<WorkflowTransitionDto>, cible: string | null): FormGroup {
+    return this.fb.group({
+      id: [transition.id ?? null],
+      code: [transition.code ?? null],
+      decision: [transition.decision ?? 'APPROUVE', Validators.required],
+      cible: [cible],
+      label: [transition.label ?? null],
+      icon: [transition.icon ?? null],
+      severity: [transition.severity ?? null],
+      requiredRole: [transition.requiredRole ?? null],
+      conditionRequise: [transition.conditionRequise ?? null],
+      conditionLibelle: [transition.conditionLibelle ?? null]
+    });
+  }
+
+  ajouterAction(indexEtape: number): void {
+    this.actionsDeLEtape(indexEtape).push(this.groupeAction({ decision: 'APPROUVE' }, null));
+  }
+
+  supprimerAction(indexEtape: number, indexAction: number): void {
+    const actions = this.actionsDeLEtape(indexEtape);
+    actions.removeAt(indexAction);
+    // Une étape sans action est une impasse : le dossier s'y arrête et rien ne peut plus le faire
+    // avancer. Mieux vaut la laisser porter une action à configurer qu'un circuit sans issue.
+    if (actions.length === 0) {
+      this.ajouterAction(indexEtape);
+    }
+  }
+
+  /**
+   * Actions auxquelles un champ de cette étape peut être rattaché.
+   *
+   * <p>« Toutes » d'abord : c'est le cas courant, et un champ qui ne nomme aucune action reste
+   * régi par sa seule portée de décision.</p>
+   */
+  actionsDesignables(indexEtape: number): Option<string | null>[] {
+    const actions = this.actionsDeLEtape(indexEtape).controls.map((action, rang) => {
+      const code = (action.get('code')?.value as string) || (action.get('decision')?.value as string);
+      const libelle = (action.get('label')?.value as string) || code || `Action ${rang + 1}`;
+      return { label: `${libelle} (${code})`, value: code };
+    });
+    return [{ label: 'Toutes les actions', value: null }, ...actions.filter((option) => !!option.value)];
+  }
+
   ouvrirCreation(): void {
     this.modeEdition = false;
     this.circuitEnCours = undefined;
@@ -583,9 +667,6 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     });
 
     etapesTriees.forEach((etape, index) => {
-      const approbation = etape.transitions?.find((t) => t.decision === 'APPROUVE');
-      const rejet = etape.transitions?.find((t) => t.decision === 'REJETE');
-
       this.etapes.push(
         this.fb.group({
           identifiantLocal: [identifiants[index]],
@@ -598,21 +679,14 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
           emailTemplateCode: [etape.emailTemplateCode ?? null],
           champTitulaire: [etape.champTitulaire ?? null],
           description: [etape.description ?? null],
-          cibleApprobation: [this.cibleDe(approbation, identifiantParCode)],
-          libelleApprobation: [approbation?.label ?? null],
-          iconeApprobation: [approbation?.icon ?? null],
-          severiteApprobation: [approbation?.severity ?? null],
-          roleApprobation: [approbation?.requiredRole ?? null],
-          conditionApprobation: [approbation?.conditionRequise ?? null],
-          conditionLibelleApprobation: [approbation?.conditionLibelle ?? null],
-          avecRejet: [!!rejet],
-          cibleRejet: [this.cibleDe(rejet, identifiantParCode)],
-          libelleRejet: [rejet?.label ?? null],
-          iconeRejet: [rejet?.icon ?? null],
-          severiteRejet: [rejet?.severity ?? null],
-          roleRejet: [rejet?.requiredRole ?? null],
-          conditionRejet: [rejet?.conditionRequise ?? null],
-          conditionLibelleRejet: [rejet?.conditionLibelle ?? null],
+          // Autant d'actions que l'étape en propose. Elles tenaient auparavant dans deux jeux de
+          // contrôles figés — approbation et rejet — et une étape ne pouvait donc rien offrir
+          // d'autre : ni « demander un complément », ni « transférer », qui sont pourtant des
+          // suites courantes et qui approuvent l'une comme l'autre.
+          actions: this.fb.array(
+            (etape.transitions ?? []).map((transition) =>
+              this.groupeAction(transition, this.cibleDe(transition, identifiantParCode)))
+          ),
           fields: this.fb.array(
             (etape.fields ?? []).map((champ) =>
               this.fb.group({
@@ -622,6 +696,9 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
                 type: [champ.type || 'TEXT', Validators.required],
                 required: [champ.required ?? false],
                 decision: [champ.decision ?? null],
+                // Le champ ne se présente qu'à l'action nommée. Sans cette portée, le motif que
+                // réclame « Demander un complément » serait demandé à qui valide simplement.
+                actionCode: [champ.actionCode ?? null],
                 // La source et la liste littérale occupent le même emplacement côté serveur :
                 // séparées ici pour que l'écran présente l'une ou l'autre, jamais les deux.
                 source: [this.sourceDepuisOptions(champ.options)],
@@ -665,21 +742,11 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
         description: [null],
         // Une étape ajoutée l'est en fin de circuit : approuver la clôt, rejeter renvoie à la
         // précédente. Les destinations des autres étapes ne sont jamais réécrites.
-        cibleApprobation: [null],
-        libelleApprobation: [null],
-        iconeApprobation: [null],
-        severiteApprobation: [null],
-        roleApprobation: [null],
-        conditionApprobation: [null],
-        conditionLibelleApprobation: [null],
-        avecRejet: [true],
-        cibleRejet: [precedente ? precedente.get('identifiantLocal')?.value : null],
-        libelleRejet: [null],
-        iconeRejet: [null],
-        severiteRejet: [null],
-        roleRejet: [null],
-        conditionRejet: [null],
-        conditionLibelleRejet: [null],
+        actions: this.fb.array([
+          this.groupeAction({ code: 'APPROUVE', decision: 'APPROUVE' }, null),
+          this.groupeAction({ code: 'REJETE', decision: 'REJETE' },
+            precedente ? precedente.get('identifiantLocal')?.value : null)
+        ]),
         fields: this.fb.array([])
       })
     );
@@ -691,9 +758,9 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     // Une destination pointant sur l'étape retirée deviendrait une fin de circuit silencieuse :
     // elle est remise à vide, ce qui oblige à statuer explicitement.
     this.etapes.controls.forEach((etape) => {
-      ['cibleApprobation', 'cibleRejet'].forEach((champ) => {
-        if (etape.get(champ)?.value === identifiant) {
-          etape.get(champ)?.setValue(null);
+      (etape.get('actions') as FormArray).controls.forEach((action) => {
+        if (action.get('cible')?.value === identifiant) {
+          action.get('cible')?.setValue(null);
         }
       });
     });
@@ -848,33 +915,27 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
       codeParIdentifiant.set(etape.identifiantLocal, code);
     });
 
-    const construireTransition = (
-      decision: StepDecision,
-      cible: string | null,
-      role: string | null,
-      libelle: string | null,
-      icone: string | null,
-      severite: string | null,
-      condition: string | null,
-      conditionLibelle: string | null
-    ): WorkflowTransitionDto => ({
-      decision,
-      toStepCode: cible ? (codeParIdentifiant.get(cible) ?? null) : null,
+    const construireTransition = (action: any): WorkflowTransitionDto => ({
+      // Le code identifie l'action dans son étape, là où la décision ne dit plus que sa nature.
+      // Vide, le serveur reprend le nom de la décision et le rend unique.
+      code: action.code || null,
+      decision: action.decision as StepDecision,
+      toStepCode: action.cible ? (codeParIdentifiant.get(action.cible) ?? null) : null,
       // Sans destination, la décision clôt le circuit — et il faut le déclarer. Le serveur
       // ignore une transition sans destination ni ce marqueur, plutôt que de supposer une fin
       // de circuit que personne n'a demandée.
-      terminal: !cible,
-      requiredRole: role || null,
-      label: libelle || null,
+      terminal: !action.cible,
+      requiredRole: action.requiredRole || null,
+      label: action.label || null,
       // Laissés vides, le serveur reprend l'icône et la couleur que porte la décision.
-      icon: icone || null,
-      severity: severite || null,
+      icon: action.icon || null,
+      severity: action.severity || null,
       // Vide, la transition est franchissable sans condition — c'est le cas de la plupart.
-      conditionRequise: condition || null,
+      conditionRequise: action.conditionRequise || null,
       // Ce que la condition veut dire : c'est la phrase que verra celui qui attend que le dossier
       // avance. Le nom du fait est technique, et l'écran ne peut pas le traduire sans se doter
       // d'une table de correspondance qui mentirait au premier fait nouveau.
-      conditionLibelle: conditionLibelle || null
+      conditionLibelle: action.conditionLibelle || null
     });
 
     const circuit: WorkflowDto = {
@@ -901,22 +962,16 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
           type: champ.type,
           required: !!champ.required,
           decision: champ.decision || null,
+          actionCode: champ.actionCode || null,
           // Une seule colonne côté serveur : la source, si elle est choisie, y prend la place de
           // la liste saisie à la main.
           options: champ.source || champ.options || null
         })),
-        transitions: [
-          construireTransition('APPROUVE', etape.cibleApprobation, etape.roleApprobation,
-            etape.libelleApprobation, etape.iconeApprobation, etape.severiteApprobation,
-            etape.conditionApprobation, etape.conditionLibelleApprobation),
-          // Le rejet n'est émis que s'il est voulu : émettre une transition de rejet sans
-          // destination ne la supprime pas, elle devient une clôture du dossier.
-          ...(etape.avecRejet
-            ? [construireTransition('REJETE', etape.cibleRejet, etape.roleRejet,
-                etape.libelleRejet, etape.iconeRejet, etape.severiteRejet,
-                etape.conditionRejet, etape.conditionLibelleRejet)]
-            : [])
-        ]
+        // Une action sans nature ne serait ni une avancée ni un retour : le serveur l'écarterait
+        // en silence. On ne la lui envoie pas.
+        transitions: (etape.actions ?? [])
+          .filter((action: any) => !!action.decision)
+          .map((action: any) => construireTransition(action))
       }))
     };
 

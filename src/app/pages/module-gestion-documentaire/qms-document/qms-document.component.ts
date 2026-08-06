@@ -39,6 +39,16 @@ import { QmsAssignWorkflowDialogComponent } from './components/qms-assign-workfl
 import { QmsReclassementDialogComponent } from './components/qms-reclassement-dialog.component';
 import { QmsDocumentAccessDialogComponent, AccessGrant } from './components/qms-document-access-dialog.component';
 
+/**
+ * Les six regards portés sur un document, réunis en onglets d'une même fiche.
+ *
+ * <p>Ils portent sur des objets différents et se complètent : la fiche décrit le document, les
+ * versions retracent le fichier, les partages disent qui y accède, la piste d'audit journalise les
+ * opérations, les demandes rapportent ce qu'on a demandé à son sujet, et le circuit conserve les
+ * décisions. Aucun ne remplace un autre — d'où six onglets plutôt qu'un choix.</p>
+ */
+export type OngletDetail = 'detail' | 'historique' | 'partages' | 'audit' | 'demandes' | 'circuit';
+
 @Component({
   selector: 'app-qms-document',
   standalone: true,
@@ -86,7 +96,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
 
   // Modals / View visibility
   showTransitionModal = false;
-  showShareModal = false;
   showAssignWorkflowModal = false;
 
   activeTab = 'access';
@@ -98,7 +107,19 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     { label: 'Modification', value: 'WRITE' }
   ];
 
-  currentView: 'list' | 'detail' | 'history' | 'audit' | 'tracabilite' | 'demandes' = 'list';
+  /**
+   * Liste, ou fiche du document.
+   *
+   * <p>Les cinq regards portés sur un document — sa fiche, ses versions, ses partages, sa piste
+   * d'audit, ses demandes, les décisions de son circuit — étaient autant de vues plein écran, dont
+   * chacune renvoyait à la liste. Passer de l'une à l'autre imposait de rouvrir le document, et
+   * rien à l'écran ne disait qu'il existait des voisines. Ce sont désormais les onglets d'une même
+   * fiche ({@link #ongletDetail}).</p>
+   */
+  currentView: 'list' | 'detail' = 'list';
+
+  /** Onglet ouvert sur la fiche du document. */
+  ongletDetail: OngletDetail = 'detail';
 
   /** Demandes portées sur le document consulté. */
   demandesDuDocument: DemandeDocumentDto[] = [];
@@ -154,6 +175,40 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadInitialData();
+    this.ouvrirLeDocumentDeLAdresse();
+  }
+
+  /**
+   * Ouvre d'emblée la fiche du document désigné par l'adresse (`?documentId=`).
+   *
+   * <p>La vue d'ensemble y renvoie pour les dossiers qui offrent plus d'une décision : on ne choisit
+   * pas entre approuver et retourner au rédacteur depuis une cellule de tableau. Le document est
+   * désigné dans l'adresse plutôt que passé en mémoire — c'est un autre écran, et le lien reste
+   * ainsi rechargeable et partageable.</p>
+   *
+   * <p>Un identifiant qui ne rend rien laisse la liste en place et le dit : le document a pu sortir
+   * de portée entre-temps, et une fiche vide n'expliquerait rien.</p>
+   */
+  private ouvrirLeDocumentDeLAdresse(): void {
+    const documentId = this.route.snapshot.queryParamMap.get('documentId');
+    if (!documentId) {
+      return;
+    }
+
+    this.qmsService.getDocumentById(documentId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (doc: any) => {
+          this.selectedDocument = doc;
+          this.workflowState = doc?.workflowState;
+          this.currentView = 'detail';
+          this.ongletDetail = 'detail';
+        },
+        error: () => this.messageService.add({
+          severity: 'warn', summary: 'Document introuvable',
+          detail: "Ce document n'est plus accessible : il a pu être retiré, ou sortir de votre périmètre."
+        })
+      });
   }
 
   ngOnDestroy(): void {
@@ -200,7 +255,10 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
       size: this.taillePage,
       query: this.searchQuery || undefined,
       documentType: this.selectedType || undefined,
-      serviceId: this.selectedService || undefined,
+      // Le filtre n'est offert qu'à la qualité et à l'administration générale ; hors d'eux, il
+      // n'est pas envoyé même s'il portait une valeur — un critère invisible qui restreindrait
+      // silencieusement la liste serait pire que pas de filtre.
+      serviceId: (this.peutFiltrerParProcessusEmetteur && this.selectedService) || undefined,
       prioriteId: this.selectedPriorite || undefined,
       niveauConfidentialiteId: this.selectedNiveauConfidentialite || undefined,
       domaineId: this.selectedDomaine || undefined,
@@ -346,6 +404,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   viewDetails(doc: DocumentQms): void {
     this.selectedDocument = doc;
     this.currentView = 'detail';
+    this.ongletDetail = 'detail';
 
     if (doc.id) {
       this.workflowState = undefined;
@@ -451,9 +510,128 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Peut-on filtrer la liste par processus émetteur ?
+   *
+   * <p>Réservé à la qualité et à l'administration générale : ce sont les seuls dont la liste porte
+   * sur plusieurs structures. Pour les autres, le serveur restreint déjà le fonds visible à leur
+   * propre structure — le filtre n'y avait qu'un effet, celui de vider la liste dès qu'on y
+   * choisissait une autre structure, sans que rien n'explique pourquoi.</p>
+   *
+   * <p>Mêmes rôles que le reclassement d'un document, plus bas : la question posée est la même,
+   * « voit-on au-delà de sa structure ». Le contrôle qui compte reste celui du serveur ; l'écran se
+   * borne à ne pas proposer un critère qui ne peut rien rendre.</p>
+   */
+  get peutFiltrerParProcessusEmetteur(): boolean {
+    return isUserInRoles(['SUPER_ADMIN', 'SUPERADMIN', 'ADMIN', 'RESPONSABLE_QUALITE']);
+  }
+
+  // ---------------------------------------------------------------- onglets de la fiche
+
+  /**
+   * Le suivi interne du document est-il ouvert à l'appelant ?
+   *
+   * <p>Faux sur un document reçu par simple partage, venu d'une autre structure : le serveur refuse
+   * alors ses versions, sa piste d'audit et les décisions de son circuit. C'est lui qui le dit —
+   * l'écran ne le devine pas.</p>
+   */
+  private get aLeSuiviInterne(): boolean {
+    return this.selectedDocument?.suiviInterneAutorise !== false;
+  }
+
+  /**
+   * Droit d'ouvrir chaque onglet, exprimé une fois.
+   *
+   * <p>Ces conditions gardent trois choses à la fois : l'en-tête de l'onglet, le panneau qu'il
+   * révèle, et l'ouverture par programme depuis le menu de la liste. Les avoir écrites dans le
+   * gabarit ne gardait que les en-têtes : le panneau se rendait quand même dès que
+   * {@link #ongletDetail} le désignait, et le menu de la liste y menait sans vérifier la
+   * permission. Le serveur refusait bien les données, mais l'écran proposait une vue qu'il aurait
+   * dû taire.</p>
+   */
+  get peutVoirLesVersions(): boolean {
+    return this.aLeSuiviInterne && this.hasPermission('document-history');
+  }
+
+  get peutVoirLaPisteAudit(): boolean {
+    return this.aLeSuiviInterne && this.hasPermission('document-audit');
+  }
+
+  get peutGererLesPartages(): boolean {
+    return this.aLeSuiviInterne && this.hasPermission('document-write');
+  }
+
+  /** Déposer une demande ne dépend pas de l'écriture ; en lire l'historique non plus. */
+  get peutVoirLesDemandes(): boolean {
+    return this.aLeSuiviInterne;
+  }
+
+  get peutVoirLeCircuit(): boolean {
+    return this.aLeSuiviInterne && this.hasPermission('document-history');
+  }
+
+  /** L'onglet demandé est-il ouvert à l'appelant ? La fiche elle-même l'est toujours. */
+  private ongletAutorise(onglet: OngletDetail): boolean {
+    switch (onglet) {
+      case 'historique': return this.peutVoirLesVersions;
+      case 'audit': return this.peutVoirLaPisteAudit;
+      case 'partages': return this.peutGererLesPartages;
+      case 'demandes': return this.peutVoirLesDemandes;
+      case 'circuit': return this.peutVoirLeCircuit;
+      default: return true;
+    }
+  }
+
+  /**
+   * Ouvre un onglet de la fiche, et charge ce qu'il montre.
+   *
+   * <p>Le chargement suit l'onglet : demander les six jeux de données à l'ouverture d'un document
+   * aurait déclenché six requêtes pour cinq vues que l'utilisateur n'ouvre pas toujours. Chaque
+   * activation relit — une piste d'audit ou une liste de demandes périmée serait pire qu'une
+   * seconde d'attente.</p>
+   *
+   * <p>Un onglet hors de portée ramène à la fiche : le contrôle ne peut pas vivre dans les seuls
+   * en-têtes, puisque le menu de la liste ouvre un onglet directement.</p>
+   */
+  // `p-tabs` émet la valeur de l'onglet sans la typer plus finement que « chaîne ou nombre ».
+  ouvrirOnglet(onglet: OngletDetail | string | number): void {
+    const doc = this.selectedDocument;
+    const demande = onglet as OngletDetail;
+    this.ongletDetail = this.ongletAutorise(demande) ? demande : 'detail';
+    if (!doc?.id) {
+      return;
+    }
+
+    switch (this.ongletDetail) {
+      case 'historique':
+        this.chargerVersions(doc);
+        break;
+      case 'audit':
+        this.chargerPisteAudit(doc);
+        break;
+      case 'demandes':
+        this.chargerDemandes(doc);
+        break;
+      case 'circuit':
+        this.chargerHistoriqueCircuit(doc);
+        break;
+      case 'partages':
+        this.chargerPartages(doc);
+        break;
+      default:
+        break;
+    }
+  }
+
   // --- Version History Drawer ---
+  /** Ouvre la fiche sur ses versions. Conservé : le menu de la liste y mène directement. */
   viewVersionHistory(doc: DocumentQms): void {
     this.selectedDocument = doc;
+    this.currentView = 'detail';
+    this.ouvrirOnglet('historique');
+  }
+
+  private chargerVersions(doc: DocumentQms): void {
     this.loading = true;
     this.qmsService.getVersionHistory(doc.id!)
       .pipe(takeUntil(this.destroy$))
@@ -461,7 +639,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
         next: (history) => {
           this.versionHistory = history;
           this.loading = false;
-          this.currentView = 'history';
         },
         error: (err: any) => {
           this.loading = false;
@@ -471,8 +648,14 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   }
 
   // --- Audit Trail Logs Drawer ---
+  /** Ouvre la fiche sur sa piste d'audit. */
   viewAuditLogs(doc: DocumentQms): void {
     this.selectedDocument = doc;
+    this.currentView = 'detail';
+    this.ouvrirOnglet('audit');
+  }
+
+  private chargerPisteAudit(doc: DocumentQms): void {
     this.loading = true;
     this.qmsService.getAuditLogs(doc.id!)
       .pipe(takeUntil(this.destroy$))
@@ -480,7 +663,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
         next: (logs) => {
           this.auditLogs = logs;
           this.loading = false;
-          this.currentView = 'audit';
         },
         error: (err: any) => {
           this.loading = false;
@@ -672,9 +854,13 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
    */
   viewDemandes(doc: DocumentQms): void {
     this.selectedDocument = doc;
+    this.currentView = 'detail';
+    this.ouvrirOnglet('demandes');
+  }
+
+  private chargerDemandes(doc: DocumentQms): void {
     this.demandesDuDocument = [];
     this.loading = true;
-    this.currentView = 'demandes';
 
     this.demandeService
       .parDocument(doc.id!)
@@ -697,9 +883,13 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   /** Décisions successives du circuit : qui a validé, quand, sur quels motifs. */
   viewValidationHistory(doc: DocumentQms): void {
     this.selectedDocument = doc;
+    this.currentView = 'detail';
+    this.ouvrirOnglet('circuit');
+  }
+
+  private chargerHistoriqueCircuit(doc: DocumentQms): void {
     this.validationHistory = [];
     this.loading = true;
-    this.currentView = 'tracabilite';
 
     this.workflowService
       .getValidationHistory(doc.id!)
@@ -801,8 +991,20 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   }
 
   // --- Partage & Gestion des Accès (ACL) ---
+  /**
+   * Ouvre la fiche sur ses partages.
+   *
+   * <p>Ils tenaient dans une fenêtre surgissante : on ne pouvait pas les regarder en même temps que
+   * le document, et rien sur la fiche ne disait avec qui il était partagé sans ouvrir ce dialogue.
+   * C'est une propriété du document, elle se consulte comme les autres.</p>
+   */
   openShareModal(doc: DocumentQms): void {
     this.selectedDocument = doc;
+    this.currentView = 'detail';
+    this.ouvrirOnglet('partages');
+  }
+
+  private chargerPartages(doc: DocumentQms): void {
     this.activeTab = 'access';
     this.selectedStructureFilter = undefined;
     this.selectedUser = undefined;
@@ -811,7 +1013,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     this.loadSystemUsers();
     this.loadDocumentAccess(doc);
     this.chargerPartagesStructure(doc);
-    this.showShareModal = true;
   }
 
   /** Structures déjà destinataires d'un partage sur ce document. */

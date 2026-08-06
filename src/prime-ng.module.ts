@@ -66,7 +66,6 @@ import { SplitterModule } from 'primeng/splitter';
 import { StepsModule } from 'primeng/steps';
 import { TableModule } from 'primeng/table';
 import { TabMenuModule } from 'primeng/tabmenu';
-import { TabViewModule } from 'primeng/tabview';
 import { TagModule } from 'primeng/tag';
 import { TerminalModule } from 'primeng/terminal';
 import { TimelineModule } from 'primeng/timeline';

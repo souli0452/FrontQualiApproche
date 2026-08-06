@@ -300,6 +300,19 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
         );
     }
 
+    /**
+     * Documents que j'ai à traiter, l'état de leur circuit joint à chaque ligne.
+     *
+     * C'est le circuit qui les désigne — lui seul porte l'habilitation de chaque étape. Les écrans
+     * qui listaient par statut montraient à chacun les dossiers de tous, et le refus tombait au
+     * moment de décider. Les `allowedActions` de chaque ligne permettent d'agir sur place.
+     */
+    documentsATraiter(): Observable<DocumentQms[]> {
+        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/a-traiter`).pipe(
+            map(res => res?.data ?? res ?? [])
+        );
+    }
+
     getDocumentStats(): Observable<DocumentStatsDto> {
         return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/stats`).pipe(
             map(res => res?.data ?? res)

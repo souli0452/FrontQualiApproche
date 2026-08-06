@@ -10,6 +10,7 @@
       [searchQuery]="searchQuery"
       [selectedType]="selectedType"
       [selectedService]="selectedService"
+      [peutFiltrerParProcessusEmetteur]="peutFiltrerParProcessusEmetteur"
       [chargerPriorites]="prioriteService.chargerOptions"
       [chargerNiveauxConfidentialite]="niveauConfidentialiteService.chargerOptionsFiltrables"
       [chargerDomaines]="domaineService.chargerOptions"
@@ -50,101 +51,146 @@
 </app-qms-transition-dialog>
 
 <!-- ========================================================================= -->
-<!-- 3. DETAIL PAGE VIEW -->
+<!-- 3. FICHE DU DOCUMENT, EN ONGLETS                                          -->
 <!-- =========================================================================
+     Six regards sur un même document : sa fiche, ses versions, ses partages, sa piste d'audit,
+     les demandes portées sur lui, les décisions de son circuit. C'étaient six vues plein écran
+     dont chacune renvoyait à la liste — passer de l'une à l'autre imposait de rouvrir le document,
+     et rien ne disait qu'il existait des voisines.
+
      La permission seule ne suffit pas : sur un document reçu par partage, venu d'une autre
      structure, le serveur refuse l'historique, la piste d'audit et les décisions du circuit.
-     `suiviInterneAutorise` est ce qu'il en dit, et l'écran s'y range — mieux vaut pas de bouton
-     qu'un bouton qui mène à un refus.
+     `suiviInterneAutorise` est ce qu'il en dit, et l'onglet correspondant n'est alors pas offert —
+     mieux vaut pas d'onglet qu'un onglet qui mène à un refus.
      ========================================================================= -->
-<app-qms-document-detail *ngIf="currentView === 'detail' && selectedDocument"
-  [document]="selectedDocument"
-  [workflowState]="workflowState"
-  [canDownload]="hasPermission('document-download')"
-  [canViewHistory]="hasPermission('document-history') && selectedDocument.suiviInterneAutorise !== false"
-  [canViewAudit]="hasPermission('document-audit') && selectedDocument.suiviInterneAutorise !== false"
-  [canValidate]="hasPermission('document-validate') && selectedDocument.suiviInterneAutorise !== false"
-  [canShare]="hasPermission('document-write') && selectedDocument.suiviInterneAutorise !== false"
-  [canRequestChange]="selectedDocument.suiviInterneAutorise !== false"
-  [statusLabel]="statusLabelFn"
-  [statusSeverity]="statusSeverityFn"
-  [actionIcon]="actionIconFn"
-  [actionClass]="actionClassFn"
-  (close)="currentView = 'list'"
-  (openDocument)="openSecuredDocument($event)"
-  (downloadPdf)="downloadSecuredPdf($event)"
-  (viewHistory)="viewVersionHistory($event)"
-  (viewAudit)="viewAuditLogs($event)"
-  (viewValidationHistory)="viewValidationHistory($event)"
-  (viewDemandes)="viewDemandes($event)"
-  (requestChange)="demanderUneModification($event)"
-  (share)="openShareModal($event)"
-  (executeAction)="executeDynamicAction($event)">
-</app-qms-document-detail>
-<!-- ========================================================================= -->
-<!-- 4. HISTORIQUE VERSION PAGE VIEW -->
-<!-- ========================================================================= -->
-<app-qms-document-history *ngIf="currentView === 'history' && selectedDocument"
-  [document]="selectedDocument"
-  [versionHistory]="versionHistory"
-  (close)="currentView = 'list'">
-</app-qms-document-history>
+<div *ngIf="currentView === 'detail' && selectedDocument">
+  <p-tabs [value]="ongletDetail" (valueChange)="ouvrirOnglet($event)">
+    <p-tablist>
+      <p-tab value="detail"><i class="pi pi-file mr-2"></i>Détail du document</p-tab>
+      @if (peutVoirLesVersions) {
+        <p-tab value="historique"><i class="pi pi-history mr-2"></i>Historique du document</p-tab>
+      }
+      @if (peutGererLesPartages) {
+        <p-tab value="partages"><i class="pi pi-share-alt mr-2"></i>Partages</p-tab>
+      }
+      @if (peutVoirLaPisteAudit) {
+        <p-tab value="audit"><i class="pi pi-shield mr-2"></i>Piste d'audit</p-tab>
+      }
+      @if (peutVoirLesDemandes) {
+        <p-tab value="demandes"><i class="pi pi-inbox mr-2"></i>Demandes</p-tab>
+      }
+      @if (peutVoirLeCircuit) {
+        <p-tab value="circuit"><i class="pi pi-sitemap mr-2"></i>Circuit de validation</p-tab>
+      }
+    </p-tablist>
 
-<!-- ========================================================================= -->
-<!-- 5. PISTE AUDIT PAGE VIEW -->
-<!-- ========================================================================= -->
-<app-qms-document-audit *ngIf="currentView === 'audit' && selectedDocument"
-  [document]="selectedDocument"
-  [auditLogs]="auditLogs"
-  (close)="currentView = 'list'">
-</app-qms-document-audit>
+    <p-tabpanels>
+      <p-tabpanel value="detail">
+        <app-qms-document-detail
+          [document]="selectedDocument"
+          [workflowState]="workflowState"
+          [enOnglet]="true"
+          [canDownload]="hasPermission('document-download')"
+          [canViewHistory]="peutVoirLesVersions"
+          [canViewAudit]="peutVoirLaPisteAudit"
+          [canValidate]="hasPermission('document-validate') && selectedDocument.suiviInterneAutorise !== false"
+          [canShare]="peutGererLesPartages"
+          [canRequestChange]="selectedDocument.suiviInterneAutorise !== false"
+          [statusLabel]="statusLabelFn"
+          [statusSeverity]="statusSeverityFn"
+          [actionIcon]="actionIconFn"
+          [actionClass]="actionClassFn"
+          (close)="currentView = 'list'"
+          (openDocument)="openSecuredDocument($event)"
+          (downloadPdf)="downloadSecuredPdf($event)"
+          (viewHistory)="viewVersionHistory($event)"
+          (viewAudit)="viewAuditLogs($event)"
+          (viewValidationHistory)="viewValidationHistory($event)"
+          (viewDemandes)="viewDemandes($event)"
+          (requestChange)="demanderUneModification($event)"
+          (share)="openShareModal($event)"
+          (executeAction)="executeDynamicAction($event)">
+        </app-qms-document-detail>
+      </p-tabpanel>
 
-<!-- ========================================================================= -->
-<!-- 5 bis. TRAÇABILITÉ DU CIRCUIT DE VALIDATION -->
-<!-- Distincte des deux vues ci-dessus : celles-ci portent sur les versions du -->
-<!-- fichier et sur les accès, aucune ne disait qui avait validé, ni pourquoi. -->
-<!-- ========================================================================= -->
-<app-qms-workflow-historique *ngIf="currentView === 'tracabilite' && selectedDocument"
-  [document]="selectedDocument"
-  [historique]="validationHistory"
-  [loading]="loading"
-  (close)="currentView = 'list'">
-</app-qms-workflow-historique>
+      <!-- Versions successives du fichier, et qui les a déposées. -->
+      @if (peutVoirLesVersions) {
+      <p-tabpanel value="historique">
+        <app-qms-document-history
+          [document]="selectedDocument"
+          [versionHistory]="versionHistory"
+          (close)="currentView = 'list'">
+        </app-qms-document-history>
+      </p-tabpanel>
+      }
 
-<!-- ========================================================================= -->
-<!-- 5 quater. DEMANDES PORTÉES SUR LE DOCUMENT                                -->
-<!-- Ni les versions, ni les accès, ni les décisions du circuit ne disaient ce  -->
-<!-- qu'on avait demandé à son sujet, ni ce qui en avait été décidé.            -->
-<!-- ========================================================================= -->
-<app-qms-document-demandes *ngIf="currentView === 'demandes' && selectedDocument"
-  [document]="selectedDocument"
-  [demandes]="demandesDuDocument"
-  [loading]="loading"
-  (close)="currentView = 'detail'">
-</app-qms-document-demandes>
+      <!-- Qui accède au document : accès nominatifs et partages à des structures entières. Même
+           composant que le dialogue d'origine, rendu ici sans sa fenêtre. -->
+      @if (peutGererLesPartages) {
+      <p-tabpanel value="partages">
+        <app-qms-document-access-dialog
+          [enDialogue]="false"
+          [document]="selectedDocument"
+          [accessList]="accessList"
+          [structures]="structures"
+          [filteredUsers]="filteredUsers"
+          [roleOptions]="roleOptions"
+          [loading]="loading"
+          [loadingAccess]="loadingAccess"
+          [partagesStructure]="partagesStructure"
+          (structureFilterChange)="onStructureFilterChange($event)"
+          (grant)="submitPermissions($event)"
+          (revoke)="revokeAccess($event)"
+          (partagerAvecStructure)="partagerAvecStructure($event)"
+          (retirerPartageStructure)="retirerPartageStructure($event)">
+        </app-qms-document-access-dialog>
+      </p-tabpanel>
+      }
+
+      <!-- Journal des accès et des opérations. -->
+      @if (peutVoirLaPisteAudit) {
+      <p-tabpanel value="audit">
+        <app-qms-document-audit
+          [document]="selectedDocument"
+          [auditLogs]="auditLogs"
+          (close)="currentView = 'list'">
+        </app-qms-document-audit>
+      </p-tabpanel>
+      }
+
+      <!-- Ni les versions, ni les accès, ni les décisions du circuit ne disent ce qu'on a demandé
+           au sujet du document, ni ce qui en a été décidé. -->
+      @if (peutVoirLesDemandes) {
+      <p-tabpanel value="demandes">
+        <app-qms-document-demandes
+          [document]="selectedDocument"
+          [demandes]="demandesDuDocument"
+          [loading]="loading"
+          (close)="ongletDetail = 'detail'">
+        </app-qms-document-demandes>
+      </p-tabpanel>
+      }
+
+      <!-- Décisions du circuit : qui a validé, quand, avec quels motifs et quelles saisies. -->
+      @if (peutVoirLeCircuit) {
+      <p-tabpanel value="circuit">
+        <app-qms-workflow-historique
+          [document]="selectedDocument"
+          [historique]="validationHistory"
+          [loading]="loading"
+          (close)="currentView = 'list'">
+        </app-qms-workflow-historique>
+      </p-tabpanel>
+      }
+    </p-tabpanels>
+  </p-tabs>
+</div>
 
 </div>
 
-<!-- ========================================================================= -->
-<!-- 6. GESTION DES ACCÈS (ACL) DIALOG -->
-<!-- ========================================================================= -->
-<app-qms-document-access-dialog
-  [document]="selectedDocument"
-  [accessList]="accessList"
-  [structures]="structures"
-  [filteredUsers]="filteredUsers"
-  [roleOptions]="roleOptions"
-  [loading]="loading"
-  [loadingAccess]="loadingAccess"
-  [visible]="showShareModal"
-  (visibleChange)="showShareModal = $event"
-  [partagesStructure]="partagesStructure"
-  (structureFilterChange)="onStructureFilterChange($event)"
-  (grant)="submitPermissions($event)"
-  (revoke)="revokeAccess($event)"
-  (partagerAvecStructure)="partagerAvecStructure($event)"
-  (retirerPartageStructure)="retirerPartageStructure($event)">
-</app-qms-document-access-dialog>
+<!-- Les accès ne sont plus servis par un dialogue : ils sont l'onglet « Partages » de la fiche
+     ci-dessus. Les regarder supposait d'ouvrir une fenêtre par-dessus le document, qu'elle
+     masquait. -->
 
 <!-- ========================================================================= -->
 <!-- 7. ASSIGNATION WORKFLOW DIALOG -->

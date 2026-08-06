@@ -22,6 +22,14 @@
         objet="cette non-conformité"
         messageSansCircuit="Cette non-conformité n'est pas encore suivie par un circuit de validation."></app-workflow-guidance>
 
+    <!-- Ce que le dossier a recueilli étape après étape. Ces réponses étaient saisies au moment de
+         décider puis introuvables sur la fiche : seule une poignée d'entre elles, recopiée par le
+         module dans une colonne à lui, y reparaissait. Elles viennent du circuit, qui les porte
+         toutes, et sans qu'aucun nom de champ soit écrit ici. -->
+    <app-workflow-saisies class="block mb-4"
+        [state]="demande.workflowState"
+        titre="Informations recueillies au fil du circuit"></app-workflow-saisies>
+
     <!-- Section Principale -->
     <div class="grid">
         <div class="field mt-5 mb-4"

@@ -66,6 +66,14 @@ export interface WorkflowStepDto {
 
 export interface WorkflowTransitionDto {
   id?: number;
+  /**
+   * Code de l'action au sein de son étape (`APPROUVE`, `DEMANDER_COMPLEMENT`…).
+   *
+   * C'est lui qui identifie l'action, et non sa décision : une étape peut en offrir plusieurs de
+   * même nature — valider, ou valider en demandant un complément — qui ne mènent pas au même
+   * endroit. Vide, le serveur reprend le nom de la décision, et le rend unique dans l'étape.
+   */
+  code?: string | null;
   /** Libellé du bouton. Null accepté : le serveur retombe alors sur le nom de la décision. */
   label?: string | null;
   /**
@@ -121,6 +129,12 @@ export interface WorkflowStepFieldDto {
    * soit la décision. Un justificatif de rejet n'a pas à être demandé à qui approuve.
    */
   decision?: string | null;
+  /**
+   * Code de l'action qui, seule, réclame ce champ — ou absent s'il vaut pour toutes celles que sa
+   * décision laisse passer. Sans lui, le motif demandé par « Demander un complément » se
+   * présenterait aussi à qui valide simplement : les deux approuvent.
+   */
+  actionCode?: string | null;
 }
 
 export interface EmailTemplateDto {
@@ -168,6 +182,29 @@ export interface WorkflowStateDto {
    * refus — mais rien ne les mentionnait ensuite, et le dossier paraissait arrêté sans raison.
    */
   pendingDecisions?: DecisionEnAttenteDto[];
+  /**
+   * Tout ce qui a été saisi sur ce dossier depuis l'ouverture de son circuit, dans l'ordre où il
+   * l'a recueilli — la valeur la plus récente d'un champ faisant foi.
+   *
+   * Une donnée demandée à une étape n'existait plus nulle part à la suivante, sauf si un module
+   * l'avait recopiée dans une colonne à lui. Elle accompagne désormais l'état du circuit, donc la
+   * fiche comme les lignes de liste. L'historique, lui, garde les valeurs successives.
+   */
+  saisies?: SaisieDto[];
+}
+
+/** Une donnée saisie sur le dossier au cours de son circuit, et qui lui reste attachée. */
+export interface SaisieDto {
+  /** Nom technique du champ — clé stable. */
+  fieldName: string;
+  /** Intitulé présenté à qui a saisi, conservé avec la valeur : un champ retiré reste lisible. */
+  fieldLabel?: string;
+  value?: string;
+  stepCode?: string;
+  stepName?: string;
+  decisionDate?: string;
+  /** Nom de qui a saisi, tel qu'il se présentait alors ; à défaut, son identifiant. */
+  auteur?: string;
 }
 
 /** Une décision prévue par l'étape, et la condition qui lui manque. */
@@ -182,6 +219,12 @@ export interface DecisionEnAttenteDto {
 export interface WorkflowActionDto {
   /** Identifiant technique de la transition, à renvoyer au serveur pour l'exécuter. */
   code: string;
+  /**
+   * Code métier de l'action au sein de son étape (`APPROUVE`, `DEMANDER_COMPLEMENT`…), stable d'une
+   * installation à l'autre là où `code` est un identifiant technique. C'est par lui qu'un champ se
+   * rattache à une action précise.
+   */
+  actionCode?: string | null;
   libelle: string;
   /** Rôle exigé pour franchir. Informatif : le serveur tranche, l'écran ne fait que l'indiquer. */
   permission?: string;
@@ -233,6 +276,8 @@ export interface ValidationHistoryDto {
 export interface ValidationFieldValueDto {
   fieldCode?: string;
   fieldName?: string;
+  /** Intitulé du champ au moment de la saisie ; à défaut, le nom technique. */
+  fieldLabel?: string;
   value?: string;
 }
 

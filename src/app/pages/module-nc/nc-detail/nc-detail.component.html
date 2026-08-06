@@ -1,11 +1,11 @@
 <div *ngIf="nc" class="nc-detail-container">
     <!-- Header avec bouton retour -->
     <div class="nc-header flex items-center mb-4">
-        <!-- <pButton 
+        <!-- <pButton
             pRipple
             icon="pi pi-chevron-left"
             class=""
-            (click)="goBack()" 
+            (click)="goBack()"
         /> -->
         <p-button icon="pi pi-chevron-left" severity="secondary" (onClick)="goBack()" />
         <span class="nc-reference ml-3">Référence : {{nc.numeroReference}}</span>
@@ -87,7 +87,7 @@
                         <span class="font-bold text-sm">Description de la non-conformité</span>
                     </div>
                 </ng-template>
-                <div class="nc-description break-words mt-2" 
+                <div class="nc-description break-words mt-2"
                      [innerHTML]="nc.justification || 'Aucune description fournie'">
                 </div>
             </p-fieldset>
@@ -266,8 +266,8 @@
     </div>
 
     <!-- Dialog Plan d'action -->
-    <p-dialog 
-    [modal]="true" 
+    <p-dialog
+    [modal]="true"
     [maximizable]="true"
     appendTo="body"
     styleClass="premium-dialog"
@@ -319,7 +319,7 @@
                 </div>
             </div>
 
-            <div class="col-12 md:col-6">
+           <!-- <div class="col-12 md:col-6">
                 <div class="mt-4">
                     <p-fieldset [toggleable]="true" styleClass="mb-4">
                         <ng-template pTemplate="header">
@@ -332,9 +332,9 @@
                         </div>
                     </p-fieldset>
                 </div>
-            </div>
+            </div>-->
 
-            <div class="col-12 md:col-6">
+           <!-- <div class="col-12 md:col-6">
                 <div class="mt-4">
                     <p-fieldset [toggleable]="true" styleClass="mb-4">
                         <ng-template pTemplate="header">
@@ -347,7 +347,7 @@
                         </div>
                     </p-fieldset>
                 </div>
-            </div>
+            </div>-->
 
             <div class="col-12" *ngIf="planAction?.fichiers?.length > 0">
                 <div class="mt-4">

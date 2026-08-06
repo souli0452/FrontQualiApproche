@@ -56,7 +56,28 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
   selectedFile?: File;
   showGuideModal = false;
   workflows: DocumentWorkflow[] = [];
-  associatedWorkflow?: DocumentWorkflow;
+
+  /**
+   * Circuit que suivra le document, tel que le serveur le choisira.
+   *
+   * <p>Il se lit sur le <b>type de document</b> : chaque type désigne son circuit
+   * ({@code QmsDocumentType.workflowId}, réglé sous Configuration des types). À défaut, c'est le
+   * circuit actif de la famille DOCUMENT — celui que le serveur livre au premier démarrage — qui
+   * s'applique.</p>
+   *
+   * <p>Il était cherché parmi les circuits dont le {@code documentType} valait le code du type
+   * (« PRO », « ENR »…). Or un circuit porte une <b>famille</b> de ressource, jamais un code de
+   * type : la recherche ne trouvait donc jamais rien, et l'écran restait muet sur le circuit qui
+   * allait s'appliquer.</p>
+   */
+  circuitApplique?: DocumentWorkflow;
+
+  /** Le circuit affiché est celui par défaut : le type choisi n'en désigne aucun. */
+  circuitParDefaut = false;
+
+  /** Circuit actif de la famille DOCUMENT, appliqué à tout type qui n'en désigne pas. */
+  private circuitDocumentParDefaut?: DocumentWorkflow;
+
   currentUserStructureId?: string;
   private destroy$ = new Subject<void>();
 
@@ -135,11 +156,13 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
 
     this.workflowService.getAllWorkflows().subscribe({
       next: (res) => {
-        this.workflows = res || [];
+        this.workflows = (res || []) as DocumentWorkflow[];
         this.findAssociatedWorkflow(this.documentForm.get('documentType')?.value);
       },
       error: (err) => console.error('Erreur chargement des workflows', err)
     });
+
+    this.chargerLeCircuitParDefaut();
 
     this.documentForm.get('documentType')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(typeCode => {
       this.findAssociatedWorkflow(typeCode);
@@ -226,12 +249,59 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Résout le circuit qui s'appliquera, dans l'ordre où le serveur le fait lui-même.
+   *
+   * <p>Le circuit du type choisi, sinon celui par défaut des documents. L'écran ne fait que
+   * <b>montrer</b> ce choix : il ne le transmet pas, pour que le serveur en reste seul juge — un
+   * identifiant retenu ici serait celui d'une configuration lue à l'ouverture de l'écran, et non
+   * celle en vigueur à l'enregistrement.</p>
+   */
   findAssociatedWorkflow(typeCode: string): void {
-    if (typeCode) {
-      this.associatedWorkflow = this.workflows.find(w => w.documentType === typeCode);
-    } else {
-      this.associatedWorkflow = undefined;
+    if (!typeCode) {
+      this.circuitApplique = undefined;
+      this.circuitParDefaut = false;
+      return;
     }
+
+    const type = this.documentTypes.find(t => t.code === typeCode);
+    const circuitDuType = type?.workflowId
+      ? this.workflows.find(w => w.id === type.workflowId)
+      : undefined;
+
+    if (circuitDuType) {
+      this.circuitApplique = circuitDuType;
+      this.circuitParDefaut = false;
+      return;
+    }
+
+    // Aucun circuit sur le type : celui par défaut prend la suite. Le dire vaut mieux que de
+    // laisser croire qu'aucune validation n'attend le document.
+    this.circuitApplique = this.circuitDocumentParDefaut;
+    this.circuitParDefaut = !!this.circuitDocumentParDefaut;
+  }
+
+  /**
+   * Circuit par défaut des documents.
+   *
+   * <p>Demandé au serveur plutôt que déduit de la liste des circuits : c'est lui qui tranche quel
+   * circuit est actif pour une famille, et l'ordre d'une liste ne le garantit pas. Son absence
+   * n'est pas une erreur d'écran — elle signifie qu'aucun circuit n'est actif pour les documents,
+   * ce que l'écran annonce alors.</p>
+   */
+  private chargerLeCircuitParDefaut(): void {
+    this.workflowService.getActiveWorkflowByType('DOCUMENT')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (circuit) => {
+          this.circuitDocumentParDefaut = circuit as DocumentWorkflow;
+          this.findAssociatedWorkflow(this.documentForm.get('documentType')?.value);
+        },
+        error: () => {
+          this.circuitDocumentParDefaut = undefined;
+          this.findAssociatedWorkflow(this.documentForm.get('documentType')?.value);
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -284,7 +354,9 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       redacteur: formVal.redacteur,
       periodiciteMois: formVal.periodiciteMois,
       // `confidentiel` n'est plus transmis : le serveur l'établit à partir du niveau choisi.
-      ...(this.associatedWorkflow && { workflowId: this.associatedWorkflow.id }),
+      // Le circuit non plus : c'est le serveur qui le choisit, du circuit désigné par le type de
+      // document à défaut de celui actif pour les documents. Le transmettre depuis ici aurait figé
+      // la configuration telle qu'elle était à l'ouverture de l'écran.
       ...(formVal.reference && { reference: formVal.reference }),
       ...(formVal.prioriteId && {
         prioriteId: formVal.prioriteId,
