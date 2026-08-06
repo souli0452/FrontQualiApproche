@@ -23,7 +23,7 @@ import { WorkflowStateDto } from '../../models/workflow.model';
     template: `
         @if (state) {
             <div class="wf-guidance" [ngClass]="'wf-guidance--' + ton">
-                
+
                 <div class="wf-guidance-texte">
                     <div class="wf-guidance-titre">{{ titre }}</div>
                     <div class="wf-guidance-detail">{{ detail }}</div>

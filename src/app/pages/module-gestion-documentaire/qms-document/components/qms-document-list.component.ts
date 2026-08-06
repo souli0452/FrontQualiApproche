@@ -53,6 +53,15 @@ export class QmsDocumentListComponent {
     @Input() chargerNiveauxConfidentialite?: OptionsLoader<NiveauConfidentialite>;
     @Input() chargerDomaines?: OptionsLoader<DomaineApplication>;
 
+    /**
+     * Le filtre par processus émetteur est-il offert ?
+     *
+     * <p>Faux pour la plupart : le serveur borne déjà leur fonds visible à leur propre structure, et
+     * choisir une autre structure ne rendait alors rien — un filtre qui ne peut que vider la liste
+     * n'en est pas un. Le parent tranche, il détient les rôles.</p>
+     */
+    @Input() peutFiltrerParProcessusEmetteur = false;
+
     @Input() searchQuery = '';
     @Input() selectedType = '';
     @Input() selectedService = '';

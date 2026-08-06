@@ -19,6 +19,10 @@ export interface AccessGrant {
  * partir de l'utilisateur choisi n'intéresse que lui. Le chargement des utilisateurs d'une
  * structure reste au parent, qui détient les services : le dialogue signale le changement de
  * filtre et se contente d'afficher la liste qu'on lui fournit.</p>
+ *
+ * <p>Le même contenu sert d'onglet « Partages » sur la fiche du document ({@link #enDialogue} à
+ * faux) : les partages sont une propriété du document, à consulter en même temps que le reste, et
+ * non un geste isolé qui n'aurait sa place que dans une fenêtre surgissante.</p>
  */
 @Component({
     selector: 'app-qms-document-access-dialog',
@@ -36,6 +40,14 @@ export class QmsDocumentAccessDialogComponent {
     @Input() loadingAccess = false;
     /** Structures déjà destinataires d'un partage, chargées par le parent. */
     @Input() partagesStructure: any[] = [];
+
+    /**
+     * Rendu en fenêtre surgissante, ou à même la page ?
+     *
+     * <p>Vrai par défaut : les appelants existants ouvrent un dialogue et n'ont rien à changer.
+     * L'onglet « Partages » de la fiche le met à faux et n'obtient que le corps.</p>
+     */
+    @Input() enDialogue = true;
 
     @Input()
     set visible(valeur: boolean) {

@@ -222,6 +222,14 @@
             objet="cette action"
             messageSansCircuit="Cette action est proposée : elle sera confiée à son responsable à la validation qualité du dossier."></app-workflow-guidance>
 
+        <!-- Ce que le circuit a recueilli sur cette action — compte rendu du responsable, constat
+             d'efficacité, tout champ qu'un administrateur ajoutera demain à une étape. Le pilote
+             puis le responsable qualité se prononcent là-dessus : ils ne peuvent pas avoir à
+             l'aller chercher dans l'historique, décision par décision. -->
+        <app-workflow-saisies class="block mb-4"
+            [state]="planAction.workflowState"
+            titre="Ce qui a été rapporté sur cette action"></app-workflow-saisies>
+
         <!-- Ce sur quoi le responsable a été engagé : il le lit, il ne le modifie pas. L'action et
              son critère ont été arrêtés à la définition du plan, puis validés. -->
         <div class="mb-4 p-3 rounded-xl bg-surface-50 dark:bg-surface-900 border border-surface-200 dark:border-surface-700">

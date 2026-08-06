@@ -120,6 +120,14 @@ export class QmsDocumentTypeComponent {
      * <p>Restreint aux circuits de type DOCUMENT : les circuits de non-conformité ou de plan
      * d'action ne peuvent pas piloter un document, et les proposer inviterait à reproduire
      * l'incohérence qui rendait les notifications impossibles.</p>
+     *
+     * <p>Un circuit désigné ici doit être <b>actif</b> pour servir : le moteur refuse d'ouvrir un
+     * circuit désactivé, quand bien même un type le nommerait. Plusieurs circuits documentaires
+     * actifs à la fois sont donc normaux — c'est ce que produit un circuit par type. Le plus ancien
+     * fait office de repli pour les types qui n'en désignent aucun.</p>
+     *
+     * <p>Un circuit désactivé reste proposé — on peut l'attribuer puis l'activer — mais l'étiquette
+     * le dit : le laisser tel quel ferait échouer le dépôt des documents de ce type.</p>
      */
     private chargerCircuits(): void {
         this.workflowService.getWorkflowsByType('DOCUMENT')
@@ -129,7 +137,7 @@ export class QmsDocumentTypeComponent {
                     this.nomParCircuit = new Map(circuits.map((c) => [c.id!, c.nom]));
                     this.circuitDropdown.dropdownEntries = circuits.map((c) => ({
                         value: c.id,
-                        label: c.actif ? c.nom : `${c.nom} (inactif)`
+                        label: c.actif ? c.nom : `${c.nom} — désactivé, à réactiver pour servir`
                     }));
                     this.dropdownList = [...this.dropdownList];
                     this.decorerListe();

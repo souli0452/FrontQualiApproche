@@ -1,3 +1,5 @@
+<p-toast></p-toast>
+
 <p-card>
 <div class="">
 
@@ -8,7 +10,28 @@
         <span *ngIf="!porteeGlobale">Chiffres portant sur <strong>votre structure</strong>.</span>
     </div>
 
+    <!-- Les deux premiers compteurs portent sur ce qui attend une décision de l'utilisateur, non
+         sur un état de fait : ce sont eux qu'on regarde pour savoir quoi faire aujourd'hui. Ils
+         viennent du circuit, comme les listes ci-dessous, et non d'un filtre sur les statuts. -->
     <div class="grid grid-cols-12 gap-4 mb-4">
+        <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+            <app-doc-stats-card
+                label="Documents à traiter"
+                icon="pi pi-inbox"
+                color="orange"
+                [value]="documentsATraiter.length"
+                [loading]="chargementATraiter">
+            </app-doc-stats-card>
+        </div>
+        <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+            <app-doc-stats-card
+                label="Demandes à instruire"
+                icon="pi pi-file-edit"
+                color="red"
+                [value]="demandesATraiter.length"
+                [loading]="chargementATraiter">
+            </app-doc-stats-card>
+        </div>
         <div class="col-span-12 sm:col-span-6 lg:col-span-3">
             <app-doc-stats-card
                 label="Total Documents"
@@ -22,83 +45,59 @@
             <app-doc-stats-card
                 label="En retard de révision"
                 icon="pi pi-clock"
-                color="red"
+                color="green"
                 [value]="stats?.documentsEnRetardRevision || 0"
                 [loading]="loading">
             </app-doc-stats-card>
         </div>
-        <!-- Les deux compteurs suivants portent sur ce qui appelle un geste, non sur un état de
-             fait : ce sont eux qu'on regarde pour savoir quoi faire aujourd'hui. -->
-        <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-            <app-doc-stats-card
-                label="Demandes en attente"
-                icon="pi pi-inbox"
-                color="orange"
-                [value]="demandesEnAttente"
-                [loading]="loading">
-            </app-doc-stats-card>
-        </div>
-        <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-            <app-doc-stats-card
-                label="Demandes déposées"
-                icon="pi pi-send"
-                color="green"
-                [value]="demandesTotal"
-                [loading]="loading">
-            </app-doc-stats-card>
-        </div>
     </div>
 
-    <!-- Évolution : douze mois glissants, mois vides compris — une courbe qui saute les mois
-         creux déforme la pente et laisse croire à une activité continue. -->
-    <div class="card border border-surface-border p-4 mb-4">
-        <h3 class="text-base font-bold m-0 mb-1">Dépôts des douze derniers mois</h3>
-        <p class="text-sm text-surface-500 m-0 mb-3">
-            Documents déposés et demandes de modification ou de suppression, mois par mois.
-        </p>
-        <div style="height: 20rem">
-            <p-chart type="line" [data]="donneesCourbe" [options]="optionsCourbe"
-                     styleClass="h-full"></p-chart>
-        </div>
+    <!-- ------------------------------------------------------------------ à traiter -->
+    <!-- Ce qui attend un geste, avec de quoi le faire sur place : les boutons sont ceux que le
+         circuit ouvre à l'appelant sur chaque dossier. Auparavant l'écran montrait des courbes de
+         dépôts, et il fallait aller chercher ailleurs les dossiers qui attendaient. -->
+    <div class="flex flex-col gap-4 mb-4">
+        <app-qms-a-traiter
+            titre="Documents attendant votre décision"
+            icone="pi pi-inbox"
+            [lignes]="documentsATraiter"
+            [chargement]="chargementATraiter"
+            messageVide="Aucun document n'attend votre décision."
+            lienLibelle="Tous les documents"
+            (traite)="apresDecision()"
+            (voirDetail)="ouvrirLeDocument($event)"
+            (voirTout)="voirLesDocuments()">
+        </app-qms-a-traiter>
+
+        <app-qms-a-traiter
+            titre="Demandes à instruire"
+            icone="pi pi-file-edit"
+            [lignes]="demandesATraiter"
+            [chargement]="chargementATraiter"
+            messageVide="Aucune demande n'attend votre instruction."
+            lienLibelle="Toutes les demandes"
+            (traite)="apresDecision()"
+            (voirDetail)="ouvrirLaDemande($event)"
+            (voirTout)="voirLesDemandes()">
+        </app-qms-a-traiter>
     </div>
 
-    <div class="grid grid-cols-12 gap-4 mb-4">
-        <div class="col-span-12 lg:col-span-6">
-            <div class="card border border-surface-border p-4 h-full">
-                <h3 class="text-base font-bold m-0 mb-1">Documents par statut</h3>
-                <p class="text-sm text-surface-500 m-0 mb-3">Où en sont les documents de votre périmètre.</p>
-                <div style="height: 18rem">
-                    <p-chart type="doughnut" [data]="donneesStatut" [options]="optionsCamembert"
-                             styleClass="h-full"></p-chart>
-                </div>
-            </div>
-        </div>
-        <div class="col-span-12 lg:col-span-6">
-            <div class="card border border-surface-border p-4 h-full">
-                <h3 class="text-base font-bold m-0 mb-1">Demandes par état</h3>
-                <p class="text-sm text-surface-500 m-0 mb-3">
-                    Ce qui est en instruction, décidé, ou reste à exécuter.
-                </p>
-                <div style="height: 18rem" *ngIf="demandesParEtat.length">
-                    <p-chart type="doughnut" [data]="donneesDemandes" [options]="optionsCamembert"
-                             styleClass="h-full"></p-chart>
-                </div>
-                <div class="flex flex-col items-center gap-2 py-12 text-surface-400"
-                     *ngIf="!loading && !demandesParEtat.length">
-                    <i class="pi pi-inbox text-3xl"></i>
-                    <span class="text-sm">Aucune demande déposée à ce jour.</span>
-                </div>
-            </div>
-        </div>
+    <!-- ------------------------------------------------------------------ état du fonds -->
+    <!-- Les répartitions restent, en second rang : elles donnent les valeurs exactes de ce qui est
+         en stock, là où les compteurs du haut ne disent que ce qui attend un geste. -->
+    <div class="flex items-center gap-2 mb-2 text-sm text-surface-500">
+        <i class="pi pi-chart-bar"></i>
+        <span>
+            État du fonds — {{ demandesTotal }} demande(s) déposée(s) à ce jour,
+            dont {{ demandesEnAttente }} en attente d'un aboutissement.
+        </span>
     </div>
 
-    <!-- Les tableaux restent : ils donnent les valeurs exactes que le camembert ne peut que
-         suggérer, et servent de recours quand deux teintes voisines se distinguent mal — la
-         palette claire passe sous le seuil de contraste pour trois de ses teintes. -->
     <div class="grid grid-cols-12 gap-4">
         <div class="col-span-12 lg:col-span-6">
             <div class="card border border-surface-border p-4">
-                <h3 class="text-base font-bold m-0 mb-3">Répartition par statut</h3>
+                <h3 class="text-base font-bold m-0 mb-1">Répartition par statut</h3>
+                <p class="text-sm text-surface-500 m-0 mb-3">Où en sont les documents de votre périmètre.</p>
                 <p-table [value]="countByStatus" [loading]="loading" styleClass="p-datatable-sm">
                     <ng-template pTemplate="header">
                         <tr><th>Statut</th><th class="text-right">Nombre</th></tr>
@@ -114,7 +113,8 @@
         </div>
         <div class="col-span-12 lg:col-span-6">
             <div class="card border border-surface-border p-4">
-                <h3 class="text-base font-bold m-0 mb-3">Répartition par type de document</h3>
+                <h3 class="text-base font-bold m-0 mb-1">Répartition par type de document</h3>
+                <p class="text-sm text-surface-500 m-0 mb-3">Ce que contient le fonds, par nature de document.</p>
                 <p-table [value]="countByDocumentType" [loading]="loading" styleClass="p-datatable-sm">
                     <ng-template pTemplate="header">
                         <tr><th>Type</th><th class="text-right">Nombre</th></tr>

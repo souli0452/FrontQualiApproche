@@ -5,6 +5,8 @@
  * responsables et sa traçabilité. Ce qui lui est propre est l'aboutissement — une modification
  * acceptée attend le fichier remplaçant, une suppression acceptée retire le document.
  */
+import { WorkflowStateDto } from './workflow.model';
+
 export type TypeDemande = 'MODIFICATION' | 'SUPPRESSION';
 
 /**
@@ -36,4 +38,12 @@ export interface DemandeDocumentDto {
   dateExecution?: string;
   /** Acceptée et attendant son exécution. */
   enAttenteExecution?: boolean;
+  /**
+   * État du circuit : étape courante et décisions ouvertes à l'appelant.
+   *
+   * Renseigné par les listes qui proposent d'agir — la vue d'ensemble documentaire — et absent
+   * ailleurs : les autres listes n'affichent pas d'action, et le demander partout aurait coûté un
+   * aller-retour par ligne.
+   */
+  workflowState?: WorkflowStateDto;
 }

@@ -1,5 +1,4 @@
 import { Component, Input, ViewChild } from '@angular/core';
-import { TabViewModule } from 'primeng/tabview';
 import { FormArray, FormBuilder, FormGroup, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { NgPrimeModule } from '../../../../prime-ng.module';
@@ -26,7 +25,10 @@ import { formatDateToDDMMYYYY } from '../../../utils/formatage/formatage-utils';
 @Component({
     selector: 'app-form-traitement',
     standalone: true,
-    imports: [NgPrimeModule, TabViewModule, DetailsDialogComponent, LightboxComponent, WorkflowActionsComponent,
+    // TabViewModule est absent volontairement : son `p-tabPanel` et le `p-tabpanel` de TabsModule
+    // — que NgPrimeModule expose — désignent la même balise aux yeux du parseur HTML, qui ignore la
+    // casse. Angular refusait alors de trancher (NG0300) et le composant ne s'affichait plus.
+    imports: [NgPrimeModule, DetailsDialogComponent, LightboxComponent, WorkflowActionsComponent,
         WorkflowGuidanceComponent, WorkflowHistoriqueComponent],
     templateUrl: './form-traitement.html',
     styleUrl: './form-traitement.scss'

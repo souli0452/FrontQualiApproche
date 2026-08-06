@@ -63,18 +63,28 @@ export class WorkflowDecisionDialogComponent {
   }
 
   /**
-   * Champs à présenter pour la décision en cours.
+   * Champs à présenter pour l'action en cours.
    *
    * <p>Une étape déclare parfois un champ propre à une seule issue — un justificatif de rejet, par
    * exemple. Présenté sans distinction, il demandait de motiver un refus à qui était en train
    * d'approuver.</p>
    */
   get stepFields(): WorkflowStepFieldDto[] {
-    return this._stepFields.filter((champ) => this.concerneLaDecision(champ));
+    return this._stepFields.filter((champ) => this.concerneLAction(champ));
   }
   private _stepFields: WorkflowStepFieldDto[] = [];
 
-  private concerneLaDecision(champ: WorkflowStepFieldDto): boolean {
+  /**
+   * Portée la plus étroite d'abord : un champ qui nomme une action ne regarde qu'elle.
+   *
+   * <p>La seule portée par décision ne suffit plus dès qu'une étape offre plusieurs actions de même
+   * nature : le motif que réclame « Demander un complément » serait demandé à qui valide
+   * simplement, les deux approuvant.</p>
+   */
+  private concerneLAction(champ: WorkflowStepFieldDto): boolean {
+    if (champ.actionCode) {
+      return !this._action?.actionCode || champ.actionCode === this._action.actionCode;
+    }
     return !champ.decision || !this._action?.decision || champ.decision === this._action.decision;
   }
 

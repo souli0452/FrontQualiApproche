@@ -87,8 +87,8 @@ describe('WorkflowEditorComponent — attribution des codes d\'étape', () => {
 
     // La première approuve vers la seconde : c'est la destination qu'un code partagé ferait
     // silencieusement retomber sur la première.
-    composant.etapes.at(0).patchValue({
-      cibleApprobation: composant.etapes.at(1).get('identifiantLocal')?.value
+    composant.actionsDeLEtape(0).at(0).patchValue({
+      cible: composant.etapes.at(1).get('identifiantLocal')?.value
     });
 
     const etapes = payload().steps ?? [];
@@ -98,6 +98,31 @@ describe('WorkflowEditorComponent — attribution des codes d\'étape', () => {
     const approbation = etapes[0].transitions?.find((t) => t.decision === 'APPROUVE');
     expect(approbation?.toStepCode).toBe('VERIFICATION_2');
     expect(approbation?.terminal).toBeFalse();
+  });
+
+  it('retient toutes les actions d\'une étape, y compris de même nature', () => {
+    composant.ajouterEtape();
+    composant.etapes.at(0).patchValue({ nomEtape: 'Validation' });
+    composant.ajouterAction(0);
+    composant.actionsDeLEtape(0).at(2).patchValue({
+      code: 'DEMANDER_COMPLEMENT', decision: 'APPROUVE', label: 'Demander un complément'
+    });
+
+    // L'étape n'offrait que deux issues, l'action se confondant avec sa décision : une troisième
+    // suite n'était même pas exprimable dans l'éditeur.
+    const actions = payload().steps?.[0].transitions ?? [];
+    expect(actions.map((a) => a.code)).toEqual(['APPROUVE', 'REJETE', 'DEMANDER_COMPLEMENT']);
+    expect(actions.filter((a) => a.decision === 'APPROUVE').length).toBe(2);
+  });
+
+  it('laisse toujours une action à configurer plutôt qu\'une étape sans issue', () => {
+    composant.ajouterEtape();
+    composant.supprimerAction(0, 1);
+    composant.supprimerAction(0, 0);
+
+    // Une étape sans action est une impasse : le dossier s'y arrête et rien ne peut plus l'en
+    // sortir.
+    expect(composant.actionsDeLEtape(0).length).toBe(1);
   });
 
   it('ne redonne pas à une étape nouvelle le code d\'une étape déjà enregistrée', () => {

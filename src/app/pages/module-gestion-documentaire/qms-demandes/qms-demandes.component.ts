@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '../../../shared';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
@@ -115,6 +115,7 @@ export class QmsDemandesComponent implements OnInit, OnDestroy {
     constructor(
         private readonly fb: FormBuilder,
         private readonly router: Router,
+        private readonly route: ActivatedRoute,
         private readonly demandeService: DemandeDocumentService,
         private readonly workflowService: WorkflowService,
         private readonly messageService: MessageService
@@ -125,6 +126,32 @@ export class QmsDemandesComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.peutDeposerRemplacant = hasAnyPermission(['document-write']);
         this.charger();
+        this.ouvrirLaDemandeDeLAdresse();
+    }
+
+    /**
+     * Ouvre d'emblée la fiche de la demande désignée par l'adresse (`?demandeId=`).
+     *
+     * <p>La vue d'ensemble y renvoie pour les demandes qui offrent plus d'une décision : instruire
+     * suppose d'avoir lu l'objectif et la pièce jointe, ce qu'une ligne de tableau ne montre pas.
+     * L'identifiant passe par l'adresse, si bien que le lien reste rechargeable.</p>
+     */
+    private ouvrirLaDemandeDeLAdresse(): void {
+        const demandeId = this.route.snapshot.queryParamMap.get('demandeId');
+        if (!demandeId) {
+            return;
+        }
+
+        this.demandeService.getById(demandeId)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (demande) => this.ouvrirDetail(demande),
+                // La demande a pu sortir de portée : la liste reste affichée, et l'échec est dit.
+                error: () => this.messageService.add({
+                    severity: 'warn', summary: 'Demande introuvable',
+                    detail: "Cette demande n'est plus accessible : elle a pu être close, ou sortir de votre périmètre."
+                })
+            });
     }
 
     ngOnDestroy(): void {

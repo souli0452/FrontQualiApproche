@@ -10,6 +10,7 @@ import { AuthService } from '../../../services/auth-services/auth.service';
 import { EtapeTraitement } from '../../../enums/enums';
 import { LightboxComponent } from '../lightbox/lightbox';
 import { WorkflowGuidanceComponent } from '../../../shared/workflow/workflow-guidance.component';
+import { WorkflowSaisiesComponent } from '../../../shared/workflow/workflow-saisies.component';
 import { WorkflowHistoriqueComponent } from '../../../shared/workflow/workflow-historique.component';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 import { convertFilesToBase64 } from '../../../utils/fichier/fichier-utils';
@@ -21,7 +22,7 @@ import { hasAnyPermission } from '../../../utils/auth/auth-utils';
     selector: 'app-details-dialog',
     templateUrl: './details-dialog.html',
     imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent, LightboxComponent,
-        WorkflowGuidanceComponent, WorkflowHistoriqueComponent],
+        WorkflowGuidanceComponent, WorkflowSaisiesComponent, WorkflowHistoriqueComponent],
     standalone: true,
     styleUrl: './details-dialog.scss'
 })

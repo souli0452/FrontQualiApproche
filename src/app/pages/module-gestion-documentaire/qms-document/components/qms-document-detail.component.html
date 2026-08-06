@@ -157,11 +157,14 @@
 
       <!-- Consultation. Quatre vues aux noms voisins — historique, piste d'audit, traçabilité —
            que quatre boutons gris identiques rendaient impossibles à distinguer : on ne savait
-           laquelle ouvrir sans les essayer. Elles forment désormais un bloc à part, distinct des
+           laquelle ouvrir sans les essayer. Elles forment donc un bloc à part, distinct des
            actions sur le fichier, où chacune porte son icône, sa couleur et une infobulle qui
-           énonce ce qu'elle montre. -->
+           énonce ce qu'elle montre.
+
+           Retiré quand la fiche est présentée en onglets : les onglets mènent aux mêmes vues, et
+           deux jeux de navigation côte à côte laisseraient croire à deux destinations. -->
       <div class="inline-flex flex-wrap items-stretch rounded-lg border border-slate-200 bg-white overflow-hidden"
-        *ngIf="canViewHistory || canViewAudit || canShare">
+        *ngIf="!enOnglet && (canViewHistory || canViewAudit || canShare)">
         <button type="button" *ngIf="canViewHistory" (click)="viewHistory.emit(document)"
           class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 border-r border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-colors"
           pTooltip="Versions successives du fichier, et qui les a déposées" tooltipPosition="top">

@@ -1,13 +1,21 @@
-import { Component, OnDestroy, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { Subject, forkJoin, takeUntil } from 'rxjs';
+
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { DocStatsCardComponent } from '../../../components/gestion-documentaire/doc-stats-card/doc-stats-card.component';
 import { QmsDocumentService } from '../../../services/module-gestion-documentaire/qms-document.service';
 import { DemandeDocumentService } from '../../../services/module-gestion-documentaire/demande-document.service';
-import { DocumentStatsDto } from '../../../models/gestion-documentaire.model';
-import { LayoutService } from '../../../layout/service/layout.service';
+import {
+    DocumentaireATraiterService
+} from '../../../services/module-gestion-documentaire/documentaire-a-traiter.service';
+import { DocumentQms, DocumentStatsDto } from '../../../models/gestion-documentaire.model';
+import { DemandeDocumentDto } from '../../../models/demande-document.model';
 import { hasAnyPermission } from '../../../utils/auth/auth-utils';
+import { formatDateToDDMMYYYY } from '../../../utils/formatage/formatage-utils';
+import { LigneATraiter, QmsATraiterComponent } from './qms-a-traiter.component';
 
 interface DimensionEntry {
     label: string;
@@ -15,18 +23,20 @@ interface DimensionEntry {
 }
 
 /**
- * Palette catégorielle, validée pour les deux modes (bande de clarté, plancher de chroma,
- * séparation en vision daltonienne et en vision normale).
+ * Vue d'ensemble documentaire : d'abord ce qui attend un geste de l'utilisateur, puis ce qui est en
+ * stock.
  *
- * <p>Les couleurs suivent l'entité, jamais son rang : chaque série garde sa teinte quel que soit
- * le nombre de séries affichées, sans quoi un filtre repeindrait les survivantes et ferait lire un
- * changement là où il n'y en a pas.</p>
- */
-const PALETTE_CLAIRE = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4'];
-const PALETTE_SOMBRE = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181'];
-
-/**
- * Vue d'ensemble documentaire : ce qui est en stock, ce qui arrive, ce qui attend un geste.
+ * <p>L'écran présentait des courbes de dépôts et deux camemberts. Ils disent l'activité du
+ * trimestre ; ils ne disent pas ce qu'il y a à faire aujourd'hui, et l'on n'y prenait rien en
+ * charge. Celui qui devait instruire une demande devait la deviner, ouvrir la liste des demandes, y
+ * retrouver les lignes en instruction — dont beaucoup ne le concernaient pas — puis ouvrir chaque
+ * fiche pour découvrir s'il pouvait décider. Le module non-conformité range sa vue d'ensemble
+ * autrement : les dossiers qui attendent une décision au premier plan, avec leurs boutons. Celui-ci
+ * fait de même.</p>
+ *
+ * <p>Ce sont les listes du <b>circuit</b> qui alimentent cette page — non un filtre sur le statut
+ * des documents : le moteur seul sait quel rôle décide de l'étape courante, et une seconde règle
+ * écrite ici aurait fait apparaître des dossiers que le serveur refuse ensuite de faire avancer.</p>
  *
  * <p>La portée des chiffres est celle qu'applique le serveur — la structure de l'utilisateur, ou
  * l'ensemble pour qui accompagne la qualité. Elle est annoncée à l'écran : un total dont on ignore
@@ -35,50 +45,41 @@ const PALETTE_SOMBRE = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181'];
 @Component({
     selector: 'app-qms-vue-ensemble',
     standalone: true,
-    imports: [CommonModule, NgPrimeModule, DocStatsCardComponent],
+    imports: [CommonModule, NgPrimeModule, DocStatsCardComponent, QmsATraiterComponent],
+    // Le dialogue de décision des lignes rend compte par messages : sans fournisseur ni conteneur,
+    // ni le succès ni le refus du serveur ne seraient dits.
+    providers: [MessageService],
     templateUrl: './qms-vue-ensemble.component.html',
     styleUrl: './qms-vue-ensemble.component.scss'
 })
 export class QmsVueEnsembleComponent implements OnInit, OnDestroy {
+    private readonly qmsService = inject(QmsDocumentService);
+    private readonly demandeService = inject(DemandeDocumentService);
+    private readonly aTraiterService = inject(DocumentaireATraiterService);
+    private readonly router = inject(Router);
+
+    /** Chargement des chiffres de stock ; les listes de travail ont le leur. */
     loading = true;
+    /** Chargement des listes de travail : « rien à faire » ne doit pas s'afficher avant de le savoir. */
+    chargementATraiter = true;
+
     stats: DocumentStatsDto | null = null;
 
     countByStatus: DimensionEntry[] = [];
     countByDocumentType: DimensionEntry[] = [];
 
-    /** Demandes : total, en attente d'un geste, et répartition par état. */
+    /** Demandes : total et nombre en attente d'un geste, tous instructeurs confondus. */
     demandesTotal = 0;
     demandesEnAttente = 0;
-    demandesParEtat: DimensionEntry[] = [];
+
+    /** Ce que l'utilisateur a à traiter, mis en forme pour le tableau. */
+    documentsATraiter: LigneATraiter[] = [];
+    demandesATraiter: LigneATraiter[] = [];
 
     /** Voit-on toute l'organisation, ou sa seule structure ? */
     porteeGlobale = false;
 
-    // --------------------------------------------------------------- graphiques
-    donneesCourbe: any;
-    optionsCourbe: any;
-    donneesStatut: any;
-    donneesDemandes: any;
-    optionsCamembert: any;
-
-    /** Séries brutes, conservées pour redessiner à l'identique quand le thème bascule. */
-    private documentsParMois: Record<string, number> = {};
-    private demandesParMois: Record<string, number> = {};
-
     private destroy$ = new Subject<void>();
-
-    constructor(
-        private qmsService: QmsDocumentService,
-        private demandeService: DemandeDocumentService,
-        private layoutService: LayoutService
-    ) {
-        // Le mode sombre n'est pas une inversion : les teintes y sont reprises pour la surface
-        // sombre, et validées contre elle. Les graphiques sont donc recomposés à chaque bascule.
-        effect(() => {
-            this.layoutService.isDarkTheme();
-            this.composerGraphiques();
-        });
-    }
 
     ngOnInit(): void {
         // Même règle que le serveur : responsable qualité et administration générale voient
@@ -87,6 +88,32 @@ export class QmsVueEnsembleComponent implements OnInit, OnDestroy {
         this.porteeGlobale = hasAnyPermission(
             ['MANAGE_USER', 'ROLE_MANAGE', 'CONFIG_GLOBAL_MANAGE',
              'nc-close', 'demande-document-validate']);
+
+        // L'état est partagé avec la cloche de notifications : elle annonce ce que cette page
+        // montre, et une décision prise ici la corrige du même coup.
+        this.aTraiterService.aTraiter$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((etat) => {
+                this.documentsATraiter = (etat.documents ?? []).map(doc => this.ligneDeDocument(doc));
+                this.demandesATraiter = (etat.demandes ?? []).map(demande => this.ligneDeDemande(demande));
+                this.chargementATraiter = etat.chargement || !etat.charge;
+            });
+
+        this.chargerATraiter();
+        this.loadStats();
+    }
+
+    /** Relit les listes de travail. Appelée à l'ouverture, et après chaque décision prise ici. */
+    chargerATraiter(): void {
+        this.aTraiterService.rafraichir().pipe(takeUntil(this.destroy$)).subscribe();
+    }
+
+    /**
+     * Après une décision : les listes de travail changent, et les compteurs de stock aussi — une
+     * approbation met un document en vigueur, une suppression décidée le retire.
+     */
+    apresDecision(): void {
+        this.chargerATraiter();
         this.loadStats();
     }
 
@@ -96,23 +123,16 @@ export class QmsVueEnsembleComponent implements OnInit, OnDestroy {
             stats: this.qmsService.getDocumentStats(),
             byStatus: this.qmsService.getDocumentStatsByDimension('STATUT'),
             byType: this.qmsService.getDocumentStatsByDimension('DOCUMENT_TYPE'),
-            parMois: this.qmsService.getDocumentsParMois(12),
             demandes: this.demandeService.statistiques(12)
         })
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-                next: ({ stats, byStatus, byType, parMois, demandes }) => {
+                next: ({ stats, byStatus, byType, demandes }) => {
                     this.stats = (stats as any)?.data ?? stats;
                     this.countByStatus = this.toEntries(byStatus);
                     this.countByDocumentType = this.toEntries(byType);
-
-                    this.documentsParMois = parMois ?? {};
-                    this.demandesParMois = demandes?.parMois ?? {};
                     this.demandesTotal = Number(demandes?.total) || 0;
                     this.demandesEnAttente = Number(demandes?.enAttente) || 0;
-                    this.demandesParEtat = this.toEntries(demandes?.parEtat);
-
-                    this.composerGraphiques();
                     this.loading = false;
                 },
                 error: () => {
@@ -121,125 +141,74 @@ export class QmsVueEnsembleComponent implements OnInit, OnDestroy {
             });
     }
 
-    // --------------------------------------------------------------- composition
+    // --------------------------------------------------------------- listes de travail
 
-    private get palette(): string[] {
-        return this.layoutService.isDarkTheme() ? PALETTE_SOMBRE : PALETTE_CLAIRE;
-    }
-
-    private get encreDiscrete(): string {
-        return this.layoutService.isDarkTheme() ? '#c3c2b7' : '#52514e';
-    }
-
-    /** Grille en retrait : elle situe, elle ne se lit pas. */
-    private get grille(): string {
-        return this.layoutService.isDarkTheme() ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
-    }
-
-    private get surface(): string {
-        return this.layoutService.isDarkTheme() ? '#1a1a19' : '#ffffff';
-    }
-
-    private composerGraphiques(): void {
-        const palette = this.palette;
-        const mois = Object.keys(this.documentsParMois);
-
-        // Deux séries de même nature — des comptages — donc un seul axe. Deux échelles
-        // superposées feraient croire à des ordres de grandeur comparables qui ne le sont pas.
-        this.donneesCourbe = {
-            labels: mois.map((m) => this.libelleMois(m)),
-            datasets: [
-                this.serie('Documents déposés', mois.map((m) => this.documentsParMois[m] ?? 0), palette[0]),
-                this.serie('Demandes déposées',
-                    Object.keys(this.demandesParMois).map((m) => this.demandesParMois[m] ?? 0), palette[1])
-            ]
-        };
-
-        this.optionsCourbe = {
-            maintainAspectRatio: false,
-            // Repère commun à toute la colonne survolée : on compare deux séries à une même date,
-            // pas un point isolé.
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: this.encreDiscrete, usePointStyle: true, boxWidth: 8 }
-                },
-                tooltip: { mode: 'index', intersect: false }
-            },
-            scales: {
-                x: { ticks: { color: this.encreDiscrete }, grid: { display: false } },
-                y: {
-                    beginAtZero: true,
-                    // Des comptages : pas de demi-document.
-                    ticks: { color: this.encreDiscrete, precision: 0 },
-                    grid: { color: this.grille }
-                }
-            }
-        };
-
-        this.donneesStatut = this.camembert(this.countByStatus, palette);
-        this.donneesDemandes = this.camembert(
-            this.demandesParEtat.map((entree) => ({
-                label: this.libelleEtatDemande(entree.label),
-                count: entree.count
-            })), palette);
-
-        this.optionsCamembert = {
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: this.encreDiscrete, usePointStyle: true, boxWidth: 8 }
-                }
-            }
-        };
-    }
-
-    private serie(libelle: string, donnees: number[], couleur: string): any {
+    /**
+     * Un document, réduit à ce qu'il faut pour décider.
+     *
+     * <p>L'étape vient de l'état du circuit, non du champ recopié sur le document : c'est le moteur
+     * qui fait foi, et le champ local peut être en retard d'une transition.</p>
+     */
+    private ligneDeDocument(doc: DocumentQms): LigneATraiter {
         return {
-            label: libelle,
-            data: donnees,
-            borderColor: couleur,
-            backgroundColor: couleur,
-            borderWidth: 2,
-            pointRadius: 4,
-            pointHoverRadius: 7,
-            tension: 0.3,
-            fill: false
+            id: doc.id!,
+            reference: doc.documentNumber,
+            titre: doc.titre || 'Document sans titre',
+            detail: [doc.serviceLibelle, doc.redacteur].filter(Boolean).join(' — ') || undefined,
+            badge: doc.documentType,
+            badgeSeverite: 'secondary',
+            etape: doc.workflowState?.currentStateName || doc.currentEtape,
+            depuis: doc.createdAt ? formatDateToDDMMYYYY(doc.createdAt) : undefined,
+            workflowState: doc.workflowState
         };
     }
 
-    private camembert(entrees: DimensionEntry[], palette: string[]): any {
+    private ligneDeDemande(demande: DemandeDocumentDto): LigneATraiter {
         return {
-            labels: entrees.map((e) => e.label),
-            datasets: [{
-                data: entrees.map((e) => e.count),
-                backgroundColor: entrees.map((_, i) => palette[i % palette.length]),
-                // Un liseré de la couleur de la surface sépare les parts : sans lui, deux teintes
-                // voisines se touchent et la frontière disparaît.
-                borderColor: this.surface,
-                borderWidth: 2
-            }]
+            id: demande.id,
+            reference: demande.documentNumber,
+            titre: demande.objectif || demande.documentTitre || 'Demande',
+            // Le document visé, puis qui demande : c'est ce qui permet d'instruire sans ouvrir la fiche.
+            detail: [demande.documentTitre, demande.demandeurNom].filter(Boolean).join(' — ') || undefined,
+            badge: demande.type === 'SUPPRESSION' ? 'Suppression' : 'Modification',
+            // Une suppression retire un document, une modification le remplace : la distinction
+            // doit sauter aux yeux avant qu'on décide.
+            badgeSeverite: demande.type === 'SUPPRESSION' ? 'danger' : 'info',
+            etape: demande.workflowState?.currentStateName || demande.currentEtape,
+            depuis: demande.createdAt ? formatDateToDDMMYYYY(demande.createdAt) : undefined,
+            workflowState: demande.workflowState
         };
     }
 
-    /** « 2026-03 » → « mars 26 ». */
-    private libelleMois(mois: string): string {
-        const [annee, m] = mois.split('-');
-        const noms = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
-            'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-        return `${noms[Number(m) - 1] ?? mois} ${annee?.slice(2) ?? ''}`;
+    /** Nombre de dossiers en attente d'un geste de l'utilisateur, toutes familles confondues. */
+    get totalATraiter(): number {
+        return this.documentsATraiter.length + this.demandesATraiter.length;
     }
 
-    libelleEtatDemande(etat: string): string {
-        switch (etat) {
-            case 'EN_COURS': return 'En instruction';
-            case 'ACCEPTEE': return 'Acceptée';
-            case 'REFUSEE': return 'Refusée';
-            case 'EXECUTEE': return 'Exécutée';
-            default: return etat;
-        }
+    voirLesDocuments(): void {
+        this.router.navigate(['/gestion-documentaire/documents']);
+    }
+
+    voirLesDemandes(): void {
+        this.router.navigate(['/gestion-documentaire/demandes']);
+    }
+
+    /**
+     * Ouvre la fiche du dossier, décisions comprises.
+     *
+     * <p>Demandé par les lignes qui offrent plus d'une décision : on ne choisit pas entre approuver
+     * et retourner au rédacteur depuis une cellule de tableau. Le dossier est désigné dans l'adresse
+     * plutôt que porté en mémoire — l'écran de destination est un autre écran, et le lien reste
+     * partageable et rechargeable.</p>
+     */
+    ouvrirLeDocument(ligne: LigneATraiter): void {
+        this.router.navigate(['/gestion-documentaire/documents'],
+            { queryParams: { documentId: ligne.id } });
+    }
+
+    ouvrirLaDemande(ligne: LigneATraiter): void {
+        this.router.navigate(['/gestion-documentaire/demandes'],
+            { queryParams: { demandeId: ligne.id } });
     }
 
     private toEntries(input: any): DimensionEntry[] {

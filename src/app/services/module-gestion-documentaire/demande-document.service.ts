@@ -37,6 +37,19 @@ export class DemandeDocumentService {
         );
     }
 
+    /**
+     * Demandes que j'ai à instruire, l'état de leur circuit joint à chaque ligne.
+     *
+     * Ce n'est pas un sous-ensemble de `mesDemandes()` filtré sur un état : c'est le circuit qui
+     * désigne les dossiers, puisque lui seul sait quel rôle décide de l'étape courante. Les
+     * `allowedActions` de chaque ligne permettent d'agir sans ouvrir la fiche.
+     */
+    aTraiter(): Observable<DemandeDocumentDto[]> {
+        return this.http.get<any>(`${QualiUrlConfig.DEMANDE_DOCUMENT_ROOT_URL}/a-traiter`).pipe(
+            map(res => res?.data ?? res ?? [])
+        );
+    }
+
     /** Historique des demandes portées sur un document. */
     parDocument(documentId: string): Observable<DemandeDocumentDto[]> {
         return this.http.get<any>(`${QualiUrlConfig.DEMANDE_DOCUMENT_ROOT_URL}/document/${documentId}`).pipe(

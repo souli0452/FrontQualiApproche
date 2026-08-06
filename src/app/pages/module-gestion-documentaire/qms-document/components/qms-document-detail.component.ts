@@ -37,6 +37,15 @@ export class QmsDocumentDetailComponent {
      */
     @Input() canRequestChange = false;
 
+    /**
+     * La fiche est présentée comme un onglet parmi d'autres.
+     *
+     * <p>Le bloc de navigation vers l'historique, la piste d'audit, la traçabilité, les demandes et
+     * les partages est alors retiré : les onglets y mènent déjà, et deux jeux de navigation côte à
+     * côte laisseraient croire à deux destinations différentes.</p>
+     */
+    @Input() enOnglet = false;
+
     @Input() statusLabel: (doc: DocumentQms) => string = () => '';
     @Input() statusSeverity: (doc: DocumentQms) => string = () => 'info';
     @Input() actionIcon: (action: WorkflowActionDto) => string = () => 'pi pi-cog';

@@ -12,6 +12,9 @@ import { Popover } from 'primeng/popover';
 import { Subject } from 'rxjs';
 import { GlobalSearchService } from '../../services/non-conformite/global-search.service';
 import { NonConformiteService } from '../../services/non-conformite/non-conformite.service';
+import {
+    DocumentaireATraiterService
+} from '../../services/module-gestion-documentaire/documentaire-a-traiter.service';
 import { hasAnyPermission, isLicenseActive } from '../../utils/auth/auth-utils';
 import { currentUserState } from '../../services/auth-services/auth.state';
 import { AuthData } from '../../models/auth.model';
@@ -122,7 +125,7 @@ import { AuthData } from '../../models/auth.model';
                 </ng-template>    
                 <div class="flex flex-col gap-3 mt-4">
                     
-                    <div *ngFor="let notif of notifications" 
+                    <div *ngFor="let notif of notifications" (click)="ouvrirNotification(notif)"
                         class="flex items-start gap-3 p-3 rounded-xl hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors cursor-pointer border border-transparent"
                         [ngClass]="{'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30': !notif.read}">
                         
@@ -140,7 +143,13 @@ import { AuthData } from '../../models/auth.model';
                         <!-- Point indicateur Non-lu -->
                         <div *ngIf="!notif.read" class="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
                     </div>
-                    
+
+                    <!-- Sans cela, la cloche s'ouvrait sur un panneau vide, qui se lit comme une
+                         panne plutôt que comme une absence de travail en attente. -->
+                    <div *ngIf="!notifications.length" class="flex flex-col items-center gap-2 py-6 text-surface-400">
+                        <i class="pi pi-check-circle text-2xl"></i>
+                        <span class="text-sm">Rien n'attend votre intervention.</span>
+                    </div>
                 </div>
         </p-popover>
         <!-- Drawer du Centre d'Aide -->
@@ -230,11 +239,30 @@ export class AppTopbar implements OnInit {
     @ViewChild('notificationPopover') notificationPopover!: Popover; 
 
     helpVisible: boolean = false;
-    notificationCount: number = 3;
     notificationVisible: boolean = false;
 
-    // Liste dynamique des notifications
-    notifications: any[] = [];
+    /**
+     * Notifications, par source.
+     *
+     * <p>Elles étaient tenues dans une seule liste, remise à vide à chaque émission des
+     * non-conformités : toute autre source y aurait été effacée au premier rafraîchissement. Chaque
+     * source garde donc la sienne, et la cloche les présente ensemble.</p>
+     */
+    notificationsNC: any[] = [];
+    notificationsDocumentaire: any[] = [];
+
+    /** Ce que la cloche déroule : toutes les sources, le documentaire d'abord. */
+    get notifications(): any[] {
+        return [...this.notificationsDocumentaire, ...this.notificationsNC];
+    }
+
+    /** Nombre de dossiers en attente, et non de lignes de notification : c'est ce que le badge disait. */
+    private totalNC = 0;
+    private totalDocumentaire = 0;
+
+    get notificationCount(): number {
+        return this.totalNC + this.totalDocumentaire;
+    }
 
     constructor(
         public layoutService: LayoutService,
@@ -246,6 +274,7 @@ export class AppTopbar implements OnInit {
         protected fb: UntypedFormBuilder,
         protected messageService: MessageService,
         private nonConformiteService: NonConformiteService,
+        private aTraiterDocumentaire: DocumentaireATraiterService,
     ) {
     }
 
@@ -266,13 +295,15 @@ export class AppTopbar implements OnInit {
             { id: 'logout', label: 'Se déconnecter', icon: 'pi pi-sign-out', command: () => this.authService.logout() }
         ];
 
+        this.ecouterLeDocumentaire();
+
         // Souscription aux notifications globales de NC
         this.nonConformiteService.notificationsNC$.pipe(takeUntil(this.destroy$)).subscribe((notifs: any) => {
-            this.notificationCount = notifs.total || 0;
-            this.notifications = [];
+            this.totalNC = notifs.total || 0;
+            this.notificationsNC = [];
 
             if (notifs.brouillons > 0) {
-                this.notifications.push({
+                this.notificationsNC.push({
                     title: "Brouillons en cours",
                     detail: `Vous avez ${notifs.brouillons} Non-Conformité(s) en attente de finalisation.`,
                     time: "À l'instant",
@@ -282,7 +313,7 @@ export class AppTopbar implements OnInit {
                 });
             }
             if (notifs.reception > 0) {
-                this.notifications.push({
+                this.notificationsNC.push({
                     title: "Non-conformités de votre service",
                     detail: `Votre service a ${notifs.reception} Non-Conformité(s) publiée(s) en attente de validation.`,
                     time: "À l'instant",
@@ -292,7 +323,7 @@ export class AppTopbar implements OnInit {
                 });
             }
             if (notifs.imputees > 0) {
-                this.notifications.push({
+                this.notificationsNC.push({
                     title: "Actions à traiter",
                     detail: `Vous avez ${notifs.imputees} Non-Conformité(s) imputée(s) pour traitement.`,
                     time: "Urgent",
@@ -302,7 +333,7 @@ export class AppTopbar implements OnInit {
                 });
             }
             if (notifs.validationRQ > 0) {
-                this.notifications.push({
+                this.notificationsNC.push({
                     title: "Validation RQ",
                     detail: `Vous avez ${notifs.validationRQ} Non-Conformité(s) que vous devez valider.`,
                     time: "Urgent",
@@ -312,7 +343,7 @@ export class AppTopbar implements OnInit {
                 });
             }
             if (notifs.enAttenteValidation > 0) {
-                this.notifications.push({
+                this.notificationsNC.push({
                     title: "Validation Globale",
                     detail: `Il y a ${notifs.enAttenteValidation} Non-Conformité(s) en attente de validation.`,
                     time: "Urgent",
@@ -322,7 +353,7 @@ export class AppTopbar implements OnInit {
                 });
             }
             if (notifs.validationPilote > 0) {
-                this.notifications.push({
+                this.notificationsNC.push({
                     title: "Validation des plans d'actions",
                     detail: `Il y a ${notifs.validationPilote} plan(s) d'actions en attente de validation.`,
                     time: "Urgent",
@@ -332,7 +363,7 @@ export class AppTopbar implements OnInit {
                 });
             }
             if (notifs.cloture > 0) {
-                this.notifications.push({
+                this.notificationsNC.push({
                     title: "Clôture des Non-Conformités",
                     detail: `Il y a ${notifs.cloture} Non-Conformité(s) en attente de clôture.`,
                     time: "À traiter",
@@ -342,7 +373,7 @@ export class AppTopbar implements OnInit {
                 });
             }
             if (notifs.affectation > 0) {
-                this.notifications.push({
+                this.notificationsNC.push({
                     title: "Affectation",
                     detail: `Vous avez ${notifs.affectation} Non-Conformité(s) en attente d'affectation.`,
                     time: "Urgent",
@@ -352,7 +383,7 @@ export class AppTopbar implements OnInit {
                 });
             }
             if (notifs.nonTraiter > 0) {
-                this.notifications.push({
+                this.notificationsNC.push({
                     title: "Traitement",
                     detail: `Vous avez ${notifs.nonTraiter} Plan(s) d'actions en attente de traitement.`,
                     time: "Urgent",
@@ -362,6 +393,63 @@ export class AppTopbar implements OnInit {
                 });
             }
         });
+    }
+
+    /**
+     * Ce que l'utilisateur a à traiter côté documentaire, annoncé par la cloche.
+     *
+     * <p>Seules les non-conformités s'y annonçaient : un document à approuver ou une demande de
+     * suppression à instruire n'apparaissaient nulle part tant qu'on n'ouvrait pas le module. La
+     * source est celle de la vue d'ensemble documentaire — le même état partagé — pour que la cloche
+     * et la liste ne puissent pas se contredire.</p>
+     *
+     * <p>Le rafraîchissement n'est demandé que si l'utilisateur a accès au module : l'interroger
+     * sans droit n'aurait rendu que des refus.</p>
+     */
+    private ecouterLeDocumentaire(): void {
+        this.aTraiterDocumentaire.aTraiter$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((etat) => {
+                this.totalDocumentaire = etat.documents.length + etat.demandes.length;
+                this.notificationsDocumentaire = [];
+
+                if (etat.documents.length > 0) {
+                    this.notificationsDocumentaire.push({
+                        title: 'Documents à traiter',
+                        detail: `${etat.documents.length} document(s) attendent votre décision.`,
+                        time: 'À traiter',
+                        icon: 'pi pi-inbox',
+                        colorClass: 'bg-orange-100 text-orange-600',
+                        read: false,
+                        // La notification mène là où l'on peut agir : la vue d'ensemble porte les
+                        // dossiers et leurs boutons. Annoncer sans y conduire obligeait à chercher.
+                        route: '/gestion-documentaire/vue-ensemble'
+                    });
+                }
+                if (etat.demandes.length > 0) {
+                    this.notificationsDocumentaire.push({
+                        title: 'Demandes sur documents',
+                        detail: `${etat.demandes.length} demande(s) de modification ou de suppression à instruire.`,
+                        time: 'Urgent',
+                        icon: 'pi pi-file-edit',
+                        colorClass: 'bg-red-100 text-red-600',
+                        read: false,
+                        route: '/gestion-documentaire/vue-ensemble'
+                    });
+                }
+            });
+
+        if (hasAnyPermission(['document-read', 'document-write', 'DOC_READ'])) {
+            this.aTraiterDocumentaire.rafraichir().pipe(takeUntil(this.destroy$)).subscribe();
+        }
+    }
+
+    /** Conduit là où la notification se traite, quand elle désigne un écran. */
+    ouvrirNotification(notification: any): void {
+        if (notification?.route) {
+            this.notificationPopover?.hide();
+            this.router.navigate([notification.route]);
+        }
     }
 
     toggleDarkMode() {

@@ -16,6 +16,7 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
 import { WorkflowActionsComponent } from '../../../shared/workflow/workflow-actions.component';
 import { WorkflowGuidanceComponent } from '../../../shared/workflow/workflow-guidance.component';
+import { WorkflowSaisiesComponent } from '../../../shared/workflow/workflow-saisies.component';
 import { WorkflowHistoriqueComponent } from '../../../shared/workflow/workflow-historique.component';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { GlobalSearchService } from '../../../services/non-conformite/global-search.service';
@@ -29,7 +30,7 @@ import { PieceJointeFichierService } from '../../../services/non-conformite/piec
     templateUrl: './traitement-action-table.html',
     styleUrl: './traitement-action-table.scss',
     standalone: true,
-    imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent, WorkflowActionsComponent, WorkflowGuidanceComponent,
+    imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent, WorkflowActionsComponent, WorkflowGuidanceComponent, WorkflowSaisiesComponent,
         WorkflowHistoriqueComponent]
 })
 export class TraitementActionTable implements OnInit {
