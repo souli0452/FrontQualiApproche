@@ -198,6 +198,17 @@ export class WorkflowConfigurationGuideComponent {
           role: "Ce à quoi ce circuit sert, pour qui le retrouvera dans six mois."
         },
         {
+          libelle: 'Réservé à un type de document',
+          role:
+            "Restreint ce circuit aux documents d'un type — les procédures, les enregistrements. " +
+            "C'est ici, et nulle part ailleurs, que se règle « ce type suit ce circuit » : le type " +
+            "de document, lui, ne désigne rien. Un type ne peut suivre qu'un circuit à la fois, et " +
+            "le serveur refuse le second.",
+          aDefaut:
+            "le circuit vaut pour toute sa famille : c'est lui que prennent les documents dont le " +
+            "type n'a pas de circuit réservé. Il n'y en a qu'un par famille."
+        },
+        {
           libelle: 'Circuit actif',
           role:
             "Un circuit désactivé n'est plus ouvrable : le moteur le refuse sur tout nouveau " +

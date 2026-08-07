@@ -1,0 +1,145 @@
+<p-toast></p-toast>
+
+<div class="card mb-4">
+    <div class="bg-surface-100 p-3 text-center rounded">
+        <div class="text-xl mb-2 font-bold">Réglages de l'organisation</div>
+        <p class="m-0">
+            Ces réglages alimentent ce que la plateforme envoie à l'extérieur : le pied de page des
+            courriels (nom, logo, contact) et la mise en copie du responsable qualité sur les
+            courriels de non-conformité. Un réglage laissé vide n'apparaît nulle part.
+        </p>
+        <p class="m-0 mt-2 text-sm text-gray-600">
+            La liste est celle des réglages que la plateforme sait lire : ils sont créés au démarrage,
+            il n'y a qu'à renseigner leur valeur.
+        </p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+        <span class="p-input-icon-left w-full sm:w-80">
+            <input pInputText type="text" class="w-full" placeholder="Rechercher un réglage"
+                   [(ngModel)]="recherche" [ngModelOptions]="{ standalone: true }"
+                   (keyup.enter)="charger()" />
+        </span>
+        <!-- Aucun bouton d'ajout : une clé que le code ne cite pas ne serait lue par personne, et
+             l'offrir laisserait croire le contraire. -->
+        <p-button label="Actualiser" icon="pi pi-refresh" severity="secondary" [text]="true"
+                  size="small" (click)="charger()"></p-button>
+    </div>
+
+    <p-table [value]="reglages" [loading]="chargement" dataKey="id" [scrollable]="true"
+             styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+            <tr>
+                <th style="min-width: 18rem">Réglage</th>
+                <th style="min-width: 16rem">Valeur</th>
+                <th style="width: 9rem">Nature</th>
+                <th style="width: 9rem"></th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-reglage>
+            <tr>
+                <td>
+                    <div class="font-semibold">{{ reglage.libelle }}</div>
+                    <div class="text-xs text-gray-500 font-mono">{{ reglage.cle }}</div>
+                    @if (reglage.description) {
+                        <div class="text-xs text-gray-500 mt-1">{{ reglage.description }}</div>
+                    }
+                </td>
+                <td>
+                    @if (estUneImage(reglage)) {
+                        <img [src]="reglage.valeur" alt="" class="max-h-10" />
+                    } @else if (estRenseigne(reglage)) {
+                        <span class="whitespace-pre-line break-words">{{ reglage.valeur }}</span>
+                    } @else {
+                        <!-- Dit explicitement, plutôt qu'une case vide : c'est l'état à corriger. -->
+                        <p-tag value="Non renseigné" severity="warn" [rounded]="true"></p-tag>
+                    }
+                </td>
+                <td>{{ libelleNature(reglage.type) }}</td>
+                <td>
+                    <!-- Renseigner, et rien d'autre : supprimer un réglage priverait ce qui le lit
+                         sans qu'on puisse le recréer ici. -->
+                    @if (peutEcrire) {
+                        <div class="flex items-center justify-end">
+                            <p-button icon="pi pi-pencil" label="Renseigner" severity="secondary"
+                                      [text]="true" size="small"
+                                      (click)="ouvrirModification(reglage)"></p-button>
+                        </div>
+                    }
+                </td>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="4" class="text-center text-gray-500 py-6">
+                    Aucun réglage. Ils sont créés au démarrage du référentiel : si la liste est vide,
+                    c'est qu'il n'a pas encore démarré depuis la mise à jour.
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<p-dialog [(visible)]="dialogueOuvert" [modal]="true" [style]="{ width: '40rem' }"
+          header="Renseigner le réglage" [draggable]="false">
+    <form [formGroup]="formulaire" class="flex flex-col gap-4">
+
+        <div class="flex flex-col gap-1">
+            <label for="cle" class="font-semibold text-sm">Clé <span class="text-red-500">*</span></label>
+            <input pInputText id="cle" formControlName="cle" class="w-full font-mono"
+                   placeholder="Ex : CONTACT_EMAIL" autocomplete="off" />
+            <small class="text-gray-500">
+                La clé n'est pas modifiable : c'est par elle que la plateforme désigne ce réglage.
+            </small>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label for="libelle" class="font-semibold text-sm">
+                Intitulé <span class="text-red-500">*</span>
+            </label>
+            <input pInputText id="libelle" formControlName="libelle" class="w-full"
+                   placeholder="Ex : Courriel de contact" autocomplete="off" />
+            <small class="text-gray-500">Ce que lit l'administrateur ; la clé est technique.</small>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label for="type" class="font-semibold text-sm">Nature de la valeur</label>
+            <p-select inputId="type" formControlName="type" [options]="natures" optionLabel="label"
+                      optionValue="value" class="w-full" appendTo="body"></p-select>
+            @if (natureRetenue) {
+                <small class="text-gray-500">{{ natureRetenue.aide }}</small>
+            }
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label for="valeur" class="font-semibold text-sm">Valeur</label>
+            @if (formulaire.get('type')?.value === 'ADRESSE') {
+                <textarea pTextarea id="valeur" formControlName="valeur" rows="3"
+                          class="w-full"></textarea>
+            } @else {
+                <input pInputText id="valeur" formControlName="valeur" class="w-full"
+                       autocomplete="off" />
+            }
+            <small class="text-gray-500">Laissée vide, elle n'apparaît nulle part.</small>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label for="description" class="font-semibold text-sm">Usage</label>
+            <textarea pTextarea id="description" formControlName="description" rows="2"
+                      class="w-full"></textarea>
+            <small class="text-gray-500">À quoi sert ce réglage, pour qui le reprendra après vous.</small>
+        </div>
+
+    </form>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Annuler" severity="secondary" [text]="true"
+                  (click)="dialogueOuvert = false"></p-button>
+        <p-button label="Enregistrer" icon="pi pi-check" [loading]="enregistrement"
+                  [disabled]="formulaire.invalid" (click)="enregistrer()"></p-button>
+    </ng-template>
+</p-dialog>

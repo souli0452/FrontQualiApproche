@@ -30,7 +30,9 @@ export class QualiUrlConfig {
     static readonly PRODUIT_ROOT_URL = `${REFERENTIEL_SERVICE}/produit`;
     static readonly Exigence_ROOT_URL = `${REFERENTIEL_SERVICE}/exigence`;
     static readonly FORMATION_ROOT_URL = `${REFERENTIEL_SERVICE}/formation`;
-    static readonly CG_ROOT_URL = `${REFERENTIEL_SERVICE}/config-global`;
+    // Réglages clé/valeur de l'organisation : ils ont remplacé la configuration globale, dont les
+    // trois champs étaient figés dans le code.
+    static readonly PARAMETRE_ROOT_URL = `${REFERENTIEL_SERVICE}/parametres`;
     // Référentiels du module documentaire : priorité et niveau de confidentialité d'un document.
     static readonly DOMAINE_APPLICATION_ROOT_URL = `${REFERENTIEL_SERVICE}/domaines-application`;
     static readonly PRIORITE_DOCUMENT_ROOT_URL = `${REFERENTIEL_SERVICE}/priorites-document`;

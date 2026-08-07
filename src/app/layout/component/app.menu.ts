@@ -6,7 +6,7 @@ import { AppMenuitem } from './app.menuitem';
 import { AuthService } from '../../services/auth-services/auth.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { NonConformiteService } from '../../services/non-conformite/non-conformite.service';
-import { hasAnyPermission, hasMenuProfile, isLicenseActive, isModuleSubscribed } from '../../utils/auth/auth-utils';
+import { accesAutorise, hasAnyPermission, hasMenuProfile, isLicenseActive } from '../../utils/auth/auth-utils';
 import { ModuleAbonnement } from '../../enums/enums';
 
 @Component({
@@ -50,9 +50,11 @@ export class AppMenu {
      * ModuleAbonnement du back : aucune direction ne pouvait y avoir souscrit.
      */
     private peutVoir(permissions: string[], module?: string): boolean {
+        // La licence en plus : un menu ne mène nulle part si l'abonnement de l'organisation est
+        // expiré. Le reste — module souscrit et permission — est la règle commune, partagée avec le
+        // tableau de bord pour que les deux ne divergent pas.
         if (!isLicenseActive()) return false;
-        if (module && !isModuleSubscribed(module)) return false;
-        return hasAnyPermission(permissions);
+        return accesAutorise(permissions, module);
     }
 
     /**
@@ -168,7 +170,7 @@ export class AppMenu {
         // back ne connaît pas encore masquerait la rubrique pour tous, SUPER_ADMIN compris.
         const configurations = [
             {
-                label: 'Configurations Globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'],
+                label: 'Réglages de l\'organisation', icon: 'pi pi-sliders-h', routerLink: ['/configurations'],
                 visible: this.peutVoir(['config-global-read', 'config-global-write', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'])
             },
             this.sousGroupe('Comptes utilisateurs', 'pi pi-fw pi-user', [

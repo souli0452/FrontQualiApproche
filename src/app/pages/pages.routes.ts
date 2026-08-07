@@ -15,7 +15,7 @@ import { CritereEvaluationComponent } from './critere-evaluation/critere-evaluat
 import { ModuleAbonnement, TypeStructure } from '../enums/enums';
 import { KcUserComponent } from './kc-user/kc-user.component';
 import { ProfilComponent } from './profil/profil.component';
-import { ConfigGComponent } from './config-g/config-g.component';
+import { ParametresComponent } from './parametres/parametres.component';
 import { SearchResultsComponent } from './recherche/search-results';
 import { RoleComponent } from './role/role-table/role.component';
 import { RoleDetailComponent } from './role/role-detail/role-detail.component';
@@ -214,7 +214,8 @@ export default [
         children: [
             { path: '', redirectTo: 'config-systeme', pathMatch: 'full' },
             {
-                path: 'config-systeme', component: ConfigGComponent, title: 'Configuration Système',
+                path: 'config-systeme', component: ParametresComponent,
+                title: 'Réglages de l\'organisation',
                 canActivate: [permissionGuard],
                 data: { permissions: ['config-global-read', 'config-global-write', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'] }
             },

@@ -71,6 +71,26 @@
             </div>
         </div>
 
+        <!-- Réservation du circuit à un type de document. Deux axes distincts et non deux niveaux
+             du même : la famille dit à quels dossiers le circuit s'applique et sert d'aiguillage de
+             retour vers le module métier ; la réservation restreint ce circuit à une catégorie de
+             ces dossiers. Vide, le circuit est celui par défaut de sa famille. -->
+        @if (formulaire.get('resourceType')?.value === 'DOCUMENT') {
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium">Réservé à un type de document</label>
+                <app-select-input formControlName="cibleId"
+                                  optionLabel="libelle" optionValue="id"
+                                  placeholder="Aucun — circuit par défaut des documents"
+                                  [lazy]="true" [loadOptions]="qmsService.chargerOptionsTypes"
+                                  [selectedOptions]="typeRetenu()"></app-select-input>
+                <small class="text-surface-400 text-[11px]">
+                    Les documents de ce type suivront ce circuit. Les autres suivent le circuit par
+                    défaut — celui qui ne réserve rien. Un type ne peut suivre qu'un circuit à la
+                    fois : le serveur refuse le second.
+                </small>
+            </div>
+        }
+
         <div class="flex items-start gap-3 rounded-lg border border-surface-200 bg-surface-50 p-3">
             <p-toggleswitch formControlName="actif"></p-toggleswitch>
             <div class="text-sm">
@@ -402,80 +422,14 @@
 </p-dialog>
 
 <!-- ------------------------------------------------------------------ Consultation -->
-<p-dialog [(visible)]="dialogueDetailOuvert" [modal]="true" [style]="{ width: '48rem' }" [draggable]="false"
+<!-- La fiche est celle du composant partagé : en-tête, étapes, actions et diagramme
+     état-transition. La liste à plat qui tenait ici laissait le lecteur reconstituer
+     mentalement le graphe — les boucles de retour et les étapes inatteignables ne s'y
+     voyaient pas. -->
+<p-dialog [(visible)]="dialogueDetailOuvert" [modal]="true" [style]="{ width: '72rem' }"
+          [draggable]="false" [maximizable]="true"
           [header]="circuitConsulte?.nom || 'Circuit'">
-    @if (circuitConsulte) {
-        <div class="flex flex-wrap items-center gap-2 mb-4">
-            <p-tag severity="secondary" [value]="libelleType(circuitConsulte.resourceType)"></p-tag>
-            @if (circuitConsulte.actif) {
-                <p-tag severity="success" value="Actif" icon="pi pi-check-circle"></p-tag>
-            } @else {
-                <p-tag severity="secondary" value="Inactif"></p-tag>
-            }
-            <p-tag severity="info" [value]="nombreEtapes(circuitConsulte) + ' étape(s)'"></p-tag>
-        </div>
-
-        @if (circuitConsulte.description) {
-            <p class="text-sm text-surface-600 mb-4">{{ circuitConsulte.description }}</p>
-        }
-
-        <div class="flex flex-col gap-3">
-            @for (etape of etapesTriees(circuitConsulte); track etape.code; let i = $index) {
-                <div class="rounded-lg border border-surface-200 p-3">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-contrast text-xs font-bold">
-                            {{ i + 1 }}
-                        </span>
-                        <span class="font-medium">{{ etape.nomEtape }}</span>
-                        @if (etape.responsableRole) {
-                            <p-tag severity="secondary" [value]="etape.responsableRole"></p-tag>
-                        }
-                        @if (etape.etatTraitement) {
-                            <span class="text-[11px] text-surface-400">→ {{ etape.etatTraitement }}</span>
-                        }
-                    </div>
-
-                    @if (etape.description) {
-                        <p class="text-xs text-surface-500 mb-2">{{ etape.description }}</p>
-                    }
-
-                    <div class="flex flex-col gap-1">
-                        <!-- Le bouton est montré tel qu'il apparaîtra au décideur : c'est la seule
-                             façon de vérifier une apparence sans dérouler le circuit en vrai. -->
-                        @for (transition of etape.transitions; track transition.decision) {
-                            <div class="flex items-center gap-2 text-xs">
-                                <p-button
-                                    [label]="transition.label || transition.decision"
-                                    [icon]="apercuIcone(transition.icon ?? null, transition.decision === 'APPROUVE' ? 'APPROUVE' : 'REJETE')"
-                                    [severity]="apercuSeverite(transition.severity ?? null, transition.decision === 'APPROUVE' ? 'APPROUVE' : 'REJETE')"
-                                    size="small" [disabled]="true"></p-button>
-                                <span class="text-surface-500">{{ descriptionTransition(transition, circuitConsulte) }}</span>
-                                @if (transition.requiredRole) {
-                                    <p-tag severity="secondary" [value]="transition.requiredRole"></p-tag>
-                                }
-                                @if (transition.conditionRequise) {
-                                    <p-tag severity="warn" icon="pi pi-lock"
-                                           [value]="'si ' + transition.conditionRequise"></p-tag>
-                                }
-                            </div>
-                        }
-                    </div>
-
-                    @if (etape.fields?.length) {
-                        <div class="mt-2 pt-2 border-t border-surface-100">
-                            <div class="text-[11px] uppercase text-surface-400 mb-1">Champs à renseigner</div>
-                            <div class="flex flex-wrap gap-1">
-                                @for (champ of etape.fields; track champ.fieldName) {
-                                    <p-tag severity="secondary"
-                                           [value]="champ.fieldLabel + (champ.required ? ' *' : '')"></p-tag>
-                                }
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
-    }
+    <app-workflow-detail [workflow]="circuitConsulte"></app-workflow-detail>
 
     <ng-template pTemplate="footer">
         <p-button label="Fermer" severity="secondary" [text]="true" (onClick)="dialogueDetailOuvert = false"></p-button>

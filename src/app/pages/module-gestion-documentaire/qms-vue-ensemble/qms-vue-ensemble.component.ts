@@ -158,6 +158,8 @@ export class QmsVueEnsembleComponent implements OnInit, OnDestroy {
             badge: doc.documentType,
             badgeSeverite: 'secondary',
             etape: doc.workflowState?.currentStateName || doc.currentEtape,
+            deposerFichier: (fichier: File) =>
+                this.qmsService.deposerFichierDEtape(doc.id ?? '', fichier),
             depuis: doc.createdAt ? formatDateToDDMMYYYY(doc.createdAt) : undefined,
             workflowState: doc.workflowState
         };
@@ -175,6 +177,8 @@ export class QmsVueEnsembleComponent implements OnInit, OnDestroy {
             // doit sauter aux yeux avant qu'on décide.
             badgeSeverite: demande.type === 'SUPPRESSION' ? 'danger' : 'info',
             etape: demande.workflowState?.currentStateName || demande.currentEtape,
+            deposerFichier: (fichier: File) =>
+                this.demandeService.deposerFichierDEtape(demande.id, fichier),
             depuis: demande.createdAt ? formatDateToDDMMYYYY(demande.createdAt) : undefined,
             workflowState: demande.workflowState
         };

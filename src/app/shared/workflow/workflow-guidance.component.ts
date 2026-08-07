@@ -134,7 +134,10 @@ export class WorkflowGuidanceComponent {
         AGENT: "l'agent concerné",
         PILOTE: 'le pilote du processus',
         RESPONSABLE_QUALITE: 'le responsable qualité',
-        '@TITULAIRE': 'la personne désignée sur ce dossier'
+        '@TITULAIRE': 'la personne désignée sur ce dossier',
+        // Sans cette entrée, l'écran annonçait « @createur doit se prononcer » : la sentinelle
+        // partait telle quelle dans la phrase, faute d'être traduite.
+        '@CREATEUR': "l'auteur de ce dossier"
     };
 
     get actions() {

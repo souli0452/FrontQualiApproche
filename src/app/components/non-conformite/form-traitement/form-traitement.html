@@ -105,7 +105,7 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <div class="flex align-items-center gap-2" style="min-width: 150px">
+                                                <div class="flex items-center gap-2" style="min-width: 150px">
                                                     <i class="pi pi-calendar text-primary-400"></i>
                                                     <span class="text-700 font-medium">{{plan.dateEcheance}}</span>
                                                 </div>
@@ -121,21 +121,19 @@
                                                 </div>
                                             </td>
                                             <td pFrozenColumn alignFrozen="right" class="text-center bg-white" style="z-index: 1;">
-                                                <div style="min-width: 130px" class="flex justify-center gap-1">
-                                                    <button pButton pRipple type="button" icon="pi pi-search"
-                                                        class="p-button-rounded p-button-text p-button-secondary p-button-sm" (click)="affich(plan)"
-                                                        pTooltip="Détails" tooltipPosition="top">
-                                                    </button>
+                                                <div style="min-width: 130px" class="flex items-center justify-center gap-1">
+                                                    <p-button [text]="true" [rounded]="true" severity="secondary" size="small"
+                                                        icon="pi pi-search" (onClick)="affich(plan)"
+                                                        pTooltip="Détails" tooltipPosition="top" />
                                                     <!-- Un plan déjà confié à son responsable pilote son propre
                                                          circuit : il ne se corrige ni ne se retire depuis la fiche. -->
-                                                    <button *ngIf="estModifiable(plan)" pButton pRipple type="button" icon="pi pi-pencil"
-                                                        class="p-button-rounded p-button-text p-button-primary p-button-sm" (click)="edit(plan)"
-                                                        [pTooltip]="designationSeule ? 'Désigner le responsable' : 'Corriger'" tooltipPosition="top">
-                                                    </button>
-                                                    <button *ngIf="estModifiable(plan) && !designationSeule" pButton pRipple type="button" icon="pi pi-trash"
-                                                        class="p-button-rounded p-button-text p-button-danger p-button-sm" (click)="delete(plan)"
-                                                        pTooltip="Retirer" tooltipPosition="top">
-                                                    </button>
+                                                    <p-button *ngIf="estModifiable(plan)" [text]="true" [rounded]="true" size="small"
+                                                        icon="pi pi-pencil" (onClick)="edit(plan)"
+                                                        [pTooltip]="designationSeule ? 'Désigner le responsable' : 'Corriger'" tooltipPosition="top" />
+                                                    <p-button *ngIf="estModifiable(plan) && !designationSeule" [text]="true" [rounded]="true"
+                                                        severity="danger" size="small"
+                                                        icon="pi pi-trash" (onClick)="delete(plan)"
+                                                        pTooltip="Retirer" tooltipPosition="top" />
                                                 </div>
                                             </td>
                                         </tr>
@@ -143,7 +141,7 @@
                                     <ng-template pTemplate="emptymessage">
                                         <tr>
                                             <td colspan="6" class="text-center p-5">
-                                                <div class="flex flex-column align-items-center text-500">
+                                                <div class="flex flex-col items-center justify-center text-500">
                                                     <i class="pi pi-inbox text-4xl mb-3 text-300"></i>
                                                     <span class="font-medium text-lg">Aucun plan d'action défini.</span>
                                                 </div>
@@ -170,15 +168,22 @@
         </div>
     </ng-template>
     
-    <div class="grid p-fluid mt-2">
-        <div *ngIf="designationSeule" class="col-12 mb-3 p-3 rounded-lg bg-surface-50 border border-surface-200">
+    <!-- Une grille de douze colonnes, celle de Tailwind, et un champ par multiple de colonnes.
+
+         Le gabarit mêlait deux grilles : le conteneur portait `grid` — donc `display: grid` de
+         Tailwind, une seule colonne — tandis que les champs se plaçaient avec `col-12` et
+         `md:w-1/3`, l'un venant de PrimeFlex qui n'est pas inclus dans le projet, l'autre de
+         Tailwind. Résultat : des largeurs sans rapport les unes avec les autres, un champ « Ordre »
+         au tiers de la largeur seul sur sa ligne, et aucune gouttière entre les champs. -->
+    <div class="grid grid-cols-12 gap-x-4 gap-y-3 mt-2">
+        <div *ngIf="designationSeule" class="col-span-12 mb-3 p-3 rounded-lg bg-surface-50 border border-surface-200">
             <span class="text-500 text-sm block mb-2">Action corrective proposée par l'agent</span>
             <div [innerHTML]="planAction.actionCorrective || '<span class=\'italic text-500\'>Action non décrite</span>'" class="line-height-3 text-700 m-0"></div>
         </div>
 
         <!-- Le rang de l'action parmi celles du dossier. Laissé vide, le serveur le place à la
              suite : c'est un repère de lecture, non une clé. -->
-        <div class="field my-2 w-full md:w-1/3" *ngIf="!designationSeule">
+        <div class="col-span-12 md:col-span-4" *ngIf="!designationSeule">
             <label for="numeroOdre" class="font-normal m-0 font-semibold block mb-2">Ordre</label>
             <p-inputnumber inputId="numeroOdre" [(ngModel)]="ordreSaisi" [min]="1" [useGrouping]="false"
                            placeholder="À la suite" styleClass="w-full"></p-inputnumber>
@@ -186,7 +191,7 @@
 
         <!-- Ce qu'on s'engage à faire. Ce qui aura effectivement été fait — causes et solution
              retenue — se saisit à l'étape de traitement du plan, par son responsable. -->
-        <div class="col-12 field my-2" *ngIf="!designationSeule">
+        <div class="col-span-12" *ngIf="!designationSeule">
             <div class="flex mb-2 gap-2">
                 <label for="actionCorrective" class="font-normal m-0 font-semibold">Action corrective à mener <span class="text-red-500">*</span></label>
                 <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCorrection.toggle($event)"></i>
@@ -199,41 +204,37 @@
             <textarea class="w-full" rows="3" cols="30" pTextarea id="actionCorrective" [(ngModel)]="planAction.actionCorrective" [autoResize]="true" placeholder="Décrivez l'action corrective à mener."></textarea>
         </div>
 
-        <div class="flex flex-col md:flex-row gap-2">
-            <div class="field my-2 w-full md:w-1/2">
-                <div class="flex mb-2 gap-2">
-                    <label for="solution" class="font-normal m-0 font-semibold">
-                        Responsable <span class="text-red-500" *ngIf="designationSeule">*</span>
-                    </label>
-                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoResponsable.toggle($event)"></i>
-                </div>
-                <p-popover #infoResponsable>
-                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                        La personne qui répond de l'exécution et de la réussite de l'action. Vous pouvez la laisser vide si vous ne la connaissez pas encore : le pilote la désignera à la validation du traitement. Le dossier ne pourra pas avancer tant qu'une action restera sans responsable.
-                    </div>
-                </p-popover>
-                <p-select id="responsable" [options]="usersByStructure" optionLabel="fullName"
-                    placeholder="Sélectionnez le responsable" [filter]="true" [showClear]="true" appendTo="body"
-                    [(ngModel)]="user" class="w-full">
-                </p-select>
-            </div>
-            <p-fluid class="field my-2 w-full md:w-1/2" *ngIf="!designationSeule">
-                <div class="flex-auto">
-                    <div class="flex mb-2 gap-2">
-                        <label for="Date d'échéance" class="font-normal m-0 font-semibold">Date d'échéance</label>
-                    </div>
-                    <p-floatlabel variant="on">
-                        <p-datePicker inputId="dateEcheance" [showIcon]="true" [showOnFocus]="false"
-                            [(ngModel)]="planAction.dateEcheance" class="w-full" appendTo="body" dateFormat="dd/mm/yy">
-                        </p-datePicker>
-                        <label for="dateEcheance" class="font-bold">Date d'échéance <span class="text-red-500">*</span></label>
-                    </p-floatlabel>
-                </div>
-            </p-fluid>
-        </div>
-        <div class="col-12 field my-2" *ngIf="!designationSeule">
+        <div class="col-span-12 md:col-span-6">
             <div class="flex mb-2 gap-2">
-                <label for="solution" class="font-normal m-0 font-semibold">Critères d'efficacité</label>
+                <label for="responsable" class="font-normal m-0 font-semibold">
+                    Responsable <span class="text-red-500" *ngIf="designationSeule">*</span>
+                </label>
+                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoResponsable.toggle($event)"></i>
+            </div>
+            <p-popover #infoResponsable>
+                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                    La personne qui répond de l'exécution et de la réussite de l'action. Vous pouvez la laisser vide si vous ne la connaissez pas encore : le pilote la désignera à la validation du traitement. Le dossier ne pourra pas avancer tant qu'une action restera sans responsable.
+                </div>
+            </p-popover>
+            <p-select id="responsable" [options]="usersByStructure" optionLabel="fullName"
+                placeholder="Sélectionnez le responsable" [filter]="true" [showClear]="true" appendTo="body"
+                [(ngModel)]="user" class="w-full">
+            </p-select>
+        </div>
+        <div class="col-span-12 md:col-span-6" *ngIf="!designationSeule">
+            <div class="flex mb-2 gap-2">
+                <label for="dateEcheance" class="font-normal m-0 font-semibold">
+                    Date d'échéance <span class="text-red-500">*</span>
+                </label>
+            </div>
+            <p-datePicker inputId="dateEcheance" [showIcon]="true" [showOnFocus]="false"
+                [(ngModel)]="planAction.dateEcheance" styleClass="w-full" appendTo="body"
+                dateFormat="dd/mm/yy" placeholder="jj/mm/aaaa">
+            </p-datePicker>
+        </div>
+        <div class="col-span-12" *ngIf="!designationSeule">
+            <div class="flex mb-2 gap-2">
+                <label for="critereEfficacite" class="font-normal m-0 font-semibold">Critères d'efficacité</label>
                 <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="critere.toggle($event)"></i>
             </div>
             <p-popover #critere>
@@ -449,7 +450,7 @@
     </p-tabs>
 
     <ng-template pTemplate="footer">
-        <div class="flex flex-wrap justify-content-end items-center gap-3 border-top-1 surface-border pt-4 mt-2">
+        <div class="flex flex-wrap justify-end items-center gap-3 border-top-1 surface-border pt-4 mt-2">
             <span *ngIf="!planAction.workflowId" class="text-500 text-sm mr-auto">
                 <i class="pi pi-info-circle mr-1"></i>
                 Cette action sera confiée à son responsable à la validation qualité du dossier.

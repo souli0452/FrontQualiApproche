@@ -13,15 +13,10 @@ export interface QmsDocumentType {
   libelle: string;
   folderName: string;
   /**
-   * Circuit de validation ouvert sur les documents de ce type.
-   *
-   * Le serveur le prévoyait de longue date, mais aucun écran ne permettait de le renseigner :
-   * tous les types restaient sans circuit, et la création retombait sur le circuit actif. Faute
-   * de pouvoir exprimer « ce type suit ce circuit », des circuits étaient créés avec le code du
-   * type de document en guise de type de ressource — ce qui empêchait toute notification, la
-   * remise ne sachant router que DOCUMENT, NON_CONFORMITE et PLAN_ACTION.
+   * Le type ne désigne pas son circuit : c'est le **circuit** qui se réserve à un type, depuis
+   * l'éditeur de circuits (`WorkflowDto.cibleId`). Un seul dépositaire du lien, donc aucune
+   * contradiction possible — et l'unicité « un type, un circuit » y est tenue par le serveur.
    */
-  workflowId?: string | null;
   createdAt?: string;
   createdById?: string;
   currentUserfullName?: string;

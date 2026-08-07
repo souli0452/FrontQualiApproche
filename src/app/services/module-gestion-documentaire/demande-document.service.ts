@@ -9,6 +9,12 @@ import { DemandeDocumentDto, TypeDemande } from '../../models/demande-document.m
  *
  * Les listes échappent à la pagination automatique côté serveur (retour explicite en
  * `ApiResponse`) : une demande masquée par une troncature silencieuse resterait sans réponse.
+ *
+ * **Toute** réponse est dépliée de son enveloppe `{ success, data }` : support-service l'ajoute
+ * d'office (`GlobalResponseHandler`) à ce qui n'est pas déjà un `ApiResponse`. Trois méthodes ne le
+ * faisaient pas — `getById`, `creer`, `deposerRemplacant` — et rendaient l'enveloppe telle quelle :
+ * la demande relue paraissait dépourvue d'identifiant, d'où des appels `instances/undefined/state`
+ * en 500. Le typage ne pouvait rien y voir, l'enveloppe étant déclarée comme la charge.
  */
 @Injectable({ providedIn: 'root' })
 export class DemandeDocumentService {
@@ -27,7 +33,9 @@ export class DemandeDocumentService {
         if (pieceJointe) {
             formData.append('file', pieceJointe);
         }
-        return this.http.post<DemandeDocumentDto>(QualiUrlConfig.DEMANDE_DOCUMENT_ROOT_URL, formData);
+        return this.http.post<any>(QualiUrlConfig.DEMANDE_DOCUMENT_ROOT_URL, formData).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
     /** Demandes visibles : celles de ma structure, toutes pour le responsable qualité. */
@@ -44,6 +52,26 @@ export class DemandeDocumentService {
      * désigne les dossiers, puisque lui seul sait quel rôle décide de l'étape courante. Les
      * `allowedActions` de chaque ligne permettent d'agir sans ouvrir la fiche.
      */
+    /**
+     * Dépose une pièce réclamée par une étape de l'instruction et rend sa référence.
+     *
+     * <p>Même contrat que pour les documents et les non-conformités : la pièce part d'abord, sa
+     * référence devient ensuite la valeur du champ de l'étape.</p>
+     */
+    deposerFichierDEtape(demandeId: string, fichier: File): Observable<string> {
+        const corps = new FormData();
+        corps.append('file', fichier, fichier.name);
+        return this.http
+            .post<any>(`${QualiUrlConfig.DEMANDE_DOCUMENT_ROOT_URL}/${demandeId}/fichiers-etape`, corps)
+            .pipe(map((reponse: any) => reponse?.data ?? reponse));
+    }
+
+    /** Adresse de téléchargement d'une pièce d'étape, désignée par sa référence. */
+    urlFichierDEtape(demandeId: string, reference: string): string {
+        return `${QualiUrlConfig.DEMANDE_DOCUMENT_ROOT_URL}/${demandeId}/fichiers-etape/contenu`
+            + `?reference=${encodeURIComponent(reference)}`;
+    }
+
     aTraiter(): Observable<DemandeDocumentDto[]> {
         return this.http.get<any>(`${QualiUrlConfig.DEMANDE_DOCUMENT_ROOT_URL}/a-traiter`).pipe(
             map(res => res?.data ?? res ?? [])
@@ -66,7 +94,9 @@ export class DemandeDocumentService {
     }
 
     getById(id: string): Observable<DemandeDocumentDto> {
-        return this.http.get<DemandeDocumentDto>(`${QualiUrlConfig.DEMANDE_DOCUMENT_ROOT_URL}/${id}`);
+        return this.http.get<any>(`${QualiUrlConfig.DEMANDE_DOCUMENT_ROOT_URL}/${id}`).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
     /** Dépôt du document remplaçant, une fois la demande de modification acceptée. */
@@ -74,7 +104,9 @@ export class DemandeDocumentService {
         const formData = new FormData();
         formData.append('file', fichier);
         const params = commentaire ? new HttpParams().set('commentaire', commentaire) : undefined;
-        return this.http.post<DemandeDocumentDto>(
-            `${QualiUrlConfig.DEMANDE_DOCUMENT_ROOT_URL}/${id}/remplacant`, formData, { params });
+        return this.http.post<any>(
+            `${QualiUrlConfig.DEMANDE_DOCUMENT_ROOT_URL}/${id}/remplacant`, formData, { params }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 }

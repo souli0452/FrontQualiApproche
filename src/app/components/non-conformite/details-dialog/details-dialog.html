@@ -194,7 +194,7 @@
                         <span class="font-bold text-sm">Documents joints</span>
                     </div>
                 </ng-template>
-                <div class="flex flex-column gap-2">
+                <div class="flex flex-col gap-2">
                     <div *ngFor="let fichier of demande.fichiers"
                         class="file-item border-round-lg mb-2 flex items-center justify-between w-full p-2 bg-blue-50 border border-blue-100 border-round-xl">
                         <div class="flex items-center gap-3">
@@ -300,7 +300,7 @@
                     <p class="mt-4 font-bold">Document joint</p>
                     <div class="file-item border-round-lg mt-2 mb-2 flex items-center justify-between w-full p-2 bg-blue-50 border border-blue-100 border-round-xl">
                         <div class="flex items-center gap-3">
-                            <div class="file-icon flex items-center justify-content-center">
+                            <div class="file-icon flex items-center justify-center">
                                 <img [src]="getFileIcon(demande.docRejet.nomFichier)" alt="File icon" width="24" height="24" />
                             </div>
                             <div class="details">
@@ -408,26 +408,32 @@
                                     </div>
                                 </td>
                                 <td class="text-center" pFrozenColumn alignFrozen="right" *ngIf="demande.btnActions===EtapeTraitement.SUIVI_RQ">
-                                    <button pButton pRipple type="button" icon="pi pi-eye"
-                                        class="p-button-outlined p-button-secondary p-button-sm" (click)="affich(plan)"
-                                        pTooltip="Voir détails" tooltipPosition="top">
-                                    </button>
+                                    <div class="flex items-center justify-center">
+                                        <p-button [text]="true" [rounded]="true" severity="secondary" size="small"
+                                            icon="pi pi-eye" (onClick)="affich(plan)"
+                                            pTooltip="Voir détails" tooltipPosition="top" />
+                                    </div>
                                 </td>
                                 <td pFrozenColumn alignFrozen="right" class="text-center bg-white" style="z-index: 1;" *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT||demande.etatTraitement===EtapeTraitement.CLOTURE">
-                                    <div class="flex justify-center gap-2" style="min-width: 140px">
-                                        <button
+                                    <div class="flex items-center justify-center gap-2" style="min-width: 140px">
+                                        <p-button [text]="true" [rounded]="true" severity="info" size="small"
+                                            icon="pi pi-pencil"
                                             *ngIf="(demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT)&&(plan.status==='NON_TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
-                                            pButton pRipple type="button" icon="pi pi-pencil"
-                                            class="p-button-rounded p-button-text p-button-info p-button-sm" (click)="edit(plan)"
-                                            pTooltip="Modifier" tooltipPosition="top">
-                                        </button>
+                                            (onClick)="edit(plan)"
+                                            pTooltip="Modifier" tooltipPosition="top" />
                                         <!-- <button 
                                             pButton pRipple type="button" icon="pi pi-search"
                                             class="p-button-rounded p-button-text p-button-secondary p-button-sm" (click)="affich(plan)"
                                             pTooltip="Détails" tooltipPosition="top">
                                         </button> -->
-                                        <p-button [text]="true" severity="secondary" size="small" icon="pi pi-search" (click)="affich(plan)" pTooltip="Visualiser" tooltipPosition="top" />
-                                        <p-button severity="danger" size="small" *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)" pRipple icon="pi pi-ban" (click)="displayRejet(plan)" pTooltip="Rejeter" tooltipPosition="top" />
+                                        <p-button [text]="true" [rounded]="true" severity="secondary" size="small"
+                                            icon="pi pi-search" (onClick)="affich(plan)"
+                                            pTooltip="Visualiser" tooltipPosition="top" />
+                                        <p-button [text]="true" [rounded]="true" severity="danger" size="small"
+                                            icon="pi pi-ban"
+                                            *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
+                                            (onClick)="displayRejet(plan)"
+                                            pTooltip="Rejeter" tooltipPosition="top" />
                                         <!-- <button pButton pRipple type="button"
                                             *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
                                             icon="pi pi-arrow-up" (click)="displayRejet(plan)"
@@ -443,7 +449,7 @@
                             <tr>
                                 <td [attr.colspan]="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT ? 7 : 6"
                                     class="text-center p-5">
-                                    <div class="flex flex-column align-items-center text-500">
+                                    <div class="flex flex-col items-center justify-center text-500">
                                         <i class="pi pi-inbox text-4xl mb-3 text-300"></i>
                                         <span class="font-medium text-lg">Aucun plan d'action défini</span>
                                     </div>
@@ -699,7 +705,7 @@
     </div>
 
     <ng-template pTemplate="footer">
-        <div class="flex justify-content-end gap-3 border-top-1 surface-border pt-4 mt-2">
+        <div class="flex justify-end gap-3 border-top-1 surface-border pt-4 mt-2">
             <button pButton pRipple type="button" icon="pi pi-times" class="p-button-text p-button-secondary font-semibold hover:bg-surface-100 transition-colors"
                 label="Fermer" (click)="hideDialogAffich()">
             </button>

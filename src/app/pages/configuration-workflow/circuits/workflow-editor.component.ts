@@ -10,9 +10,12 @@ import { TableColumn } from '../../../models/generique.model';
 import { hasAnyPermission } from '../../../utils/auth/auth-utils';
 import { AppRoleService } from '../../role/role-service/role.service';
 import { WorkflowStepTemplateService } from '../../../services/module-gestion-documentaire/workflow-step-template.service';
+import { QmsDocumentService } from '../../../services/module-gestion-documentaire/qms-document.service';
+import { SelectInputComponent } from '../../../shared';
 import { WorkflowError, WorkflowService } from '../../../services/workflow.service';
 import { WorkflowStepTemplate } from '../../../models/gestion-documentaire.model';
 import { WorkflowConfigurationGuideComponent } from './workflow-configuration-guide.component';
+import { WorkflowDetailComponent } from '../../../shared/workflow/workflow-detail.component';
 import {
   EmailTemplateDto,
   StepDecision,
@@ -116,7 +119,7 @@ type SeveriteBouton = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'he
   selector: 'app-workflow-editor',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule, NgPrimeModule, AppCrudGenericComponent,
-    WorkflowConfigurationGuideComponent],
+    WorkflowConfigurationGuideComponent, SelectInputComponent, WorkflowDetailComponent],
   providers: [MessageService, ConfirmationService],
   templateUrl: './workflow-editor.component.html'
 })
@@ -125,6 +128,13 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   private readonly workflowService = inject(WorkflowService);
   private readonly roleService = inject(AppRoleService);
   private readonly stepTemplateService = inject(WorkflowStepTemplateService);
+  /**
+   * Types de documents, pour réserver un circuit à l'un d'eux.
+   *
+   * <p>La liste vient du module documentaire : c'est lui qui détient les types, et le moteur ne
+   * connaît de la cible qu'un identifiant opaque.</p>
+   */
+  protected readonly qmsService = inject(QmsDocumentService);
   private readonly messageService = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
 
@@ -214,7 +224,29 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
    */
   typesEnConflit: string[] = [];
 
+  /**
+   * Habilitations proposables : les rôles de l'organisation, précédés des deux <b>désignations</b>.
+   *
+   * <p>Une étape ne se décide pas toujours par appartenance à un groupe. Ces deux valeurs disent
+   * « une personne », et le serveur les reconnaît comme telles :</p>
+   * <ul>
+   *   <li>{@code @CREATEUR} — celui qui a ouvert le dossier. Soumettre sa propre déclaration est un
+   *       acte personnel, et le dossier revient à son auteur quand on le lui renvoie ;</li>
+   *   <li>{@code @TITULAIRE} — celui à qui le dossier a été confié, l'agent imputé. Se déplace au
+   *       fil du circuit, contrairement au créateur.</li>
+   * </ul>
+   *
+   * <p>Elles n'étaient pas offertes : la liste ne contenait que les rôles rendus par user-service,
+   * si bien que les circuits livrés s'en servaient sans que personne ne puisse les choisir — ni les
+   * retirer. Une règle configurable dans le code et pas à l'écran n'est pas configurable.</p>
+   */
   rolesDisponibles: Option[] = [];
+
+  /** Les deux désignations, en tête de liste : elles précèdent les rôles, elles ne s'y mêlent pas. */
+  private readonly designations: Option[] = [
+    { label: '👤 Le créateur du dossier (celui qui l\'a déposé)', value: '@CREATEUR' },
+    { label: '👤 Le titulaire du dossier (celui à qui il est confié)', value: '@TITULAIRE' }
+  ];
   /**
    * Faits qu'une transition peut exiger du dossier.
    *
@@ -224,6 +256,8 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   faitsConnus: Option<string | null>[] = [];
   modelesEmail: Option<string | null>[] = [];
   modelesEtape: WorkflowStepTemplate[] = [];
+  /** Types documentaires connus, pour afficher en clair le type réservé par un circuit. */
+  typesDocument: any[] = [];
 
   readonly typesRessource: Option[] = [
     { label: 'Documents', value: 'DOCUMENT' },
@@ -288,6 +322,24 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     { label: 'Approbation — le dossier avance', value: 'APPROUVE' },
     { label: 'Rejet — le dossier revient en arrière', value: 'REJETE' }
   ];
+
+  /**
+   * Type de document déjà réservé, à réinjecter dans sa liste déroulante.
+   *
+   * <p>La liste se charge page par page : le type retenu — celui d'un circuit qu'on modifie — n'est
+   * pas nécessairement en première page, et le champ paraîtrait vide alors qu'il porte une valeur.
+   * Seul l'identifiant est connu ici ; le libellé s'affichera dès que sa page sera chargée.</p>
+   */
+  typeRetenu(): any[] {
+    const cible = this.formulaire?.get('cibleId')?.value;
+    if (!cible) {
+      return [];
+    }
+    // Le libellé vient du catalogue chargé à l'ouverture de l'écran. À défaut — type supprimé
+    // depuis, ou catalogue indisponible — on le dit, plutôt que d'afficher un identifiant brut.
+    const connu = this.typesDocument.find((type) => type.id === cible);
+    return [connu ?? { id: cible, libelle: 'Type inconnu ou supprimé' }];
+  }
 
   /** Icône telle qu'elle s'affichera : celle saisie, ou celle que porte la nature de l'action. */
   apercuIcone(valeur: string | null, decision: string): string {
@@ -365,6 +417,8 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
       resourceType: [null, Validators.required],
       description: [null],
       actif: [true],
+      // Réservation du circuit à un type de document. Vide : le circuit vaut pour toute la famille.
+      cibleId: [null],
       steps: this.fb.array([])
     });
   }
@@ -387,6 +441,7 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     this.chargerRoles();
     this.chargerModelesEmail();
     this.chargerModelesEtape();
+    this.chargerTypesDocument();
     this.chargerFaits();
   }
 
@@ -424,11 +479,18 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
           const roles = reponse?.data?.content ?? reponse?.data ?? [];
           // La valeur retenue est le **nom** du rôle : c'est lui qu'inscrivent les circuits
           // livrés, et le serveur accepte indifféremment le nom ou l'identifiant.
-          this.rolesDisponibles = (roles as any[])
-            .map((role) => ({ label: role.name ?? role.id, value: role.name ?? role.id }))
-            .filter((option) => !!option.value);
+          this.rolesDisponibles = [
+            ...this.designations,
+            ...(roles as any[])
+              .map((role) => ({ label: role.name ?? role.id, value: role.name ?? role.id }))
+              .filter((option) => !!option.value)
+          ];
         },
-        error: () => console.warn('Liste des rôles indisponible.')
+        // Les désignations restent proposées même sans user-service : elles ne viennent pas de lui.
+        error: () => {
+          this.rolesDisponibles = [...this.designations];
+          console.warn('Liste des rôles indisponible.');
+        }
       });
   }
 
@@ -445,6 +507,22 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
       .map((champ) => champ.get('fieldName')?.value)
       .filter((nom: string) => !!nom)
       .map((nom: string) => ({ label: nom, value: nom }));
+  }
+
+  /**
+   * Catalogue des types documentaires.
+   *
+   * <p>Chargé en entier — quelques dizaines d'entrées — et non page par page : il ne sert qu'à
+   * traduire en clair l'identifiant réservé par un circuit, ce qu'une seule page ne permettrait pas
+   * pour un type situé au-delà.</p>
+   */
+  private chargerTypesDocument(): void {
+    this.qmsService.typeDocumentQmsGetAll(0, 1000)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: any) => (this.typesDocument = res?.data?.content ?? res?.content ?? []),
+        error: () => console.warn('Types de documents indisponibles.')
+      });
   }
 
   private chargerFaits(): void {
@@ -649,7 +727,8 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
       nom: circuit.nom,
       resourceType: circuit.resourceType,
       description: circuit.description,
-      actif: circuit.actif ?? true
+      actif: circuit.actif ?? true,
+      cibleId: circuit.cibleId ?? null
     });
     this.etapes.clear();
 
@@ -943,6 +1022,8 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
       resourceType: valeurs.resourceType,
       description: valeurs.description,
       actif: valeurs.actif ?? true,
+      // Vide vaut « aucune réservation » : le serveur ramène la chaîne vide à l'absence de cible.
+      cibleId: valeurs.cibleId || null,
       steps: etapes.map((etape, index): WorkflowStepDto => ({
         id: etape.id ?? undefined,
         code: codeParIdentifiant.get(etape.identifiantLocal) ?? null,

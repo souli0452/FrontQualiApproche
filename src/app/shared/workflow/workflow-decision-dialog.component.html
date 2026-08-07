@@ -49,39 +49,41 @@
               <input *ngSwitchCase="'DATE'" pInputText type="date" class="w-full"
                 [formControlName]="nomDeControle(champ)" />
 
-              <select *ngSwitchCase="'SELECT'" class="p-inputtext w-full"
-                [formControlName]="nomDeControle(champ)">
-                <option value="">—</option>
-                <option *ngFor="let choix of choixDuChamp(champ)" [value]="choix.value">{{ choix.label }}</option>
-              </select>
+              <!-- Le sélecteur partagé plutôt qu'un `select` natif : il porte le filtre, ce qu'une
+                   liste de trente utilisateurs réclame, et il a l'apparence des autres champs de
+                   l'application. -->
+              <app-select-input *ngSwitchCase="'SELECT'"
+                [formControlName]="nomDeControle(champ)"
+                [options]="choixDuChamp(champ)"
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                filterBy="label"
+                placeholder="Sélectionner…"
+                [showClear]="!champ.required"></app-select-input>
 
               <!-- Le moteur ne transporte que des chaînes : le fichier est déposé d'abord, et
                    c'est sa référence qui devient la valeur du champ. -->
-              <div *ngSwitchCase="'FILE'" class="flex flex-col gap-1">
-                <ng-container *ngIf="deposerFichier; else depotIndisponible">
-                  <input type="file" class="w-full text-sm"
-                    [disabled]="depotsEnCours.has(nomDeControle(champ))"
-                    (change)="choisirFichier($event, nomDeControle(champ))" />
+              <!-- Sans moyen de déposer la pièce, le champ n'est pas rendu du tout : un
+                   sélecteur de fichier inerte, ou un message expliquant que l'écran ne sait pas
+                   faire, n'aide personne. Le champ n'est alors pas exigé non plus — c'est le
+                   serveur qui dira, dans ses mots, ce qui manque. -->
+              <div *ngSwitchCase="'FILE'" class="flex flex-col gap-1" [hidden]="!deposerFichier">
+                <input type="file" class="w-full text-sm" *ngIf="deposerFichier"
+                  [disabled]="depotsEnCours.has(nomDeControle(champ))"
+                  (change)="choisirFichier($event, nomDeControle(champ))" />
 
-                  <small class="text-slate-500 flex items-center gap-1"
-                    *ngIf="depotsEnCours.has(nomDeControle(champ))">
-                    <i class="pi pi-spinner pi-spin text-xs"></i> Dépôt en cours…
-                  </small>
-                  <small class="text-emerald-700 flex items-center gap-1"
-                    *ngIf="fichiersDeposes[nomDeControle(champ)] && !depotsEnCours.has(nomDeControle(champ))">
-                    <i class="pi pi-check text-xs"></i> {{ fichiersDeposes[nomDeControle(champ)] }}
-                  </small>
-                  <small class="p-error" *ngIf="depotsEnEchec.has(nomDeControle(champ))">
-                    Le dépôt a échoué : la pièce n'est pas jointe. Réessayez.
-                  </small>
-                </ng-container>
-
-                <ng-template #depotIndisponible>
-                  <input type="file" class="w-full text-sm" disabled />
-                  <small class="p-error">
-                    Cet écran ne sait pas encore déposer de pièce jointe pour cette étape.
-                  </small>
-                </ng-template>
+                <small class="text-slate-500 flex items-center gap-1"
+                  *ngIf="depotsEnCours.has(nomDeControle(champ))">
+                  <i class="pi pi-spinner pi-spin text-xs"></i> Dépôt en cours…
+                </small>
+                <small class="text-emerald-700 flex items-center gap-1"
+                  *ngIf="fichiersDeposes[nomDeControle(champ)] && !depotsEnCours.has(nomDeControle(champ))">
+                  <i class="pi pi-check text-xs"></i> {{ fichiersDeposes[nomDeControle(champ)] }}
+                </small>
+                <small class="p-error" *ngIf="depotsEnEchec.has(nomDeControle(champ))">
+                  Le dépôt a échoué : la pièce n'est pas jointe. Réessayez.
+                </small>
               </div>
 
               <input *ngSwitchDefault pInputText type="text" class="w-full"

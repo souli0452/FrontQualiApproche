@@ -1,716 +1,123 @@
-import { AfterViewInit, ChangeDetectorRef, Component, inject, PLATFORM_ID } from '@angular/core';
-import { NotificationsWidget } from './components/notificationswidget';
-import { StatsWidget } from './components/statswidget';
-import { RecentSalesWidget } from './components/recentsaleswidget';
-import { BestSellingWidget } from './components/bestsellingwidget';
-import { RevenueStreamWidget } from './components/revenuestreamwidget';
-import { AuthService } from '../../services/auth-services/auth.service';
-import { isPlatformBrowser, Location } from '@angular/common';
-import { SelectModule } from 'primeng/select';
-import { NgPrimeModule } from '../../../prime-ng.module';
-import { generateColor, getCurrentUserStructure } from '../../utils/global/global-utils';
-import { Router } from '@angular/router';
-import { StructureService } from '../parametrages/structure/structure-service/structure-service';
-import { ProcNonConformiteService } from '../../services/non-conformite/proc-non-conformite.service';
-import { isUserInRoles } from '../../utils/auth/auth-utils';
+import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
 
+import { currentUserState } from '../../services/auth-services/auth.state';
+import { getCurrentUserStructure } from '../../utils/global/global-utils';
+import { ActionsRapidesComponent } from './components/actions-rapides.component';
+import { IndicateursComponent } from './components/indicateurs.component';
+import { EtatDeLaListe, MesDecisionsComponent } from './components/mes-decisions.component';
 
-
+/**
+ * Accueil : ce qu'on attend de vous, et ce que vous pouvez entreprendre.
+ *
+ * <p>Cette page présentait des graphiques de non-conformités — par processus, par niveau, par mois.
+ * Deux choses les condamnaient. D'abord ils ne s'affichaient plus : le chargement des données avait
+ * été mis en commentaire, et chacun rendait un cadre vide. Ensuite, ils étaient les mêmes pour tout
+ * le monde : un agent d'un service qui n'a pas souscrit au module des non-conformités y voyait des
+ * cadres vides, et un pilote n'y trouvait aucun de ses dossiers en attente.</p>
+ *
+ * <p>Une page d'accueil de système qualité doit répondre à une question et une seule : <b>qu'attend-on
+ * de moi ?</b> D'où deux blocs, tous deux réglés sur le module souscrit et les permissions détenues :
+ * les dossiers arrêtés en attente d'une décision de cette personne, avec de quoi la prendre sur
+ * place, puis les gestes qu'elle peut entreprendre.</p>
+ *
+ * <p>Les statistiques ne sont pas perdues : chaque module a la sienne, sur son propre écran, où elle
+ * porte sur un périmètre que le lecteur connaît.</p>
+ */
 @Component({
     selector: 'app-dashboard',
-    imports: [StatsWidget, RecentSalesWidget, BestSellingWidget, RevenueStreamWidget, NotificationsWidget, SelectModule, NgPrimeModule],
+    standalone: true,
+    imports: [CommonModule, MesDecisionsComponent, ActionsRapidesComponent, IndicateursComponent],
     template: `
-        <div class="grid grid-cols-12 gap-8">
-            <app-stats-widget class="contents" />
-            <div class="col-span-12 xl:col-span-6">
-                <app-recent-sales-widget [data]="data" [options]="options" />
-            </div>
-            <div class="col-span-12 xl:col-span-6">
-                <app-revenue-stream-widget [chartDataTaux]="dataTaux" [chartOptionsTaux]="optionsTaux" [chartData]="chartData" [chartOptions]="chartOptions" (changeYear)="changeForProcessus($event)" />
-            </div>
-            <div class="col-span-12 xl:col-span-12" *ngIf="!isUserInRoles(['SUPER_ADMIN'])">
-                <div class="card">
-                <h6>Non conformité par niveau</h6>
-                    <p-chart type="line" [data]="dataNiveau" [options]="optionsNiveau" class="h-[30rem]" /></div>
-            </div>
-            <div class="col-span-12 xl:col-span-12">
+        <div class="flex flex-col gap-6">
 
-                <app-best-selling-widget [data]="dataAll" [options]="optionsAll" (changeYear)="change($event)" />
+            <!-- Salutation et synthèse : la phrase dit tout de suite s'il y a lieu d'agir. -->
+            <div class="card mb-0">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h1 class="text-xl font-bold m-0">Bonjour {{ nom }}</h1>
+                        <p class="m-0 mt-1 text-surface-500">
+                            {{ synthese }}
+                            @if (structure) {
+                                <span class="text-surface-400"> · {{ structure }}</span>
+                            }
+                        </p>
+                    </div>
+                </div>
             </div>
-            <div class="col-span-12 xl:col-span-12">
-                <app-notifications-widget [data]="dataChartStructLast" [options]="optionsChartStructLast" (changeYear)="changeAll($event)" />
+
+            <!-- Indicateurs : ce qui attend et ce qui est en retard, nourris par les listes que la
+                 section suivante charge — un seul appel par source, deux nombres qui ne peuvent
+                 donc pas différer. -->
+            <app-indicateurs
+                [enAttente]="connu ? etat!.total : null"
+                [plansEnRetard]="connu ? etat!.plansEnRetard : null"
+                [plansEcheanceProche]="connu ? etat!.plansEcheanceProche : null"
+                [suitDesActions]="!!etat?.suitDesActions"></app-indicateurs>
+
+            <!-- Ce qu'on attend de vous. Rien ne s'affiche si aucun module suivi par un circuit
+                 n'est accessible : l'accueil se réduit alors aux actions rapides. -->
+            <app-mes-decisions (etat)="etat = $event"></app-mes-decisions>
+
+            <div>
+                <h2 class="text-base font-semibold mb-3">Que souhaitez-vous faire ?</h2>
+                <app-actions-rapides></app-actions-rapides>
             </div>
         </div>
     `
 })
-export class Dashboard implements AfterViewInit {
-    data: any;
-    options: any;
-    dataNiveau: any;
-    optionsNiveau: any;
-    dataTaux: any;
-    optionsTaux: any;
-    dataChartStructLast: any;
-    optionsChartStructLast: any;
-    dataAll: any;
-    optionsAll: any;
-    chartData: any;
-    chartOptions: any;
-    nonConformites: Array<any> | null = [];
-    nonConformiteTraites: any[] = [];
-    nonConformiteRejetes: any[] = [];
+export class Dashboard {
 
-    platformId = inject(PLATFORM_ID);
-    annees: number[] = [];
-    anneeSelectionnee!: number;
-    userStructure: any = {};
-    constructor(
-        private cd: ChangeDetectorRef,
-        public authService: AuthService,
-        public stuctureService: StructureService,
-        public service: ProcNonConformiteService,
-        private router: Router,
+    /**
+     * Ce que la liste de travail a trouvé.
+     *
+     * <p>Reçu d'elle, et non lu à travers elle : la synthèse et les indicateurs se dessinent avant,
+     * et interroger un composant qui n'existe pas encore aurait donné un premier rendu faux.</p>
+     */
+    etat?: EtatDeLaListe;
 
-    ) {
-        this.userStructure = getCurrentUserStructure();
-    }
-    ngOnInit() {
-        // if (isUserInRoles(['SUPER_ADMIN'])) {
-        //     this.fecthNonConformite();
-        //     this.fetchStatsMensuelStatus();
-        //     this.fetchStatsMensuel();
-        //     this.fetchStats();
-        // }
-        // else {
-        //     this.fecthNonConformiteConnect();
-        //     this.fetchStatsMensuelStatusService();
-        //     this.fecthStatMensuelStatusConnect();
-        //     this.fetchStatsPlanAction();
-        //     this.fetchStatsMensuelStatusNiveau();
-
-        // }
-
-
+    /** Les nombres veulent-ils déjà dire quelque chose ? */
+    get connu(): boolean {
+        return !!this.etat && !this.etat.chargement;
     }
 
-    fecthNonConformite() {
-        this.service.getNonConformiteAll().subscribe({
-            next: (data) => {
-                this.nonConformites = data.body;
-                // @ts-ignore
-                this.nonConformiteTraites = this.nonConformites.filter((nc) => nc.status === 'APPROVED');
-                // @ts-ignore
-                this.nonConformiteRejetes = this.nonConformites.filter((nc) => nc.status === 'REJECTED');
-                this.initChart();
-            },
-            error: (error) => {
-                //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-            }
-        });
-    }
-    fecthNonConformiteConnect() {
-        this.service.getNonConformiteByStrcuture(this.userStructure.id).subscribe({
-            next: (data) => {
-                this.nonConformites = data.body;
-                // @ts-ignore
-                this.nonConformiteTraites = this.nonConformites.filter((nc) => nc.status === 'APPROVED');
-                // @ts-ignore
-                this.nonConformiteRejetes = this.nonConformites.filter((nc) => nc.status === 'REJECTED');
-                this.initChart();
-            },
-            error: (error) => {
-                //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-            }
-        });
+    /** Nom de la personne connectée, tel qu'on l'appelle. */
+    readonly nom: string;
+    readonly structure: string;
+
+    constructor() {
+        // Les deux formes de la réponse d'authentification sont acceptées : le nom figure tantôt à
+        // la racine, tantôt sous `user`. N'en lire qu'une donnait un « Bonjour » sans personne.
+        const racine: any = currentUserState.value ?? {};
+        const utilisateur: any = racine.user ?? {};
+        const prenom = racine.firstName || utilisateur.firstName || '';
+        const patronyme = racine.lastName || utilisateur.lastName || '';
+        this.nom = `${prenom} ${patronyme}`.trim()
+            || racine.username || utilisateur.username || utilisateur.email || '';
+        // Le libellé court d'abord : c'est celui que les agents emploient entre eux.
+        const structure = getCurrentUserStructure();
+        this.structure = structure?.libelleCourt || structure?.libelleLong || '';
     }
 
-    fetchStats() {
-        const currentYear = new Date().getFullYear();
-        this.service.getStatsNfStruct(currentYear).subscribe({
-            next: (data) => {
-                this.initChartBystuct(data.body);
-            },
-            error: (error) => {
-                //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-            }
-        });
-    }
-    fetchStatsPlanAction() {
-        const currentYear = new Date().getFullYear();
-        this.service.getStatsPlanAction(currentYear).subscribe({
-            next: (data) => {
-
-                this.initChartTaux(data.body);
-            },
-            error: (error) => {
-                //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-            }
-        });
-    }
-    fetchStatsMensuel() {
-        const currentYear = new Date().getFullYear();
-        this.service.getStatsMensuel(currentYear).subscribe({
-            next: (data) => {
-                this.initChartAll(data.body);
-            },
-            error: (error) => {
-                //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-            }
-        });
-    }
-    fecthStatMensuelStatusConnect() {
-        const currentYear = new Date().getFullYear();
-        this.service.getStatsMensuelService(currentYear, this.userStructure.id).subscribe({
-            next: (data) => {
-                this.initChartAll(data.body);
-            },
-            error: (error) => {
-                //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-            }
-        });
-    }
-    fetchStatsMensuelStatus() {
-        const currentYear = new Date().getFullYear();
-        this.service.getStatsMensuelStatus(currentYear).subscribe({
-            next: (data) => {
-                this.initChartStructMonthLast(data.body);
-            },
-            error: (error) => {
-                //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-            }
-        });
-    }
-    fetchStatsMensuelStatusService() {
-        const currentYear = new Date().getFullYear();
-        this.service.getStatsMensuelStatusService(currentYear, this.userStructure.id).subscribe({
-            next: (data) => {
-
-                this.initChartStructMonthLast(data.body);
-            },
-            error: (error) => {
-                //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-            }
-        });
-    }
-    fetchStatsMensuelStatusNiveau() {
-        const currentYear = new Date().getFullYear();
-        this.service.getStatsByNiveau(currentYear, this.userStructure.id).subscribe({
-            next: (data) => {
-                this.initChartNiveau(data.body)
-
-            },
-            error: (error) => {
-                //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-            }
-        });
-    }
-    initChart() {
-        const documentStyle = getComputedStyle(document.documentElement);
-        const textColor = documentStyle.getPropertyValue('--p-text-color');
-
-        this.data = {
-            labels: ['En cours', 'Traités', 'Réjétés'],
-            datasets: [
-                {
-                    data: [this.nonConformites?.length, this.nonConformiteTraites.length, this.nonConformiteRejetes.length],
-                    backgroundColor: [documentStyle.getPropertyValue('--p-cyan-500'), documentStyle.getPropertyValue('--p-orange-500'), documentStyle.getPropertyValue('--p-gray-500')],
-                    hoverBackgroundColor: [documentStyle.getPropertyValue('--p-cyan-400'), documentStyle.getPropertyValue('--p-orange-400'), documentStyle.getPropertyValue('--p-gray-400')]
-                }
-            ]
-        };
-
-        this.options = {
-            maintainAspectRatio: false,
-            cutout: '60%',
-            plugins: {
-                legend: {
-                    labels: {
-                        color: textColor
-                    }
-                }
-            }
-        };
-        this.cd.markForCheck();
-    }
-
-    initChartBystuct(data: { [key: string]: number }) {
-        const documentStyle = getComputedStyle(document.documentElement);
-        const textColor = documentStyle.getPropertyValue('--text-color');
-        const borderColor = documentStyle.getPropertyValue('--surface-border');
-        const barColor = documentStyle.getPropertyValue('--p-primary-400');
-        const textMutedColor = documentStyle.getPropertyValue('--text-color-secondary');
-
-        const labels = Object.keys(data);
-        const values = Object.values(data);
-
-        this.chartData = {
-            labels,
-            datasets: [
-                {
-                    type: 'bar',
-                    label: 'Processus',
-                    backgroundColor: barColor,
-                    data: values,
-                    barThickness: 36,
-                    borderRadius: {
-                        topLeft: 6,
-                        topRight: 6,
-                        bottomLeft: 0,
-                        bottomRight: 0
-                    },
-                    borderSkipped: false
-                }
-            ]
-        };
-
-        this.chartOptions = {
-            maintainAspectRatio: false,
-            aspectRatio: 1,
-            plugins: {
-                legend: {
-                    labels: {
-                        color: textColor
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    stacked: false,
-                    ticks: {
-                        color: textMutedColor
-                    },
-                    grid: {
-                        color: 'transparent',
-                        borderColor: 'transparent'
-                    }
-                },
-                y: {
-                    stacked: false,
-                    beginAtZero: true,
-                    ticks: {
-                        color: textMutedColor,
-                        stepSize: 1
-                    },
-                    grid: {
-                        color: borderColor,
-                        drawTicks: false
-                    }
-                }
-            }
-        };
-        this.cd.markForCheck();
-    }
-    initChartAll(stats: Record<string, Record<string, number>>) {
-        if (isPlatformBrowser(this.platformId)) {
-            const documentStyle = getComputedStyle(document.documentElement);
-            const textColor = documentStyle.getPropertyValue('--p-text-color');
-            const textColorSecondary = documentStyle.getPropertyValue('--p-text-muted-color');
-            const surfaceBorder = documentStyle.getPropertyValue('--p-content-border-color');
-            const barColor = documentStyle.getPropertyValue('--p-cyan-500');
-
-            const year = Object.keys(stats)[0];
-            const monthlyData = stats[year];
-
-            const monthsFr = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-
-            const labels = monthsFr;
-            const values = monthsFr.map((mois) => monthlyData[mois] ?? 0);
-
-            this.dataAll = {
-                labels,
-                datasets: [
-                    {
-                        label: `Non-conformités  de ${year}`,
-                        backgroundColor: barColor,
-                        borderColor: barColor,
-                        data: values
-                    }
-                ]
-            };
-
-            this.optionsAll = {
-                maintainAspectRatio: false,
-                aspectRatio: 0.8,
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: textColor
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            color: textColorSecondary,
-                            font: { weight: 500 }
-                        },
-                        grid: {
-                            color: surfaceBorder,
-                            drawBorder: false
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            color: textColorSecondary,
-                            precision: 0
-                        },
-                        grid: {
-                            color: surfaceBorder,
-                            drawBorder: false
-                        }
-                    }
-                }
-            };
-
-            this.cd.markForCheck();
+    /**
+     * Phrase de synthèse.
+     *
+     * <p>Tant qu'une famille n'a pas répondu, on ne dit pas « rien ne vous attend » : ce serait
+     * affirmer une absence qu'on ne connaît pas encore.</p>
+     */
+    get synthese(): string {
+        if (!this.etat) {
+            return 'Voici votre journée.';
         }
-    }
-
-    change(year: any) {
-        // if (isUserInRoles(['SUPER_ADMIN'])) {
-        //     this.service.getStatsMensuel(year).subscribe({
-        //         next: (data) => {
-        //             this.initChartAll(data.body);
-        //         },
-        //         error: (error) => {
-        //             //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-        //         }
-        //     });
-        // } else {
-        //     this.service.getStatsMensuelService(year, this.userStructure.id).subscribe({
-        //         next: (data) => {
-        //             this.initChartAll(data.body);
-        //         },
-        //         error: (error) => {
-        //             //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-        //         }
-        //     });
-        // }
-
-
-    }
-    changeForProcessus(year: any) {
-        // if (isUserInRoles(['SUPER_ADMIN'])) {
-        //     this.service.getStatsNfStruct(year).subscribe({
-        //         next: (data) => {
-        //             this.initChartBystuct(data.body);
-        //         },
-        //         error: (error) => {
-        //             //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-        //         }
-        //     });
-        // } else {
-        //     this.service.getStatsPlanAction(year).subscribe({
-        //         next: (data) => {
-        //             this.initChartTaux(data.body);
-
-        //         },
-        //         error: (error) => {
-        //             //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-        //         }
-        //     });
-        // }
-
-    }
-    initChartStructMonthLast(stats: any) {
-        if (isPlatformBrowser(this.platformId)) {
-            const documentStyle = getComputedStyle(document.documentElement);
-            const textColor = documentStyle.getPropertyValue('--p-text-color');
-            const textColorSecondary = documentStyle.getPropertyValue('--p-text-muted-color');
-            const surfaceBorder = documentStyle.getPropertyValue('--p-content-border-color');
-
-            // Liste des mois en français
-            const monthLabels = [
-                'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-                'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
-            ];
-
-            const year = Object.keys(stats)[0];
-            const monthlyStats = stats[year];
-
-            // Catégories de statut (trouvés dynamiquement)
-            const categories = ['APPROVED', 'IN_PROGRESS', 'REJECTED'];
-            const colorMap: Record<string, string> = {
-                APPROVED: documentStyle.getPropertyValue('--p-cyan-500'),
-                IN_PROGRESS: documentStyle.getPropertyValue('--p-gray-500'),
-                REJECTED: documentStyle.getPropertyValue('--p-orange-500')
-            };
-
-            // Construction des datasets par statut
-            const datasets = categories.map(status => ({
-                type: 'bar',
-                label: status === 'APPROVED' ? 'Traités' :
-                    status === 'IN_PROGRESS' ? 'En cours' :
-                        status === 'REJECTED' ? 'Réjétés' : status,
-                backgroundColor: colorMap[status] || '#999',
-                data: monthLabels.map(m => monthlyStats[m]?.[status] ?? 0)
-            }));
-
-            this.dataChartStructLast = {
-                labels: monthLabels,
-                datasets: datasets
-            };
-
-            this.optionsChartStructLast = {
-                maintainAspectRatio: false,
-                aspectRatio: 0.8,
-                plugins: {
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    legend: {
-                        labels: {
-                            color: textColor
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        stacked: true,
-                        ticks: {
-                            color: textColorSecondary
-                        },
-                        grid: {
-                            color: surfaceBorder,
-                            drawBorder: false
-                        }
-                    },
-                    y: {
-                        stacked: true,
-                        beginAtZero: true,
-                        ticks: {
-                            color: textColorSecondary
-                        },
-                        grid: {
-                            color: surfaceBorder,
-                            drawBorder: false
-                        }
-                    }
-                }
-            };
-
-            this.cd.markForCheck();
+        if (this.etat.chargement) {
+            return 'Recherche des dossiers qui vous attendent…';
         }
-    }
-
-    changeAll(year: any) {
-        // if (isUserInRoles(['SUPER_ADMIN'])) {
-        //     this.service.getStatsMensuelStatus(year).subscribe({
-        //         next: (data) => {
-        //             this.initChartStructMonthLast(data.body);
-        //         },
-        //         error: (error) => {
-        //             //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-        //         }
-        //     });
-        // } else {
-        //     this.service.getStatsMensuelStatusService(year, this.userStructure.id).subscribe({
-        //         next: (data) => {
-        //             this.initChartStructMonthLast(data.body);
-        //         },
-        //         error: (error) => {
-        //             //showToastDm(handleHttpErrors(error, 'error', 'Récupération', 'demandeKey'), this.messageService)
-        //         }
-        //     });
-        // }
-
-    }
-    initChartTaux(statsData: any) {
-        if (isPlatformBrowser(this.platformId)) {
-            const documentStyle = getComputedStyle(document.documentElement);
-            const textColor = documentStyle.getPropertyValue('--text-color');
-            const textColorSecondary = documentStyle.getPropertyValue('--text-secondary-color');
-            const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
-
-            // Transformation de vos données
-            const year = Object.keys(statsData)[0];
-            const yearData = statsData[year]; // Adaptez selon votre structure
-            const mois = Object.keys(yearData);
-            const tauxTraitement = mois.map(m => yearData[m].taux_traitement);
-            const totaux = mois.map(m => yearData[m].total);
-
-            this.dataTaux = {
-                labels: mois.map(m => m.charAt(0).toUpperCase() + m.slice(1)), // Capitalize month names
-                datasets: [
-                    {
-                        label: 'Taux de traitement (%)',
-                        data: tauxTraitement,
-                        backgroundColor: documentStyle.getPropertyValue('--primary-500'),
-                        borderColor: documentStyle.getPropertyValue('--primary-500'),
-                        tension: 0.4,
-                        fill: false
-                    },
-                    {
-                        label: 'Nombre total de plans',
-                        data: totaux,
-                        backgroundColor: documentStyle.getPropertyValue('--cyan-500'),
-                        borderColor: documentStyle.getPropertyValue('--cyan-500'),
-                        tension: 0.4,
-                        fill: false,
-                        type: 'bar', // Mix line and bar chart
-                        yAxisID: 'y1'
-                    }
-                ]
-            };
-
-            this.optionsTaux = {
-                maintainAspectRatio: false,
-                aspectRatio: 0.8,
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            color: textColor,
-                            font: {
-                                weight: '500'
-                            }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            color: textColorSecondary,
-                            font: {
-                                weight: '500'
-                            }
-                        },
-                        grid: {
-                            color: surfaceBorder,
-                            drawBorder: false
-                        },
-                        title: {
-                            display: true,
-                            text: 'Mois',
-                            color: textColor
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-
-                        grid: {
-                            color: surfaceBorder,
-                            drawBorder: false
-                        },
-                        title: {
-                            display: true,
-                            text: 'Taux de traitement',
-                            color: textColor
-                        }
-                    },
-                    y1: {
-                        position: 'right',
-                        beginAtZero: true,
-                        ticks: {
-                            color: textColorSecondary
-                        },
-                        grid: {
-                            drawOnChartArea: false
-                        },
-                        title: {
-                            display: true,
-                            text: 'Nombre de plans',
-                            color: textColor
-                        }
-                    }
-                }
-            };
-            this.cd.markForCheck();
+        const total = this.etat.total;
+        if (total === 0) {
+            return 'Aucun dossier n\'attend votre décision.';
         }
+        return total === 1
+            ? 'Un dossier attend votre décision.'
+            : `${total} dossiers attendent votre décision.`;
     }
-
-    ngAfterViewInit(): void {
-
-
-    }
-
-    initChartNiveau(stats: any) {
-        if (isPlatformBrowser(this.platformId)) {
-            const documentStyle = getComputedStyle(document.documentElement);
-            const textColor = documentStyle.getPropertyValue('--p-text-color');
-            const textColorSecondary = documentStyle.getPropertyValue('--p-text-muted-color');
-            const surfaceBorder = documentStyle.getPropertyValue('--p-content-border-color');
-
-            const year = Object.keys(stats)[0];
-            const monthlyStats = stats[year];
-
-            const monthLabels = [
-                'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-                'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
-            ];
-
-            const categoriesSet = new Set<string>();
-            monthLabels.forEach(month => {
-                const monthData = monthlyStats[month];
-                if (monthData) {
-                    Object.keys(monthData).forEach(cat => categoriesSet.add(cat));
-                }
-            });
-            const categories = Array.from(categoriesSet);
-            const totalCategories = categories.length;
-            const colorMap: Record<string, string> = {};
-            categories.forEach((cat, index) => {
-                colorMap[cat] = generateColor(index, totalCategories);
-            });
-
-            const datasets = categories.map(cat => ({
-                label: cat,
-                data: monthLabels.map(m => monthlyStats[m]?.[cat] ?? 0),
-                fill: false,
-                borderColor: colorMap[cat] || documentStyle.getPropertyValue('--p-gray-500'),
-                tension: 0.4
-            }));
-
-            this.dataNiveau = {
-                labels: monthLabels,
-                datasets: datasets
-            };
-
-            this.optionsNiveau = {
-                maintainAspectRatio: false,
-                aspectRatio: 0.6,
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: textColor
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            color: textColorSecondary
-                        },
-                        grid: {
-                            color: surfaceBorder,
-                            drawBorder: false
-                        }
-                    },
-                    y: {
-                        ticks: {
-                            color: textColorSecondary
-                        },
-                        grid: {
-                            color: surfaceBorder,
-                            drawBorder: false
-                        }
-                    }
-                }
-            };
-
-            this.cd.markForCheck();
-        }
-    }
-
-
-    protected readonly isUserInRoles = isUserInRoles;
 }

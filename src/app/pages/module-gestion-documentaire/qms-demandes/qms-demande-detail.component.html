@@ -33,9 +33,26 @@
     </div>
   </div>
 
-  <!-- Contenu -->
-  <div class="p-5">
-    <div class="grid grid-cols-12 gap-4">
+  <!-- Contenu, en onglets.
+
+       La traçabilité de l'instruction figurait au bas de la fiche, après l'origine, la suite donnée
+       et la description : sur une demande instruite en plusieurs passes, elle repoussait la barre
+       d'actions hors de l'écran, et il fallait dérouler toute la fiche pour décider. Ce sont deux
+       lectures distinctes — ce que la demande dit, et ce qu'on en a fait — d'où deux onglets. -->
+  <p-tabs value="detail">
+    <p-tablist>
+      <p-tab value="detail"><i class="pi pi-file mr-2"></i>Détail de la demande</p-tab>
+      <p-tab value="historique">
+        <i class="pi pi-sitemap mr-2"></i>Instruction
+        @if (historique.length) {
+          <p-tag severity="secondary" [value]="historique.length + ''" styleClass="ml-2"></p-tag>
+        }
+      </p-tab>
+    </p-tablist>
+
+    <p-tabpanels>
+      <p-tabpanel value="detail">
+        <div class="grid grid-cols-12 gap-4">
 
       <div class="col-span-12 lg:col-span-6">
         <div class="h-full border border-slate-200 rounded-lg p-4">
@@ -100,43 +117,55 @@
         </div>
       </div>
 
-      <!-- Décisions déjà prises sur ce circuit : qui, quand, pourquoi. -->
-      <div class="col-span-12" *ngIf="historique.length">
-        <div class="border border-slate-200 rounded-lg p-4">
-          <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-3 flex items-center gap-2">
-            <i class="pi pi-sitemap text-indigo-500"></i> Traçabilité de l'instruction
-          </h3>
-          <div class="flex flex-col gap-3">
-            <div *ngFor="let entree of historique" class="flex gap-3">
-              <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-50 border border-slate-200 shrink-0">
-                <i class="pi pi-check text-slate-400"></i>
-              </span>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="font-bold text-slate-800 text-sm">{{ entree.decision }}</span>
-                  <span class="text-xs text-slate-400" *ngIf="entree.stepName">
-                    depuis « {{ entree.stepName }} »
+        </div>
+      </p-tabpanel>
+
+      <p-tabpanel value="historique">
+        <!-- Décisions déjà prises sur ce circuit : qui, quand, pourquoi. -->
+        @if (historique.length) {
+          <div class="border border-slate-200 rounded-lg p-4">
+              <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-3 flex items-center gap-2">
+                <i class="pi pi-sitemap text-indigo-500"></i> Traçabilité de l'instruction
+              </h3>
+              <div class="flex flex-col gap-3">
+                <div *ngFor="let entree of historique" class="flex gap-3">
+                  <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-50 border border-slate-200 shrink-0">
+                    <i class="pi pi-check text-slate-400"></i>
                   </span>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="font-bold text-slate-800 text-sm">{{ entree.decision }}</span>
+                      <span class="text-xs text-slate-400" *ngIf="entree.stepName">
+                        depuis « {{ entree.stepName }} »
+                      </span>
+                    </div>
+                    <div class="text-xs text-slate-500 mt-1 flex items-center gap-3 flex-wrap">
+                      <span *ngIf="entree.decisionDate">
+                        <i class="pi pi-clock mr-1"></i>{{ entree.decisionDate | date:'dd/MM/yyyy à HH:mm' }}
+                      </span>
+                      <span *ngIf="entree.validatorFullName || entree.validatorUserId">
+                        <i class="pi pi-user mr-1"></i>{{ entree.validatorFullName || entree.validatorUserId }}
+                      </span>
+                    </div>
+                    <p class="mt-2 mb-0 text-sm text-slate-700 bg-slate-50 rounded-lg p-2" *ngIf="entree.comments">
+                      {{ entree.comments }}
+                    </p>
+                  </div>
                 </div>
-                <div class="text-xs text-slate-500 mt-1 flex items-center gap-3 flex-wrap">
-                  <span *ngIf="entree.decisionDate">
-                    <i class="pi pi-clock mr-1"></i>{{ entree.decisionDate | date:'dd/MM/yyyy à HH:mm' }}
-                  </span>
-                  <span *ngIf="entree.validatorFullName || entree.validatorUserId">
-                    <i class="pi pi-user mr-1"></i>{{ entree.validatorFullName || entree.validatorUserId }}
-                  </span>
-                </div>
-                <p class="mt-2 mb-0 text-sm text-slate-700 bg-slate-50 rounded-lg p-2" *ngIf="entree.comments">
-                  {{ entree.comments }}
-                </p>
               </div>
             </div>
+        }
+        <!-- Une demande à peine déposée n'a pas d'historique : le dire vaut mieux qu'un onglet vide,
+             qui se lit comme un chargement qui n'aboutit pas. -->
+        @if (!historique.length) {
+          <div class="flex flex-col items-center gap-2 py-10 text-slate-400">
+            <i class="pi pi-inbox text-3xl"></i>
+            <span class="text-sm">Aucune décision n'a encore été prise sur cette demande.</span>
           </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
+        }
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
 
   <!-- Barre d'actions : ce que le serveur autorise à cette étape, et rien d'autre. -->
   <div class="px-5 py-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">

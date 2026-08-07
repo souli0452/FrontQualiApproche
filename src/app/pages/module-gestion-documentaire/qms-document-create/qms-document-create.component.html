@@ -70,47 +70,6 @@
                 placeholder="Sélectionner le type de document"
                 [lazy]="true"
                 [loadOptions]="qmsService.chargerOptionsTypes"></app-select-input>
-
-              <!-- Le circuit découle du type de document, et de lui seul. Ce rappel s'affichait aussi
-                   sous le processus émetteur, où il donnait à croire que la structure y était pour
-                   quelque chose — deux encarts identiques côte à côte pour un seul circuit.
-
-                   Trois cas, et il faut les distinguer : le type désigne son circuit, le type n'en
-                   désigne aucun et celui par défaut prend la suite, ou aucun circuit n'est actif du
-                   tout — et le dépôt sera refusé. Un encart unique laissait croire au premier cas
-                   quand on était dans le deuxième, et se taisait dans le troisième. -->
-              @if (circuitApplique && !circuitParDefaut) {
-                <div class="mt-2 p-2.5 bg-blue-50 border border-blue-100 rounded flex items-center gap-2.5">
-                  <i class="pi pi-sitemap text-blue-500 text-base"></i>
-                  <div class="text-left">
-                    <span class="text-[10px] text-blue-700 font-bold uppercase block">Circuit de ce type de document :</span>
-                    <span class="text-xs font-semibold text-slate-800">{{ circuitApplique.nom }} ({{ circuitApplique.steps?.length || 0 }} étapes)</span>
-                  </div>
-                </div>
-              } @else if (circuitApplique && circuitParDefaut) {
-                <div class="mt-2 p-2.5 bg-amber-50 border border-amber-100 rounded flex items-start gap-2.5">
-                  <i class="pi pi-info-circle text-amber-600 text-base mt-0.5"></i>
-                  <div class="text-left">
-                    <span class="text-[10px] text-amber-800 font-bold uppercase block">Circuit par défaut des documents :</span>
-                    <span class="text-xs font-semibold text-slate-800">{{ circuitApplique.nom }} ({{ circuitApplique.steps?.length || 0 }} étapes)</span>
-                    <span class="block text-[11px] text-amber-800 mt-1">
-                      Ce type ne désigne pas de circuit. Pour lui en attribuer un, passez par
-                      Configuration des types de document.
-                    </span>
-                  </div>
-                </div>
-              } @else if (documentForm.get('documentType')?.value) {
-                <div class="mt-2 p-2.5 bg-red-50 border border-red-100 rounded flex items-start gap-2.5">
-                  <i class="pi pi-exclamation-triangle text-red-500 text-base mt-0.5"></i>
-                  <div class="text-left">
-                    <span class="text-[10px] text-red-700 font-bold uppercase block">Aucun circuit de validation</span>
-                    <span class="text-xs text-slate-700">
-                      Ni ce type ni la famille des documents n'ont de circuit actif : l'enregistrement
-                      sera refusé. Activez un circuit de type DOCUMENT, ou désignez-en un sur ce type.
-                    </span>
-                  </div>
-                </div>
-              }
             </div>
 
             <div class="col-span-12 md:col-span-6">
