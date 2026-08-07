@@ -36,6 +36,7 @@
   [action]="actionChoisie"
   [loading]="enregistrement"
   [stepFields]="etatCircuit?.currentStepFields"
+  [deposerFichier]="deposerFichierDEtape"
   [visible]="dialogueDecisionOuvert"
   (visibleChange)="dialogueDecisionOuvert = $event"
   (confirm)="soumettreDecision($event)">

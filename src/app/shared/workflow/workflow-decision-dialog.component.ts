@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Observable } from 'rxjs';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { WorkflowActionDto, WorkflowStepFieldDto } from '../../models/workflow.model';
+import { SelectInputComponent } from '../ui/select-input/select-input.component';
 import { ChoixDeChamp, ChoixDeChampService } from './choix-de-champ.service';
 
 /** Décision confirmée : commentaire et valeurs saisies, prêtes pour l'appel au serveur. */
@@ -28,7 +29,7 @@ export interface DecisionConfirmee {
 @Component({
   selector: 'app-workflow-decision-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule],
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, SelectInputComponent],
   templateUrl: './workflow-decision-dialog.component.html'
 })
 export class WorkflowDecisionDialogComponent {
@@ -111,7 +112,17 @@ export class WorkflowDecisionDialogComponent {
    * demander à l'utilisateur de saisir un fichier à la main serait pire que de lui dire que l'écran
    * ne sait pas encore le faire.</p>
    */
-  @Input() deposerFichier?: (fichier: File) => Observable<string>;
+  @Input()
+  set deposerFichier(valeur: ((fichier: File) => Observable<string>) | undefined) {
+    this._deposerFichier = valeur;
+    // Le formulaire dépend de sa présence : un champ « pièce jointe » n'est exigé que si l'écran
+    // sait la déposer. L'entrée peut arriver après les champs de l'étape, d'où la reconstruction.
+    this.reconstruireFormulaire();
+  }
+  get deposerFichier(): ((fichier: File) => Observable<string>) | undefined {
+    return this._deposerFichier;
+  }
+  private _deposerFichier?: (fichier: File) => Observable<string>;
 
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() confirm = new EventEmitter<DecisionConfirmee>();
@@ -178,7 +189,14 @@ export class WorkflowDecisionDialogComponent {
       if (champ.id == null) {
         continue;
       }
-      controles[this.nomDeControle(champ)] = ['', champ.required ? Validators.required : []];
+
+      // Un champ que cet écran ne peut pas servir — une pièce jointe sans moyen de dépôt — n'est
+      // pas exigé ici : il n'est pas affiché, et le rendre obligatoire bloquerait la décision sans
+      // que rien ne le montre. Le serveur, lui, refusera avec son propre message si la pièce est
+      // réellement requise, et l'écran du module permettra de la joindre.
+      const servable = champ.type !== 'FILE' || !!this.deposerFichier;
+      controles[this.nomDeControle(champ)] =
+        ['', champ.required && servable ? Validators.required : []];
     }
     this.form = this.fb.group(controles);
     this.chargerLesSources();
@@ -198,18 +216,39 @@ export class WorkflowDecisionDialogComponent {
    * <p>Soit la liste littérale déclarée par le circuit, soit celles d'une source — structures,
    * utilisateurs — qui vit ailleurs et change sans qu'on remanie le circuit. La valeur retenue est
    * alors l'identifiant : c'est lui que le moteur transporte.</p>
+   *
+   * <p><b>La même liste est toujours rendue à l'identique</b>, et pas seulement égale. Le gabarit
+   * appelle cette méthode à chaque détection de changement : une liste reconstruite à chaque appel
+   * faisait recréer les options du sélecteur, et le choix retenu disparaissait de l'affichage — la
+   * valeur restait dans le formulaire, mais le champ paraissait vide. Les listes de source
+   * échappaient au défaut, étant déjà mémorisées : d'où un champ à liste écrite à la main qui
+   * n'affichait pas son choix, là où une liste d'utilisateurs fonctionnait.</p>
    */
   choixDuChamp(champ: WorkflowStepFieldDto): ChoixDeChamp[] {
     const options = champ.options ?? '';
     if (this.choixService.estUneSource(options)) {
       return this.choixParSource[options.trim().toUpperCase()] ?? [];
     }
-    return options
+    const enCache = this.choixLitteraux.get(options);
+    if (enCache) {
+      return enCache;
+    }
+    const choix = options
       .split(',')
-      .map((choix) => choix.trim())
-      .filter((choix) => choix.length > 0)
-      .map((choix) => ({ label: choix, value: choix }));
+      .map((valeur) => valeur.trim())
+      .filter((valeur) => valeur.length > 0)
+      .map((valeur) => ({ label: valeur, value: valeur }));
+    this.choixLitteraux.set(options, choix);
+    return choix;
   }
+
+  /**
+   * Listes écrites à la main, mémorisées par leur déclaration.
+   *
+   * <p>Deux champs qui proposent les mêmes valeurs partagent la même liste : elles ne dépendent que
+   * du texte déclaré dans le circuit.</p>
+   */
+  private readonly choixLitteraux = new Map<string, ChoixDeChamp[]>();
 
   /**
    * Valeurs chargées, par source.

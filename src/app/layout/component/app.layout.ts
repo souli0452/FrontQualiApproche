@@ -5,13 +5,14 @@ import { filter, Subscription } from 'rxjs';
 import { AppTopbar } from './app.topbar';
 import { AppSidebar } from './app.sidebar';
 import { AppFooter } from './app.footer';
+import { AppReglagesRequis } from './app.reglages-requis';
 import { LayoutService } from '../service/layout.service';
 import { AuthService } from '../../services/auth-services/auth.service';
 
 @Component({
     selector: 'app-layout',
     standalone: true,
-    imports: [CommonModule, AppTopbar, AppSidebar, RouterModule, AppFooter],
+    imports: [CommonModule, AppTopbar, AppSidebar, RouterModule, AppFooter, AppReglagesRequis],
     template: `<div class="layout-wrapper" [ngClass]="containerClass">
 
         <app-sidebar></app-sidebar>
@@ -33,6 +34,10 @@ import { AuthService } from '../../services/auth-services/auth.service';
             <app-footer></app-footer>
         </div>
         <div class="layout-mask animate-fadein"></div>
+
+        <!-- Réglages sans lesquels la plateforme fonctionne mal en silence : exigés de
+             l'administrateur au lancement, et de lui seul — nul autre ne peut y répondre. -->
+        <app-reglages-requis></app-reglages-requis>
     </div> `
 })
 export class AppLayout {

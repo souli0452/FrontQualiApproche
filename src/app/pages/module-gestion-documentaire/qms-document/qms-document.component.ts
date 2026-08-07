@@ -125,6 +125,15 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   demandesDuDocument: DemandeDocumentDto[] = [];
   /** Décisions successives du circuit, distinctes des versions du fichier et des accès. */
   validationHistory: ValidationHistoryDto[] = [];
+
+  /**
+   * Dépôt d'une pièce réclamée par l'étape courante, rendant la référence qui la désigne.
+   *
+   * <p>Fonction fléchée : passée en entrée du dialogue, une méthode ordinaire y perdrait son
+   * {@code this}. Le document concerné est celui de la fiche ouverte.</p>
+   */
+  readonly deposerFichierDEtape = (fichier: File) =>
+    this.qmsService.deposerFichierDEtape(this.selectedDocument?.id ?? '', fichier);
   /** États de circuit des documents listés, indexés par identifiant de document. */
   workflowStates: Record<string, WorkflowStateDto> = {};
   actionMenuItems: MenuItem[] = [];

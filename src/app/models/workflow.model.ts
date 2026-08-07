@@ -33,6 +33,14 @@ export interface WorkflowDto {
    * métier. Sans ce marqueur, le premier circuit rendu par la base était choisi arbitrairement.
    */
   actif?: boolean;
+  /**
+   * Entité à laquelle le circuit est réservé au sein de sa famille — l'identifiant d'un type de
+   * document — ou absent s'il est le circuit **par défaut** de la famille.
+   *
+   * La famille n'est pas subdivisée pour autant : `resourceType` reste l'aiguillage de retour vers
+   * le module métier (notifications, liste « à traiter »), et la réservation est un second axe.
+   */
+  cibleId?: string | null;
   steps?: WorkflowStepDto[];
 }
 
@@ -157,6 +165,14 @@ export interface WorkflowInstanceDto {
 
 export interface WorkflowStateDto {
   instanceId?: string;
+  /**
+   * Circuit que suit le dossier.
+   *
+   * <p>Sans lui, une fiche qui reçoit l'état connaît l'étape courante mais pas le circuit dont elle
+   * fait partie : ni ce qui reste à franchir, ni qui l'attendra ensuite. Le module documentaire s'en
+   * tirait avec une colonne à lui ; les non-conformités et les demandes n'en ont pas.</p>
+   */
+  workflowId?: string;
   status: ValidationStatus | string;
   /**
    * Code de l'étape courante. À renvoyer tel quel en `expectedStateCode` lors d'une décision :

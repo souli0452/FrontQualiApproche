@@ -10,7 +10,6 @@ import { DropdownSelector, FormGroupColumn, TableColumn } from '../../../models/
 import { QmsDocumentType } from '../../../models/gestion-documentaire.model';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
-import { WorkflowService } from '../../../services/workflow.service';
 
 @Component({
     selector: 'app-qms-document-type',
@@ -59,10 +58,14 @@ export class QmsDocumentTypeComponent {
 
     closeDialog = false;
     formGroup: UntypedFormGroup;
-    /** Circuits proposés : ceux des documents, seuls applicables à un type de document. */
+    /**
+     * Aucune liste déroulante ici.
+     *
+     * Le circuit d'un type ne se règle plus depuis cet écran : c'est le **circuit** qui se réserve à
+     * un type, depuis l'éditeur de circuits — seul endroit où l'unicité « un type, un circuit » peut
+     * être tenue. Deux écrans réglant le même lien auraient fini par se contredire.
+     */
     dropdownList: DropdownSelector[] = [];
-    private circuitDropdown: DropdownSelector = { field: 'workflowId', dropdownEntries: [] };
-    private nomParCircuit = new Map<string, string>();
     tableCols: TableColumn[];
     formCols: FormGroupColumn[];
     pageLabel = 'Configuration des Types de Document QMS';
@@ -71,23 +74,18 @@ export class QmsDocumentTypeComponent {
     constructor(protected fb: UntypedFormBuilder,
         protected messageService: MessageService,
         protected qmsService: QmsDocumentService,
-        private workflowService: WorkflowService,
         private ngxPermissionsService: NgxPermissionsService) {
         this.formCols = [
             { field: 'id', label: "", header: 'Id', type: 'string', visible: false, required: false },
             { field: 'code', label: "Code du type (ex: PRO, INS, ENR)", header: 'Code', type: 'string', visible: true, required: true },
             { field: 'libelle', label: "Libellé (ex: Procédure, Instruction)", header: 'Libellé', type: 'string', visible: true, required: true },
-            { field: 'folderName', label: "Nom du dossier dans Alfresco", header: 'Dossier Alfresco', type: 'string', visible: true, required: true },
-            // Sans ce champ, aucun type ne pouvait désigner son circuit : la création de document
-            // retombait systématiquement sur le circuit actif, quel que soit le type.
-            { field: 'workflowId', label: "Circuit de validation appliqué aux documents de ce type", header: 'Circuit', type: 'dropdown', visible: true, required: false }
+            { field: 'folderName', label: "Nom du dossier dans Alfresco", header: 'Dossier Alfresco', type: 'string', visible: true, required: true }
         ];
 
         this.tableCols = [
             { field: 'code', header: 'Code', type: 'string', filter: true },
             { field: 'libelle', header: 'Libellé', type: 'string', filter: true },
             { field: 'folderName', header: 'Dossier sur minio', type: 'string', filter: true },
-            { field: 'workflowNom', header: 'Circuit de validation', type: 'string', filter: true },
             { field: 'createdAt', header: 'Date de création', type: 'string', filter: true }
         ];
 
@@ -95,8 +93,7 @@ export class QmsDocumentTypeComponent {
             id: [null],
             code: [null, Validators.required],
             libelle: [null, Validators.required],
-            folderName: [null, Validators.required],
-            workflowId: [null]
+            folderName: [null, Validators.required]
         });
     }
 
@@ -109,49 +106,7 @@ export class QmsDocumentTypeComponent {
     }
 
     ngOnInit(): void {
-        this.dropdownList.push(this.circuitDropdown);
-        this.chargerCircuits();
         this.fetchObject();
-    }
-
-    /**
-     * Circuits applicables à un type de document.
-     *
-     * <p>Restreint aux circuits de type DOCUMENT : les circuits de non-conformité ou de plan
-     * d'action ne peuvent pas piloter un document, et les proposer inviterait à reproduire
-     * l'incohérence qui rendait les notifications impossibles.</p>
-     *
-     * <p>Un circuit désigné ici doit être <b>actif</b> pour servir : le moteur refuse d'ouvrir un
-     * circuit désactivé, quand bien même un type le nommerait. Plusieurs circuits documentaires
-     * actifs à la fois sont donc normaux — c'est ce que produit un circuit par type. Le plus ancien
-     * fait office de repli pour les types qui n'en désignent aucun.</p>
-     *
-     * <p>Un circuit désactivé reste proposé — on peut l'attribuer puis l'activer — mais l'étiquette
-     * le dit : le laisser tel quel ferait échouer le dépôt des documents de ce type.</p>
-     */
-    private chargerCircuits(): void {
-        this.workflowService.getWorkflowsByType('DOCUMENT')
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-                next: (circuits) => {
-                    this.nomParCircuit = new Map(circuits.map((c) => [c.id!, c.nom]));
-                    this.circuitDropdown.dropdownEntries = circuits.map((c) => ({
-                        value: c.id,
-                        label: c.actif ? c.nom : `${c.nom} — désactivé, à réactiver pour servir`
-                    }));
-                    this.dropdownList = [...this.dropdownList];
-                    this.decorerListe();
-                },
-                error: () => console.warn('Circuits de validation indisponibles.')
-            });
-    }
-
-    /** Nom du circuit affiché en clair dans le tableau, l'identifiant ne disant rien. */
-    private decorerListe(): void {
-        this.dataList = this.dataList.map((type) => ({
-            ...type,
-            workflowNom: type.workflowId ? (this.nomParCircuit.get(type.workflowId) ?? '—') : '—'
-        })) as QmsDocumentType[];
     }
 
     fetchObject() {
@@ -160,7 +115,6 @@ export class QmsDocumentTypeComponent {
             .subscribe({
                 next: res => {
                     this.dataList = res.data.content || [];
-                    this.decorerListe();
                     // On garde la trace du total pour la pagination
                     this.totalElements = res.data.totalElements;
                     this.currentPage = res.data.pageNumber;

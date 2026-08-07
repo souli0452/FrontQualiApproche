@@ -2,12 +2,7 @@ import { Component, ViewChild } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { EtapeTraitement } from '../../../enums/enums';
 import { HttpResponse } from '@angular/common/http';
-import {
-    getCurrentUserStructure,
-    showToast,
-    StatusEnum,
-    TypeDemande
-} from '../../../utils/global/global-utils';
+import { showToast, StatusEnum, TypeDemande } from '../../../utils/global/global-utils';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { FeaturesService } from '../../../services/feature-service';
@@ -17,9 +12,6 @@ import { Subject } from 'rxjs';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
-import { RoleService } from '../../../services/non-conformite/role.service';
-import { currentUserState } from '../../../services/auth-services/auth.state';
-import { AuthData } from '../../../models/auth.model';
 import { generateReportFile, ReportFormat, ReportingInput } from '../../../utils/fichier/fichier-utils';
 
 @Component({
@@ -48,12 +40,6 @@ export class NCSuiviComponent {
     title = 'Consultations des non-conformités';
     loading: boolean = false;
     cols: any[] = [];
-    userStructure:any={};
-
-    isRQ: boolean = false;
-    isChef: boolean = false;
-    isAgent: boolean = false;
-
     private destroy$ = new Subject<void>();
 
     constructor(
@@ -61,14 +47,17 @@ export class NCSuiviComponent {
       protected messageService: MessageService,
       private service:ProcNonConformiteService,
       private nonConformiteService:NonConformiteService,
-      public roleService: RoleService,
       private authService: AuthService) 
       {
-        this.userStructure = getCurrentUserStructure();
         this.cols = [
             { field: 'numeroReference', header: 'N° Ref', type: 'string', filter: true, width: '250px', centered: false },
             { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '150px', centered: false },
-            { field: 'status', header: 'Statut', type: 'enum', filter: true, width: '250px', centered: false },
+            // L'étape du circuit, et non le statut : c'est elle qui dit où en est le dossier, et
+            // c'est le circuit qui la nomme. Le type « enum » du tableau affiche l'étape courante
+            // rendue par le moteur ; à défaut de circuit en cours — un dossier clos — il retombe sur
+            // ce champ, d'où `workflowStatus` : la dernière étape connue, plutôt qu'un statut
+            // technique (« PUBLISHED ») qui ne dit rien à qui lit la liste.
+            { field: 'workflowStatus', header: 'Étape du circuit', type: 'enum', filter: true, width: '250px', centered: false },
             {
                 field: 'typeNonConformiteLibelle',
                 header: 'Source',
@@ -99,27 +88,25 @@ export class NCSuiviComponent {
         this.destroy$.complete();
     }
 
+    /**
+     * Charge la consultation : tous les dossiers que l'appelant a le droit de voir, tous processus
+     * confondus.
+     *
+     * <p>L'écran choisissait son point d'entrée selon le rôle — la liste générale pour le
+     * responsable qualité, celle d'une structure pour le pilote, celle d'un utilisateur pour l'agent.
+     * Deux conséquences, toutes deux constatées : la liste du pilote était bâtie sur un seul champ de
+     * structure, si bien qu'un dossier transféré ou clos en sortait et disparaissait de son écran ;
+     * et la portée de la consultation dépendait d'un aiguillage de gabarit, alors que le serveur la
+     * tient déjà.</p>
+     *
+     * <p>Une seule source désormais. C'est {@code visiblesParLAppelant} qui décide, côté serveur :
+     * l'administration et la responsabilité qualité voient tout ; les autres voient les dossiers de
+     * leur structure — émis par elle <b>ou</b> qui lui sont adressés — plus les leurs, ceux qu'ils
+     * ont déclarés et ceux qui leur sont imputés. Aucun filtre sur l'état : un dossier clos reste
+     * consultable, ce qui est le propre d'un écran de suivi.</p>
+     */
     loadSuiviData() {
-        this.loading = true;
-        const user = currentUserState.value as AuthData | any;
-        
-        if (!user) {
-            console.warn("Utilisateur non connecté ou sans permissions.");
-            this.loading = false;
-            return;
-        }
-    
-        const currentUserId = user.userId;
-        
-        if (this.roleService.isRQ) {
-            this.getDemandeList();
-        } 
-        else if (this.roleService.isChef) {
-            this.getDemandeListStructure();
-        }
-        else if (this.roleService.isAgent) {
-            this.getDemandeListUser(currentUserId!);
-        }
+        this.getDemandeList();
     }
 
     applyLocalFilters() {
@@ -181,44 +168,16 @@ export class NCSuiviComponent {
 
     getDemandeList() {
         this.loading = true;
-        this.nonConformiteService.nonConformiteGetAll().subscribe({
+        // Les bornes de page sont transmises, et le total repris : sans elles, le serveur servait sa
+        // page par défaut — dix dossiers — et la barre de pagination, faute de total, n'annonçait
+        // aucune suite. La consultation paraissait ne compter que dix non-conformités.
+        this.nonConformiteService.nonConformiteGetAll(this.currentPage, this.pageSize).subscribe({
             next: (data) => {
                 this.rawDemandeList = data.data.content || [];
-                this.applyLocalFilters();
-                this.featureService.onReloadRequested(true);
-                this.loading = false;
-            },
-            error: (error) => {
-                this.loading = false;
-            }
-        });
-    }
-
-    getDemandeListStructure() {
-        this.loading = true;
-        this.nonConformiteService.nonConformiteByStructureGetPagination(this.userStructure.id, this.currentPage, this.pageSize).subscribe({
-            next: (data) => {
-                this.rawDemandeList = data.data.content || [];
-                this.totalElements = data.data.totalElements;
-                this.totalPages = data.data.totalPages;
-                this.currentPage = data.data.pageNumber;
-                this.pageSize = data.data.pageSize;
-                
-                this.applyLocalFilters();
-                this.featureService.onReloadRequested(true);
-                this.loading = false;
-            },
-            error: (error) => {
-                this.loading = false;
-            }
-        });
-    }
-
-    getDemandeListUser(userId: string) {
-        this.loading = true;
-        this.service.getNCByUser(userId).subscribe({
-            next: (data) => {
-                this.rawDemandeList = data.data.content || [];
+                this.totalElements = data.data.totalElements ?? this.rawDemandeList.length;
+                this.totalPages = data.data.totalPages ?? 1;
+                this.currentPage = data.data.pageNumber ?? this.currentPage;
+                this.pageSize = data.data.pageSize ?? this.pageSize;
                 this.applyLocalFilters();
                 this.featureService.onReloadRequested(true);
                 this.loading = false;

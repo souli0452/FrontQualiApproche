@@ -14,7 +14,12 @@ import { DemandeDocumentService } from '../../../services/module-gestion-documen
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 import { QmsDemandeDetailComponent } from './qms-demande-detail.component';
 import { WorkflowService } from '../../../services/workflow.service';
-import { ValidationHistoryDto, WorkflowActionDto, WorkflowStateDto } from '../../../models/workflow.model';
+import {
+    ValidationHistoryDto,
+    WorkflowActionDto,
+    WorkflowStateDto,
+    WorkflowValidationRequestDto
+} from '../../../models/workflow.model';
 import { hasAnyPermission } from '../../../utils/auth/auth-utils';
 
 /** Ligne du tableau : la demande, augmentée de ce que la colonne affiche telle quelle. */
@@ -255,6 +260,14 @@ export class QmsDemandesComponent implements OnInit, OnDestroy {
         this.historique = [];
         this.vue = 'detail';
 
+        // Une demande sans identifiant ne se demande pas au moteur : l'appel partait avec
+        // « undefined » dans l'adresse et revenait en 500, deux fois, pour une donnée que le serveur
+        // ne pouvait de toute façon pas trouver. La fiche s'affiche, et dit ce qui manque.
+        if (!demande?.id) {
+            this.etatIndisponible = true;
+            return;
+        }
+
         this.etatIndisponible = false;
         this.workflowService.getWorkflowStateForResource(demande.id)
             .pipe(takeUntil(this.destroy$))
@@ -319,6 +332,15 @@ export class QmsDemandesComponent implements OnInit, OnDestroy {
      * strict nécessaire — le document visé et l'étape — plutôt que d'en écrire un second, identique
      * à un libellé près.</p>
      */
+    /**
+     * Dépôt d'une pièce réclamée par l'étape d'instruction, rendant sa référence.
+     *
+     * <p>Fonction fléchée : passée en entrée du dialogue, une méthode ordinaire y perdrait son
+     * {@code this}. La demande concernée est celle sur laquelle porte la décision en cours.</p>
+     */
+    readonly deposerFichierDEtape = (fichier: File) =>
+        this.demandeService.deposerFichierDEtape(this.demandeSelectionnee?.id ?? '', fichier);
+
     get documentDeLaDecision(): any {
         if (!this.demandeSelectionnee) {
             return undefined;
@@ -335,18 +357,32 @@ export class QmsDemandesComponent implements OnInit, OnDestroy {
         this.dialogueDecisionOuvert = true;
     }
 
-    soumettreDecision(decision: any): void {
+    /**
+     * Transmet la décision, avec les saisies que l'étape exigeait.
+     *
+     * <p>Les valeurs étaient envoyées sous le nom {@code fieldValues}, que ni le serveur ni le
+     * dialogue ne connaissent : le serveur attend {@code fields}. Le champ arrivait donc vide, et
+     * l'utilisateur se voyait refuser sa décision en « Champ(s) obligatoire(s) non renseigné(s) »
+     * alors qu'il venait de les saisir. Le paramètre était typé {@code any} et la requête castée,
+     * si bien que rien ne signalait l'écart.</p>
+     *
+     * <p>{@code expectedStateCode} accompagne désormais la décision, comme ailleurs : le serveur
+     * refuse en 409 une décision prise depuis un écran périmé, ce qui neutralise du même coup le
+     * second envoi d'un double clic.</p>
+     */
+    soumettreDecision(decision: DecisionConfirmee): void {
         if (!this.demandeSelectionnee || !this.actionChoisie) {
             return;
         }
-        const requete = {
-            comments: decision?.comments ?? decision?.commentaire ?? '',
-            fieldValues: decision?.fieldValues ?? decision?.valeurs ?? {}
+        const requete: WorkflowValidationRequestDto = {
+            comments: decision.comments,
+            fields: decision.fields,
+            expectedStateCode: this.etatCircuit?.currentStateCode
         };
 
         this.enregistrement = true;
         this.workflowService
-            .executeTransition(this.demandeSelectionnee.id, this.actionChoisie.code!, requete as any)
+            .executeTransition(this.demandeSelectionnee.id, this.actionChoisie.code!, requete)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: () => {

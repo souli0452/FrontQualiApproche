@@ -33,6 +33,13 @@ export interface LigneATraiter {
     depuis?: string;
     /** État du circuit : ce sont ses actions ouvertes qui deviennent les boutons de la ligne. */
     workflowState?: WorkflowStateDto;
+    /**
+     * Dépôt d'une pièce réclamée par l'étape, rendant la référence qui la désigne.
+     *
+     * <p>Propre à la ligne : la pièce se range sous le dossier concerné. Absent, le champ n'est pas
+     * présenté — l'étape reste alors à décider depuis la fiche du dossier.</p>
+     */
+    deposerFichier?: (fichier: File) => import('rxjs').Observable<string>;
 }
 
 /**
@@ -125,6 +132,7 @@ export interface LigneATraiter {
                                     } @else if (nombreDActions(ligne) === 1) {
                                         <!-- Une seule issue : elle se prend d'ici, sans détour. -->
                                         <app-workflow-actions
+                                            [deposerFichier]="ligne.deposerFichier"
                                             [resourceId]="ligne.id"
                                             [reference]="ligne.reference || ligne.titre"
                                             [state]="ligne.workflowState"

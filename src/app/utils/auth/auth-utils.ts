@@ -42,3 +42,24 @@ export function isModuleSubscribed(moduleName: string): boolean {
     const authData = currentUserState.value;
     return authData?.modulesSubscribed?.includes(moduleName) || false;
 }
+
+/**
+ * L'utilisateur a-t-il accès à cette fonction : module souscrit par la direction, et permission
+ * détenue par lui ?
+ *
+ * <p>Les deux conditions ne se remplacent pas. La permission dit ce que la personne est habilitée à
+ * faire ; l'abonnement dit ce que l'organisation a acheté. Offrir une entrée sans vérifier le second
+ * mène à un écran vide ou à un refus du serveur, et sans le premier à une action refusée.</p>
+ *
+ * <p>Le module est facultatif : tout ne relève pas d'un abonnement — l'accueil, les comptes, la
+ * configuration. Ne rien passer vaut donc « aucun abonnement requis », et non « tout abonnement
+ * accepté par défaut » : une chaîne inventée qui ne correspond à aucun module fermerait la fonction
+ * pour tout le monde, sans le moindre message. C'est déjà arrivé.</p>
+ *
+ * @param permissions permissions dont une seule suffit
+ * @param module valeur de l'énumération `ModuleAbonnement`, jamais une chaîne libre
+ */
+export function accesAutorise(permissions: string[], module?: string): boolean {
+    if (module && !isModuleSubscribed(module)) return false;
+    return hasAnyPermission(permissions);
+}

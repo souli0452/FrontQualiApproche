@@ -33,7 +33,7 @@ export class ParametragesComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.activeTab = this.router.url.split('?')[0];
         this.items = [
-            { label: 'Configuration globale', icon: 'pi pi-cog', routerLink: '/configurations/config-systeme' },
+            { label: 'Réglages de l\'organisation', icon: 'pi pi-cog', routerLink: '/configurations/config-systeme' },
             // Configuration des circuits de validation, rapatriée ici depuis sa propre section.
             // Les trois écrans voyagent ensemble : les circuits seuls auraient laissé le catalogue
             // d'étapes et les modèles d'e-mail sans aucun chemin depuis le menu.

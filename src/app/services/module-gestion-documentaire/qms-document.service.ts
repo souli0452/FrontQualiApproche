@@ -166,24 +166,37 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
                 formData.append(key, documentData[key].toString());
             }
         });
-        return this.http.post<DocumentQms>(QualiUrlConfig.QMS_DOCUMENT_ROOT_URL, formData);
+        // Déplié de son enveloppe : sans cela le document rendu était `{ success, data }`, et le
+        // message de confirmation annonçait « Le document undefined a été enregistré » — tandis que
+        // l'avertissement sur le classement, porté par la même charge, ne s'affichait jamais.
+        return this.http.post<any>(QualiUrlConfig.QMS_DOCUMENT_ROOT_URL, formData).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
     addVersion(id: string, file: File, comments: string): Observable<QmsDocumentVersion> {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('comments', comments);
-        return this.http.post<QmsDocumentVersion>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/versions`, formData);
+        return this.http.post<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/versions`, formData).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
     transitionStatus(id: string, nextStatus: string, reason: string): Observable<DocumentQms> {
         const params = new HttpParams().set('nextStatus', nextStatus).set('reason', reason);
-        return this.http.post<DocumentQms>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/transition`, null, { params });
+        // L'appelant compare l'identifiant rendu à celui de la fiche ouverte et affiche le nouvel
+        // état : l'enveloppe lui donnait un document sans identifiant ni statut.
+        return this.http.post<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/transition`, null, { params }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
     assignWorkflow(id: string, workflowId: string): Observable<DocumentQms> {
         const params = new HttpParams().set('workflowId', workflowId);
-        return this.http.post<DocumentQms>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/workflow`, null, { params });
+        return this.http.post<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/workflow`, null, { params }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
 
@@ -312,6 +325,28 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
             map(res => res?.data ?? res ?? [])
         );
     }
+
+    /**
+     * Dépose une pièce réclamée par une étape du circuit et rend sa référence.
+     *
+     * <p>C'est le contrat du dialogue de décision : « déposer d'abord, référencer ensuite » — le
+     * moteur ne transporte que des chaînes, et c'est la référence rendue ici qui devient la valeur du
+     * champ. Sans ce dépôt, une étape réclamant un justificatif était indécidable depuis l'écran.</p>
+     */
+    deposerFichierDEtape(documentId: string, fichier: File): Observable<string> {
+        const corps = new FormData();
+        corps.append('file', fichier, fichier.name);
+        return this.http
+            .post<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${documentId}/fichiers-etape`, corps)
+            .pipe(map((reponse: any) => reponse?.data ?? reponse));
+    }
+
+    /** Adresse de téléchargement d'une pièce d'étape, désignée par sa référence. */
+    urlFichierDEtape(documentId: string, reference: string): string {
+        return `${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${documentId}/fichiers-etape/contenu`
+            + `?reference=${encodeURIComponent(reference)}`;
+    }
+
 
     getDocumentStats(): Observable<DocumentStatsDto> {
         return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/stats`).pipe(

@@ -227,6 +227,7 @@
   [action]="selectedWorkflowAction"
   [loading]="loading"
   [stepFields]="workflowState?.currentStepFields"
+  [deposerFichier]="deposerFichierDEtape"
   [visible]="showWorkflowModal"
   (visibleChange)="showWorkflowModal = $event"
   (confirm)="submitWorkflowDecision($event)">
