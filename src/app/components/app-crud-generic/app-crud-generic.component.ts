@@ -21,13 +21,14 @@ import { MenuModule } from 'primeng/menu';
 import { GlobalSearchService } from '../../services/non-conformite/global-search.service';
 import { DropdownSelector, FormGroupColumn, MultiSelectSelector, TableColumn } from '../../models/generique.model';
 import { patternToDate, toFormatFromDate } from '../../utils/formatage/formatage-utils';
+import { LicenceOuverteDirective } from '../../shared/licence/licence-ouverte.directive';
 
 @Component({
     selector: 'app-crud-generic',
     standalone: true,
     templateUrl: './app-crud-generic.component.html',
     styleUrl: './app-crud-generic.component.scss',
-    imports: [NgPrimeModule, FormInputTemplateComponent, DetailTemplateComponent, MenuModule]
+    imports: [NgPrimeModule, FormInputTemplateComponent, DetailTemplateComponent, MenuModule, LicenceOuverteDirective]
 })
 export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnChanges, OnDestroy {
     @Input() pageLabel!: string;

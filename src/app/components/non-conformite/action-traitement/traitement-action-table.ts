@@ -24,6 +24,7 @@ import { forkJoin } from 'rxjs';
 import { PlanActionService } from '../../../services/non-conformite/planAction.service';
 import { ChoixDeChampService } from '../../../shared/workflow/choix-de-champ.service';
 import { PieceJointeFichierService } from '../../../services/non-conformite/piece-jointe-fichier.service';
+import { LicenceOuverteDirective } from '../../../shared/licence/licence-ouverte.directive';
 
 @Component({
     selector: 'app-traitement-action',
@@ -31,7 +32,7 @@ import { PieceJointeFichierService } from '../../../services/non-conformite/piec
     styleUrl: './traitement-action-table.scss',
     standalone: true,
     imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent, WorkflowActionsComponent, WorkflowGuidanceComponent, WorkflowSaisiesComponent,
-        WorkflowHistoriqueComponent]
+        WorkflowHistoriqueComponent, LicenceOuverteDirective]
 })
 export class TraitementActionTable implements OnInit {
 

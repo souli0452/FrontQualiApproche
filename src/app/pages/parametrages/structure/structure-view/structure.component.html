@@ -22,7 +22,8 @@
                            class="w-full p-inputtext-sm border-none bg-transparent focus:ring-0" />
                 </p-iconfield>
             </div>
-            <p-button label="Ajouter une structure" 
+            <p-button siLicenceOuverte
+                      label="Ajouter une structure"
                       icon="pi pi-plus" 
                       severity="info" 
                       (click)="onDisplay()" 
@@ -130,7 +131,7 @@
                 [text]="true" 
                 severity="secondary" 
             />
-            <p-button 
+            <p-button siLicenceOuverte
                 label="Enregistrer" 
                 [disabled]="editForm!.invalid" 
                 [loading]="loading"

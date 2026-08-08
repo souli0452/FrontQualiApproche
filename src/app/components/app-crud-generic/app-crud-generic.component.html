@@ -16,6 +16,7 @@
                     </ng-template>
                     <ng-template #end>
                         <p-button *ngIf="!consultation"
+                                  siLicenceOuverte
                                   [label]="addButtonLabel"
                                   icon="pi pi-plus"
                                   severity="info"
@@ -223,7 +224,7 @@
     <ng-template #footer>
         <button size="small" type="button" pRipple pButton icon="pi pi-times" (click)="hidDialog()" label="Annuler"
                 class="p-button-secondary position-left mr-3"></button>
-        <button [disabled]="formGroup.invalid" size="small" severity="info" pRipple pButton type="button" (click)="save()" icon="pi pi-save"
+        <button siLicenceOuverte [disabled]="formGroup.invalid" size="small" severity="info" pRipple pButton type="button" (click)="save()" icon="pi pi-save"
                 label="Enregistrer">
         </button>
     </ng-template>

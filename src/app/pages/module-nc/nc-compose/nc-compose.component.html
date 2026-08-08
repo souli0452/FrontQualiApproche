@@ -91,17 +91,17 @@
             </button>
 
             <div class="flex items-center gap-2">
-                <button pButton pRipple class="p-button-primary font-bold" label="Enregistrer"
+                <button siLicenceOuverte pButton pRipple class="p-button-primary font-bold" label="Enregistrer"
                         *ngIf="!nonConformite.id || nonConformite.status === 'DRAFT'"
                         [disabled]="!nc.typeNonformite||!nc.niveauNonConformite"
                         (click)="onSave(false)">
                 </button>
-                <button pButton pRipple class="p-button-info font-bold" label="Publier"
+                <button siLicenceOuverte pButton pRipple class="p-button-info font-bold" label="Publier"
                         *ngIf="!nonConformite.id || nonConformite.status === 'DRAFT'"
                         [disabled]="!nc.typeNonformite||!nc.niveauNonConformite"
                         (click)="onSave(true)">
                 </button>
-                <button pButton pRipple class="p-button-primary font-bold" label="Modifier"
+                <button siLicenceOuverte pButton pRipple class="p-button-primary font-bold" label="Modifier"
                         *ngIf="nonConformite.id && nonConformite.status !== 'DRAFT'"
                         [disabled]="!nc.typeNonformite||!nc.niveauNonConformite"
                         (click)="onSave(false)">

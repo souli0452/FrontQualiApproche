@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { DocumentQms } from '../../../../models/gestion-documentaire.model';
+import { LicenceOuverteDirective } from '../../../../shared/licence/licence-ouverte.directive';
 
 /** Décision de transition soumise par l'utilisateur. */
 export interface TransitionDecision {
@@ -19,7 +20,7 @@ export interface TransitionDecision {
 @Component({
     selector: 'app-qms-transition-dialog',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, NgPrimeModule],
+    imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, LicenceOuverteDirective],
     templateUrl: './qms-transition-dialog.component.html'
 })
 export class QmsTransitionDialogComponent {

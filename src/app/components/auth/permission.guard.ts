@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, CanActivateFn, Router, UrlTree } from '@angular
 import { Observable, map, of } from 'rxjs';
 import { AuthService } from '../../services/auth-services/auth.service';
 import { currentUserState } from '../../services/auth-services/auth.state';
-import { hasAnyPermission, isLicenseActive, isModuleSubscribed } from '../../utils/auth/auth-utils';
+import { hasAnyPermission, isModuleSubscribed } from '../../utils/auth/auth-utils';
 
 /**
  * Restriction d'accès portée par une route, déclarée dans son `data` :
@@ -14,8 +14,8 @@ import { hasAnyPermission, isLicenseActive, isModuleSubscribed } from '../../uti
  *   data: { permissions: ['reclamation-read', 'RECLAMATION_READ'], module: 'RECLAMATION' } }
  * ```
  *
- * <p>La règle appliquée est exactement celle du menu — licence active, module souscrit,
- * permission détenue — et elle s'appuie sur les mêmes fonctions (`auth-utils`). C'est
+ * <p>La règle appliquée est exactement celle du menu — module souscrit, permission détenue — et
+ * elle s'appuie sur les mêmes fonctions (`auth-utils`). C'est
  * délibéré : masquer une entrée de menu n'empêche que le clic, pas la saisie de l'URL. Deux
  * implémentations séparées auraient fini par diverger, et la divergence se serait vue là où
  * elle coûte le plus cher — un écran ouvert à qui ne doit pas le voir.</p>
@@ -41,9 +41,11 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) =>
         if (!currentUserState.value) {
             return router.parseUrl('/login');
         }
-        if (!isLicenseActive()) {
-            return router.parseUrl('/auth/access');
-        }
+        // L'échéance de la licence n'interdit pas de naviguer. Elle renvoyait ici vers
+        // `/auth/access` — page située hors du layout, donc sans la fenêtre d'activation : une
+        // licence expirée fermait l'application tout en affichant, ailleurs, que les données
+        // restaient consultables. Ce que la licence suspend, ce sont les écritures, et c'est la
+        // passerelle qui les refuse en 402.
         if (module && !isModuleSubscribed(module)) {
             return router.parseUrl('/auth/access');
         }

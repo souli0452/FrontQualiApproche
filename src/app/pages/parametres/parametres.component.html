@@ -139,7 +139,7 @@
     <ng-template pTemplate="footer">
         <p-button label="Annuler" severity="secondary" [text]="true"
                   (click)="dialogueOuvert = false"></p-button>
-        <p-button label="Enregistrer" icon="pi pi-check" [loading]="enregistrement"
+        <p-button siLicenceOuverte label="Enregistrer" icon="pi pi-check" [loading]="enregistrement"
                   [disabled]="formulaire.invalid" (click)="enregistrer()"></p-button>
     </ng-template>
 </p-dialog>

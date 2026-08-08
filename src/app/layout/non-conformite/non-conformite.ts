@@ -10,6 +10,7 @@ import { LayoutService } from '../service/layout.service';
 import { RoleService } from '../../services/non-conformite/role.service';
 import { ProcNonConformiteService } from '../../services/non-conformite/proc-non-conformite.service';
 import { NonConformiteService } from '../../services/non-conformite/non-conformite.service';
+import { LicenceOuverteDirective } from '../../shared/licence/licence-ouverte.directive';
 
 
 @Component({
@@ -19,7 +20,8 @@ import { NonConformiteService } from '../../services/non-conformite/non-conformi
     CommonModule,
     NgPrimeModule, 
     RouterModule,
-    NcModule
+    NcModule,
+    LicenceOuverteDirective
   ],
   templateUrl: './non-conformite.html',
   styleUrl: './non-conformite.scss'

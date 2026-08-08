@@ -391,10 +391,10 @@
         <div class="flex flex-wrap justify-end items-center gap-3 border-t border-surface-200 dark:border-surface-700 pt-4 mt-2">
             <button size="small" type="button" pRipple pButton icon="pi pi-times" (click)="displayDialog = false" label="Fermer"
                     class="p-button-text p-button-secondary font-semibold hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"></button>
-            <p-button *ngIf="peutRendreCompte" severity="secondary" [outlined]="true" pRipple (click)="enregistrer()"
+            <p-button *ngIf="peutRendreCompte" siLicenceOuverte severity="secondary" [outlined]="true" pRipple (click)="enregistrer()"
                     label="Enregistrer" icon="pi pi-save" class="font-semibold rounded-lg"
                     [disabled]="enregistrement || !planAction.solutionRetenues"></p-button>
-            <p-button *ngIf="peutChangerLeResponsable" severity="secondary" [outlined]="true" pRipple (click)="enregistrer()"
+            <p-button *ngIf="peutChangerLeResponsable" siLicenceOuverte severity="secondary" [outlined]="true" pRipple (click)="enregistrer()"
                     label="Confier" icon="pi pi-user-edit" class="font-semibold rounded-lg"
                     [disabled]="enregistrement || !nouveauResponsable"></p-button>
             <!-- Les décisions viennent du moteur : aucun bouton ne fait avancer un plan de sa

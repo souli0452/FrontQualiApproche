@@ -16,6 +16,7 @@ import { Structure } from '../structure-config/structure';
 import { GlobalSearchService } from '../../../../services/non-conformite/global-search.service';
 import { CategorieProcessusService } from '../../../../services/non-conformite/type-processus.service';
 import { CategorieProcessus } from '../../../../models/categore-processus.model';
+import { LicenceOuverteDirective } from '../../../../shared/licence/licence-ouverte.directive';
 @Component({
     selector: 'app-structure',
     templateUrl: './structure.component.html',
@@ -25,7 +26,8 @@ import { CategorieProcessus } from '../../../../models/categore-processus.model'
         CommonModule,
         NgPrimeModule,
         CreationComponent,
-        MenuModule
+        MenuModule,
+        LicenceOuverteDirective
     ]
 })
 export class StructureComponent implements OnInit, OnDestroy {

@@ -8,6 +8,7 @@ import { NcArchiveComponent } from './nc-archive/nc-archive.component';
 import { LightboxComponent } from '../../components/non-conformite/lightbox/lightbox';
 import { FileUploadComponent } from '../../components/non-conformite/file-upload/file-upload.component';
 import { NcTableComponent } from '../../components/non-conformite/nc-table/nc-table.component';
+import { LicenceOuverteDirective } from '../../shared/licence/licence-ouverte.directive';
 
 
 @NgModule({
@@ -16,7 +17,8 @@ import { NcTableComponent } from '../../components/non-conformite/nc-table/nc-ta
         FormsModule,
         NgPrimeModule, 
         FileUploadComponent,
-        LightboxComponent
+        LightboxComponent,
+        LicenceOuverteDirective
     ],
     declarations: [
         // NcComposeComponent, 

@@ -8,6 +8,7 @@ import { NgPrimeModule } from '../../../prime-ng.module';
 import { NatureParametre, Parametre, ParametreService } from '../../services/parametre.service';
 import { hasAnyPermission } from '../../utils/auth/auth-utils';
 import { showToast, StatusEnum } from '../../utils/global/global-utils';
+import { LicenceOuverteDirective } from '../../shared/licence/licence-ouverte.directive';
 
 /** Nature d'un réglage, avec ce qu'elle change pour la saisie. */
 interface Nature {
@@ -40,7 +41,7 @@ interface Nature {
 @Component({
     selector: 'app-parametres',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, NgPrimeModule],
+    imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, LicenceOuverteDirective],
     providers: [MessageService],
     templateUrl: './parametres.component.html'
 })

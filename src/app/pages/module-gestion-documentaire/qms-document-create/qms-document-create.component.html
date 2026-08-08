@@ -293,7 +293,7 @@
             <p-button label="Voir guide de saisie" severity="secondary" (click)="showGuideModal = true" />
             <div class="flex gap-2">
               <p-button label="Annuler" variant="outlined" severity="contrast" (click)="goBack()" />
-              <p-button label="Enregistrer le document" severity="info"
+              <p-button siLicenceOuverte label="Enregistrer le document" severity="info"
                 [disabled]="documentForm.invalid || !selectedFile" [loading]="loading"
                 (click)="submitDocument()" />
             </div>

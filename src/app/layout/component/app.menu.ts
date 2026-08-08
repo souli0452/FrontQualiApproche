@@ -6,7 +6,7 @@ import { AppMenuitem } from './app.menuitem';
 import { AuthService } from '../../services/auth-services/auth.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { NonConformiteService } from '../../services/non-conformite/non-conformite.service';
-import { accesAutorise, hasAnyPermission, hasMenuProfile, isLicenseActive } from '../../utils/auth/auth-utils';
+import { accesAutorise, hasAnyPermission, hasMenuProfile } from '../../utils/auth/auth-utils';
 import { ModuleAbonnement } from '../../enums/enums';
 
 @Component({
@@ -41,19 +41,21 @@ export class AppMenu {
     ) {}
 
     /**
-     * Une entrée de menu ne s'affiche que si les trois conditions sont réunies : licence active,
-     * module souscrit par la direction, et permission détenue par l'utilisateur.
+     * Une entrée de menu ne s'affiche que si deux conditions sont réunies : module souscrit par la
+     * direction, et permission détenue par l'utilisateur.
      *
      * Le module est facultatif : toutes les rubriques ne relèvent pas d'un abonnement (l'accueil,
      * la configuration). En exiger un là où il n'existe pas revenait à masquer l'entrée pour tout
      * le monde — c'est ce que faisait le module fictif « AUTRE_MODULE », absent de l'énumération
      * ModuleAbonnement du back : aucune direction ne pouvait y avoir souscrit.
+     *
+     * <p>L'échéance de la licence n'entre pas dans le calcul. Elle a longtemps vidé le menu entier
+     * — jusqu'au tableau de bord — alors que la fenêtre d'activation promet, dans la même vue, que
+     * « vos données restent consultables et exportables ». Une licence expirée suspend les
+     * <b>actions</b>, et c'est la passerelle qui les refuse ; la consultation, elle, ne se ferme
+     * jamais.</p>
      */
     private peutVoir(permissions: string[], module?: string): boolean {
-        // La licence en plus : un menu ne mène nulle part si l'abonnement de l'organisation est
-        // expiré. Le reste — module souscrit et permission — est la règle commune, partagée avec le
-        // tableau de bord pour que les deux ne divergent pas.
-        if (!isLicenseActive()) return false;
         return accesAutorise(permissions, module);
     }
 
@@ -93,7 +95,7 @@ export class AppMenu {
 
     ngOnInit() {
         const accueil = [
-            { label: 'Tableau de bord', icon: 'pi pi-fw pi-home', routerLink: ['/'], visible: isLicenseActive() }
+            { label: 'Tableau de bord', icon: 'pi pi-fw pi-home', routerLink: ['/'] }
         ];
 
         const documentaire = [
@@ -185,6 +187,10 @@ export class AppMenu {
             {
                 label: 'Configurations globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'],
                 visible: this.peutVoir(['config-global-read', 'config-global-write', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'])
+            },
+            {
+                label: "Licence de l'installation", icon: 'pi pi-fw pi-shield', routerLink: ['/licence'],
+                visible: this.peutVoir(['licence-write', 'config-global-write', 'CONFIG_GLOBAL_MANAGE'])
             },
             this.sousGroupe('Non-Conformités', 'pi pi-fw pi-exclamation-triangle', [
                 {

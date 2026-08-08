@@ -53,6 +53,7 @@ import { WorkflowEditorComponent } from './configuration-workflow/circuits/workf
 import { CircuitsListeComponent } from './configuration-workflow/circuits/circuits-liste.component';
 import { CircuitDetailPageComponent } from './configuration-workflow/circuits/circuit-detail-page.component';
 import { permissionGuard } from '../components/auth/permission.guard';
+import { LicenceComponent } from './licence/licence.component';
 
 // Les permissions déclarées ici reprennent celles du menu (app.menu.ts) : une entrée masquée
 // correspond à une route fermée. Les noms en majuscules sont les anciennes permissions, encore
@@ -63,6 +64,13 @@ import { permissionGuard } from '../components/auth/permission.guard';
 // enfants, et ceux-ci ne font qu'affiner.
 export default [
     { path: 'recherche', component: SearchResultsComponent, title: 'Résultats de recherche' },
+    {
+        // Aucun module exigé : la licence se consulte et se pose quel que soit l'abonnement —
+        // en exiger un fermerait l'écran qui sert précisément à en ouvrir.
+        path: 'licence', component: LicenceComponent, title: "Licence de l'installation",
+        canActivate: [permissionGuard],
+        data: { permissions: ['licence-write', 'config-global-write', 'CONFIG_GLOBAL_MANAGE'] }
+    },
     { path: 'documentation', component: Documentation },
     { path: 'crud', component: Crud },
     {

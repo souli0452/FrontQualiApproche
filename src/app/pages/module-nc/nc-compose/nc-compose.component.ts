@@ -24,13 +24,14 @@ import { CategorieProcessus } from '../../../models/categore-processus.model';
 import { Reclamation } from '../../../models/reclamation.model';
 import { OrigineNonConformiteService } from '../../../services/non-conformite/type-non-conformite.service';
 import { convertFilesToBase64, PieceJointe } from '../../../utils/fichier/fichier-utils';
+import { LicenceOuverteDirective } from '../../../shared/licence/licence-ouverte.directive';
 
 @Component({
     selector: 'app-nc-compose',
     templateUrl: './nc-compose.component.html',
     styleUrl: './nc-compose.component.scss',
     standalone: true,
-    imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent]
+    imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent, LicenceOuverteDirective]
 })
 export class NcComposeComponent {
     @Input() editId: any;

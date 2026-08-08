@@ -10,33 +10,40 @@ import { hasAnyPermission } from '../../utils/auth/auth-utils';
 /**
  * L'invitation à installer une licence, à la première connexion et à l'échéance.
  *
- * <p>Elle s'impose — sans croix ni clic à côté pour la fermer — tant qu'aucune licence valide
- * n'est posée : c'est la seule chose à faire, et l'application n'ouvrirait rien d'autre. Une
- * licence valide la fait disparaître ; un terme proche la remplace par un simple bandeau.</p>
+ * <p>Elle ne s'impose que dans un seul cas : <b>aucune licence posée</b>. Là, il n'y a rien
+ * d'autre à faire, et la fenêtre n'a ni croix ni clic à côté pour la fermer.</p>
+ *
+ * <p>À l'<b>expiration</b>, elle se retire au profit d'un bandeau. Elle restait auparavant
+ * modale et infermable, ce qui fermait l'application entière — tout en affichant, dans la même
+ * vue, que « vos données restent consultables et exportables ». Une licence échue suspend les
+ * actions, pas la consultation : couper l'accès aux données qualité d'un client transformerait
+ * un retard de paiement en litige, et le pousserait à chercher comment contourner. Le bandeau
+ * reste, lui, sous les yeux, et rouvre la fenêtre sur demande.</p>
  *
  * <p>Deux issues à la première connexion : coller la licence remise par l'éditeur, ou démarrer un
- * essai gratuit de quelques jours, tous modules ouverts. L'essai n'est proposé qu'une fois par
- * installation — sans quoi il suffirait d'en redemander un à chaque échéance.</p>
+ * essai gratuit de quelques jours, sur les modules ouverts à l'essai — le serveur en donne la
+ * liste, elle n'est pas écrite ici. L'essai n'est proposé qu'une fois par installation, sans quoi
+ * il suffirait d'en redemander un à chaque échéance. Tant qu'il court, un bandeau le dit :
+ * personne ne doit découvrir qu'il était en essai le jour où il s'arrête.</p>
  *
- * <p>À l'expiration, les données restent <b>consultables</b> : seules les actions sont suspendues.
- * Couper l'accès aux données qualité d'un client transformerait un retard de paiement en litige.</p>
+ * <p>Elle s'ouvre aussi à la demande, depuis « Configurations » : on renouvelle avant le terme,
+ * ou l'on remplace un essai par la licence achetée.</p>
  */
 @Component({
     selector: 'app-licence-dialog',
     standalone: true,
     imports: [CommonModule, FormsModule, NgPrimeModule],
     template: `
-        @if (etat && doitSAfficher) {
-            <p-dialog [visible]="true" [modal]="true" [closable]="false" [draggable]="false"
+        @if (etat) {
+            <p-dialog [(visible)]="visible" [modal]="true" [closable]="estFermable" [draggable]="false"
+                      [closeOnEscape]="estFermable" (onHide)="fermer()"
                       [style]="{ width: '38rem' }" styleClass="licence-dialog">
 
                 <ng-template pTemplate="header">
                     <div class="flex items-center gap-3">
                         <i class="pi pi-shield text-2xl"
                            [ngClass]="etat.statut === 'EXPIREE' ? 'text-orange-500' : 'text-primary'"></i>
-                        <span class="text-xl font-bold">
-                            {{ etat.statut === 'ABSENTE' ? 'Activer QualiSira' : 'Licence expirée' }}
-                        </span>
+                        <span class="text-xl font-bold">{{ titre }}</span>
                     </div>
                 </ng-template>
 
@@ -99,11 +106,12 @@ import { hasAnyPermission } from '../../utils/auth/auth-utils';
             </p-dialog>
         }
 
-        <!-- Échéance proche : un bandeau, pas une fenêtre. Le travail n'a pas à s'interrompre
-             pour une licence qui court encore. -->
-        @if (etat && bandeauEcheance) {
-            <div class="flex items-center gap-2 mb-3 p-3 border-round bg-orange-50 text-orange-900 text-sm">
-                <i class="pi pi-exclamation-triangle"></i>
+        <!-- Un bandeau, pas une fenêtre : le travail n'a pas à s'interrompre pour une licence,
+             qu'elle coure encore, qu'elle soit un essai ou qu'elle ait pris fin. Le serveur rédige
+             la phrase — elle dit l'échéance et ce qu'il reste à faire. -->
+        @if (etat && bandeau) {
+            <div class="flex items-center gap-2 mb-3 p-3 border-round text-sm" [ngClass]="bandeauClasse">
+                <i [class]="bandeauIcone"></i>
                 <span class="flex-1">{{ etat.message }}</span>
                 @if (peutInstaller) {
                     <p-button label="Installer une licence" size="small" [text]="true"
@@ -123,32 +131,103 @@ export class LicenceDialogComponent implements OnInit {
     erreur = '';
     enCours = false;
 
-    /** Ouverture demandée depuis le bandeau, alors que la licence court encore. */
+    /**
+     * Visibilité réelle de la fenêtre, tenue en champ et non calculée dans le gabarit.
+     *
+     * <p>Elle était pilotée par un {@code @if} sur un {@code [visible]="true"} figé : PrimeNG
+     * refermait la fenêtre de son côté sans qu'Angular en sache rien, et la condition du
+     * {@code @if} la rouvrait dans la foulée. Le bouton de fermeture restait donc sans effet.
+     * Avec une liaison à deux sens, c'est le même état des deux côtés.</p>
+     */
+    visible = false;
+
+    /** Ouverture demandée depuis le bandeau ou l'écran de licence, alors qu'elle court encore. */
     private ouvertureForcee = false;
 
     peutInstaller = false;
 
     ngOnInit(): void {
+        // Même liste que le contrôleur, l'entrée de menu et l'écran de licence : quatre endroits
+        // qui doivent dire la même chose, sans quoi le menu proposerait une fenêtre que le serveur
+        // refuserait.
         this.peutInstaller = hasAnyPermission(
-            ['SUPER_ADMIN', 'CONFIG_GLOBAL_MANAGE', 'config-global-write']);
+            ['SUPER_ADMIN', 'licence-write', 'CONFIG_GLOBAL_MANAGE', 'config-global-write']);
 
-        this.service.etat$.subscribe((etat) => (this.etat = etat));
+        this.service.etat$.subscribe((etat) => {
+            this.etat = etat;
+            this.visible = this.doitSAfficher;
+        });
+
+        // Ouverture demandée depuis l'écran « Licence de l'installation ». L'état est relu au
+        // passage : celui qui vient renouveler doit voir l'échéance réelle, pas celle de sa
+        // connexion.
+        this.service.ouvertureDemandee$.subscribe(() => {
+            this.erreur = '';
+            this.forcerOuverture();
+            this.service.charger().subscribe({ error: () => undefined });
+        });
         // Une lecture en échec — service indisponible — laisse l'application se comporter comme
         // avant : mieux vaut un écran utilisable qu'une fenêtre bloquante due à une panne.
         this.service.charger().subscribe({ error: () => undefined });
     }
 
+    /**
+     * La fenêtre ne s'ouvre d'elle-même que faute de licence installée. Une licence expirée la
+     * déclenchait aussi, et l'utilisateur ne pouvait plus rien consulter derrière.
+     */
     get doitSAfficher(): boolean {
-        return !!this.etat && (!this.etat.actionsOuvertes || this.ouvertureForcee);
+        return !!this.etat && (this.etat.statut === 'ABSENTE' || this.ouvertureForcee);
     }
 
-    get bandeauEcheance(): boolean {
-        return !!this.etat && this.etat.actionsOuvertes && !this.ouvertureForcee
-            && this.etat.joursRestants <= 30;
+    /**
+     * La fenêtre s'ouvre désormais aussi sur demande, licence en cours — pour renouveler avant le
+     * terme, ou remplacer un essai. « Licence expirée » y serait faux.
+     */
+    get titre(): string {
+        if (this.etat?.statut === 'ABSENTE') return 'Activer QualiSira';
+        if (this.etat?.statut === 'EXPIREE') return 'Licence expirée';
+        return this.etat?.type === 'ESSAI' ? 'Essai gratuit en cours' : 'Licence de cette installation';
+    }
+
+    /** Infermable tant que rien n'est posé : il n'y a rien d'autre à faire dans l'application. */
+    get estFermable(): boolean {
+        return this.ouvertureForcee;
+    }
+
+    /** Un bandeau dès que la licence appelle une décision : essai en cours, terme proche, ou échu. */
+    get bandeau(): boolean {
+        if (!this.etat || this.ouvertureForcee || this.etat.statut === 'ABSENTE') return false;
+        return this.etat.statut === 'EXPIREE'
+            || this.etat.type === 'ESSAI'
+            || this.etat.joursRestants <= 30;
+    }
+
+    get bandeauClasse(): string {
+        if (this.etat?.statut === 'EXPIREE') return 'bg-red-50 text-red-900';
+        // Orange pour l'essai comme pour un terme proche : dans les deux cas une échéance
+        // approche et appelle une décision. Le bleu, lui, se lit comme une information sans
+        // conséquence, et l'essai s'arrêtait sans que personne ne s'en soit soucié.
+        return 'bg-orange-50 text-orange-900';
+    }
+
+    get bandeauIcone(): string {
+        if (this.etat?.statut === 'EXPIREE') return 'pi pi-times-circle';
+        return this.etat?.type === 'ESSAI' ? 'pi pi-clock' : 'pi pi-exclamation-triangle';
     }
 
     forcerOuverture(): void {
         this.ouvertureForcee = true;
+        this.visible = true;
+    }
+
+    /**
+     * Appelée par {@code onHide} : la fenêtre est déjà refermée côté PrimeNG, on remet l'état
+     * d'accord avec elle. Sans licence posée, elle n'est pas fermable et ne passe jamais ici.
+     */
+    fermer(): void {
+        this.ouvertureForcee = false;
+        this.erreur = '';
+        this.visible = this.doitSAfficher;
     }
 
     installer(): void {
@@ -158,6 +237,7 @@ export class LicenceDialogComponent implements OnInit {
             next: (etat) => {
                 this.enCours = false;
                 this.ouvertureForcee = false;
+                this.visible = this.doitSAfficher;
                 this.licence = '';
                 this.messages.add({
                     severity: 'success',
@@ -179,6 +259,8 @@ export class LicenceDialogComponent implements OnInit {
         this.service.demarrerEssai().subscribe({
             next: (etat) => {
                 this.enCours = false;
+                this.ouvertureForcee = false;
+                this.visible = this.doitSAfficher;
                 this.messages.add({
                     severity: 'success',
                     summary: 'Essai démarré',

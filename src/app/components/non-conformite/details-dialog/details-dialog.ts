@@ -17,12 +17,14 @@ import { convertFilesToBase64 } from '../../../utils/fichier/fichier-utils';
 import { PieceJointeFichierService } from '../../../services/non-conformite/piece-jointe-fichier.service';
 import { formatDateToDDMMYYYY } from '../../../utils/formatage/formatage-utils';
 import { hasAnyPermission } from '../../../utils/auth/auth-utils';
+import { LicenceOuverteDirective } from '../../../shared/licence/licence-ouverte.directive';
 
 @Component({
     selector: 'app-details-dialog',
     templateUrl: './details-dialog.html',
     imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent, LightboxComponent,
-        WorkflowGuidanceComponent, WorkflowSaisiesComponent, WorkflowHistoriqueComponent],
+        WorkflowGuidanceComponent, WorkflowSaisiesComponent, WorkflowHistoriqueComponent,
+        LicenceOuverteDirective],
     standalone: true,
     styleUrl: './details-dialog.scss'
 })

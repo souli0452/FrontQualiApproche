@@ -9,6 +9,7 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
 import { AppRoleService, RoleService } from '../role-service/role.service';
 import { ApiResponse } from '../../../models/response.model';
 import { AppRole, Permission } from '../../../models/role.model';
+import { LicenceOuverteDirective } from '../../../shared/licence/licence-ouverte.directive';
 
 interface GroupedPermission {
     module: string;
@@ -21,7 +22,7 @@ interface GroupedPermission {
     templateUrl: './role-detail.component.html',
     styleUrl: './role-detail.component.scss',
     standalone: true,
-    imports: [CommonModule, NgPrimeModule, FormsModule, ReactiveFormsModule]
+    imports: [CommonModule, NgPrimeModule, FormsModule, ReactiveFormsModule, LicenceOuverteDirective]
 })
 export class RoleDetailComponent implements OnInit, OnDestroy {
     roleForm: UntypedFormGroup;

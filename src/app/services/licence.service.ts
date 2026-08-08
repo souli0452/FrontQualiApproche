@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, catchError, tap, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, catchError, tap, throwError } from 'rxjs';
 
 /**
  * Où en est la licence de cette installation.
@@ -41,7 +41,23 @@ export class LicenceService {
     /** Dernier état connu, pour que plusieurs écrans le lisent sans le redemander. */
     readonly etat$ = new BehaviorSubject<EtatLicence | null>(null);
 
+    private readonly ouverture = new Subject<void>();
+
+    /**
+     * Demandes d'ouverture de la fenêtre de licence, émises par le menu.
+     *
+     * <p>La fenêtre vit dans le layout, l'entrée de menu ailleurs : elles ne se connaissent pas.
+     * Le service, que les deux tiennent déjà, porte le signal — plutôt qu'une route dédiée, qui
+     * ferait quitter l'écran en cours pour une opération de quelques secondes.</p>
+     */
+    readonly ouvertureDemandee$ = this.ouverture.asObservable();
+
     private readonly racine = '/referentiel-service/api/v1/licence';
+
+    /** Ouvre la fenêtre de licence, licence en cours comprise : on renouvelle avant le terme. */
+    demanderOuverture(): void {
+        this.ouverture.next();
+    }
 
     charger(): Observable<EtatLicence> {
         return this.http.get<any>(`${this.racine}/etat`).pipe(

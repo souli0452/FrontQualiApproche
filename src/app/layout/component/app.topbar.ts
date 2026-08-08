@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { Router, RouterModule, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { LayoutService } from '../service/layout.service';
@@ -15,7 +15,8 @@ import { NonConformiteService } from '../../services/non-conformite/non-conformi
 import {
     DocumentaireATraiterService
 } from '../../services/module-gestion-documentaire/documentaire-a-traiter.service';
-import { hasAnyPermission, isLicenseActive } from '../../utils/auth/auth-utils';
+import { hasAnyPermission } from '../../utils/auth/auth-utils';
+import { LicenceService } from '../../services/licence.service';
 import { currentUserState } from '../../services/auth-services/auth.state';
 import { AuthData } from '../../models/auth.model';
 
@@ -49,6 +50,18 @@ import { AuthData } from '../../models/auth.model';
             </div>
 
             <div class="layout-topbar-actions">
+
+                <!-- Essai gratuit en cours : dit en permanence sous quel régime l'installation
+                     tourne. Sans ce repère, on découvre l'essai le jour où il s'arrête, et
+                     l'arrêt passe pour une panne. -->
+                @if (essai(); as jours) {
+                    <span class="flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-900 text-xs font-semibold whitespace-nowrap"
+                          pTooltip="Essai gratuit de QualiSira. À son terme, les données restent consultables et les actions sont suspendues, jusqu'à l'installation d'une licence."
+                          tooltipPosition="bottom">
+                        <i class="pi pi-clock"></i>
+                        Essai gratuit — {{ jours.restants }} j
+                    </span>
+                }
 
                 <!-- Bouton Centre d'Aide -->
                 <button type="button" pTooltip="Centre d'aide" tooltipPosition="bottom" (click)="helpVisible = true" class="px-3 py-2 p-button-secondary rounded-full transition-colors hover:bg-surface-100 dark:hover:bg-surface-800">
@@ -231,9 +244,22 @@ export class AppTopbar implements OnInit {
     pageTitle: string = '';
     searchQuery: string = '';
 
-    isLicenseActive = isLicenseActive;
     hasAnyPermission = hasAnyPermission;
     destroy$: Subject<boolean> = new Subject<boolean>();
+
+    private readonly licence = inject(LicenceService);
+
+    /**
+     * Jours restants d'essai, ou `null` hors essai en cours.
+     *
+     * <p>L'état vient de {@link LicenceService}, alimenté par la fenêtre d'activation montée dans
+     * le layout : la barre n'émet donc pas d'appel supplémentaire pour l'afficher.</p>
+     */
+    essai(): { restants: number } | null {
+        const etat = this.licence.etat;
+        if (!etat || etat.type !== 'ESSAI' || !etat.actionsOuvertes) return null;
+        return { restants: Math.max(0, etat.joursRestants) };
+    }
 
 
     @ViewChild('notificationPopover') notificationPopover!: Popover; 

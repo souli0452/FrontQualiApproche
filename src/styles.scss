@@ -485,3 +485,16 @@ p-button .p-button-info {
 .p-breadcrumb {
     background: transparent !important;
 }
+/*
+ * Action suspendue faute de licence valide (directive `siLicenceOuverte`).
+ *
+ * L'attribut `disabled` posé sur le bouton interne de PrimeNG ne survit pas toujours à un
+ * nouveau rendu du composant. Le clic est donc aussi neutralisé ici, où rien ne peut le
+ * réécrire. Le bouton reste visible : une action qui disparaît se lit comme un défaut de droits,
+ * alors qu'il s'agit d'une licence à renouveler.
+ */
+.licence-suspendue {
+    pointer-events: none;
+    opacity: 0.5;
+    cursor: not-allowed;
+}

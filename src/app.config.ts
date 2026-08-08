@@ -14,6 +14,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { ToastModule } from 'primeng/toast';
 import { UntypedFormBuilder } from '@angular/forms';
 import { LoaderInterceptor } from './app/interceptors/loader.interceptor';
+import { LicenceInterceptor } from './app/interceptors/licence.interceptor';
 // Définition de votre thème bleu QualiSira
 const MyPreset = definePreset(Aura, {
     semantic: {
@@ -63,6 +64,9 @@ export const appConfig: ApplicationConfig = {
             }
         }),
         { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+        // Le refus de licence (402) doit être dit à l'utilisateur, faute de quoi l'écran reste
+        // muet et le refus passe pour une panne.
+        { provide: HTTP_INTERCEPTORS, useClass: LicenceInterceptor, multi: true },
         importProvidersFrom(NgxPermissionsModule.forRoot())
     ]
 };

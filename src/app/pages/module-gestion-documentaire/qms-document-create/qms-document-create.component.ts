@@ -20,11 +20,13 @@ import { Subject, takeUntil } from 'rxjs';
 import { ToggleSwitch } from 'primeng/toggleswitch';
 import { SelectInputComponent } from '../../../shared';
 import { FileUploadComponent } from '../../../components/non-conformite/file-upload/file-upload.component';
+import { LicenceOuverteDirective } from '../../../shared/licence/licence-ouverte.directive';
 
 @Component({
   selector: 'app-qms-document-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, FileUploadComponent, SelectInputComponent],
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, FileUploadComponent, SelectInputComponent,
+    LicenceOuverteDirective],
   templateUrl: './qms-document-create.component.html',
   styleUrls: ['./qms-document-create.component.scss'],
   providers: [MessageService]

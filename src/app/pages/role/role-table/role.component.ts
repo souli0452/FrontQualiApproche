@@ -10,6 +10,7 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
 import { AppCrudGenericComponent } from '../../../components/app-crud-generic/app-crud-generic.component';
 import { AppRoleService, RoleService } from '../role-service/role.service';
 import { AppRole, Permission } from '../../../models/role.model';
+import { LicenceOuverteDirective } from '../../../shared/licence/licence-ouverte.directive';
 
 @Component({
   selector: 'app-role',
@@ -21,7 +22,8 @@ import { AppRole, Permission } from '../../../models/role.model';
     NgPrimeModule,
     FormsModule,
     ReactiveFormsModule,
-    AppCrudGenericComponent
+    AppCrudGenericComponent,
+    LicenceOuverteDirective
   ]
 })
 export class RoleComponent implements OnInit, OnDestroy {

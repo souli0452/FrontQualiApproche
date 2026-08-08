@@ -4,6 +4,7 @@ import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { MenuItem } from 'primeng/api';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { LicenceOuverteDirective } from '../../shared/licence/licence-ouverte.directive';
 
 @Component({
     selector: 'app-gestion-documentaire-layout',
@@ -12,7 +13,8 @@ import { NgxPermissionsModule } from 'ngx-permissions';
         CommonModule,
         NgPrimeModule,
         RouterModule,
-        NgxPermissionsModule
+        NgxPermissionsModule,
+        LicenceOuverteDirective
     ],
     templateUrl: './gestion-documentaire.html',
     styleUrl: './gestion-documentaire.scss'

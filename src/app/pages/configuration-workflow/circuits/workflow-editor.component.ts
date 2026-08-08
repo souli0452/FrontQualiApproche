@@ -20,6 +20,7 @@ import {
   WorkflowStepDto,
   WorkflowTransitionDto
 } from '../../../models/workflow.model';
+import { LicenceOuverteDirective } from '../../../shared/licence/licence-ouverte.directive';
 
 /** Option de liste déroulante. */
 interface Option<T = string> {
@@ -112,7 +113,7 @@ type SeveriteBouton = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'he
   selector: 'app-workflow-editor',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule, NgPrimeModule,
-    WorkflowConfigurationGuideComponent, SelectInputComponent],
+    WorkflowConfigurationGuideComponent, SelectInputComponent, LicenceOuverteDirective],
   providers: [MessageService],
   templateUrl: './workflow-editor.component.html'
 })
