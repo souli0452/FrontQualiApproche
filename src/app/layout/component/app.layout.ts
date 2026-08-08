@@ -8,27 +8,25 @@ import { AppFooter } from './app.footer';
 import { AppReglagesRequis } from './app.reglages-requis';
 import { LayoutService } from '../service/layout.service';
 import { AuthService } from '../../services/auth-services/auth.service';
+import { LicenceDialogComponent } from '../../shared/licence/licence-dialog.component';
 
 @Component({
     selector: 'app-layout',
     standalone: true,
-    imports: [CommonModule, AppTopbar, AppSidebar, RouterModule, AppFooter, AppReglagesRequis],
+    imports: [CommonModule, AppTopbar, AppSidebar, RouterModule, AppFooter, AppReglagesRequis,
+        LicenceDialogComponent],
     template: `<div class="layout-wrapper" [ngClass]="containerClass">
 
         <app-sidebar></app-sidebar>
         <div class="layout-main-container">
                 <app-topbar></app-topbar>
 
-                <!-- Bandeau de licence -->
-                <div *ngIf="daysRemaining !== undefined && daysRemaining <= 10"
-                     [ngClass]="{'license-warning': daysRemaining > 0, 'license-expired': daysRemaining <= 0}"
-                     class="license-banner">
-                    <i class="pi pi-exclamation-triangle mr-2"></i>
-                    <span *ngIf="daysRemaining > 0">Votre licence expire dans <b>{{ daysRemaining }} jours</b>. Pensez à la renouveler pour conserver l'accès à vos services.</span>
-                    <span *ngIf="daysRemaining <= 0">Votre licence est <b>expirée</b>. Vous êtes en période de grâce. Il vous reste <b>{{ 7 + daysRemaining }} jours</b> avant le blocage.</span>
-                </div>
-
             <div class="layout-main">
+                <!-- Licence de l'installation : bandeau à l'approche du terme, fenêtre qui
+                     s'impose tant qu'aucune licence valide n'est posée. Elle remplace le bandeau
+                     précédent, qui lisait un nombre de jours figé à la construction de l'écran —
+                     et annonçait « licence expirée » tant que la session n'était pas chargée. -->
+                <app-licence-dialog></app-licence-dialog>
                 <router-outlet></router-outlet>
             </div>
             <app-footer></app-footer>

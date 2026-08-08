@@ -1,0 +1,83 @@
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { BehaviorSubject, Observable, catchError, tap, throwError } from 'rxjs';
+
+/**
+ * Où en est la licence de cette installation.
+ *
+ * <p>Trois situations, et trois conduites différentes : `ABSENTE` — rien n'a jamais été installé ;
+ * `ACTIVE` — tout est ouvert ; `EXPIREE` — les données restent consultables, les actions sont
+ * suspendues.</p>
+ */
+export interface EtatLicence {
+    statut: 'ABSENTE' | 'ACTIVE' | 'EXPIREE';
+    actionsOuvertes: boolean;
+    type?: 'COMMERCIALE' | 'ESSAI';
+    reference?: string;
+    partenaireNom?: string;
+    debut?: string;
+    fin?: string;
+    /** Négatif une fois le terme passé. */
+    joursRestants: number;
+    modules: string[];
+    utilisateursMax: number;
+    essaiDisponible: boolean;
+    /** Phrase à afficher telle quelle : c'est elle qui dit quoi faire. */
+    message: string;
+}
+
+/**
+ * La licence de l'installation, telle que le serveur la tient.
+ *
+ * <p>L'état est relu auprès du serveur, jamais déduit côté client : c'est lui qui vérifie la
+ * signature, et lui seul qui décide ce qui est ouvert. Ce que le navigateur en sait ne sert qu'à
+ * l'affichage.</p>
+ */
+@Injectable({ providedIn: 'root' })
+export class LicenceService {
+
+    private readonly http = inject(HttpClient);
+
+    /** Dernier état connu, pour que plusieurs écrans le lisent sans le redemander. */
+    readonly etat$ = new BehaviorSubject<EtatLicence | null>(null);
+
+    private readonly racine = '/referentiel-service/api/v1/licence';
+
+    charger(): Observable<EtatLicence> {
+        return this.http.get<any>(`${this.racine}/etat`).pipe(
+            tap((reponse) => this.etat$.next(reponse?.data ?? reponse)),
+            catchError((erreur: HttpErrorResponse) => this.echec(erreur))
+        );
+    }
+
+    installer(licence: string): Observable<EtatLicence> {
+        return this.http.post<any>(this.racine, { licence }).pipe(
+            tap((reponse) => this.etat$.next(reponse?.data ?? reponse)),
+            catchError((erreur: HttpErrorResponse) => this.echec(erreur))
+        );
+    }
+
+    demarrerEssai(): Observable<EtatLicence> {
+        return this.http.post<any>(`${this.racine}/essai`, {}).pipe(
+            tap((reponse) => this.etat$.next(reponse?.data ?? reponse)),
+            catchError((erreur: HttpErrorResponse) => this.echec(erreur))
+        );
+    }
+
+    get etat(): EtatLicence | null {
+        return this.etat$.value;
+    }
+
+    /**
+     * Le serveur rédige des refus destinés à être lus — « cette licence a pris fin le … »,
+     * « la signature est invalide ». Les remplacer par un libellé générique priverait
+     * l'administrateur de la seule information qui lui dit quoi faire.
+     */
+    private echec(erreur: HttpErrorResponse) {
+        const message = erreur.error?.message
+            || (erreur.status === 403
+                ? "Vous n'avez pas les droits pour installer une licence. Demandez-le à un administrateur."
+                : "L'état de la licence n'a pas pu être lu.");
+        return throwError(() => new Error(message));
+    }
+}
