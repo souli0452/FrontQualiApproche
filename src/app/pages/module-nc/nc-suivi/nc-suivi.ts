@@ -1,4 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { EtapeTraitement } from '../../../enums/enums';
 import { HttpResponse } from '@angular/common/http';
@@ -47,6 +48,7 @@ export class NCSuiviComponent {
       protected messageService: MessageService,
       private service:ProcNonConformiteService,
       private nonConformiteService:NonConformiteService,
+      private route: ActivatedRoute,
       private authService: AuthService) 
       {
         this.cols = [
@@ -166,6 +168,38 @@ export class NCSuiviComponent {
     }
 
 
+    /**
+     * Ouvre la fiche désignée par « ?ncId= » — le lien des courriels d'étape.
+     *
+     * <p>Le dossier n'est pas forcément dans la page chargée : il est relu par son identifiant,
+     * puis la fiche s'ouvre comme si la ligne avait été cliquée. Introuvable ou hors de portée,
+     * rien ne s'ouvre et l'écran de suivi reste utilisable — le lien d'un courriel ancien ne doit
+     * pas produire une erreur bloquante.</p>
+     */
+    private ouvrirLaFicheDeLAdresse(): void {
+        const ncId = this.route.snapshot.queryParamMap.get('ncId');
+        if (!ncId) {
+            return;
+        }
+        const dejaChargee = this.rawDemandeList.find((nc: any) => nc.id === ncId);
+        if (dejaChargee) {
+            this.dmdTraitement.displayDetails(dejaChargee);
+            return;
+        }
+        this.nonConformiteService.findNCById(ncId).subscribe({
+            next: (reponse: any) => {
+                const nc = reponse?.data ?? reponse;
+                if (nc?.id) {
+                    this.dmdTraitement.displayDetails(nc);
+                }
+            },
+            error: () => { /* dossier hors de portée : le suivi reste l'écran. */ }
+        });
+    }
+
+    /** La fiche ne s'ouvre qu'une fois : revenir du dialogue ne doit pas la rouvrir. */
+    private ficheDeLAdresseOuverte = false;
+
     getDemandeList() {
         this.loading = true;
         // Les bornes de page sont transmises, et le total repris : sans elles, le serveur servait sa
@@ -181,6 +215,10 @@ export class NCSuiviComponent {
                 this.applyLocalFilters();
                 this.featureService.onReloadRequested(true);
                 this.loading = false;
+                if (!this.ficheDeLAdresseOuverte) {
+                    this.ficheDeLAdresseOuverte = true;
+                    this.ouvrirLaFicheDeLAdresse();
+                }
             },
             error: (error) => {
                 this.loading = false;

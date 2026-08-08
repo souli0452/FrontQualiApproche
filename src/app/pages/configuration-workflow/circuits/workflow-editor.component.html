@@ -1,57 +1,31 @@
 <p-toast></p-toast>
-<p-confirmDialog></p-confirmDialog>
 
-<!-- L'écran expose la totalité du contrat du serveur — état de traitement, fin de circuit, faits
-     exigés, portée des champs — mais les libellés d'aide sous les champs ne peuvent pas dire ce que
-     chaque réglage produit, ni ce que le serveur fait à sa place quand il est laissé vide. Le guide
-     le dit, dans l'ordre de l'écran. -->
-<div class="flex justify-end mb-3">
-    <p-button label="Comprendre la configuration d'un circuit" icon="pi pi-question-circle"
-              size="small" [text]="true" (onClick)="guideOuvert = true"></p-button>
+<!-- ------------------------------------------------------------------ Édition (pleine page)
+     Le formulaire s'ouvrait dans un dialogue modal au-dessus de la liste : l'objet le plus profond
+     de l'application — étapes, actions, champs de saisie — y défilait dans un cadre de 62 rem, et
+     la saisie n'avait pas d'adresse. La page en a une (`circuits/edition/:id`, `nouveau` à la
+     création) : elle se recharge et se partage. -->
+<div class="flex items-center justify-between mb-3">
+    <div class="flex items-center gap-2">
+        <p-button icon="pi pi-arrow-left" [text]="true" [rounded]="true"
+                  pTooltip="Retour à la liste" (onClick)="annuler()"></p-button>
+        <h2 class="text-lg font-semibold m-0">{{ modeEdition ? 'Modifier le circuit' : 'Nouveau circuit' }}</h2>
+    </div>
+    <!-- Le guide reste atteignable pendant la saisie : c'est là qu'on hésite, et il s'ouvre
+         au-dessus de la page — rien à quitter, donc rien à ressaisir. -->
+    <p-button label="Guide de configuration" icon="pi pi-question-circle" size="small"
+              [text]="true" (onClick)="guideOuvert = true"></p-button>
 </div>
 
 <app-workflow-configuration-guide [(visible)]="guideOuvert"></app-workflow-configuration-guide>
 
-@if (typesEnConflit.length) {
-    <!-- Informatif, et non plus une alerte : plusieurs circuits actifs sont normaux dès qu'un type
-         de document désigne le sien. Ce qui mérite d'être dit est lequel sert de repli. -->
-    <div class="flex items-start gap-2 mb-4 p-3 border-round bg-blue-50 text-blue-900 text-sm">
-        <i class="pi pi-info-circle mt-0.5"></i>
-        <span>
-            Plusieurs circuits sont actifs pour {{ typesEnConflit.join(', ') }} : les dossiers qui ne
-            désignent pas de circuit — un type de document sans circuit attribué, par exemple —
-            prennent le <strong>plus ancien</strong> d'entre eux.
-        </span>
+@if (chargement) {
+    <div class="flex justify-center p-8">
+        <i class="pi pi-spin pi-spinner text-2xl text-surface-400"></i>
     </div>
-}
-
-<!-- Tableau générique : même composant que le catalogue d'étapes et que les autres écrans de
-     configuration. Il apporte sa propre carte, d'où la fermeture de celle de l'en-tête juste
-     au-dessus. Les actions passent par son menu de ligne ; la création et la modification restent
-     portées par le dialogue ci-dessous, qu'aucun formulaire générique ne saurait décrire (étapes,
-     transitions, champs de saisie). -->
-<app-crud-generic [loading]="chargement" [tableCols]="colonnes" [listeObject]="circuits"
-                  [pageLabel]="titrePage" [addButtonLabel]="'Nouveau circuit'"
-                  [addFilter]="true" [searchField]="filtres" (filterEvent)="filtrerParType($event)"
-                  [ajoutExterne]="true" (ajoutDemande)="ouvrirCreation()"
-                  [formGroup]="formulaireTableau" [formCols]="[]" [notModif]="true" [notDelete]="true"
-                  [isAffich]="false" [asRoleEdit]="true" [customButtons]="actionsLigne"
-                  (customActionEvent)="executerAction($event)"
-                  [consultation]="!peutEcrire"
-                  [isPagination]="circuits.length > 10">
-</app-crud-generic>
-
-<!-- ------------------------------------------------------------------ Édition -->
-<p-dialog [(visible)]="dialogueOuvert" [modal]="true" [style]="{ width: '62rem' }" [draggable]="false"
-          [header]="modeEdition ? 'Modifier le circuit' : 'Nouveau circuit'" styleClass="p-fluid">
+} @else {
+<div class="card p-fluid">
     <form [formGroup]="formulaire" class="flex flex-col gap-5">
-
-        <!-- Le guide reste atteignable pendant la saisie : c'est là qu'on hésite, et le dialogue
-             d'édition n'a pas à être fermé — donc rien à ressaisir — pour aller le consulter. -->
-        <div class="flex justify-end">
-            <p-button label="Guide de configuration" icon="pi pi-question-circle" size="small"
-                      [text]="true" (onClick)="guideOuvert = true"></p-button>
-        </div>
 
         <!-- Identité du circuit -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -415,23 +389,9 @@
         </div>
     </form>
 
-    <ng-template pTemplate="footer">
-        <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="dialogueOuvert = false"></p-button>
+    <div class="flex justify-end gap-2 mt-5">
+        <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="annuler()"></p-button>
         <p-button label="Enregistrer" icon="pi pi-check" [loading]="enregistrement" (onClick)="enregistrer()"></p-button>
-    </ng-template>
-</p-dialog>
-
-<!-- ------------------------------------------------------------------ Consultation -->
-<!-- La fiche est celle du composant partagé : en-tête, étapes, actions et diagramme
-     état-transition. La liste à plat qui tenait ici laissait le lecteur reconstituer
-     mentalement le graphe — les boucles de retour et les étapes inatteignables ne s'y
-     voyaient pas. -->
-<p-dialog [(visible)]="dialogueDetailOuvert" [modal]="true" [style]="{ width: '72rem' }"
-          [draggable]="false" [maximizable]="true"
-          [header]="circuitConsulte?.nom || 'Circuit'">
-    <app-workflow-detail [workflow]="circuitConsulte"></app-workflow-detail>
-
-    <ng-template pTemplate="footer">
-        <p-button label="Fermer" severity="secondary" [text]="true" (onClick)="dialogueDetailOuvert = false"></p-button>
-    </ng-template>
-</p-dialog>
+    </div>
+</div>
+}

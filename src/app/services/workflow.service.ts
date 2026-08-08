@@ -97,16 +97,25 @@ export class WorkflowService {
 
   // -------------------------------------------------------------- instances
 
-  /** Ouvre un circuit. Un rejeu sur le même circuit rend l'instance déjà en cours, sans doublon. */
+  /**
+   * Ouvre un circuit. Un rejeu sur le même circuit rend l'instance déjà en cours, sans doublon.
+   *
+   * @param reference référence lisible du dossier (« NC-2026-014 ») : c'est elle que citent les
+   *                   courriels d'étape — le moteur ne détient que l'UUID.
+   */
   initiateWorkflow(
     resourceId: string,
     resourceType: ResourceType | string,
-    workflowId: string
+    workflowId: string,
+    reference?: string
   ): Observable<WorkflowInstanceDto> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('resourceId', resourceId)
       .set('resourceType', resourceType)
       .set('workflowId', workflowId);
+    if (reference) {
+      params = params.set('reference', reference);
+    }
     return this.http
       .post<WorkflowInstanceDto>(`${this.workflowsUrl}/initiate`, null, { params })
       .pipe(catchError(this.enErreurMetier));

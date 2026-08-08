@@ -1,13 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { AppCrudGenericComponent } from '../../../components/app-crud-generic/app-crud-generic.component';
-import { TableColumn } from '../../../models/generique.model';
-import { hasAnyPermission } from '../../../utils/auth/auth-utils';
 import { AppRoleService } from '../../role/role-service/role.service';
 import { WorkflowStepTemplateService } from '../../../services/module-gestion-documentaire/workflow-step-template.service';
 import { QmsDocumentService } from '../../../services/module-gestion-documentaire/qms-document.service';
@@ -15,7 +13,6 @@ import { SelectInputComponent } from '../../../shared';
 import { WorkflowError, WorkflowService } from '../../../services/workflow.service';
 import { WorkflowStepTemplate } from '../../../models/gestion-documentaire.model';
 import { WorkflowConfigurationGuideComponent } from './workflow-configuration-guide.component';
-import { WorkflowDetailComponent } from '../../../shared/workflow/workflow-detail.component';
 import {
   EmailTemplateDto,
   StepDecision,
@@ -29,15 +26,6 @@ interface Option<T = string> {
   label: string;
   value: T;
 }
-
-/**
- * Ligne du tableau : le circuit, augmenté de ce que la colonne affiche telle quelle.
- *
- * Le tableau générique lit la valeur brute du champ désigné par la colonne — il n'appelle aucune
- * méthode du composant. Le libellé du type de ressource et le nombre d'étapes sont donc calculés
- * ici, au moment du filtrage.
- */
-type LigneCircuit = WorkflowDto & { typeLibelle: string; nbEtapes: number };
 
 /**
  * Identifiant local d'une étape, le temps de la saisie.
@@ -111,6 +99,11 @@ function codeDisponible(base: string, dejaPris: Set<string>): string {
  *   destination ; sans ce marqueur, le moteur ignore purement et simplement la transition ;
  * - `etatTraitement` — l'état métier propagé au service propriétaire du dossier ;
  * - les champs de saisie exigés à chaque étape.
+ *
+ * C'est une page (`circuits/edition/:id`, `nouveau` tenant lieu d'identifiant à la création — la
+ * convention des rôles), et non plus un dialogue au-dessus de la liste : le formulaire le plus
+ * profond de l'application — étapes, actions, champs — défilait dans une fenêtre de 62 rem, et la
+ * saisie en cours n'avait pas d'adresse.
  */
 /** Jetons de couleur admis par `p-button`, et par le serveur. */
 type SeveriteBouton = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'help' | 'contrast' | 'primary';
@@ -118,9 +111,9 @@ type SeveriteBouton = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'he
 @Component({
   selector: 'app-workflow-editor',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgPrimeModule, AppCrudGenericComponent,
-    WorkflowConfigurationGuideComponent, SelectInputComponent, WorkflowDetailComponent],
-  providers: [MessageService, ConfirmationService],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgPrimeModule,
+    WorkflowConfigurationGuideComponent, SelectInputComponent],
+  providers: [MessageService],
   templateUrl: './workflow-editor.component.html'
 })
 export class WorkflowEditorComponent implements OnInit, OnDestroy {
@@ -136,93 +129,14 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
    */
   protected readonly qmsService = inject(QmsDocumentService);
   private readonly messageService = inject(MessageService);
-  private readonly confirmationService = inject(ConfirmationService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   private readonly destroy$ = new Subject<void>();
 
-  chargement = true;
+  /** Le circuit à modifier est en cours de relecture : le formulaire n'est pas encore montrable. */
+  chargement = false;
   enregistrement = false;
-
-  circuits: LigneCircuit[] = [];
-  private tousLesCircuits: WorkflowDto[] = [];
-
-  typeFiltre: string | null = null;
-
-  readonly titrePage = 'Circuits de validation';
-
-  /**
-   * Filtre servi par la barre du tableau générique. La recherche libre y est déjà, portée par le
-   * composant : n'y reste que ce qu'il ne sait pas faire seul, le filtre par type de ressource.
-   */
-  readonly filtres = [
-    {
-      field: 'resourceType',
-      label: 'Type de ressource',
-      placeHolder: 'Tous les types',
-      list: [
-        { label: 'Documents', value: 'DOCUMENT' },
-        { label: 'Non-conformités', value: 'NON_CONFORMITE' },
-        { label: "Plans d'action", value: 'PLAN_ACTION' },
-        { label: 'Demandes sur documents', value: 'DEMANDE_DOCUMENT' }
-      ],
-      value: null as string | null
-    }
-  ];
-
-  /**
-   * Colonnes du tableau générique — le même composant que le catalogue d'étapes et le reste des
-   * écrans de configuration. Le tableau maison qui figurait ici en reproduisait le rendu, les
-   * filtres et le menu d'actions, sans en hériter les corrections.
-   */
-  readonly colonnes: TableColumn[] = [
-    { field: 'nom', header: 'Circuit', type: 'string', filter: true },
-    { field: 'description', header: 'Description', type: 'string', filter: true },
-    { field: 'typeLibelle', header: 'Type de ressource', type: 'string', filter: true, width: '12rem' },
-    { field: 'nbEtapes', header: 'Étapes', type: 'number', filter: false, width: '7rem' },
-    {
-      field: 'actif',
-      header: 'Statut',
-      type: 'boolean',
-      filter: false,
-      labelTrue: 'Actif',
-      labelFalse: 'Inactif',
-      width: '8rem'
-    }
-  ];
-
-  /**
-   * Le tableau générique réclame un formulaire : celui de son dialogue intégré, dont cet écran ne
-   * se sert pas — la saisie d'un circuit passe par le dialogue dédié. On lui confie donc un groupe
-   * vide plutôt que le formulaire d'édition, qu'il lui arrive de réinitialiser.
-   */
-  readonly formulaireTableau = this.fb.group({});
-
-  /**
-   * Actions du menu de ligne. Modifier et supprimer sont retirés faute de `workflow-write` —
-   * l'équivalent de `*ngxPermissionsOnly` que portaient les boutons du tableau maison, exprimé
-   * en TypeScript puisque le menu du tableau générique est construit par le composant.
-   */
-  actionsLigne: { label: string; icon: string; action: string }[] = [];
-
-  /**
-   * L'écran se consulte sans `workflow-write` ; il ne se modifie pas. Le bouton de création était
-   * offert à tous, et la saisie n'échouait qu'à l'enregistrement, en 403 — après avoir composé
-   * tout un circuit.
-   */
-  peutEcrire = false;
-
-  /**
-   * Types de ressource pour lesquels plusieurs circuits sont ouvrables à la fois.
-   *
-   * Ce n'est plus une anomalie : un type de document peut désigner son propre circuit, et celui-ci
-   * doit être actif pour servir — le moteur refuse d'ouvrir un circuit désactivé. Plusieurs circuits
-   * documentaires actifs sont donc la règle dès qu'on en attribue par type.
-   *
-   * Reste une chose à dire, et le bandeau la dit : lequel s'applique aux dossiers qui ne désignent
-   * aucun circuit. C'est le plus ancien des circuits actifs de la famille, et non plus le premier
-   * rendu par la base.
-   */
-  typesEnConflit: string[] = [];
 
   /**
    * Habilitations proposables : les rôles de l'organisation, précédés des deux <b>désignations</b>.
@@ -393,21 +307,14 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   ];
 
   // Édition
-  dialogueOuvert = false;
   modeEdition = false;
   circuitEnCours?: WorkflowDto;
   formulaire: FormGroup;
 
-  // Consultation
-  dialogueDetailOuvert = false;
-  circuitConsulte?: WorkflowDto;
-
   /**
-   * Guide de configuration, ouvrable depuis la liste comme depuis la saisie.
-   *
-   * Il est porté par l'écran et non par le dialogue d'édition : l'auteur d'un circuit a besoin de
-   * s'y reporter au moment où il hésite sur un réglage, sans fermer le circuit en cours et perdre
-   * ce qu'il a saisi.
+   * Guide de configuration, en dialogue au-dessus de la page : l'auteur d'un circuit a besoin de
+   * s'y reporter au moment où il hésite sur un réglage, sans quitter la saisie et perdre ce qu'il
+   * a saisi.
    */
   guideOuvert = false;
 
@@ -424,20 +331,16 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Les permissions sont chargées avant l'activation de la route (permissionGuard), et c'est la
-    // même source que celle du menu — pas un second mécanisme d'habilitation.
-    this.peutEcrire = hasAnyPermission(['workflow-write']);
-    this.actionsLigne = [
-      { label: 'Consulter', icon: 'pi pi-eye', action: 'consulter' },
-      ...(this.peutEcrire
-        ? [
-            { label: 'Modifier', icon: 'pi pi-pencil', action: 'modifier' },
-            { label: 'Supprimer', icon: 'pi pi-trash', action: 'supprimer' }
-          ]
-        : [])
-    ];
+    // La page sert la création comme la modification : `nouveau` tient lieu d'identifiant, la
+    // convention des rôles (`roles/:id`).
+    const id = this.route.snapshot.paramMap.get('id');
+    this.modeEdition = !!id && id !== 'nouveau';
+    if (this.modeEdition) {
+      this.chargerCircuit(id!);
+    } else {
+      this.preparerCreation();
+    }
 
-    this.chargerCircuits();
     this.chargerRoles();
     this.chargerModelesEmail();
     this.chargerModelesEtape();
@@ -451,24 +354,6 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   }
 
   // ---------------------------------------------------------------- chargement
-
-  chargerCircuits(): void {
-    this.chargement = true;
-    this.workflowService
-      .getAllWorkflows()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (circuits) => {
-          this.tousLesCircuits = circuits;
-          this.appliquerFiltres();
-          this.chargement = false;
-        },
-        error: (erreur: WorkflowError) => {
-          this.chargement = false;
-          this.signalerErreur(erreur);
-        }
-      });
-  }
 
   private chargerRoles(): void {
     this.roleService
@@ -565,63 +450,6 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
       });
   }
 
-  // ---------------------------------------------------------------- liste
-
-  appliquerFiltres(): void {
-    // La recherche libre est assurée par le tableau générique ; il ne reste ici que le filtre par
-    // type de ressource, qu'il ne sait pas exprimer seul.
-    this.circuits = this.tousLesCircuits
-      .filter((circuit) => !this.typeFiltre || circuit.resourceType === this.typeFiltre)
-      .map((circuit) => ({
-        ...circuit,
-        typeLibelle: this.libelleType(circuit.resourceType),
-        nbEtapes: this.nombreEtapes(circuit)
-      }));
-
-    this.typesEnConflit = this.typesRessource
-      .filter(
-        (type) =>
-          this.tousLesCircuits.filter((circuit) => circuit.actif && circuit.resourceType === type.value)
-            .length > 1
-      )
-      .map((type) => type.label);
-  }
-
-  /** Reçoit l'entrée de filtre du tableau générique, qui y a posé la valeur choisie. */
-  filtrerParType(filtre: any): void {
-    this.typeFiltre = (typeof filtre === 'string' || filtre === null) ? filtre : (filtre?.value ?? null);
-    this.appliquerFiltres();
-  }
-
-  libelleType(type?: string): string {
-    return this.typesRessource.find((option) => option.value === type)?.label ?? (type ?? '—');
-  }
-
-  nombreEtapes(circuit: WorkflowDto): number {
-    return circuit.steps?.length ?? 0;
-  }
-
-  /**
-   * Aiguillage du menu d'actions du tableau générique, qui n'émet qu'un couple action/ligne.
-   *
-   * La suppression conserve sa propre confirmation (`supprimer`), qui énonce ce qui est en jeu —
-   * les dossiers en cours sur ce circuit — là où celle du tableau générique est générique.
-   */
-  executerAction(evenement: { action: string; user: any }): void {
-    const circuit = evenement.user as WorkflowDto;
-    switch (evenement.action) {
-      case 'consulter':
-        this.consulter(circuit);
-        break;
-      case 'modifier':
-        this.ouvrirModification(circuit);
-        break;
-      case 'supprimer':
-        this.supprimer(circuit);
-        break;
-    }
-  }
-
   // ---------------------------------------------------------------- édition
 
   get etapes(): FormArray {
@@ -689,36 +517,39 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     return [{ label: 'Toutes les actions', value: null }, ...actions.filter((option) => !!option.value)];
   }
 
-  ouvrirCreation(): void {
-    this.modeEdition = false;
+  private preparerCreation(): void {
     this.circuitEnCours = undefined;
-    this.formulaire.reset({ actif: true, resourceType: this.typeFiltre ?? null });
+    // La liste transmet son filtre courant : créer un circuit depuis la vue « Non-conformités »
+    // pré-remplit le type, comme le faisait le dialogue.
+    const type = this.route.snapshot.queryParamMap.get('type');
+    this.formulaire.reset({ actif: true, resourceType: type ?? null });
     this.etapes.clear();
     this.ajouterEtape();
-    this.dialogueOuvert = true;
   }
 
-  ouvrirModification(circuit: WorkflowDto): void {
-    this.modeEdition = true;
-    this.circuitEnCours = circuit;
+  private chargerCircuit(id: string): void {
     this.chargement = true;
 
     // Relecture systématique : la ligne de la liste peut être en retard sur le serveur, et
     // enregistrer à partir d'elle réécrirait le circuit avec un état périmé.
     this.workflowService
-      .getWorkflowById(circuit.id!)
+      .getWorkflowById(id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (complet) => {
           this.chargement = false;
           this.remplirFormulaire(complet);
-          this.dialogueOuvert = true;
         },
         error: (erreur: WorkflowError) => {
           this.chargement = false;
           this.signalerErreur(erreur);
         }
       });
+  }
+
+  /** Retour à la liste, sans enregistrer — le formulaire meurt avec la page. */
+  annuler(): void {
+    this.router.navigate(['/configurations/circuits']);
   }
 
   private remplirFormulaire(circuit: WorkflowDto): void {
@@ -950,13 +781,11 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     requete.pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.enregistrement = false;
-        this.dialogueOuvert = false;
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Circuit enregistré',
-          detail: `« ${payload.nom} » a été enregistré.`
+        // Le message de succès est confié à la liste via l'état de navigation : cette page est
+        // détruite par le retour, et un toast émis ici mourrait avec elle.
+        this.router.navigate(['/configurations/circuits'], {
+          state: { circuitEnregistre: payload.nom }
         });
-        this.chargerCircuits();
       },
       error: (erreur: WorkflowError) => {
         this.enregistrement = false;
@@ -1059,68 +888,6 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     return circuit;
   }
 
-  // ---------------------------------------------------------------- consultation et suppression
-
-  consulter(circuit: WorkflowDto): void {
-    this.chargement = true;
-    this.workflowService
-      .getWorkflowById(circuit.id!)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (complet) => {
-          this.chargement = false;
-          this.circuitConsulte = complet;
-          this.dialogueDetailOuvert = true;
-        },
-        error: (erreur: WorkflowError) => {
-          this.chargement = false;
-          this.signalerErreur(erreur);
-        }
-      });
-  }
-
-  etapesTriees(circuit?: WorkflowDto): WorkflowStepDto[] {
-    return [...(circuit?.steps ?? [])].sort((a, b) => a.stepOrder - b.stepOrder);
-  }
-
-  /** Description lisible d'une transition, pour la vue de consultation. */
-  descriptionTransition(transition: WorkflowTransitionDto, circuit?: WorkflowDto): string {
-    if (transition.terminal || !transition.toStepCode) {
-      return 'clôt le circuit';
-    }
-    const destination = circuit?.steps?.find((etape) => etape.code === transition.toStepCode);
-    return `mène à « ${destination?.nomEtape ?? transition.toStepCode} »`;
-  }
-
-  supprimer(circuit: WorkflowDto): void {
-    this.confirmationService.confirm({
-      header: 'Supprimer ce circuit ?',
-      message:
-        `« ${circuit.nom} » sera définitivement supprimé. ` +
-        'La suppression est refusée si des dossiers y sont encore en cours.',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Supprimer',
-      rejectLabel: 'Annuler',
-      acceptButtonStyleClass: 'p-button-danger',
-      accept: () => {
-        this.workflowService
-          .deleteWorkflow(circuit.id!)
-          .pipe(takeUntil(this.destroy$))
-          .subscribe({
-            next: () => {
-              this.messageService.add({
-                severity: 'success',
-                summary: 'Circuit supprimé',
-                detail: `« ${circuit.nom} » a été supprimé.`
-              });
-              this.chargerCircuits();
-            },
-            error: (erreur: WorkflowError) => this.signalerErreur(erreur)
-          });
-      }
-    });
-  }
-
   // ---------------------------------------------------------------- erreurs
 
   /**
@@ -1138,9 +905,8 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
       detail: erreur.message,
       life: 8000
     });
-    if (erreur.estPerime) {
-      this.chargerCircuits();
-    }
+    // Un 409 signifie que le circuit a changé sous la saisie. On ne recharge pas d'office : le
+    // formulaire porte le travail de l'utilisateur, et c'est le message qui l'invite à rouvrir.
   }
 
   private titreErreur(erreur: WorkflowError): string {
