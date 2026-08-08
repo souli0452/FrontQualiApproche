@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
 import { WorkflowEditorComponent } from './workflow-editor.component';
@@ -28,6 +29,9 @@ describe('WorkflowEditorComponent — attribution des codes d\'étape', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        // L'éditeur est devenu une page : il lit son identifiant dans la route et navigue au
+        // retour. Les tests n'exercent ni l'un ni l'autre, mais l'injection les exige.
+        provideRouter([]),
         MessageService,
         ConfirmationService
       ]

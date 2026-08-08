@@ -3,6 +3,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { DemandeDocumentDto } from '../../../models/demande-document.model';
 import { ValidationHistoryDto, WorkflowActionDto, WorkflowStateDto } from '../../../models/workflow.model';
+import { WorkflowHistoriqueComponent } from '../../../shared/workflow/workflow-historique.component';
 
 /**
  * Fiche d'une demande : ce qu'elle porte, où elle en est, et ce qu'on peut en faire.
@@ -17,7 +18,7 @@ import { ValidationHistoryDto, WorkflowActionDto, WorkflowStateDto } from '../..
 @Component({
     selector: 'app-qms-demande-detail',
     standalone: true,
-    imports: [CommonModule, NgPrimeModule],
+    imports: [CommonModule, NgPrimeModule, WorkflowHistoriqueComponent],
     templateUrl: './qms-demande-detail.component.html'
 })
 export class QmsDemandeDetailComponent {

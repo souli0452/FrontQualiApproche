@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { Observable } from 'rxjs';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
@@ -39,7 +40,7 @@ export interface LigneATraiter {
      * <p>Propre à la ligne : la pièce se range sous le dossier concerné. Absent, le champ n'est pas
      * présenté — l'étape reste alors à décider depuis la fiche du dossier.</p>
      */
-    deposerFichier?: (fichier: File) => import('rxjs').Observable<string>;
+    deposerFichier?: (fichier: File) => Observable<string>;
 }
 
 /**

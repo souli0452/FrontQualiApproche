@@ -34,7 +34,7 @@ import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '../../../sha
 import { QmsDocumentDemandesComponent } from './components/qms-document-demandes.component';
 import { DemandeDocumentService } from '../../../services/module-gestion-documentaire/demande-document.service';
 import { DemandeDocumentDto } from '../../../models/demande-document.model';
-import { QmsWorkflowHistoriqueComponent } from './components/qms-workflow-historique.component';
+import { WorkflowHistoriqueComponent } from '../../../shared/workflow/workflow-historique.component';
 import { QmsAssignWorkflowDialogComponent } from './components/qms-assign-workflow-dialog.component';
 import { QmsReclassementDialogComponent } from './components/qms-reclassement-dialog.component';
 import { QmsDocumentAccessDialogComponent, AccessGrant } from './components/qms-document-access-dialog.component';
@@ -52,7 +52,7 @@ export type OngletDetail = 'detail' | 'historique' | 'partages' | 'audit' | 'dem
 @Component({
   selector: 'app-qms-document',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, QmsTransitionDialogComponent, WorkflowDecisionDialogComponent, QmsWorkflowHistoriqueComponent, QmsDocumentDemandesComponent, QmsAssignWorkflowDialogComponent,
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, QmsTransitionDialogComponent, WorkflowDecisionDialogComponent, WorkflowHistoriqueComponent, QmsDocumentDemandesComponent, QmsAssignWorkflowDialogComponent,
     QmsReclassementDialogComponent, QmsDocumentAccessDialogComponent],
   templateUrl: './qms-document.component.html',
   styleUrls: ['./qms-document.component.scss'],

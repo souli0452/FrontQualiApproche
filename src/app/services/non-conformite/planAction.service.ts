@@ -38,7 +38,7 @@ export class PlanActionService extends QualiCrudService<Formation, string> {
      */
     relire(planActionId: string): Observable<any> {
         return this.http
-            .get<any>(`${QualiUrlConfig.PLAN_ACTION_ROOT_URL}/${planActionId}`)
+            .get<any>(`${QualiUrlConfig.PLAN_ACTION_ROOT_URL}/get/${planActionId}`)
             .pipe(map((reponse) => reponse?.data ?? reponse));
     }
 

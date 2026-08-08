@@ -50,6 +50,8 @@ import { PrioriteDocumentComponent } from './parametrage-document/priorite-docum
 import { NiveauConfidentialiteComponent } from './parametrage-document/niveau-confidentialite/niveau-confidentialite.component';
 import { EmailTemplateWorkflowComponent } from './configuration-workflow/email-template/email-template.component';
 import { WorkflowEditorComponent } from './configuration-workflow/circuits/workflow-editor.component';
+import { CircuitsListeComponent } from './configuration-workflow/circuits/circuits-liste.component';
+import { CircuitDetailPageComponent } from './configuration-workflow/circuits/circuit-detail-page.component';
 import { permissionGuard } from '../components/auth/permission.guard';
 
 // Les permissions déclarées ici reprennent celles du menu (app.menu.ts) : une entrée masquée
@@ -276,9 +278,23 @@ export default [
             // circuits aurait laissé le catalogue d'étapes et les modèles d'e-mail sans aucun
             // chemin depuis le menu.
             {
-                path: 'circuits', component: WorkflowEditorComponent, title: 'Circuits de validation',
+                path: 'circuits', component: CircuitsListeComponent, title: 'Circuits de validation',
                 canActivate: [permissionGuard],
                 data: { permissions: ['workflow-read', 'workflow-write'] }
+            },
+            // La consultation et la saisie d'un circuit sont des pages, non plus des dialogues
+            // au-dessus de la liste : l'objet le plus profond de l'application — étapes, actions,
+            // champs — tenait à l'étroit dans une fenêtre, et la saisie n'avait pas d'adresse.
+            // `nouveau` tient lieu d'identifiant à la création, la convention de `roles/:id`.
+            {
+                path: 'circuits/detail/:id', component: CircuitDetailPageComponent, title: 'Détail du circuit',
+                canActivate: [permissionGuard],
+                data: { permissions: ['workflow-read', 'workflow-write'] }
+            },
+            {
+                path: 'circuits/edition/:id', component: WorkflowEditorComponent, title: 'Édition du circuit',
+                canActivate: [permissionGuard],
+                data: { permissions: ['workflow-write'] }
             },
             {
                 path: 'etapes-circuit', component: WorkflowStepTemplateComponent, title: "Catalogue des Étapes",

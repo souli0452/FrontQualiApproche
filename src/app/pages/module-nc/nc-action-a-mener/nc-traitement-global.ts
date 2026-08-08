@@ -1,4 +1,5 @@
 import { Component, Input, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { forkJoin, Subject, takeUntil } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { EtapeTraitement, NonConformStatus } from '../../../enums/enums';
@@ -8,6 +9,7 @@ import { AuthService } from '../../../services/auth-services/auth.service';
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
 import { FeaturesService } from '../../../services/feature-service';
 import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
+import { PlanActionService } from '../../../services/non-conformite/planAction.service';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 import { Location } from '@angular/common';
@@ -65,6 +67,8 @@ export class TraitementGlobalComponent {
         protected messageService: MessageService,
         private featureService:FeaturesService,
         private nonConformiteService:NonConformiteService,
+        private planActionService: PlanActionService,
+        private route: ActivatedRoute,
         private location: Location
     ) {
         this.cols = [
@@ -91,6 +95,40 @@ export class TraitementGlobalComponent {
     ngOnInit() {
         this.user = currentUserState.value as AuthData;
         this.fetchData();
+        this.ouvrirLeDossierDeLAdresse();
+    }
+
+    /**
+     * Ouvre le dossier désigné par « ?planId= » — le lien des courriels d'étape des plans.
+     *
+     * <p>Un plan se traite depuis la fiche de sa non-conformité : le plan est relu par son
+     * identifiant, sa non-conformité chargée, et la fiche s'ouvre comme si la ligne avait été
+     * cliquée. Introuvable ou hors de portée, rien ne s'ouvre — le lien d'un courriel ancien ne
+     * doit pas produire une erreur bloquante, la liste reste l'écran.</p>
+     */
+    private ouvrirLeDossierDeLAdresse(): void {
+        const planId = this.route.snapshot.queryParamMap.get('planId');
+        if (!planId) {
+            return;
+        }
+        this.planActionService.relire(planId).subscribe({
+            next: (plan: any) => {
+                const ncId = plan?.nonConformeId;
+                if (!ncId) {
+                    return;
+                }
+                this.nonConformiteService.findNCById(ncId).subscribe({
+                    next: (reponse: any) => {
+                        const nc = reponse?.data ?? reponse;
+                        if (nc?.id) {
+                            this.dmdTraitement.displayDetails(nc);
+                        }
+                    },
+                    error: () => { /* dossier hors de portée : la liste reste l'écran. */ }
+                });
+            },
+            error: () => { /* plan supprimé ou hors de portée : même silence utile. */ }
+        });
     }
         handleFilter(event: NcFilter) {
         this.currentFilters = event;

@@ -171,15 +171,19 @@
       </p-tabpanel>
       }
 
-      <!-- Décisions du circuit : qui a validé, quand, avec quels motifs et quelles saisies. -->
+      <!-- Décisions du circuit : qui a validé, quand, avec quels motifs et quelles saisies.
+           Frise partagée avec les non-conformités et les demandes — elle se clôt sur l'étape
+           en cours, que le moteur connaît mieux que la colonne recopiée sur le document. -->
       @if (peutVoirLeCircuit) {
       <p-tabpanel value="circuit">
-        <app-qms-workflow-historique
-          [document]="selectedDocument"
+        <app-workflow-historique
           [historique]="validationHistory"
           [loading]="loading"
+          [objet]="selectedDocument.documentNumber ? 'le document ' + selectedDocument.documentNumber : 'ce document'"
+          [etapeCourante]="etapeDeCircuit(selectedDocument)"
+          [termine]="circuitTermine(selectedDocument)"
           (close)="currentView = 'list'">
-        </app-qms-workflow-historique>
+        </app-workflow-historique>
       </p-tabpanel>
       }
     </p-tabpanels>

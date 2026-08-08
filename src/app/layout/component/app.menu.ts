@@ -159,30 +159,33 @@ export class AppMenu {
             }
         ];
 
-        // Les sous-groupes (comptes, non-conformités, organigramme, documentation) reprennent le
+        // La gestion des comptes est une rubrique de premier niveau, non plus un sous-groupe de
+        // « Configurations » : administrer les personnes est un geste quotidien, configurer
+        // l'application un geste d'installation. La rubrique reprend la permission de menu
+        // `menu-configuration` — celle qui la gouvernait déjà — plutôt que d'en inventer une que
+        // le dictionnaire du back ne connaît pas : une permission inconnue masquerait la rubrique
+        // pour tous les profils de menu, SUPER_ADMIN compris.
+        const comptes = [
+            {
+                label: 'Gestion des utilisateurs', icon: 'pi pi-fw pi-users', routerLink: ['/utilisateurs'],
+                visible: this.peutVoir(['MANAGE_USER'])
+            },
+            {
+                label: 'Gestion des rôles', icon: 'pi pi-fw pi-id-card', routerLink: ['/roles'],
+                visible: this.peutVoir(['ROLE_MANAGE'])
+            }
+        ];
+
+        // Les sous-groupes (non-conformités, organigramme, documentation) reprennent le
         // découpage du menu remanié sur develop, mais chaque entrée passe par `peutVoir` : la
         // version d'origine n'en soumettait aucune à une permission, et gardait trois entrées
         // derrière le module fictif « AUTRE_MODULE », absent de l'énumération du back — donc
         // invisibles pour tout le monde, faute d'une direction pouvant y souscrire.
-        //
-        // Elles vivent sous « Configurations » plutôt qu'en rubriques de premier niveau : une
-        // rubrique se ferme par une permission `menu-*`, et en inventer une que le dictionnaire du
-        // back ne connaît pas encore masquerait la rubrique pour tous, SUPER_ADMIN compris.
         const configurations = [
             {
-                label: 'Réglages de l\'organisation', icon: 'pi pi-sliders-h', routerLink: ['/configurations'],
+                label: 'Configurations globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'],
                 visible: this.peutVoir(['config-global-read', 'config-global-write', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'])
             },
-            this.sousGroupe('Comptes utilisateurs', 'pi pi-fw pi-user', [
-                {
-                    label: 'Gestion des utilisateurs', icon: 'pi pi-fw pi-users', routerLink: ['/utilisateurs'],
-                    visible: this.peutVoir(['MANAGE_USER'])
-                },
-                {
-                    label: 'Gestion des rôles', icon: 'pi pi-fw pi-id-card', routerLink: ['/roles'],
-                    visible: this.peutVoir(['ROLE_MANAGE'])
-                }
-            ]),
             this.sousGroupe('Non-Conformités', 'pi pi-fw pi-exclamation-triangle', [
                 {
                     label: 'Niveau de Non-Conformité', routerLink: ['/niveau-non-conformite'],
@@ -238,6 +241,7 @@ export class AppMenu {
             this.rubrique('Qualité & Conformité', 'pi pi-fw pi-verified', 'menu-qualite', qualite),
             this.rubrique('Gestion des Ressources', 'pi pi-fw pi-database', 'menu-ressources', ressources),
             this.rubrique('Gestion des Actions', 'pi pi-fw pi-list-check', 'menu-actions', actions),
+            this.rubrique('Comptes utilisateurs', 'pi pi-fw pi-user', 'menu-configuration', comptes),
             this.rubrique('Configurations', 'pi pi-sliders-h', 'menu-configuration', configurations)
         ].filter(rubrique => rubrique.visible);
 

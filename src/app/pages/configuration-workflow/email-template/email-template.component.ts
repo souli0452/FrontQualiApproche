@@ -80,16 +80,20 @@ export class EmailTemplateWorkflowComponent implements OnInit, OnDestroy {
                 type: 'string', visible: true, required: true
             },
             {
-                field: 'subject', label: "Objet de l'e-mail", header: 'Objet',
-                type: 'string', visible: true, required: true
+                field: 'subject',
+                label: "Objet de l'e-mail — {numeroNc} y insère la référence du dossier",
+                header: 'Objet', type: 'string', visible: true, required: true
             },
             {
                 field: 'description', label: 'À quoi sert ce modèle', header: 'Description',
                 type: 'string', visible: true, required: false
             },
             {
-                field: 'body', label: 'Corps du message', header: 'Corps',
-                type: 'text', visible: true, required: true
+                // Les variables s'écrivent entre accolades ; une variable absente s'efface du
+                // message. La liste est celle que le moteur fournit à chaque étape.
+                field: 'body',
+                label: 'Corps du message — variables : {numeroNc} {fullName} {link} {observation} {etape}',
+                header: 'Corps', type: 'text', visible: true, required: true
             }
         ];
 
