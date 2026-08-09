@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { QualiUrlConfig } from '../../services/quali-url-configs';
+import { LicenceService } from '../../services/licence.service';
 import { currentUserState } from '../../services/auth-services/auth.state';
 import { AppReglagesRequis } from './app.reglages-requis';
 
@@ -30,6 +31,19 @@ describe('AppReglagesRequis', () => {
         currentUserState.next({ permissions } as any);
     }
 
+    /**
+     * Pose l'état de licence avant l'initialisation.
+     *
+     * <p>La saisie du responsable qualité s'écrit dans les réglages de l'organisation, que la
+     * passerelle refuse tant que la licence n'ouvre pas les actions. Le dialogue attend donc cet
+     * état, et l'immense majorité de ces cas se place après.</p>
+     */
+    function licence(actionsOuvertes: boolean): void {
+        TestBed.inject(LicenceService).etat$.next({
+            statut: actionsOuvertes ? 'ACTIVE' : 'ABSENTE', actionsOuvertes
+        } as any);
+    }
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [AppReglagesRequis],
@@ -47,6 +61,7 @@ describe('AppReglagesRequis', () => {
 
     it('exige le responsable qualité quand il manque', () => {
         habiliter(['CONFIG_GLOBAL_MANAGE']);
+        licence(true);
 
         component.ngOnInit();
         http.expectOne(QualiUrlConfig.PARAMETRE_ROOT_URL).flush({ data: [RQ_NOM, RQ_EMAIL] });
@@ -56,6 +71,7 @@ describe('AppReglagesRequis', () => {
 
     it('ne demande rien quand les deux sont renseignés', () => {
         habiliter(['CONFIG_GLOBAL_MANAGE']);
+        licence(true);
 
         component.ngOnInit();
         http.expectOne(QualiUrlConfig.PARAMETRE_ROOT_URL).flush({
@@ -70,6 +86,7 @@ describe('AppReglagesRequis', () => {
 
     it('reprend la valeur déjà saisie et ne réclame que celle qui manque', () => {
         habiliter(['CONFIG_GLOBAL_MANAGE']);
+        licence(true);
 
         component.ngOnInit();
         http.expectOne(QualiUrlConfig.PARAMETRE_ROOT_URL)
@@ -78,6 +95,49 @@ describe('AppReglagesRequis', () => {
         expect(component.ouvert).toBeTrue();
         expect(component.formulaire.get('nom')?.value).toBe('Awa Traoré');
         expect(component.formulaire.get('email')?.value).toBe('');
+    });
+
+    it('n\'exige rien tant que la licence n\'ouvre pas les actions', () => {
+        habiliter(['CONFIG_GLOBAL_MANAGE']);
+        licence(false);
+
+        component.ngOnInit();
+
+        // La passerelle refuse l'écriture des réglages sans licence valide : ouvrir ce dialogue
+        // d'abord enfermerait l'administrateur devant un bouton qui répond 402.
+        http.expectNone(QualiUrlConfig.PARAMETRE_ROOT_URL);
+        expect(component.ouvert).toBeFalse();
+    });
+
+    it('s\'impose dès que la licence est posée, avant toute autre configuration', () => {
+        habiliter(['CONFIG_GLOBAL_MANAGE']);
+        licence(false);
+        component.ngOnInit();
+        http.expectNone(QualiUrlConfig.PARAMETRE_ROOT_URL);
+
+        licence(true);
+
+        http.expectOne(QualiUrlConfig.PARAMETRE_ROOT_URL).flush({ data: [RQ_NOM, RQ_EMAIL] });
+        expect(component.ouvert).toBeTrue();
+    });
+
+    it('ne redemande rien quand la licence est renouvelée', () => {
+        habiliter(['CONFIG_GLOBAL_MANAGE']);
+        licence(true);
+        component.ngOnInit();
+        http.expectOne(QualiUrlConfig.PARAMETRE_ROOT_URL).flush({
+            data: [
+                { ...RQ_NOM, valeur: 'Awa Traoré' },
+                { ...RQ_EMAIL, valeur: 'rq@exemple.fr' }
+            ]
+        });
+
+        // L'état de licence est réémis à chaque installation ou renouvellement ; une seconde
+        // lecture des réglages rouvrirait un dialogue déjà honoré.
+        licence(true);
+
+        http.expectNone(QualiUrlConfig.PARAMETRE_ROOT_URL);
+        expect(component.ouvert).toBeFalse();
     });
 
     it('ne demande rien à qui ne peut pas y répondre', () => {
@@ -92,6 +152,7 @@ describe('AppReglagesRequis', () => {
 
     it('réglages illisibles : rien n\'est exigé', () => {
         habiliter(['CONFIG_GLOBAL_MANAGE']);
+        licence(true);
 
         component.ngOnInit();
         http.expectOne(QualiUrlConfig.PARAMETRE_ROOT_URL)
@@ -103,6 +164,7 @@ describe('AppReglagesRequis', () => {
 
     it('enregistre les deux réglages puis se ferme', () => {
         habiliter(['CONFIG_GLOBAL_MANAGE']);
+        licence(true);
         component.ngOnInit();
         http.expectOne(QualiUrlConfig.PARAMETRE_ROOT_URL).flush({ data: [RQ_NOM, RQ_EMAIL] });
 
@@ -117,6 +179,7 @@ describe('AppReglagesRequis', () => {
 
     it('reste ouvert si l\'enregistrement échoue', () => {
         habiliter(['CONFIG_GLOBAL_MANAGE']);
+        licence(true);
         component.ngOnInit();
         http.expectOne(QualiUrlConfig.PARAMETRE_ROOT_URL).flush({ data: [RQ_NOM, RQ_EMAIL] });
 

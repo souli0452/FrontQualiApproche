@@ -29,7 +29,6 @@ describe('LicenceDialogComponent', () => {
         joursRestants: 200,
         modules: ['NON_CONFORMITE'],
         utilisateursMax: 0,
-        essaiDisponible: false,
         message: '',
         ...partiel
     });
@@ -48,7 +47,7 @@ describe('LicenceDialogComponent', () => {
 
     it("sans licence, s'impose et ne se ferme pas", () => {
         composant.etat = etat({ statut: 'ABSENTE', actionsOuvertes: false, joursRestants: 0,
-            modules: [], essaiDisponible: true });
+            modules: [] });
 
         expect(composant.doitSAfficher).toBeTrue();
         expect(composant.estFermable).toBeFalse();

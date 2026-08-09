@@ -21,7 +21,6 @@ export interface EtatLicence {
     joursRestants: number;
     modules: string[];
     utilisateursMax: number;
-    essaiDisponible: boolean;
     /** Phrase à afficher telle quelle : c'est elle qui dit quoi faire. */
     message: string;
 }
@@ -68,13 +67,6 @@ export class LicenceService {
 
     installer(licence: string): Observable<EtatLicence> {
         return this.http.post<any>(this.racine, { licence }).pipe(
-            tap((reponse) => this.etat$.next(reponse?.data ?? reponse)),
-            catchError((erreur: HttpErrorResponse) => this.echec(erreur))
-        );
-    }
-
-    demarrerEssai(): Observable<EtatLicence> {
-        return this.http.post<any>(`${this.racine}/essai`, {}).pipe(
             tap((reponse) => this.etat$.next(reponse?.data ?? reponse)),
             catchError((erreur: HttpErrorResponse) => this.echec(erreur))
         );

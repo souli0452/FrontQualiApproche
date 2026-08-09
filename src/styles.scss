@@ -498,3 +498,23 @@ p-button .p-button-info {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+/*
+ * Voile des fenêtres qui s'imposent au lancement — licence, puis responsable qualité.
+ *
+ * Ces deux fenêtres n'ont ni croix ni clic à côté pour les fermer : l'écran derrière n'est pas
+ * utilisable, et le laisser net invite à essayer. Le flou dit ce que le blocage veut dire, et
+ * porte l'œil sur la seule chose à faire.
+ *
+ * Le voile est teinté du marine de la charte plutôt que d'un noir plat, et reste assez clair
+ * pour qu'on reconnaisse l'application derrière : on doit voir qu'on est chez soi, pas devant un
+ * écran mort.
+ *
+ * `backdrop-filter` n'est pas partout : le flou tombe alors, la teinte demeure, et le voile
+ * remplit son office.
+ */
+.qs-mask-flou {
+    background-color: rgba(15, 42, 82, 0.45) !important;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}

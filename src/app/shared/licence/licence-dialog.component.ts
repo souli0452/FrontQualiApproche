@@ -20,11 +20,11 @@ import { hasAnyPermission } from '../../utils/auth/auth-utils';
  * un retard de paiement en litige, et le pousserait à chercher comment contourner. Le bandeau
  * reste, lui, sous les yeux, et rouvre la fenêtre sur demande.</p>
  *
- * <p>Deux issues à la première connexion : coller la licence remise par l'éditeur, ou démarrer un
- * essai gratuit de quelques jours, sur les modules ouverts à l'essai — le serveur en donne la
- * liste, elle n'est pas écrite ici. L'essai n'est proposé qu'une fois par installation, sans quoi
- * il suffirait d'en redemander un à chaque échéance. Tant qu'il court, un bandeau le dit :
- * personne ne doit découvrir qu'il était en essai le jour où il s'arrête.</p>
+ * <p>Une seule issue à la première connexion : coller la licence remise par l'éditeur — essai
+ * gratuit compris, car il est désormais émis et signé comme les autres. L'installation se
+ * l'accordait auparavant d'un clic ; elle ne pouvait alors pas le compter, un effacement de ligne
+ * en base suffisant à en obtenir un nouveau. Tant qu'un essai court, un bandeau le dit : personne
+ * ne doit découvrir qu'il était en essai le jour où il s'arrête.</p>
  *
  * <p>Elle s'ouvre aussi à la demande, depuis « Configurations » : on renouvelle avant le terme,
  * ou l'on remplace un essai par la licence achetée.</p>
@@ -37,7 +37,8 @@ import { hasAnyPermission } from '../../utils/auth/auth-utils';
         @if (etat) {
             <p-dialog [(visible)]="visible" [modal]="true" [closable]="estFermable" [draggable]="false"
                       [closeOnEscape]="estFermable" (onHide)="fermer()"
-                      [style]="{ width: '38rem' }" styleClass="licence-dialog">
+                      [style]="{ width: '38rem' }" styleClass="licence-dialog"
+                      maskStyleClass="qs-mask-flou">
 
                 <ng-template pTemplate="header">
                     <div class="flex items-center gap-3">
@@ -84,17 +85,23 @@ import { hasAnyPermission } from '../../utils/auth/auth-utils';
                             <span>{{ erreur }}</span>
                         </div>
                     }
+
+                    @if (etat.statut === 'ABSENTE') {
+                        <!-- L'essai était auparavant accordé par l'installation elle-même, d'un
+                             clic. Il est désormais émis et signé par l'éditeur, seul en mesure de
+                             le compter : une installation ne pouvait pas le faire pour elle-même,
+                             effacer une ligne suffisait à en obtenir un nouveau. -->
+                        <div class="flex items-start gap-2 mt-3 p-3 border-round bg-surface-100 text-surface-700 text-sm">
+                            <i class="pi pi-clock mt-1"></i>
+                            <span>Pas encore de licence ? Demandez-en une à l'éditeur, essai gratuit
+                                  compris : elle vous sera remise sous la même forme, à coller
+                                  ci-dessus.</span>
+                        </div>
+                    }
                 }
 
                 <ng-template pTemplate="footer">
                     @if (peutInstaller) {
-                        @if (etat.essaiDisponible) {
-                            <!-- L'essai n'est proposé qu'une fois : le rappeler ici évite qu'on le
-                                 consomme sans le savoir. -->
-                            <p-button label="Essayer 7 jours gratuitement" icon="pi pi-clock"
-                                      severity="secondary" [outlined]="true" [loading]="enCours"
-                                      (onClick)="essayer()"></p-button>
-                        }
                         <p-button label="Installer la licence" icon="pi pi-check"
                                   [loading]="enCours" [disabled]="!licence.trim()"
                                   (onClick)="installer()"></p-button>
@@ -242,28 +249,6 @@ export class LicenceDialogComponent implements OnInit {
                 this.messages.add({
                     severity: 'success',
                     summary: 'Licence installée',
-                    detail: etat.message,
-                    life: 8000
-                });
-            },
-            error: (e: Error) => {
-                this.enCours = false;
-                this.erreur = e.message;
-            }
-        });
-    }
-
-    essayer(): void {
-        this.erreur = '';
-        this.enCours = true;
-        this.service.demarrerEssai().subscribe({
-            next: (etat) => {
-                this.enCours = false;
-                this.ouvertureForcee = false;
-                this.visible = this.doitSAfficher;
-                this.messages.add({
-                    severity: 'success',
-                    summary: 'Essai démarré',
                     detail: etat.message,
                     life: 8000
                 });

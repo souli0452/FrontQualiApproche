@@ -32,7 +32,6 @@ describe('LicenceOuverteDirective', () => {
         joursRestants: 200,
         modules: [],
         utilisateursMax: 0,
-        essaiDisponible: false,
         message: '',
         ...partiel
     });

@@ -5,6 +5,7 @@ import { MessageService } from 'primeng/api';
 import { Observable, Subject, forkJoin, of, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '../../../prime-ng.module';
+import { LicenceService } from '../../services/licence.service';
 import { Parametre, ParametreService } from '../../services/parametre.service';
 import { hasAnyPermission } from '../../utils/auth/auth-utils';
 import { showToast, StatusEnum } from '../../utils/global/global-utils';
@@ -37,6 +38,7 @@ interface ReglageRequis {
         <p-toast></p-toast>
         <p-dialog [(visible)]="ouvert" [modal]="true" [closable]="false" [draggable]="false"
                   [resizable]="false" [closeOnEscape]="false" [style]="{ width: '34rem' }"
+                  maskStyleClass="qs-mask-flou"
                   header="Responsable qualité à renseigner">
             <div class="flex flex-col gap-4">
                 <p-message severity="warn" [closable]="false">
@@ -100,12 +102,15 @@ export class AppReglagesRequis implements OnInit, OnDestroy {
     formulaire: FormGroup;
 
     private existants: Record<string, Parametre> = {};
+    /** Les réglages ont déjà été lus : l'état de licence est réémis, la vérification ne l'est pas. */
+    private verifie = false;
     private readonly destroy$ = new Subject<boolean>();
 
     constructor(
         private readonly fb: FormBuilder,
         private readonly service: ParametreService,
-        private readonly messageService: MessageService
+        private readonly messageService: MessageService,
+        private readonly licence: LicenceService
     ) {
         this.formulaire = this.fb.group({
             nom: ['', [Validators.required]],
@@ -113,11 +118,42 @@ export class AppReglagesRequis implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Le dialogue attend que la licence ouvre les actions, puis s'impose aussitôt.
+     *
+     * <p>Le responsable qualité s'écrit dans les réglages de l'organisation, et la passerelle
+     * refuse toute écriture tant que la licence n'est pas valide — {@code /parametres} ne figure
+     * pas parmi ses exemptions, contrairement à l'installation d'une licence. Présenter cette
+     * saisie en premier sur une installation sans licence enfermerait donc l'administrateur devant
+     * une fenêtre infermable dont l'unique bouton répond 402.</p>
+     *
+     * <p>Les deux fenêtres s'ouvraient jusqu'ici en même temps, l'une par-dessus l'autre, et
+     * l'enregistrement du responsable qualité échouait sans que la raison soit lisible. Elles se
+     * suivent désormais : la licence d'abord si rien n'est posé — il n'y a de toute façon rien
+     * d'autre à faire —, le responsable qualité dès que les actions sont ouvertes, avant toute
+     * autre configuration.</p>
+     */
     ngOnInit(): void {
         if (!hasAnyPermission(['config-global-write', 'CONFIG_GLOBAL_MANAGE'])) {
             return;
         }
-        this.verifier();
+
+        this.licence.etat$.pipe(takeUntil(this.destroy$)).subscribe((etat) => {
+            if (!etat?.actionsOuvertes || this.verifie) {
+                return;
+            }
+            // Une seule fois : l'état de licence est réémis à chaque installation ou
+            // renouvellement, et rouvrir le dialogue après coup reviendrait à redemander une
+            // saisie déjà faite.
+            this.verifie = true;
+            this.verifier();
+        });
+
+        // Le dialogue de licence charge le même état de son côté ; ne pas s'y fier permet à ce
+        // composant de rester juste s'il venait à être monté seul.
+        if (!this.licence.etat) {
+            this.licence.charger().subscribe({ error: () => undefined });
+        }
     }
 
     ngOnDestroy(): void {
