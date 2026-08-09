@@ -26,6 +26,8 @@ export interface UserResponse{
   firstName: string;
   lastName: string;
   fonction?: string | null;
+  phoneNumber?: string | null;
+  emailVerified?: boolean;
   structure: string;
   roles: string[];
   permissions?: string[];

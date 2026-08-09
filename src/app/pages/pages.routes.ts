@@ -454,7 +454,7 @@ export default [
             },
         ]
     },
-    { path: 'profil', component: ProfilComponent, title: 'Liste des Profils' },
+    { path: 'profil', component: ProfilComponent, title: 'Mon profil' },
     {
         path: 'type-nc', component: SourceNonConformite, title: 'Types de non conformité',
         canActivate: [permissionGuard],

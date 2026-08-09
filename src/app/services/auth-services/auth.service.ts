@@ -7,7 +7,7 @@ import { map } from 'rxjs/operators';
 import { QualiUrlConfig } from '../quali-url-configs';
 import { currentUserState } from './auth.state';
 import { BaseCrudService } from '../base-crud.service';
-import { AuthData, LoginRequest } from '../../models/auth.model';
+import { AuthData, LoginRequest, UserResponse } from '../../models/auth.model';
 import { ApiItemResponse, ApiResponse } from '../../models/response.model';
 import { NgxPermissionsService } from 'ngx-permissions';
 
@@ -73,6 +73,30 @@ export class AuthService extends BaseCrudService<AuthData, number> {
                 currentUserState.next(null);
                 this.isLoggedIn.next(false);
                 return of(null);
+            })
+        );
+    }
+
+    /**
+     * Libre-service : l'utilisateur met à jour son nom, son prénom et son téléphone.
+     *
+     * Distinct de `updateUser`, réservé à l'administration des comptes : celui-ci porte aussi
+     * l'activation et les rôles, absents d'un formulaire de profil — l'employer ici désactiverait
+     * le compte de l'intéressé et effacerait ses rôles applicatifs.
+     *
+     * L'état courant est relu ensuite, faute de quoi la barre supérieure continuerait d'afficher
+     * l'ancien nom jusqu'à la prochaine ouverture de session.
+     */
+    updateMyProfile(profil: { firstName: string; lastName: string; phoneNumber?: string | null }): Observable<ApiItemResponse<UserResponse>> {
+        return this.http.put<ApiItemResponse<UserResponse>>(QualiUrlConfig.USER, profil, {
+            withCredentials: true
+        }).pipe(
+            map((response: ApiItemResponse<UserResponse>) => {
+                // `/me` rend la fiche à plat ; `currentUserState` la porte typée `AuthData` depuis
+                // l'origine, et `getMe()` fait de même. On s'y conforme ici plutôt que de retyper
+                // toute la chaîne d'authentification pour un seul appel.
+                currentUserState.next(response.data as unknown as AuthData);
+                return response;
             })
         );
     }

@@ -1,20 +1,196 @@
-<div class="profile-container">
-    <div class="profile-header">
-        <p-avatar [style]="{ 'background-color': '#007ad9', color: 'white' }">
-            <span>{{ user?.firstName ? user?.firstName?.charAt(0)?.toUpperCase() : '' }}</span>
-        </p-avatar>
-        <h2>{{ user?.firstName }} {{ user?.lastName }}</h2>
-        <p>{{ user?.email }}</p>
+<p-toast></p-toast>
+
+<div class="page-layout profil">
+
+    <!-- Titre de page -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0 m-0">Mon profil</h1>
+        <p class="text-sm text-surface-500 dark:text-surface-400 mt-1 mb-0">
+            Vos informations personnelles et la sécurité de votre compte.
+        </p>
     </div>
 
-    <div class="profile-details">
-        <p><strong>Nom d'utilisateur :</strong> {{ user?.username }}</p>
-        <p><strong>Fonction :</strong> </p>
-        <!-- <p><strong>Structure : {{userStructure.libelleLong}}</strong>  </p> -->
-    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-    <div class="profile-actions">
-        <button pButton label="Modifier le Profil" icon="pi pi-user-edit" (click)="editProfile()"></button>
-        <button pButton label="Changer le mot de passe" icon="pi pi-lock" (click)="changePassword()"></button>
+        <!-- ================= Carte d'identité ================= -->
+        <section class="lg:col-span-4 rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 overflow-hidden">
+
+            <div class="h-24 bg-primary-500"></div>
+
+            <div class="px-6 pb-6 -mt-12">
+                <div class="w-24 h-24 rounded-full bg-primary-600 text-white border-4 border-surface-0 dark:border-surface-900
+                            flex items-center justify-center text-2xl font-semibold tracking-wide select-none">
+                    {{ initiales }}
+                </div>
+
+                <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mt-4 mb-1 break-words">
+                    {{ nomComplet }}
+                </h2>
+                <p class="text-sm text-surface-500 dark:text-surface-400 m-0" *ngIf="user?.fonction">
+                    {{ user?.fonction }}
+                </p>
+
+                <div class="flex flex-wrap gap-2 mt-4" *ngIf="roles.length">
+                    <p-tag *ngFor="let role of roles" [value]="role" severity="secondary" [rounded]="true"></p-tag>
+                </div>
+
+                <p-divider></p-divider>
+
+                <dl class="m-0 space-y-4">
+                    <div>
+                        <dt class="text-[11px] font-semibold uppercase tracking-wider text-surface-400">Identifiant</dt>
+                        <dd class="text-sm text-surface-800 dark:text-surface-100 m-0 mt-1 break-all">{{ user?.username || '—' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-[11px] font-semibold uppercase tracking-wider text-surface-400">Adresse électronique</dt>
+                        <dd class="text-sm text-surface-800 dark:text-surface-100 m-0 mt-1 break-all">{{ user?.email || '—' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-[11px] font-semibold uppercase tracking-wider text-surface-400">Structure</dt>
+                        <dd class="text-sm text-surface-800 dark:text-surface-100 m-0 mt-1">
+                            {{ userStructure?.libelleLong || userStructure?.libelleCourt || '—' }}
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+        </section>
+
+        <!-- ================= Colonne de droite ================= -->
+        <div class="lg:col-span-8 flex flex-col gap-6">
+
+            <!-- ---------- Informations personnelles ---------- -->
+            <section class="rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900">
+                <header class="px-6 py-4 border-b border-surface-200 dark:border-surface-700">
+                    <h2 class="text-base font-semibold text-surface-900 dark:text-surface-0 m-0">Informations personnelles</h2>
+                    <p class="text-xs text-surface-500 dark:text-surface-400 mt-1 mb-0">
+                        Ces informations apparaissent dans les dossiers que vous traitez et dans les courriels que la plateforme envoie.
+                    </p>
+                </header>
+
+                <form [formGroup]="identiteForm" (ngSubmit)="enregistrerIdentite()" novalidate>
+                    <div class="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                        <div>
+                            <label for="firstName" class="block text-sm font-medium text-surface-700 dark:text-surface-200 mb-2">
+                                Prénom <span class="text-red-500">*</span>
+                            </label>
+                            <input id="firstName" pInputText type="text" class="w-full" formControlName="firstName"
+                                   autocomplete="given-name" placeholder="Votre prénom" />
+                            <small class="block mt-1 text-red-500"
+                                   *ngIf="identiteForm.get('firstName')?.touched && identiteForm.get('firstName')?.errors?.['required']">
+                                Le prénom est obligatoire.
+                            </small>
+                        </div>
+
+                        <div>
+                            <label for="lastName" class="block text-sm font-medium text-surface-700 dark:text-surface-200 mb-2">
+                                Nom <span class="text-red-500">*</span>
+                            </label>
+                            <input id="lastName" pInputText type="text" class="w-full" formControlName="lastName"
+                                   autocomplete="family-name" placeholder="Votre nom" />
+                            <small class="block mt-1 text-red-500"
+                                   *ngIf="identiteForm.get('lastName')?.touched && identiteForm.get('lastName')?.errors?.['required']">
+                                Le nom est obligatoire.
+                            </small>
+                        </div>
+
+                        <div class="md:col-span-2 md:max-w-sm">
+                            <label for="phoneNumber" class="block text-sm font-medium text-surface-700 dark:text-surface-200 mb-2">
+                                Téléphone
+                            </label>
+                            <input id="phoneNumber" pInputText type="tel" class="w-full" formControlName="phoneNumber"
+                                   autocomplete="tel" placeholder="+226 70 00 00 00" />
+                            <small class="block mt-1 text-surface-500 dark:text-surface-400"
+                                   *ngIf="!(identiteForm.get('phoneNumber')?.touched && identiteForm.get('phoneNumber')?.errors)">
+                                Facultatif. Laissez vide pour retirer le numéro enregistré.
+                            </small>
+                            <small class="block mt-1 text-red-500"
+                                   *ngIf="identiteForm.get('phoneNumber')?.touched && identiteForm.get('phoneNumber')?.errors?.['pattern']">
+                                Numéro non reconnu. Chiffres, espaces et indicatif sont acceptés.
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="px-6 pb-5">
+                        <p-message severity="secondary" styleClass="w-full text-sm">
+                            Votre identifiant et votre adresse électronique sont tenus par l'administrateur de la plateforme.
+                        </p-message>
+                    </div>
+
+                    <footer class="px-6 py-4 border-t border-surface-200 dark:border-surface-700 flex justify-end gap-2">
+                        <button pButton type="button" label="Annuler" severity="secondary" [text]="true"
+                                [disabled]="identiteInchangee || enregistrementIdentite" (click)="annulerIdentite()"></button>
+                        <button pButton type="submit" label="Enregistrer" icon="pi pi-check"
+                                [loading]="enregistrementIdentite" [disabled]="identiteInchangee"></button>
+                    </footer>
+                </form>
+            </section>
+
+            <!-- ---------- Sécurité ---------- -->
+            <section class="rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900">
+                <header class="px-6 py-4 border-b border-surface-200 dark:border-surface-700">
+                    <h2 class="text-base font-semibold text-surface-900 dark:text-surface-0 m-0">Mot de passe</h2>
+                    <p class="text-xs text-surface-500 dark:text-surface-400 mt-1 mb-0">
+                        Votre mot de passe actuel vous est demandé pour confirmer que la demande vient bien de vous.
+                    </p>
+                </header>
+
+                <form [formGroup]="motDePasseForm" (ngSubmit)="changerMotDePasse()" novalidate>
+                    <div class="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                        <div class="md:col-span-2 md:max-w-sm">
+                            <label for="actuel" class="block text-sm font-medium text-surface-700 dark:text-surface-200 mb-2">
+                                Mot de passe actuel <span class="text-red-500">*</span>
+                            </label>
+                            <p-password inputId="actuel" formControlName="actuel" [toggleMask]="true" [feedback]="false"
+                                        autocomplete="current-password" styleClass="w-full" inputStyleClass="w-full"></p-password>
+                            <small class="block mt-1 text-red-500"
+                                   *ngIf="motDePasseForm.get('actuel')?.touched && motDePasseForm.get('actuel')?.errors?.['required']">
+                                Votre mot de passe actuel est obligatoire.
+                            </small>
+                        </div>
+
+                        <div>
+                            <label for="nouveau" class="block text-sm font-medium text-surface-700 dark:text-surface-200 mb-2">
+                                Nouveau mot de passe <span class="text-red-500">*</span>
+                            </label>
+                            <p-password inputId="nouveau" formControlName="nouveau" [toggleMask]="true" [feedback]="false"
+                                        autocomplete="new-password" styleClass="w-full" inputStyleClass="w-full"></p-password>
+                        </div>
+
+                        <div>
+                            <label for="confirmation" class="block text-sm font-medium text-surface-700 dark:text-surface-200 mb-2">
+                                Confirmation <span class="text-red-500">*</span>
+                            </label>
+                            <p-password inputId="confirmation" formControlName="confirmation" [toggleMask]="true" [feedback]="false"
+                                        autocomplete="new-password" styleClass="w-full" inputStyleClass="w-full"></p-password>
+                            <small class="block mt-1 text-red-500"
+                                   *ngIf="motDePasseForm.get('confirmation')?.touched && motDePasseForm.errors?.['discordance']">
+                                Les deux saisies ne correspondent pas.
+                            </small>
+                        </div>
+
+                        <!-- Règles vérifiées en direct plutôt qu'un refus après l'envoi -->
+                        <div class="md:col-span-2">
+                            <ul class="list-none p-0 m-0 flex flex-wrap gap-x-6 gap-y-2">
+                                <li *ngFor="let regle of reglesMotDePasse" class="flex items-center gap-2 text-sm"
+                                    [ngClass]="regle.satisfaite ? 'text-green-600 dark:text-green-400' : 'text-surface-500 dark:text-surface-400'">
+                                    <i class="pi text-xs" [ngClass]="regle.satisfaite ? 'pi-check-circle' : 'pi-circle'"></i>
+                                    {{ regle.libelle }}
+                                </li>
+                            </ul>
+                            <small class="block mt-3 text-red-500" *ngIf="motDePasseForm.errors?.['inchange']">
+                                Le nouveau mot de passe doit différer de l'actuel.
+                            </small>
+                        </div>
+                    </div>
+
+                    <footer class="px-6 py-4 border-t border-surface-200 dark:border-surface-700 flex justify-end">
+                        <button pButton type="submit" label="Modifier le mot de passe" icon="pi pi-lock"
+                                [loading]="enregistrementMotDePasse" [disabled]="motDePasseForm.invalid"></button>
+                    </footer>
+                </form>
+            </section>
+        </div>
     </div>
 </div>
