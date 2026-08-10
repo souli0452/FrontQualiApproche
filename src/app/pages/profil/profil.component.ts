@@ -14,6 +14,16 @@ import { Structure } from '../parametrages/structure/structure-config/structure'
 /** Même forme que celle qu'accepte le back : indicatif, espaces et ponctuation usuelle. */
 const FORME_TELEPHONE = /^[+()./\-\s0-9]{6,25}$/;
 
+/**
+ * Longueur minimale du mot de passe.
+ *
+ * <p>Alignée sur l'écran de réinitialisation, qui exige huit caractères : deux seuils différents
+ * selon la porte empruntée feraient refuser ici un mot de passe accepté là, sans que rien ne
+ * l'explique. La règle affichée et celle qui valide sortent de cette même constante, pour qu'elles
+ * ne puissent pas diverger.</p>
+ */
+const LONGUEUR_MINIMALE = 8;
+
 @Component({
     selector: 'app-profil',
     standalone: true,
@@ -127,7 +137,7 @@ export class ProfilComponent implements OnInit, OnDestroy {
     get reglesMotDePasse(): { libelle: string; satisfaite: boolean }[] {
         const nouveau: string = this.motDePasseForm?.get('nouveau')?.value ?? '';
         return [
-            { libelle: '12 caractères au minimum', satisfaite: nouveau.length >= 12 },
+            { libelle: '8 caractères au minimum', satisfaite: nouveau.length >= LONGUEUR_MINIMALE },
             { libelle: 'une minuscule et une majuscule', satisfaite: /[a-z]/.test(nouveau) && /[A-Z]/.test(nouveau) },
             { libelle: 'un chiffre', satisfaite: /\d/.test(nouveau) },
             { libelle: 'un caractère spécial', satisfaite: /[^A-Za-z0-9]/.test(nouveau) }
@@ -185,7 +195,7 @@ export class ProfilComponent implements OnInit, OnDestroy {
         this.motDePasseForm = this.fb.group(
             {
                 actuel: [null, [Validators.required]],
-                nouveau: [null, [Validators.required, Validators.minLength(12), this.robustesse]],
+                nouveau: [null, [Validators.required, Validators.minLength(LONGUEUR_MINIMALE), this.robustesse]],
                 confirmation: [null, [Validators.required]]
             },
             { validators: [this.concordance, this.nouveauteDuMotDePasse] }
