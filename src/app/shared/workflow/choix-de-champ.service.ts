@@ -97,6 +97,14 @@ export class ChoixDeChampService {
                         value: utilisateur.userId ?? utilisateur.id
                     })))
                 );
+            case '@CIRCUITS_TRAITEMENT':
+                // Les deux seuls circuits de traitement d'une non-conformité. Une liste écrite dans
+                // le circuit aurait fait retenir le libellé comme valeur, et corriger l'orthographe
+                // depuis l'éditeur aurait suffi à rompre le lien avec l'énumération du serveur.
+                return of([
+                    { label: 'Action corrective', value: 'ACTION_CORRECTIVE' },
+                    { label: 'Correction', value: 'CORRECTION' }
+                ]);
             default:
                 return of([]);
         }

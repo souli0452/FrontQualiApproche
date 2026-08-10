@@ -22,6 +22,33 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
         return this.http.get<any>(`${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/count-by-status/${id}`, {observe: 'response'});
     }
 
+    /**
+     * Enregistre la déclaration et la soumet aussitôt au pilote du processus.
+     *
+     * <p>Enregistrer et soumettre étaient deux visites : l'agent décrivait son constat, quittait
+     * l'écran, puis devait retrouver son dossier dans une liste pour le soumettre — alors qu'il
+     * n'avait le plus souvent rien à y ajouter. Le brouillon reste offert par le bouton voisin, et
+     * garde tout son sens pour qui veut relire ou compléter sa description plus tard.</p>
+     *
+     * <p>C'est le serveur qui fait franchir l'étape, par le moteur de workflow : sans quoi il n'y
+     * aurait ni historique, ni courriel au pilote, ni habilitation vérifiée. L'écran ne décrète
+     * plus l'état d'arrivée, il le lit dans la réponse.</p>
+     */
+    creerEtSoumettre(payload: Partial<NonConformite>): Observable<ApiItemResponse<NonConformite>> {
+        return this.http.post<ApiItemResponse<NonConformite>>(
+            `${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/create`, payload,
+            { params: new HttpParams().set('soumettre', true) });
+    }
+
+    /**
+     * Soumet une déclaration restée en brouillon, pour l'agent qui a préféré la relire avant de
+     * l'envoyer. Même geste que ci-dessus, joué plus tard.
+     */
+    soumettre(id: string): Observable<ApiItemResponse<NonConformite>> {
+        return this.http.post<ApiItemResponse<NonConformite>>(
+            `${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/${id}/soumettre`, {});
+    }
+
     public notificationsNC$ = new BehaviorSubject<any>({
         total: 0,
         brouillons: 0,

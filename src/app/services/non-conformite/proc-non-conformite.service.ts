@@ -72,7 +72,10 @@ export class ProcNonConformiteService {
         return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL_By_Structure+id, {observe: 'response', headers: {'X-Skip-Loader': 'true'}});
     }
     updateNomConformite(demande: any, id: string): Observable<HttpResponse<any>> {
-        return this.http.put<any>(NonConformiteUrlConfig.UPDATE_NON_CONFORMITE + id, demande, {observe: 'response'});
+        // « UPDATE_NON_CONFORMITE » vise /update/many : lui accoler un identifiant donnait
+        // « /update/many<id> », que rien ne dessert — l'appel partait en 404 sans que l'écran
+        // s'en aperçoive.
+        return this.http.put<any>(NonConformiteUrlConfig.miseAJour(id), demande, {observe: 'response'});
     }
     updateNomConformites(demandes: any[]): Observable<HttpResponse<any>> {
         console.log('Route vers le BACKEND Demandes->',demandes);

@@ -115,6 +115,9 @@ export class FormTraitementComponent {
             }
 
             this.editForm.patchValue(patchValues);
+            // Les participants sont saisis à part, hors du formulaire réactif : ils s'enregistrent
+            // au fil de l'eau, la fiche n'ayant plus de bouton qui la persiste en bloc.
+            this.participants = [...(this.demande.participants ?? [])];
             if (this.demande.planActions?.length > 0) {
                 this.planActions = this.demande.planActions;
             }
@@ -140,7 +143,9 @@ export class FormTraitementComponent {
             justificationPilote: clean(formValues.justificationPilote),
             pertinanceRsSuivi: clean(formValues.pertinanceRsSuivi),
             numeroFdac: clean(formValues.numeroFdac),
-            participants: formValues.participants ?? [],
+            // Les participants ne sont plus repris d'ici : le formulaire réactif porte un contrôle
+            // du même nom, qu'aucun champ ne remplit et qui vaut donc [''] — il écrasait la liste
+            // saisie à côté par un participant sans nom.
             circuit: clean(formValues.circuit)
         });
 
@@ -558,6 +563,80 @@ loadStuctures() {
     /** À la validation, le pilote ne reprend pas la description de l'action : il en nomme le responsable. */
     get designationSeule(): boolean {
         return this.demande?.etatTraitement === this.BtnActions.VALIDATION;
+    }
+
+    /**
+     * Enregistre les participants à l'analyse dès qu'un nom est ajouté ou retiré.
+     *
+     * <p>La fiche n'a plus de bouton d'enregistrement — les boutons statiques ont cédé la place aux
+     * décisions du circuit — et une saisie seulement locale se perdrait au premier rechargement,
+     * sans que rien ne le dise. Les autres champs de la fiche sont des champs d'étape, recueillis
+     * par le dialogue de décision ; les participants, eux, appartiennent au dossier et se
+     * complètent au fil de l'analyse, avant même qu'aucune décision ne soit prise.</p>
+     */
+    enregistrerLesParticipants() {
+        if (!this.demande?.id) {
+            return;
+        }
+        // Seuls les participants : la fiche entière porterait avec elle des champs que d'autres
+        // écrans saisissent, et les écraserait au passage.
+        this.service.updateNomConformite(
+            { id: this.demande.id, participants: this.participants ?? [] }, this.demande.id).subscribe({
+            next: () => this.demande.participants = this.participants ?? [],
+            error: () => this.messageService.add({
+                severity: 'error', summary: 'Enregistrement impossible',
+                detail: "Les participants n'ont pas pu être enregistrés.", life: 5000
+            })
+        });
+    }
+
+    /**
+     * La cause est-elle demandée sur ce dossier ?
+     *
+     * <p>Elle dépend du circuit de traitement retenu par le responsable qualité. En
+     * <b>correction</b>, on remet en conformité ce qui ne l'était pas sans avoir à remonter à ce
+     * qui l'a produit : la colonne n'existe pas, et la présenter ferait écrire n'importe quoi pour
+     * remplir le formulaire. En <b>action corrective</b>, elle est le cœur du sujet — une action
+     * corrective qui ne vise aucune cause n'est qu'une correction déguisée.</p>
+     *
+     * <p>Un dossier qui ne porte pas encore de circuit la demande : c'est la plus exigeante des deux
+     * lectures, et mieux vaut la recueillir à tort que découvrir plus tard qu'elle manque.</p>
+     */
+    get causeDemandee(): boolean {
+        return this.demande?.circuit !== 'CORRECTION';
+    }
+
+    /**
+     * Ce qui manque encore à l'action en cours de saisie.
+     *
+     * <p>Un plan se soumet entier : le supérieur ne peut se prononcer que sur une action dont il
+     * lit la cause, la solution retenue, l'échéance et le critère auquel le résultat sera
+     * confronté. Le dire ici, pendant la saisie, plutôt que de laisser l'utilisateur buter sur une
+     * transition fermée trois écrans plus loin.</p>
+     *
+     * <p>Le responsable n'en fait pas partie : la personne imputée ne le connaît pas toujours, et
+     * c'est le pilote qui le désigne à la validation.</p>
+     */
+    get colonnesManquantes(): string[] {
+        const vide = (valeur: any) => !valeur || String(valeur).trim() === '';
+        const manquantes: string[] = [];
+
+        if (vide(this.planAction?.actionCorrective)) {
+            manquantes.push("l'action proposée");
+        }
+        if (this.causeDemandee && vide(this.planAction?.causeIdentifiees)) {
+            manquantes.push('la cause');
+        }
+        if (vide(this.planAction?.solutionRetenues)) {
+            manquantes.push('la solution retenue');
+        }
+        if (!this.planAction?.dateEcheance) {
+            manquantes.push("l'échéance");
+        }
+        if (vide(this.planAction?.critereEfficacite)) {
+            manquantes.push("le critère d'efficacité");
+        }
+        return manquantes;
     }
     hideDialog() {
         this.displayDialog = false;

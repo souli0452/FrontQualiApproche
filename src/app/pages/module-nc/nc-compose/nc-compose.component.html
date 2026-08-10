@@ -90,15 +90,25 @@
                     (click)="goBack()">
             </button>
 
+            <!-- Deux issues à la saisie, et l'agent choisit. Enregistrer laisse la déclaration en
+                 brouillon, qu'il pourra relire et compléter ; soumettre l'envoie au pilote dans la
+                 foulée, s'il estime sa description complète. Il fallait auparavant passer par les
+                 deux, en deux visites. -->
             <div class="flex items-center gap-2">
-                <button siLicenceOuverte pButton pRipple class="p-button-primary font-bold" label="Enregistrer"
+                <button siLicenceOuverte pButton pRipple class="p-button-outlined font-bold"
+                        label="Enregistrer le brouillon" icon="pi pi-save"
                         *ngIf="!nonConformite.id || nonConformite.status === 'DRAFT'"
                         [disabled]="!nc.typeNonformite||!nc.niveauNonConformite"
+                        pTooltip="La déclaration reste modifiable et n'est transmise à personne."
+                        tooltipPosition="top"
                         (click)="onSave(false)">
                 </button>
-                <button siLicenceOuverte pButton pRipple class="p-button-info font-bold" label="Publier"
+                <button siLicenceOuverte pButton pRipple class="p-button-primary font-bold"
+                        label="Soumettre au pilote" icon="pi pi-send"
                         *ngIf="!nonConformite.id || nonConformite.status === 'DRAFT'"
                         [disabled]="!nc.typeNonformite||!nc.niveauNonConformite"
+                        pTooltip="La déclaration part immédiatement au pilote de votre processus."
+                        tooltipPosition="top"
                         (click)="onSave(true)">
                 </button>
                 <button siLicenceOuverte pButton pRipple class="p-button-primary font-bold" label="Modifier"

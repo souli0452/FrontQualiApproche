@@ -40,4 +40,15 @@ export class NonConformiteUrlConfig {
     static fichiers(nonConformiteId: string): string {
         return `${AMELIORATION_SERVICE}/non-conformite/${nonConformiteId}/fichiers`;
     }
+
+    /**
+     * Mise à jour d'un dossier.
+     *
+     * <p>Distincte de {@code UPDATE_NON_CONFORMITE}, qui vise {@code /update/many} : accoler un
+     * identifiant à celle-ci donnait « /update/many&lt;id&gt; », une adresse qu'aucun point d'entrée
+     * ne dessert.</p>
+     */
+    static miseAJour(nonConformiteId: string): string {
+        return `${AMELIORATION_SERVICE}/non-conformite/update/${nonConformiteId}`;
+    }
 }

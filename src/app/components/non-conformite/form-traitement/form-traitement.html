@@ -8,6 +8,38 @@
      sur la non-conformité, sans passer par le moteur. -->
 <app-details-dialog [demande]="demande"></app-details-dialog>
 
+<!-- Les personnes ayant pris part à l'analyse. Le champ existait en base et s'affichait sur la
+     fiche, mais aucun écran ne l'écrivait : la rubrique restait donc vide sur tous les dossiers.
+     Une non-conformité s'analyse rarement seul, et savoir qui a cherché les causes fait partie de
+     la traçabilité de l'analyse. Saisi là où elle se mène — au traitement, par la personne
+     imputée — et lu partout ailleurs. -->
+@if (demande.etatTraitement == BtnActions.TRAITEMENT) {
+    <div class="col-12">
+        <div class="bg-white border-1 surface-border shadow-1 border-round-xl p-4 mt-4">
+            <div class="flex items-center gap-2 mb-2">
+                <label for="participants" class="font-bold text-900">Participants à l'analyse</label>
+                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors"
+                   (click)="infoParticipants.toggle($event)"></i>
+            </div>
+            <p-popover #infoParticipants>
+                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                    Les personnes qui ont pris part à la recherche des causes avec vous. Saisissez un nom
+                    puis validez par Entrée pour l'ajouter à la liste.
+                </div>
+            </p-popover>
+            <!-- Saisie libre en jetons : « p-chips » a disparu de PrimeNG 19, et l'autocomplétion
+                 multiple sans source de suggestions en tient lieu. -->
+            <p-autocomplete inputId="participants" [(ngModel)]="participants"
+                            [multiple]="true" [typeahead]="false" [fluid]="true"
+                            placeholder="Nom, puis Entrée"
+                            (onKeyUp)="null"
+                            (onSelect)="enregistrerLesParticipants()"
+                            (onUnselect)="enregistrerLesParticipants()">
+            </p-autocomplete>
+        </div>
+    </div>
+}
+
 <!-- Les plans d'action sont visibles dès qu'il y en a, à toutes les étapes.
      Ils ne l'étaient qu'au traitement et à la validation du pilote : le responsable qualité, qui
      doit apprécier leur efficacité pour clore le dossier, ne les voyait donc jamais — il lui était
@@ -25,10 +57,10 @@
                                     @if (demande.etatTraitement == BtnActions.TRAITEMENT) {
                                         <h5 class="m-0 font-bold text-900 text-lg">Plans d'action</h5>
                                         <p class="text-sm text-500 m-0 mt-1">
-                                            Décrivez l'action à mener, son responsable et son échéance pour chaque
-                                            action, puis soumettez le traitement à votre pilote au pied de la fiche.
-                                            Les causes et la solution retenue seront consignées par chaque responsable
-                                            au moment où il traitera son action.
+                                            Recherchez la ou les causes, puis proposez pour chacune une action
+                                            complète&nbsp;: {{ causeDemandee ? 'cause, ' : '' }}solution retenue,
+                                            action proposée, responsable, échéance et critère d'efficacité. Soumettez
+                                            ensuite le traitement à votre pilote, au pied de la fiche.
                                         </p>
                                     } @else if (demande.etatTraitement == BtnActions.VALIDATION) {
                                         <h5 class="m-0 font-bold text-900 text-lg">Validation des plans d'action</h5>
@@ -81,10 +113,18 @@
                                     
                                     <ng-template pTemplate="header">
                                         <tr>
+                                            <!-- Les colonnes du plan d'action, dans l'ordre où il se
+                                                 lit. « Cause » disparaît en circuit Correction : on
+                                                 y remet en conformité sans remonter à l'origine de
+                                                 l'écart, et la colonne serait vide sur toutes les
+                                                 lignes. -->
                                             <th pFrozenColumn alignFrozen="left" class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 70px; text-align: center; z-index: 10;">N°</th>
-                                            <th class="bg-surface-50 text-700 font-semibold" style="min-width: 320px">Action corrective</th>
+                                            <th *ngIf="causeDemandee" class="bg-surface-50 text-700 font-semibold" style="min-width: 240px">Cause</th>
+                                            <th class="bg-surface-50 text-700 font-semibold" style="min-width: 240px">Solution retenue</th>
+                                            <th class="bg-surface-50 text-700 font-semibold" style="min-width: 320px">Action proposée</th>
                                             <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 200px">Responsable</th>
                                             <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 150px">Échéance</th>
+                                            <th class="bg-surface-50 text-700 font-semibold" style="min-width: 240px">Critère d'efficacité</th>
                                             <th class="bg-surface-50 text-700 font-semibold white-space-nowrap text-center" style="min-width: 140px">Étape</th>
                                             <th pFrozenColumn alignFrozen="right" class="bg-surface-50 text-700 font-semibold white-space-nowrap text-center" style="min-width: 130px; z-index: 10;">Actions</th>
                                         </tr>
@@ -92,6 +132,18 @@
                                     <ng-template pTemplate="body" let-plan>
                                         <tr class="text-sm">
                                             <td pFrozenColumn alignFrozen="left" class="font-bold text-600 text-center bg-white" style="z-index: 1;">{{plan.numeroOdre}}</td>
+                                            <td *ngIf="causeDemandee">
+                                                <div class="line-height-3 text-700 m-0 p-0" style="min-width: 240px; white-space: normal; word-break: break-word;">
+                                                    <span *ngIf="plan.causeIdentifiees; else causeAbsente">{{plan.causeIdentifiees}}</span>
+                                                    <ng-template #causeAbsente><span class="italic text-400">À renseigner</span></ng-template>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="line-height-3 text-700 m-0 p-0" style="min-width: 240px; white-space: normal; word-break: break-word;">
+                                                    <span *ngIf="plan.solutionRetenues; else solutionAbsente">{{plan.solutionRetenues}}</span>
+                                                    <ng-template #solutionAbsente><span class="italic text-400">À renseigner</span></ng-template>
+                                                </div>
+                                            </td>
                                             <td>
                                                 <div [innerHTML]="plan.actionCorrective" class="line-height-3 text-700 m-0 p-0" style="min-width: 320px; white-space: normal; word-break: break-word;"></div>
                                             </td>
@@ -108,6 +160,12 @@
                                                 <div class="flex items-center gap-2" style="min-width: 150px">
                                                     <i class="pi pi-calendar text-primary-400"></i>
                                                     <span class="text-700 font-medium">{{plan.dateEcheance}}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="line-height-3 text-700 m-0 p-0" style="min-width: 240px; white-space: normal; word-break: break-word;">
+                                                    <span *ngIf="plan.critereEfficacite; else critereAbsent">{{plan.critereEfficacite}}</span>
+                                                    <ng-template #critereAbsent><span class="italic text-400">À renseigner</span></ng-template>
                                                 </div>
                                             </td>
                                             <td class="text-center">
@@ -140,7 +198,7 @@
                                     </ng-template>
                                     <ng-template pTemplate="emptymessage">
                                         <tr>
-                                            <td colspan="6" class="text-center p-5">
+                                            <td [attr.colspan]="causeDemandee ? 9 : 8" class="text-center p-5">
                                                 <div class="flex flex-col items-center justify-center text-500">
                                                     <i class="pi pi-inbox text-4xl mb-3 text-300"></i>
                                                     <span class="font-medium text-lg">Aucun plan d'action défini.</span>
@@ -189,19 +247,48 @@
                            placeholder="À la suite" styleClass="w-full"></p-inputnumber>
         </div>
 
-        <!-- Ce qu'on s'engage à faire. Ce qui aura effectivement été fait — causes et solution
-             retenue — se saisit à l'étape de traitement du plan, par son responsable. -->
+        <!-- La cause, que la personne imputée recherche. Absente du circuit « Correction » : on y
+             remet en conformité ce qui ne l'était pas, sans avoir à remonter à ce qui l'a produit,
+             et la demander ferait écrire n'importe quoi pour remplir le formulaire. -->
+        <div class="col-span-12" *ngIf="!designationSeule && causeDemandee">
+            <div class="flex mb-2 gap-2">
+                <label for="causeIdentifiees" class="font-normal m-0 font-semibold">Cause <span class="text-red-500">*</span></label>
+                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCause.toggle($event)"></i>
+            </div>
+            <p-popover #infoCause>
+                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                    Ce qui a réellement produit l'écart, et non ce qu'on a constaté. Remontez jusqu'à ce sur quoi on peut agir : un contrôle absent, une procédure non diffusée, une compétence non acquise. C'est cette cause que l'action corrective doit supprimer, faute de quoi l'anomalie reviendra.
+                </div>
+            </p-popover>
+            <textarea class="w-full" rows="3" cols="30" pTextarea id="causeIdentifiees" [(ngModel)]="planAction.causeIdentifiees" [autoResize]="true" placeholder="Quelle est l'origine de l'écart constaté ?"></textarea>
+        </div>
+
+        <!-- Ce qu'on a décidé de faire face à cette cause. -->
         <div class="col-span-12" *ngIf="!designationSeule">
             <div class="flex mb-2 gap-2">
-                <label for="actionCorrective" class="font-normal m-0 font-semibold">Action corrective à mener <span class="text-red-500">*</span></label>
+                <label for="solutionRetenues" class="font-normal m-0 font-semibold">Solution retenue <span class="text-red-500">*</span></label>
+                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoSolution.toggle($event)"></i>
+            </div>
+            <p-popover #infoSolution>
+                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
+                    Le parti que vous retenez parmi ceux qui s'offraient — renforcer un contrôle, réviser une procédure, former, modifier un outil. La solution dit <em>quoi</em> ; l'action proposée, juste en dessous, dit <em>comment</em> et par quels gestes concrets.
+                </div>
+            </p-popover>
+            <textarea class="w-full" rows="3" cols="30" pTextarea id="solutionRetenues" [(ngModel)]="planAction.solutionRetenues" [autoResize]="true" placeholder="Quelle solution retenez-vous face à cette cause ?"></textarea>
+        </div>
+
+        <!-- Ce qu'on s'engage à faire, concrètement. -->
+        <div class="col-span-12" *ngIf="!designationSeule">
+            <div class="flex mb-2 gap-2">
+                <label for="actionCorrective" class="font-normal m-0 font-semibold">Action proposée <span class="text-red-500">*</span></label>
                 <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCorrection.toggle($event)"></i>
             </div>
             <p-popover #infoCorrection>
                 <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                    Décrivez l'action à mener, et non le résultat attendu. Elle ne doit pas se limiter à corriger l'erreur constatée (action curative) : elle doit modifier concrètement le processus — mise à jour documentaire, formation, modification technique — pour que l'anomalie ne se reproduise plus. Les causes réellement identifiées et la solution finalement retenue seront consignées par le responsable au moment du traitement.
+                    Décrivez l'action à mener, et non le résultat attendu. Elle ne doit pas se limiter à corriger l'erreur constatée (action curative) : elle doit modifier concrètement le processus — mise à jour documentaire, formation, modification technique — pour que l'anomalie ne se reproduise plus.
                 </div>
             </p-popover>
-            <textarea class="w-full" rows="3" cols="30" pTextarea id="actionCorrective" [(ngModel)]="planAction.actionCorrective" [autoResize]="true" placeholder="Décrivez l'action corrective à mener."></textarea>
+            <textarea class="w-full" rows="3" cols="30" pTextarea id="actionCorrective" [(ngModel)]="planAction.actionCorrective" [autoResize]="true" placeholder="Décrivez l'action à mener."></textarea>
         </div>
 
         <div class="col-span-12 md:col-span-6">
@@ -234,17 +321,29 @@
         </div>
         <div class="col-span-12" *ngIf="!designationSeule">
             <div class="flex mb-2 gap-2">
-                <label for="critereEfficacite" class="font-normal m-0 font-semibold">Critères d'efficacité</label>
+                <label for="critereEfficacite" class="font-normal m-0 font-semibold">Critère d'efficacité <span class="text-red-500">*</span></label>
                 <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="critere.toggle($event)"></i>
             </div>
             <p-popover #critere>
                 <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                    Comment saurez-vous que l'action est efficace ? Précisez les indicateurs de suivi, les méthodes de vérification et les critères de succès.
+                    Comment saurez-vous que l'action est efficace ? Précisez les indicateurs de suivi, les méthodes de vérification et les critères de succès. C'est à ce critère que le responsable qualité confrontera le résultat avant de solder l'action.
                 </div>
             </p-popover>
             <textarea class="w-full" rows="3"cols="30" pTextarea [(ngModel)]="planAction.critereEfficacite" [autoResize]="true" placeholder="Précisez les indicateurs de suivi et les objectifs à atteindre pour clôturer cette action."></textarea>
         </div>
-        
+
+        <!-- Un plan se soumet entier : le dire pendant la saisie plutôt que de laisser l'utilisateur
+             buter sur une transition fermée trois écrans plus loin. L'enregistrement, lui, reste
+             permis — un plan s'écrit progressivement, et refuser de sauvegarder une action à demi
+             rédigée ferait perdre à son auteur ce qu'il vient d'écrire. -->
+        <div class="col-span-12" *ngIf="!designationSeule && colonnesManquantes.length">
+            <p-message severity="warn" styleClass="w-full">
+                <span class="text-sm">
+                    Vous pouvez enregistrer cette action, mais le dossier ne pourra pas être soumis
+                    tant qu'il lui manquera {{ colonnesManquantes.join(', ') }}.
+                </span>
+            </p-message>
+        </div>
 
     </div>
     <ng-template #footer>
@@ -303,8 +402,8 @@
                 messageSansCircuit="Cette action est proposée : elle sera confiée à son responsable à la validation qualité du dossier, et suivra alors son propre circuit."></app-workflow-guidance>
         </div>
 
-        <!-- Le plan se lit en deux temps : ce sur quoi on s'est engagé à la définition de
-             l'action, puis ce que son responsable en a rapporté au traitement. Les mêlanger
+        <!-- Le plan se lit en deux temps : ce que la personne imputée a proposé — l'analyse
+             complète, cause comprise — puis ce qu'il en a été une fois l'action menée. Les mêler
              laissait croire qu'une action était traitée alors qu'on n'en lisait que l'intention. -->
         <div class="col-12">
             <div class="bg-surface-50 dark:bg-surface-900 p-4 rounded-xl border border-surface-200 dark:border-surface-700">
@@ -339,8 +438,22 @@
                     </div>
                 </div>
 
-                <div class="mt-4 bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700">
-                    <span class="text-500 text-sm block mb-2">Action corrective à mener</span>
+                <!-- La cause et la solution retenue relèvent de la proposition : c'est la personne
+                     imputée qui recherche l'une et arrête l'autre, et son supérieur ne peut se
+                     prononcer que sur un plan entier. Elles se lisaient plus bas, parmi ce que le
+                     responsable rapportait une fois l'action menée, si bien qu'on validait une
+                     intention sans savoir à quoi elle répondait. -->
+                <div class="mt-4 bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700"
+                     *ngIf="causeDemandee">
+                    <span class="text-500 text-sm block mb-2">Cause</span>
+                    <div [innerHTML]="planAction.causeIdentifiees || '<span class=\'italic text-500\'>Aucune cause identifiée</span>'" class="line-height-3 text-700 m-0"></div>
+                </div>
+                <div class="mt-3 bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700">
+                    <span class="text-500 text-sm block mb-2">Solution retenue</span>
+                    <div [innerHTML]="planAction.solutionRetenues || '<span class=\'italic text-500\'>Aucune solution retenue</span>'" class="line-height-3 text-700 m-0"></div>
+                </div>
+                <div class="mt-3 bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700">
+                    <span class="text-500 text-sm block mb-2">Action proposée</span>
                     <div [innerHTML]="planAction.actionCorrective || '<span class=\'italic text-500\'>Action non décrite</span>'" class="line-height-3 text-700 m-0"></div>
                 </div>
                 <div class="mt-3 bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700">
@@ -359,30 +472,15 @@
                     <span class="text-xs text-500 font-normal" *ngIf="planAction.dateTraitement">— le {{ planAction.dateTraitement }}</span>
                 </div>
 
-                <div *ngIf="!planAction.causeIdentifiees && !planAction.solutionRetenues && !planAction.observation && !planAction.constatEfficacite"
+                <div *ngIf="!planAction.dateTraitement && !planAction.observation && !planAction.constatEfficacite"
                      class="bg-white dark:bg-surface-800 p-4 rounded-lg border border-dashed border-surface-300 dark:border-surface-600 text-center text-500 italic">
-                    Cette action n'a pas encore été traitée par son responsable.
+                    Cette action n'a pas encore été menée par son responsable.
                 </div>
 
-                <div class="grid" *ngIf="planAction.causeIdentifiees || planAction.solutionRetenues || planAction.observation || planAction.constatEfficacite">
-                    <div class="col-12 md:col-6 flex flex-col">
-                        <div class="flex-1 bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700">
-                            <div class="flex items-center gap-2 mb-2 text-red-500">
-                                <i class="pi pi-exclamation-triangle"></i>
-                                <span class="text-sm font-semibold">Causes identifiées</span>
-                            </div>
-                            <div [innerHTML]="planAction.causeIdentifiees || '<span class=\'italic text-500\'>Aucune cause identifiée</span>'" class="line-height-3 text-700 m-0"></div>
-                        </div>
-                    </div>
-                    <div class="col-12 md:col-6 flex flex-col">
-                        <div class="flex-1 bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700">
-                            <div class="flex items-center gap-2 mb-2 text-green-500">
-                                <i class="pi pi-check-circle"></i>
-                                <span class="text-sm font-semibold">Solution retenue</span>
-                            </div>
-                            <div [innerHTML]="planAction.solutionRetenues || '<span class=\'italic text-500\'>Aucune solution retenue</span>'" class="line-height-3 text-700 m-0"></div>
-                        </div>
-                    </div>
+                <div class="grid" *ngIf="planAction.dateTraitement || planAction.observation || planAction.constatEfficacite">
+                    <!-- Ce qui a été dit à chaque décision se lit dans l'onglet Historique : tout
+                         franchissement exige un commentaire, et il y est conservé avec son auteur
+                         et sa date. -->
                     <!-- Les observations ne sont plus saisies à part : le commentaire exigé à
                          chaque décision les recueille, et l'historique les porte. Le bloc reste
                          pour les actions traitées avant ce changement. -->

@@ -154,19 +154,31 @@ export class NcComposeComponent {
             }
         }
 
-        if (publish) {
-            this.nonConformite.status = NonConformStatus.PUBLISHED;
-            this.nonConformite.etatTraitement = EtapeTraitement.RECEPTION;
-            console.log("NON CONFORMITE " , this.nonConformite);
-            
-        } else if (!this.nonConformite.id) {
+        if (!this.nonConformite.id) {
+            // L'état d'arrivée n'est plus décrété ici. Poser « PUBLISHED » et « RECEPTION » sur
+            // l'objet faisait croire à l'écran que le dossier était parti, alors que le circuit ne
+            // l'avait pas fait franchir : ni historique, ni courriel au pilote, et un dossier que
+            // les listes de traitement ne montraient à personne. C'est le serveur qui joue la
+            // décision, et l'écran lit ce qu'il en advient.
             this.nonConformite.status = NonConformStatus.DRAFT;
         }
 
-        if (this.nonConformite.id != null) {
+        if (this.nonConformite.id != null && publish) {
+            // Un brouillon relu puis soumis : on enregistre les dernières retouches avant de faire
+            // franchir l'étape, sinon le pilote recevrait le dossier tel qu'il était à la visite
+            // précédente.
+            const dejaEnregistre = this.nonConformite.id;
+            this.nonConformiteService.update(this.nonConformite).subscribe({
+                next: () => this.nonConformiteService.soumettre(dejaEnregistre)
+                    .subscribe(this.onResponse(true)),
+                error: this.onResponse(true).error
+            });
+        } else if (this.nonConformite.id != null) {
             this.nonConformiteService.update(this.nonConformite).subscribe(this.onResponse(publish));
+        } else if (publish) {
+            this.nonConformiteService.creerEtSoumettre(this.nonConformite).subscribe(this.onResponse(true));
         } else {
-            this.nonConformiteService.create(this.nonConformite).subscribe(this.onResponse(publish));
+            this.nonConformiteService.create(this.nonConformite).subscribe(this.onResponse(false));
         }
     }
 
@@ -175,8 +187,10 @@ export class NcComposeComponent {
             next: (res: ApiItemResponse<NonConformite>) => { // ✅ correction ici
                 this.messageService.add({
                     severity: 'success',
-                    summary: 'Succès',
-                    detail: res.message || 'La non-conformité a été enregistrée avec succès.'
+                    summary: publish ? 'Non-conformité soumise' : 'Brouillon enregistré',
+                    detail: res.message || (publish
+                        ? "Elle est transmise au pilote du processus, qui en sera prévenu."
+                        : "Vous pourrez la compléter puis la soumettre depuis vos brouillons.")
                 });
 
                 if (!this.editId) {
