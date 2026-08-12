@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, catchError, tap, throwError } from 'rxjs';
+import { REFERENTIEL_SERVICE } from './quali-url-configs';
 
 /**
  * Où en est la licence de cette installation.
@@ -51,7 +52,21 @@ export class LicenceService {
      */
     readonly ouvertureDemandee$ = this.ouverture.asObservable();
 
-    private readonly racine = '/referentiel-service/api/v1/licence';
+    /**
+     * Adresse du service, préfixée par celle de la passerelle comme partout ailleurs.
+     *
+     * <p>Elle était écrite en <b>relatif</b> — {@code /referentiel-service/api/v1/licence} — et ne
+     * fonctionnait que par le proxy du serveur de développement, qui redirige ce préfixe vers la
+     * passerelle. Une fois déployé, il n'y a plus de proxy : l'appel partait sur le domaine du
+     * frontal, dont le serveur répond {@code index.html} à toute route qu'il ne connaît pas — la
+     * page d'accueil de l'application, renvoyée à la place de l'état de la licence.</p>
+     *
+     * <p>Rien ne le signalait comme une panne de réseau : la réponse valait 200, et c'est
+     * l'analyse du JSON qui échouait. L'état restait donc nul, et avec lui tout ce qui l'attend —
+     * ni fenêtre d'activation, ni réglages requis, sur une installation neuve qui n'a pourtant
+     * jamais eu de licence.</p>
+     */
+    private readonly racine = `${REFERENTIEL_SERVICE}/licence`;
 
     /** Ouvre la fenêtre de licence, licence en cours comprise : on renouvelle avant le terme. */
     demanderOuverture(): void {
