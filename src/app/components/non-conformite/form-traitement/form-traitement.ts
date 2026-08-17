@@ -230,13 +230,24 @@ export class FormTraitementComponent {
     }
 
     fetchUsersByStructure() {
-        if (!this.demande?.origineId) return;
+        // Essayer origineId en priorité, sinon utiliser structureSoumissionId
+        const structureId = this.demande?.origineId || this.demande?.structureSoumissionId;
+
+        console.log("🔍 fetchUsersByStructure() appelé !");
+        console.log("   - ID de structure retenu pour le filtre :", structureId);
+
+        if (!structureId) {
+            console.log("   ⚠️ Annulation : aucun ID de structure trouvé.");
+            return;
+        }
 
         this.authService
-            .loadAgentPublicByService(this.demande.origineId)
+            .loadAgentPublicByService(structureId)
             .pipe()
             .subscribe({
                 next: (res) => {
+                    console.log("✅ Réponse de loadAgentPublicByService :", res);
+                    
                     this.usersByStructure = res.data.content || [];
                     this.usersByStructure = this.usersByStructure.map((user: any) => {
                         return {
@@ -253,21 +264,7 @@ export class FormTraitementComponent {
             });
     }
 
-    // loadStuctures() {
-    //     this.structureService
-    //         .getAllStructures()
-    //         .pipe()
-    //         .subscribe({
-    //             next: (resp: HttpResponse<Structure[]>) => {
-    //                 this.structures = resp.body || [];
-    //                 // Ré-essayer le patch si les données arrivent après ngOnInit
-    //                 if (this.demande?.origineId && !this.editForm.get('destination')?.value) {
-    //                     const dest = this.structures.find(s => s.id === this.demande.origineId);
-    //                     if (dest) this.editForm.get('destination')?.patchValue(dest);
-    //                 }
-    //             }
-    //         });
-    // }
+
 
 loadStuctures() {
     this.structureService
@@ -621,9 +618,9 @@ loadStuctures() {
         const vide = (valeur: any) => !valeur || String(valeur).trim() === '';
         const manquantes: string[] = [];
 
-        if (vide(this.planAction?.actionCorrective)) {
-            manquantes.push("l'action proposée");
-        }
+        // if (vide(this.planAction?.actionCorrective)) {
+        //     manquantes.push("l'action proposée");
+        // }
         if (this.causeDemandee && vide(this.planAction?.causeIdentifiees)) {
             manquantes.push('la cause');
         }

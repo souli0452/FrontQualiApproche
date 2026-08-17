@@ -241,11 +241,11 @@
 
         <!-- Le rang de l'action parmi celles du dossier. Laissé vide, le serveur le place à la
              suite : c'est un repère de lecture, non une clé. -->
-        <div class="col-span-12 md:col-span-4" *ngIf="!designationSeule">
+        <!-- <div class="col-span-12 md:col-span-4" *ngIf="!designationSeule">
             <label for="numeroOdre" class="font-normal m-0 font-semibold block mb-2">Ordre</label>
             <p-inputnumber inputId="numeroOdre" [(ngModel)]="ordreSaisi" [min]="1" [useGrouping]="false"
                            placeholder="À la suite" styleClass="w-full"></p-inputnumber>
-        </div>
+        </div> -->
 
         <!-- La cause, que la personne imputée recherche. Absente du circuit « Correction » : on y
              remet en conformité ce qui ne l'était pas, sans avoir à remonter à ce qui l'a produit,
@@ -278,7 +278,7 @@
         </div>
 
         <!-- Ce qu'on s'engage à faire, concrètement. -->
-        <div class="col-span-12" *ngIf="!designationSeule">
+        <!-- <div class="col-span-12" *ngIf="!designationSeule">
             <div class="flex mb-2 gap-2">
                 <label for="actionCorrective" class="font-normal m-0 font-semibold">Action proposée <span class="text-red-500">*</span></label>
                 <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCorrection.toggle($event)"></i>
@@ -289,7 +289,7 @@
                 </div>
             </p-popover>
             <textarea class="w-full" rows="3" cols="30" pTextarea id="actionCorrective" [(ngModel)]="planAction.actionCorrective" [autoResize]="true" placeholder="Décrivez l'action à mener."></textarea>
-        </div>
+        </div> -->
 
         <div class="col-span-12 md:col-span-6">
             <div class="flex mb-2 gap-2">
@@ -358,7 +358,7 @@
         }
         @if (!isEdit){
         <button pButton pRipple size="small" type="button" class="p-button-primary ml-2" (click)="save()"
-            [disabled]="!planAction.actionCorrective" label="Ajouter">
+            [disabled]="!planAction.solutionRetenues" label="Ajouter">
         </button>
         }
 
