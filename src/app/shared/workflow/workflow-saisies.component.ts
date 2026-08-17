@@ -96,6 +96,13 @@ import { SaisieDto, WorkflowStateDto } from '../../models/workflow.model';
 })
 export class WorkflowSaisiesComponent {
 
+    /**
+     * Un identifiant brut, tel que les champs alimentés par le référentiel en enregistrent —
+     * « Processus destinataire » porte l'UUID d'une structure, pas son nom.
+     */
+    private static readonly UUID =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
     /** État du circuit du dossier, tel que le serveur le joint à la ressource. */
     @Input() state?: WorkflowStateDto | null;
 
@@ -109,7 +116,13 @@ export class WorkflowSaisiesComponent {
     @Input() messageSiVide = '';
 
     get saisies(): SaisieDto[] {
-        return (this.state?.saisies ?? []).filter((saisie) => (saisie.value ?? '').trim().length > 0);
+        return (this.state?.saisies ?? []).filter((saisie) => {
+            const valeur = (saisie.value ?? '').trim();
+            // Un UUID ne dit rien à personne : quand une réponse en est un, c'est le module
+            // métier qui sait le résoudre — la structure destinataire s'affiche déjà, en clair,
+            // sur la fiche. Le montrer ici en ferait une information qui n'en est pas une.
+            return valeur.length > 0 && !WorkflowSaisiesComponent.UUID.test(valeur);
+        });
     }
 
     /**
