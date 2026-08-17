@@ -1,6 +1,7 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SaisieDto, WorkflowStateDto } from '../../models/workflow.model';
+import { ChoixDeChampService } from './choix-de-champ.service';
 
 /**
  * Ce que le dossier a recueilli au fil de son circuit, rassemblé au même endroit.
@@ -35,7 +36,7 @@ import { SaisieDto, WorkflowStateDto } from '../../models/workflow.model';
                         <div class="wf-saisies-ligne">
                             <dt>{{ saisie.fieldLabel || saisie.fieldName }}</dt>
                             <dd>
-                                <span class="wf-saisies-valeur">{{ saisie.value }}</span>
+                                <span class="wf-saisies-valeur">{{ valeurDe(saisie) }}</span>
                                 <span class="wf-saisies-origine">
                                     {{ origine(saisie) }}
                                 </span>
@@ -94,7 +95,7 @@ import { SaisieDto, WorkflowStateDto } from '../../models/workflow.model';
         }
     `]
 })
-export class WorkflowSaisiesComponent {
+export class WorkflowSaisiesComponent implements OnChanges {
 
     /**
      * Un identifiant brut, tel que les champs alimentés par le référentiel en enregistrent —
@@ -102,6 +103,13 @@ export class WorkflowSaisiesComponent {
      */
     private static readonly UUID =
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    /**
+     * Les sources dont les valeurs sont des identifiants. La saisie ne dit pas de quelle source
+     * elle vient — le moteur ne transporte que des chaînes — mais un UUID est unique parmi
+     * toutes : chercher dans leur réunion suffit.
+     */
+    private static readonly SOURCES_D_IDENTIFIANTS = ['@STRUCTURES', '@UTILISATEURS'];
 
     /** État du circuit du dossier, tel que le serveur le joint à la ressource. */
     @Input() state?: WorkflowStateDto | null;
@@ -115,14 +123,52 @@ export class WorkflowSaisiesComponent {
      */
     @Input() messageSiVide = '';
 
+    /** Libellés connus des référentiels, indexés par identifiant. Rempli à la demande. */
+    private libelles = new Map<string, string>();
+    private chargementLance = false;
+
+    constructor(private readonly choixDeChamp: ChoixDeChampService) {}
+
+    /**
+     * Charge les dictionnaires de libellés, seulement si une valeur à traduire existe : la
+     * plupart des dossiers n'en portent aucune, et interroger les référentiels sur chaque fiche
+     * serait payer pour rien. Le service met les réponses en cache pour la session.
+     */
+    ngOnChanges(): void {
+        if (this.chargementLance || !this.contientDesIdentifiants()) {
+            return;
+        }
+        this.chargementLance = true;
+        for (const source of WorkflowSaisiesComponent.SOURCES_D_IDENTIFIANTS) {
+            this.choixDeChamp.choix(source).subscribe((choix) => {
+                for (const c of choix) {
+                    this.libelles.set(c.value, c.label);
+                }
+            });
+        }
+    }
+
     get saisies(): SaisieDto[] {
         return (this.state?.saisies ?? []).filter((saisie) => {
             const valeur = (saisie.value ?? '').trim();
-            // Un UUID ne dit rien à personne : quand une réponse en est un, c'est le module
-            // métier qui sait le résoudre — la structure destinataire s'affiche déjà, en clair,
-            // sur la fiche. Le montrer ici en ferait une information qui n'en est pas une.
-            return valeur.length > 0 && !WorkflowSaisiesComponent.UUID.test(valeur);
+            // Un UUID ne dit rien à personne : quand une réponse en est un, c'est son libellé au
+            // référentiel qui s'affiche. Introuvable — structure supprimée, référentiel
+            // injoignable — la ligne s'efface plutôt que de montrer l'identifiant.
+            return valeur.length > 0
+                && (!WorkflowSaisiesComponent.UUID.test(valeur) || this.libelles.has(valeur));
         });
+    }
+
+    /** Valeur telle qu'elle se lit : celle saisie, ou son libellé quand c'est un identifiant. */
+    valeurDe(saisie: SaisieDto): string {
+        const valeur = (saisie.value ?? '').trim();
+        return this.libelles.get(valeur) ?? valeur;
+    }
+
+    private contientDesIdentifiants(): boolean {
+        return (this.state?.saisies ?? []).some((saisie) =>
+            WorkflowSaisiesComponent.UUID.test((saisie.value ?? '').trim())
+            || WorkflowSaisiesComponent.UUID.test((saisie.auteur ?? '').trim()));
     }
 
     /**
@@ -136,8 +182,15 @@ export class WorkflowSaisiesComponent {
         if (saisie.stepName) {
             morceaux.push(saisie.stepName);
         }
-        if (saisie.auteur) {
-            morceaux.push(saisie.auteur);
+        // L'auteur est le nom du décideur quand le serveur l'a enregistré, sinon son identifiant
+        // brut — cas des décisions antérieures à cet enregistrement. L'identifiant se traduit
+        // alors par l'annuaire ; s'il n'y figure plus, l'origine se réduit à l'étape et à la
+        // date, comme le fait déjà l'historique.
+        const auteur = (saisie.auteur ?? '').trim();
+        if (auteur && !WorkflowSaisiesComponent.UUID.test(auteur)) {
+            morceaux.push(auteur);
+        } else if (this.libelles.has(auteur)) {
+            morceaux.push(this.libelles.get(auteur)!);
         }
         if (saisie.decisionDate) {
             const date = new Date(saisie.decisionDate);
