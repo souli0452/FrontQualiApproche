@@ -54,7 +54,8 @@ export class WorkflowDetailComponent {
     /** Apparence par défaut d'une action, quand le circuit n'en fixe pas. */
     private static readonly APPARENCE: Record<string, { icone: string; severite: string }> = {
         APPROUVE: { icone: 'pi pi-check', severite: 'success' },
-        REJETE: { icone: 'pi pi-times', severite: 'danger' }
+        REJETE: { icone: 'pi pi-times', severite: 'danger' },
+        CLOTURE: { icone: 'pi pi-lock', severite: 'warn' }
     };
 
     private static readonly LIBELLES_TYPE: Record<string, string> = {
@@ -151,6 +152,14 @@ export class WorkflowDetailComponent {
         return (transition.severity
             || WorkflowDetailComponent.APPARENCE[String(transition.decision)]?.severite
             || 'success') as Severite;
+    }
+
+    /** Nature d'une action, en clair : avancer, revenir en arrière, ou mettre en clôture. */
+    libelleNature(decision: unknown): string {
+        if (decision === 'REJETE') {
+            return 'Rejet';
+        }
+        return decision === 'CLOTURE' ? 'Clôture' : 'Approbation';
     }
 
     /** Où mène une action, en clair. */

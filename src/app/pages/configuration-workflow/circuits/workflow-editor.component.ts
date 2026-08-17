@@ -223,11 +223,13 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   /** Apparence retenue par le serveur quand rien n'est saisi, reproduite pour l'aperçu. */
   private static readonly APPARENCE_PAR_DEFAUT: Record<string, { icone: string; severite: string }> = {
     APPROUVE: { icone: 'pi pi-check', severite: 'success' },
-    REJETE: { icone: 'pi pi-times', severite: 'danger' }
+    REJETE: { icone: 'pi pi-times', severite: 'danger' },
+    CLOTURE: { icone: 'pi pi-lock', severite: 'warn' }
   };
 
   /**
-   * Nature d'une action : elle fait avancer le dossier, ou elle le renvoie en arrière.
+   * Nature d'une action : elle fait avancer le dossier, le renvoie en arrière, ou le met en
+   * clôture.
    *
    * <p>Ce n'est plus son identité — plusieurs actions d'une même étape peuvent approuver — mais
    * c'est ce qui donne son sens à un franchissement : la couleur du bouton par défaut, l'issue
@@ -235,7 +237,8 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
    */
   readonly naturesAction: Option<string>[] = [
     { label: 'Approbation — le dossier avance', value: 'APPROUVE' },
-    { label: 'Rejet — le dossier revient en arrière', value: 'REJETE' }
+    { label: 'Rejet — le dossier revient en arrière', value: 'REJETE' },
+    { label: 'Clôture — le dossier est mis en clôture', value: 'CLOTURE' }
   ];
 
   /**
@@ -261,6 +264,17 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     return valeur || WorkflowEditorComponent.APPARENCE_PAR_DEFAUT[decision]?.icone || 'pi pi-check';
   }
 
+  /** Libellé tel qu'il s'affichera : celui saisi, ou le verbe que porte la nature de l'action. */
+  apercuLibelle(valeur: string | null, decision: string): string {
+    if (valeur) {
+      return valeur;
+    }
+    if (decision === 'REJETE') {
+      return 'Rejeter';
+    }
+    return decision === 'CLOTURE' ? 'Clôturer' : 'Approuver';
+  }
+
   /**
    * Couleur telle qu'elle s'affichera : celle saisie, ou celle que porte la décision.
    *
@@ -281,7 +295,8 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   readonly porteesChamp: Option<string | null>[] = [
     { label: 'Toutes les décisions', value: null },
     { label: 'Approbation seulement', value: 'APPROUVE' },
-    { label: 'Rejet seulement', value: 'REJETE' }
+    { label: 'Rejet seulement', value: 'REJETE' },
+    { label: 'Clôture seulement', value: 'CLOTURE' }
   ];
 
   /**

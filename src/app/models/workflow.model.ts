@@ -12,8 +12,8 @@
  *   avec un champ `message` exploitable. Ne pas déplier `.data` sur les succès de ce service.
  */
 
-/** Décision métier portée par une transition. */
-export type StepDecision = 'APPROUVE' | 'REJETE';
+/** Décision métier portée par une transition : avancer, revenir en arrière, ou mettre en clôture. */
+export type StepDecision = 'APPROUVE' | 'REJETE' | 'CLOTURE';
 
 /** Statut d'une instance de validation. */
 export type ValidationStatus = 'EN_COURS' | 'TERMINE';
@@ -133,8 +133,9 @@ export interface WorkflowStepFieldDto {
   /** Valeurs proposées pour un champ de type liste, séparées par des virgules. */
   options?: string | null;
   /**
-   * Décision à laquelle ce champ se rapporte (`APPROUVE`, `REJETE`), ou absent s'il vaut quelle que
-   * soit la décision. Un justificatif de rejet n'a pas à être demandé à qui approuve.
+   * Décision à laquelle ce champ se rapporte (`APPROUVE`, `REJETE`, `CLOTURE`), ou absent s'il
+   * vaut quelle que soit la décision. Un justificatif de rejet n'a pas à être demandé à qui
+   * approuve.
    */
   decision?: string | null;
   /**

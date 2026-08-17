@@ -7,7 +7,7 @@ import { EtapeTraitement, StatusEnum } from '../../../enums/enums';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { WorkflowActionsComponent, WorkflowDecisionDialogComponent, DecisionConfirmee } from '../../../shared';
 import { WorkflowService } from '../../../services/workflow.service';
-import { ResultatDecisionDto, WorkflowActionDto } from '../../../models/workflow.model';
+import { ResultatDecisionDto, StepDecision, WorkflowActionDto } from '../../../models/workflow.model';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 
 
@@ -148,7 +148,13 @@ export class TraitementTableComponent implements OnInit {
     }
 
     severiteDe(action: WorkflowActionDto): any {
-        return action.severity ?? (action.decision === 'REJETE' ? 'danger' : 'success');
+        if (action.severity) {
+            return action.severity;
+        }
+        if (action.decision === 'REJETE') {
+            return 'danger';
+        }
+        return action.decision === 'CLOTURE' ? 'warn' : 'success';
     }
 
     ouvrirDecisionGroupee(action: WorkflowActionDto) {
@@ -165,7 +171,10 @@ export class TraitementTableComponent implements OnInit {
      */
     executerDecisionGroupee(decision: DecisionConfirmee) {
         const identifiants = this.selectionMultiple.map((d) => d.id).filter(Boolean);
-        const sens = this.actionGroupee?.decision === 'REJETE' ? 'REJETE' : 'APPROUVE';
+        // L'approbation servait de sens par défaut à tout ce qui n'était pas un rejet : une
+        // clôture groupée serait partie comme une approbation.
+        const nature = this.actionGroupee?.decision;
+        const sens: StepDecision = nature === 'REJETE' || nature === 'CLOTURE' ? nature : 'APPROUVE';
         if (!identifiants.length) {
             return;
         }

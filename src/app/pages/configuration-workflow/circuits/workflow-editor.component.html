@@ -262,7 +262,7 @@
                                             <div class="flex flex-col gap-1">
                                                 <label class="text-xs font-medium text-surface-600">Aperçu</label>
                                                 <p-button
-                                                    [label]="action.get('label')?.value || (action.get('decision')?.value === 'REJETE' ? 'Rejeter' : 'Approuver')"
+                                                    [label]="apercuLibelle(action.get('label')?.value, action.get('decision')?.value)"
                                                     [icon]="apercuIcone(action.get('icon')?.value, action.get('decision')?.value)"
                                                     [severity]="apercuSeverite(action.get('severity')?.value, action.get('decision')?.value)"
                                                     size="small" [disabled]="true"></p-button>

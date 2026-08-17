@@ -95,7 +95,10 @@ export class WorkflowActionsComponent {
         if (action.severity) {
             return action.severity;
         }
-        return action.decision === 'REJETE' ? 'danger' : 'success';
+        if (action.decision === 'REJETE') {
+            return 'danger';
+        }
+        return action.decision === 'CLOTURE' ? 'warn' : 'success';
     }
 
     ouvrir(action: WorkflowActionDto): void {

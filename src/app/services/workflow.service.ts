@@ -7,6 +7,7 @@ import { QualiUrlConfig } from './quali-url-configs';
 import {
   EmailTemplateDto,
   ResourceType,
+  StepDecision,
   ValidationHistoryDto,
   WorkflowDto,
   WorkflowInstanceDto,
@@ -194,7 +195,7 @@ export class WorkflowService {
    */
   decideEnLot(
     resourceIds: string[],
-    decision: 'APPROUVE' | 'REJETE',
+    decision: StepDecision,
     requete: WorkflowValidationRequestDto
   ): Observable<ResultatDecisionDto[]> {
     let params = new HttpParams().set('decision', decision);
