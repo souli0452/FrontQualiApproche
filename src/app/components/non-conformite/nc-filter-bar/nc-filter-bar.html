@@ -1,4 +1,4 @@
-<div class="flex justify-end gap-3 p-4 overflow-x-auto whitespace-nowrap hide-scrollbar">
+<div class="flex items-center gap-3 p-4 overflow-x-auto whitespace-nowrap hide-scrollbar w-full">
     
     <div class="filter-item-date shrink-0">
         <!-- Le bouton déclencheur principal (affiche les dates sélectionnées) -->
@@ -62,131 +62,49 @@
         </p-popover>
     </div>
 
-    <!-- Le Bouton "Filtrer" pour les autres critères (Processus, Gravité, Origine) -->
-    <div class="shrink-0">
-        <button pButton pRipple type="button" 
-                class="p-button-outlined p-button-secondary border-round-lg flex items-center gap-2 px-4 py-2 text-700 bg-transparent border-1 border-surface-border"
-                (click)="filterPanel.toggle($event)">
-            <i class="pi pi-filter"></i>
-            <span>Filtrer</span>
-            <span *ngIf="getActiveFiltersCount() > 0" 
-                  class="ml-1 text-white text-xs px-2 py-0.5 rounded-full" 
-                  style="background-color: var(--secondary-color);">
-                {{ getActiveFiltersCount() }}
-            </span>
-        </button>
-
-        <p-popover #filterPanel>
-            <div class="flex flex-col bg-white dark:bg-surface-900 w-80 shadow-2 border-round-xl overflow-hidden">
-                
-                <!-- En-tête du filtre -->
-                <div class="flex items-center justify-between p-3 border-b border-surface-border">
-                    <span class="font-bold text-900 flex items-center gap-2">
-                        <i class="pi pi-filter text-primary"></i>
-                        Filtres
-                    </span>
-                    <button pButton pRipple type="button" icon="pi pi-times" 
-                            class="p-button-rounded p-button-text p-button-sm bouton-fermer"
-                            (click)="filterPanel.hide()">
-                    </button>
-                </div>
-
-                <!-- Liste des sections accordéons -->
-                <div class="flex flex-col p-3 gap-3 overflow-y-auto max-h-[350px]">
-                    
-                    <!-- Section Processus -->
-                    <div *ngIf="showProcessus" class="border-b border-surface-border pb-3">
-                        <button type="button" 
-                                class="w-full flex items-center justify-between font-semibold text-800 bg-transparent border-none cursor-pointer py-1 bouton-categorie-filtre"
-                                (click)="expandedProcessus = !expandedProcessus">
-                            <span class="flex items-center gap-2">
-                                <i class="pi text-xs text-500" [ngClass]="expandedProcessus ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
-                                Processus
-                            </span>
-                        </button>
-                        <div *ngIf="expandedProcessus" class="flex flex-col gap-2 mt-3 pl-6 max-h-40 overflow-y-auto bg-list">
-                            <div *ngFor="let item of processusList" class="flex items-center gap-3">
-                                <p-checkbox 
-                                    name="processusGroup" 
-                                    [value]="item" 
-                                    [(ngModel)]="selectedProcess" 
-                                    [inputId]="'proc_' + item.id">
-                                </p-checkbox>
-                                <label [for]="'proc_' + item.id" class="text-700 text-sm cursor-pointer select-none">
-                                    {{ item.libelleCourt }}
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section Gravité -->
-                    <div *ngIf="showGravite" class="border-b border-surface-border pb-3">
-                        <button type="button" 
-                                class="w-full flex items-center justify-between font-semibold text-800 bg-transparent border-none cursor-pointer py-1 bouton-categorie-filtre"
-                                (click)="expandedGravite = !expandedGravite">
-                            <span class="flex items-center gap-2">
-                            <i class="pi text-xs text-500" [ngClass]="expandedGravite ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
-                                Gravité
-                            </span>
-                        </button>
-                        <div *ngIf="expandedGravite" class="flex flex-col gap-2 mt-3 pl-6 max-h-40 overflow-y-auto bg-list">
-                            <div *ngFor="let item of graviteList" class="flex items-center gap-3">
-                                <p-checkbox 
-                                    name="graviteGroup" 
-                                    [value]="item" 
-                                    [(ngModel)]="selectedGravite" 
-                                    [inputId]="'grav_' + item.id">
-                                </p-checkbox>
-                                <label [for]="'grav_' + item.id" class="text-700 text-sm cursor-pointer select-none">
-                                    {{ item.libelle }}
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section Origine -->
-                    <div *ngIf="showOrigine" class="pb-2">
-                        <button type="button" 
-                                class="w-full flex items-center justify-between font-semibold text-800 bg-transparent border-none cursor-pointer py-1 bouton-categorie-filtre"
-                                (click)="expandedOrigine = !expandedOrigine">
-                            <span class="flex items-center gap-2">
-                            <i class="pi text-xs text-500" [ngClass]="expandedOrigine ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
-                                Origine des NC
-                            </span>
-                        </button>
-                        <div *ngIf="expandedOrigine" class="flex flex-col gap-2 mt-3 pl-6 max-h-40 overflow-y-auto bg-list">
-                            <div *ngFor="let item of origineList" class="flex items-center gap-3">
-                                <p-checkbox 
-                                    name="origineGroup" 
-                                    [value]="item" 
-                                    [(ngModel)]="selectedOrigine" 
-                                    [inputId]="'orig_' + item.id">
-                                </p-checkbox>
-                                <label [for]="'orig_' + item.id" class="text-700 text-sm cursor-pointer select-none">
-                                    {{ item.libelle }}
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- Pied de page : Actions -->
-                <div class="flex items-center justify-between border-t border-surface-border p-3 bg-surface-50 dark:bg-surface-950 gap-2">
-                    <button 
-                        pButton pRipple label="Réinitialiser" 
-                        class="p-button-text p-button-secondary font-bold"
-                        (click)="resetFiltersInPanel(filterPanel)">
-                    </button>
-                    <p-button 
-                        label="Filtrer" class=""
-                        (click)="applyFiltersInPanel(filterPanel)" 
-                        severity="info" />
-                </div>
-
-            </div>
-        </p-popover>
+    <!-- Filtre Processus (directement sur la ligne) -->
+    <div *ngIf="showProcessus" class="shrink-0" style="min-width: 220px;">
+        <app-multiselect-input 
+            [(ngModel)]="selectedProcess" 
+            [options]="processusList"
+            optionLabel="libelleCourt" 
+            placeholder="Tous les processus"
+            [filter]="true"
+            [lazy]="false"
+            (selectionChange)="applyFilters()"></app-multiselect-input>
     </div>
+
+    <!-- Filtre Gravité (directement sur la ligne) -->
+    <div *ngIf="showGravite" class="shrink-0" style="min-width: 200px;">
+        <app-multiselect-input 
+            [(ngModel)]="selectedGravite" 
+            [options]="graviteList"
+            optionLabel="libelle" 
+            placeholder="Toutes les gravités"
+            [filter]="true"
+            [lazy]="false"
+            (selectionChange)="applyFilters()"></app-multiselect-input>
+    </div>
+
+    <!-- Filtre Origine (directement sur la ligne) -->
+    <div *ngIf="showOrigine" class="shrink-0" style="min-width: 220px;">
+        <app-multiselect-input 
+            [(ngModel)]="selectedOrigine" 
+            [options]="origineList"
+            optionLabel="libelle" 
+            placeholder="Toutes les origines"
+            [filter]="true"
+            [lazy]="false"
+            (selectionChange)="applyFilters()"></app-multiselect-input>
+    </div>
+
+    <!-- Bouton Réinitialiser (si des filtres sont actifs) -->
+    <button *ngIf="getActiveFiltersCount() > 0"
+            pButton pRipple type="button" 
+            icon="pi pi-refresh"
+            class="p-button-text p-button-secondary p-button-sm shrink-0 font-semibold" 
+            label="Réinitialiser"
+            (click)="resetFilters()"></button>
 
     <!-- Bouton Réinitialiser Global -->
     <!-- <div class="filter-item text-right ml-auto">

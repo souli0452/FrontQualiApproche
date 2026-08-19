@@ -10,6 +10,7 @@ import { OrigineNonConformiteService } from '../../../services/non-conformite/ty
 import { StructureService } from '../../../pages/parametrages/structure/structure-service/structure-service';
 import { TypeStructure } from '../../../enums/enums';
 import { Structure } from '../../../pages/parametrages/structure/structure-config/structure';
+import { MultiselectInputComponent } from '../../../shared/ui/multiselect-input/multiselect-input.component';
 
 export interface NcFilter {
     dateDebut: Date | undefined;
@@ -21,7 +22,7 @@ export interface NcFilter {
 
 @Component({
     selector: 'app-nc-filter-bar',
-    imports: [CommonModule, FormsModule, NgPrimeModule],
+    imports: [CommonModule, FormsModule, NgPrimeModule, MultiselectInputComponent],
     templateUrl: './nc-filter-bar.html',
     styleUrl: './nc-filter-bar.scss'
 })

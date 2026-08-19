@@ -291,7 +291,7 @@ export class NCTraitementSuiviComponent {
             ...currentNotifs,
             total:            this.rawDemandeList.length,
             reception:        getCount('RECEPTION'),
-            validationRQ:     getCount('VALIDATION_RQ'),
+            validationRQ:     getCount('VALIDATION_RQ') + getCount('VALIDATION_RS'),
             affectation:      getCount('IMPUTATION'),
             validationPilote: getCount('VALIDATION'),
             cloture:          getCount('SUIVI_RQ'),
