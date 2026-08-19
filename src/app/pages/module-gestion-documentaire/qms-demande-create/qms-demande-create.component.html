@@ -45,6 +45,11 @@
                     <div class="p-2 text-sm text-700 line-height-3" style="max-width: 320px;">
                       Seuls les documents de votre structure vous sont proposés : on ne demande pas
                       la modification d'un document qu'on n'a pas le droit de voir.
+                      <ng-container *ngIf="!estUneSuppression">
+                        La liste se limite en outre aux documents <strong>en vigueur</strong> : un
+                        document encore en rédaction se corrige en déposant une version, et un
+                        document obsolète se remplace au lieu d'être modifié.
+                      </ng-container>
                     </div>
                   </p-popover>
                   <div class="flex-1 mt-2">
@@ -52,7 +57,7 @@
                       optionLabel="documentNumber" optionValue="id"
                       placeholder="Sélectionner le document"
                       [lazy]="true"
-                      [loadOptions]="documentService.chargerOptionsDocuments"
+                      [loadOptions]="chargeurDeDocuments"
                       [selectedOptions]="documentChoisi ? [documentChoisi] : []"
                       (selectionChange)="onDocumentChoisi($event)"></app-select-input>
                   </div>
@@ -90,6 +95,7 @@
                     <p-floatlabel variant="on" class="w-full">
                       <p-select id="type" formControlName="type" [options]="typesDemande"
                                 optionLabel="label" optionValue="value" appendTo="body"
+                                (onChange)="onTypeChange()"
                                 styleClass="w-full" class="w-full">
                       </p-select>
                       <label for="type">Sélectionner la nature</label>

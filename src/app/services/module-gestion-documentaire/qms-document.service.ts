@@ -240,6 +240,33 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
      * <p>Sans lui, le sélecteur n'offrait que les dix premiers documents — la recherche étant
      * paginée d'office — et aucun moyen d'atteindre les autres.</p>
      */
+    /**
+     * Documents proposés à une demande de modification : ceux qui sont **en vigueur**, et eux seuls.
+     *
+     * <p>Une modification se demande sur un texte approuvé — c'est ce que le serveur exige, en 409.
+     * Un document encore en rédaction se corrige en déposant une version, sans instruction ni
+     * décision ; un document obsolète ne se modifie plus, il se remplace. Les proposer revenait à
+     * faire saisir une demande entière pour la voir refusée à l'envoi.</p>
+     */
+    readonly chargerOptionsDocumentsEnVigueur: OptionsLoader<DocumentQms> = (event: OptionsLoadEvent) =>
+        this.http
+            .get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/search`, {
+                params: this.buildParams({
+                    page: event.page, size: event.limit, query: event.search, status: ['valide']
+                })
+            })
+            .pipe(
+                map((res: any) => {
+                    const donnees = res?.data ?? res;
+                    const options = (donnees?.content ?? (Array.isArray(donnees) ? donnees : [])) as DocumentQms[];
+                    return {
+                        options,
+                        totalRecords: donnees?.totalElements ?? options.length,
+                        hasMore: donnees?.last === undefined ? undefined : !donnees.last
+                    };
+                })
+            );
+
     readonly chargerOptionsDocuments: OptionsLoader<DocumentQms> = (event: OptionsLoadEvent) =>
         this.http
             .get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/search`, {

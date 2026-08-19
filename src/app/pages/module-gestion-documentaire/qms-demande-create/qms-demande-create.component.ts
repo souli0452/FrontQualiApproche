@@ -101,6 +101,43 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
         return this.formulaire.get('type')?.value === 'SUPPRESSION';
     }
 
+    /**
+     * Ce que le sélecteur propose, selon ce qui est demandé.
+     *
+     * <p>Une modification ne porte que sur un document <b>en vigueur</b> — le serveur le refuse en
+     * 409 sinon. Proposer les autres revenait à faire saisir une demande entière pour la voir
+     * rejetée à l'envoi. Une suppression, elle, vise justement souvent un brouillon abandonné ou un
+     * document devenu obsolète : sa liste reste entière.</p>
+     */
+    get chargeurDeDocuments() {
+        return this.estUneSuppression
+            ? this.documentService.chargerOptionsDocuments
+            : this.documentService.chargerOptionsDocumentsEnVigueur;
+    }
+
+    /**
+     * Le type de demande vient de changer : un document retenu qui ne convient plus est relâché.
+     *
+     * <p>Passer de « suppression » à « modification » avec un brouillon déjà choisi laissait dans le
+     * formulaire une sélection que la nouvelle liste ne contient pas — l'utilisateur ne l'aurait
+     * découvert qu'au refus du serveur.</p>
+     */
+    onTypeChange(): void {
+        if (this.estUneSuppression || !this.documentChoisi) {
+            return;
+        }
+        const enVigueur = this.documentChoisi.esTraiter === true && this.documentChoisi.obsolete !== true;
+        if (!enVigueur) {
+            this.formulaire.patchValue({ documentId: null });
+            this.documentChoisi = undefined;
+            this.messageService.add({
+                severity: 'info', summary: 'Document à choisir de nouveau',
+                detail: "Une modification ne se demande que sur un document en vigueur : choisissez-en un dans la liste.",
+                life: 5000
+            });
+        }
+    }
+
 
 
     handleFileUpload(fichiers: any[]): void {
