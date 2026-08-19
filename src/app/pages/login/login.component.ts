@@ -54,6 +54,13 @@ export class LoginComponent implements OnInit{
             next: (response) => {
                 // response.data contient l'objet complet avec { user, permissions, ... }
                 if (response) {
+                    // Une session déjà ouverte et une adresse demandée : c'est elle qu'on sert,
+                    // avant toute redirection par rôle — sinon le dossier visé serait perdu au
+                    // profit de l'écran d'accueil.
+                    if (this.route.snapshot.queryParamMap.get('returnUrl')) {
+                        this.navigateAfterLogin();
+                        return;
+                    }
                     // On vérifie directement le rôle sans passer connectedUser car la fonction lit en mémoire
                     if (isUserInRoles(['SUPER_ADMIN'])) {
 
@@ -180,7 +187,27 @@ export class LoginComponent implements OnInit{
         });
     }
 
+    /**
+     * Après connexion, l'écran demandé avant elle — à défaut la vue d'ensemble, comme toujours.
+     *
+     * <p>Le garde renvoie vers la connexion en emportant l'adresse visée : sans ce retour, un lien
+     * de courriel d'étape ou le QR code d'une fiche imprimée menaient au dossier <b>seulement</b>
+     * si la session était déjà ouverte ; sinon on atterrissait sur la vue d'ensemble, et le
+     * dossier visé était perdu.</p>
+     *
+     * <p>Seul un chemin interne est suivi : une adresse absolue, même écrite dans la barre du
+     * navigateur, ferait de l'écran de connexion un tremplin vers un autre site.</p>
+     */
     navigateAfterLogin() {
+        const demandee = this.route.snapshot.queryParamMap.get('returnUrl');
+        if (demandee && demandee.startsWith('/') && !demandee.startsWith('//')) {
+            this.router.navigateByUrl(demandee).then((abouti) => {
+                if (!abouti) {
+                    this.router.navigate(['/non-conformite/vue-ensemble']);
+                }
+            });
+            return;
+        }
         this.router.navigate(['/non-conformite/vue-ensemble']);
     }
 
