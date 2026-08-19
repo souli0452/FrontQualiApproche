@@ -135,6 +135,8 @@ export class WorkflowDecisionDialogComponent {
   fichiersDeposes: Record<string, string> = {};
   /** Dépôt en échec, par nom de contrôle. */
   depotsEnEchec = new Set<string>();
+  /** Messages d'erreurs précis de dépôt, par nom de contrôle. */
+  erreursDeDepot: Record<string, string> = {};
 
   get depotEnCours(): boolean {
     return this.depotsEnCours.size > 0;
@@ -160,17 +162,49 @@ export class WorkflowDecisionDialogComponent {
     if (!fichier || !this.deposerFichier) {
       return;
     }
+
+    // Validation client de base
+    const extension = fichier.name.split('.').pop()?.toLowerCase() || '';
+    const extensionsAutorisees = ['doc', 'docx', 'xlsx', 'pdf', 'jpeg', 'jpg', 'png', 'txt'];
+    const maxTailleMo = 10;
+
+    if (!extensionsAutorisees.includes(extension)) {
+      this.erreursDeDepot[nomDeControle] = `Extension .${extension} non autorisée (autorisés : doc, docx, xlsx, pdf, jpeg, jpg, png, txt).`;
+      this.depotsEnEchec.add(nomDeControle);
+      entree.value = '';
+      return;
+    }
+
+    if (fichier.size > maxTailleMo * 1024 * 1024) {
+      this.erreursDeDepot[nomDeControle] = `Le fichier est trop volumineux (maximum ${maxTailleMo} Mo).`;
+      this.depotsEnEchec.add(nomDeControle);
+      entree.value = '';
+      return;
+    }
+
     this.depotsEnEchec.delete(nomDeControle);
+    delete this.erreursDeDepot[nomDeControle];
     this.depotsEnCours.add(nomDeControle);
     this.form.get(nomDeControle)?.setValue('');
+
     this.deposerFichier(fichier).subscribe({
       next: (reference) => {
         this.depotsEnCours.delete(nomDeControle);
         this.fichiersDeposes[nomDeControle] = fichier.name;
         this.form.get(nomDeControle)?.setValue(reference);
       },
-      error: () => {
+      error: (err) => {
         this.depotsEnCours.delete(nomDeControle);
+        let rawMsg = err?.error?.message || err?.message || '';
+        let cleanMsg = "Le dépôt a échoué. Veuillez réessayer.";
+        
+        if (rawMsg.toLowerCase().includes('size') || rawMsg.toLowerCase().includes('max') || rawMsg.toLowerCase().includes('large')) {
+          cleanMsg = "Le fichier est trop volumineux pour le serveur. Veuillez choisir un fichier plus léger (ex: inférieur à 2 Mo).";
+        } else if (rawMsg) {
+          cleanMsg = rawMsg;
+        }
+        
+        this.erreursDeDepot[nomDeControle] = cleanMsg;
         this.depotsEnEchec.add(nomDeControle);
         entree.value = '';
       }

@@ -38,7 +38,7 @@ import { ValidationHistoryDto, ValidationFieldValueDto, WorkflowStateDto } from 
             <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-wrap gap-3">
                 <div>
                     <h3 class="m-0 text-lg font-bold text-slate-800">
-                        <i class="pi pi-verified text-indigo-500 mr-2"></i>{{ titre }}
+                        <i class="pi pi-verified text-sky-500 mr-2"></i>{{ titre }}
                     </h3>
                     <p class="m-0 mt-1 text-sm text-slate-500">
                         Décisions prises sur {{ objet }} — auteurs, motifs et informations saisies.
@@ -157,15 +157,15 @@ import { ValidationHistoryDto, ValidationFieldValueDto, WorkflowStateDto } from 
                         } @else if (nomEtapeEnCours) {
                             <div class="flex gap-3">
                                 <div class="flex flex-col items-center">
-                                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 shrink-0">
+                                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-sky-600 shrink-0">
                                         <i class="pi pi-hourglass text-white text-sm"></i>
                                     </span>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <div class="rounded-lg border border-indigo-200 bg-indigo-50 p-3">
-                                        <div class="text-[11px] uppercase tracking-wide font-bold text-indigo-600">Étape en cours</div>
-                                        <div class="text-sm font-bold text-indigo-900 mt-0.5">{{ nomEtapeEnCours }}</div>
-                                        <p class="text-xs text-indigo-700 m-0 mt-1">Le dossier attend une décision à cette étape.</p>
+                                    <div class="rounded-lg border border-sky-200 bg-sky-50 p-3">
+                                        <div class="text-[11px] uppercase tracking-wide font-bold text-sky-600">Étape en cours</div>
+                                        <div class="text-sm font-bold text-sky-900 mt-0.5">{{ nomEtapeEnCours }}</div>
+                                        <p class="text-xs text-sky-700 m-0 mt-1">Le dossier attend une décision à cette étape.</p>
                                     </div>
                                 </div>
                             </div>

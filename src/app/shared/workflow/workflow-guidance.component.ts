@@ -73,6 +73,11 @@ import { WorkflowStateDto } from '../../models/workflow.model';
             border-color: rgba(34, 197, 94, 0.35);
             border-left-color: #22c55e;
         }
+        .wf-guidance--rejet {
+            background: rgba(239, 68, 68, 0.07);
+            border-color: rgba(239, 68, 68, 0.35);
+            border-left-color: #ef4444;
+        }
         .wf-guidance--attente {
             background: rgba(59, 130, 246, 0.07);
             border-color: rgba(59, 130, 246, 0.3);
@@ -90,11 +95,24 @@ import { WorkflowStateDto } from '../../models/workflow.model';
         }
         .wf-guidance-icone { font-size: 1.125rem; margin-top: 0.125rem; }
         .wf-guidance--action .wf-guidance-icone { color: #16a34a; }
+        .wf-guidance--rejet .wf-guidance-icone { color: #dc2626; }
         .wf-guidance--attente .wf-guidance-icone { color: #2563eb; }
         .wf-guidance--fin .wf-guidance-icone,
         .wf-guidance--neutre .wf-guidance-icone { color: #64748b; }
         .wf-guidance-texte { flex: 1 1 auto; min-width: 0; }
         .wf-guidance-titre { font-weight: 700; color: var(--text-color, #0f172a); }
+        .wf-guidance--rejet .wf-guidance-titre { color: #b91c1c; }
+        
+        /* Dark mode */
+        :host-context(.dark) .wf-guidance--rejet {
+            background: rgba(220, 38, 38, 0.1);
+            border-color: rgba(220, 38, 38, 0.3);
+            border-left-color: #ef4444;
+        }
+        :host-context(.dark) .wf-guidance--rejet .wf-guidance-titre {
+            color: #fca5a5;
+        }
+
         .wf-guidance-detail { color: var(--text-color-secondary, #475569); margin-top: 0.125rem; }
         .wf-guidance-champs {
             margin-top: 0.5rem;
@@ -116,6 +134,9 @@ import { WorkflowStateDto } from '../../models/workflow.model';
 export class WorkflowGuidanceComponent {
     /** État rendu par le serveur. Absent, seul {@link messageSansCircuit} s'affiche. */
     @Input() state?: WorkflowStateDto | null;
+
+    /** Le dossier parent (ex: Non-Conformité). */
+    @Input() parentDemande: any = null;
 
     /** Nom du dossier tel qu'on en parle à l'utilisateur : « cette non-conformité », « cette action ». */
     @Input() objet = 'ce dossier';
@@ -149,7 +170,73 @@ export class WorkflowGuidanceComponent {
         return !this.actions.length && (statut === 'APPROVED' || statut === 'TERMINE' || statut === 'CLOTURE');
     }
 
-    get ton(): 'action' | 'attente' | 'fin' {
+    get isRejet(): boolean {
+        const parent = this.parentDemande;
+        const state = this.state;
+        const status = parent?.status || state?.status;
+        if (status === 'DRAFT' || status === 'Brouillon') return false;
+
+        const STEP_ORDER: Record<string, number> = {
+            'SOUMISSION': 1,
+            'RECEPTION': 2,
+            'VALIDATION_RQ': 3,
+            'IMPUTATION': 4,
+            'TRAITEMENT': 5,
+            'VALIDATION': 6,
+            'VALIDATION_RS': 7,
+            'SUIVI_RQ': 8,
+            'CLOTURE': 9,
+
+            // Support des codes numériques du moteur de workflow
+            '1': 1, // SOUMISSION
+            '2': 2, // RECEPTION
+            '3': 3, // VALIDATION_RQ
+            '4': 4, // IMPUTATION
+            '5': 5, // TRAITEMENT
+            '6': 6, // VALIDATION
+            '7': 7, // VALIDATION_RS
+            '8': 8, // SUIVI_RQ
+            '9': 9  // CLOTURE
+        };
+
+        const currentStep = parent?.etatTraitement || state?.currentStateCode || '';
+        const currentOrder = STEP_ORDER[currentStep] || 0;
+
+        const saisies = state?.saisies || [];
+        const docRejetId = parent?.docRejet?.id?.toLowerCase();
+        const docRejetNom = (parent?.docRejet?.nom || parent?.docRejet?.nomFichier || '').toLowerCase();
+
+        const rejectionSaisie = saisies.find((s: any) => {
+            const val = (s.value || '').toLowerCase();
+            const fieldName = (s.fieldName || '').toLowerCase();
+            const fieldLabel = (s.fieldLabel || '').toLowerCase();
+
+            return fieldName.includes('rejet') || 
+                   fieldLabel.includes('rejet') ||
+                   fieldName === 'docrejet' ||
+                   (docRejetId && val.includes(docRejetId)) ||
+                   (docRejetNom && val.includes(docRejetNom));
+        });
+
+        if (rejectionSaisie) {
+            const rejectOrder = STEP_ORDER[rejectionSaisie.stepCode || ''] || 0;
+            if (rejectOrder > currentOrder) {
+                return true; // Rejet actif
+            }
+        }
+
+        // Cas de repli : retour à l'étape initiale SOUMISSION
+        if (currentStep === 'SOUMISSION' && status !== 'DRAFT') {
+            return true;
+        }
+
+        return false;
+    }
+
+    get ton(): 'action' | 'attente' | 'fin' | 'rejet' {
+        if (this.isRejet) {
+            return 'rejet';
+        }
         if (this.actions.length) {
             return 'action';
         }
@@ -157,13 +244,16 @@ export class WorkflowGuidanceComponent {
     }
 
     get icone(): string {
-        return { action: 'pi-bolt', attente: 'pi-hourglass', fin: 'pi-flag' }[this.ton];
+        return { action: 'pi-bolt', rejet: 'pi-exclamation-triangle', attente: 'pi-hourglass', fin: 'pi-flag' }[this.ton];
     }
 
     get titre(): string {
         const etape = this.state?.currentStateName;
         if (this.ton === 'fin') {
             return 'Circuit terminé';
+        }
+        if (this.ton === 'rejet') {
+            return etape ? `Dossier rejeté — étape « ${etape} »` : 'Dossier rejeté';
         }
         if (this.ton === 'action') {
             return etape ? `À vous de jouer — étape « ${etape} »` : 'À vous de jouer';
@@ -174,6 +264,20 @@ export class WorkflowGuidanceComponent {
     get detail(): string {
         if (this.ton === 'fin') {
             return `Aucune décision n'est plus attendue sur ${this.objet}.`;
+        }
+        if (this.ton === 'rejet') {
+            if (this.actions.length) {
+                const libelles = this.actions.map((a) => `« ${a.libelle} »`);
+                const liste = libelles.length > 1
+                    ? `${libelles.slice(0, -1).join(', ')} ou ${libelles[libelles.length - 1]}`
+                    : libelles[0];
+                return `Cette non-conformité a été rejetée. Vous devez la corriger et ${liste}. Les boutons se trouvent au pied de cette fiche.`;
+            } else {
+                const attendu = this.libelleDeLHabilitation(this.state?.currentStepRole);
+                return attendu
+                    ? `Cette non-conformité a été rejetée. ${this.majuscule(attendu)} doit la corriger et la soumettre de nouveau. Vous n'avez rien à faire pour l'instant.`
+                    : `Cette non-conformité a été rejetée et est en cours de correction. Vous n'avez rien à faire pour l'instant.`;
+            }
         }
         if (this.ton === 'action') {
             const libelles = this.actions.map((a) => `« ${a.libelle} »`);

@@ -126,9 +126,9 @@ export class NcComposeComponent {
         this.nonConformite.typeNonConformiteId = this.nc.typeNonformite.id;
         this.nonConformite.structureSoumissionLibelle = this.userStructure?.libelleCourt;
         this.nonConformite.structureSoumissionId = this.userStructure?.id;
-        // On récupère directement la structure de l'utilisateur pour le processus
-        this.nonConformite.typeProcessusId = this.userStructure?.id;
-        this.nonConformite.typeProcessusLibelle = this.userStructure?.libelleCourt || this.userStructure?.libelleCourt;
+        // On récupère le type de processus lié à la structure de l'utilisateur
+        this.nonConformite.typeProcessusId = this.userStructure?.typeProcessusId;
+        this.nonConformite.typeProcessusLibelle = this.userStructure?.typeProcessusLibelle;
 
         if (this.nc.typeAction) {
             this.nonConformite.actionLibelle = this.nc.typeAction.libelle;
@@ -163,6 +163,8 @@ export class NcComposeComponent {
             this.nonConformite.status = NonConformStatus.DRAFT;
         }
 
+        console.log("DONNÉES ENVOYÉES AU SERVEUR (Payload) :", this.nonConformite);
+
         if (this.nonConformite.id != null && publish) {
             // Un brouillon relu puis soumis : on enregistre les dernières retouches avant de faire
             // franchir l'étape, sinon le pilote recevrait le dossier tel qu'il était à la visite
@@ -185,6 +187,7 @@ export class NcComposeComponent {
     onResponse(publish: boolean) {
         return {
             next: (res: ApiItemResponse<NonConformite>) => { // ✅ correction ici
+                console.log("RÉPONSE DU SERVEUR (Succès) :", res);
                 this.messageService.add({
                     severity: 'success',
                     summary: publish ? 'Non-conformité soumise' : 'Brouillon enregistré',

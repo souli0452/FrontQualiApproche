@@ -418,6 +418,16 @@ export class AppTopbar implements OnInit {
                     read: false
                 });
             }
+            if (notifs.soumission > 0) {
+                this.notificationsNC.push({
+                    title: "Non-Conformités rejetées",
+                    detail: `Vous avez ${notifs.soumission} Non-Conformité(s) rejetée(s) en attente de correction.`,
+                    time: "À corriger",
+                    icon: "pi pi-exclamation-triangle",
+                    colorClass: "bg-red-100 text-red-600",
+                    read: false
+                });
+            }
         });
     }
 

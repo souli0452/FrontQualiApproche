@@ -29,14 +29,14 @@ import { EtatDeLaListe, MesDecisionsComponent } from './components/mes-decisions
     standalone: true,
     imports: [CommonModule, MesDecisionsComponent, ActionsRapidesComponent, IndicateursComponent],
     template: `
-        <div class="flex flex-col gap-6">
+        <div class="card-first overflow-hidden border-none premium-hub transition-colors duration-300">
 
             <!-- Salutation et synthèse : la phrase dit tout de suite s'il y a lieu d'agir. -->
-            <div class="card mb-0">
-                <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="pb-5 flex justify-between items-center border-b border-surface-border">
+                <div class="flex items-center gap-4">
                     <div>
-                        <h1 class="text-xl font-bold m-0">Bonjour {{ nom }}</h1>
-                        <p class="m-0 mt-1 text-surface-500">
+                        <h1 class="text-2xl font-bold m-0 text-surface-900 dark:text-surface-50 flex items-center gap-3">Bonjour {{ nom }}</h1>
+                        <p class="text-surface-500 dark:text-surface-400 mt-1 mb-0">
                             {{ synthese }}
                             @if (structure) {
                                 <span class="text-surface-400"> · {{ structure }}</span>

@@ -199,7 +199,8 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     { label: 'Demander une correction', value: 'pi pi-replay' },
     { label: 'Réattribuer', value: 'pi pi-refresh' },
     { label: 'Refuser', value: 'pi pi-times-circle' },
-    { label: 'Interdire', value: 'pi pi-ban' }
+    { label: 'Interdire', value: 'pi pi-ban' },
+    { label: 'Aucun', value: '' }
   ];
 
   /**

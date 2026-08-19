@@ -1,12 +1,12 @@
 <p-dialog [visible]="visible" (visibleChange)="visible = $event; visibleChange.emit($event)"
   [modal]="true" [style]="{ width: '44rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }"
-  [draggable]="false" styleClass="p-fluid">
+  [draggable]="false" styleClass="p-fluid" [closable]="true" maskStyleClass="backdrop-blur-sm">
 
   <!-- En-tête porté par le contenu plutôt que par l'attribut `header` : la décision engage son
        auteur, et le titre doit dire laquelle, sur quel document, et depuis quelle étape. -->
   <ng-template pTemplate="header">
     <div class="flex items-center gap-3">
-      <span class="flex items-center justify-center w-11 h-11 rounded-full bg-indigo-50 text-indigo-500 shrink-0">
+      <span class="flex items-center justify-center w-11 h-11 rounded-full bg-blue-50 text-blue-500 shrink-0">
         <i class="pi pi-directions text-xl"></i>
       </span>
       <div class="min-w-0">
@@ -30,7 +30,7 @@
       <ng-container *ngIf="stepFields.length">
         <div class="flex flex-col gap-3 rounded-lg border border-slate-200 p-4">
           <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-            <i class="pi pi-pencil text-indigo-500"></i>Informations demandées à cette étape
+            <i class="pi pi-pencil text-blue-500"></i>Informations demandées à cette étape
           </div>
 
           <div *ngFor="let champ of stepFields" class="flex flex-col gap-1">
@@ -68,7 +68,8 @@
                    sélecteur de fichier inerte, ou un message expliquant que l'écran ne sait pas
                    faire, n'aide personne. Le champ n'est alors pas exigé non plus — c'est le
                    serveur qui dira, dans ses mots, ce qui manque. -->
-              <div *ngSwitchCase="'FILE'" class="flex flex-col gap-1" [hidden]="!deposerFichier">
+              <!-- Ancien code mis en commentaire -->
+              <!-- <div *ngSwitchCase="'FILE'" class="flex flex-col gap-1" [hidden]="!deposerFichier">
                 <input type="file" class="w-full text-sm" *ngIf="deposerFichier"
                   [disabled]="depotsEnCours.has(nomDeControle(champ))"
                   (change)="choisirFichier($event, nomDeControle(champ))" />
@@ -84,15 +85,47 @@
                 <small class="p-error" *ngIf="depotsEnEchec.has(nomDeControle(champ))">
                   Le dépôt a échoué : la pièce n'est pas jointe. Réessayez.
                 </small>
+              </div> -->
+
+              <!-- Nouveau bloc d'upload stylisé -->
+              <div *ngSwitchCase="'FILE'" class="flex flex-col gap-2" [hidden]="!deposerFichier">
+                <div class="flex items-center gap-3 p-3 border border-dashed border-slate-300 rounded-lg bg-slate-50/50 hover:bg-slate-50 transition-colors relative">
+                  <input type="file" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
+                    *ngIf="deposerFichier"
+                    [disabled]="depotsEnCours.has(nomDeControle(champ))"
+                    (change)="choisirFichier($event, nomDeControle(champ)); $event.stopPropagation(); $event.preventDefault();" />
+                  
+                  <div class="flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-500 shrink-0">
+                    <i class="pi pi-upload text-lg" *ngIf="!depotsEnCours.has(nomDeControle(champ))"></i>
+                    <i class="pi pi-spinner pi-spin text-lg" *ngIf="depotsEnCours.has(nomDeControle(champ))"></i>
+                  </div>
+                  
+                  <div class="flex flex-col min-w-0 flex-grow">
+                    <span class="text-sm font-semibold text-slate-800">
+                      {{ fichiersDeposes[nomDeControle(champ)] || 'Sélectionner un fichier ou une image...' }}
+                    </span>
+                    <span class="text-xs text-slate-500">
+                      Cliquez pour parcourir vos fichiers
+                    </span>
+                  </div>
+                </div>
+
+                <small class="text-emerald-700 flex items-center gap-1 mt-1"
+                  *ngIf="fichiersDeposes[nomDeControle(champ)] && !depotsEnCours.has(nomDeControle(champ))">
+                  <i class="pi pi-check text-xs"></i> Fichier associé avec succès.
+                </small>
+                <small class="p-error flex items-center gap-1 mt-1" *ngIf="depotsEnEchec.has(nomDeControle(champ))">
+                  <i class="pi pi-exclamation-circle text-xs"></i> {{ erreursDeDepot[nomDeControle(champ)] || 'Le dépôt a échoué. Veuillez réessayer.' }}
+                </small>
               </div>
 
               <input *ngSwitchDefault pInputText type="text" class="w-full"
                 [formControlName]="nomDeControle(champ)" />
             </ng-container>
 
-            <small class="p-error block" *ngIf="estInvalide(nomDeControle(champ))">
+            <!-- <small class="p-error block" *ngIf="estInvalide(nomDeControle(champ))">
               Ce champ est obligatoire pour valider cette étape.
-            </small>
+            </small> -->
           </div>
         </div>
       </ng-container>
@@ -101,9 +134,9 @@
            traçabilité, lue par qui reprendra le dossier ou l'auditera. Elle est donc présentée
            comme telle — cadre à part, motif énoncé — et non comme un champ de plus en bas de
            formulaire. -->
-      <div class="flex flex-col gap-2 rounded-lg border border-indigo-100 bg-indigo-50/40 p-4">
+      <div class="flex flex-col gap-2 rounded-lg border border-blue-100 bg-blue-50/40 p-4">
         <label for="comments" class="flex items-center gap-2 text-sm font-bold text-slate-800">
-          <i class="pi pi-comment text-indigo-500"></i>
+          <i class="pi pi-comment text-blue-500"></i>
           Observation <span class="text-red-500">*</span>
         </label>
         <p class="m-0 text-xs text-slate-500">
@@ -128,10 +161,10 @@
         <i class="pi pi-lock text-slate-400"></i>
         Décision définitive : elle fait avancer le circuit et reste inscrite au dossier.
       </span>
-      <div class="flex gap-2">
-        <p-button label="Annuler" icon="pi pi-times" severity="secondary" [text]="true"
+      <div class="flex justify-between gap-2 w-full">
+        <p-button label="Annuler" variant="outlined" severity="secondary"
           (onClick)="fermer()"></p-button>
-        <p-button [label]="action?.libelle || 'Confirmer'" icon="pi pi-check"
+        <p-button severity="info" [label]="action?.libelle || 'Confirmer'"
           [disabled]="form.invalid || depotEnCours" [loading]="loading || depotEnCours"
           (onClick)="valider()"></p-button>
       </div>

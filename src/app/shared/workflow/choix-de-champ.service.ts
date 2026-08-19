@@ -80,22 +80,28 @@ export class ChoixDeChampService {
                     return of([]);
                 }
                 return this.authService.loadAgentPublicByService(maStructure.id).pipe(
-                    map((reponse: any) => (reponse?.data?.content ?? []).map((agent: any) => ({
-                        label: [agent.firstName, agent.lastName].filter(Boolean).join(' ')
-                            || agent.email || agent.userId,
-                        value: agent.userId ?? agent.id
-                    })))
+                    map((reponse: any) => (reponse?.data?.content ?? []).map((agent: any) => {
+                        const userObj = agent.user ? agent.user : agent;
+                        return {
+                            label: [userObj.firstName, userObj.lastName].filter(Boolean).join(' ')
+                                || userObj.email || userObj.userId || userObj.username || agent.id,
+                            value: userObj.userId || userObj.id || agent.id
+                        };
+                    }))
                 );
             }
             case '@UTILISATEURS':
                 // Une page large : ces listes servent à désigner quelqu'un, pas à parcourir un
                 // annuaire. Une pagination y rendrait le choix impraticable.
                 return this.authService.getAllUsers(0, 500).pipe(
-                    map((reponse: any) => (reponse?.data?.content ?? []).map((utilisateur: any) => ({
-                        label: [utilisateur.firstName, utilisateur.lastName].filter(Boolean).join(' ')
-                            || utilisateur.email || utilisateur.userId,
-                        value: utilisateur.userId ?? utilisateur.id
-                    })))
+                    map((reponse: any) => (reponse?.data?.content ?? []).map((utilisateur: any) => {
+                        const userObj = utilisateur.user ? utilisateur.user : utilisateur;
+                        return {
+                            label: [userObj.firstName, userObj.lastName].filter(Boolean).join(' ')
+                                || userObj.email || userObj.userId || userObj.username || utilisateur.id,
+                            value: userObj.userId || userObj.id || utilisateur.id
+                        };
+                    }))
                 );
             case '@CIRCUITS_TRAITEMENT':
                 // Les deux seuls circuits de traitement d'une non-conformité. Une liste écrite dans

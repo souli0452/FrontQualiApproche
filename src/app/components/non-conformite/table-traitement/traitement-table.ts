@@ -1,5 +1,5 @@
-import { Component, ComponentRef, EventEmitter, Input, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { Component, ComponentRef, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FeaturesService } from "../../../services/feature-service";
 import { TypeDemande } from "../../../utils/global/global-utils";
@@ -9,6 +9,8 @@ import { WorkflowActionsComponent, WorkflowDecisionDialogComponent, DecisionConf
 import { WorkflowService } from '../../../services/workflow.service';
 import { ResultatDecisionDto, StepDecision, WorkflowActionDto } from '../../../models/workflow.model';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
+import { Router } from '@angular/router';
+import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 
 
 @Component({
@@ -19,7 +21,7 @@ import { ProcNonConformiteService } from '../../../services/non-conformite/proc-
     standalone: true,
     imports: [CommonModule, NgPrimeModule, WorkflowActionsComponent, WorkflowDecisionDialogComponent]
 })
-export class TraitementTableComponent implements OnInit {
+export class TraitementTableComponent implements OnInit, OnChanges {
     @Input() demandeList: Array<any> = [];
     @Input() loading: boolean = false;
     @Input() paginator: boolean = true;
@@ -35,12 +37,16 @@ export class TraitementTableComponent implements OnInit {
     @Input() btnActions?: EtapeTraitement = EtapeTraitement.RECEPTION;
     @Input() status?: String;
     @Input() title?: string;
+    @Input() subtitle?: string;
+    @Input() hasFilters: boolean = false;
     @Output() onImputation = new EventEmitter<any>();
     @Output() onValidation = new EventEmitter<any>();
     @Output() onStructureValidation = new EventEmitter<any>();
     @Output() onEdition = new EventEmitter<any>();
     @Output() onSaveEntity = new EventEmitter<any>();
     @Output() onReceptionner = new EventEmitter<any>();
+    @Output() onArchive = new EventEmitter<any>();
+    @Output() onDelete = new EventEmitter<any>();
 
     @ViewChild('detailContainer', { read: ViewContainerRef, static: true }) detailContainer?: ViewContainerRef;
 
@@ -61,13 +67,19 @@ export class TraitementTableComponent implements OnInit {
     totalActions: number = 0;
     nombreTraites: number = 0;
     nombreNonTraites: number = 0;
+
+    rowMenuItems: MenuItem[] = [];
+    activeRow: any;
+
     constructor(
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         private featureService: FeaturesService,
         private datePipe: DatePipe,
         private nonConformiteService: ProcNonConformiteService,
-        private workflowService: WorkflowService
+        private workflowService: WorkflowService,
+        private router: Router,
+        private globalNcService: NonConformiteService
     ) {
     }
 
@@ -235,6 +247,13 @@ export class TraitementTableComponent implements OnInit {
 
     ngOnInit() {
         this.colsFilter = this.cols.map((value) => value.field);
+        console.log("DONNEES DU TABLEAU INITIALES (ngOnInit) :", this.demandeList);
+    }
+
+    ngOnChanges(changes: any) {
+        if (changes.demandeList) {
+            console.log("DONNEES DU TABLEAU MISES A JOUR (ngOnChanges) :", this.demandeList);
+        }
     }
 
     closeDetailsDialog() {
@@ -243,30 +262,57 @@ export class TraitementTableComponent implements OnInit {
 
     }
     displayDetails(rowData?: any) {
+        console.log("DONNEES DE LA DEMANDE SELECTIONNEE (displayDetails) :", rowData);
         if (this.displayDetail) {
             this.closeDetailsDialog();
         } else {
-            this.selectedDemande = rowData;
-            this.selectedDemande.btnActions = this.btnActions;
-            this.totalActions = this.selectedDemande.planActions.length;
-            this.hasNonTraiter = this.selectedDemande.planActions.some((action: { status: string }) => action.status === 'NON_TRAITER');
-            this.hasInactive = this.selectedDemande.planActions.some((action: { status: string }) => action.status === 'INACTIF');
-
-            this.nombreTraites = this.selectedDemande.planActions.filter((action: { status: string }) => action.status === 'TRAITER').length;
-            this.nombreNonTraites = this.selectedDemande.planActions.filter((action: { status: string }) => action.status === 'NON_TRAITER').length;
-            this.nbreInactive = this.selectedDemande.planActions.filter((action: { status: string }) => action.status === 'INACTIF').length;
-
-            this.displayDetail = true;
-            let componentRef: any;
-            if (this.btnActions !== EtapeTraitement.CLOTURE && this.btnActions !== EtapeTraitement.IMPUTATION && this.btnActions !== EtapeTraitement.SUIVI_RQ) {
-                componentRef = this.detailContainer?.createComponent(this.featureService.getDynamicFormTraitementComponent(this.selectedDemande.typeDemande));
+            if (rowData && rowData.nonConformeId) {
+                this.globalNcService.findNCById(rowData.nonConformeId).subscribe({
+                    next: (reponse: any) => {
+                        const parentNC = reponse?.data ?? reponse;
+                        if (parentNC) {
+                            // On injecte les données d'origine de la demande pour s'assurer qu'il a le bon circuit, etc.
+                            parentNC.btnActions = this.btnActions;
+                            parentNC.workflowState = parentNC.workflowState || rowData.workflowState;
+                            this.openDetailsWithNC(parentNC);
+                        } else {
+                            this.openDetailsWithNC(rowData);
+                        }
+                    },
+                    error: () => {
+                        this.openDetailsWithNC(rowData);
+                    }
+                });
             } else {
-                componentRef = this.detailContainer?.createComponent(this.featureService.getDynamicDetailsDialogComponent(this.selectedDemande.typeDemande));
+                this.openDetailsWithNC(rowData);
             }
-
-            componentRef!.instance.demande = this.selectedDemande;
-            this.componentRef = componentRef;
         }
+    }
+
+    private openDetailsWithNC(ncData: any) {
+        this.selectedDemande = ncData;
+        this.selectedDemande.btnActions = this.btnActions;
+        if (this.selectedDemande) {
+            this.selectedDemande.planActions = this.selectedDemande.planActions || [];
+        }
+        this.totalActions = this.selectedDemande.planActions.length;
+        this.hasNonTraiter = this.selectedDemande.planActions.some((action: { status: string }) => action.status === 'NON_TRAITER');
+        this.hasInactive = this.selectedDemande.planActions.some((action: { status: string }) => action.status === 'INACTIF');
+
+        this.nombreTraites = this.selectedDemande.planActions.filter((action: { status: string }) => action.status === 'TRAITER').length;
+        this.nombreNonTraites = this.selectedDemande.planActions.filter((action: { status: string }) => action.status === 'NON_TRAITER').length;
+        this.nbreInactive = this.selectedDemande.planActions.filter((action: { status: string }) => action.status === 'INACTIF').length;
+
+        this.displayDetail = true;
+        let componentRef: any;
+        if (this.btnActions !== EtapeTraitement.CLOTURE && this.btnActions !== EtapeTraitement.IMPUTATION && this.btnActions !== EtapeTraitement.SUIVI_RQ) {
+            componentRef = this.detailContainer?.createComponent(this.featureService.getDynamicFormTraitementComponent(this.selectedDemande.typeDemande));
+        } else {
+            componentRef = this.detailContainer?.createComponent(this.featureService.getDynamicDetailsDialogComponent(this.selectedDemande.typeDemande));
+        }
+
+        componentRef!.instance.demande = this.selectedDemande;
+        this.componentRef = componentRef;
     }
 
     onPageChange(event: any) {
@@ -294,6 +340,284 @@ export class TraitementTableComponent implements OnInit {
         }
         
         return 'secondary';
+    }
+
+    getGravityStyle(gravity: string): { [key: string]: string } {
+        const severity = this.getSeverity(gravity);
+        switch (severity) {
+            case 'danger':
+                return { 'color': '#ef4444' };
+            case 'warn':
+                return { 'color': '#f97316' };
+            case 'info':
+                return { 'color': '#0084ca' };
+            default:
+                return { 'color': '#64748b' };
+        }
+    }
+
+    isRejet(rowData: any): boolean {
+        if (!rowData || rowData.status === 'DRAFT' || rowData.status === 'Brouillon') return false;
+
+        const STEP_ORDER: Record<string, number> = {
+            'SOUMISSION': 1,
+            'RECEPTION': 2,
+            'VALIDATION_RQ': 3,
+            'IMPUTATION': 4,
+            'TRAITEMENT': 5,
+            'VALIDATION': 6,
+            'VALIDATION_RS': 7,
+            'SUIVI_RQ': 8,
+            'CLOTURE': 9,
+
+            // Support des codes numériques du moteur de workflow
+            '1': 1, // SOUMISSION
+            '2': 2, // RECEPTION
+            '3': 3, // VALIDATION_RQ
+            '4': 4, // IMPUTATION
+            '5': 5, // TRAITEMENT
+            '6': 6, // VALIDATION
+            '7': 7, // VALIDATION_RS
+            '8': 8, // SUIVI_RQ
+            '9': 9  // CLOTURE
+        };
+
+        const currentOrder = STEP_ORDER[rowData.etatTraitement || ''] || 0;
+
+        // Rechercher dans l'historique à quelle étape le document de rejet a été attaché
+        const saisies = rowData.workflowState?.saisies || [];
+        const docRejetId = rowData.docRejet?.id?.toLowerCase();
+        const docRejetNom = (rowData.docRejet?.nom || rowData.docRejet?.nomFichier || '').toLowerCase();
+
+        const rejectionSaisie = saisies.find((s: any) => {
+            const val = (s.value || '').toLowerCase();
+            const fieldName = (s.fieldName || '').toLowerCase();
+            const fieldLabel = (s.fieldLabel || '').toLowerCase();
+
+            return fieldName.includes('rejet') || 
+                   fieldLabel.includes('rejet') ||
+                   fieldName === 'docrejet' ||
+                   (docRejetId && val.includes(docRejetId)) ||
+                   (docRejetNom && val.includes(docRejetNom));
+        });
+
+        if (rejectionSaisie) {
+            const rejectOrder = STEP_ORDER[rejectionSaisie.stepCode || ''] || 0;
+            if (rejectOrder > currentOrder) {
+                return true; // Rejet actif
+            }
+        }
+
+        // Cas de repli : retour à l'étape initiale SOUMISSION
+        if (rowData.etatTraitement === 'SOUMISSION' && rowData.status !== 'DRAFT') {
+            return true;
+        }
+
+        return false;
+    }
+
+    getWorkflowStatusSeverity(statusName: string, rowData?: any): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
+        if (!statusName) return 'info';
+        const val = statusName.toLowerCase().trim();
+        if (this.isRejet(rowData)) {
+            return 'danger'; // 🔴 Rouge pour indiquer un rejet
+        }
+        if (val.includes('clôture') || val.includes('cloture')) {
+            return 'success'; // 🟢 Vert
+        }
+        return 'info'; // 🔵 Bleu par défaut
+    }
+
+    formatWorkflowStatusName(statusName: string, rowData?: any): string {
+        if (!statusName) return '';
+        const val = statusName.trim();
+        if (this.isRejet(rowData)) {
+            return 'Rejetée (À corriger)';
+        }
+        if (val.toLowerCase() === 'clôture' || val.toLowerCase() === 'cloture') {
+            return 'Clôturé';
+        }
+        return val;
+    }
+
+    getInitials(name: any): string {
+        if (!name || typeof name !== 'string') return 'U';
+        return name.trim().charAt(0).toUpperCase();
+    }
+
+    buildRowMenu(rowData: any) {
+        this.activeRow = rowData;
+        this.rowMenuItems = [];
+
+        // 1. Action commune : Détails
+        this.rowMenuItems.push({
+            label: 'Détails',
+            icon: 'pi pi-search',
+            command: () => this.displayDetails(rowData)
+        });
+
+        // 2. Si c'est un brouillon (DRAFT)
+        if (rowData.status === 'DRAFT' || rowData.status === 'Brouillon') {
+            this.rowMenuItems.push({
+                label: 'Modifier',
+                icon: 'pi pi-pencil',
+                command: () => this.modifierBrouillon(rowData)
+            });
+            this.rowMenuItems.push({
+                label: 'Soumettre',
+                icon: 'pi pi-send',
+                command: () => this.soumettreBrouillon(rowData)
+            });
+            this.rowMenuItems.push({
+                label: 'Supprimer',
+                icon: 'pi pi-trash',
+                styleClass: 'delete-menu-item',
+                command: () => this.supprimerBrouillon(rowData)
+            });
+        } else if (rowData.status === 'PUBLISHED' || rowData.status === 'Publié') {
+            this.rowMenuItems.push({
+                label: 'Archiver',
+                icon: 'pi pi-file',
+                command: () => this.archiverDossier(rowData)
+            });
+            this.rowMenuItems.push({
+                label: 'Supprimer',
+                icon: 'pi pi-trash',
+                styleClass: 'delete-menu-item',
+                command: () => this.supprimerDossier(rowData)
+            });
+        } else {
+            // Si c'est rejeté à l'étape SOUMISSION, on permet la modification et la suppression
+            if (this.isRejet(rowData) && rowData.etatTraitement === 'SOUMISSION') {
+                this.rowMenuItems.push({
+                    label: 'Modifier',
+                    icon: 'pi pi-pencil',
+                    command: () => this.modifierBrouillon(rowData)
+                });
+                this.rowMenuItems.push({
+                    label: 'Supprimer',
+                    icon: 'pi pi-trash text-red-500',
+                    command: () => this.supprimerBrouillon(rowData)
+                });
+            }
+
+            // 3. Actions de workflow dynamiques issues du moteur
+            const actions = rowData.workflowState?.allowedActions || [];
+            actions.forEach((action: any) => {
+                this.rowMenuItems.push({
+                    label: action.libelle,
+                    icon: action.icon || 'pi pi-cog',
+                    command: () => {
+                        this.displayDetails(rowData);
+                    }
+                });
+            });
+        }
+    }
+
+    modifierBrouillon(rowData: any) {
+        this.router.navigate(['/non-conformite/declaration', rowData.id]);
+    }
+
+    soumettreBrouillon(rowData: any) {
+        this.confirmationService.confirm({
+            message: 'Voulez-vous vraiment soumettre cette non-conformité ?',
+            header: 'Confirmation',
+            icon: 'pi pi-exclamation-triangle',
+            acceptLabel: 'Oui',
+            rejectLabel: 'Non',
+            accept: () => {
+                this.loading = true;
+                this.globalNcService.updateStatus(rowData.id, 'PUBLISHED').subscribe({
+                    next: () => {
+                        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'La non-conformité a été soumise avec succès.' });
+                        this.featureService.onReloadRequested(true);
+                        this.loading = false;
+                    },
+                    error: () => {
+                        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Une erreur est survenue lors de la soumission.' });
+                        this.loading = false;
+                    }
+                });
+            }
+        });
+    }
+
+    supprimerBrouillon(rowData: any) {
+        this.confirmationService.confirm({
+            message: 'Voulez-vous vraiment supprimer définitivement ce brouillon ?',
+            header: 'Confirmation de suppression',
+            icon: 'pi pi-trash',
+            acceptLabel: 'Supprimer',
+            rejectLabel: 'Annuler',
+            acceptButtonStyleClass: 'p-button-danger',
+            accept: () => {
+                this.loading = true;
+                this.globalNcService.delete(rowData.id).subscribe({
+                    next: () => {
+                        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Le brouillon a été supprimé avec succès.' });
+                        this.featureService.onReloadRequested(true);
+                        this.loading = false;
+                    },
+                    error: () => {
+                        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Une erreur est survenue lors de la suppression.' });
+                        this.loading = false;
+                    }
+                });
+            }
+        });
+    }
+
+    archiverDossier(rowData: any) {
+        this.confirmationService.confirm({
+            message: 'Voulez-vous vraiment archiver cette non-conformité ?',
+            header: 'Confirmation d\'archivage',
+            icon: 'pi pi-file',
+            acceptLabel: 'Archiver',
+            rejectLabel: 'Annuler',
+            accept: () => {
+                this.onArchive.emit(rowData);
+            }
+        });
+    }
+
+    supprimerDossier(rowData: any) {
+        this.confirmationService.confirm({
+            message: 'Voulez-vous vraiment supprimer cette non-conformité ?',
+            header: 'Confirmation de suppression',
+            icon: 'pi pi-trash',
+            acceptLabel: 'Supprimer',
+            rejectLabel: 'Annuler',
+            acceptButtonStyleClass: 'p-button-danger',
+            accept: () => {
+                this.onDelete.emit(rowData);
+            }
+        });
+    }
+
+    getCellValue(rowData: any, col: any): string {
+        const val = rowData[col.field];
+        if (val !== undefined && val !== null && val !== '') {
+            return val;
+        }
+        
+        // Si c'est un PlanAction (il a nonConformeId)
+        if (rowData.nonConformeId) {
+            if (col.field === 'numeroReference') {
+                return rowData.numeroNc || rowData.nonConformite?.numeroReference || '';
+            }
+            if (col.field === 'structureSoumissionLibelle') {
+                return rowData.procEmetteur || rowData.nonConformite?.structureSoumissionLibelle || '';
+            }
+            if (col.field === 'typeNonConformiteLibelle') {
+                return rowData.nonConformite?.typeNonConformiteLibelle || '';
+            }
+            if (col.field === 'niveauNonConformiteLibelle') {
+                return rowData.nonConformite?.niveauNonConformiteLibelle || '';
+            }
+        }
+        
+        return '';
     }
 
 

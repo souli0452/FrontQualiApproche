@@ -20,7 +20,7 @@ import { WorkflowSaisiesComponent } from '../../../shared/workflow/workflow-sais
 import { WorkflowHistoriqueComponent } from '../../../shared/workflow/workflow-historique.component';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { GlobalSearchService } from '../../../services/non-conformite/global-search.service';
-import { forkJoin } from 'rxjs';
+import { forkJoin, map } from 'rxjs';
 import { PlanActionService } from '../../../services/non-conformite/planAction.service';
 import { ChoixDeChampService } from '../../../shared/workflow/choix-de-champ.service';
 import { PieceJointeFichierService } from '../../../services/non-conformite/piece-jointe-fichier.service';
@@ -61,6 +61,10 @@ export class TraitementActionTable implements OnInit {
     /** Personne à qui le pilote confie l'action au moment d'en constater la réalisation. */
     nouveauResponsable:string|null=null;
     utilisateursDeMaStructure:any[]=[];
+    readonly deposerFichierDEtape = (fichier: File) =>
+        this.planActionService.deposerFichier(this.planAction.id, fichier).pipe(
+            map((reponse: any) => reponse?.url || reponse?.id || `${reponse}`)
+        );
 
     @ViewChild('dt') table!: Table;
     private destroy$: Subject<boolean> = new Subject<boolean>();

@@ -6,7 +6,7 @@
      observations, agent imputé sont des champs déclarés par les étapes du circuit, et l'onglet de
      la fiche les recueille. Le formulaire les redemandait en parallèle et les écrivait directement
      sur la non-conformité, sans passer par le moteur. -->
-<app-details-dialog [demande]="demande"></app-details-dialog>
+<app-details-dialog [demande]="demande" [masquerPlansAction]="true"></app-details-dialog>
 
 <!-- Les personnes ayant pris part à l'analyse. Le champ existait en base et s'affichait sur la
      fiche, mais aucun écran ne l'écrivait : la rubrique restait donc vide sur tous les dossiers.
@@ -99,114 +99,93 @@
                         </div>
 
                         <!-- Table -->
-                        <div class="overflow-x-auto w-full p-2" style="max-width: 100%;">
-                                <p-table 
-                                    [value]="demande.planActions" 
-                                    [rowHover]="true"
-                                    styleClass="p-datatable-sm"
-                                    responsiveLayout="scroll"
-                                    [scrollable]="true"
-                                    [paginator]="true" 
-                                    [rows]="10"
-                                    [showCurrentPageReport]="true"
-                                    currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} actions">
-                                    
-                                    <ng-template pTemplate="header">
-                                        <tr>
-                                            <!-- Les colonnes du plan d'action, dans l'ordre où il se
-                                                 lit. « Cause » disparaît en circuit Correction : on
-                                                 y remet en conformité sans remonter à l'origine de
-                                                 l'écart, et la colonne serait vide sur toutes les
-                                                 lignes. -->
-                                            <th pFrozenColumn alignFrozen="left" class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 70px; text-align: center; z-index: 10;">N°</th>
-                                            <th *ngIf="causeDemandee" class="bg-surface-50 text-700 font-semibold" style="min-width: 240px">Cause</th>
-                                            <th class="bg-surface-50 text-700 font-semibold" style="min-width: 240px">Solution retenue</th>
-                                            <th class="bg-surface-50 text-700 font-semibold" style="min-width: 320px">Action proposée</th>
-                                            <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 200px">Responsable</th>
-                                            <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 150px">Échéance</th>
-                                            <th class="bg-surface-50 text-700 font-semibold" style="min-width: 240px">Critère d'efficacité</th>
-                                            <th class="bg-surface-50 text-700 font-semibold white-space-nowrap text-center" style="min-width: 140px">Étape</th>
-                                            <th pFrozenColumn alignFrozen="right" class="bg-surface-50 text-700 font-semibold white-space-nowrap text-center" style="min-width: 130px; z-index: 10;">Actions</th>
-                                        </tr>
-                                    </ng-template>
-                                    <ng-template pTemplate="body" let-plan>
-                                        <tr class="text-sm">
-                                            <td pFrozenColumn alignFrozen="left" class="font-bold text-600 text-center bg-white" style="z-index: 1;">{{plan.numeroOdre}}</td>
-                                            <td *ngIf="causeDemandee">
-                                                <div class="line-height-3 text-700 m-0 p-0" style="min-width: 240px; white-space: normal; word-break: break-word;">
-                                                    <span *ngIf="plan.causeIdentifiees; else causeAbsente">{{plan.causeIdentifiees}}</span>
-                                                    <ng-template #causeAbsente><span class="italic text-400">À renseigner</span></ng-template>
+                        <div class="p-2 w-full" style="min-width: 100%;">
+                            <p-menu #menu [model]="rowMenuItems" [popup]="true" appendTo="body"></p-menu>
+                            <p-table [value]="demande.planActions" [rowHover]="true" styleClass="p-datatable-sm w-full"
+                                responsiveLayout="scroll" [scrollable]="true" [paginator]="true" [rows]="10"
+                                [showCurrentPageReport]="true"
+                                currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} actions">
+                                
+                                <ng-template pTemplate="header">
+                                    <tr>
+                                        <!-- Ordre est une colonne technique dont la valeur est un nombre :
+                                             l'en-tête et les cellules s'alignent au milieu des
+                                             lignes. -->
+                                        <th pFrozenColumn alignFrozen="left" class="first:rounded-l-lg !py-3 text-center !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 70px; z-index: 10;">N°</th>
+                                        <th *ngIf="causeDemandee" class="!py-3 text-left !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 240px">Cause</th>
+                                        <th class="!py-3 text-left !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 240px">Solution retenue</th>
+                                        <th class="!py-3 text-left !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 200px">Responsable</th>
+                                        <th class="!py-3 text-center !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 150px">Échéance</th>
+                                        <th class="!py-3 text-left !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 240px">Critère d'efficacité</th>
+                                        <th class="!py-3 text-center !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 140px">Étape</th>
+                                        <th pFrozenColumn alignFrozen="right" class="last:rounded-r-lg !py-3 text-center !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 80px; z-index: 10;">Actions</th>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="body" let-plan>
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td pFrozenColumn alignFrozen="left" class="font-bold text-slate-600 text-center bg-white border-b border-slate-100" style="z-index: 1;">{{plan.numeroOdre}}</td>
+                                        <td *ngIf="causeDemandee" class="border-b border-slate-100">
+                                            <div class="line-height-3 text-slate-700 m-0 p-0" style="min-width: 240px; white-space: normal; word-break: break-word;">
+                                                <span *ngIf="plan.causeIdentifiees; else causeAbsente">{{plan.causeIdentifiees}}</span>
+                                                <ng-template #causeAbsente><span class="italic text-slate-400">À renseigner</span></ng-template>
+                                            </div>
+                                        </td>
+                                        <td class="border-b border-slate-100">
+                                            <div class="line-height-3 text-slate-700 m-0 p-0" style="min-width: 240px; white-space: normal; word-break: break-word;">
+                                                <span *ngIf="plan.solutionRetenues; else solutionAbsente">{{plan.solutionRetenues}}</span>
+                                                <ng-template #solutionAbsente><span class="italic text-slate-400">À renseigner</span></ng-template>
+                                            </div>
+                                        </td>
+                                        <td class="border-b border-slate-100">
+                                            <div class="flex items-center gap-2" style="min-width: 200px">
+                                                <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center text-xs border border-slate-200 flex-shrink-0">
+                                                    {{ getResponsableInitials(plan) }}
                                                 </div>
-                                            </td>
-                                            <td>
-                                                <div class="line-height-3 text-700 m-0 p-0" style="min-width: 240px; white-space: normal; word-break: break-word;">
-                                                    <span *ngIf="plan.solutionRetenues; else solutionAbsente">{{plan.solutionRetenues}}</span>
-                                                    <ng-template #solutionAbsente><span class="italic text-400">À renseigner</span></ng-template>
+                                                <div class="flex flex-col gap-0.5">
+                                                    <span class="font-semibold text-slate-900">{{ getResponsableName(plan) }}</span>
+                                                    <span class="text-xs text-slate-500">{{ plan.responsable?.email || plan.responsableEmail }}</span>
                                                 </div>
-                                            </td>
-                                            <td>
-                                                <div [innerHTML]="plan.actionCorrective" class="line-height-3 text-700 m-0 p-0" style="min-width: 320px; white-space: normal; word-break: break-word;"></div>
-                                            </td>
-                                            <td>
-                                                <div class="flex items-center gap-2" style="min-width: 200px">
-                                                    <i class="pi pi-user text-primary-400"></i>
-                                                    <div class="flex flex-col gap-1">
-                                                        <span class="font-medium text-900">{{plan.responsableNomComplet}}</span>
-                                                        <span class="text-xs text-500">{{plan.responsableEmail}}</span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="flex items-center gap-2" style="min-width: 150px">
-                                                    <i class="pi pi-calendar text-primary-400"></i>
-                                                    <span class="text-700 font-medium">{{plan.dateEcheance}}</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="line-height-3 text-700 m-0 p-0" style="min-width: 240px; white-space: normal; word-break: break-word;">
-                                                    <span *ngIf="plan.critereEfficacite; else critereAbsent">{{plan.critereEfficacite}}</span>
-                                                    <ng-template #critereAbsent><span class="italic text-400">À renseigner</span></ng-template>
-                                                </div>
-                                            </td>
-                                            <td class="text-center">
-                                                <!-- Une action pas encore confiée n'a pas de circuit : elle est
-                                                     « Proposée », et non dans l'état technique INACTIF que la
-                                                     colonne affichait sans rien en dire à qui lit la fiche. -->
-                                                <div style="min-width: 140px">
-                                                    <p-tag [severity]="couleurEtapeDuPlan(plan)"
-                                                           [value]="etapeDuPlan(plan)"
-                                                           [rounded]="true"></p-tag>
-                                                </div>
-                                            </td>
-                                            <td pFrozenColumn alignFrozen="right" class="text-center bg-white" style="z-index: 1;">
-                                                <div style="min-width: 130px" class="flex items-center justify-center gap-1">
-                                                    <p-button [text]="true" [rounded]="true" severity="secondary" size="small"
-                                                        icon="pi pi-search" (onClick)="affich(plan)"
-                                                        pTooltip="Détails" tooltipPosition="top" />
-                                                    <!-- Un plan déjà confié à son responsable pilote son propre
-                                                         circuit : il ne se corrige ni ne se retire depuis la fiche. -->
-                                                    <p-button *ngIf="estModifiable(plan)" [text]="true" [rounded]="true" size="small"
-                                                        icon="pi pi-pencil" (onClick)="edit(plan)"
-                                                        [pTooltip]="designationSeule ? 'Désigner le responsable' : 'Corriger'" tooltipPosition="top" />
-                                                    <p-button *ngIf="estModifiable(plan) && !designationSeule" [text]="true" [rounded]="true"
-                                                        severity="danger" size="small"
-                                                        icon="pi pi-trash" (onClick)="delete(plan)"
-                                                        pTooltip="Retirer" tooltipPosition="top" />
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </ng-template>
-                                    <ng-template pTemplate="emptymessage">
-                                        <tr>
-                                            <td [attr.colspan]="causeDemandee ? 9 : 8" class="text-center p-5">
-                                                <div class="flex flex-col items-center justify-center text-500">
-                                                    <i class="pi pi-inbox text-4xl mb-3 text-300"></i>
-                                                    <span class="font-medium text-lg">Aucun plan d'action défini.</span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </ng-template>
-                                </p-table>
+                                            </div>
+                                        </td>
+                                        <td class="border-b border-slate-100">
+                                            <div class="flex items-center justify-center gap-2" style="min-width: 150px">
+                                                <i class="pi pi-calendar text-slate-400"></i>
+                                                <span class="text-slate-700 font-medium">{{plan.dateEcheance}}</span>
+                                            </div>
+                                        </td>
+                                        <td class="border-b border-slate-100">
+                                            <div class="line-height-3 text-slate-700 m-0 p-0" style="min-width: 240px; white-space: normal; word-break: break-word;">
+                                                <span *ngIf="plan.critereEfficacite; else critereAbsent">{{plan.critereEfficacite}}</span>
+                                                <ng-template #critereAbsent><span class="italic text-slate-400">À renseigner</span></ng-template>
+                                            </div>
+                                        </td>
+                                        <td class="text-center border-b border-slate-100">
+                                            <div style="min-width: 140px">
+                                                <p-tag [severity]="couleurEtapeDuPlan(plan)"
+                                                       [value]="etapeDuPlan(plan)"
+                                                       [rounded]="true"></p-tag>
+                                            </div>
+                                        </td>
+                                        <td pFrozenColumn alignFrozen="right" class="text-center bg-white border-b border-slate-100" style="z-index: 1;">
+                                            <div style="min-width: 80px" class="flex items-center justify-center">
+                                                <p-button [text]="true" [rounded]="true" icon="pi pi-ellipsis-v"
+                                                    (click)="menu.toggle($event); $event.stopPropagation(); buildRowMenu(plan)"
+                                                    severity="secondary" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="emptymessage">
+                                    <tr>
+                                        <td [attr.colspan]="causeDemandee ? 8 : 7" class="text-center p-5">
+                                            <div class="flex flex-col items-center justify-center text-500">
+                                                <i class="pi pi-inbox text-4xl mb-3 text-300"></i>
+                                                <span class="font-medium text-lg">Aucun plan d'action défini.</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </ng-template>
+                            </p-table>
                         </div>
                     </div>
                 </div>
@@ -234,9 +213,23 @@
          Tailwind. Résultat : des largeurs sans rapport les unes avec les autres, un champ « Ordre »
          au tiers de la largeur seul sur sa ligne, et aucune gouttière entre les champs. -->
     <div class="grid grid-cols-12 gap-x-4 gap-y-3 mt-2">
+        @if (designationSeule) {
+            <div class="col-span-12 p-3 bg-blue-50/70 border-l-4 border-blue-500 rounded-r-lg text-blue-900 mb-2 flex items-start gap-2.5">
+                <i class="pi pi-info-circle text-blue-600 text-lg mt-0.5 flex-shrink-0"></i>
+                <div class="flex flex-col gap-0.5">
+                    <span class="font-bold text-sm">Attribution du responsable</span>
+                    <span class="text-xs text-blue-700 leading-relaxed">
+                        À l'étape de validation, vous devez confirmer ou attribuer l'action corrective à l'agent responsable qui sera chargé de la traiter et de la réaliser.
+                    </span>
+                </div>
+            </div>
+        }
+
         <div *ngIf="designationSeule" class="col-span-12 mb-3 p-3 rounded-lg bg-surface-50 border border-surface-200">
-            <span class="text-500 text-sm block mb-2">Action corrective proposée par l'agent</span>
-            <div [innerHTML]="planAction.actionCorrective || '<span class=\'italic text-500\'>Action non décrite</span>'" class="line-height-3 text-700 m-0"></div>
+            <!-- <span class="text-500 text-sm block mb-2">Action corrective proposée par l'agent</span>
+            <div [innerHTML]="planAction.actionCorrective || '<span class=\'italic text-500\'>Action non décrite</span>'" class="line-height-3 text-700 m-0"></div> -->
+            <span class="text-500 text-sm block mb-2">Solutions proposées par l'agent</span>
+            <div [innerHTML]="planAction.solutionRetenues || '<span class=\'italic text-500\'>Action non décrite</span>'" class="line-height-3 text-700 m-0"></div>
         </div>
 
         <!-- Le rang de l'action parmi celles du dossier. Laissé vide, le serveur le place à la
@@ -291,7 +284,7 @@
             <textarea class="w-full" rows="3" cols="30" pTextarea id="actionCorrective" [(ngModel)]="planAction.actionCorrective" [autoResize]="true" placeholder="Décrivez l'action à mener."></textarea>
         </div> -->
 
-        <div class="col-span-12 md:col-span-6">
+        <div [class]="designationSeule ? 'col-span-12' : 'col-span-12 md:col-span-6'">
             <div class="flex mb-2 gap-2">
                 <label for="responsable" class="font-normal m-0 font-semibold">
                     Responsable <span class="text-red-500" *ngIf="designationSeule">*</span>
@@ -351,15 +344,15 @@
             label="Annuler" (click)="hideDialog()">
         </button>
         @if (isEdit){
-        <button pButton pRipple size="small" type="button" icon="pi pi-check"
-            [disabled]="designationSeule ? !user : !planAction.actionCorrective"
-            class="p-button-primary ml-2" (click)="save()" [label]="designationSeule ? 'Désigner' : 'Modifier'">
-        </button>
+        <p-button pRipple type="button" severity="info"
+            [disabled]="designationSeule ? !user : !planAction.solutionRetenues"
+            class="p-button-primary ml-2" (click)="save()" [label]="designationSeule ? 'Attribuer' : 'Modifier'">
+        </p-button>
         }
         @if (!isEdit){
-        <button pButton pRipple size="small" type="button" class="p-button-primary ml-2" (click)="save()"
+        <p-button pRipple type="button" class="p-button-primary ml-2" (click)="save()"
             [disabled]="!planAction.solutionRetenues" label="Ajouter">
-        </button>
+        </p-button>
         }
 
     </ng-template>
@@ -368,7 +361,7 @@
 
 <!-- Dialog Détails Plan d'action -->
 <p-dialog [(visible)]="afficheDialog" [style]="{ width: '50rem' }"
-    [breakpoints]="{ '960px': '95vw' }" [modal]="true" [dismissableMask]="true">
+    [breakpoints]="{ '960px': '95vw' }" [modal]="true" [dismissableMask]="true" [closable]="true">
     
     <ng-template pTemplate="header">
         <div class="flex items-center gap-3">
@@ -425,9 +418,9 @@
                         <span class="text-500 text-sm block mb-1">Responsable</span>
                         <div class="flex items-center gap-2">
                             <i class="pi pi-user text-primary-400"></i>
-                            <span class="font-bold text-900">{{ planAction.responsableNomComplet || 'Non désigné' }}</span>
+                            <span class="font-bold text-900">{{ getResponsableName(planAction) }}</span>
                         </div>
-                        <span class="text-xs text-500 mt-1 block">{{ planAction.responsableEmail }}</span>
+                        <span class="text-xs text-500 mt-1 block">{{ planAction.responsable?.email || planAction.responsableEmail }}</span>
                     </div>
                     <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 shadow-sm flex-1 min-w-max">
                         <span class="text-500 text-sm block mb-1">Date d'échéance</span>
@@ -452,10 +445,10 @@
                     <span class="text-500 text-sm block mb-2">Solution retenue</span>
                     <div [innerHTML]="planAction.solutionRetenues || '<span class=\'italic text-500\'>Aucune solution retenue</span>'" class="line-height-3 text-700 m-0"></div>
                 </div>
-                <div class="mt-3 bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700">
+                <!-- <div class="mt-3 bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700">
                     <span class="text-500 text-sm block mb-2">Action proposée</span>
                     <div [innerHTML]="planAction.actionCorrective || '<span class=\'italic text-500\'>Action non décrite</span>'" class="line-height-3 text-700 m-0"></div>
-                </div>
+                </div> -->
                 <div class="mt-3 bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700">
                     <span class="text-500 text-sm block mb-2">Critère d'efficacité attendu</span>
                     <div [innerHTML]="planAction.critereEfficacite || '<span class=\'italic text-500\'>Aucun critère défini</span>'" class="line-height-3 text-700 m-0 nc-description"></div>
@@ -564,6 +557,7 @@
                 [resourceId]="planAction.id"
                 [reference]="planAction.numeroOdre"
                 [state]="planAction.workflowState"
+                [deposerFichier]="deposerFichierDEtape"
                 (executed)="apresDecisionSurLePlan(planAction)"></app-workflow-actions>
         </div>
     </ng-template>

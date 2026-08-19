@@ -44,10 +44,73 @@ export class NcVueEnsembleFacade {
     return [];
   }
 
+  private enrichRejectionFlag(ncList: any[]): any[] {
+    const STEP_ORDER: Record<string, number> = {
+      'SOUMISSION': 1,
+      'RECEPTION': 2,
+      'VALIDATION_RQ': 3,
+      'IMPUTATION': 4,
+      'TRAITEMENT': 5,
+      'VALIDATION': 6,
+      'VALIDATION_RS': 7,
+      'SUIVI_RQ': 8,
+      'CLOTURE': 9,
+
+      // Support des codes numériques du moteur de workflow
+      '1': 1, // SOUMISSION
+      '2': 2, // RECEPTION
+      '3': 3, // VALIDATION_RQ
+      '4': 4, // IMPUTATION
+      '5': 5, // TRAITEMENT
+      '6': 6, // VALIDATION
+      '7': 7, // VALIDATION_RS
+      '8': 8, // SUIVI_RQ
+      '9': 9  // CLOTURE
+    };
+
+    return this.safeArray(ncList).map((nc: any) => {
+      if (!nc || nc.status === 'DRAFT' || nc.status === 'Brouillon') return nc;
+
+      const currentOrder = STEP_ORDER[nc.etatTraitement || ''] || 0;
+      const saisies = nc.workflowState?.saisies || [];
+      const docRejetId = nc.docRejet?.id?.toLowerCase();
+      const docRejetNom = (nc.docRejet?.nom || nc.docRejet?.nomFichier || '').toLowerCase();
+
+      const rejectionSaisie = saisies.find((s: any) => {
+        const val = (s.value || '').toLowerCase();
+        const fieldName = (s.fieldName || '').toLowerCase();
+        const fieldLabel = (s.fieldLabel || '').toLowerCase();
+
+        return fieldName.includes('rejet') ||
+               fieldLabel.includes('rejet') ||
+               fieldName === 'docrejet' ||
+               (docRejetId && val.includes(docRejetId)) ||
+               (docRejetNom && val.includes(docRejetNom));
+      });
+
+      let isRejected = false;
+      if (rejectionSaisie) {
+        const rejectOrder = STEP_ORDER[rejectionSaisie.stepCode || ''] || 0;
+        if (rejectOrder > currentOrder) {
+          isRejected = true;
+        }
+      }
+
+      if (!isRejected && nc.etatTraitement === 'SOUMISSION' && nc.status !== 'DRAFT') {
+        isRejected = true;
+      }
+
+      if (isRejected) {
+        return { ...nc, rejeter: true };
+      }
+      return nc;
+    });
+  }
+
   private extractNcResponses(res: any) {
     return {
-      aTraiter: this.extractArray(res.aTraiterRes),
-      allUserNcs: this.extractArray(res.userNcsRes),
+      aTraiter: this.enrichRejectionFlag(this.extractArray(res.aTraiterRes)),
+      allUserNcs: this.enrichRejectionFlag(this.extractArray(res.userNcsRes)),
       allNcNonTraiter: this.extractArray(res.ncNonTraiterRes)
     };
   }
@@ -96,7 +159,8 @@ export class NcVueEnsembleFacade {
       validationRqData: parEtape(EtapeTraitement.VALIDATION_RS),
       clotureData: parEtape(EtapeTraitement.SUIVI_RQ),
       nonConformiteClotureeData: parEtape(EtapeTraitement.CLOTURE),
-      imputationsData: parEtape(EtapeTraitement.TRAITEMENT)
+      imputationsData: parEtape(EtapeTraitement.TRAITEMENT),
+      soumissionData: parEtape(EtapeTraitement.SOUMISSION)
     };
   }
 
@@ -154,6 +218,7 @@ export class NcVueEnsembleFacade {
           this.enrichNonTraiterData(raw, processed.nonTraiterData);
         return {
           ...processed,
+          allUserNcs: raw.allUserNcs,
           nonTraiterData: enrichedNonTraiter
         };
       })

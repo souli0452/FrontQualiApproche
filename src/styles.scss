@@ -518,3 +518,195 @@ p-button .p-button-info {
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
 }
+
+
+.border-left-orange {
+    border-left: 4px solid #f97315;
+    border-radius: 5px;
+}
+
+.border-left-blue {
+    border-left: 4px solid #3b82f6;
+    border-radius: 5px;
+}
+
+.border-left-rouge{
+    border-left: 4px solid #ef4444;
+    border-radius: 5px;
+}
+.customFlex {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;              /* Permet le passage à la ligne automatique s'il manque de la place */
+    justify-content: space-between;
+    align-items: center;          /* Aligne verticalement le titre et les sélecteurs */
+    gap: 12px;                    /* Espace minimal de sécurité entre le titre et les calendriers */
+}
+
+.customWidth {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;               /* Empêche les calendriers de s'écraser */
+}
+
+.p-datepicker-year-selected {
+    background: var(--info-color) !important;
+}
+
+.date-select {
+    width: 110px;                 /* Largeur idéale pour un affichage propre des sélecteurs */
+    
+    .p-datepicker-clear-icon {
+        right: 25px !important;
+    }
+}
+
+/* TABLE STYLE PREMIUM (SaaS style - Growth Overview) */
+.premium-table {
+    border: none !important;
+
+    /* En-tête (Header) */
+    .p-datatable-thead > tr > th {
+        background-color: #f8fafc !important; /* Gris très clair moderne */
+        color: #000000 !important; /* Slate grey */
+        font-weight: 600 !important;
+        font-size: 0.825rem !important;
+        text-transform: uppercase !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        padding: 1rem 1.25rem !important; /* Padding généreux */
+        border-left: none !important;
+        border-right: none !important;
+        
+        p-sorticon, .p-sortable-column-icon, .p-datatable-sort-icon {
+            color: #000000 !important;
+            display: inline-flex;
+            align-items: center;
+            
+            /* Pour les icônes SVG natives de PrimeNG 19 */
+            svg, .p-icon {
+                width: 0.7rem !important;   /* Ajustez la taille ici */
+                height: 0.7rem !important;  /* Ajustez la taille ici */
+            }
+            /* Pour les icônes Font classiques */
+            i, .pi {
+                font-size: 0.7rem !important;
+            }
+        }
+    }
+
+    /* Corps du tableau (Body) */
+    .p-datatable-tbody > tr {
+        background-color: #ffffff !important;
+        transition: background-color 0.2s;
+
+        &:hover {
+            background-color: #f8fafc !important; /* Surlignage doux */
+        }
+
+        & > td {
+            padding: 1.2rem 1.25rem !important; /* Hauteur de ligne aérée */
+            border-bottom: 1px solid #f1f5f9 !important;
+            color: #334155 !important;
+            font-size: 0.875rem !important;
+            border-left: none !important;
+            border-right: none !important;
+            
+            /* Ellipsis */
+            max-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        & > td:last-child {
+            overflow: visible;
+            max-width: none;
+        }
+    }
+
+    .p-datatable-tbody > tr:last-child > td {
+        border-bottom: none !important;
+    }
+
+    /* Badges adoucis (PrimeNG p-tag customisés) */
+    .p-tag {
+        font-weight: 700 !important;
+        border-radius: 5px !important;
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    /* Sévérité - Critique (Danger) */
+    .p-tag-danger {
+        background-color: rgba(239, 68, 68, 0.1) !important; /* Rouge doux */
+        color: #ef4444 !important;
+        border: 1px solid rgba(239, 68, 68, 0.2) !important;
+    }
+
+    /* Sévérité - Majeure (Warning) */
+    .p-tag-warn {
+        background-color: rgba(249, 115, 22, 0.1) !important; /* Orange doux */
+        color: #f97316 !important;
+        border: 1px solid rgba(249, 115, 22, 0.2) !important;
+    }
+
+    /* Sévérité - Mineure (Info) */
+    .p-tag-info {
+        background-color: rgba(59, 130, 246, 0.1) !important; /* Bleu doux */
+        color: #0084ca !important;
+        border: 1px solid rgba(59, 130, 246, 0.2) !important;
+    }
+
+    /* Statut - Clôturé / Succès */
+    .p-tag-success {
+        background-color: rgba(34, 197, 94, 0.1) !important; /* Vert doux */
+        color: #22c55e !important;
+        border: 1px solid rgba(34, 197, 94, 0.2) !important;
+    }
+}
+
+/* Style destructif pour le bouton Supprimer dans le menu contextuel (PrimeNG v19 + Compatibilité) */
+.delete-menu-item {
+    /* 1. État normal : Texte et icône en rouge */
+    & [class*="-content"], 
+    & [class*="-link"], 
+    & a {
+        color: #ef4444 !important;
+        background-color: rgba(239, 68, 68, 0.05) !important; /* Léger fond rouge transparent par défaut */
+        border-radius: 5px !important; /* Coins arrondis style CRM */
+        
+        [class*="-icon"], 
+        [class*="-text"], 
+        .pi {
+            color: #ef4444 !important;
+        }
+    }
+
+    /* 2. État survolé : Fond rouge solide et texte blanc */
+    &:hover [class*="-content"], 
+    & [class*="-content"]:hover,
+    &:hover [class*="-link"], 
+    & [class*="-link"]:hover,
+    &:hover a {
+        background-color: #ef4444 !important;
+        color: #ffffff !important;
+        
+        [class*="-icon"], 
+        [class*="-text"], 
+        .pi {
+            color: #ffffff !important;
+        }
+    }
+}
+
+/* Style spécifique pour la barre de filtre lorsqu'elle est projetée dans l'en-tête d'un tableau */
+app-traitement-table app-nc-filter-bar > div {
+    padding: 0 !important;
+    background-color: transparent !important;
+    border: none !important;
+}
+
+
+.cacher{
+    display: none !important;
+}

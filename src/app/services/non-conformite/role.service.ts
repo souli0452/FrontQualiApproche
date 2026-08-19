@@ -26,6 +26,6 @@ export class RoleService {
 
   // Bonus : Si vous utilisiez aussi "isAdmin"
   get isAdmin(): boolean {
-    return hasAnyPermission(['ADMIN']);
+    return hasAnyPermission(['SUPER_ADMIN']);
   }
 }

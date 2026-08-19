@@ -21,6 +21,7 @@ import { WorkflowActionsComponent } from '../../../shared/workflow/workflow-acti
 import { WorkflowGuidanceComponent } from '../../../shared/workflow/workflow-guidance.component';
 import { WorkflowHistoriqueComponent } from '../../../shared/workflow/workflow-historique.component';
 import { formatDateToDDMMYYYY } from '../../../utils/formatage/formatage-utils';
+import { map } from 'rxjs';
 
 @Component({
     selector: 'app-form-traitement',
@@ -45,7 +46,7 @@ export class FormTraitementComponent {
     protected readonly BtnActions = EtapeTraitement;
     planActionForm: FormGroup;
     actions: FormArray;
-    user: any = {};
+    user: any = undefined;
 
     isEdit: boolean = false;
     submitted = false;
@@ -64,6 +65,10 @@ export class FormTraitementComponent {
     afficheDialog: boolean = false;
     structures: Structure[] = [];
     typesActions: ActionNonConformite[] = [];
+    readonly deposerFichierDEtape = (fichier: File) =>
+        this.planActionService.deposerFichier(this.planAction.id, fichier).pipe(
+            map((reponse: any) => reponse?.url || reponse?.id || `${reponse}`)
+        );
     constructor(
         private fb: FormBuilder,
         private authService: AuthService,
@@ -205,64 +210,103 @@ export class FormTraitementComponent {
     addAction(): void {
         this.actions.push(this.createAction());
     }
-    fetchUsers() {
-        this.authService
-            .getAllUsers()
-            .pipe()
-            .subscribe({
-                next: (res) => {
-                    this.users = res.data.content || [];
-                    this.users = this.users.map((user: any) => {
-                        return {
-                            ...user,
-                            fullName: user.firstName + ' ' + user.lastName,
-                        }
+     private extractUserInfos(u: any): any {
+         const userObj = u.user ? u.user : u;
+         const id = userObj.userId || userObj.id || u.id || '';
+         const firstName = userObj.firstName || '';
+         const lastName = userObj.lastName || '';
+         const email = userObj.email || '';
+         const fullName = `${firstName} ${lastName}`.trim() || userObj.username || id;
+         return {
+             ...u,
+             id,
+             firstName,
+             lastName,
+             email,
+             fullName
+         };
+     }
 
+     getResponsableName(plan: any): string {
+         if (!plan) return '—';
+         // 1. Try nested object
+         if (plan.responsable?.nomComplet) {
+             return plan.responsable.nomComplet;
+         }
+         // 2. Try flat name field
+         if (this.isNameValid(plan.responsableNomComplet)) {
+             return plan.responsableNomComplet;
+         }
+         // 3. Try to resolve it locally from the loaded usersByStructure list by email
+         const email = plan.responsableEmail || plan.responsable?.email;
+         if (email) {
+             const found = this.usersByStructure.find(u => u.email === email);
+             if (found && this.isNameValid(found.fullName)) {
+                 return found.fullName;
+             }
+             // 4. Fallback to username from email
+             const parts = email.split('@');
+             return parts[0];
+         }
+         return '—';
+     }
 
-                    });
-                    this.user = this.users.find((user: any) =>
-                        user.fullName === this.planAction.responsableNomComplet
-                    );
+     getResponsableInitials(plan: any): string {
+         const name = this.getResponsableName(plan);
+         return this.getInitials(name);
+     }
 
+     fetchUsers() {
+         this.authService
+             .getAllUsers()
+             .pipe()
+             .subscribe({
+                 next: (res: any) => {
+                     const list = res.data?.content || res.content || [];
+                     this.users = list.map((user: any) => this.extractUserInfos(user));
+                     this.user = this.users.find((user: any) =>
+                         user.fullName === this.planAction.responsableNomComplet
+                     );
+                 },
+             });
+     }
 
-                },
-            });
-    }
+     fetchUsersByStructure() {
+         // Essayer origineId en priorité, sinon utiliser structureSoumissionId
+         const structureId = this.demande?.origineId || this.demande?.structureSoumissionId;
 
-    fetchUsersByStructure() {
-        // Essayer origineId en priorité, sinon utiliser structureSoumissionId
-        const structureId = this.demande?.origineId || this.demande?.structureSoumissionId;
+         console.log("🔍 fetchUsersByStructure() appelé !");
+         console.log("   - ID de structure retenu pour le filtre :", structureId);
 
-        console.log("🔍 fetchUsersByStructure() appelé !");
-        console.log("   - ID de structure retenu pour le filtre :", structureId);
+         if (!structureId) {
+             console.log("   ⚠️ Annulation : aucun ID de structure trouvé.");
+             return;
+         }
 
-        if (!structureId) {
-            console.log("   ⚠️ Annulation : aucun ID de structure trouvé.");
-            return;
-        }
-
-        this.authService
-            .loadAgentPublicByService(structureId)
-            .pipe()
-            .subscribe({
-                next: (res) => {
-                    console.log("✅ Réponse de loadAgentPublicByService :", res);
-                    
-                    this.usersByStructure = res.data.content || [];
-                    this.usersByStructure = this.usersByStructure.map((user: any) => {
-                        return {
-                            ...user,
-                            fullName: user.firstName + ' ' + user.lastName,
-                        }
-                    });
-                    if (this.planAction?.responsableNomComplet) {
-                        this.user = this.usersByStructure.find((user: any) =>
-                            user.fullName === this.planAction.responsableNomComplet
-                        );
-                    }
-                },
-            });
-    }
+         this.authService
+             .loadAgentPublicByService(structureId)
+             .pipe()
+             .subscribe({
+                 next: (res: any) => {
+                     console.log("✅ Réponse de loadAgentPublicByService :", res);
+                     
+                     const list = res.data?.content || res.content || [];
+                     this.usersByStructure = list.map((user: any) => this.extractUserInfos(user));
+                     
+                     // Pre-select the user: first match by email, otherwise fallback to fullName
+                     if (this.planAction?.responsableEmail) {
+                         this.user = this.usersByStructure.find((user: any) =>
+                             user.email === this.planAction.responsableEmail
+                         );
+                     }
+                     if (!this.user && this.isNameValid(this.planAction?.responsableNomComplet)) {
+                         this.user = this.usersByStructure.find((user: any) =>
+                             user.fullName === this.planAction.responsableNomComplet
+                         );
+                     }
+                 },
+             });
+     }
 
 
 
@@ -349,107 +393,132 @@ loadStuctures() {
         this.planAction = {};
         this.ordreSaisi = null;
     }
-    edit(plan: any) {
-        // Create a copy so we don't mutate the original directly if the user cancels
-        this.planAction = { ...plan };
-        this.ordreSaisi = this.rangDe(plan.numeroOdre);
-        
-        // Convert string to a real Date object for the p-datePicker
-        if (this.planAction.dateEcheance) {
-            if (typeof this.planAction.dateEcheance === 'string') {
-                const parts = this.planAction.dateEcheance.split(/-|\//);
-                if (parts.length === 3) {
-                    if (parts[2].length === 4) {
-                        this.planAction.dateEcheance = new Date(+parts[2], +parts[1] - 1, +parts[0]);
-                    } else if (parts[0].length === 4) {
-                        this.planAction.dateEcheance = new Date(+parts[0], +parts[1] - 1, +parts[2]);
-                    } else {
-                        this.planAction.dateEcheance = new Date(this.planAction.dateEcheance);
-                    }
-                } else {
-                    this.planAction.dateEcheance = new Date(this.planAction.dateEcheance);
-                }
-            } else {
-                this.planAction.dateEcheance = new Date(this.planAction.dateEcheance);
-            }
-        }
+     private isNameValid(name: string | null | undefined): boolean {
+         if (!name) return false;
+         const cleaned = name.trim().toLowerCase();
+         return cleaned !== '' && cleaned !== 'undefined undefined' && cleaned !== 'null null' && cleaned !== 'undefined' && cleaned !== 'null';
+     }
 
-        this.displayDialog = true;
-        this.fetchUsers();
-        this.isEdit = true;
+     edit(plan: any) {
+         // Create a copy so we don't mutate the original directly if the user cancels
+         this.planAction = { ...plan };
+         this.ordreSaisi = this.rangDe(plan.numeroOdre);
+         this.user = undefined; // Reset current selected user
+         
+         // Convert string to a real Date object for the p-datePicker
+         if (this.planAction.dateEcheance) {
+             if (typeof this.planAction.dateEcheance === 'string') {
+                 const parts = this.planAction.dateEcheance.split(/-|\//);
+                 if (parts.length === 3) {
+                     if (parts[2].length === 4) {
+                         this.planAction.dateEcheance = new Date(+parts[2], +parts[1] - 1, +parts[0]);
+                     } else if (parts[0].length === 4) {
+                         this.planAction.dateEcheance = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+                     } else {
+                         this.planAction.dateEcheance = new Date(this.planAction.dateEcheance);
+                     }
+                 } else {
+                     this.planAction.dateEcheance = new Date(this.planAction.dateEcheance);
+                 }
+             } else {
+                 this.planAction.dateEcheance = new Date(this.planAction.dateEcheance);
+             }
+         }
 
+         this.displayDialog = true;
+         this.fetchUsersByStructure();
+         this.isEdit = true;
+     }
+     save() {
+         // Le responsable n'est plus exigé à l'écriture de l'action : l'agent imputé peut le
+         // désigner s'il le connaît, et le pilote le désigne ou le corrige à la validation. Le
+         // circuit, lui, refuse de valider tant qu'une action reste sans responsable — la règle est
+         // portée là où elle vaut pour tout le dossier, non par un écran de saisie.
+         if (this.user && this.user.id) {
+             this.planAction.responsableEmail = this.user.email;
+             this.planAction.responsableNomComplet = this.user.fullName || (this.user.firstName + ' ' + this.user.lastName);
+             this.planAction.responsableId = this.user.id;
+         }
+         
+         // Toujours formater la date pour le backend, qu'on soit en création ou en modification
+         this.planAction.dateEcheance = formatDateToDDMMYYYY(this.planAction.dateEcheance);
 
-    }
-    save() {
-        // Le responsable n'est plus exigé à l'écriture de l'action : l'agent imputé peut le
-        // désigner s'il le connaît, et le pilote le désigne ou le corrige à la validation. Le
-        // circuit, lui, refuse de valider tant qu'une action reste sans responsable — la règle est
-        // portée là où elle vaut pour tout le dossier, non par un écran de saisie.
-        if (this.user) {
-            this.planAction.responsableEmail = this.user.email;
-            this.planAction.responsableNomComplet = this.user.firstName + ' ' + this.user.lastName;
-            this.planAction.responsableId = this.user.id;
-        }
-        
-        // Toujours formater la date pour le backend, qu'on soit en création ou en modification
-        this.planAction.dateEcheance = formatDateToDDMMYYYY(this.planAction.dateEcheance);
+         // Vide, le serveur place l'action à la suite des autres.
+         this.planAction.numeroOdre = this.ordreSaisi != null ? String(this.ordreSaisi) : null;
 
-        // Vide, le serveur place l'action à la suite des autres.
-        this.planAction.numeroOdre = this.ordreSaisi != null ? String(this.ordreSaisi) : null;
-
-        if (!this.isEdit) {
-            // Enregistré tout de suite, et non gardé en mémoire jusqu'à la soumission : le bouton
-            // qui persistait la fiche a cédé la place à la décision du circuit, et une saisie
-            // seulement locale aurait été perdue sans que rien ne le dise.
-            this.planAction.status = "INACTIF";
-            this.planAction.nonConformeId = this.demande.id;
-            this.service.createPlanAction(this.planAction).subscribe({
-                next: (reponse: any) => {
-                    // Le serveur enveloppe ses réponses : sans déballer `data`, c'est l'enveloppe
-                    // qui atterrissait dans le tableau — une ligne apparaissait, vide de tout.
-                    const enregistre = reponse?.body?.data ?? reponse?.body ?? this.planAction;
-                    this.demande.planActions = [...(this.demande.planActions ?? []), enregistre];
-                    this.planActions = this.demande.planActions;
-                    this.displayDialog = false;
-                    this.messageService.add({
-                        severity: 'success', summary: 'Plan d\'action enregistré',
-                        detail: "Il sera soumis au pilote avec le traitement.", life: 4000
-                    });
-                },
-                error: () => {
-                    this.messageService.add({
-                        severity: 'error', summary: 'ERREUR',
-                        detail: "Le plan d'action n'a pas pu être enregistré.", life: 5000
-                    });
-                }
-            });
-        } else {
-            if (this.planAction.id) {
-                this.service.updatePlanAction(this.planAction).subscribe({
-                    next: (reponse: any) => {
-                        // Par l'identifiant, et non par le numéro d'ordre : celui-ci n'est qu'un
-                        // rang, que deux plans peuvent partager — la modification retombait alors
-                        // sur la mauvaise ligne.
-                        const index = this.demande.planActions.findIndex((p: any) => p.id === this.planAction.id);
-                        if (index !== -1) {
-                            this.demande.planActions[index] = reponse?.body?.data ?? this.planAction;
-                        }
-                        this.displayDialog = false;
-                        this.messageService.add({ severity: 'success', summary: 'Réussi', detail: "L'opération a réussi !", life: 3000 });
-                    },
-                    error: (error) => {
-                        this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'opération a échoué ! Veuillez vérifier le format des données.", life: 3000 });
-                    }
-                });
-            } else {
-                // Plan n'a pas encore d'ID (créé localement)
-                const index = this.demande.planActions.findIndex((p: any) => p.numeroOdre === this.planAction.numeroOdre);
-                if (index !== -1) {
-                    this.demande.planActions[index] = this.planAction;
-                }
-                this.displayDialog = false;
-            }
-        }
+         if (!this.isEdit) {
+             // Enregistré tout de suite, et non gardé en mémoire jusqu'à la soumission : le bouton
+             // qui persistait la fiche a cédé la place à la décision du circuit, et une saisie
+             // seulement locale aurait été perdue sans que rien ne le dise.
+             this.planAction.status = "INACTIF";
+             this.planAction.nonConformeId = this.demande.id;
+             this.service.createPlanAction(this.planAction).subscribe({
+                 next: (reponse: any) => {
+                     // Le serveur enveloppe ses réponses : sans déballer `data`, c'est l'enveloppe
+                     // qui atterrissait dans le tableau — une ligne apparaissait, vide de tout.
+                     const enregistre = reponse?.body?.data ?? reponse?.body ?? this.planAction;
+                     this.demande.planActions = [...(this.demande.planActions ?? []), enregistre];
+                     this.planActions = this.demande.planActions;
+                     this.displayDialog = false;
+                     this.messageService.add({
+                         severity: 'success', summary: 'Plan d\'action enregistré',
+                         detail: "Il sera soumis au pilote avec le traitement.", life: 4000
+                     });
+                 },
+                 error: () => {
+                     this.messageService.add({
+                         severity: 'error', summary: 'ERREUR',
+                         detail: "Le plan d'action n'a pas pu être enregistré.", life: 5000
+                     });
+                 }
+             });
+         } else {
+             if (this.planAction.id) {
+                 this.service.updatePlanAction(this.planAction).subscribe({
+                     next: (reponse: any) => {
+                         // Par l'identifiant, et non par le numéro d'ordre : celui-ci n'est qu'un
+                         // rang, que deux plans peuvent partager — la modification retombait alors
+                         // sur la mauvaise ligne.
+                         const index = this.demande.planActions.findIndex((p: any) => p.id === this.planAction.id);
+                         if (index !== -1) {
+                             const updated = reponse?.body?.data ?? reponse?.body ?? this.planAction;
+                             if (this.user) {
+                                 updated.responsable = {
+                                     id: this.user.id,
+                                     nomComplet: this.user.fullName,
+                                     email: this.user.email
+                                 };
+                             }
+                             const validName = this.isNameValid(updated.responsableNomComplet) 
+                                 ? updated.responsableNomComplet 
+                                 : (this.isNameValid(this.planAction.responsableNomComplet) ? this.planAction.responsableNomComplet : '');
+                             this.demande.planActions[index] = {
+                                 ...this.planAction,
+                                 ...updated,
+                                 responsableNomComplet: validName,
+                                 responsableEmail: updated.responsableEmail || this.planAction.responsableEmail
+                             };
+                             this.demande.planActions = [...this.demande.planActions];
+                             this.planActions = this.demande.planActions;
+                         }
+                         this.displayDialog = false;
+                         this.messageService.add({ severity: 'success', summary: 'Réussi', detail: "L'opération a réussi !", life: 3000 });
+                     },
+                     error: (error) => {
+                         this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'opération a échoué ! Veuillez vérifier le format des données.", life: 3000 });
+                     }
+                 });
+             } else {
+                 // Plan n'a pas encore d'ID (créé localement)
+                 const index = this.demande.planActions.findIndex((p: any) => p.numeroOdre === this.planAction.numeroOdre);
+                 if (index !== -1) {
+                     this.demande.planActions[index] = this.planAction;
+                     this.demande.planActions = [...this.demande.planActions];
+                     this.planActions = this.demande.planActions;
+                 }
+                 this.displayDialog = false;
+             }
+         }
 
     }
     /**
@@ -687,5 +756,38 @@ loadStuctures() {
             txt: 'assets/images/txt-file.png'
         };
         return icons[extension] || 'assets/images/unknown-file.png';
+    }
+
+    rowMenuItems: any[] = [];
+
+    buildRowMenu(plan: any) {
+        this.rowMenuItems = [
+            {
+                label: 'Détails',
+                icon: 'pi pi-search',
+                command: () => this.affich(plan)
+            }
+        ];
+
+        if (this.estModifiable(plan)) {
+            this.rowMenuItems.push({
+                label: this.designationSeule ? 'Attribuer à un autre responsable' : 'Modifier',
+                icon: 'pi pi-pencil',
+                command: () => this.edit(plan)
+            });
+
+            if (!this.designationSeule) {
+                this.rowMenuItems.push({
+                    label: 'Retirer',
+                    icon: 'pi pi-trash text-red-500',
+                    command: () => this.delete(plan)
+                });
+            }
+        }
+    }
+
+    getInitials(name: any): string {
+        if (!name || typeof name !== 'string') return 'U';
+        return name.trim().charAt(0).toUpperCase();
     }
 }

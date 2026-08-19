@@ -187,7 +187,9 @@ export class ProcNonConformiteService {
         const corps = new FormData();
         corps.append('file', fichier);
         return this.http
-            .post<ApiItemResponse<string>>(NonConformiteUrlConfig.fichiers(nonConformiteId), corps)
+            .post<ApiItemResponse<string>>(NonConformiteUrlConfig.fichiers(nonConformiteId), corps, {
+                headers: { 'X-Skip-Loader': 'true' }
+            })
             .pipe(map((reponse) => reponse.data));
     }
 

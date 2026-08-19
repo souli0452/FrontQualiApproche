@@ -31,11 +31,14 @@ import { LicenceOuverteDirective } from '../../../shared/licence/licence-ouverte
 export class DetailsDialogComponent {
     @Input() set demande(valeur: any) {
         this._demande = valeur ?? {};
+        console.log("DEMANDE DANS DETAILS-DIALOG:", valeur);
     }
     get demande(): any {
         return this._demande;
     }
     private _demande: any = {};
+
+    @Input() masquerPlansAction: boolean = false;
 
     /**
      * L'historique nomme des personnes et rapporte leurs appréciations : il ne s'ouvre qu'à qui a

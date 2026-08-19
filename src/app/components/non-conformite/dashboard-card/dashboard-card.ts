@@ -78,8 +78,7 @@ export const DASHBOARD_CARDS_CHEF: StatsCardConfig[] = [
     color: 'green',
     icon: 'pi pi-arrow-right',
     badge: "Anomalies résolues",
-    description: "Anomalies entièrement résolues",
-    isCustomValue: true 
+    description: "Anomalies entièrement résolues"
   }
 ];
 
@@ -115,7 +114,6 @@ export const DASHBOARD_CARDS_RQ: StatsCardConfig[] = [
             color: 'green',
             icon: 'pi pi-arrow-right',
             badge: "Résolues",
-            description: "Anomalies clôturées",
-            isCustomValue: true
+            description: "Anomalies clôturées"
         }
     ];

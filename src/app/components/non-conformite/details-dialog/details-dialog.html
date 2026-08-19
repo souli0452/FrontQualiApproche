@@ -19,6 +19,7 @@
          quelqu'un. Le message se déduit de ce que le circuit rend, non d'une table d'états. -->
     <app-workflow-guidance class="block mb-4"
         [state]="demande.workflowState"
+        [parentDemande]="demande"
         objet="cette non-conformité"
         messageSansCircuit="Cette non-conformité n'est pas encore suivie par un circuit de validation."></app-workflow-guidance>
 
@@ -28,6 +29,8 @@
          toutes, et sans qu'aucun nom de champ soit écrit ici. -->
     <app-workflow-saisies class="block mb-4"
         [state]="demande.workflowState"
+        [parentDemande]="demande"
+        (onOpenFile)="openLightbox($event)"
         titre="Informations recueillies au fil du circuit"></app-workflow-saisies>
 
     <!-- Section Principale -->
@@ -339,7 +342,7 @@
         </div>
 
         <!-- Plans d'actions -->
-        <div class="col-12" *ngIf="demande?.planActions?.length > 0" style="max-width: 100%; overflow: hidden;">
+        <div class="col-12" *ngIf="demande?.planActions?.length > 0 && !masquerPlansAction" style="max-width: 100%; overflow: hidden;">
             <div class="mt-4 mb-2">
                 <div class="flex items-center gap-3 mb-4 px-2">
                     <div>
@@ -572,8 +575,8 @@
 </p-dialog>
 
 <!-- Dialog Détails Plan d'action -->
-<p-dialog [(visible)]="afficheDialog" [style]="{ width: '50rem' }"
-    [breakpoints]="{ '960px': '95vw' }" [modal]="true" [dismissableMask]="true">
+<p-dialog [(visible)]="afficheDialog" [style]="{ width: '50rem' }" maskStyleClass="backdrop-blur-sm"
+    [breakpoints]="{ '960px': '95vw' }" [modal]="true" >
     
     <ng-template pTemplate="header">
         <div class="flex items-center gap-3">

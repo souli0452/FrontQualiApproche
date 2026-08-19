@@ -54,6 +54,7 @@ import { CircuitsListeComponent } from './configuration-workflow/circuits/circui
 import { CircuitDetailPageComponent } from './configuration-workflow/circuits/circuit-detail-page.component';
 import { permissionGuard } from '../components/auth/permission.guard';
 import { LicenceComponent } from './licence/licence.component';
+import { NCTraitementSuiviComponent } from './module-nc/nc-traitement-suivi/nc-traitement-suivi';
 
 // Les permissions déclarées ici reprennent celles du menu (app.menu.ts) : une entrée masquée
 // correspond à une route fermée. Les noms en majuscules sont les anciennes permissions, encore
@@ -441,6 +442,20 @@ export default [
                 path: 'suivi', component: NCSuiviComponent, title: 'Suivi',
                 canActivate: [permissionGuard],
                 data: { permissions: ['nc-read', 'NC_READ', 'CONSULTATION_NC'] }
+            },
+            {
+                path: 'traitement-suivi', component: NCTraitementSuiviComponent, title: 'Traitement & Suivi',
+                canActivate: [permissionGuard],
+                data: { 
+                    permissions: [
+                        'nc-read', 'NC_READ', 'CONSULTATION_NC', 
+                        'nc-impute', 'IMPUTATION_NC', 
+                        'nc-receive', 'RECEPTION_NC', 
+                        'nc-validate', 'VALIDATION_RQ', 'VALIDATION_CHEF', 
+                        'nc-close', 'RQ_NC', 
+                        'plan-action-read', 'plan-action-write', 'TRAITEMENT_PLAN'
+                    ] 
+                }
             },
             {
                 path: 'publiees', component: NcPublieesComponent, title: 'Mes Non-Conformitées publiées',

@@ -26,7 +26,9 @@ export class PlanActionService extends QualiCrudService<Formation, string> {
         const corps = new FormData();
         corps.append('file', fichier, fichier.name);
         return this.http
-            .post<any>(`${QualiUrlConfig.PLAN_ACTION_ROOT_URL}/${planActionId}/fichiers`, corps)
+            .post<any>(`${QualiUrlConfig.PLAN_ACTION_ROOT_URL}/${planActionId}/fichiers`, corps, {
+                headers: { 'X-Skip-Loader': 'true' }
+            })
             .pipe(map((reponse) => reponse?.data ?? reponse));
     }
 

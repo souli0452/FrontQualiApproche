@@ -6,16 +6,8 @@ import { NcStatsCardComponent } from '../../../components/non-conformite/nc-stat
 import { getCurrentUserStructure } from '../../../utils/global/global-utils';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { Subject, takeUntil, forkJoin, of } from 'rxjs';
-import { VueEnsembleImputationComponent } from './nc-imputation/nc-imputation';
 import { AlerteTraitement } from '../../../components/non-conformite/alerte-traitement/alerte-traitement';
 import { FeaturesService } from '../../../services/feature-service';
-import { ReceptionComponent } from './nc-reception/nc-reception';
-import { ValidationRqAffectationComponent } from './nc-validation-rq-affectation/nc-validation-rq-affectation';
-import { ValidationRQComponent } from './nc-validation-rq/nc-validation-rq';
-import { NcAffectationComponent } from './nc-affectation/nc-affectation';
-import { ValidationPiloteComponent } from './nc-validation-pilote/nc-validation-pilote';
-import { NcClotureComponent } from './nc-cloture-rq/nc-cloture';
-import { NcNonTraiterComponent } from './nc-traitement-action/nc-non-traiter';
 import { RoleService } from '../../../services/non-conformite/role.service';
 import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
@@ -25,6 +17,8 @@ import { NcVueEnsembleFacade } from './vue-ensemble.facade';
 import { isUserInRoles } from '../../../utils/auth/auth-utils';
 import { currentUserState } from '../../../services/auth-services/auth.state';
 import { AuthData } from '../../../models/auth.model';
+import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
+import { EtapeTraitement } from '../../../enums/enums';
 
 @Component({
     selector: 'app-vue-ensemble',
@@ -34,15 +28,8 @@ import { AuthData } from '../../../models/auth.model';
                 NcModule, 
                 NgPrimeModule,
                 NcStatsCardComponent,
-                VueEnsembleImputationComponent,
                 AlerteTraitement,
-                ReceptionComponent,
-                ValidationRQComponent,
-                ValidationRqAffectationComponent,
-                NcAffectationComponent,
-                ValidationPiloteComponent,
-                NcClotureComponent,
-                NcNonTraiterComponent
+                TraitementTableComponent
             ],
     templateUrl: './vue-ensemble.html',
     styleUrl: './vue-ensemble.scss'
@@ -72,20 +59,14 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     countMineure: number = 0;
 
 
-    // Calcul automatique du total global basé sur les compteurs spécifiques au rôle
+    // Calcul automatique du total global basé sur la liste unique de toutes les NC actives
     get countTotal(): number {
-        return this.countBrouillon + 
-               this.countImputees + 
-               this.countReception + 
-               this.countValidationRQ +
-               this.countValidationRqAffectation + 
-               this.countAffectation + 
-               this.countValidationPilote + 
-               this.countCloture + 
-               this.countNonTraiter;
+        return this.allActiveNCs.length;
     }
 
     brouillonData: any[] = [];
+    allActiveNCs: any[] = [];
+    colsDashboard: any[] = [];
     imputationsData: any[] = [];
     receptionData: any[] = [];
     validationRqData: any[] = [];
@@ -97,6 +78,8 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     clotureData: any[] = [];
     nonTraiterData: any[] = [];
     nonConformiteClotureeData: any[] = [];
+    soumissionData: any[] = [];
+    countSoumission: number = 0;
 
     stats: any = {
         total: 0,
@@ -133,6 +116,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     private resetUserDataState(): void {
         this.countBrouillon = 0;
         this.brouillonData = [];
+        this.allActiveNCs = [];
 
         this.countImputees = 0;
         this.imputationsData = [];
@@ -159,6 +143,9 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
 
         this.countNonConformiteCloturee = 0;
         this.nonConformiteClotureeData = [];
+
+        this.countSoumission = 0;
+        this.soumissionData = [];
     }
     
     constructor(
@@ -178,6 +165,19 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         });
         this.userStructure = getCurrentUserStructure();
         
+        this.colsDashboard = [
+            { field: 'numeroReference', header: 'N° Ref', type: 'string', width: '200px' },
+            { 
+                field: 'structureSoumissionLibelle', 
+                header: 'Processus Emetteur', 
+                type: 'string', 
+                width: 'fit-content'
+            },
+            { field: 'currentUserfullName', header: 'Initiateur', type: 'user', width: '200px' },
+            { field: 'workflowStatus', header: 'Étape du circuit', type: 'enum', width: '220px' },
+            { field: 'niveauNonConformiteLibelle', header: 'Gravité', type: 'badge', width: '150px' }
+        ];
+
         // Charger les données initialement
         this.loadDashboardData();
         
@@ -195,6 +195,22 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
             
             this.loadEvolutionStats();
             this.initChart();
+
+            // Récupérer et afficher toutes les non-conformités en console
+            this.nonConformiteService.nonConformiteGetAll(0, 100).subscribe({
+                next: (data) => {
+                    console.log("Toutes les Non-Conformités (page 0, taille 100) :", data);
+                },
+                error: (err) => {
+                    console.error("Erreur lors de la récupération de toutes les Non-Conformités :", err);
+                }
+            });
+
+            // À insérer temporairement dans ngOnInit()
+            console.log("Rôles de l'utilisateur connecté :", this.roleService);
+            console.log("Permissions de l'utilisateur connecté :", this.currentUser?.permissions);
+            console.log("STRUCTURE DE L'UTILISATEUR CONNECTE (vue-ensemble) :", this.userStructure);
+            console.log("ETAT DE L'UTILISATEUR COURANT (vue-ensemble) :", currentUserState.value);
     }
 
     loadStructures() {
@@ -345,6 +361,24 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
                     this.loading = false;
                 }
                 });
+
+            // ✅ Récupération et log des NC clôturées de la structure du Pilote
+            this.nonConformiteService.nonConformiteParStructureEtTraitementGet(
+                EtapeTraitement.CLOTURE,
+                this.userStructure?.id
+            ).pipe(takeUntil(this.destroy$)).subscribe({
+                next: (res: any) => {
+                    console.log("NC CLOTUREES DE LA STRUCTURE DU PILOTE (Brut) :", res);
+                    const count = res.data?.content?.length || 0;
+                    if (!this.stats) {
+                        this.stats = {};
+                    }
+                    this.stats.cloturees = count;
+                },
+                error: (err: any) => {
+                    console.error("Erreur lors du chargement des NC clôturées du Pilote :", err);
+                }
+            });
             break;
 
             case 'RQ':
@@ -376,6 +410,9 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
         next: (data: any) => {
+            console.log("loadUserNcData", data);
+            console.log("TOUTES LES NC DE L'UTILISATEUR (allUserNcs) :", data.allUserNcs);
+            
             this.brouillonData = data.brouillonData;
             this.imputationsData = data.imputationsData;
             this.receptionData = data.receptionData;
@@ -386,18 +423,67 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
             this.clotureData = data.clotureData;
             this.nonConformiteClotureeData = data.nonConformiteClotureeData;
             this.nonTraiterData = data.nonTraiterData;
+            this.soumissionData = data.soumissionData || [];
 
-            // ✅ Calcul des counts ici (ou tu peux centraliser après)
+            // ✅ Calcul des compteurs en excluant les NC rejetées (qui sont comptées à part dans countSoumission)
             this.countBrouillon = this.brouillonData.length;
-            this.countImputees = this.imputationsData.length;
-            this.countReception = this.receptionData.length;
-            this.countAffectation = this.affectationData.length;
-            this.countValidationPilote = this.validationPiloteData.length;
-            this.countValidationRQ = this.validationRqData.length;
-            this.countValidationRqAffectation = this.validationRqAffectationData.length;
-            this.countCloture = this.clotureData.length;
+            this.countImputees = this.imputationsData.filter((nc: any) => !nc.rejeter).length;
+            this.countReception = this.receptionData.filter((nc: any) => !nc.rejeter).length;
+            this.countAffectation = this.affectationData.filter((nc: any) => !nc.rejeter).length;
+            this.countValidationPilote = this.validationPiloteData.filter((nc: any) => !nc.rejeter).length;
+            this.countValidationRQ = this.validationRqData.filter((nc: any) => !nc.rejeter).length;
+            this.countValidationRqAffectation = this.validationRqAffectationData.filter((nc: any) => !nc.rejeter).length;
+            this.countCloture = this.clotureData.filter((nc: any) => !nc.rejeter).length;
             this.countNonConformiteCloturee = this.nonConformiteClotureeData.length;
             this.countNonTraiter = this.nonTraiterData.length;
+            this.countSoumission = this.soumissionData.length;
+
+            // ✅ Recalcul des statistiques du tableau de bord pour l'Agent en se basant sur le circuit réel (etatTraitement)
+            if (this.roleService.isAgent) {
+                const allNcs = data.allUserNcs || [];
+                this.stats = {
+                    total: allNcs.length,
+                    enCours: allNcs.filter((nc: any) => nc.etatTraitement !== 'CLOTURE' && nc.status !== 'DRAFT').length,
+                    published: allNcs.filter((nc: any) => nc.etatTraitement === 'RECEPTION').length,
+                    cloturees: allNcs.filter((nc: any) => nc.etatTraitement === 'CLOTURE').length
+                };
+            }
+
+            // ✅ Fusionner toutes les listes actives dans allActiveNCs
+            const mergedList: any[] = [];
+            
+            if (this.brouillonData && this.brouillonData.length > 0) {
+                this.brouillonData.forEach(item => {
+                    mergedList.push({ ...item, status: 'DRAFT' });
+                });
+            }
+
+            const otherActiveLists = [
+                this.receptionData,
+                this.validationRqAffectationData,
+                this.affectationData,
+                this.imputationsData,
+                this.validationRqData,
+                this.validationPiloteData,
+                this.clotureData,
+                this.nonTraiterData,
+                this.soumissionData
+            ];
+
+            otherActiveLists.forEach(list => {
+                if (list && list.length > 0) {
+                    list.forEach(item => {
+                        if (!mergedList.some(existing => existing.id === item.id)) {
+                            mergedList.push(item);
+                        }
+                    });
+                }
+            });
+
+            this.allActiveNCs = mergedList;
+
+            // ✅ countSoumission compte toutes les NC rejetées pour la notification "Non-Conformités rejetées"
+            this.countSoumission = this.allActiveNCs.filter((nc: any) => nc.rejeter).length;
 
             // ✅ Mise à jour du badge dans le menu global et les onglets spécifiques
             this.nonConformiteService.notificationsNC$.next({
@@ -405,13 +491,12 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
                 brouillons: this.countBrouillon,
                 imputees: this.countImputees,
                 reception: this.countReception,
-                validationRQ: this.countValidationRQ,
+                validationRQ: this.countValidationRQ + this.countValidationRqAffectation,
                 validationPilote: this.countValidationPilote,
                 cloture: this.countCloture,
                 affectation: this.countAffectation,
                 nonTraiter: this.countNonTraiter,
-                // Si actions est la même chose que nonTraiter ou imputees pour l'agent, on le met
-                //actions: this.countNonTraiter // à adapter selon le vrai compteur "actions"
+                soumission: this.countSoumission
             });
         },
         error: (err) => {
@@ -434,11 +519,13 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
 
     private updateKpis() {
         if (!this.dashboardData) return;
+        console.log("DASHBOARD DATA RECEIVED:", this.dashboardData);
 
         const stats = this.dashboardData.statsByStatus || {};
 
         // Affichage des 4 blocs
         this.stats = buildDashboardStats(this.dashboardData);
+        console.log("CALCULATED STATS OBJECT:", this.stats);
 
         // Pour les graphiques
         this.filteredNc = this.dashboardData.nonConformites || this.dashboardData.content || this.dashboardData.ncs || [];

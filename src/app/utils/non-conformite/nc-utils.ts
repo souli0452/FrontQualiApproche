@@ -9,7 +9,7 @@ export function buildDashboardStats(data: any) {
     enCours: (stats.PENDING_PILOT || 0) + (stats.PENDING_RQ || 0) + (stats.PENDING_ASSIGNMENT || 0) + (stats.IN_PROGRESS || 0) + (stats.PENDING_PILOT_REVIEW || 0) + (stats.PENDING_CLOSURE || 0),
     retard: stats.OVERDUE || data?.retard || 0, 
     imputees: (stats.IMPUTED || 0),
-    cloturees: stats.CLOSED || 0,
+    cloturees: stats.CLOSED || stats.ARCHIVED || 0,
     draft: stats.DRAFT || 0,
     published: stats.PUBLISHED || 0,
     pendingPilot: stats.PENDING_PILOT || 0,

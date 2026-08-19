@@ -17,11 +17,12 @@ export class AlerteTraitement {
     @Input() countBrouillon: number = 0;
     @Input() countImputees: number = 0;
     @Input() countReception: number = 0;
-    @Input() countValidationRQ: number = 0;
+    @Input() countValidationRqAffectation: number = 0;
     @Input() countValidationPilote: number = 0;
     @Input() countCloture: number = 0;
     @Input() countAffectation: number = 0;
     @Input() countNonTraiter: number = 0;
+    @Input() countSoumission: number = 0;
 
 
     isAdmin: boolean = false;

@@ -16,12 +16,14 @@ import { currentUserState } from '../../../services/auth-services/auth.state';
 import { AuthData } from '../../../models/auth.model';
 import { ApiResponse } from '../../../models/response.model';
 import { NonConformite } from '../../../models/non-conformite.model';
+import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
+import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 
 @Component({
     selector: 'app-nc-publiees',
     templateUrl: './nc-publiees.html',
     standalone: true,
-    imports: [CommonModule, NgPrimeModule, NcModule]
+    imports: [CommonModule, NgPrimeModule, NcModule, NcFilterBarComponent, TraitementTableComponent]
 })
 export class NcPublieesComponent implements OnInit, OnDestroy {
     publishedList: any[] = [];
@@ -32,6 +34,7 @@ export class NcPublieesComponent implements OnInit, OnDestroy {
 
 
     loading: boolean = false;
+    currentFilters: NcFilter | undefined;
     destroy$: Subject<boolean> = new Subject<boolean>();
     cols: any[] = [
             { field: 'numeroReference', header: 'N° Ref', type: 'string', filter: true, width: '250px', centered: false },
@@ -91,7 +94,8 @@ ngOnInit() {
                 next: (res: ApiResponse<NonConformite>) => {
                     console.log(res);
                     
-                    this.publishedList = res.data?.content ?? [];
+                    this.rawDemandeList = res.data?.content ?? [];
+                    this.applyLocalFilters();
 
                     // ✅ mise à jour pagination
                     this.totalElements = res.data?.totalElements ?? 0;
@@ -128,10 +132,72 @@ ngOnInit() {
         }
     }
 
+    handleFilter(event: NcFilter) {
+        this.currentFilters = event;
+        this.applyLocalFilters();
+    }
+
+    applyLocalFilters() {
+        const filters = this.currentFilters || {} as any;
+        const { dateDebut, dateFin, process, gravite, origine } = filters;
+
+        const filterFn = (item: any) => {
+            if (!item) return false;
+            let isValid = true;
+
+            if (dateDebut || dateFin) {
+                const itemDateStr = item.dateCreation || item.createdAt || item.date;
+                if (itemDateStr) {
+                    const itemDate = new Date(itemDateStr);
+                    itemDate.setHours(0,0,0,0);
+                    
+                    if (dateDebut) {
+                        const start = new Date(dateDebut);
+                        start.setHours(0,0,0,0);
+                        if (itemDate < start) isValid = false;
+                    }
+                    if (dateFin) {
+                        const end = new Date(dateFin);
+                        end.setHours(23,59,59,999);
+                        if (itemDate > end) isValid = false;
+                    }
+                }
+            }
+            // 1. Pour les Processus
+            if (process && process.length > 0) {
+                const selectedIds = process.map((p: any) => p.id);
+                if (!selectedIds.includes(item.typeProcessusId)) {
+                    isValid = false;
+                }
+            }
+
+            // 2. Pour les Gravités
+            if (gravite && gravite.length > 0) {
+                const selectedIds = gravite.map((g: any) => g.id);
+                if (!selectedIds.includes(item.niveauNonConformiteId)) {
+                    isValid = false;
+                }
+            }
+
+            // 3. Pour les Origines
+            if (origine && origine.length > 0) {
+                const selectedIds = origine.map((o: any) => o.id);
+                if (!selectedIds.includes(item.typeNonConformiteId)) {
+                    isValid = false;
+                }
+            }
+
+            return isValid;
+        };
+
+        this.publishedList = this.rawDemandeList.filter(filterFn);
+    }
+
     archive(rowdata: any): void {
         this.nonConformiteService.updateStatus(rowdata.id, NonConformStatus.ARCHIVED).subscribe({
             next: (data) => {
-                this.publishedList = this.publishedList.filter(item => item.id !== rowdata.id);
+                this.rawDemandeList = this.rawDemandeList.filter(item => item.id !== rowdata.id);
+                this.applyLocalFilters();
                 this.featureService.onReloadRequested(true);
                 this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Non-Conformité archivée' });
             },
@@ -144,7 +210,8 @@ ngOnInit() {
     delete(rowdata: any) {
         this.nonConformiteService.delete(rowdata.id!).subscribe({
             next: (data) => {
-                this.publishedList = this.publishedList.filter(item => item.id !== rowdata.id);
+                this.rawDemandeList = this.rawDemandeList.filter(item => item.id !== rowdata.id);
+                this.applyLocalFilters();
                 this.featureService.onReloadRequested(true);
                 this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Non-Conformité supprimée' });
             },

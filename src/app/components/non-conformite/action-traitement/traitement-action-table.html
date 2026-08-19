@@ -228,6 +228,7 @@
              l'aller chercher dans l'historique, décision par décision. -->
         <app-workflow-saisies class="block mb-4"
             [state]="planAction.workflowState"
+            [parentDemande]="planAction"
             titre="Ce qui a été rapporté sur cette action"></app-workflow-saisies>
 
         <!-- Ce sur quoi le responsable a été engagé : il le lit, il ne le modifie pas. L'action et
@@ -403,6 +404,7 @@
                 [resourceId]="planAction.id"
                 [reference]="planAction.numeroOdre"
                 [state]="planAction.workflowState"
+                [deposerFichier]="deposerFichierDEtape"
                 (executed)="apresDecision()"></app-workflow-actions>
         </div>
     </ng-template>

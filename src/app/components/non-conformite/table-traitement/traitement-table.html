@@ -18,14 +18,14 @@
     [stripedRows]="true"
     [showGridlines]="showGridlines"
     [size]="'small'"
-    styleClass="p-datatable-sm"
+    styleClass="p-datatable-sm premium-table"
     >
 
     <ng-template pTemplate="caption">
         <div class="flex flex-wrap items-center justify-between gap-3 bg-surface-0 dark:bg-surface-900 rounded-t-xl py-4 px-2">
             <!-- Partie Gauche : Titre et Badge -->
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center"
+                <!-- <div class="w-10 h-10 rounded-full flex items-center justify-center"
                      [ngClass]="{
                         'bg-purple-50 dark:bg-purple-500/20': btnActions === BtnActions.VALIDATION || btnActions === BtnActions.VALIDATION_RS,
                         'bg-blue-50 dark:bg-blue-500/20': btnActions === BtnActions.TRAITEMENT,
@@ -41,26 +41,31 @@
                            'pi-inbox text-green-600 dark:text-green-400': btnActions === BtnActions.RECEPTION,
                            'pi-list text-gray-600 dark:text-gray-400': btnActions !== BtnActions.VALIDATION && btnActions !== BtnActions.VALIDATION_RS && btnActions !== BtnActions.TRAITEMENT && btnActions !== BtnActions.IMPUTATION && btnActions !== BtnActions.RECEPTION
                        }"></i>
-                </div>
-                <div>
-                    <h5 class="m-0 font-bold text-surface-900 dark:text-surface-0 text-lg flex items-center gap-2">
-                        <span *ngIf="btnActions===BtnActions.IMPUTATION">Demandes à imputer</span>
-                        <span *ngIf="btnActions===BtnActions.TRAITEMENT">Demandes à traiter</span>
-                        <span *ngIf="btnActions===BtnActions.VALIDATION || btnActions===BtnActions.VALIDATION_RS">Demandes en attente de validation</span>
-                        <span *ngIf="btnActions===BtnActions.RECEPTION">Demandes en attente de réception</span>
-                        <span *ngIf="btnActions!==BtnActions.IMPUTATION && btnActions!==BtnActions.TRAITEMENT && btnActions!==BtnActions.VALIDATION && btnActions!==BtnActions.VALIDATION_RS && btnActions!==BtnActions.RECEPTION && btnActions!==BtnActions.CLOTURE">Non-Conformité en attente de clôture</span>
-                        <span *ngIf="btnActions===BtnActions.CLOTURE">Non-Conformité clôturées</span>
-                        <p-badge [value]="demandeList.length.toString()" styleClass="ml-1" severity="info"></p-badge>
-                    </h5>
-                    <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5 m-0">
-                        <span *ngIf="btnActions===BtnActions.IMPUTATION">Veuillez assigner ces non-conformités.</span>
-                        <span *ngIf="btnActions===BtnActions.TRAITEMENT">Ces non-conformités requièrent votre action.</span>
-                        <span *ngIf="btnActions===BtnActions.VALIDATION || btnActions===BtnActions.VALIDATION_RS">Ces non-conformités sont en attente de validation de votre part.</span>
-                        <span *ngIf="btnActions===BtnActions.RECEPTION">Veuillez réceptionner ces non-conformités.</span>
-                        <span *ngIf="btnActions!==BtnActions.IMPUTATION && btnActions!==BtnActions.TRAITEMENT && btnActions!==BtnActions.VALIDATION && btnActions!==BtnActions.VALIDATION_RS && btnActions!==BtnActions.RECEPTION && btnActions!==BtnActions.CLOTURE">Ces non-conformités sont en attente de clôture de votre part.</span>
-                        <span *ngIf="btnActions===BtnActions.CLOTURE">Ces non-conformités sont clôturées.</span>
-                    </p>
-                </div>
+                </div> -->
+                @if (hasFilters) {
+                    <ng-content select="[filters]"></ng-content>
+                } @else {
+                    <div>
+                        <h5 class="m-0 font-bold text-surface-900 dark:text-surface-0 text-lg flex items-center gap-2">
+                            @if (title) {
+                                <span>{{ title }}</span>
+                            } @else {
+                                <span *ngIf="btnActions===BtnActions.IMPUTATION">Demandes à imputer</span>
+                                <span *ngIf="btnActions===BtnActions.TRAITEMENT">Demandes à traiter</span>
+                                <span *ngIf="btnActions===BtnActions.VALIDATION || btnActions===BtnActions.VALIDATION_RS">Demandes en attente de validation</span>
+                                <span *ngIf="btnActions===BtnActions.RECEPTION">Demandes en attente de réception</span>
+                                <span *ngIf="btnActions!==BtnActions.IMPUTATION && btnActions!==BtnActions.TRAITEMENT && btnActions!==BtnActions.VALIDATION && btnActions!==BtnActions.VALIDATION_RS && btnActions!==BtnActions.RECEPTION && btnActions!==BtnActions.CLOTURE">Non-Conformité en attente de clôture</span>
+                                <span *ngIf="btnActions===BtnActions.CLOTURE">Non-Conformité clôturées</span>
+                            }
+                            <p-badge [value]="demandeList.length.toString()" styleClass="ml-1" severity="info"></p-badge>
+                        </h5>
+                        @if (subtitle) {
+                            <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5 m-0">
+                                {{ subtitle }}
+                            </p>
+                        }
+                    </div>
+                }
             </div>
             
             <!-- Partie Droite : Recherche et Bouton -->
@@ -129,17 +134,45 @@
                     [ngClass]="col.field === 'numeroReference' ? 'text-left' : 'text-center'"
                     class="bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
                     <!-- Contenu des cellules inchangé -->
-                    <span class="block" [ngClass]="col.field === 'numeroReference' ? 'text-left pl-4' : 'text-center'" style="white-space: nowrap;" *ngIf="col.type === 'string'">{{ rowData[col.field] }}</span>
+                    <div *ngIf="col.type === 'string'" class="flex flex-col gap-0.5" [ngClass]="col.field === 'numeroReference' ? 'text-left pl-4' : 'text-center'">
+                        <span class="font-semibold text-surface-900 dark:text-surface-0">{{ getCellValue(rowData, col) }}</span>
+                        
+                        <!-- Type de processus en plus petit et moins gras en dessous de la structure -->
+                        <span *ngIf="col.field === 'structureSoumissionLibelle'" class="text-xs text-surface-500 dark:text-surface-400 font-normal mt-0.5">
+                            {{ rowData.typeProcessusLibelle || rowData.nonConformite?.typeProcessusLibelle || '' }}
+                        </span>
+
+                        @if (col.subField) {
+                            <span class="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
+                                @if (col.subFieldType === 'date') {
+                                    {{ rowData[col.subField] | date:'dd/MM/yyyy HH:mm' }}
+                                } @else {
+                                    {{ rowData[col.subField] }}
+                                }
+                            </span>
+                        }
+                    </div>
                     <span class="block" [ngClass]="col.field === 'numeroReference' ? 'text-left pl-4' : 'text-center'" style="white-space: nowrap;" *ngIf="col.type === 'date'">
                         {{ rowData[col.field] | date:'dd/MM/yyyy HH:mm' }}
                     </span>
                     <!-- On ne garde qu'un seul attribut class -->
-                    <span *ngIf="col.type === 'badge' && rowData[col.field]" class="flex w-full" [ngClass]="col.field === 'numeroReference' ? 'justify-start pl-4' : 'justify-center'">
-                        <p-tag 
-                            [style]="{'font-weight': 'normal', 'text-transform': 'uppercase'}"
-                            [severity]="getSeverity(rowData[col.field])" 
-                            [value]="rowData[col.field]">
-                        </p-tag>
+                    <span *ngIf="col.type === 'badge' && getCellValue(rowData, col)" class="flex w-full justify-center">
+                        <span class="font-bold text-xs uppercase tracking-wider" [ngStyle]="getGravityStyle(getCellValue(rowData, col))">
+                            {{ getCellValue(rowData, col) }}
+                        </span>
+                    </span>
+
+                    <!-- Type 'user' avec avatar et nom en gras (SaaS style) -->
+                    <span *ngIf="col.type === 'user'" class="flex items-center gap-2 w-full" [ngClass]="col.field === 'numeroReference' ? 'justify-start pl-4' : 'justify-center'">
+                        <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-semibold flex items-center justify-center text-xs border border-slate-200 flex-shrink-0">
+                            {{ getInitials(rowData[col.field]) }}
+                        </div>
+                        <div class="flex flex-col text-left">
+                            <span class="font-medium text-slate-800">{{ rowData[col.field] || 'Utilisateur' }}</span>
+                            <span class="text-xs text-surface-500 dark:text-surface-400 font-normal">
+                                {{ rowData.currentUserEmail || rowData.nonConformite?.currentUserEmail || '' }}
+                            </span>
+                        </div>
                     </span>
 
                     <!-- L'étape courante est nommée par le circuit. Elle était jusqu'ici déduite
@@ -150,29 +183,23 @@
                     <span *ngIf="col.type === 'enum'" class="flex w-full justify-center">
                         <p-tag *ngIf="rowData.workflowState?.currentStateName"
                             [style]="{'font-weight': 'normal'}"
-                            severity="info"
-                            [value]="rowData.workflowState.currentStateName">
+                            [severity]="getWorkflowStatusSeverity(rowData.workflowState.currentStateName, rowData)"
+                            [value]="formatWorkflowStatusName(rowData.workflowState.currentStateName, rowData)">
                         </p-tag>
                         <!-- Dossier sans circuit en cours — clôturé, ou créé avant qu'un circuit ne
                              lui soit associé : son statut reste la seule chose qu'on puisse en dire. -->
                         <span *ngIf="!rowData.workflowState?.currentStateName" class="text-500 text-sm">
-                            {{ rowData[col.field] }}
+                            {{ formatWorkflowStatusName(rowData[col.field], rowData) }}
                         </span>
                     </span>
                 </td>
             }
             <td pFrozenColumn alignFrozen="right" class="text-right pr-4 bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
                 <div class="flex gap-1 justify-end">
-                    @if (btnActions === BtnActions.TRAITEMENT) {
-                        <button pButton pRipple icon="pi pi-wrench"
-                                class="p-button-rounded p-button-text p-button-secondary h-8 w-8 hover:bg-surface-100 dark:hover:bg-surface-800"
-                                pTooltip="Traiter" tooltipPosition="left" (click)="displayDetails(rowData)"></button>
-                    } @else {
-                        <p-button size="small" icon="pi pi-search" pTooltip="Détails" tooltipPosition="left" (click)="displayDetails(rowData)" pRipple severity="secondary" />
-                        <!-- <button pButton pRipple icon="pi pi-search"
-                                class="p-button-rounded p-button-text p-button-info h-8 w-8 hover:bg-surface-100 dark:hover:bg-surface-800"
-                                pTooltip="Détails" (click)="displayDetails(rowData)"></button> -->
-                    }
+                    <button pButton pRipple type="button" icon="pi pi-ellipsis-h"
+                            class="p-button-rounded p-button-text p-button-secondary h-8 w-8 hover:bg-surface-100 dark:hover:bg-surface-800"
+                            (click)="buildRowMenu(rowData); menu.toggle($event)"
+                            pTooltip="Actions" tooltipPosition="left"></button>
                 </div>
             </td>
         </tr>
@@ -220,7 +247,7 @@
 
 <p-dialog
     (onHide)="displayDetail = false" [modal]="true" [maximizable]="true"
-    [closable]="false"
+    [closable]="true" maskStyleClass="backdrop-blur-sm"
     [(visible)]="displayDetail" [style]="{width: '60vw'}" [breakpoints]="{ '960px': '95vw' }">
     <ng-template pTemplate="header">
         <div class="flex items-center gap-3">
@@ -253,7 +280,7 @@
                     
                     <span class="text-primary-500 text-sm text-red-500 font-bold ml-2">#{{ selectedDemande.numeroReference }}</span>
                     
-                    <span class="ml-3 px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-full flex items-center" *ngIf="selectedDemande.rejeter">
+                    <span class="ml-3 px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-full flex items-center" *ngIf="isRejet(selectedDemande)">
                         <i class="pi pi-exclamation-triangle mr-1 text-xs"></i>
                         Réjetée
                     </span>
@@ -300,7 +327,7 @@
                 [deposerFichier]="deposerFichier"
                 (executed)="circuitAvance()"></app-workflow-actions>
 
-            @if (btnActions === BtnActions.CLOTURE && selectedDemande?.etatTraitement === BtnActions.CLOTURE) {
+            @if (selectedDemande?.etatTraitement === 'CLOTURE' || selectedDemande?.status === 'CLOTURE') {
             <!-- L'édition n'avance pas le dossier : elle l'imprime. Elle reste donc au pied de la
                  fiche, à côté de Quitter. -->
             <button pRipple pButton size="small" type="button" icon="pi pi-print"
@@ -370,4 +397,6 @@
         </div>
     </ng-template>
 </p-confirmDialog>
+
+<p-menu #menu [model]="rowMenuItems" [popup]="true" appendTo="body"></p-menu>
 
