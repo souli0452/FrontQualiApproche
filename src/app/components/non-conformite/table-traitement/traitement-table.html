@@ -327,13 +327,14 @@
                 [deposerFichier]="deposerFichier"
                 (executed)="circuitAvance()"></app-workflow-actions>
 
-            @if (selectedDemande?.etatTraitement === 'CLOTURE' || selectedDemande?.status === 'CLOTURE') {
+            @if (selectedDemande?.etatTraitement === BtnActions.CLOTURE || selectedDemande?.status === 'CLOTURE') {
             <!-- L'édition n'avance pas le dossier : elle l'imprime. Elle reste donc au pied de la
-                 fiche, à côté de Quitter. -->
-            <button pRipple pButton size="small" type="button" icon="pi pi-print"
-                    class="p-button-warning position-left mr-3"
-                    (click)="editionNew()" label="Editer">
-            </button>}
+                 fiche, à côté de Quitter — et partout où un dossier clôturé s'ouvre, non plus sur
+                 le seul écran Suivi : c'est l'état du dossier qui la justifie, pas l'écran. -->
+            <p-button icon="pi pi-file-pdf" severity="warn" size="small" [outlined]="true"
+                      styleClass="position-left mr-3" [loading]="ficheEnCours"
+                      (onClick)="editerFicheCloture()" label="Éditer la fiche">
+            </p-button>}
         </div>
 
     </ng-template>

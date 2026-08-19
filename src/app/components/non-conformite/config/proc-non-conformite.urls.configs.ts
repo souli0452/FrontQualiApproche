@@ -42,6 +42,16 @@ export class NonConformiteUrlConfig {
     }
 
     /**
+     * Fiche récapitulative d'une non-conformité clôturée, en PDF.
+     *
+     * <p>Composée par le serveur — identification, constat, plans d'action, visas du circuit —
+     * et refusée par lui tant que le dossier n'est pas clôturé.</p>
+     */
+    static ficheCloture(nonConformiteId: string): string {
+        return `${AMELIORATION_SERVICE}/non-conformite/${nonConformiteId}/fiche-cloture`;
+    }
+
+    /**
      * Mise à jour d'un dossier.
      *
      * <p>Distincte de {@code UPDATE_NON_CONFORMITE}, qui vise {@code /update/many} : accoler un

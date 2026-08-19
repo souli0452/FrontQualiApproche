@@ -42,7 +42,6 @@ export class TraitementTableComponent implements OnInit, OnChanges {
     @Output() onImputation = new EventEmitter<any>();
     @Output() onValidation = new EventEmitter<any>();
     @Output() onStructureValidation = new EventEmitter<any>();
-    @Output() onEdition = new EventEmitter<any>();
     @Output() onSaveEntity = new EventEmitter<any>();
     @Output() onReceptionner = new EventEmitter<any>();
     @Output() onArchive = new EventEmitter<any>();
@@ -628,9 +627,59 @@ export class TraitementTableComponent implements OnInit, OnChanges {
         }
     }
 
-    //     this.onEdition.emit(this.selectedDemandes);
-    editionNew() {
-        this.onEdition.emit([this.selectedDemande]);
+    /** Édition de la fiche de clôture en cours : le bouton l'affiche, le loader global ignore les GET. */
+    ficheEnCours = false;
+
+    /**
+     * Télécharge la fiche de clôture du dossier ouvert, composée par le serveur.
+     *
+     * <p>Remplace l'ancien rapport Jasper, qui partait d'ici vers l'écran parent par un
+     * {@code @Output} — seul l'écran Suivi le branchait, si bien que le même dossier clôturé
+     * s'éditait ou non selon la liste d'où on l'ouvrait. Le téléchargement est désormais le fait
+     * de la fiche elle-même, partout où elle s'affiche.</p>
+     */
+    editerFicheCloture() {
+        const dossier = this.selectedDemande;
+        if (!dossier?.id || this.ficheEnCours) {
+            return;
+        }
+        this.ficheEnCours = true;
+        this.nonConformiteService.ficheCloture(dossier.id).subscribe({
+            next: (fiche) => {
+                this.ficheEnCours = false;
+                const url = window.URL.createObjectURL(fiche);
+                const lien = document.createElement('a');
+                lien.href = url;
+                lien.download = `Fiche_NC_${dossier.numeroReference || dossier.id}.pdf`;
+                lien.click();
+                setTimeout(() => window.URL.revokeObjectURL(url), 100);
+            },
+            error: async (erreur) => {
+                this.ficheEnCours = false;
+                this.messageService.add({
+                    severity: 'error', summary: 'Fiche de clôture',
+                    detail: await this.messageDuRefus(erreur), life: 5000
+                });
+            }
+        });
+    }
+
+    /**
+     * Le message que le serveur a réellement rendu : demandé en {@code blob}, un refus arrive lui
+     * aussi en {@code Blob}, et le lire comme un objet donnait un toast muet.
+     */
+    private async messageDuRefus(erreur: any): Promise<string> {
+        try {
+            if (erreur?.error instanceof Blob) {
+                const corps = JSON.parse(await erreur.error.text());
+                if (corps?.message) {
+                    return corps.message;
+                }
+            }
+        } catch {
+            // Corps illisible : le message générique suffit.
+        }
+        return erreur?.error?.message || "La fiche n'a pas pu être éditée. Veuillez réessayer.";
     }
 
     protected readonly TypeDemande = TypeDemande;

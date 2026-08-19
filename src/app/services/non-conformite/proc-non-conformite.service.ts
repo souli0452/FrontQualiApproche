@@ -198,4 +198,14 @@ export class ProcNonConformiteService {
         return `${NonConformiteUrlConfig.fichiers(nonConformiteId)}/contenu?reference=${encodeURIComponent(reference)}`;
     }
 
+    /**
+     * Fiche de clôture d'un dossier, telle que le serveur l'édite.
+     *
+     * <p>Le contenu arrive brut — c'est un PDF, pas une enveloppe {@code ApiResponse} — et le
+     * serveur refuse en 409 un dossier encore en circuit : c'est lui qui détient la règle.</p>
+     */
+    ficheCloture(nonConformiteId: string): Observable<Blob> {
+        return this.http.get(NonConformiteUrlConfig.ficheCloture(nonConformiteId), { responseType: 'blob' });
+    }
+
 }

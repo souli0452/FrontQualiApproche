@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { EtapeTraitement } from '../../../enums/enums';
 import { HttpResponse } from '@angular/common/http';
-import { showToast, StatusEnum, TypeDemande } from '../../../utils/global/global-utils';
+import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { FeaturesService } from '../../../services/feature-service';
@@ -13,7 +13,6 @@ import { Subject } from 'rxjs';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
-import { generateReportFile, ReportFormat, ReportingInput } from '../../../utils/fichier/fichier-utils';
 
 @Component({
     selector: 'app-nc-suivi',
@@ -249,52 +248,6 @@ export class NCSuiviComponent {
         this.loadSuiviData();
     }
 
-    // private editer(rowData: any, resp: HttpResponse<any>) {
-    //     const reportingInput: ReportingInput = {
-    //         reportFormat: ReportFormat.PDF,
-    //         reportType: rowData.typeDemande,
-    //         entityId: rowData.id!,
-    //     };
-    //     this.featureService.printReport(reportingInput).pipe()
-    //         .subscribe({
-    //             next: arrayBytes => {
-    //                 if (arrayBytes.byteLength) {
-    //                     generateReportFile(arrayBytes, reportingInput);
-    //                     this.dmdTraitement.displayDetails(resp.body);
-    //                     this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'oppération à réussie !", life: 3000 });
-    //                 }
-    //             },
-    //             error: () => {
-    //                 this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'oppération à échouée ! Veuillez réessayer 2", life: 3000 });
-    //                 //showToast(handleHttpErrors(err, 'error', 'Impression correspondance', 'demandeCodeKey'), this.messageService);
-    //             }
-    //         });
-    // }
-
-    private editer(rowData: any, resp: any) { // J'ai retiré HttpResponse car c'est trompeur
-        const reportingInput: ReportingInput = {
-            reportFormat: ReportFormat.PDF,
-            reportType: TypeDemande.NON_CONFORMITE, // Utilisation de l'Enum correcte
-            entityId: rowData.id!,
-        };
-        
-        this.featureService.printReport(reportingInput).pipe()
-            .subscribe({
-                next: arrayBytes => {
-                    if (arrayBytes.byteLength) {
-                        generateReportFile(arrayBytes, reportingInput);
-                        this.dmdTraitement.displayDetails(resp); // Remplacement de resp.body par resp
-                        this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'oppération a réussi !", life: 3000 });
-                    }
-                },
-                error: (error) => {
-                    console.log("ERREUR DE PRINT : ", error)
-                    this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'opération a échoué ! Veuillez réessayer", life: 3000 });
-                }
-            });
-    }
-
-
-    edition(demandes: any) {
-        this.editer(demandes[0], demandes[0]);}
+    // L'édition de la fiche de clôture est le fait de la fiche elle-même (traitement-table) :
+    // le dossier clôturé s'édite partout où il s'ouvre, plus seulement depuis cet écran.
 }
