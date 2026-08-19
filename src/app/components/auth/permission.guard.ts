@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivateFn, Router, UrlTree } from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivateFn, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { Observable, map, of } from 'rxjs';
 import { AuthService } from '../../services/auth-services/auth.service';
 import { currentUserState } from '../../services/auth-services/auth.state';
@@ -24,7 +24,7 @@ import { hasAnyPermission, isModuleSubscribed } from '../../utils/auth/auth-util
  * de fermer par défaut, afin qu'ajouter le garde à une route ne la condamne pas tant que sa
  * déclaration n'est pas écrite.</p>
  */
-export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
+export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
     const router = inject(Router);
     const authService = inject(AuthService);
 
@@ -39,7 +39,12 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) =>
         // Session absente : c'est un défaut d'authentification, pas d'habilitation. La distinction
         // compte pour l'utilisateur — on le renvoie se connecter, pas sur un « accès refusé ».
         if (!currentUserState.value) {
-            return router.parseUrl('/login');
+            // L'adresse visée accompagne le renvoi, comme dans AuthGuard : sans elle, le lien d'un
+            // courriel ou le QR d'une fiche déposait l'utilisateur sur l'accueil après connexion.
+            const demandee = state?.url;
+            return demandee && demandee !== '/' && !demandee.startsWith('/login')
+                ? router.createUrlTree(['/login'], { queryParams: { returnUrl: demandee } })
+                : router.parseUrl('/login');
         }
         // L'échéance de la licence n'interdit pas de naviguer. Elle renvoyait ici vers
         // `/auth/access` — page située hors du layout, donc sans la fenêtre d'activation : une
