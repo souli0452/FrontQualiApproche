@@ -119,14 +119,19 @@ describe('WorkflowEditorComponent — attribution des codes d\'étape', () => {
     expect(actions.filter((a) => a.decision === 'APPROUVE').length).toBe(2);
   });
 
-  it('laisse toujours une action à configurer plutôt qu\'une étape sans issue', () => {
+  it('accepte une étape sans action : c\'est ainsi que se décrit une fin de circuit', () => {
     composant.ajouterEtape();
+    composant.etapes.at(0).patchValue({ nomEtape: 'Clôturer' });
     composant.supprimerAction(0, 1);
     composant.supprimerAction(0, 0);
 
-    // Une étape sans action est une impasse : le dossier s'y arrête et rien ne peut plus l'en
-    // sortir.
-    expect(composant.actionsDeLEtape(0).length).toBe(1);
+    // Retirer la dernière action en rendait aussitôt une vide : une étape « Clôturer » qui dit la
+    // fin du circuit n'était pas exprimable, alors que les circuits livrés sont écrits ainsi — la
+    // clôture d'une non-conformité, l'action soldée d'un plan. Le moteur clôt l'instance en
+    // atteignant une telle étape.
+    expect(composant.actionsDeLEtape(0).length).toBe(0);
+    expect(composant.termineLeCircuit(0)).toBeTrue();
+    expect(payload().steps?.[0].transitions).toEqual([]);
   });
 
   it('ne redonne pas à une étape nouvelle le code d\'une étape déjà enregistrée', () => {

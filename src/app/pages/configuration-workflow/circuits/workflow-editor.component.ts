@@ -510,13 +510,23 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   }
 
   supprimerAction(indexEtape: number, indexAction: number): void {
-    const actions = this.actionsDeLEtape(indexEtape);
-    actions.removeAt(indexAction);
-    // Une étape sans action est une impasse : le dossier s'y arrête et rien ne peut plus le faire
-    // avancer. Mieux vaut la laisser porter une action à configurer qu'un circuit sans issue.
-    if (actions.length === 0) {
-      this.ajouterAction(indexEtape);
-    }
+    // Retirer la dernière action rendait aussitôt une action vide : une étape sans action était
+    // tenue pour une impasse. C'en est une fin — voulue. Une étape « Clôturer » qui n'offre rien
+    // dit la fin du circuit mieux qu'une case cochée sur un bouton, et c'est ainsi que sont
+    // écrits les circuits livrés : la clôture d'une non-conformité, l'action soldée d'un plan.
+    // Le moteur clôt l'instance en l'atteignant, l'écran l'annonce, et le diagramme la mène à sa
+    // borne finale.
+    this.actionsDeLEtape(indexEtape).removeAt(indexAction);
+  }
+
+  /**
+   * L'étape ne propose aucune action : l'atteindre termine le circuit.
+   *
+   * <p>Ce n'est pas un état intermédiaire de la saisie — c'est une façon de décrire une fin, au
+   * même titre qu'une action qui ne mène nulle part.</p>
+   */
+  termineLeCircuit(indexEtape: number): boolean {
+    return this.actionsDeLEtape(indexEtape).length === 0;
   }
 
   /**
