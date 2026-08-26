@@ -72,7 +72,8 @@
                 [loadOptions]="qmsService.chargerOptionsTypes"></app-select-input>
             </div>
 
-            <div class="col-span-12 md:col-span-6">
+            <!-- Le champ Processus Émetteur est auto-peuplé par l'utilisateur connecté, on le masque -->
+            <!-- <div class="col-span-12 md:col-span-6">
               <div class="flex items-center mb-2 gap-2">
                 <label for="service" class="font-semibold m-0">Processus Émetteur <span class="text-red-500">*</span></label>
                 <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="aideProcessusEmetteur.toggle($event)"></i>
@@ -90,7 +91,7 @@
                 [lazy]="true"
                 [loadOptions]="structureService.chargerOptions"
                 [selectedOptions]="structureRetenue('service')"></app-select-input>
-            </div>
+            </div> -->
 
             <div class="col-span-12 md:col-span-6">
               <div class="flex items-center mb-2 gap-2">

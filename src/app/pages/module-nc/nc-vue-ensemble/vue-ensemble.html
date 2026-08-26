@@ -253,13 +253,19 @@
 <!-- Tableau unifié des Non-Conformités en cours -->
 <div *ngIf="allActiveNCs.length > 0" class="my-4 bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl shadow-sm overflow-hidden">
     <app-traitement-table 
-        [demandeList]="allActiveNCs" 
+        [demandeList]="paginatedNCs" 
         [cols]="colsDashboard"
         [title]="'Traitement et suivi des non-conformités'"
         [subtitle]="'Consultez toutes les non-conformités qui requièrent une action de votre part.'"
         [loading]="loading"
-        [paginator]="true"
-        [showGridlines]="false">
+        [paginator]="false"
+        [hasFilters]="true"
+        [showGridlines]="false"
+        [totalElements]="filteredActiveNCs.length"
+        [currentPage]="currentPage"
+        [pageSize]="pageSize"
+        (pageChangeEvent)="onPageChange($event)">
+        <app-nc-filter-bar filters (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
     </app-traitement-table>
 </div>
 

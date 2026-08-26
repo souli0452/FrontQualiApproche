@@ -60,14 +60,7 @@ export class NCTraitementSuiviComponent {
             // ce champ, d'où `workflowStatus` : la dernière étape connue, plutôt qu'un statut
             // technique (« PUBLISHED ») qui ne dit rien à qui lit la liste.
             { field: 'workflowStatus', header: 'Étape du circuit', type: 'enum', filter: true, width: '250px', centered: false },
-            {
-                field: 'typeNonConformiteLibelle',
-                header: 'Source',
-                type: 'string',
-                filter: true,
-                width: '150px',
-                centered: false
-            },
+            { field: 'dateVisaEmetteur', header: 'Date soumission', type: 'string', width: '200px' },
             { field: 'niveauNonConformiteLibelle', header: 'Gravité', type: 'badge', filter: false, width: '150px', centered: false },
         ];
     }

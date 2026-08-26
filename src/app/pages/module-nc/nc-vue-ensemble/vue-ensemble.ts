@@ -19,6 +19,7 @@ import { currentUserState } from '../../../services/auth-services/auth.state';
 import { AuthData } from '../../../models/auth.model';
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
 import { EtapeTraitement } from '../../../enums/enums';
+import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 
 @Component({
     selector: 'app-vue-ensemble',
@@ -29,6 +30,7 @@ import { EtapeTraitement } from '../../../enums/enums';
                 NgPrimeModule,
                 NcStatsCardComponent,
                 AlerteTraitement,
+                NcFilterBarComponent,
                 TraitementTableComponent
             ],
     templateUrl: './vue-ensemble.html',
@@ -66,6 +68,11 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
 
     brouillonData: any[] = [];
     allActiveNCs: any[] = [];
+    filteredActiveNCs: any[] = [];
+    paginatedNCs: any[] = [];
+    currentPage: number = 0;
+    pageSize: number = 10;
+    currentFilters: any = {};
     colsDashboard: any[] = [];
     imputationsData: any[] = [];
     receptionData: any[] = [];
@@ -157,6 +164,68 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         private facade: NcVueEnsembleFacade,
     ) {} 
 
+    handleFilter(event: NcFilter) {
+        this.currentFilters = event;
+        this.currentPage = 0; // Reset pagination when filtering
+        this.applyLocalFilters();
+    }
+
+    applyLocalFilters() {
+        const filters = this.currentFilters || {} as any;
+        const { dateDebut, dateFin, process, gravite, origine } = filters;
+
+        const filterFn = (item: any) => {
+            if (!item) return false;
+            let isValid = true;
+
+            if (dateDebut || dateFin) {
+                const itemDateStr = item.dateCreation || item.createdAt || item.date || item.dateVisaEmetteur;
+                if (itemDateStr) {
+                    const itemDate = new Date(itemDateStr);
+                    itemDate.setHours(0,0,0,0);
+                    
+                    if (dateDebut) {
+                        const start = new Date(dateDebut);
+                        start.setHours(0,0,0,0);
+                        if (itemDate < start) isValid = false;
+                    }
+                    if (dateFin) {
+                        const end = new Date(dateFin);
+                        end.setHours(23,59,59,999);
+                        if (itemDate > end) isValid = false;
+                    }
+                }
+            }
+            
+            if (process && process.length > 0) {
+                const selectedIds = process.map((p: any) => p.id);
+                // process emetteur can be typeProcessusId or process.id etc.
+                if (!selectedIds.includes(item.typeProcessusId) && !selectedIds.includes(item.nonConformite?.typeProcessusId)) {
+                    isValid = false;
+                }
+            }
+
+            if (gravite && gravite.length > 0) {
+                const selectedIds = gravite.map((g: any) => g.id);
+                if (!selectedIds.includes(item.niveauNonConformiteId) && !selectedIds.includes(item.nonConformite?.niveauNonConformiteId)) {
+                    isValid = false;
+                }
+            }
+
+            if (origine && origine.length > 0) {
+                const selectedIds = origine.map((o: any) => o.id);
+                if (!selectedIds.includes(item.typeNonConformiteId) && !selectedIds.includes(item.nonConformite?.typeNonConformiteId)) {
+                    isValid = false;
+                }
+            }
+
+            return isValid;
+        };
+
+        this.filteredActiveNCs = this.allActiveNCs.filter(filterFn);
+        this.updatePaginatedNCs();
+    }
+
     ngOnInit(): void {
         this.authService.currentUser$
             .pipe(takeUntil(this.destroy$))
@@ -173,7 +242,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
                 type: 'string', 
                 width: 'fit-content'
             },
-            { field: 'currentUserfullName', header: 'Initiateur', type: 'user', width: '200px' },
+            { field: 'dateVisaEmetteur', header: 'Date soumission', type: 'string', width: '200px' },
             { field: 'workflowStatus', header: 'Étape du circuit', type: 'enum', width: '220px' },
             { field: 'niveauNonConformiteLibelle', header: 'Gravité', type: 'badge', width: '150px' }
         ];
@@ -481,6 +550,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
             });
 
             this.allActiveNCs = mergedList;
+            this.applyLocalFilters();
 
             // ✅ countSoumission compte toutes les NC rejetées pour la notification "Non-Conformités rejetées"
             this.countSoumission = this.allActiveNCs.filter((nc: any) => nc.rejeter).length;
@@ -504,6 +574,18 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
             this.resetUserDataState();
         }
         });
+    }
+
+    onPageChange(event: any) {
+        this.currentPage = event.page;
+        this.pageSize = event.size;
+        this.updatePaginatedNCs();
+    }
+
+    updatePaginatedNCs() {
+        const start = this.currentPage * this.pageSize;
+        const end = start + this.pageSize;
+        this.paginatedNCs = this.filteredActiveNCs.slice(start, end);
     }
 
     /**Recuperation des Non Conformités de l'utilisateur connecté en fonction de son rôle | FIN */

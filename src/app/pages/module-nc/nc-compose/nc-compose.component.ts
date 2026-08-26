@@ -143,11 +143,12 @@ export class NcComposeComponent {
         if (this.uploadedFiles && this.uploadedFiles.length > 0) {
             try {
                 const base64Files = await convertFilesToBase64(this.uploadedFiles);
-                this.nonConformite.fichiers = base64Files.map(fileData => ({
+                const newFichiers = base64Files.map(fileData => ({
                     fichier: fileData.fichierBase64,
                     nom: fileData.nomFichier,
                     type: fileData.typeFichier
                 }));
+                this.nonConformite.fichiers = [...(this.nonConformite.fichiers || []), ...newFichiers];
             } catch (error) {
                 this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la conversion des fichiers.' });
                 return;

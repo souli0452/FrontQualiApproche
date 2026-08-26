@@ -6,6 +6,7 @@ import { NgPrimeModule } from '../../../prime-ng.module';
 import { WorkflowActionDto, WorkflowStepFieldDto } from '../../models/workflow.model';
 import { SelectInputComponent } from '../ui/select-input/select-input.component';
 import { ChoixDeChamp, ChoixDeChampService } from './choix-de-champ.service';
+import { MessageService } from 'primeng/api';
 
 /** Décision confirmée : commentaire et valeurs saisies, prêtes pour l'appel au serveur. */
 export interface DecisionConfirmee {
@@ -144,7 +145,8 @@ export class WorkflowDecisionDialogComponent {
 
   constructor(
     private fb: FormBuilder,
-    private choixService: ChoixDeChampService
+    private choixService: ChoixDeChampService,
+    private messageService: MessageService
   ) {
     this.form = this.fb.group({ comments: ['', Validators.required] });
   }
@@ -169,15 +171,19 @@ export class WorkflowDecisionDialogComponent {
     const maxTailleMo = 10;
 
     if (!extensionsAutorisees.includes(extension)) {
-      this.erreursDeDepot[nomDeControle] = `Extension .${extension} non autorisée (autorisés : doc, docx, xlsx, pdf, jpeg, jpg, png, txt).`;
+      const msg = `Extension .${extension} non autorisée (autorisés : doc, docx, xlsx, pdf, jpeg, jpg, png, txt).`;
+      this.erreursDeDepot[nomDeControle] = msg;
       this.depotsEnEchec.add(nomDeControle);
+      this.messageService.add({ severity: 'error', summary: 'Type de fichier invalide', detail: msg });
       entree.value = '';
       return;
     }
 
     if (fichier.size > maxTailleMo * 1024 * 1024) {
-      this.erreursDeDepot[nomDeControle] = `Le fichier est trop volumineux (maximum ${maxTailleMo} Mo).`;
+      const msg = `Le fichier est trop volumineux (maximum ${maxTailleMo} Mo).`;
+      this.erreursDeDepot[nomDeControle] = msg;
       this.depotsEnEchec.add(nomDeControle);
+      this.messageService.add({ severity: 'error', summary: 'Fichier trop volumineux', detail: msg });
       entree.value = '';
       return;
     }
@@ -198,7 +204,7 @@ export class WorkflowDecisionDialogComponent {
         let rawMsg = err?.error?.message || err?.message || '';
         let cleanMsg = "Le dépôt a échoué. Veuillez réessayer.";
         
-        if (rawMsg.toLowerCase().includes('size') || rawMsg.toLowerCase().includes('max') || rawMsg.toLowerCase().includes('large')) {
+        if (rawMsg.toLowerCase().includes('size') || rawMsg.toLowerCase().includes('max') || rawMsg.toLowerCase().includes('large') || rawMsg.toLowerCase().includes('unknown url')) {
           cleanMsg = "Le fichier est trop volumineux pour le serveur. Veuillez choisir un fichier plus léger (ex: inférieur à 2 Mo).";
         } else if (rawMsg) {
           cleanMsg = rawMsg;
@@ -206,6 +212,7 @@ export class WorkflowDecisionDialogComponent {
         
         this.erreursDeDepot[nomDeControle] = cleanMsg;
         this.depotsEnEchec.add(nomDeControle);
+        this.messageService.add({ severity: 'error', summary: 'Échec de l\'envoi', detail: cleanMsg });
         entree.value = '';
       }
     });

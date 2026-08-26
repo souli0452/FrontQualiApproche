@@ -100,7 +100,7 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
     this.documentForm = this.fb.group({
       titre: [null, Validators.required],
       documentType: [null, Validators.required],
-      service: [null, Validators.required],
+      service: [null],
       redacteur: [null, Validators.required],
       periodiciteMois: [12, [Validators.required, Validators.min(1)]],
       // Code propre à l'organisation, distinct du numéro attribué par le système. Le champ
@@ -188,6 +188,9 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
   }
 
   trySetUserStructure(): void {
+    console.log("---- DEBUG ---- ID de l'utilisateur :", this.currentUserStructureId, "| Nombre de structures chargées :", this.structures.length);
+    console.log("---- DEBUG ---- Liste des 4 structures :", this.structures);
+
     if (this.currentUserStructureId && this.structures.length > 0) {
       const userStructure = this.structures.find(s =>
         s.id === this.currentUserStructureId ||
@@ -197,6 +200,9 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       );
       if (userStructure) {
         this.documentForm.patchValue({ service: userStructure });
+
+        console.log("====> Processus Emetteur récupéré :", userStructure);
+        console.log("====> Valeur actuelle du formulaire :", this.documentForm.value);
       }
     }
   }
@@ -239,21 +245,16 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
 
 
     this.loading = true;
-    const serviceObj: Structure = formVal.service;
+    const serviceObj = formVal.service;
 
-
-    this.qmsService.createDocument(this.selectedFile, {
+    const payload = {
       titre: formVal.titre,
       documentType: formVal.documentType,
-      serviceId: serviceObj.id!,
-      serviceLibelle: serviceObj.libelleLong || '',
-      serviceSigle: serviceObj.libelleCourt || '',
+      serviceId: serviceObj?.id || this.currentUserStructureId || '',
+      serviceLibelle: serviceObj?.libelleLong || '',
+      serviceSigle: serviceObj?.libelleCourt || '',
       redacteur: formVal.redacteur,
       periodiciteMois: formVal.periodiciteMois,
-      // `confidentiel` n'est plus transmis : le serveur l'établit à partir du niveau choisi.
-      // Le circuit non plus : c'est le serveur qui le choisit, du circuit désigné par le type de
-      // document à défaut de celui actif pour les documents. Le transmettre depuis ici aurait figé
-      // la configuration telle qu'elle était à l'ouverture de l'écran.
       ...(formVal.reference && { reference: formVal.reference }),
       ...(formVal.prioriteId && {
         prioriteId: formVal.prioriteId,
@@ -269,14 +270,16 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
         domaine: this.domaineChoisi?.libelle ?? ''
       }),
       ...(formVal.statutLegal && { statutLegal: formVal.statutLegal })
-    }).subscribe({
+    };
+
+    console.log("====> TEST DE SOUMISSION (Pas d'envoi en BD) <====");
+    console.log("Fichier prêt à être envoyé :", this.selectedFile ? this.selectedFile.name : "Aucun fichier");
+    console.log("Données du formulaire (Payload) :", payload);
+
+    this.qmsService.createDocument(this.selectedFile, payload).subscribe({
       next: (doc) => {
         this.loading = false;
         this.messageService.add({ severity: 'success', summary: 'Document créé', detail: `Le document ${doc.documentNumber} a été enregistré avec succès.` });
-
-        // Le classement peut fermer le circuit du document : le dépôt aboutit, mais aucun de ses
-        // décideurs ne le verra. L'avertissement reste affiché jusqu'à ce qu'on le referme, et
-        // retarde la redirection — le passer en même temps que la confirmation le ferait manquer.
         if (doc.avertissementConfidentialite) {
           this.messageService.add({
             severity: 'warn', summary: 'Classement à revoir',
@@ -289,7 +292,6 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       },
       error: (err: any) => {
         this.loading = false;
-        // On récupère le message d'erreur du backend s'il existe
         const backendMessage = err.error?.message || "Échec de l'enregistrement";
         showToast(StatusEnum.error, err.status, backendMessage, this.messageService, err);
       }
