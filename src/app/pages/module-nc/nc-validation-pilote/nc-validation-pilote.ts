@@ -12,13 +12,14 @@ import { ReceptionComponent } from '../nc-vue-ensemble/nc-reception/nc-reception
 import { ValidationPiloteComponent } from '../nc-vue-ensemble/nc-validation-pilote/nc-validation-pilote';
 import { NcClotureComponent } from '../nc-vue-ensemble/nc-cloture-rq/nc-cloture';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
-import { NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
+import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
 import { MessageService } from 'primeng/api';
 import { FeaturesService } from '../../../services/feature-service';
 import { Router } from '@angular/router';
 import { ApiItemResponse } from '../../../models/response.model';
+import { criteresDeRecherche } from '../../../utils/non-conformite/nc-criteres';
 
 @Component({
   selector: 'app-nc-validation-pilote',
@@ -70,6 +71,9 @@ export class ValidationPilote implements OnInit, OnDestroy {
     ];
   }
     
+  /** Ce qui est coché dans la barre, transmis au serveur à chaque chargement. */
+  currentFilters?: NcFilter;
+
   ngOnInit() {
     this.userStructure = getCurrentUserStructure();
     this.fetchData();
@@ -84,7 +88,14 @@ export class ValidationPilote implements OnInit, OnDestroy {
   fetchData() {
     this.loading = true;
         if(this.userStructure?.id){
-            this.nonConformiteService.nonConformiteParStructureEtOrigineGetPagination(EtapeTraitement.VALIDATION, this.userStructure?.id, this.currentPage, this.pageSize)
+            // Ici la structure est celle que le dossier concerne — origineId — et non celle qui
+            // l'a émis : c'est ce que posait le point d'entrée « structure/origin » appelé jusqu'ici.
+            const criteres = criteresDeRecherche([
+                { field: 'etatTraitement', operator: 'EQ', value: EtapeTraitement.VALIDATION },
+                { field: 'origineId', operator: 'EQ', value: this.userStructure?.id }
+            ], this.currentFilters);
+
+            this.nonConformiteService.rechercher(criteres, this.currentPage, this.pageSize)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res) => {
@@ -110,60 +121,16 @@ export class ValidationPilote implements OnInit, OnDestroy {
         }
     }
 
-    handleFilter(filters: any) {
-      if (!filters) return;
-      
-      const { dateDebut, dateFin, process, gravite, origine } = filters;
-
-      this.validationPiloteData = this.rawValidationPiloteData.filter(item => {
-          if (!item) return false;
-          let isValid = true;
-
-          if (dateDebut || dateFin) {
-              const itemDateStr = item.dateCreation || item.createdAt || item.date;
-              if (itemDateStr) {
-                  const itemDate = new Date(itemDateStr);
-                  itemDate.setHours(0,0,0,0);
-                  
-                  if (dateDebut) {
-                      const start = new Date(dateDebut);
-                      start.setHours(0,0,0,0);
-                      if (itemDate < start) isValid = false;
-                  }
-                  if (dateFin) {
-                      const end = new Date(dateFin);
-                      end.setHours(23,59,59,999);
-                      if (itemDate > end) isValid = false;
-                  }
-              }
-          }
-
-        // 1. Pour les Processus
-        if (process && process.length > 0) {
-            const selectedIds = process.map((p: any) => p.id);
-            if (!selectedIds.includes(item.typeProcessusId)) {
-                isValid = false;
-            }
-        }
-
-        // 2. Pour les Gravités
-        if (gravite && gravite.length > 0) {
-            const selectedIds = gravite.map((g: any) => g.id);
-            if (!selectedIds.includes(item.niveauNonConformiteId)) {
-                isValid = false;
-            }
-        }
-
-        // 3. Pour les Origines
-        if (origine && origine.length > 0) {
-            const selectedIds = origine.map((o: any) => o.id);
-            if (!selectedIds.includes(item.typeNonConformiteId)) {
-                isValid = false;
-            }
-        }
-
-          return isValid;
-      });
+      /**
+     * Un filtre change : la liste est redemandée au serveur depuis la première page.
+     *
+     * <p>Repartir de la première page n'est pas un détail : restreindre en restant à la page cinq
+     * afficherait une page vide alors que des dossiers correspondent.</p>
+     */
+    handleFilter(filters: NcFilter) {
+      this.currentFilters = filters;
+      this.currentPage = 0;
+      this.fetchData();
     }
 
   // fetchData() {

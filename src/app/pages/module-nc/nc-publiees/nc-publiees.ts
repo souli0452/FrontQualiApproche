@@ -18,6 +18,7 @@ import { ApiResponse } from '../../../models/response.model';
 import { NonConformite } from '../../../models/non-conformite.model';
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
 import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
+import { criteresDeRecherche } from '../../../utils/non-conformite/nc-criteres';
 
 @Component({
     selector: 'app-nc-publiees',
@@ -74,28 +75,36 @@ export class NcPublieesComponent implements OnInit, OnDestroy {
         private authService: AuthService
     ) {}
 
+    /** L'utilisateur dont l'écran montre les dossiers, retenu pour les rechargements. */
+    utilisateurCourant = '';
+
 ngOnInit() {
         this.userStructure = getCurrentUserStructure();
         const user = currentUserState.value as AuthData | any;
-        const userId = user.userId;
-        
-        // 2. Appel de la bonne méthode
-        if (userId) {
-            this.getDemandeListUser(userId);
+        this.utilisateurCourant = user.userId;
+
+        if (this.utilisateurCourant) {
+            this.getDemandeListUser(this.utilisateurCourant);
         }
     }
 
     getDemandeListUser(userId: string) {
         this.loading = true;
         this.nonConformiteService
-            .nonConformiteParUtilisateurGetPagination(userId, this.currentPage, this.pageSize) // ✅ passer page et size
+            .rechercher(criteresDeRecherche(
+                // « Mes dossiers » n'est pas une colonne : ce sont ceux que j'ai déclarés **ou**
+                // ceux qui me sont imputés. Des critères cumulés ne savent pas le dire — ils se
+                // combinent par un ET — d'où la comparaison portée sur les deux colonnes à la fois.
+                [{ fields: ['createdById', 'userImputId'], operator: 'EQ', value: userId }],
+                this.currentFilters),
+                this.currentPage, this.pageSize)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res: ApiResponse<NonConformite>) => {
                     console.log(res);
                     
                     this.rawDemandeList = res.data?.content ?? [];
-                    this.applyLocalFilters();
+                    this.publishedList = this.rawDemandeList;
 
                     // ✅ mise à jour pagination
                     this.totalElements = res.data?.totalElements ?? 0;
@@ -132,72 +141,22 @@ ngOnInit() {
         }
     }
 
+    /**
+     * Un filtre change : la liste est redemandée au serveur depuis la première page.
+     */
     handleFilter(event: NcFilter) {
         this.currentFilters = event;
-        this.applyLocalFilters();
+        this.currentPage = 0;
+        this.getDemandeListUser(this.utilisateurCourant);
     }
 
-    applyLocalFilters() {
-        const filters = this.currentFilters || {} as any;
-        const { dateDebut, dateFin, process, gravite, origine } = filters;
 
-        const filterFn = (item: any) => {
-            if (!item) return false;
-            let isValid = true;
-
-            if (dateDebut || dateFin) {
-                const itemDateStr = item.dateCreation || item.createdAt || item.date;
-                if (itemDateStr) {
-                    const itemDate = new Date(itemDateStr);
-                    itemDate.setHours(0,0,0,0);
-                    
-                    if (dateDebut) {
-                        const start = new Date(dateDebut);
-                        start.setHours(0,0,0,0);
-                        if (itemDate < start) isValid = false;
-                    }
-                    if (dateFin) {
-                        const end = new Date(dateFin);
-                        end.setHours(23,59,59,999);
-                        if (itemDate > end) isValid = false;
-                    }
-                }
-            }
-            // 1. Pour les Processus
-            if (process && process.length > 0) {
-                const selectedIds = process.map((p: any) => p.id);
-                if (!selectedIds.includes(item.typeProcessusId)) {
-                    isValid = false;
-                }
-            }
-
-            // 2. Pour les Gravités
-            if (gravite && gravite.length > 0) {
-                const selectedIds = gravite.map((g: any) => g.id);
-                if (!selectedIds.includes(item.niveauNonConformiteId)) {
-                    isValid = false;
-                }
-            }
-
-            // 3. Pour les Origines
-            if (origine && origine.length > 0) {
-                const selectedIds = origine.map((o: any) => o.id);
-                if (!selectedIds.includes(item.typeNonConformiteId)) {
-                    isValid = false;
-                }
-            }
-
-            return isValid;
-        };
-
-        this.publishedList = this.rawDemandeList.filter(filterFn);
-    }
 
     archive(rowdata: any): void {
         this.nonConformiteService.updateStatus(rowdata.id, NonConformStatus.ARCHIVED).subscribe({
             next: (data) => {
                 this.rawDemandeList = this.rawDemandeList.filter(item => item.id !== rowdata.id);
-                this.applyLocalFilters();
+                this.publishedList = this.rawDemandeList;
                 this.featureService.onReloadRequested(true);
                 this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Non-Conformité archivée' });
             },
@@ -211,7 +170,7 @@ ngOnInit() {
         this.nonConformiteService.delete(rowdata.id!).subscribe({
             next: (data) => {
                 this.rawDemandeList = this.rawDemandeList.filter(item => item.id !== rowdata.id);
-                this.applyLocalFilters();
+                this.publishedList = this.rawDemandeList;
                 this.featureService.onReloadRequested(true);
                 this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Non-Conformité supprimée' });
             },

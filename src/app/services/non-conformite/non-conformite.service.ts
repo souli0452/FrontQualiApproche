@@ -9,6 +9,7 @@ import { NonConformiteUrlConfig } from '../../components/non-conformite/config/p
 import { EtapeTraitement, NonConformStatus } from '../../enums/enums';
 import { ApiItemResponse, ApiResponse } from '../../models/response.model';
 import { NonConformite } from '../../models/non-conformite.model';
+import { CriteriaDto } from '../../models/criteria.model';
 
 
 
@@ -16,6 +17,29 @@ import { NonConformite } from '../../models/non-conformite.model';
 export class NonConformiteService extends BaseCrudService<NonConformite, string> {
     constructor(public override http: HttpClient) {
         super(http, QualiUrlConfig.NON_CONFORMITE_ROOT_URL);
+    }
+
+    /**
+     * Recherche filtrée et paginée des non-conformités.
+     *
+     * <p>Un seul point d'entrée pour tous les écrans : le périmètre de l'écran et ce que
+     * l'utilisateur a coché voyagent ensemble, dans le corps, et la base fait la sélection. Les
+     * écrans filtraient jusqu'ici la <b>page déjà chargée</b> — le compteur annonçait un total qui
+     * ne correspondait à rien, et les dossiers des pages suivantes restaient invisibles quel que
+     * soit le filtre posé.</p>
+     *
+     * <p>Le tri est transmis tel que Spring l'attend ({@code sort=createdAt,desc}) ; les résultats
+     * restent bornés à ce que l'appelant a le droit de voir, le serveur s'en chargeant.</p>
+     */
+    rechercher(
+        criteres: CriteriaDto,
+        page: number = 0,
+        size: number = 10,
+        sort: string = 'createdAt,desc'
+    ): Observable<ApiResponse<any>> {
+        const params = new HttpParams().set('page', page).set('size', size).set('sort', sort);
+        return this.http.post<ApiResponse<any>>(
+            `${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/search`, criteres, { params });
     }
 
     getCountByStatus(id:any): Observable<HttpResponse<Array<NcStats>>> {

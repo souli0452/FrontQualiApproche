@@ -6,7 +6,7 @@ import { getCurrentUserStructure } from '../../../utils/global/global-utils';
 import { EtapeTraitement } from '../../../enums/enums';
 import { Subject, takeUntil } from 'rxjs';
 
-import { NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
+import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 
 // Nouveaux imports pour le tableau
@@ -14,6 +14,7 @@ import { TraitementTableComponent } from '../../../components/non-conformite/tab
 import { MessageService } from 'primeng/api';
 import { FeaturesService } from '../../../services/feature-service';
 import { ApiItemResponse } from '../../../models/response.model';
+import { criteresDeRecherche } from '../../../utils/non-conformite/nc-criteres';
 
 @Component({
   selector: 'app-nc-analyse-reception',
@@ -66,6 +67,9 @@ export class AnalyseReceptionComponent implements OnInit, OnDestroy {
         ];
   }
     
+  /** Ce qui est coché dans la barre, transmis au serveur à chaque chargement. */
+  currentFilters?: NcFilter;
+
   ngOnInit() {
     this.userStructure = getCurrentUserStructure();
     this.fetchData();
@@ -81,7 +85,14 @@ export class AnalyseReceptionComponent implements OnInit, OnDestroy {
     this.loading = true;
 
     if (this.roleService.isChef && this.userStructure?.id) {
-        this.nonConformiteService.nonConformiteParStructureEtTraitementGet(EtapeTraitement.RECEPTION, this.userStructure.id)
+        // Le périmètre de l'écran, tel que le point d'entrée qu'il appelait le posait : l'étape
+        // de réception, dans la structure émettrice du dossier.
+        const criteres = criteresDeRecherche([
+                { field: 'etatTraitement', operator: 'EQ', value: EtapeTraitement.RECEPTION },
+                { field: 'structureSoumissionId', operator: 'EQ', value: this.userStructure.id }
+            ], this.currentFilters);
+
+        this.nonConformiteService.rechercher(criteres, this.currentPage, this.pageSize)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res) => {
@@ -104,60 +115,16 @@ export class AnalyseReceptionComponent implements OnInit, OnDestroy {
     }
   }
 
-  handleFilter(filters: any) {
-    if (!filters) return;
-    
-    const { dateDebut, dateFin, process, gravite, origine } = filters;
-
-    this.receptionPiloteData = this.rawReceptionPiloteData.filter(item => {
-        if (!item) return false;
-        let isValid = true;
-
-        if (dateDebut || dateFin) {
-            const itemDateStr = item.dateCreation || item.createdAt || item.date;
-            if (itemDateStr) {
-                const itemDate = new Date(itemDateStr);
-                itemDate.setHours(0,0,0,0);
-                
-                if (dateDebut) {
-                    const start = new Date(dateDebut);
-                    start.setHours(0,0,0,0);
-                    if (itemDate < start) isValid = false;
-                }
-                if (dateFin) {
-                    const end = new Date(dateFin);
-                    end.setHours(23,59,59,999);
-                    if (itemDate > end) isValid = false;
-                }
-            }
-        }
-
-        // 1. Pour les Processus
-        if (process && process.length > 0) {
-            const selectedIds = process.map((p: any) => p.id);
-            if (!selectedIds.includes(item.typeProcessusId)) {
-                isValid = false;
-            }
-        }
-
-        // 2. Pour les Gravités
-        if (gravite && gravite.length > 0) {
-            const selectedIds = gravite.map((g: any) => g.id);
-            if (!selectedIds.includes(item.niveauNonConformiteId)) {
-                isValid = false;
-            }
-        }
-
-        // 3. Pour les Origines
-        if (origine && origine.length > 0) {
-            const selectedIds = origine.map((o: any) => o.id);
-            if (!selectedIds.includes(item.typeNonConformiteId)) {
-                isValid = false;
-            }
-        }
-
-          return isValid;
-      });
+    /**
+     * Un filtre change : la liste est redemandée au serveur depuis la première page.
+     *
+     * <p>Repartir de la première page n'est pas un détail : restreindre en restant à la page cinq
+     * afficherait une page vide alors que des dossiers correspondent.</p>
+     */
+    handleFilter(filters: NcFilter) {
+      this.currentFilters = filters;
+      this.currentPage = 0;
+      this.fetchData();
     }
 
   // ============== ACTIONS DU TABLEAU ==============

@@ -103,6 +103,20 @@ export class NCTraitementSuiviComponent {
         this.getDemandeList();
     }
 
+    /**
+     * Filtrage local, et il le reste — contrairement aux autres écrans du module.
+     *
+     * <p>Les sept écrans qui listent une seule requête ont été portés sur {@code POST /search} : la
+     * base fait la sélection, et le compteur comme les pages suivantes s'accordent enfin avec le
+     * filtre. Celui-ci ne liste pas une requête : sa liste est l'<b>union</b> de plusieurs sources,
+     * dont l'une n'est pas une interrogation de table — les dossiers sur lesquels l'appelant a une
+     * décision ouverte sont calculés par le moteur de workflow, à partir des habilitations d'étape.
+     * Aucun jeu de critères ne saurait la reproduire.</p>
+     *
+     * <p>Le filtrage porte donc sur la liste assemblée. C'est le seul endroit du module où il a
+     * encore un sens : ne pas le remplacer par un appel à la recherche, qui perdrait les lignes
+     * venues des plans d'action.</p>
+     */
     applyLocalFilters() {
         const filters = this.currentFilters || {} as any;
         const { dateDebut, dateFin, process, gravite, origine } = filters;

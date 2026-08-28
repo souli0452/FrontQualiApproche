@@ -4,12 +4,13 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
 import { RoleService } from '../../../services/non-conformite/role.service'; // 👈 Bon chemin
 import { EtapeTraitement } from '../../../enums/enums';
 import { Subject, takeUntil } from 'rxjs';
-import { NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
+import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
 import { MessageService } from 'primeng/api';
 import { FeaturesService } from '../../../services/feature-service';
 import { ApiItemResponse } from '../../../models/response.model';
+import { criteresDeRecherche } from '../../../utils/non-conformite/nc-criteres';
 
 @Component({
   selector: 'app-nc-analyse-cloture',
@@ -59,6 +60,9 @@ export class AnalyseClotureComponent implements OnInit, OnDestroy {
     ];
   }
     
+  /** Ce qui est coché dans la barre, transmis au serveur à chaque chargement. */
+  currentFilters?: NcFilter;
+
   ngOnInit() {
     this.fetchData();
   }
@@ -69,10 +73,22 @@ export class AnalyseClotureComponent implements OnInit, OnDestroy {
     this.fetchData();
   }
 
+  /**
+   * Charge l'étape de suivi qualité, filtres compris.
+   *
+   * <p>La sélection est faite par la base : le périmètre de l'écran — l'étape que le circuit lui
+   * confie — et ce que l'utilisateur a coché dans la barre partent ensemble. L'écran filtrait
+   * jusqu'ici la page déjà chargée, si bien que le compteur annonçait un total qui ne
+   * correspondait à rien et que les dossiers des pages suivantes restaient invisibles.</p>
+   */
   fetchData() {
     this.loading = true;
 
-        this.nonConformiteService.nonConformiteParEtapeGetPagination(EtapeTraitement.SUIVI_RQ, this.currentPage, this.pageSize)
+    const criteres = criteresDeRecherche(
+        [{ field: 'etatTraitement', operator: 'EQ', value: EtapeTraitement.SUIVI_RQ }],
+        this.currentFilters);
+
+    this.nonConformiteService.rechercher(criteres, this.currentPage, this.pageSize)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res) => {
@@ -94,60 +110,16 @@ export class AnalyseClotureComponent implements OnInit, OnDestroy {
             });
     }
 
-    handleFilter(filters: any) {
-      if (!filters) return;
-      
-      const { dateDebut, dateFin, process, gravite, origine } = filters;
-
-      this.suiviRqData = this.rawSuiviRqData.filter(item => {
-          if (!item) return false;
-          let isValid = true;
-
-          if (dateDebut || dateFin) {
-              const itemDateStr = item.dateCreation || item.createdAt || item.date;
-              if (itemDateStr) {
-                  const itemDate = new Date(itemDateStr);
-                  itemDate.setHours(0,0,0,0);
-                  
-                  if (dateDebut) {
-                      const start = new Date(dateDebut);
-                      start.setHours(0,0,0,0);
-                      if (itemDate < start) isValid = false;
-                  }
-                  if (dateFin) {
-                      const end = new Date(dateFin);
-                      end.setHours(23,59,59,999);
-                      if (itemDate > end) isValid = false;
-                  }
-              }
-          }
-
-        // 1. Pour les Processus
-        if (process && process.length > 0) {
-            const selectedIds = process.map((p: any) => p.id);
-            if (!selectedIds.includes(item.typeProcessusId)) {
-                isValid = false;
-            }
-        }
-
-        // 2. Pour les Gravités
-        if (gravite && gravite.length > 0) {
-            const selectedIds = gravite.map((g: any) => g.id);
-            if (!selectedIds.includes(item.niveauNonConformiteId)) {
-                isValid = false;
-            }
-        }
-
-        // 3. Pour les Origines
-        if (origine && origine.length > 0) {
-            const selectedIds = origine.map((o: any) => o.id);
-            if (!selectedIds.includes(item.typeNonConformiteId)) {
-                isValid = false;
-            }
-        }
-
-          return isValid;
-      });
+    /**
+     * Un filtre change : la liste est redemandée depuis la première page.
+     *
+     * <p>Repartir de la première page n'est pas un détail : restreindre en restant à la page cinq
+     * afficherait une page vide alors que des dossiers correspondent.</p>
+     */
+    handleFilter(filters: NcFilter) {
+      this.currentFilters = filters;
+      this.currentPage = 0;
+      this.fetchData();
     }
     
     cloture(demandes: any) {

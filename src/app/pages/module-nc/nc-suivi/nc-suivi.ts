@@ -13,6 +13,7 @@ import { Subject } from 'rxjs';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
+import { criteresDeRecherche } from '../../../utils/non-conformite/nc-criteres';
 
 @Component({
     selector: 'app-nc-suivi',
@@ -75,9 +76,16 @@ export class NCSuiviComponent {
 
     protected readonly BtnActions = EtapeTraitement;
 
+    /**
+     * Un filtre change : la liste est redemandée au serveur depuis la première page.
+     *
+     * <p>Repartir de la première page n'est pas un détail : restreindre en restant à la page cinq
+     * afficherait une page vide alors que des dossiers correspondent.</p>
+     */
     handleFilter(event: NcFilter) {
         this.currentFilters = event;
-        this.applyLocalFilters();
+        this.currentPage = 0;
+        this.getDemandeList();
     }
 
     ngOnInit() {
@@ -108,62 +116,6 @@ export class NCSuiviComponent {
      */
     loadSuiviData() {
         this.getDemandeList();
-    }
-
-    applyLocalFilters() {
-        const filters = this.currentFilters || {} as any;
-        const { dateDebut, dateFin, process, gravite, origine } = filters;
-
-        const filterFn = (item: any) => {
-            if (!item) return false;
-            let isValid = true;
-
-            if (dateDebut || dateFin) {
-                const itemDateStr = item.dateCreation || item.createdAt || item.date;
-                if (itemDateStr) {
-                    const itemDate = new Date(itemDateStr);
-                    itemDate.setHours(0,0,0,0);
-                    
-                    if (dateDebut) {
-                        const start = new Date(dateDebut);
-                        start.setHours(0,0,0,0);
-                        if (itemDate < start) isValid = false;
-                    }
-                    if (dateFin) {
-                        const end = new Date(dateFin);
-                        end.setHours(23,59,59,999);
-                        if (itemDate > end) isValid = false;
-                    }
-                }
-            }
-            // 1. Pour les Processus
-            if (process && process.length > 0) {
-                const selectedIds = process.map((p: any) => p.id);
-                if (!selectedIds.includes(item.typeProcessusId)) {
-                    isValid = false;
-                }
-            }
-
-            // 2. Pour les Gravités
-            if (gravite && gravite.length > 0) {
-                const selectedIds = gravite.map((g: any) => g.id);
-                if (!selectedIds.includes(item.niveauNonConformiteId)) {
-                    isValid = false;
-                }
-            }
-
-            // 3. Pour les Origines
-            if (origine && origine.length > 0) {
-                const selectedIds = origine.map((o: any) => o.id);
-                if (!selectedIds.includes(item.typeNonConformiteId)) {
-                    isValid = false;
-                }
-            }
-
-            return isValid;
-        };
-
-        this.demandeList = this.rawDemandeList.filter(filterFn);
     }
 
 
@@ -204,14 +156,19 @@ export class NCSuiviComponent {
         // Les bornes de page sont transmises, et le total repris : sans elles, le serveur servait sa
         // page par défaut — dix dossiers — et la barre de pagination, faute de total, n'annonçait
         // aucune suite. La consultation paraissait ne compter que dix non-conformités.
-        this.nonConformiteService.nonConformiteGetAll(this.currentPage, this.pageSize).subscribe({
+        // Aucun périmètre propre à l'écran : la consultation montre tout ce que l'appelant a le
+        // droit de voir, et c'est le serveur qui en décide. Seuls les filtres de la barre
+        // s'ajoutent.
+        const criteres = criteresDeRecherche([], this.currentFilters);
+
+        this.nonConformiteService.rechercher(criteres, this.currentPage, this.pageSize).subscribe({
             next: (data) => {
                 this.rawDemandeList = data.data.content || [];
                 this.totalElements = data.data.totalElements ?? this.rawDemandeList.length;
                 this.totalPages = data.data.totalPages ?? 1;
                 this.currentPage = data.data.pageNumber ?? this.currentPage;
                 this.pageSize = data.data.pageSize ?? this.pageSize;
-                this.applyLocalFilters();
+                this.demandeList = this.rawDemandeList;
                 this.featureService.onReloadRequested(true);
                 this.loading = false;
                 if (!this.ficheDeLAdresseOuverte) {
