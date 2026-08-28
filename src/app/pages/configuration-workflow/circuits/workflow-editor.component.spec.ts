@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 import { WorkflowEditorComponent } from './workflow-editor.component';
 import { WorkflowDto } from '../../../models/workflow.model';
@@ -16,6 +17,9 @@ import { WorkflowDto } from '../../../models/workflow.model';
 describe('WorkflowEditorComponent — attribution des codes d\'étape', () => {
   let composant: WorkflowEditorComponent;
 
+  const ANNE = '3f1b5c20-0000-4000-8000-00000000000a';
+  const BRUNO = '3f1b5c20-0000-4000-8000-00000000000b';
+
   const MODELE_VERIFICATION = {
     id: 'modele-verification',
     code: 'VERIFICATION',
@@ -26,6 +30,9 @@ describe('WorkflowEditorComponent — attribution des codes d\'étape', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
+      // L'éditeur propose de nommer les signataires d'une étape : il résout donc l'annuaire des
+      // utilisateurs, dont le service dépend à son tour des permissions applicatives.
+      imports: [NgxPermissionsModule.forRoot()],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -132,6 +139,20 @@ describe('WorkflowEditorComponent — attribution des codes d\'étape', () => {
     expect(composant.actionsDeLEtape(0).length).toBe(0);
     expect(composant.termineLeCircuit(0)).toBeTrue();
     expect(payload().steps?.[0].transitions).toEqual([]);
+  });
+
+  it('renvoie les signataires de l\'étape, et une liste vide quand elle n\'en nomme aucun', () => {
+    composant.ajouterEtape();
+    composant.ajouterEtape();
+    composant.etapes.at(0).patchValue({ nomEtape: 'Rédaction' });
+    composant.etapes.at(1).patchValue({ nomEtape: 'Vérification' });
+    composant.etapes.at(1).get('cosignataires')?.setValue([ANNE, BRUNO]);
+
+    // Omis du corps envoyé, le serveur efface la liste : l'étape cesserait de séparer les
+    // signatures sans que rien ne l'ait demandé — c'est ce qui est arrivé au champ titulaire.
+    const etapes = payload().steps ?? [];
+    expect(etapes[0].cosignataires).toEqual([]);
+    expect(etapes[1].cosignataires).toEqual([ANNE, BRUNO]);
   });
 
   it('ne redonne pas à une étape nouvelle le code d\'une étape déjà enregistrée', () => {

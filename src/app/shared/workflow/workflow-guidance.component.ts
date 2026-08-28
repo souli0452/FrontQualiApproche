@@ -165,6 +165,16 @@ export class WorkflowGuidanceComponent {
         return this.state?.allowedActions ?? [];
     }
 
+    /**
+     * L'utilisateur est écarté de cette étape parce qu'il a soumis le dossier lui-même.
+     *
+     * <p>Subordonné à l'absence d'action : l'administration passe outre la séparation des
+     * signatures et reçoit les boutons, auquel cas lui dire qu'il n'a rien à faire serait faux.</p>
+     */
+    get ecarteCommeAuteur(): boolean {
+        return !this.actions.length && !!this.state?.ecarteCommeAuteur;
+    }
+
     get estTermine(): boolean {
         const statut = (this.state?.status ?? '').toUpperCase();
         return !this.actions.length && (statut === 'APPROVED' || statut === 'TERMINE' || statut === 'CLOTURE');
@@ -290,6 +300,16 @@ export class WorkflowGuidanceComponent {
                 + `commentaire vous sera demandé au moment de décider.`;
         }
         const attendu = this.libelleDeLHabilitation(this.state?.currentStepRole);
+        // Répondre « le pilote du processus doit se prononcer » à un pilote, sur le dossier qu'il a
+        // lui-même déposé, est exact et incompréhensible : c'est bien un pilote qu'on attend, mais
+        // pas celui-là. Ce n'est pas une question de rôle, et le rôle ne pouvait pas la répondre.
+        if (this.ecarteCommeAuteur) {
+            return attendu
+                ? `Vous avez soumis ${this.objet} : à cette étape, la décision revient à un autre `
+                    + `signataire que son auteur — ${attendu}. Vous n'avez rien à faire pour l'instant.`
+                : `Vous avez soumis ${this.objet} : à cette étape, la décision revient à un autre `
+                    + `signataire que son auteur. Vous n'avez rien à faire pour l'instant.`;
+        }
         return attendu
             ? `${this.majuscule(attendu)} doit se prononcer avant que ${this.objet} n'avance. Vous n'avez rien à faire pour l'instant.`
             : `Personne d'autre que le responsable de cette étape ne peut faire avancer ${this.objet}. Vous n'avez rien à faire pour l'instant.`;

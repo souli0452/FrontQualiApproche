@@ -68,6 +68,21 @@ export interface WorkflowStepDto {
    * cesse de nommer quelqu'un et les étapes réservées au titulaire deviennent indécidables.
    */
   champTitulaire?: string | null;
+  /**
+   * Personnes qui **co-signent** cette étape, par leur identifiant d'utilisateur.
+   *
+   * Le rôle responsable dit qui *peut* décider ; cette liste nomme qui engage sa signature ici.
+   * Elle porte une seule règle, la séparation des signatures : celui de ces signataires qui a
+   * soumis le dossier ne le décide pas à cette étape — un pilote ne vérifie pas le document qu'il
+   * a rédigé. Les autres signataires décident comme avant.
+   *
+   * Des personnes et non des rôles : le rôle est déjà dit par `responsableRole`, et deux porteurs
+   * d'un même rôle ne sont pas interchangeables au regard d'une signature.
+   *
+   * Liste vide : la règle est inactive, l'étape se décide à l'habilitation seule. Doit être
+   * renvoyée telle quelle — omise, le serveur l'efface et l'étape cesse de séparer quoi que ce soit.
+   */
+  cosignataires?: string[];
   transitions?: WorkflowTransitionDto[];
   fields?: WorkflowStepFieldDto[];
 }
@@ -187,6 +202,18 @@ export interface WorkflowStateDto {
    * n'a rien à décider.
    */
   currentStepRole?: string | null;
+  /**
+   * L'utilisateur est écarté de l'étape courante parce qu'il a lui-même soumis ce dossier.
+   *
+   * Sans cette information, l'écran répondait « le pilote du processus doit se prononcer » — à un
+   * pilote, sur son propre document : exact et incompréhensible, puisque c'est bien un pilote
+   * qu'on attend, mais pas celui-là. `currentStepRole` ne pouvait pas le dire, la question n'étant
+   * pas celle du rôle.
+   *
+   * Ne vaut que si `allowedActions` est vide : l'administration passe outre la séparation des
+   * signatures, et reçoit alors les actions comme n'importe qui.
+   */
+  ecarteCommeAuteur?: boolean;
   allowedActions: WorkflowActionDto[];
   /**
    * Champs à saisir avant de décider sur l'étape courante. Le serveur refuse la décision en 400

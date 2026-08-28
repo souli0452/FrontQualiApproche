@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
 import { PanelModule } from 'primeng/panel';
@@ -9,6 +9,7 @@ import { TooltipModule } from 'primeng/tooltip';
 
 import { WorkflowDto, WorkflowStepDto, WorkflowTransitionDto } from '../../models/workflow.model';
 import { WorkflowDiagramComponent } from './workflow-diagram.component';
+import { ChoixDeChampService } from './choix-de-champ.service';
 
 /** Sévérité de tag admise par PrimeNG. */
 type Severite = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
@@ -51,6 +52,18 @@ interface GroupeTransitions {
 })
 export class WorkflowDetailComponent {
 
+    private readonly choixService = inject(ChoixDeChampService);
+
+    /**
+     * Noms des personnes, par identifiant, pour lire les signataires d'une étape.
+     *
+     * <p>Le circuit ne transporte que des identifiants — c'est ce que le moteur compare — et les
+     * afficher tels quels donnerait une liste d'UUID illisible. L'annuaire est demandé une fois,
+     * au service qui alimente déjà les champs à source {@code @UTILISATEURS} et qui le met en
+     * cache ; à défaut, l'identifiant reste affiché, ce qui vaut mieux que rien.</p>
+     */
+    private nomParIdentifiant = new Map<string, string>();
+
     /** Apparence par défaut d'une action, quand le circuit n'en fixe pas. */
     private static readonly APPARENCE: Record<string, { icone: string; severite: string }> = {
         APPROUVE: { icone: 'pi pi-check', severite: 'success' },
@@ -87,6 +100,24 @@ export class WorkflowDetailComponent {
         this.nombreTransitions = this.etapes.reduce((total, etape) => total + etape.sortantes.length, 0);
         this.etapeOuverte = this.etapes.length ? this.cleDe(this.etapes[0]) : '';
         this.groupeOuvert = this.groupes.length ? this.groupes[0].cle : '';
+        this.chargerLesNoms();
+    }
+
+    /**
+     * Résout en noms les identifiants des signataires, et seulement s'il y en a.
+     *
+     * <p>La quasi-totalité des circuits ne nomme personne : interroger l'annuaire à chaque
+     * consultation de circuit coûterait un appel pour une colonne vide.</p>
+     */
+    private chargerLesNoms(): void {
+        const aDesSignataires = this.etapes.some((etape) => (etape.cosignataires ?? []).length > 0);
+        if (!aDesSignataires) {
+            return;
+        }
+        this.choixService.choix('@UTILISATEURS').subscribe((utilisateurs) => {
+            this.nomParIdentifiant = new Map(
+                (utilisateurs ?? []).map((utilisateur) => [utilisateur.value, utilisateur.label]));
+        });
     }
 
     // ------------------------------------------------------------------ construction des vues
@@ -186,6 +217,22 @@ export class WorkflowDetailComponent {
             return 'Première étape';
         }
         return etape.sansSuite ? 'Dernière étape' : 'Étape intermédiaire';
+    }
+
+    /**
+     * Les signataires d'une étape, nommés — ou le tiret quand l'étape n'en désigne aucun.
+     *
+     * <p>Aucun signataire est le cas ordinaire : l'étape se décide alors à l'habilitation seule, et
+     * son auteur peut y décider comme un autre.</p>
+     */
+    signataires(etape: EtapeVue): string {
+        const identifiants = etape.cosignataires ?? [];
+        if (!identifiants.length) {
+            return 'Aucun — l\'étape se décide au rôle seul';
+        }
+        return identifiants
+            .map((identifiant) => this.nomParIdentifiant.get(identifiant) ?? identifiant)
+            .join(', ');
     }
 
     /** Habilitation d'une étape, en termes lisibles : les désignations ne sont pas des rôles. */

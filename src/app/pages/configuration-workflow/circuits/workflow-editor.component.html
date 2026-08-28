@@ -170,6 +170,27 @@
                                         les étapes réservées au titulaire ne s'ouvriront qu'à elle.
                                     </small>
                                 </div>
+                                <!-- Le rôle dit qui peut décider ; ceci nomme qui signe. Un pilote
+                                     qui rédige un document porte le rôle attendu à la vérification,
+                                     et se trouvait donc habilité à vérifier son propre dépôt : c'est
+                                     ce que le rôle ne savait pas exprimer. -->
+                                <div class="flex flex-col gap-1 md:col-span-2">
+                                    <label class="text-xs font-medium text-surface-600">
+                                        Signataires de l'étape
+                                    </label>
+                                    <p-multiSelect formControlName="cosignataires"
+                                                   [options]="utilisateursDisponibles"
+                                                   optionLabel="label" optionValue="value"
+                                                   [filter]="true" [showClear]="true" display="chip"
+                                                   placeholder="Personne — l'étape se décide au rôle seul"
+                                                   appendTo="body"></p-multiSelect>
+                                    <small class="text-[11px] text-surface-400">
+                                        Celui de ces signataires qui a <strong>soumis</strong> le dossier ne
+                                        décidera pas à cette étape : on ne vérifie pas son propre document.
+                                        Les autres décident normalement. Laissé vide, rien ne change — l'étape
+                                        se décide à l'habilitation seule.
+                                    </small>
+                                </div>
                             </div>
 
                             <!-- Actions proposées à l'étape -->

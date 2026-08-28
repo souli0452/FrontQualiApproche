@@ -10,6 +10,7 @@ import { AppRoleService } from '../../role/role-service/role.service';
 import { WorkflowStepTemplateService } from '../../../services/module-gestion-documentaire/workflow-step-template.service';
 import { QmsDocumentService } from '../../../services/module-gestion-documentaire/qms-document.service';
 import { SelectInputComponent } from '../../../shared';
+import { ChoixDeChampService } from '../../../shared/workflow/choix-de-champ.service';
 import { WorkflowError, WorkflowService } from '../../../services/workflow.service';
 import { WorkflowStepTemplate } from '../../../models/gestion-documentaire.model';
 import { WorkflowConfigurationGuideComponent } from './workflow-configuration-guide.component';
@@ -123,6 +124,13 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   private readonly roleService = inject(AppRoleService);
   private readonly stepTemplateService = inject(WorkflowStepTemplateService);
   /**
+   * Résout les sources de valeurs du moteur — dont `@UTILISATEURS`, qui alimente le choix des
+   * signataires d'une étape. Le même service sert déjà les champs de saisie à liste : les
+   * identifiants proposés ici sont donc exactement ceux que le moteur compare au créateur du
+   * dossier.
+   */
+  private readonly choixService = inject(ChoixDeChampService);
+  /**
    * Types de documents, pour réserver un circuit à l'un d'eux.
    *
    * <p>La liste vient du module documentaire : c'est lui qui détient les types, et le moteur ne
@@ -156,6 +164,16 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
    * retirer. Une règle configurable dans le code et pas à l'écran n'est pas configurable.</p>
    */
   rolesDisponibles: Option[] = [];
+
+  /**
+   * Personnes proposées comme signataires d'une étape.
+   *
+   * <p>Les mêmes que celles d'un champ à source {@code @UTILISATEURS}, et pour la même raison : la
+   * valeur retenue est l'identifiant d'utilisateur, seul terme que le moteur puisse comparer au
+   * créateur inscrit sur le dossier. Un annuaire figé dans le circuit aurait vieilli au premier
+   * arrivant.</p>
+   */
+  utilisateursDisponibles: Option[] = [];
 
   /** Les deux désignations, en tête de liste : elles précèdent les rôles, elles ne s'y mêlent pas. */
   private readonly designations: Option[] = [
@@ -359,6 +377,7 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     }
 
     this.chargerRoles();
+    this.chargerUtilisateurs();
     this.chargerModelesEmail();
     this.chargerModelesEtape();
     this.chargerTypesDocument();
@@ -393,6 +412,27 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
           this.rolesDisponibles = [...this.designations];
           console.warn('Liste des rôles indisponible.');
         }
+      });
+  }
+
+  /**
+   * Personnes proposables comme signataires d'une étape.
+   *
+   * <p>Indisponible, la liste reste vide : le reste du circuit se configure sans elle, et une
+   * étape sans signataire nommé se comporte comme avant. Bloquer l'écran entier pour cela serait
+   * hors de proportion.</p>
+   */
+  private chargerUtilisateurs(): void {
+    this.choixService
+      .choix('@UTILISATEURS')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (utilisateurs) => {
+          this.utilisateursDisponibles = (utilisateurs ?? [])
+            .map((utilisateur) => ({ label: utilisateur.label, value: utilisateur.value }))
+            .filter((option) => !!option.value);
+        },
+        error: () => console.warn('Liste des utilisateurs indisponible.')
       });
   }
 
@@ -615,6 +655,7 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
           etatTraitement: [etape.etatTraitement ?? null],
           emailTemplateCode: [etape.emailTemplateCode ?? null],
           champTitulaire: [etape.champTitulaire ?? null],
+          cosignataires: [etape.cosignataires ?? []],
           description: [etape.description ?? null],
           // Autant d'actions que l'étape en propose. Elles tenaient auparavant dans deux jeux de
           // contrôles figés — approbation et rejet — et une étape ne pouvait donc rien offrir
@@ -676,6 +717,7 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
         etatTraitement: [null],
         emailTemplateCode: [null],
         champTitulaire: [null],
+        cosignataires: [[]],
         description: [null],
         // Une étape ajoutée l'est en fin de circuit : approuver la clôt, rejeter renvoie à la
         // précédente. Les destinations des autres étapes ne sont jamais réécrites.
@@ -891,6 +933,9 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
         stepTemplateId: etape.stepTemplateId || null,
         // Renvoyé tel quel : omis, le serveur l'efface et l'étape cesse de désigner le titulaire.
         champTitulaire: etape.champTitulaire || null,
+        // Même règle : omis, le serveur efface la liste et l'étape cesse de séparer les
+        // signatures. Vide, elle vaut « aucune séparation » — l'étape se décide comme avant.
+        cosignataires: etape.cosignataires ?? [],
         description: etape.description,
         fields: (etape.fields ?? []).map((champ: any) => ({
           id: champ.id ?? null,
