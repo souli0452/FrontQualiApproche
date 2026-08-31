@@ -22,20 +22,18 @@ import {
   PrioriteDocumentService
 } from '../../../services/module-gestion-documentaire/referentiel-document.service';
 import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '../../../models/referentiel-document.model';
-import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentType, QmsDocumentVersion, DocumentWorkflow, WorkflowStep } from '../../../models/gestion-documentaire.model';
+import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentType, QmsDocumentVersion } from '../../../models/gestion-documentaire.model';
 import { WorkflowStateDto, WorkflowActionDto, ValidationHistoryDto } from '../../../models/workflow.model';
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
 import { QmsDocumentListComponent } from './components/qms-document-list.component';
 import { QmsDocumentDetailComponent } from './components/qms-document-detail.component';
 import { QmsDocumentHistoryComponent } from './components/qms-document-history.component';
 import { QmsDocumentAuditComponent } from './components/qms-document-audit.component';
-import { QmsTransitionDialogComponent, TransitionDecision } from './components/qms-transition-dialog.component';
 import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '../../../shared';
 import { QmsDocumentDemandesComponent } from './components/qms-document-demandes.component';
 import { DemandeDocumentService } from '../../../services/module-gestion-documentaire/demande-document.service';
 import { DemandeDocumentDto } from '../../../models/demande-document.model';
 import { WorkflowHistoriqueComponent } from '../../../shared/workflow/workflow-historique.component';
-import { QmsAssignWorkflowDialogComponent } from './components/qms-assign-workflow-dialog.component';
 import { QmsReclassementDialogComponent } from './components/qms-reclassement-dialog.component';
 import { QmsDocumentAccessDialogComponent, AccessGrant } from './components/qms-document-access-dialog.component';
 
@@ -52,7 +50,7 @@ export type OngletDetail = 'detail' | 'historique' | 'partages' | 'audit' | 'dem
 @Component({
   selector: 'app-qms-document',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, QmsTransitionDialogComponent, WorkflowDecisionDialogComponent, WorkflowHistoriqueComponent, QmsDocumentDemandesComponent, QmsAssignWorkflowDialogComponent,
+  imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, WorkflowDecisionDialogComponent, WorkflowHistoriqueComponent, QmsDocumentDemandesComponent,
     QmsReclassementDialogComponent, QmsDocumentAccessDialogComponent],
   templateUrl: './qms-document.component.html',
   styleUrls: ['./qms-document.component.scss'],
@@ -94,9 +92,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
 
 
 
-  // Modals / View visibility
-  showTransitionModal = false;
-  showAssignWorkflowModal = false;
 
   activeTab = 'access';
   accessList: DocumentUserAccess[] = [];
@@ -144,7 +139,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   selectedDocument?: DocumentQms;
   versionHistory: QmsDocumentVersion[] = [];
   auditLogs: QmsAuditLog[] = [];
-  availableWorkflows: DocumentWorkflow[] = [];
   workflowState?: WorkflowStateDto;
 
   // Form Groups
@@ -424,39 +418,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
           error: (err: any) => console.warn('Could not fetch dynamic workflow state', err)
         });
     }
-  }
-
-  openTransitionDialog(doc: DocumentQms): void {
-    this.selectedDocument = doc;
-    this.showTransitionModal = true;
-  }
-
-  submitTransition(decision: TransitionDecision): void {
-    if (!this.selectedDocument) return;
-
-    this.loading = true;
-
-    this.qmsService.transitionStatus(this.selectedDocument.id!, decision.nextStatus, decision.reason)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (updatedDoc) => {
-          this.loading = false;
-          this.showTransitionModal = false;
-          if (this.currentView === 'detail' && this.selectedDocument?.id === updatedDoc.id) {
-            this.selectedDocument = updatedDoc;
-          }
-          this.refreshList();
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Statut mis à jour',
-            detail: `Le document est maintenant dans l'état: ${this.getStatusLabel(updatedDoc)}`
-          });
-        },
-        error: (err: any) => {
-          this.loading = false;
-          showToast(StatusEnum.error, err.status, 'Échec de la transition', this.messageService, err);
-        }
-      });
   }
 
   // --- Document Opener ---
@@ -944,61 +905,6 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     this.openWorkflowDialog(this.selectedDocument, action);
   }
 
-  openAssignWorkflowModal(doc: DocumentQms): void {
-    this.selectedDocument = doc;
-
-    // Charger les workflows disponibles
-    this.loading = true;
-    this.workflowService.getAllWorkflows()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (workflows: any) => {
-          this.availableWorkflows = workflows;
-          this.loading = false;
-          this.showAssignWorkflowModal = true;
-        },
-        error: (err: any) => {
-          this.loading = false;
-          showToast(StatusEnum.error, err.status, 'Erreur de chargement des workflows', this.messageService, err);
-        }
-      });
-  }
-
-
-  submitWorkflowAssignment(workflowId: string): void {
-    if (!this.selectedDocument) return;
-
-    this.loading = true;
-
-    this.qmsService.assignWorkflow(this.selectedDocument.id!, workflowId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (updatedDoc) => {
-          this.loading = false;
-          this.showAssignWorkflowModal = false;
-          this.refreshList();
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Workflow assigné',
-            detail: 'Le document a été soumis au circuit de validation avec succès.'
-          });
-        },
-        error: (err) => {
-          this.loading = false;
-          // showToast with err
-          showToast(StatusEnum.error, err.status, "Échec de l'assignation du workflow", this.messageService, err);
-        }
-      });
-  }
-
-  editInOffice(_doc: DocumentQms): void {
-    this.messageService.add({
-      severity: 'info',
-      summary: 'Non disponible',
-      detail: "L'édition en direct n'est pas encore supportée."
-    });
-  }
-
   // --- Partage & Gestion des Accès (ACL) ---
   /**
    * Ouvre la fiche sur ses partages.
@@ -1233,37 +1139,5 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
     if (doc.esTraiter) return 'Validé / En Vigueur';
     if (doc.currentEtape) return doc.currentEtape;
     return 'Brouillon';
-  }
-
-  getTransitionOptions(doc: DocumentQms | undefined): { label: string; value: string }[] {
-    if (!doc) return [];
-    if (doc.obsolete) {
-      return [
-        { label: 'Lancer une révision (Brouillon)', value: 'brouillon' }
-      ];
-    }
-    if (doc.enRetardRevision) {
-      return [
-        { label: 'Lancer une révision (Brouillon)', value: 'brouillon' },
-        { label: 'Rendre Obsolète', value: 'obsolete' }
-      ];
-    }
-    if (doc.esTraiter) {
-      return [
-        { label: 'Rendre Obsolète', value: 'obsolete' },
-        { label: 'Retourner en modification (Brouillon)', value: 'brouillon' }
-      ];
-    }
-    if (doc.currentEtape) {
-      // En cours de validation par le workflow
-      return [
-        { label: 'Valider et Publier (Mise en vigueur)', value: 'valide' },
-        { label: 'Rejeter au step précédent', value: 'brouillon' }
-      ];
-    }
-    // Brouillon
-    return [
-      { label: 'Soumettre pour approbation', value: 'en_approbation' }
-    ];
   }
 }

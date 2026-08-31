@@ -23,18 +23,8 @@ export class AppRoleService extends BaseCrudService<AppRole> {
         super(http, QualiUrlConfig.APP_ROLE_URL);
     }
 
-    createRole(role: AppRole): Observable<AppRole> {
-        return this.http.post<AppRole>(QualiUrlConfig.APP_ROLE_URL, role);
-    }
-
     updateRole(role: AppRole): Observable<AppRole> {
         return this.http.post<AppRole>(QualiUrlConfig.APP_ROLE_URL, role); // Utilise Post pour Save (Create or Update)
-    }
-
-    assignRoleToUser(userId: string, roleId: string): Observable<any> {
-        return this.http.post<any>(`${QualiUrlConfig.APP_ROLE_URL}/assign`, {}, {
-            params: { userId, roleId }
-        });
     }
 
     getPermissionsDictionary(): Observable<any> {

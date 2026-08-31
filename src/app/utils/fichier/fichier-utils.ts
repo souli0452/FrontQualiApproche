@@ -1,9 +1,3 @@
-export interface ReportingInput {
-    reportFormat: ReportFormat;
-    reportType: any;
-    entityId?: string;
-    structureId?: string;
-}
 export class PieceJointe {
     id?: number;
     nom?: string;
@@ -14,46 +8,6 @@ export class PieceJointe {
     fichier?: string | null;
     createdDate?: Date;
 }
-export enum ReportFormat {
-    PDF = 'PDF', WORD = 'WORD', EXCEL = 'EXCEL', CSV = 'CSV', XPRINT = 'XPRINT'
-}
-export function printPdfFile(bytes: any) {
-    window.open(URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })), '_blank');
-}
-
-export function printExcelFile(bytes: any) {
-    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    window.open(URL.createObjectURL(new Blob([bytes], { type: contentType })), '_blank');
-}
-
-export function printWordFile(bytes: any) {
-    const contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    window.open(URL.createObjectURL(new Blob([bytes], { type: contentType })), '_blank');
-}
-
-export function generateReportFile(bytes: any, reporting?: ReportingInput) {
-    if (reporting) {
-        const report = { ...reporting };
-        switch (report.reportFormat) {
-            case ReportFormat.PDF:
-                printPdfFile(bytes);
-                break;
-            case ReportFormat.EXCEL:
-                printExcelFile(bytes);
-                break;
-            case ReportFormat.WORD:
-                printWordFile(bytes);
-                break;
-            case ReportFormat.CSV:
-                printExcelFile(bytes);
-                break;
-            default:
-                window.console.log('Aucun format de fichier précisé');
-                break;
-        }
-    }
-}
-
 export function downloadFile(nom: string, base64: string) {
     // Extraire le type MIME si la base64 inclut un préfixe de type Data URI
     const matches = base64.match(/^data:(.+);base64,(.+)$/);
@@ -104,16 +58,5 @@ export function convertFilesToBase64(files: { file: File; extension: string; nam
         });
     });
     return Promise.all(filePromises);
-}
-
-export function onFileUpload(file: File, rowdata: PieceJointe) {
-    const reader = new FileReader();
-    reader.onload = () => {
-        const result: any = reader.result;
-        rowdata.fichier = result.split(',')[1];
-        rowdata.nom = file.name;
-        rowdata.type = file.type;
-    };
-    reader.readAsDataURL(file);
 }
 

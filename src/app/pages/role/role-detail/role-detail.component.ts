@@ -51,20 +51,6 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
         const roleId = this.route.snapshot.params['id'];
         this.loadPermissionsAndRole(roleId);
     }
-    toggleModuleAll(select: boolean) {
-        let selected: string[] = [];
-        if (select) {
-            // On récupère toutes les valeurs de toutes les permissions
-            this.groupedPermissions.forEach((group) => {
-                group.permissions.forEach((p) => selected.push(p.value));
-                group.allSelected = true;
-            });
-        } else {
-            // On vide tout
-            this.groupedPermissions.forEach((group) => (group.allSelected = false));
-        }
-        this.roleForm.patchValue({ permissions: selected });
-    }
     ngOnDestroy(): void {
         this.destroy$.next(true);
         this.destroy$.complete();

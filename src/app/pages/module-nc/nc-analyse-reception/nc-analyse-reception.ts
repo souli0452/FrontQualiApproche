@@ -129,41 +129,6 @@ export class AnalyseReceptionComponent implements OnInit, OnDestroy {
 
   // ============== ACTIONS DU TABLEAU ==============
 
-//   private editer(rowData: any, resp: HttpResponse<any>) {
-//       const reportingInput: ReportingInput = {
-//           reportFormat: ReportFormat.PDF,
-//           reportType: TypeDemande.NON_CONFORMITE,
-//           entityId: rowData.id!,
-//       };
-//       this.featureService.printReport(reportingInput).pipe(takeUntil(this.destroy$))
-//           .subscribe({
-//               next: arrayBytes => {
-//                   if (arrayBytes.byteLength) {
-//                       generateReportFile(arrayBytes, reportingInput);
-//                       this.dmdTraitement.displayDetails(resp.body);
-//                       this.messageService.add({ severity: 'success', summary: 'Succès', detail: "L'opération a réussie !", life: 3000 });
-//                   }
-//               },
-//               error: () => {
-//                   this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'opération a échouée !", life: 3000 });
-//               }
-//           });
-//   }
-
-//   edition(demandes: any) {
-//     console.log(demandes);
-    
-//       this.procService.updateNomConformites(demandes).subscribe({
-//           next: (data) => {
-//               this.editer(demandes[0], data);
-//               this.dmdTraitement.closeDetailsDialog();
-//           },
-//           error: () => {
-//               this.messageService.add({ severity: 'error', summary: 'ERREUR', detail: "L'opération a échouée !", life: 3000 });
-//           }
-//       });
-//   }
-
     onSuccess(res: ApiItemResponse<any>) {
         this.dmdTraitement.closeDetailsDialog();
         this.featureService.onReloadRequested(true);

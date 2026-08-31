@@ -159,10 +159,6 @@ export class LayoutService {
         return window.innerWidth > 991;
     }
 
-    isMobile() {
-        return !this.isDesktop();
-    }
-
     onConfigUpdate() {
         this._config = { ...this.layoutConfig() };
         this.configUpdate.next(this.layoutConfig());

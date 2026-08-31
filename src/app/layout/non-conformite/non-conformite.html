@@ -41,37 +41,4 @@
         </div>
     </div>
 </div>
-
-<!-- Popup de Soumission d'une NC -->
-<p-dialog [(visible)]="submitNCVisible" 
-          [modal]="true" 
-          [style]="{ width: '50rem' }"
-          [maximizable]="true"
-          appendTo="body"
-          [header]="'Nouvelle Non-Conformité'"
-          styleClass="premium-dialog">
-          
-    <ng-template pTemplate="header">
-        <div class="flex items-center justify-between w-full">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-red-50 dark:bg-red-950/20 rounded-full flex items-center justify-center">
-                    <i class="pi pi-exclamation-triangle text-xl text-red-600 dark:text-red-400"></i>
-                </div>
-                <div>
-                    <h5 class="m-0 font-bold text-surface-900 dark:text-surface-50 text-lg">
-                        Déclarer une Non-Conformité
-                    </h5>
-                    <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
-                        Renseigner les informations nécessaires pour déclarer un nouvel incident
-                    </p>
-                </div>
-            </div>
-        </div>
-    </ng-template>
-
-    <!-- <div class="p-1" *ngIf="submitNCVisible">
-        <app-nc-compose (closeDialog)="submitNCVisible = false"></app-nc-compose>
-    </div> -->
-</p-dialog>
-
  

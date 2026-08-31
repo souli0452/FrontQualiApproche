@@ -382,11 +382,6 @@ export class TraitementActionTable implements OnInit {
         return diffHours <= 24;
     }
 
-    getKeys(obj: any): string[] {
-        if (!obj) return [];
-        return Object.keys(obj);
-    }
-
     ngOnDestroy(): void {
         this.destroy$.next(true);
         this.destroy$.complete();

@@ -174,37 +174,6 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
         );
     }
 
-    addVersion(id: string, file: File, comments: string): Observable<QmsDocumentVersion> {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('comments', comments);
-        return this.http.post<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/versions`, formData).pipe(
-            map(res => res?.data ?? res)
-        );
-    }
-
-    transitionStatus(id: string, nextStatus: string, reason: string): Observable<DocumentQms> {
-        const params = new HttpParams().set('nextStatus', nextStatus).set('reason', reason);
-        // L'appelant compare l'identifiant rendu à celui de la fiche ouverte et affiche le nouvel
-        // état : l'enveloppe lui donnait un document sans identifiant ni statut.
-        return this.http.post<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/transition`, null, { params }).pipe(
-            map(res => res?.data ?? res)
-        );
-    }
-
-    assignWorkflow(id: string, workflowId: string): Observable<DocumentQms> {
-        const params = new HttpParams().set('workflowId', workflowId);
-        return this.http.post<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/workflow`, null, { params }).pipe(
-            map(res => res?.data ?? res)
-        );
-    }
-
-
-    linkToNonConformity(id: string, ncRef: string, actionCorrective: string): Observable<DocumentQms> {
-        const params = new HttpParams().set('ncRef', ncRef).set('actionCorrective', actionCorrective);
-        return this.http.post<DocumentQms>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/link-nc`, null, { params });
-    }
-
     exportSecuredPdf(id: string): Observable<Blob> {
         return this.http.get(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/${id}/export-pdf`, {
             responseType: 'blob'
@@ -287,9 +256,8 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
     /**
      * Recherche paginée : le contenu de la page et le total du fonds visible.
      *
-     * <p>Distincte de `searchDocuments`, qui ne rend que le contenu. Un tableau qui pagine côté
-     * serveur a besoin du total pour dimensionner sa barre de pagination — sans lui, il ne peut
-     * pas savoir qu'il existe une page suivante.</p>
+     * <p>Un tableau qui pagine côté serveur a besoin du total pour dimensionner sa barre de
+     * pagination — sans lui, il ne peut pas savoir qu'il existe une page suivante.</p>
      */
     rechercherDocumentsPagines(filters: Record<string, any>): Observable<{ contenu: DocumentQms[]; total: number }> {
         // `buildParams` écraserait un critère multivalué comme `status` : chaque valeur doit être
@@ -316,28 +284,6 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
                     return { contenu, total: donnees?.totalElements ?? contenu.length };
                 })
             );
-    }
-
-    searchDocuments(filters: Record<string, any>): Observable<DocumentQms[]> {
-        let params = new HttpParams();
-        Object.keys(filters).forEach(key => {
-            if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
-                 if (Array.isArray(filters[key])) {
-                     filters[key].forEach((v: any) => params = params.append(key, v));
-                 } else {
-                     params = params.set(key, filters[key].toString());
-                 }
-            }
-        });
-        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/search`, { params }).pipe(
-            map(res => {
-                if (Array.isArray(res)) return res;
-                if (res?.data?.content) return res.data.content;
-                if (res?.content) return res.content;
-                if (res?.data) return Array.isArray(res.data) ? res.data : [];
-                return [];
-            })
-        );
     }
 
     /**
@@ -378,17 +324,6 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
     getDocumentStats(): Observable<DocumentStatsDto> {
         return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/stats`).pipe(
             map(res => res?.data ?? res)
-        );
-    }
-
-    /**
-     * Dépôts par mois, mois vides compris. La portée est celle du serveur : sa structure, ou
-     * l'ensemble pour qui accompagne la qualité.
-     */
-    getDocumentsParMois(mois = 12): Observable<Record<string, number>> {
-        return this.http.get<any>(
-            `${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/stats/mensuel?mois=${mois}`).pipe(
-            map(res => res?.data ?? res ?? {})
         );
     }
 
@@ -467,18 +402,6 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
 
     getMySharedDocuments(): Observable<SharedDocumentDto[]> {
         return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/shared/me`).pipe(
-            map(res => {
-                if (Array.isArray(res)) return res;
-                if (res?.data?.content) return res.data.content;
-                if (res?.data) return Array.isArray(res.data) ? res.data : [];
-                if (res?.content) return res.content;
-                return [];
-            })
-        );
-    }
-
-    getSharedDocumentsForUser(userId: string): Observable<SharedDocumentDto[]> {
-        return this.http.get<any>(`${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/shared/${userId}`).pipe(
             map(res => {
                 if (Array.isArray(res)) return res;
                 if (res?.data?.content) return res.data.content;

@@ -5,13 +5,10 @@ import { TypeDemande } from '../utils/global/global-utils';
 import { SERVICE_PREFIX } from './quali-url-configs';
 import { FormTraitementComponent } from '../components/non-conformite/form-traitement/form-traitement';
 import { DetailsDialogComponent } from '../components/non-conformite/details-dialog/details-dialog';
-import { ReportingInput } from '../utils/fichier/fichier-utils';
 
 
 @Injectable({providedIn: 'root'})
 export class FeaturesService {
-    REPORTING_URL = `${SERVICE_PREFIX}/api/v1/reports/reporting`;
-
     loader = new BehaviorSubject(false);
     private reaload = new Subject<boolean>();
     reaload$ = this.reaload.asObservable();
@@ -35,11 +32,6 @@ export class FeaturesService {
     onReloadRequested(event: boolean) {
         this.reaload.next(event);
     }
-
-    public printReport(data: ReportingInput): Observable<ArrayBuffer> {
-        return this.http.post(this.REPORTING_URL, data, {responseType: 'arraybuffer'});
-    }
-
 
     getDynamicFormTraitementComponent(typeDemande: TypeDemande) {
         switch (typeDemande) {

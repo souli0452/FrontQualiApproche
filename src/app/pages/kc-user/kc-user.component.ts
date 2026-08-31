@@ -207,17 +207,6 @@ export class KcUserComponent implements OnInit, OnDestroy {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: res.message || 'Opération effectuée avec succès!!!' });
     }
 
-    // générer un mot de passe aléatoire à 8 chiffres
-    generatePassword(): string {
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let password = '';
-        for (let i = 0; i < 8; i++) {
-            const randomIndex = Math.floor(Math.random() * characters.length);
-            password += characters[randomIndex];
-        }
-        return password;
-    }
-
     onSave(object: any) {
         const duplicateField = this.getDuplicateField(object);
         if (duplicateField) {

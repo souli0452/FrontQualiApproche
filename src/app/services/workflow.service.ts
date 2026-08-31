@@ -63,26 +63,6 @@ export class WorkflowService {
     return this.http.get<WorkflowDto>(`${this.workflowsUrl}/${id}`).pipe(catchError(this.enErreurMetier));
   }
 
-  getWorkflowsByType(resourceType: ResourceType | string): Observable<WorkflowDto[]> {
-    return this.http.get<WorkflowDto[]>(`${this.workflowsUrl}/type/${resourceType}`).pipe(
-      map((circuits) => circuits ?? []),
-      catchError(this.enErreurMetier)
-    );
-  }
-
-  /**
-   * Circuit actif d'un type de ressource.
-   *
-   * À préférer systématiquement à `getWorkflowsByType(...)` suivi du premier élément : l'ordre de
-   * cette liste n'est pas garanti, et le circuit retenu pouvait varier d'un appel à l'autre.
-   * Répond 404 si aucun circuit n'est actif pour ce type.
-   */
-  getActiveWorkflowByType(resourceType: ResourceType | string): Observable<WorkflowDto> {
-    return this.http
-      .get<WorkflowDto>(`${this.workflowsUrl}/type/${resourceType}/active`)
-      .pipe(catchError(this.enErreurMetier));
-  }
-
   createWorkflow(dto: WorkflowDto): Observable<WorkflowDto> {
     return this.http.post<WorkflowDto>(this.workflowsUrl, dto).pipe(catchError(this.enErreurMetier));
   }
@@ -119,12 +99,6 @@ export class WorkflowService {
     }
     return this.http
       .post<WorkflowInstanceDto>(`${this.workflowsUrl}/initiate`, null, { params })
-      .pipe(catchError(this.enErreurMetier));
-  }
-
-  getLastValidationInstance(resourceId: string): Observable<WorkflowInstanceDto> {
-    return this.http
-      .get<WorkflowInstanceDto>(`${this.workflowsUrl}/instances/${resourceId}`)
       .pipe(catchError(this.enErreurMetier));
   }
 
@@ -174,18 +148,6 @@ export class WorkflowService {
 
   // -------------------------------------------------------------- décisions
 
-  validateStep(resourceId: string, requete: WorkflowValidationRequestDto): Observable<void> {
-    return this.http
-      .post<void>(`${this.workflowsUrl}/validate/${resourceId}`, requete)
-      .pipe(catchError(this.enErreurMetier));
-  }
-
-  rejectStep(resourceId: string, requete: WorkflowValidationRequestDto): Observable<void> {
-    return this.http
-      .post<void>(`${this.workflowsUrl}/reject/${resourceId}`, requete)
-      .pipe(catchError(this.enErreurMetier));
-  }
-
   /**
    * Prend la même décision sur plusieurs dossiers.
    *
@@ -210,10 +172,7 @@ export class WorkflowService {
       );
   }
 
-  /**
-   * Franchit une transition désignée par son code, tel que rendu dans `allowedActions[].code`.
-   * À préférer à `validateStep` / `rejectStep` dès qu'une étape offre plus de deux issues.
-   */
+  /** Franchit une transition désignée par son code, tel que rendu dans `allowedActions[].code`. */
   executeTransition(
     resourceId: string,
     transitionCode: string,
@@ -247,12 +206,6 @@ export class WorkflowService {
       map((modeles) => modeles ?? []),
       catchError(this.enErreurMetier)
     );
-  }
-
-  getEmailTemplateById(id: string): Observable<EmailTemplateDto> {
-    return this.http
-      .get<EmailTemplateDto>(`${this.emailTemplatesUrl}/${id}`)
-      .pipe(catchError(this.enErreurMetier));
   }
 
   createEmailTemplate(dto: EmailTemplateDto): Observable<EmailTemplateDto> {

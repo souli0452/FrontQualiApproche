@@ -1,9 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { TypeStructure } from '../../../enums/enums';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import { Structure } from '../../../pages/parametrages/structure/structure-config/structure';
-import { StructureService } from '../../../pages/parametrages/structure/structure-service/structure-service';
 import { AuthData } from '../../../models/auth.model';
 
 
@@ -26,40 +24,14 @@ export class SearchAgentComponent implements OnInit {
     @Input() prefilledStructureId?: string;
     @Output() searchedAgentChange = new EventEmitter<any>();
 
-    constructor(
-        private structureService: StructureService,
-        private authService: AuthService) {}
+    constructor(private authService: AuthService) {}
 
     ngOnInit() {
         if (this.prefilledStructureId) {
             this.loadAgentsForStructure(this.prefilledStructureId);
-        } 
-        // else {
-        //     this.structureService.getAllDirections(TypeStructure.DIRECTION)
-        //         .subscribe({
-        //             next: (data) => {
-        //                 this.directions = data.body || [];
-        //             },
-        //             error: (error) => {
-        //                 console.log(error);
-        //             }
-        //         });
-        // }
-    }
-
-    loadServiceByDirection() {
-        if (this.directionId) {
-            this.structureService.getAllStructure(TypeStructure.SERVICE, this.directionId)
-                .subscribe({
-                    next: (data) => {
-                        this.services = data.content || [];
-                    },
-                    error: (error) => {
-                        console.log(error);
-                    }
-                });
         }
     }
+
     loadAgents() {
         if (this.directionId || this.serviceId) {
             this.loadAgentsForStructure(this.serviceId ? this.serviceId : this.directionId!);
