@@ -102,6 +102,7 @@ export class FileUploadComponent {
                 };
 
                 this.uploadedFiles.push(fileObj);
+                this.fileUploaded.emit(this.uploadedFiles);
 
                 setTimeout(() => {
                     fileObj.loading = false;

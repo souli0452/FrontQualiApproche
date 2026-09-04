@@ -10,7 +10,6 @@ import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { NcModule } from '../nc.module';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
-import { Structure } from '../../parametrages/structure/structure-config/structure';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 import { currentUserState } from '../../../services/auth-services/auth.state';
 import { AuthData } from '../../../models/auth.model';
@@ -19,6 +18,7 @@ import { NonConformite } from '../../../models/non-conformite.model';
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
 import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
 import { criteresDeRecherche } from '../../../utils/non-conformite/nc-criteres';
+import { Structure } from '../../parametrages/structure/structure.model';
 
 @Component({
     selector: 'app-nc-publiees',
@@ -30,7 +30,7 @@ export class NcPublieesComponent implements OnInit, OnDestroy {
     publishedList: any[] = [];
     totalElements: number = 0;
     currentPage: number = 0;
-    pageSize: number = 5;
+    pageSize: number = 10;
     totalPages: number = 0;
 
 
@@ -38,7 +38,7 @@ export class NcPublieesComponent implements OnInit, OnDestroy {
     currentFilters: NcFilter | undefined;
     destroy$: Subject<boolean> = new Subject<boolean>();
     cols: any[] = [
-            { field: 'numeroReference', header: 'N° Ref', type: 'string', filter: true, width: '250px', centered: false },
+            { field: 'numeroReference', header: 'N° Ref', type: 'string', filter: true, width: '180px', centered: false },
             {
                 field: 'typeNonConformiteLibelle',
                 header: 'Source',
@@ -101,18 +101,18 @@ ngOnInit() {
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res: ApiResponse<NonConformite>) => {
-                    console.log(res);
-                    
-                    this.rawDemandeList = res.data?.content ?? [];
-                    this.publishedList = this.rawDemandeList;
+                    setTimeout(() => {
+                        this.rawDemandeList = res.data?.content ?? [];
+                        this.publishedList = this.rawDemandeList;
 
-                    // ✅ mise à jour pagination
-                    this.totalElements = res.data?.totalElements ?? 0;
-                    this.currentPage = res.data?.pageNumber ?? 0;
-                    this.pageSize = res.data?.pageSize ?? 10;
-                    this.totalPages = res.data?.totalPages ?? 0;
+                        // ✅ mise à jour pagination
+                        this.totalElements = res.data?.totalElements ?? 0;
+                        this.currentPage = res.data?.pageNumber ?? 0;
+                        this.pageSize = res.data?.pageSize ?? 10;
+                        this.totalPages = res.data?.totalPages ?? 0;
 
-                    this.loading = false;
+                        this.loading = false;
+                    }, 500);
                 },
                 error: (error) => {
                     console.error(error);

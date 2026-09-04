@@ -14,6 +14,7 @@ import { reglementationComponent } from './reglementation/reglementation';
 import { CritereEvaluationComponent } from './critere-evaluation/critere-evaluation';
 import { ModuleAbonnement, TypeStructure } from '../enums/enums';
 import { KcUserComponent } from './kc-user/kc-user.component';
+import { KcUserFormComponent } from './kc-user/kc-user-form/kc-user-form.component';
 import { ProfilComponent } from './profil/profil.component';
 import { ParametresComponent } from './parametres/parametres.component';
 import { SearchResultsComponent } from './recherche/search-results';
@@ -21,21 +22,24 @@ import { RoleComponent } from './role/role-table/role.component';
 import { RoleDetailComponent } from './role/role-detail/role-detail.component';
 import { NonConformiteLayoutComponent } from '../layout/non-conformite/non-conformite';
 import { NcVueEnsembleComponent } from './module-nc/nc-vue-ensemble/vue-ensemble';
-import { NCAffectationActionComponent } from './module-nc/nc-affectation-action/nc-affectation-action';
-import { AnalyseReceptionComponent } from './module-nc/nc-analyse-reception/nc-analyse-reception';
-import { NCSuiviComponent } from './module-nc/nc-suivi/nc-suivi';
+// ❌ SUPPRIMÉS — Ces pages par étape sont remplacées par nc-traitement-suivi (moteur workflow).
+// Les dossiers correspondants peuvent être supprimés physiquement.
+// import { NCAffectationActionComponent } from './module-nc/nc-affectation-action/nc-affectation-action';
+// import { AnalyseReceptionComponent } from './module-nc/nc-analyse-reception/nc-analyse-reception';
+// import { NCSuiviComponent } from './module-nc/nc-suivi/nc-suivi';
 import { ParametragesComponent } from './parametrages/parametrages.component';
 import { NcPublieesComponent } from './module-nc/nc-publiees/nc-publiees';
-import { AnalyseValidationComponent } from './module-nc/nc-analyse-validation/nc-analyse-validation';
-import { TraitementGlobalComponent } from './module-nc/nc-action-a-mener/nc-traitement-global';
+// import { AnalyseValidationComponent } from './module-nc/nc-analyse-validation/nc-analyse-validation';
+// import { TraitementGlobalComponent } from './module-nc/nc-action-a-mener/nc-traitement-global';
 import { ActionNonConformiteComponent } from './parametrages/parametrage-non-conformite/action-nc/action';
 import { NiveauNonConformiteComponent } from './parametrages/parametrage-non-conformite/niveau-nc/niveau';
 import { SourceNonConformite } from './parametrages/parametrage-non-conformite/origine-nc/origine';
 import { CategorieProcessusComponent } from './parametrages/categorie-processus/categorie-processus';
-import { StructureComponent } from './parametrages/structure/structure-view/structure.component';
+import { StructureComponent } from './parametrages/structure/structure.component';
+import { StructureFormComponent } from './parametrages/structure/structure-form/structure-form.component';
 import { NcComposeComponent } from './module-nc/nc-compose/nc-compose.component';
-import { ValidationPilote } from './module-nc/nc-validation-pilote/nc-validation-pilote';
-import { AnalyseClotureComponent } from './module-nc/nc-analyse-cloture/nc-analyse-cloture';
+// import { ValidationPilote } from './module-nc/nc-validation-pilote/nc-validation-pilote';
+// import { AnalyseClotureComponent } from './module-nc/nc-analyse-cloture/nc-analyse-cloture';
 import { QmsDocumentComponent } from './module-gestion-documentaire/qms-document/qms-document.component';
 import { QmsDocumentCreateComponent } from './module-gestion-documentaire/qms-document-create/qms-document-create.component';
 import { QmsDocumentTypeComponent } from './module-gestion-documentaire/qms-document-type/qms-document-type.component';
@@ -141,6 +145,16 @@ export default [
         data: { permissions: ['MANAGE_USER'] }
     },
     {
+        path: 'utilisateurs/create', component: KcUserFormComponent, title: 'Nouvel Utilisateur',
+        canActivate: [permissionGuard],
+        data: { permissions: ['MANAGE_USER'] }
+    },
+    {
+        path: 'utilisateurs/edit/:id', component: KcUserFormComponent, title: 'Modifier Utilisateur',
+        canActivate: [permissionGuard],
+        data: { permissions: ['MANAGE_USER'] }
+    },
+    {
         path: 'roles', component: RoleComponent, title: 'Gestion des rôles',
         canActivate: [permissionGuard],
         data: { permissions: ['ROLE_MANAGE'] }
@@ -171,11 +185,43 @@ export default [
         }
     },
     {
-        path: 'service', component: StructureComponent, title: 'Services',
+        path: 'direction/create', component: StructureFormComponent, title: 'Nouvelle Direction',
+        canActivate: [permissionGuard],
+        data: {
+            typeStructure: TypeStructure.DIRECTION,
+            permissions: ['structure-write', 'STRUCT_MANAGE']
+        }
+    },
+    {
+        path: 'direction/edit/:id', component: StructureFormComponent, title: 'Modifier Direction',
+        canActivate: [permissionGuard],
+        data: {
+            typeStructure: TypeStructure.DIRECTION,
+            permissions: ['structure-write', 'STRUCT_MANAGE']
+        }
+    },
+    {
+        path: 'parametrage-organigramme/processus', component: StructureComponent, title: 'Processus',
         canActivate: [permissionGuard],
         data: {
             typeStructure: TypeStructure.SERVICE,
             permissions: ['structure-read', 'structure-write', 'STRUCT_MANAGE', 'SERVICE_MANAGE']
+        }
+    },
+    {
+        path: 'parametrage-organigramme/processus/create', component: StructureFormComponent, title: 'Nouveau Processus',
+        canActivate: [permissionGuard],
+        data: {
+            typeStructure: TypeStructure.SERVICE,
+            permissions: ['structure-write', 'SERVICE_MANAGE']
+        }
+    },
+    {
+        path: 'parametrage-organigramme/processus/edit/:id', component: StructureFormComponent, title: 'Modification de Processus',
+        canActivate: [permissionGuard],
+        data: {
+            typeStructure: TypeStructure.SERVICE,
+            permissions: ['structure-write', 'SERVICE_MANAGE']
         }
     },
     {
@@ -236,6 +282,16 @@ export default [
                 data: { permissions: ['MANAGE_USER'] }
             },
             {
+                path: 'utilisateurs/create', component: KcUserFormComponent, title: 'Nouvel Utilisateur',
+                canActivate: [permissionGuard],
+                data: { permissions: ['MANAGE_USER'] }
+            },
+            {
+                path: 'utilisateurs/edit/:id', component: KcUserFormComponent, title: 'Modifier Utilisateur',
+                canActivate: [permissionGuard],
+                data: { permissions: ['MANAGE_USER'] }
+            },
+            {
                 path: 'roles', component: RoleComponent, title: 'Rôles',
                 canActivate: [permissionGuard],
                 data: { permissions: ['ROLE_MANAGE'] }
@@ -246,7 +302,7 @@ export default [
                 data: { permissions: ['ROLE_MANAGE'] }
             },
             {
-                path: 'type-processus', component: CategorieProcessusComponent, title: 'Processus',
+                path: 'parametrage-organigramme/categorie-processus', component: CategorieProcessusComponent, title: 'Categorie de processus',
                 canActivate: [permissionGuard],
                 data: { permissions: ['type-processus-read', 'type-processus-write', 'TYPE_PROC_MANAGE', 'CONFIG_READ'] }
             },
@@ -413,36 +469,18 @@ export default [
             },
             // Les quatre écrans de décision : chacun exige la permission de l'étape qu'il porte,
             // et non la simple lecture des non-conformités.
-            {
-                path: 'affectation-action', component: NCAffectationActionComponent, title: 'Affectations',
-                canActivate: [permissionGuard],
-                data: { permissions: ['nc-impute', 'IMPUTATION_NC'] }
-            },
-            {
-                path: 'analyse-reception', component: AnalyseReceptionComponent, title: 'Analyse et Réception',
-                canActivate: [permissionGuard],
-                data: { permissions: ['nc-receive', 'RECEPTION_NC'] }
-            },
-            {
-                path: 'analyse-validation', component: AnalyseValidationComponent, title: 'Analyse et Validation',
-                canActivate: [permissionGuard],
-                data: { permissions: ['nc-validate', 'VALIDATION_RQ'] }
-            },
-            {
-                path: 'validation-pilote', component: ValidationPilote, title: 'Validation Pilote',
-                canActivate: [permissionGuard],
-                data: { permissions: ['nc-validate', 'VALIDATION_CHEF'] }
-            },
-            {
-                path: 'analyse-cloture', component: AnalyseClotureComponent, title: 'Analyse et clôture',
-                canActivate: [permissionGuard],
-                data: { permissions: ['nc-close', 'RQ_NC'] }
-            },
-            {
-                path: 'suivi', component: NCSuiviComponent, title: 'Suivi',
-                canActivate: [permissionGuard],
-                data: { permissions: ['nc-read', 'NC_READ', 'CONSULTATION_NC'] }
-            },
+            // ❌ ROUTES SUPPRIMÉES — Anciennes pages dédiées à chaque étape du workflow NC.
+            // Toutes absorbées par /traitement-suivi (NCTraitementSuiviComponent) depuis
+            // la mise en place du moteur workflow. Les dossiers peuvent être supprimés :
+            //   nc-affectation-action, nc-analyse-reception, nc-analyse-validation,
+            //   nc-validation-pilote (top-level), nc-analyse-cloture, nc-suivi
+            //
+            // { path: 'affectation-action', component: NCAffectationActionComponent, ... },
+            // { path: 'analyse-reception', component: AnalyseReceptionComponent, ... },
+            // { path: 'analyse-validation', component: AnalyseValidationComponent, ... },
+            // { path: 'validation-pilote', component: ValidationPilote, ... },
+            // { path: 'analyse-cloture', component: AnalyseClotureComponent, ... },
+            // { path: 'suivi', component: NCSuiviComponent, ... },
             {
                 path: 'traitement-suivi', component: NCTraitementSuiviComponent, title: 'Traitement & Suivi',
                 canActivate: [permissionGuard],
@@ -462,11 +500,7 @@ export default [
                 canActivate: [permissionGuard],
                 data: { permissions: ['nc-read', 'NC_READ', 'CONSULTATION_NC'] }
             },
-            {
-                path: 'actions', component: TraitementGlobalComponent, title: 'Mes actions à mener',
-                canActivate: [permissionGuard],
-                data: { permissions: ['plan-action-read', 'plan-action-write', 'TRAITEMENT_PLAN'] }
-            },
+            // { path: 'actions', component: TraitementGlobalComponent, ... }, // ❌ Absorbé par /traitement-suivi
         ]
     },
     { path: 'profil', component: ProfilComponent, title: 'Mon profil' },
@@ -476,7 +510,7 @@ export default [
         data: { permissions: ['type-nc-read', 'type-nc-write', 'NC_ORIGIN_MANAGE'], module: ModuleAbonnement.NON_CONFORMITE }
     },
     {
-        path: 'type-processus', component: CategorieProcessusComponent, title: 'Types de processus',
+        path: 'parametrage-organigramme/categorie-processus', component: CategorieProcessusComponent, title: 'Categorie de processus',
         canActivate: [permissionGuard],
         data: { permissions: ['type-processus-read', 'type-processus-write', 'TYPE_PROC_MANAGE'] }
     },

@@ -4,7 +4,6 @@ import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { AppTopbar } from './app.topbar';
 import { AppSidebar } from './app.sidebar';
-import { AppFooter } from './app.footer';
 import { AppReglagesRequis } from './app.reglages-requis';
 import { LayoutService } from '../service/layout.service';
 import { AuthService } from '../../services/auth-services/auth.service';
@@ -13,7 +12,7 @@ import { LicenceDialogComponent } from '../../shared/licence/licence-dialog.comp
 @Component({
     selector: 'app-layout',
     standalone: true,
-    imports: [CommonModule, AppTopbar, AppSidebar, RouterModule, AppFooter, AppReglagesRequis,
+    imports: [CommonModule, AppTopbar, AppSidebar, RouterModule, AppReglagesRequis,
         LicenceDialogComponent],
     template: `<div class="layout-wrapper" [ngClass]="containerClass">
 
@@ -29,7 +28,6 @@ import { LicenceDialogComponent } from '../../shared/licence/licence-dialog.comp
                 <app-licence-dialog></app-licence-dialog>
                 <router-outlet></router-outlet>
             </div>
-            <app-footer></app-footer>
         </div>
         <div class="layout-mask animate-fadein"></div>
 

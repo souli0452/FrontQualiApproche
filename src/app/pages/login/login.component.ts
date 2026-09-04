@@ -9,9 +9,9 @@ import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../utils/global/global-utils';
 import { isUserInRoles } from '../../utils/auth/auth-utils';
-import { StructureService } from '../parametrages/structure/structure-service/structure-service';
 import { AuthData, LoginRequest } from '../../models/auth.model';
 import { ApiItemResponse } from '../../models/response.model';
+import { StructureService } from '../parametrages/structure/structure.service';
 
 @Component({
     selector: 'app-login',

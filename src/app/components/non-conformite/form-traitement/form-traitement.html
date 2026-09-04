@@ -13,7 +13,7 @@
      Une non-conformité s'analyse rarement seul, et savoir qui a cherché les causes fait partie de
      la traçabilité de l'analyse. Saisi là où elle se mène — au traitement, par la personne
      imputée — et lu partout ailleurs. -->
-@if (demande.etatTraitement == BtnActions.TRAITEMENT) {
+@if (demande.etatDeTraitement == BtnActions.TRAITEMENT) {
     <div class="col-12">
         <div class="bg-white border-1 surface-border shadow-1 border-round-xl p-4 mt-4">
             <div class="flex items-center gap-2 mb-2">
@@ -47,14 +47,14 @@
 
      Ce qu'on peut en faire, en revanche, dépend de l'étape : seul l'agent imputé, au traitement,
      en ajoute et les corrige. Voir n'est pas décider. -->
-@if (demande.planActions?.length || demande.etatTraitement == BtnActions.TRAITEMENT) {
+@if (demande.planActions?.length || demande.etatDeTraitement == BtnActions.TRAITEMENT) {
                 <div class="col-12" style="max-width: 100%; overflow: hidden;">
                     <div class="bg-white border-1 surface-border shadow-1 border-round-xl overflow-hidden mt-4">
                         <!-- Premium Header -->
                         <div class="flex items-center justify-between pt-0 p-4 border-bottom-1 surface-border bg-surface-50 flex-wrap gap-3">
                             <div class="flex items-center gap-3">
                                 <div>
-                                    @if (demande.etatTraitement == BtnActions.TRAITEMENT) {
+                                    @if (demande.etatDeTraitement == BtnActions.TRAITEMENT) {
                                         <h5 class="m-0 font-bold text-900 text-lg">Plans d'action</h5>
                                         <p class="text-sm text-500 m-0 mt-1">
                                             Recherchez la ou les causes, puis proposez pour chacune une action
@@ -62,7 +62,7 @@
                                             action proposée, responsable, échéance et critère d'efficacité. Soumettez
                                             ensuite le traitement à votre pilote, au pied de la fiche.
                                         </p>
-                                    } @else if (demande.etatTraitement == BtnActions.VALIDATION) {
+                                    } @else if (demande.etatDeTraitement == BtnActions.VALIDATION) {
                                         <h5 class="m-0 font-bold text-900 text-lg">Validation des plans d'action</h5>
                                         <p class="text-sm text-500 m-0 mt-1">Examinez les plans proposés par l'agent</p>
                                     } @else {
@@ -75,7 +75,7 @@
                                 <i class="pi pi-question-circle ml-3 mr-3 text-500 cursor-pointer hover:text-primary transition-colors" (click)="validationPopover.toggle($event)"></i>
                             </div>
                             <div>
-                                @if (demande.etatTraitement == BtnActions.TRAITEMENT) {
+                                @if (demande.etatDeTraitement == BtnActions.TRAITEMENT) {
                                     <button size="small" pButton pRipple label="Ajouter un plan d'action"
                                         icon="pi pi-plus" class="p-button-primary font-bold border-round-md shadow-2"
                                         (click)="openDialog()">

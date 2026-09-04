@@ -387,10 +387,10 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
                 .subscribe((nonConformites: any[]) => this.poser('nonConformites',
                     (nonConformites ?? []).map((nc) => ({
                         id: nc.id,
-                        reference: nc.numeroReference,
-                        titre: nc.typeNonConformiteLibelle || nc.originNonConformiteLibelle
+                        reference: nc.numeroDeReference,
+                        titre: nc.sourceDeNonConformiteLibelle || nc.originNonConformiteLibelle
                             || 'Non-conformité',
-                        detail: nc.nomProcessus || nc.structureSoumissionLibelle,
+                        detail: nc.nomProcessus || nc.structureDeSoumissionLibelle,
                         state: nc.workflowState,
                         route: '/non-conformite/vue-ensemble',
                         deposerFichier: (fichier: File) =>

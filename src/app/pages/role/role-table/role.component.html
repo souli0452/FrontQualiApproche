@@ -1,57 +1,37 @@
+<div class="block">
+    <app-header-page 
+        [title]="'Gestion des rôles'" 
+        [subtitle]="'Ajoutez ou modifiez les rôles ainsi que les permissions des utilisateurs habilités à utiliser la plateforme.'"
+        [breadcrumbs]="breadcrumbs"
+        [buttonText]="'Nouveau Rôle'" 
+        buttonIcon="pi pi-plus"
+        [withLicence]="true"
+        (actionClick)="goToDetail()"
+    />
 
-<div class="card-first overflow-hidden border-none premium-hub transition-colors duration-300">
-    <!-- Header Premium -->
-    <div class="pb-5 flex justify-between items-center border-b border-surface-border">
-        <div class="flex items-center gap-4">
-            <div>
-                <h1 class="text-3xl font-bold m-0 text-surface-900 dark:text-surface-50 flex items-center gap-3">
-                    Gestion des rôles
-                </h1>
-                <p class="text-surface-500 dark:text-surface-400 mt-1 mb-0">Ajoutez ou modifiez les rôles ainsi que les permissions des utilisateurs habilités à utiliser la plateforme.</p>
+    <div class="page-layout mt-4">
+        <div class="row p-2">
+            <div class="col-sm-12">
+                <app-crud-generic #crud
+                    [pageLabel]="'rôle'"
+                    [tableCols]="tableCols"
+                    [formCols]="formCols"
+                    [formGroup]="roleForm"
+                    [listeObject]="roles"
+                    [multiSelectList]="multiSelectList"
+                    [customButtons]="customButtons"
+                    [notModif]="true"
+                    [loading]="loading"
+                    [asRoleEdit]="true"
+                    (customActionEvent)="handleCustomAction($event)"
+                    [totalElements]="totalElements"
+                    [isPagination]="true"
+                    [currentPage]="currentPage"
+                    [pageSize]="pageSize"
+                    (pageChangeEvent)="onPageChange($event)"
+                    (removeEvent)="onDelete($event)">
+                </app-crud-generic>
             </div>
         </div>
     </div>
-
-    <div class="toolbar-card">
-    <p-toolbar styleClass="mb-2">
-        <ng-template pTemplate="left">
-            <p-iconfield class="w-full">
-                <p-inputicon styleClass="pi pi-search text-gray-400" />
-                <input type="text" pInputText 
-                       (input)="crud.table.filterGlobal($any($event.target).value, 'contains')" 
-                       placeholder="Rechercher un rôle..." 
-                       class="w-full p-inputtext-sm border-none bg-transparent focus:ring-0" />
-            </p-iconfield>
-        </ng-template>
-        <ng-template pTemplate="right">
-            <p-button pRipple siLicenceOuverte label="Nouveau Rôle" icon="pi pi-plus"
-                      severity="info" (click)="goToDetail()" size="small"></p-button>
-        </ng-template>
-    </p-toolbar>
-</div>
-
-
-<div class="card-table shadow-3">
-    <app-crud-generic #crud
-        [tableCols]="tableCols"
-        [formCols]="formCols"
-        [formGroup]="roleForm"
-        [listeObject]="roles"
-        [multiSelectList]="multiSelectList"
-        [customButtons]="customButtons"
-        [notModif]="true"
-        [loading]="loading"
-        [asRoleEdit]="true"
-        (customActionEvent)="handleCustomAction($event)"
-        [totalElements]="totalElements"
-        [isPagination]="false"
-        [currentPage]="currentPage"
-        [pageSize]="pageSize"
-        (pageChangeEvent)="onPageChange($event)"
-        (removeEvent)="onDelete($event)">
-    </app-crud-generic>
-</div>
-
-<p-toast></p-toast>
-<p-confirmDialog></p-confirmDialog>
 </div>

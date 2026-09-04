@@ -6,8 +6,6 @@ import { MessageService } from 'primeng/api';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { QmsDocumentService } from '../../../services/module-gestion-documentaire/qms-document.service';
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
-import { Structure } from '../../parametrages/structure/structure-config/structure';
-import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import {
   DomaineApplicationService,
@@ -21,6 +19,8 @@ import { ToggleSwitch } from 'primeng/toggleswitch';
 import { SelectInputComponent } from '../../../shared';
 import { FileUploadComponent } from '../../../components/non-conformite/file-upload/file-upload.component';
 import { LicenceOuverteDirective } from '../../../shared/licence/licence-ouverte.directive';
+import { Structure } from '../../parametrages/structure/structure.model';
+import { StructureService } from '../../parametrages/structure/structure.service';
 
 @Component({
   selector: 'app-qms-document-create',

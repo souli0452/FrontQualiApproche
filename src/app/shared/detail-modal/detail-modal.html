@@ -1,0 +1,60 @@
+<p-dialog 
+    [(visible)]="visible" 
+    (onHide)="onHideDialog()" 
+    [modal]="true" 
+    maskStyleClass="backdrop-blur-sm"
+    [style]="{width: width}" 
+    [draggable]="false" 
+    [resizable]="false" 
+    styleClass="p-fluid">
+    
+    <!-- Header personnalisé -->
+    <ng-template pTemplate="header">
+        <div class="flex items-center gap-4">
+            <!-- Icône avec background -->
+            <div [class]="'flex items-center justify-center w-12 h-12 rounded-xl shrink-0 ' + iconBgClass">
+                <i [class]="icon + ' ' + iconColorClass + ' text-xl'"></i>
+            </div>
+            <!-- Titre et sous-titre -->
+            <div>
+                <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 leading-tight">{{ title }}</h2>
+                <p class="text-sm text-surface-500 m-0 mt-1 leading-snug" *ngIf="subtitle">{{ subtitle }}</p>
+            </div>
+        </div>
+    </ng-template>
+
+    <div class="flex flex-col gap-6 mt-2">
+        <!-- Grande description (optionnelle) et Description dynamique -->
+        <div *ngIf="longDescription || itemDescription" class="bg-sky-50 dark:bg-sky-800/50 p-4 rounded-lg border-l-4 border-l-sky-500">
+            <p *ngIf="longDescription" class="text-sm text-slate-600 dark:text-surface-300 m-0 leading-relaxed whitespace-normal break-words">
+                {{ longDescription }}
+            </p>
+            <hr *ngIf="longDescription && itemDescription" class="border-t border-sky-200 dark:border-sky-700/50 my-3 opacity-50">
+            <div *ngIf="itemDescription" class="text-sm text-slate-700 dark:text-surface-200 m-0 leading-relaxed whitespace-normal break-words">
+                <span class="font-semibold block mb-1">Description :</span>
+                <span [innerHTML]="itemDescription"></span>
+            </div>
+        </div>
+
+        <!-- Contenu : Image à gauche, Détails à droite -->
+        <div class="flex flex-col md:flex-row gap-5">
+            <!-- Image (optionnelle) -->
+            <div *ngIf="imagePath" class="w-full md:w-1/3 flex justify-center items-start absolute opacity-10">
+                <img [src]="imagePath" alt="Illustration des détails" class="w-full max-w-xs object-contain rounded-lg image-detail">
+            </div>
+            
+            <!-- Contenu dynamique (Détails) -->
+            <div class="w-full min-w-0">
+                <ng-content></ng-content>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-end gap-3 pt-6 border-t border-surface-100 dark:border-surface-800">
+            <p-button 
+                label="Fermer"
+                (click)="handleClose()" 
+                severity="secondary" />
+        </div>
+    </div>
+</p-dialog>

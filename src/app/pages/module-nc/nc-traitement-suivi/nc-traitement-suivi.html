@@ -1,7 +1,7 @@
-<div class="">
-<div class="my-4 bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl shadow-sm overflow-hidden">
+<div class="min-h-[500px] py-4">
     <app-traitement-table
         [demandeList]="demandeList"
+        [showSearch]="false"
         [cols]="cols"
         [hasFilters]="true"
         [loading]="loading"
@@ -14,7 +14,6 @@
         >
         <app-nc-filter-bar filters (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
     </app-traitement-table>
-</div>
 
 <div *ngIf="demandeList.length === 0 && !loading" 
       class="flex flex-col items-center justify-center p-4 text-center">

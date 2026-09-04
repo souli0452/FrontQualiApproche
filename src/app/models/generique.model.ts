@@ -10,6 +10,7 @@ export interface FormGroupColumn {
     visible?: boolean;
     required?: boolean;
     optionLabel?: string;
+    optionValue?: string;
     dropdownList?: any[];
     fileNb?: number;
     validators?: Validators;
@@ -17,6 +18,9 @@ export interface FormGroupColumn {
     readonly?: boolean;
     class?: string;
     placeholder?: string;
+    min?: number; 
+    max?: number; 
+    step?: number;
 }
 
 export interface TableColumn {
@@ -31,6 +35,8 @@ export interface TableColumn {
     width?: string;
     compute?: boolean;
     editable?: boolean;
+    showValue?: boolean;
+
     /**
      * Colonne de type `badge` : champ de la ligne portant la sévérité PrimeNG de la pastille
      * (`success`, `warn`, `danger`, `info`, `secondary`). À défaut, la pastille est `info`.
@@ -39,6 +45,8 @@ export interface TableColumn {
      * peuvent nommer « État » des choses qui ne se colorent pas de la même façon.</p>
      */
     severityField?: string;
+    colorField?: string;  // <-- À ajouter
+    max?: number; 
 }
 
 export interface DropdownSelector {

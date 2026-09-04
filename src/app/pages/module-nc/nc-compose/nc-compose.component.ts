@@ -11,8 +11,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NonConformStatus, EtapeTraitement } from '../../../enums/enums';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { NiveauNonConformiteService } from '../../../services/non-conformite/niveau-non-conformite.service';
-import { Structure } from '../../parametrages/structure/structure-config/structure';
-import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -25,6 +23,8 @@ import { Reclamation } from '../../../models/reclamation.model';
 import { OrigineNonConformiteService } from '../../../services/non-conformite/type-non-conformite.service';
 import { convertFilesToBase64, PieceJointe } from '../../../utils/fichier/fichier-utils';
 import { LicenceOuverteDirective } from '../../../shared/licence/licence-ouverte.directive';
+import { StructureService } from '../../parametrages/structure/structure.service';
+import { Structure } from '../../parametrages/structure/structure.model';
 
 @Component({
     selector: 'app-nc-compose',
@@ -102,8 +102,8 @@ export class NcComposeComponent {
                             this.nonConformite = data.data;
                         }
                         this.nc.origineService = this.structures.find((value) => value.id === this.nonConformite.origineId);
-                        // this.nc.typeProcedure = this.typeProcessus.find((value) => value.id === this.nonConformite.typeProcessusId);
-                        this.nc.typeNonformite = this.typesNcs.find((value) => value.id === this.nonConformite.typeNonConformiteId);
+                        // this.nc.typeProcedure = this.typeProcessus.find((value) => value.id === this.nonConformite.categorieProcessusId);
+                        this.nc.typeNonformite = this.typesNcs.find((value) => value.id === this.nonConformite.sourceDeNonConformiteId);
                         this.nc.niveauNonConformite = this.niveauNcs.find((value) => value.id === this.nonConformite.niveauNonConformiteId);
                         // this.nc.typeAction = this.typesActions.find((value) => value.id === this.nonConformite.actionId);
                         // this.nc.reclamationClient = this.reclamationsClients.find((value) => value.id === this.nonConformite.originNonConformiteId);
@@ -123,12 +123,20 @@ export class NcComposeComponent {
 
         // Remplir les champs requis
         this.nonConformite.niveauNonConformiteId = this.nc.niveauNonConformite.id;
-        this.nonConformite.typeNonConformiteId = this.nc.typeNonformite.id;
-        this.nonConformite.structureSoumissionLibelle = this.userStructure?.libelleCourt;
-        this.nonConformite.structureSoumissionId = this.userStructure?.id;
+        this.nonConformite.sourceDeNonConformiteId = this.nc.typeNonformite.id;
+        this.nonConformite.sourceDeNonConformiteLibelle = this.nc.typeNonformite.libelle;
+        this.nonConformite.structureDeSoumissionLibelle = this.userStructure?.libelleCourt;
+        this.nonConformite.structureDeSoumissionId = this.userStructure?.id;
+        this.nonConformite.categorieProcessusId = this.userStructure?.typeProcessusId;
+        this.nonConformite.categorieProcessusLibelle = this.userStructure?.typeProcessusLibelle;
+        this.nonConformite.description = this.nonConformite.description;
+        this.nonConformite.actionImmediate = this.nonConformite.actionImmediate;
+        this.nonConformite.sourceDeNonConformiteId = this.nc.typeNonformite.id;
+        this.nonConformite.structureDeSoumissionLibelle = this.userStructure?.libelleCourt;
+        this.nonConformite.structureDeSoumissionId = this.userStructure?.id;
         // On récupère le type de processus lié à la structure de l'utilisateur
-        this.nonConformite.typeProcessusId = this.userStructure?.typeProcessusId;
-        this.nonConformite.typeProcessusLibelle = this.userStructure?.typeProcessusLibelle;
+        this.nonConformite.categorieProcessusId = this.userStructure?.typeProcessusId;
+        this.nonConformite.categorieProcessusLibelle = this.userStructure?.typeProcessusLibelle;
 
         if (this.nc.typeAction) {
             this.nonConformite.actionLibelle = this.nc.typeAction.libelle;
@@ -137,51 +145,50 @@ export class NcComposeComponent {
 
         this.nonConformite.fonctionEmetteur = '';
         this.nonConformite.niveauNonConformiteLibelle = this.nc.niveauNonConformite.libelle;
-        this.nonConformite.typeNonConformiteLibelle = this.nc.typeNonformite.libelle;
+        this.nonConformite.sourceDeNonConformiteLibelle = this.nc.typeNonformite.libelle;
 
-        // Gestion des pièces jointes de manière asynchrone
+        // Préparer la liste des pièces jointes sans muter l'état local en cas d'échec
+        const fichiersExistants = (this.nonConformite.fichiers || []).filter(f => !!f.url);
+        let nouveauxFichiers: any[] = [];
+
         if (this.uploadedFiles && this.uploadedFiles.length > 0) {
             try {
                 const base64Files = await convertFilesToBase64(this.uploadedFiles);
-                const newFichiers = base64Files.map(fileData => ({
+                nouveauxFichiers = base64Files.map(fileData => ({
                     fichier: fileData.fichierBase64,
                     nom: fileData.nomFichier,
                     type: fileData.typeFichier
                 }));
-                this.nonConformite.fichiers = [...(this.nonConformite.fichiers || []), ...newFichiers];
             } catch (error) {
                 this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la conversion des fichiers.' });
                 return;
             }
         }
 
-        if (!this.nonConformite.id) {
-            // L'état d'arrivée n'est plus décrété ici. Poser « PUBLISHED » et « RECEPTION » sur
-            // l'objet faisait croire à l'écran que le dossier était parti, alors que le circuit ne
-            // l'avait pas fait franchir : ni historique, ni courriel au pilote, et un dossier que
-            // les listes de traitement ne montraient à personne. C'est le serveur qui joue la
-            // décision, et l'écran lit ce qu'il en advient.
-            this.nonConformite.status = NonConformStatus.DRAFT;
+        const payload: any = {
+            ...this.nonConformite,
+            fichiers: [...fichiersExistants, ...nouveauxFichiers]
+        };
+
+        if (!payload.id) {
+            payload.status = NonConformStatus.DRAFT;
         }
 
-        console.log("DONNÉES ENVOYÉES AU SERVEUR (Payload) :", this.nonConformite);
+        console.log("DONNÉES ENVOYÉES AU SERVEUR (Payload) :", payload);
 
-        if (this.nonConformite.id != null && publish) {
-            // Un brouillon relu puis soumis : on enregistre les dernières retouches avant de faire
-            // franchir l'étape, sinon le pilote recevrait le dossier tel qu'il était à la visite
-            // précédente.
-            const dejaEnregistre = this.nonConformite.id;
-            this.nonConformiteService.update(this.nonConformite).subscribe({
+        if (payload.id != null && publish) {
+            const dejaEnregistre = payload.id;
+            this.nonConformiteService.update(payload).subscribe({
                 next: () => this.nonConformiteService.soumettre(dejaEnregistre)
                     .subscribe(this.onResponse(true)),
                 error: this.onResponse(true).error
             });
-        } else if (this.nonConformite.id != null) {
-            this.nonConformiteService.update(this.nonConformite).subscribe(this.onResponse(publish));
+        } else if (payload.id != null) {
+            this.nonConformiteService.update(payload).subscribe(this.onResponse(publish));
         } else if (publish) {
-            this.nonConformiteService.creerEtSoumettre(this.nonConformite).subscribe(this.onResponse(true));
+            this.nonConformiteService.creerEtSoumettre(payload).subscribe(this.onResponse(true));
         } else {
-            this.nonConformiteService.create(this.nonConformite).subscribe(this.onResponse(false));
+            this.nonConformiteService.create(payload).subscribe(this.onResponse(false));
         }
     }
 

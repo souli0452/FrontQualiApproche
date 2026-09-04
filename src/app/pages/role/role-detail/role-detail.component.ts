@@ -10,6 +10,8 @@ import { AppRoleService, RoleService } from '../role-service/role.service';
 import { ApiResponse } from '../../../models/response.model';
 import { AppRole, Permission } from '../../../models/role.model';
 import { LicenceOuverteDirective } from '../../../shared/licence/licence-ouverte.directive';
+import { HeaderPage } from '../../../shared/header-page/header-page';
+import { AlertService } from '../../../shared/alert-message/alert-message.service';
 
 interface GroupedPermission {
     module: string;
@@ -22,7 +24,14 @@ interface GroupedPermission {
     templateUrl: './role-detail.component.html',
     styleUrl: './role-detail.component.scss',
     standalone: true,
-    imports: [CommonModule, NgPrimeModule, FormsModule, ReactiveFormsModule, LicenceOuverteDirective]
+    imports: [
+        CommonModule, 
+        NgPrimeModule, 
+        FormsModule, 
+        ReactiveFormsModule, 
+        LicenceOuverteDirective,
+        HeaderPage
+    ]
 })
 export class RoleDetailComponent implements OnInit, OnDestroy {
     roleForm: UntypedFormGroup;
@@ -30,6 +39,11 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
     loading: boolean = false;
     isEdit: boolean = false;
     destroy$: Subject<boolean> = new Subject<boolean>();
+    breadcrumbs = [
+        { label: 'Tableau de bord', routerLink: '/' },
+        { label: 'Roles', routerLink: '/roles' },
+        { label: 'Utilisateurs', routerLink: '/utilisateurs' }
+    ];
 
     constructor(
         private fb: UntypedFormBuilder,
@@ -37,7 +51,8 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
         private appRoleService: AppRoleService,
         private messageService: MessageService,
         private route: ActivatedRoute,
-        private router: Router
+        private router: Router,
+        private alertService: AlertService
     ) {
         this.roleForm = this.fb.group({
             id: [null],
@@ -50,6 +65,9 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         const roleId = this.route.snapshot.params['id'];
         this.loadPermissionsAndRole(roleId);
+        if (this.isEdit) {
+            this.breadcrumbs[2] = { label: 'Modifier le rôle', routerLink: '' };
+        }
     }
     toggleModuleAll(select: boolean) {
         let selected: string[] = [];
@@ -84,7 +102,7 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
                 next: (permissions) => {
                     this.groupPermissions(permissions);
 
-                    if (roleId && roleId !== 'new') {
+                    if (roleId && roleId !== 'create') {
                         this.isEdit = true;
                         this.loadRole(roleId);
                     } else {
@@ -175,23 +193,32 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
     }
 
 
-
     save() {
-        if (this.roleForm.invalid) return;
+        if (this.roleForm.invalid) {
+            this.alertService.showWarning('Veuillez renseigner le nom du rôle.');
+            return;
+        }
 
         this.loading = true;
-        this.appRoleService.updateRole(this.roleForm.value).subscribe({
+        
+        // Si isEdit est vrai -> updateRole, sinon createRole
+        const request$ = this.isEdit
+            ? this.appRoleService.updateRole(this.roleForm.value)
+            : this.appRoleService.createRole(this.roleForm.value);
+
+        request$.pipe(takeUntil(this.destroy$)).subscribe({
             next: () => {
-                this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Rôle enregistré' });
+                this.alertService.showSuccess(this.isEdit ? 'Rôle modifié avec succès' : 'Rôle créé avec succès');
                 this.router.navigate(['/roles']);
             },
             error: (error) => {
                 this.loading = false;
-                console.log("l'erreur est :", error);
-                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error.detail || "Échec de l'enregistrement" });
+                console.error("Erreur lors de l'enregistrement du rôle :", error);
+                this.alertService.showError(error?.error?.detail || error?.error?.message || "Échec de l'enregistrement");
             }
         });
     }
+
 
     cancel() {
         this.router.navigate(['/roles']);

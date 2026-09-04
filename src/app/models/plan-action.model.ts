@@ -2,6 +2,14 @@ import { UserInfos } from "./auth.model";
 import { NonConformite } from "./non-conformite.model";
 
 export interface PlanAction extends UserInfos {
+    // --- NOUVELLES APPELLATIONS CLAIRES ---
+    numeroOrdre?: string;
+    causeIdentifiee?: string;
+    solutionRetenue?: string;
+    nonConformiteId?: string;
+    responsableNomComplet?: string;
+    actionCorrective?: string;
+
     id?: number;
     numeroOdre: string;
     causeIdentifiees: string;

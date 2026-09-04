@@ -50,6 +50,11 @@ export class CircuitsListeComponent implements OnInit, OnDestroy {
 
   chargement = true;
 
+  currentPage = 0;
+  pageSize = 8;
+  totalElements = 0;
+  private tousLesCircuitsFiltres: LigneCircuit[] = [];
+
   circuits: LigneCircuit[] = [];
   private tousLesCircuits: WorkflowDto[] = [];
 
@@ -180,13 +185,16 @@ export class CircuitsListeComponent implements OnInit, OnDestroy {
   }
 
   appliquerFiltres(): void {
-    this.circuits = this.tousLesCircuits
+    this.tousLesCircuitsFiltres = this.tousLesCircuits
       .filter((circuit) => !this.typeFiltre || circuit.resourceType === this.typeFiltre)
       .map((circuit) => ({
         ...circuit,
         typeLibelle: this.libelleType(circuit.resourceType),
         nbEtapes: circuit.steps?.length ?? 0
       }));
+
+    this.totalElements = this.tousLesCircuitsFiltres.length;
+    this.mettreAJourPage();
 
     this.typesEnConflit = this.typesRessource
       .filter(
@@ -196,6 +204,18 @@ export class CircuitsListeComponent implements OnInit, OnDestroy {
       )
       .map((type) => type.label);
   }
+
+  mettreAJourPage(): void {
+    const debut = this.currentPage * this.pageSize;
+    this.circuits = this.tousLesCircuitsFiltres.slice(debut, debut + this.pageSize);
+  }
+
+  onPageChange(event: { page: number; size: number }): void {
+    this.currentPage = event.page;
+    this.pageSize = event.size;
+    this.mettreAJourPage();
+  }
+
 
   /** Reçoit l'entrée de filtre du tableau générique, qui y a posé la valeur choisie. */
   filtrerParType(filtre: any): void {

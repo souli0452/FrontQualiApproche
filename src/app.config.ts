@@ -46,7 +46,7 @@ export const appConfig: ApplicationConfig = {
         },
         { provide: UntypedFormBuilder, useClass: UntypedFormBuilder },
         { provide: LocationStrategy, useClass: PathLocationStrategy },
-        ConfirmationService, MessageService, DialogService, ToastModule,
+        DialogService,
         { provide: DatePipe },
         providePrimeNG({ 
             theme: { preset: MyPreset, options: { darkModeSelector: '.app-dark' } },

@@ -7,10 +7,10 @@ import { CategorieProcessus } from '../../../models/categore-processus.model';
 import { NiveauNonConformite, OrigineNonConformite } from '../../../models/non-conformite.model';
 import { CategorieProcessusService } from '../../../services/non-conformite/type-processus.service';
 import { OrigineNonConformiteService } from '../../../services/non-conformite/type-non-conformite.service';
-import { StructureService } from '../../../pages/parametrages/structure/structure-service/structure-service';
 import { TypeStructure } from '../../../enums/enums';
-import { Structure } from '../../../pages/parametrages/structure/structure-config/structure';
 import { MultiselectInputComponent } from '../../../shared/ui/multiselect-input/multiselect-input.component';
+import { Structure } from '../../../pages/parametrages/structure/structure.model';
+import { StructureService } from '../../../pages/parametrages/structure/structure.service';
 
 export interface NcFilter {
     dateDebut: Date | undefined;
@@ -22,6 +22,7 @@ export interface NcFilter {
 
 @Component({
     selector: 'app-nc-filter-bar',
+    standalone: true,
     imports: [CommonModule, FormsModule, NgPrimeModule, MultiselectInputComponent],
     templateUrl: './nc-filter-bar.html',
     styleUrl: './nc-filter-bar.scss'

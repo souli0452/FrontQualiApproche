@@ -15,7 +15,7 @@ import { LayoutService } from '../service/layout.service';
     template: `
         <ng-container>
             <div *ngIf="root && item.visible !== false" class="layout-menuitem-root-text">{{ item.label }}</div>
-            <a *ngIf="(!item.routerLink || item.items) && item.visible !== false" [attr.href]="item.url" (click)="itemClick($event)" [ngClass]="item.styleClass" [attr.target]="item.target" tabindex="0" pRipple>
+            <a *ngIf="(!item.routerLink || item.items) && item.visible !== false" class="parent-menu-item" [attr.href]="item.url" (click)="itemClick($event)" [ngClass]="item.styleClass" [attr.target]="item.target" tabindex="0" pRipple>
                 <i [ngClass]="item.icon" class="layout-menuitem-icon"></i>
                 <span class="layout-menuitem-text">{{ item.label }}</span>
                 <span class="ml-auto text-xs px-2 py-0.5 rounded-full" *ngIf="item.badge" [ngClass]="item.badgeStyleClass">{{item.badge}}</span>

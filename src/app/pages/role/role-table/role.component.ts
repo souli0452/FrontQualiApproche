@@ -10,7 +10,7 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
 import { AppCrudGenericComponent } from '../../../components/app-crud-generic/app-crud-generic.component';
 import { AppRoleService, RoleService } from '../role-service/role.service';
 import { AppRole, Permission } from '../../../models/role.model';
-import { LicenceOuverteDirective } from '../../../shared/licence/licence-ouverte.directive';
+import { HeaderPage } from '../../../shared/header-page/header-page';
 
 @Component({
   selector: 'app-role',
@@ -23,7 +23,7 @@ import { LicenceOuverteDirective } from '../../../shared/licence/licence-ouverte
     FormsModule,
     ReactiveFormsModule,
     AppCrudGenericComponent,
-    LicenceOuverteDirective
+    HeaderPage
   ]
 })
 export class RoleComponent implements OnInit, OnDestroy {
@@ -65,6 +65,12 @@ export class RoleComponent implements OnInit, OnDestroy {
         });
     }
 
+    breadcrumbs = [
+        { label: 'Tableau de bord', routerLink: '/' },
+        { label: 'Roles', routerLink: '/roles' },
+        { label: 'Utilisateurs', routerLink: '/utilisateurs' }
+    ];
+
     ngOnInit(): void {
         this.loadRoles();
     }
@@ -74,7 +80,7 @@ export class RoleComponent implements OnInit, OnDestroy {
         this.destroy$.complete();
     }
 
-    goToDetail(id: string = 'new') {
+    goToDetail(id: string = 'create') {
         this.router.navigate(['/roles', id]);
     }
 
@@ -86,13 +92,14 @@ export class RoleComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (resp) => {
-                    this.roles = resp.data.content || [];
-                    this.totalElements = resp.data.totalElements;
-                    this.currentPage = resp.data.pageNumber;
-                    this.pageSize = resp.data.pageSize;
-                    this.totalPages = resp.data.totalPages;
-
-                    this.loading = false;
+                    setTimeout(() => {
+                        this.roles = resp.data.content || [];
+                        this.totalElements = resp.data.totalElements;
+                        this.currentPage = resp.data.pageNumber;
+                        this.pageSize = resp.data.pageSize;
+                        this.totalPages = resp.data.totalPages;
+                        this.loading = false;
+                    }, 500);
                 },
                 error: (error) => {
                     this.loading = false;

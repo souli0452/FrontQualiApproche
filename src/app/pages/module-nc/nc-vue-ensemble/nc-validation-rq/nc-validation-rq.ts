@@ -57,9 +57,9 @@ export class ValidationRQComponent {
 
             return {
                 ...demandeRest,
-                pertinanceRs: clean(demandeRest.pertinanceRs),
+                pertinanceRs: clean(demandeRest.pertinenceRs),
                 justificationRs: clean(demandeRest.justificationRs),
-                pertinancePilote: clean(demandeRest.pertinancePilote),
+                pertinancePilote: clean(demandeRest.pertinencePilote),
                 justificationPilote: clean(demandeRest.justificationPilote),
                 pertinanceRsSuivi: clean(demandeRest.pertinanceRsSuivi),
                 numeroFdac: clean(demandeRest.numeroFdac),
@@ -102,9 +102,9 @@ export class ValidationRQComponent {
 
             return {
                 ...demandeRest,
-                pertinanceRs: clean(demandeRest.pertinanceRs),
+                pertinanceRs: clean(demandeRest.pertinenceRs),
                 justificationRs: clean(demandeRest.justificationRs),
-                pertinancePilote: clean(demandeRest.pertinancePilote),
+                pertinancePilote: clean(demandeRest.pertinencePilote),
                 justificationPilote: clean(demandeRest.justificationPilote),
                 pertinanceRsSuivi: clean(demandeRest.pertinanceRsSuivi),
                 numeroFdac: clean(demandeRest.numeroFdac),

@@ -108,7 +108,7 @@ import { PopoverModule } from 'primeng/popover';
 import { Popover } from 'primeng/popover';
 
 @NgModule({
-    providers: [MessageService],
+    providers: [],
     declarations: [
     ],
     imports: [

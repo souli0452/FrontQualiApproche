@@ -9,3 +9,7 @@ export * from './ui/multiselect-input/multiselect-input.component';
 export * from './workflow/workflow-decision-dialog.component';
 export * from './workflow/workflow-actions.component';
 export * from './workflow/workflow-historique.component';
+
+// ─── Tableau d'affichage partagé ─────────────────────────────────────────────
+export * from './tableau-affichage/tableau-affichage';
+

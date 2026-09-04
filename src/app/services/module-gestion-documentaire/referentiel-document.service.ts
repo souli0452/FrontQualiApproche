@@ -31,6 +31,20 @@ export class NiveauConfidentialiteService extends BaseCrudService<NiveauConfiden
     constructor(public override http: HttpClient) {
         super(http, QualiUrlConfig.NIVEAU_CONFIDENTIALITE_ROOT_URL);
     }
+    
+    override findAll(
+        page: number = 0,
+        size: number = 10,
+        filters?: Record<string, any>,
+        headers?: Record<string, string>
+    ): Observable<any> {
+        const params = this.buildParams({ page, size, ...filters });
+        const httpHeaders = this.buildHeaders(headers);
+        return this.http.get<any>(this.uri, {
+            params,
+            headers: httpHeaders
+        });
+    }
 
     liste(): Observable<NiveauConfidentialite[]> {
         return this.http.get<any>(`${QualiUrlConfig.NIVEAU_CONFIDENTIALITE_ROOT_URL}/all`).pipe(
@@ -73,6 +87,20 @@ export class NiveauConfidentialiteService extends BaseCrudService<NiveauConfiden
 export class DomaineApplicationService extends BaseCrudService<DomaineApplication, string> {
     constructor(public override http: HttpClient) {
         super(http, QualiUrlConfig.DOMAINE_APPLICATION_ROOT_URL);
+    }
+
+    override findAll(
+        page: number = 0,
+        size: number = 10,
+        filters?: Record<string, any>,
+        headers?: Record<string, string>
+    ): Observable<any> {
+        const params = this.buildParams({ page, size, ...filters });
+        const httpHeaders = this.buildHeaders(headers);
+        return this.http.get<any>(this.uri, {
+            params,
+            headers: httpHeaders
+        });
     }
 
     liste(): Observable<DomaineApplication[]> {

@@ -41,7 +41,7 @@
 
         &.layout-static {
             .layout-main-container {
-                margin-left: 20rem;
+                margin-left: 19rem;
             }
 
             &.layout-static-inactive {
@@ -64,7 +64,21 @@
     }
 }
 
+
 @media (max-width: 991px) {
+    .layout-topbar-search{
+        display: none !important;
+    }
+    .custom-flex-col{
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        align-items: flex-start;
+
+        .first, .second{
+            width: 100% !important;
+        }
+    }
     .blocked-scroll {
         overflow: hidden;
     }
@@ -72,7 +86,8 @@
     .layout-wrapper {
         .layout-main-container {
             margin-left: 0;
-            padding-left: 2rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
         }
 
         .layout-sidebar {
@@ -107,5 +122,26 @@
                 display: block;
             }
         }
+    }
+}
+
+@media (max-width: 767px) {
+    .bg-blue {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    .actions-right {
+        margin-top: 15px;
+    }
+    .ligne {
+        display: flex !important;
+        flex-direction: row;
+        align-items: center !important;
+        padding: 10px 5px;
+    }
+    .champs-decideur {
+        display: flex;
+        flex-direction: column;
     }
 }

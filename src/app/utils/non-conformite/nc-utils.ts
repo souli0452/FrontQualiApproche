@@ -62,7 +62,7 @@ export function matchesNcFilter(item: any, filters: NcFilter): boolean {
 
   // --- Filtrage par Processus ---
   if (process && process.id) {
-    if (item.typeProcessusId !== process.id) isValid = false;
+    if (item.categorieProcessusId !== process.id) isValid = false;
   }
 
   // --- Filtrage par Gravité ---
@@ -72,7 +72,7 @@ export function matchesNcFilter(item: any, filters: NcFilter): boolean {
 
   // --- Filtrage par Origine ---
   if (origine && origine.id) {
-    if (item.typeNonConformiteId !== origine.id) isValid = false;
+    if (item.sourceDeNonConformiteId !== origine.id) isValid = false;
   }
 
   return isValid;

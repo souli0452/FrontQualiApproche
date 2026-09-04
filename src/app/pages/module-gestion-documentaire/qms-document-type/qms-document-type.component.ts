@@ -10,20 +10,37 @@ import { DropdownSelector, FormGroupColumn, TableColumn } from '../../../models/
 import { QmsDocumentType } from '../../../models/gestion-documentaire.model';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
+import { HeaderPage } from '../../../shared/header-page/header-page';
 
 @Component({
     selector: 'app-qms-document-type',
     standalone: true,
-    imports: [CommonModule, AppCrudGenericComponent, NgPrimeModule, NgxPermissionsModule],
-    providers: [MessageService],
+    imports: [
+        CommonModule, 
+        AppCrudGenericComponent, 
+        HeaderPage,
+        NgPrimeModule, NgxPermissionsModule
+    ],
+    providers: [],
     template: `
-        <p-toast></p-toast>
+        <app-header-page 
+            [title]="pageLabel" 
+            [subtitle]="'Ajoutez ou modifiez les types de documents'"
+            [breadcrumbs]="breadcrumbs"
+            [buttonText]="'Nouveau type de document'" 
+            buttonIcon="pi pi-plus"
+            (actionClick)="crudGeneric.openNew()"
+        />
         <div class="page-layout">
-            <app-crud-generic
-                [addButtonLabel]="'Nouveau type de document'"
+            <app-crud-generic #crudGeneric
+                [requireRqPassword]="true"
+                [deleteConfirmField]="'code'"
+                [showAddButton]="false"
                 [dialogWidth]="'40rem'"
                 [loading]="loading"
                 [pageLabel]="pageLabel"
+                [formLongDescription]="'Remplissez ce formulaire pour configurer un type de document qualité. Définissez un code normalisé unique (ex: PRO, INS, ENR) ainsi que le dossier de classement dans la GED. Les champs avec astérisque sont obligatoires.'"
+                [detailLongDescription]="'Consultez les spécifications de ce type de document. Les types structurent la pyramide documentaire du SMQ, harmonisent la codification et assurent le classement automatique des fichiers dans la GED.'"
                 [tableCols]="tableCols"
                 [listeObject]="dataList"
                 [formGroup]="formGroup"
@@ -35,7 +52,7 @@ import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
                 (newItemEvent)="onSave($event)"
                 (removeEvent)="onDelete($event)"
                 [totalElements]="totalElements"
-                [isPagination]="false"
+                [isPagination]="true"
                 [currentPage]="currentPage"
                 [pageSize]="pageSize"
                 (pageChangeEvent)="onPageChange($event)"
@@ -77,9 +94,9 @@ export class QmsDocumentTypeComponent {
         private ngxPermissionsService: NgxPermissionsService) {
         this.formCols = [
             { field: 'id', label: "", header: 'Id', type: 'string', visible: false, required: false },
-            { field: 'code', label: "Code du type (ex: PRO, INS, ENR)", header: 'Code', type: 'string', visible: true, required: true },
-            { field: 'libelle', label: "Libellé (ex: Procédure, Instruction)", header: 'Libellé', type: 'string', visible: true, required: true },
-            { field: 'folderName', label: "Nom du dossier dans Alfresco", header: 'Dossier Alfresco', type: 'string', visible: true, required: true }
+            { field: 'code', label: "Code du type (ex: PRO, INS, ENR)", placeholder:"Code du type (ex: PRO, INS, ENR)", header: 'Code', type: 'string', visible: true, required: true },
+            { field: 'libelle', label: "Libellé (ex: Procédure, Instruction)", placeholder:"Libellé (ex: Procédure, Instruction)", header: 'Libellé', type: 'string', visible: true, required: true },
+            { field: 'folderName', label: "Nom du dossier dans Alfresco", placeholder:"Nom du dossier", header: 'Dossier Alfresco', type: 'string', visible: true, required: true }
         ];
 
         this.tableCols = [
@@ -89,6 +106,7 @@ export class QmsDocumentTypeComponent {
             { field: 'createdAt', header: 'Date de création', type: 'string', filter: true }
         ];
 
+
         this.formGroup = this.fb.group({
             id: [null],
             code: [null, Validators.required],
@@ -96,6 +114,11 @@ export class QmsDocumentTypeComponent {
             folderName: [null, Validators.required]
         });
     }
+
+    breadcrumbs = [
+        { label: 'Tableau de bord', routerLink: '/' },
+        { label: 'Type de document QMS', routerLink: '' }
+    ];
 
     hasWritePermission(): boolean {
         return true;
@@ -114,12 +137,14 @@ export class QmsDocumentTypeComponent {
         this.qmsService.typeDocumentQmsGetAll(this.currentPage, this.pageSize).pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: res => {
-                    this.dataList = res.data.content || [];
-                    // On garde la trace du total pour la pagination
-                    this.totalElements = res.data.totalElements;
-                    this.currentPage = res.data.pageNumber;
-                    this.pageSize = res.data.pageSize;
-                    this.loading = false;
+                    setTimeout(() => {
+                        this.dataList = res.data.content || [];
+                        // On garde la trace du total pour la pagination
+                        this.totalElements = res.data.totalElements;
+                        this.currentPage = res.data.pageNumber;
+                        this.pageSize = res.data.pageSize;
+                        this.loading = false;
+                    }, 500);
                 },
                 error: error => {
                     this.loading = false;

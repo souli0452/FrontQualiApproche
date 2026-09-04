@@ -1,6 +1,9 @@
-import { Component, ComponentRef, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, ComponentRef, EventEmitter, Input, OnInit, OnChanges, AfterViewInit, OnDestroy, SimpleChanges, Output, ViewChild, ViewContainerRef, booleanAttribute } from '@angular/core';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { CommonModule, DatePipe } from '@angular/common';
+import { Table } from 'primeng/table';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { FeaturesService } from "../../../services/feature-service";
 import { TypeDemande } from "../../../utils/global/global-utils";
 import { EtapeTraitement, StatusEnum } from '../../../enums/enums';
@@ -11,6 +14,7 @@ import { ResultatDecisionDto, StepDecision, WorkflowActionDto } from '../../../m
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 import { Router } from '@angular/router';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
+import { GlobalSearchService } from '../../../services/non-conformite/global-search.service';
 
 
 @Component({
@@ -21,7 +25,7 @@ import { NonConformiteService } from '../../../services/non-conformite/non-confo
     standalone: true,
     imports: [CommonModule, NgPrimeModule, WorkflowActionsComponent, WorkflowDecisionDialogComponent]
 })
-export class TraitementTableComponent implements OnInit, OnChanges {
+export class TraitementTableComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
     @Input() demandeList: Array<any> = [];
     @Input() loading: boolean = false;
     @Input() paginator: boolean = true;
@@ -31,7 +35,14 @@ export class TraitementTableComponent implements OnInit, OnChanges {
     @Input() totalElements: number = 0;
     @Input() pageSize: number = 10;
     @Input() currentPage: number = 0;
+    @Input() recordName: string = 'non-conformités';
     @Output() pageChangeEvent = new EventEmitter<{ page: number, size: number }>();
+
+    get skeletonRows(): number[] {
+        return Array.from({ length: this.pageSize || 5 }, (_, i) => i);
+    }
+
+    @Input({ transform: booleanAttribute }) showSearch: boolean = false;
 
 
     @Input() btnActions?: EtapeTraitement = EtapeTraitement.RECEPTION;
@@ -39,6 +50,7 @@ export class TraitementTableComponent implements OnInit, OnChanges {
     @Input() title?: string;
     @Input() subtitle?: string;
     @Input() hasFilters: boolean = false;
+    @Input() allowDeleteUnconditionally: boolean = false;
     @Output() onImputation = new EventEmitter<any>();
     @Output() onValidation = new EventEmitter<any>();
     @Output() onStructureValidation = new EventEmitter<any>();
@@ -48,6 +60,9 @@ export class TraitementTableComponent implements OnInit, OnChanges {
     @Output() onDelete = new EventEmitter<any>();
 
     @ViewChild('detailContainer', { read: ViewContainerRef, static: true }) detailContainer?: ViewContainerRef;
+    @ViewChild('dt') dt?: Table;
+    currentSearchQuery: string = '';
+    private destroy$ = new Subject<void>();
 
     protected readonly BtnActions = EtapeTraitement;
 
@@ -78,7 +93,8 @@ export class TraitementTableComponent implements OnInit, OnChanges {
         private nonConformiteService: ProcNonConformiteService,
         private workflowService: WorkflowService,
         private router: Router,
-        private globalNcService: NonConformiteService
+        private globalNcService: NonConformiteService,
+        private globalSearchService: GlobalSearchService
     ) {
     }
 
@@ -245,13 +261,57 @@ export class TraitementTableComponent implements OnInit, OnChanges {
     }
 
     ngOnInit() {
-        this.colsFilter = this.cols.map((value) => value.field);
+        this.updateColsFilter();
         console.log("DONNEES DU TABLEAU INITIALES (ngOnInit) :", this.demandeList);
     }
 
+    ngAfterViewInit() {
+        this.globalSearchService.searchQuery$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((query: string) => {
+                this.currentSearchQuery = query || '';
+                if (this.dt) {
+                    this.dt.filterGlobal(this.currentSearchQuery, 'contains');
+                }
+            });
+    }
+
     ngOnChanges(changes: any) {
+        if (changes.cols) {
+            this.updateColsFilter();
+        }
         if (changes.demandeList) {
             console.log("DONNEES DU TABLEAU MISES A JOUR (ngOnChanges) :", this.demandeList);
+            if (this.dt && this.currentSearchQuery) {
+                setTimeout(() => {
+                    this.dt?.filterGlobal(this.currentSearchQuery, 'contains');
+                });
+            }
+        }
+    }
+
+    ngOnDestroy() {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
+
+    private updateColsFilter() {
+        const baseFields = this.cols ? this.cols.map((col: any) => col.field) : [];
+        const extraFields = [
+            'numeroReference', 'numeroDeReference', 'numeroNc',
+            'structureSoumissionLibelle', 'structureDeSoumissionLibelle', 'procEmetteur',
+            'typeNonConformiteLibelle', 'sourceDeNonConformiteLibelle',
+            'niveauNonConformiteLibelle', 'etatDeTraitement', 'status',
+            'description', 'justification'
+        ];
+        this.colsFilter = Array.from(new Set([...baseFields, ...extraFields]));
+    }
+
+    onLocalSearchInput(val: string) {
+        this.currentSearchQuery = val;
+        this.globalSearchService.updateSearchQuery(val);
+        if (this.dt) {
+            this.dt.filterGlobal(val, 'contains');
         }
     }
 
@@ -265,8 +325,9 @@ export class TraitementTableComponent implements OnInit, OnChanges {
         if (this.displayDetail) {
             this.closeDetailsDialog();
         } else {
-            if (rowData && rowData.nonConformeId) {
-                this.globalNcService.findNCById(rowData.nonConformeId).subscribe({
+            const targetId = rowData?.nonConformeId || rowData?.id;
+            if (targetId) {
+                this.globalNcService.findNCById(targetId).subscribe({
                     next: (reponse: any) => {
                         const parentNC = reponse?.data ?? reponse;
                         if (parentNC) {
@@ -303,6 +364,7 @@ export class TraitementTableComponent implements OnInit, OnChanges {
         this.nbreInactive = this.selectedDemande.planActions.filter((action: { status: string }) => action.status === 'INACTIF').length;
 
         this.displayDetail = true;
+        this.detailContainer?.clear();
         let componentRef: any;
         if (this.btnActions !== EtapeTraitement.CLOTURE && this.btnActions !== EtapeTraitement.IMPUTATION && this.btnActions !== EtapeTraitement.SUIVI_RQ) {
             componentRef = this.detailContainer?.createComponent(this.featureService.getDynamicFormTraitementComponent(this.selectedDemande.typeDemande));
@@ -381,7 +443,7 @@ export class TraitementTableComponent implements OnInit, OnChanges {
             '9': 9  // CLOTURE
         };
 
-        const currentOrder = STEP_ORDER[rowData.etatTraitement || ''] || 0;
+        const currentOrder = STEP_ORDER[rowData.etatDeTraitement || ''] || 0;
 
         // Rechercher dans l'historique à quelle étape le document de rejet a été attaché
         const saisies = rowData.workflowState?.saisies || [];
@@ -408,7 +470,7 @@ export class TraitementTableComponent implements OnInit, OnChanges {
         }
 
         // Cas de repli : retour à l'étape initiale SOUMISSION
-        if (rowData.etatTraitement === 'SOUMISSION' && rowData.status !== 'DRAFT') {
+        if (rowData.etatDeTraitement === 'SOUMISSION' && rowData.status !== 'DRAFT') {
             return true;
         }
 
@@ -487,7 +549,7 @@ export class TraitementTableComponent implements OnInit, OnChanges {
             });
         } else {
             // Si c'est rejeté à l'étape SOUMISSION, on permet la modification et la suppression
-            if (this.isRejet(rowData) && rowData.etatTraitement === 'SOUMISSION') {
+            if (this.isRejet(rowData) && rowData.etatDeTraitement === 'SOUMISSION') {
                 this.rowMenuItems.push({
                     label: 'Modifier',
                     icon: 'pi pi-pencil',
@@ -499,6 +561,15 @@ export class TraitementTableComponent implements OnInit, OnChanges {
                     command: () => this.supprimerBrouillon(rowData)
                 });
             }
+            if (this.allowDeleteUnconditionally && !this.rowMenuItems.find(i => i.label === 'Supprimer')) {
+                this.rowMenuItems.push({
+                    label: 'Supprimer',
+                    icon: 'pi pi-trash',
+                    styleClass: 'delete-menu-item',
+                    command: () => this.supprimerDossier(rowData)
+                });
+            }
+
 
             // 3. Actions de workflow dynamiques issues du moteur
             const actions = rowData.workflowState?.allowedActions || [];
@@ -594,31 +665,43 @@ export class TraitementTableComponent implements OnInit, OnChanges {
         });
     }
 
-    getCellValue(rowData: any, col: any): string {
+        getCellValue(rowData: any, col: any): string {
+        if (!rowData || !col) return "";
         const val = rowData[col.field];
-        if (val !== undefined && val !== null && val !== '') {
+        if (val !== undefined && val !== null && val !== "") {
             return val;
         }
         
-        // Si c'est un PlanAction (il a nonConformeId)
-        if (rowData.nonConformeId) {
-            if (col.field === 'numeroReference') {
-                return rowData.numeroNc || rowData.nonConformite?.numeroReference || '';
+        // Fallbacks automatiques entre anciennes et nouvelles nomenclatures
+        if (col.field === "numeroReference" && rowData.numeroDeReference) return rowData.numeroDeReference;
+        if (col.field === "numeroDeReference" && rowData.numeroDeReference) return rowData.numeroDeReference;
+        if (col.field === "justification" && rowData.description) return rowData.description;
+        if (col.field === "description" && rowData.justification) return rowData.justification;
+        if (col.field === "typeNonConformiteLibelle" && rowData.sourceDeNonConformiteLibelle) return rowData.sourceDeNonConformiteLibelle;
+        if (col.field === "sourceDeNonConformiteLibelle" && rowData.sourceDeNonConformiteLibelle) return rowData.sourceDeNonConformiteLibelle;
+        if (col.field === "typeProcessusLibelle" && rowData.categorieProcessusLibelle) return rowData.categorieProcessusLibelle;
+        if (col.field === "categorieProcessusLibelle" && rowData.categorieProcessusLibelle) return rowData.categorieProcessusLibelle;
+        if (col.field === "structureSoumissionLibelle" && rowData.structureDeSoumissionLibelle) return rowData.structureDeSoumissionLibelle;
+        if (col.field === "structureDeSoumissionLibelle" && rowData.structureDeSoumissionLibelle) return rowData.structureDeSoumissionLibelle;
+
+        // Si c'est un PlanAction (il a nonConformeId ou nonConformiteId)
+        if (rowData.nonConformeId || rowData.nonConformiteId) {
+            if (col.field === "numeroReference" || col.field === "numeroDeReference") {
+                return rowData.numeroNc || rowData.nonConformite?.numeroDeReference || rowData.nonConformite?.numeroDeReference || "";
             }
-            if (col.field === 'structureSoumissionLibelle') {
-                return rowData.procEmetteur || rowData.nonConformite?.structureSoumissionLibelle || '';
+            if (col.field === "structureSoumissionLibelle" || col.field === "structureDeSoumissionLibelle") {
+                return rowData.procEmetteur || rowData.nonConformite?.structureDeSoumissionLibelle || rowData.nonConformite?.structureDeSoumissionLibelle || "";
             }
-            if (col.field === 'typeNonConformiteLibelle') {
-                return rowData.nonConformite?.typeNonConformiteLibelle || '';
+            if (col.field === "typeNonConformiteLibelle" || col.field === "sourceDeNonConformiteLibelle") {
+                return rowData.nonConformite?.sourceDeNonConformiteLibelle || rowData.nonConformite?.sourceDeNonConformiteLibelle || "";
             }
-            if (col.field === 'niveauNonConformiteLibelle') {
-                return rowData.nonConformite?.niveauNonConformiteLibelle || '';
+            if (col.field === "niveauNonConformiteLibelle") {
+                return rowData.nonConformite?.niveauNonConformiteLibelle || "";
             }
         }
         
-        return '';
+        return "";
     }
-
 
     rechercher() {
         this.isAgentSeach = true;
@@ -650,7 +733,7 @@ export class TraitementTableComponent implements OnInit, OnChanges {
                 const url = window.URL.createObjectURL(fiche);
                 const lien = document.createElement('a');
                 lien.href = url;
-                lien.download = `Fiche_NC_${dossier.numeroReference || dossier.id}.pdf`;
+                lien.download = `Fiche_NC_${dossier.numeroDeReference || dossier.id}.pdf`;
                 lien.click();
                 setTimeout(() => window.URL.revokeObjectURL(url), 100);
             },

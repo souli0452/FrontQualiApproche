@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { forkJoin, Observable, of, BehaviorSubject } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { NonConformiteService } from './non-conformite.service';
-import { StructureService } from '../../pages/parametrages/structure/structure-service/structure-service';
+import { StructureService } from '../../pages/parametrages/structure/structure.service';
 
 export interface SearchResult {
     title: string;
@@ -73,13 +73,13 @@ export class GlobalSearchService {
                 // Filtrage des Non-conformités
                 ncs.forEach((nc: any) => {
                     if (
-                        (nc.numeroNc && nc.numeroNc.toLowerCase().includes(q)) ||
-                        (nc.justification && nc.justification.toLowerCase().includes(q)) ||
-                        (nc.actionDsc && nc.actionDsc.toLowerCase().includes(q))
+                        (nc.numeroDeReference && nc.numeroDeReference.toLowerCase().includes(q)) || (nc.numeroDeReference && nc.numeroDeReference.toLowerCase().includes(q)) || (nc.numeroNc && nc.numeroNc.toLowerCase().includes(q)) || (nc.description && nc.description.toLowerCase().includes(q)) ||
+                        (nc.description && nc.description.toLowerCase().includes(q)) ||
+                        (nc.actionImmediate && nc.actionImmediate.toLowerCase().includes(q))
                     ) {
                         results.push({
                             title: `NC : ${nc.numeroNc}`,
-                            description: nc.justification || nc.actionDsc || 'Aucune description',
+                            description: nc.description || nc.actionImmediate || nc.actionImmediate || 'Aucune description',
                             type: 'NC',
                             date: nc.createdAt || '',
                             reference: nc.numeroNc,

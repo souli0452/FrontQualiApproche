@@ -16,5 +16,21 @@ export class FormInputTemplateComponent {
     @Input() form!: UntypedFormGroup;
 
     onFileSelected(event: any) {}
+
+    incrementKnob(field: string) {
+        const ctrl = this.form.get(field);
+        if (ctrl) {
+            const current = ctrl.value || 0;
+            if (current < 100) ctrl.setValue(current + 1);
+        }
+    }
+
+    decrementKnob(field: string) {
+        const ctrl = this.form.get(field);
+        if (ctrl) {
+            const current = ctrl.value || 0;
+            if (current > 0) ctrl.setValue(current - 1);
+        }
+    }
 }
 

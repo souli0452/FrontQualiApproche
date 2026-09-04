@@ -4,6 +4,7 @@ import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { MenuItem } from 'primeng/api';
 import { ButtonGroupModule } from 'primeng/buttongroup';
+import { HeaderPage } from '../../shared/header-page/header-page';
 
 @Component({
   selector: 'app-parametrages',
@@ -13,6 +14,7 @@ import { ButtonGroupModule } from 'primeng/buttongroup';
     NgPrimeModule, 
     ButtonGroupModule, 
     RouterModule,
+    HeaderPage
   ],
   templateUrl: './parametrages.component.html',
   styleUrl: './parametrages.component.scss'
@@ -29,6 +31,11 @@ export class ParametragesComponent implements OnInit, OnDestroy {
             }
         });
     }
+
+    breadcrumbs = [
+        { label: 'Tableau de bord', routerLink: '/' },
+        { label: 'Paramètrages', routerLink: '/configurations' }
+    ];
 
     ngOnInit() {
         this.activeTab = this.router.url.split('?')[0];

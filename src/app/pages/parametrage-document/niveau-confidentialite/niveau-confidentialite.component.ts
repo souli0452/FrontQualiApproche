@@ -12,6 +12,8 @@ import { NiveauConfidentialiteService } from '../../../services/module-gestion-d
 import { AppRoleService } from '../../role/role-service/role.service';
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 import { hasAnyPermission } from '../../../utils/auth/auth-utils';
+import { AlertService } from '../../../shared/alert-message/alert-message.service';
+import { HeaderPage } from '../../../shared/header-page/header-page';
 
 /**
  * Référentiel des niveaux de confidentialité, et des rôles admis à consulter les documents qui les
@@ -25,14 +27,33 @@ import { hasAnyPermission } from '../../../utils/auth/auth-utils';
 @Component({
     selector: 'app-niveau-confidentialite',
     standalone: true,
-    imports: [CommonModule, AppCrudGenericComponent, NgPrimeModule],
-    providers: [MessageService],
+    imports: [
+        CommonModule, 
+        AppCrudGenericComponent, 
+        NgPrimeModule,
+        HeaderPage
+    ],
+    providers: [
+    ],
     template: `
-        <p-toast></p-toast>
+        <app-header-page 
+            [title]="pageLabel" 
+            [subtitle]="'Ajoutez ou modifiez les niveaux de confidentialite des documents'"
+            [breadcrumbs]="breadcrumbs"
+            [buttonText]="'Niveau de confidentialite'" 
+            buttonIcon="pi pi-plus"
+            (actionClick)="crudGeneric.openNew()"
+        />
         <div class="page-layout">
             <app-crud-generic
+                #crudGeneric
+                [requireRqPassword]="true"
+                [deleteConfirmField]="'libelle'"
+                [showAddButton]="false"
+                formLongDescription="Définissez les paramètres de sécurité et d’accès pour ce niveau de confidentialité. Indiquez un libellé clair, un rang d'exposition (du moins sensible au plus critique) et sélectionnez les rôles habilités à consulter ces documents au sein de leur structure. Si aucun rôle n'est sélectionné, l'accès reste ouvert par défaut aux membres de la structure. Les champs marqués d'un astérisque sont obligatoires."
+                detailLongDescription="Consultez les caractéristiques et les règles d'habilitation associées à ce niveau de confidentialité. Ce référentiel encadre la diffusion des informations sensibles au sein de votre organisation en limitant la consultation des documents aux seuls profils autorisés, garantissant ainsi la conformité de votre système de management documentaire."
                 [addButtonLabel]="'Nouveau niveau'"
-                [dialogWidth]="'42rem'"
+                [dialogWidth]="'40rem'"
                 [loading]="loading"
                 [pageLabel]="pageLabel"
                 [tableCols]="tableCols"
@@ -45,7 +66,11 @@ import { hasAnyPermission } from '../../../utils/auth/auth-utils';
                 [formHeader]="formHeader"
                 (newItemEvent)="onSave($event)"
                 (removeEvent)="onDelete($event)"
-                [isPagination]="false"
+                [isPagination]="true"
+                [totalElements]="totalElements"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChangeEvent)="onPageChange($event)"
                 [consultation]="!peutEcrire"
                 [notModif]="!peutEcrire"
                 [notDelete]="!peutEcrire">
@@ -57,6 +82,10 @@ export class NiveauConfidentialiteComponent implements OnInit, OnDestroy {
 
     loading = true;
     dataList: NiveauConfidentialite[] = [];
+    totalElements = 0;
+    currentPage = 0;
+    pageSize = 10;
+
     closeDialog = false;
     peutEcrire = false;
 
@@ -73,13 +102,18 @@ export class NiveauConfidentialiteComponent implements OnInit, OnDestroy {
         field: 'rolesAutorises', optionLabel: 'label', multiselectEntries: []
     };
 
+    breadcrumbs = [
+        { label: 'Tableau de bord', routerLink: '/' },
+        { label: 'Niveaux de confidentialité des documents', routerLink: '' }
+    ];
+
     private readonly destroy$ = new Subject<boolean>();
 
     constructor(
         protected fb: UntypedFormBuilder,
-        protected messageService: MessageService,
         protected service: NiveauConfidentialiteService,
-        private roleService: AppRoleService
+        private roleService: AppRoleService,
+        private readonly alertService: AlertService
     ) {
         this.formCols = [
             { field: 'id', label: '', header: 'Id', type: 'string', visible: false, required: false },
@@ -88,8 +122,15 @@ export class NiveauConfidentialiteComponent implements OnInit, OnDestroy {
                 type: 'string', visible: true, required: true
             },
             {
-                field: 'ordre', label: 'Rang, du moins sensible au plus sensible', header: 'Rang',
-                type: 'number', visible: true, required: false
+                field: 'ordre', 
+                label: 'Rang de sensibilité', 
+                header: 'Rang', 
+                type: 'knob', 
+                min: 1, 
+                max: 10,
+                helpText: 'Classez du niveau le moins confidentiel (ex : 1 pour Public) au plus critique (ex : 4 ou 5 pour Confidentiel Direction).',
+                visible: true, 
+                required: false
             },
             {
                 field: 'rolesAutorises',
@@ -151,26 +192,34 @@ export class NiveauConfidentialiteComponent implements OnInit, OnDestroy {
     }
 
     fetchObject(): void {
-        this.loading = true;
-        this.service.liste().pipe(takeUntil(this.destroy$)).subscribe({
-            next: (niveaux) => {
-                // Le tableau lit la valeur brute du champ : la liste des rôles est aplatie ici, et
-                // « Aucune restriction » remplace la case vide, qui se lirait comme une donnée
-                // manquante alors qu'elle est une absence voulue.
-                this.dataList = (niveaux ?? []).map((niveau) => ({
-                    ...niveau,
-                    rolesLibelle: niveau.rolesAutorises?.length
-                        ? niveau.rolesAutorises.join(', ')
-                        : 'Aucune restriction'
-                })) as NiveauConfidentialite[];
-                this.loading = false;
+    this.loading = true;
+    this.service.findAll(this.currentPage, this.pageSize)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+            next: (res: any) => {
+                setTimeout(() => {
+                    const content = res?.data?.content ?? res?.data ?? [];
+                    this.dataList = (content ?? []).map((niveau: any) => ({
+                        ...niveau,
+                        rolesLibelle: niveau.rolesAutorises?.length
+                            ? niveau.rolesAutorises.join(', ')
+                            : 'Aucune restriction'
+                    })) as NiveauConfidentialite[];
+                    this.totalElements = res?.data?.totalElements ?? this.dataList.length;
+                    this.loading = false;
+                }, 500);
             },
             error: (error) => {
                 this.loading = false;
-                showToast(StatusEnum.error, error.status, 'Chargement des niveaux impossible',
-                    this.messageService, error);
+                this.alertService.showError('Chargement des niveaux impossible');
             }
         });
+    }
+
+    onPageChange(event: { page: number; size: number }) {
+        this.currentPage = event.page;
+        this.pageSize = event.size;
+        this.fetchObject();
     }
 
     onSave(objet: NiveauConfidentialite): void {
@@ -180,30 +229,23 @@ export class NiveauConfidentialiteComponent implements OnInit, OnDestroy {
 
         requete.pipe(takeUntil(this.destroy$)).subscribe({
             next: () => this.onSuccess(),
-            error: (error) => showToast(StatusEnum.error, error.status,
-                'Enregistrement impossible', this.messageService, error)
+            error: (error) => this.alertService.showError('Enregistrement impossible')
         });
     }
 
     onDelete(objet: NiveauConfidentialite): void {
         this.service.delete(objet.id!).pipe(takeUntil(this.destroy$)).subscribe({
             next: () => {
-                this.messageService.add({
-                    severity: 'success', summary: 'Supprimé',
-                    // Conséquence énoncée : la restriction disparaît avec le niveau.
-                    detail: 'Niveau supprimé. Les documents qui le portaient redeviennent visibles '
-                        + 'de toute leur structure.'
-                });
+                this.alertService.showSuccess('Suppression réussie');
                 this.fetchObject();
             },
-            error: (error) => showToast(StatusEnum.error, error.status,
-                'Suppression impossible', this.messageService, error)
+            error: (error) => this.alertService.showError('Suppression impossible')
         });
     }
 
     private onSuccess(): void {
         this.closeDialog = true;
         this.fetchObject();
-        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Opération réussie' });
+        this.alertService.showSuccess('Opération réussie');
     }
 }

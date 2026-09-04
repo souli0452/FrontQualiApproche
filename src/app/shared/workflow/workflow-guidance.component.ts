@@ -209,7 +209,7 @@ export class WorkflowGuidanceComponent {
             '9': 9  // CLOTURE
         };
 
-        const currentStep = parent?.etatTraitement || state?.currentStateCode || '';
+        const currentStep = parent?.etatDeTraitement || state?.currentStateCode || '';
         const currentOrder = STEP_ORDER[currentStep] || 0;
 
         const saisies = state?.saisies || [];

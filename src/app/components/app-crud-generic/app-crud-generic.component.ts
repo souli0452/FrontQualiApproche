@@ -7,7 +7,9 @@ import {
     OnChanges, OnInit, OnDestroy,
     Output,
     SimpleChanges,
-    ViewChild
+    ViewChild,
+    ContentChild,
+    TemplateRef
 } from '@angular/core';
 import {UntypedFormGroup} from "@angular/forms";
 import { Table } from 'primeng/table';
@@ -15,25 +17,41 @@ import { Subject, takeUntil } from 'rxjs';
 import {ConfirmationService, MessageService} from "primeng/api";
 import { NgPrimeModule } from '../../../prime-ng.module';
 import { FormInputTemplateComponent } from '../form-input-template/form-input-template.component';
-import { DetailTemplateComponent } from '../detail-template/detail-template.component';
 import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
 import { GlobalSearchService } from '../../services/non-conformite/global-search.service';
 import { DropdownSelector, FormGroupColumn, MultiSelectSelector, TableColumn } from '../../models/generique.model';
 import { patternToDate, toFormatFromDate } from '../../utils/formatage/formatage-utils';
-import { LicenceOuverteDirective } from '../../shared/licence/licence-ouverte.directive';
+import { TableauAffichageComponent } from '../../shared/tableau-affichage/tableau-affichage';
+import { FormModal } from '../../shared/form-modal/form-modal';
+import { DetailModal } from '../../shared/detail-modal/detail-modal';
+import { DetailTemplateComponent } from '../../shared/detail-content/detail-content';
+import { RequestPasswordComponent } from '../../shared/request-password/request-password';
 
 @Component({
     selector: 'app-crud-generic',
     standalone: true,
     templateUrl: './app-crud-generic.component.html',
     styleUrl: './app-crud-generic.component.scss',
-    imports: [NgPrimeModule, FormInputTemplateComponent, DetailTemplateComponent, MenuModule, LicenceOuverteDirective]
+    imports: [
+        NgPrimeModule, 
+        FormInputTemplateComponent, 
+        MenuModule, 
+        TableauAffichageComponent, 
+        FormModal,
+        DetailModal,
+        DetailTemplateComponent,
+        RequestPasswordComponent
+    ]
 })
 export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnChanges, OnDestroy {
+    @ContentChild('customDetail') customDetailTemplate?: TemplateRef<any>;
     @Input() pageLabel!: string;
     actionMenuItems: MenuItem[] = [];
     @Input() loading: boolean = false;
+    @Input() formLongDescription: string = '';
+    @Input() detailLongDescription: string = '';
+    @Input() detailImagePath: string = 'assets/logo-quali-sira.svg';
     @Input() asRoleEdit: boolean = false;
     @Input() tableCols!: TableColumn[];
     @Input() formCols!: FormGroupColumn[];
@@ -41,6 +59,11 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     @Output() newItemEvent = new EventEmitter<any>();
     @Output() removeEvent = new EventEmitter<any>();
     @Output() filterEvent = new EventEmitter<any>();
+    @Input() requireRqPassword: boolean = false;
+
+    @Input() detailCols?: any[];
+    
+    @Input() showItemDescriptionOnTop: boolean = true;
 
     @Input() totalElements: number = 0;
     @Input() pageSize: number = 10;
@@ -70,6 +93,13 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     value: any;
     rowData: any;
     lastTarget: any;
+    @Input() deleteConfirmField?: string; // optionnel, pour forcer 'code' par exemple
+    deleteExpectedValue: string = '';
+    deleteTargetLabel: string = 'le libellé';
+
+    displayPasswordDialog: boolean = false;
+    itemToDelete: any = null;
+    passwordLoading: boolean = false;
 
     /**
      * Actions propres à l'écran, ajoutées au menu de chaque ligne.
@@ -84,7 +114,14 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
         visible?: (rowData: any) => boolean;
     }[] = [];
     @Input() isPagination: boolean = true;
-    @Input() addButtonLabel: string = 'Ajouter';
+    @Input() addButtonLabel?: string;
+    @Input() showAddButton?: boolean;
+
+    get canShowAddButton(): boolean {
+        if (this.consultation) return false;
+        if (this.showAddButton !== undefined) return this.showAddButton;
+        return !!this.addButtonLabel;
+    }
     /**
      * Confie l'ajout à l'écran appelant plutôt qu'au formulaire intégré.
      *
@@ -95,10 +132,12 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
      */
     @Input() ajoutExterne = false;
     @Output() ajoutDemande = new EventEmitter<void>();
+    @Output() editDemande = new EventEmitter<any>();
     @Input() minWidth: string = '50rem';
     @Input() loadingRows: number = 10;
     @Output() customActionEvent = new EventEmitter<{ action: string; user: any }>();
 
+    @ViewChild(TableauAffichageComponent) tableauAffichage!: TableauAffichageComponent;
     @ViewChild('dt') table!: Table;
     private destroy$: Subject<boolean> = new Subject<boolean>();
 
@@ -109,7 +148,7 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     ) {}
 
     ngOnInit(): void {
-        this.filterFiels = this.tableCols.map((c) => c.field);
+        this.filterFiels = this.tableCols ? this.tableCols.map((c) => c.field) : [];
         if (this.dropdownList) {
             this.dropdownList.forEach((v) => {
                 this.dropDownObject[v.field] = v.dropdownEntries;
@@ -124,7 +163,9 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
 
         // Écouter la barre de recherche globale
         this.globalSearchService.searchQuery$.pipe(takeUntil(this.destroy$)).subscribe((query) => {
-            if (this.table) {
+            if (this.tableauAffichage) {
+                this.tableauAffichage.filterGlobal(query);
+            } else if (this.table) {
                 this.table.filterGlobal(query, 'contains');
             }
         });
@@ -163,7 +204,7 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
         // event.rows : le nombre de lignes par page
         this.pageChangeEvent.emit({ 
             page: event.page, 
-            size: event.rows 
+            size: event.size 
         });
     }
 
@@ -197,28 +238,57 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     }
 
     delele(data: any, event: any) {
+        if (this.requireRqPassword) {
+            this.itemToDelete = data;
+            
+            // Priorité au champ explicitement configuré, sinon Libellé par défaut, sinon Code, etc.
+            if (this.deleteConfirmField && data[this.deleteConfirmField]) {
+                this.deleteExpectedValue = String(data[this.deleteConfirmField]);
+                this.deleteTargetLabel = this.deleteConfirmField === 'code' ? 'le code' : 'la valeur';
+            } else if (data.libelle) {
+                this.deleteExpectedValue = String(data.libelle);
+                this.deleteTargetLabel = 'le libellé';
+            } else if (data.libelleLong) {
+                this.deleteExpectedValue = String(data.libelleLong);
+                this.deleteTargetLabel = 'le libellé';
+            } else if (data.code) {
+                this.deleteExpectedValue = String(data.code);
+                this.deleteTargetLabel = 'le code';
+            } else if (data.reference || data.numeroRef) {
+                this.deleteExpectedValue = String(data.reference || data.numeroRef);
+                this.deleteTargetLabel = 'la référence';
+            } else {
+                this.deleteExpectedValue = String(data.id || 'CONFIRMER');
+                this.deleteTargetLabel = 'la confirmation';
+            }
+
+            this.displayPasswordDialog = true;
+            return;
+        }
+
         this.confirmationService.confirm({
             key: 'crudPopup',
             target: this.lastTarget || event?.originalEvent?.target || event?.target,
             header: 'CONFIRMATION',
             message: 'Voulez-vous vraiment supprimer cet enregistrement ?',
             icon: 'pi pi-exclamation-triangle',
-            rejectButtonProps: {
-                label: 'Annuler',
-                severity: 'secondary',
-                outlined: true,
-                size: 'small'
-            },
-            acceptButtonProps: {
-                label: 'Supprimer',
-                severity: 'danger',
-                size: 'small'
-            },
+            rejectButtonProps: { label: 'Annuler', severity: 'secondary', outlined: true, size: 'small' },
+            acceptButtonProps: { label: 'Supprimer', severity: 'danger', size: 'small' },
             accept: () => {
                 this.removeEvent.emit(data);
             }
         });
     }
+
+
+    onConfirmDeleteWithPassword() {
+        this.displayPasswordDialog = false;
+        if (this.itemToDelete) {
+            this.removeEvent.emit(this.itemToDelete);
+            this.itemToDelete = null;
+        }
+    }
+
 
     openNew() {
         if (this.ajoutExterne) {
@@ -235,6 +305,10 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     }
 
     edit(rowData: any) {
+        if (this.ajoutExterne) {
+            this.editDemande.emit(rowData);
+            return;
+        }
         this.rowData = rowData;
         this.display = true;
         setTimeout(() => {
@@ -345,16 +419,6 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
             });
         }
 
-        // Bouton Supprimer
-        if (!this.notDelete && !this.consultation) {
-            this.actionMenuItems.push({
-                label: 'Supprimer',
-                icon: 'pi pi-trash',
-                styleClass: 'text-red-500 menu-style',
-                command: (event: any) => this.delele(rowData, event.originalEvent)
-            });
-        }
-
         // Actions personnalisées, celles qui valent pour cette ligne.
         if (this.customButtons && this.customButtons.length > 0) {
             this.customButtons
@@ -363,9 +427,20 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
                     this.actionMenuItems.push({
                         label: btn.label,
                         icon: btn.icon,
+                        styleClass: 'menu-style',
                         command: (event: any) => this.onCustomAction(btn.action, rowData, event.originalEvent)
                     });
                 });
+        }
+
+        // Bouton Supprimer à la fin
+        if (!this.notDelete && !this.consultation) {
+            this.actionMenuItems.push({
+                label: 'Supprimer',
+                icon: 'pi pi-trash',
+                styleClass: 'delete-menu-item menu-style',
+                command: (event: any) => this.delele(rowData, event.originalEvent)
+            });
         }
 
         menu.toggle(event);

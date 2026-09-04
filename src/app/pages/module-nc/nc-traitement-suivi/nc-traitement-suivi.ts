@@ -52,7 +52,7 @@ export class NCTraitementSuiviComponent {
       private authService: AuthService) 
       {
         this.cols = [
-            { field: 'numeroReference', header: 'N° Ref', type: 'string', filter: true, width: '250px', centered: false },
+            { field: 'numeroReference', header: 'N° Ref', type: 'string', filter: true, width: '180px', centered: false },
             { field: 'structureSoumissionLibelle', header: 'Processus Emetteur', type: 'string', filter: true, width: '150px', centered: false },
             // L'étape du circuit, et non le statut : c'est elle qui dit où en est le dossier, et
             // c'est le circuit qui la nomme. Le type « enum » du tableau affiche l'étape courante
@@ -146,7 +146,7 @@ export class NCTraitementSuiviComponent {
             // 1. Pour les Processus
             if (process && process.length > 0) {
                 const selectedIds = process.map((p: any) => p.id);
-                if (!selectedIds.includes(item.typeProcessusId)) {
+                if (!selectedIds.includes(item.categorieProcessusId)) {
                     isValid = false;
                 }
             }
@@ -162,7 +162,7 @@ export class NCTraitementSuiviComponent {
             // 3. Pour les Origines
             if (origine && origine.length > 0) {
                 const selectedIds = origine.map((o: any) => o.id);
-                if (!selectedIds.includes(item.typeNonConformiteId)) {
+                if (!selectedIds.includes(item.sourceDeNonConformiteId)) {
                     isValid = false;
                 }
             }
@@ -281,36 +281,38 @@ export class NCTraitementSuiviComponent {
     }
 
     private finalizeDemandeList() {
-        this.totalElements = this.rawDemandeList.length;
-        this.totalPages = 1;
-        this.applyLocalFilters();
+        setTimeout(() => {
+            this.totalElements = this.rawDemandeList.length;
+            this.totalPages = 1;
+            this.applyLocalFilters();
 
-        // ✅ Synchronise le badge "Traitement & Suivi" avec les données fraîches.
-        // On recalcule chaque compteur spécifique à partir de la liste chargée :
-        // le badge était périmé car la vue d'ensemble ne se recharge pas automatiquement
-        // après chaque action de workflow (resoumission, validation…).
-        // Les clés propres aux plans d'action (imputees, nonTraiter) sont préservées via le spread.
-        const getCount = (etape: string) =>
-            this.rawDemandeList.filter((item: any) => item.etatTraitement === etape && !this.isRejet(item)).length;
+            // ✅ Synchronise le badge "Traitement & Suivi" avec les données fraîches.
+            // On recalcule chaque compteur spécifique à partir de la liste chargée :
+            // le badge était périmé car la vue d'ensemble ne se recharge pas automatiquement
+            // après chaque action de workflow (resoumission, validation…).
+            // Les clés propres aux plans d'action (imputees, nonTraiter) sont préservées via le spread.
+            const getCount = (etape: string) =>
+                this.rawDemandeList.filter((item: any) => item.etatDeTraitement === etape && !this.isRejet(item)).length;
 
-        const currentNotifs = this.nonConformiteService.notificationsNC$.value;
-        this.nonConformiteService.notificationsNC$.next({
-            ...currentNotifs,
-            total:            this.rawDemandeList.length,
-            reception:        getCount('RECEPTION'),
-            validationRQ:     getCount('VALIDATION_RQ') + getCount('VALIDATION_RS'),
-            affectation:      getCount('IMPUTATION'),
-            validationPilote: getCount('VALIDATION'),
-            cloture:          getCount('SUIVI_RQ'),
-            soumission:       this.rawDemandeList.filter((item: any) => this.isRejet(item)).length,
-        });
+            const currentNotifs = this.nonConformiteService.notificationsNC$.value;
+            this.nonConformiteService.notificationsNC$.next({
+                ...currentNotifs,
+                total:            this.rawDemandeList.length,
+                reception:        getCount('RECEPTION'),
+                validationRQ:     getCount('VALIDATION_RQ') + getCount('VALIDATION_RS'),
+                affectation:      getCount('IMPUTATION'),
+                validationPilote: getCount('VALIDATION'),
+                cloture:          getCount('SUIVI_RQ'),
+                soumission:       this.rawDemandeList.filter((item: any) => this.isRejet(item)).length,
+            });
 
-        this.featureService.onReloadRequested(true);
-        this.loading = false;
-        if (!this.ficheDeLAdresseOuverte) {
-            this.ficheDeLAdresseOuverte = true;
-            this.ouvrirLaFicheDeLAdresse();
-        }
+            this.featureService.onReloadRequested(true);
+            this.loading = false;
+            if (!this.ficheDeLAdresseOuverte) {
+                this.ficheDeLAdresseOuverte = true;
+                this.ouvrirLaFicheDeLAdresse();
+            }
+        }, 500);
     }
 
     onSuccess(res: HttpResponse<any>) {
@@ -365,7 +367,7 @@ export class NCTraitementSuiviComponent {
             '9': 9  // CLOTURE
         };
 
-        const currentOrder = STEP_ORDER[rowData.etatTraitement || ''] || 0;
+        const currentOrder = STEP_ORDER[rowData.etatDeTraitement || ''] || 0;
 
         // Rechercher dans l'historique à quelle étape le document de rejet a été attaché
         const saisies = rowData.workflowState?.saisies || [];
@@ -392,7 +394,7 @@ export class NCTraitementSuiviComponent {
         }
 
         // Cas de repli : retour à l'étape initiale SOUMISSION
-        if (rowData.etatTraitement === 'SOUMISSION' && rowData.status !== 'DRAFT') {
+        if (rowData.etatDeTraitement === 'SOUMISSION' && rowData.status !== 'DRAFT') {
             return true;
         }
 

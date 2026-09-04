@@ -1,308 +1,101 @@
 <div class="block">
-    <div class="col-12">
-        <div class="card shadow-3">
-            @if (pageLabel){
-                <p-toolbar styleClass="mb-4 shadow-1 border-round-xl bg-white">
-                    <ng-template #start>
-                        <p-iconfield iconPosition="left">
-                            <p-inputicon>
-                                <i class="pi pi-search text-primary"></i>
-                            </p-inputicon>
-                            <input pInputText type="text"
-                                   (input)="dt.filterGlobal($any($event.target).value, 'contains')"
-                                   placeholder="Rechercher..."
-                                   class="w-full p-inputtext-sm border-none bg-transparent focus:ring-0" />
-                        </p-iconfield>
-                    </ng-template>
-                    <ng-template #end>
-                        <p-button *ngIf="!consultation"
-                                  siLicenceOuverte
-                                  [label]="addButtonLabel"
-                                  icon="pi pi-plus"
-                                  severity="info"
-                                  (click)="openNew()"
-                                  size="small" />
-                    </ng-template>
-                </p-toolbar>
-            }
-            <div class="row p-2">
-                <ng-container *ngIf="addFilter">
-                    <div class="col-sm-3 mb-1" *ngFor="let r of searchField">
-                        <div class="field">
-                            <label class="fw-bold">{{ r['label'] }}</label>
-                            <p-select [options]="r['list']" [style]="{'width': '100%'}"
-                                        [autoDisplayFirst]="false" appendTo="body"
-                                        [placeholder]="r['placeHolder']"
-                                        [filter]="true" [showClear]="true"
-                                        [(ngModel)]="value"
-                                        (ngModelChange)="onFilterChange(r['field'])">
-                            </p-select>
-                        </div>
+    <div class="col-12 p-0">
+        <div class="row p-2">
+            <ng-container *ngIf="addFilter">
+                <div class="col-sm-3 mb-2" *ngFor="let r of searchField">
+                    <div class="field">
+                        <label class="fw-bold">{{ r['label'] }}</label>
+                        <p-select [options]="r['list']" [style]="{'width': '100%'}"
+                                    [autoDisplayFirst]="false" appendTo="body"
+                                    [placeholder]="r['placeHolder']"
+                                    [filter]="true" [showClear]="true"
+                                    [(ngModel)]="value"
+                                    (ngModelChange)="onFilterChange(r['field'])">
+                        </p-select>
                     </div>
-                </ng-container>
+                </div>
+            </ng-container>
 
-                <div class="col-sm-12">
-                    <p-table
-                    [resizableColumns]="true"
-                    columnResizeMode="expand"
-                    #dt #gFilter
-                    [size]="'small'"
-                    [columns]="tableCols"
-                    [value]="listeObject"
-                    selectionMode="single"
-                    dataKey="id"
-                    [paginator]="isPagination"
-                    [rows]="10"
+            <div class="col-sm-12">
+                <app-tableau-affichage
+                    [tableCols]="tableCols"
+                    [listeObject]="listeObject"
                     [loading]="loading"
-                    [showLoader]="false"
-                    styleClass="p-datatable-sm"
-                    [globalFilterFields]="filterFiels"
-                    paginatorPosition="bottom"
-                    [tableStyle]="{ 'min-width': minWidth }">
-                        <!-- <ng-template #caption>
-                            <div class="flex">
-                                <p-iconfield iconPosition="left" class="ml-auto">
-                                    <p-inputicon>
-                                        <i class="pi pi-search"></i>
-                                    </p-inputicon>
-                                    <input pInputText class="p-fluid w-100"
-                                    #myInput type="text"
-                                    (input)="gFilter.filterGlobal(myInput.value, 'contains')"
-                                    placeholder="Rechercher"/>
-                                </p-iconfield>
-                            </div>
-                        </ng-template> -->
-                        <ng-template #header let-columns>
-                            <tr>
-                                <th *ngFor="let col of columns" [pSortableColumn]="col.field">
-                                    {{ col.header }}
-                                    <p-sortIcon [field]="col.field"></p-sortIcon>
-                                </th>
-                                <th *ngIf="!consultation" class="text-center font-bold" style="width: 4rem">Action</th>
-                            </tr>
-                        </ng-template>
-                        <ng-template #body let-rowData let-columns="columns" let-ri="rowIndex">
-                            <tr [pSelectableRow]="rowData">
-                                <td *ngFor="let col of columns" [style.width]="col.width">
-                                    <span *ngIf="col.type === 'string'">
-                                        <ng-container *ngIf="col.header == 'Réference'">
-                                            
-                                          <p-tag severity="info" value="{{ rowData[col.field] }}" />
-                                        </ng-container>
-                                        <ng-container *ngIf="col.header == 'Statut'">
-                                            <p-tag severity="warn" value="{{ rowData[col.field] }}" />
-                                        </ng-container>
-                                        <ng-container *ngIf="col.header !== 'Réference' && col.header !== 'Statut'">
-                                            <span [innerHTML]="rowData[col.field]"></span>
-                                        </ng-container>
-                                    </span>
-                                    <!-- Pastille : la sévérité vient de la ligne, via `severityField`.
-                                         Jusqu'ici seuls deux en-têtes nommés « Réference » et « Statut »
-                                         produisaient une pastille — un badge dépendait donc du libellé
-                                         de la colonne, ce qu'aucun écran ne pouvait deviner. -->
-                                    <span *ngIf="col.type === 'badge'">
-                                        <p-tag [value]="rowData[col.field]"
-                                               [severity]="(col.severityField && rowData[col.severityField]) || 'info'" />
-                                    </span>
-                                    <span
-                                        *ngIf="col.type === 'number'"> {{ rowData[col.field] }}</span>
-                                    <span
-                                        *ngIf="col.type === 'date'"> {{ rowData[col.field] | date: 'dd/MM/yyyy HH:mm' }}</span>
-                                    <span *ngIf="col.type === 'boolean'">
-                                <span *ngIf="rowData[col.field]">
-                                    <p-tag  severity="success" value="{{ col.labelTrue }}" />
-                                    <!-- <span class="ng-badge success">
-                                        {{ col.labelTrue }}
-                                    </span> -->
-                                </span>
-                                <span *ngIf="!rowData[col.field]">
-                                    <p-tag  severity="warning" value="{{ col.labelFalse }}" />
-                                    <!-- <span class="ng-badge warning">
-                                        {{ col.labelFalse }}
-                                    </span> -->
-                                </span>
-                            </span>
-                            <span *ngIf="col.type === 'list'">
-                                <span *ngFor="let val of rowData[col.field]">
-                                    <p-tag  severity="info" value="{{ val[col.optionLabel] }}" />
-                                    <!-- <span class="ng-badge info">
-                                        {{ val[col.optionLabel] }}
-                                    </span> -->
-                                </span>
-                            </span>
-                                </td>
-                                <td style="text-align:center" *ngIf="!consultation">
-                                    <p-button
-                                        size="small"
-                                        icon="pi pi-ellipsis-h"
-                                        (click)="setActionMenu($event, menu, rowData)"
-                                        pTooltip="Actions"
-                                        tooltipPosition="bottom"
-                                        severity="secondary"
-                                        >
-                                    </p-button>
-                                    <p-menu #menu [model]="actionMenuItems" [popup]="true" appendTo="body"></p-menu>
-                                </td>
-
-                            </tr>
-                        </ng-template>
-
-                        <ng-template #loadingbody>
-                            <tr *ngFor="let i of [].constructor(loadingRows)">
-                                <td *ngFor="let col of tableCols">
-                                    <p-skeleton width="100%" height="1rem"></p-skeleton>
-                                </td>
-                                <td *ngIf="!consultation" class="text-center">
-                                    <p-skeleton width="100%" height="1rem"></p-skeleton>
-                                </td>
-                            </tr>
-                        </ng-template>
-                        <ng-template #emptymessage>
-                            <tr>
-                                <td [attr.colspan]="tableCols.length + 1">
-                                    <div class="h-60">
-                                        <div class="centrer-image mt-6">
-                                                <img src="../../../assets/images/empty.svg" alt="Image vide" style="width: 150px; height: auto; margin: auto; filter: grayscale(1);">
-                                                <span class="text-slate-500 mt-4 flex justify-content-center opacity-35">Aucune données trouvées</span>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </ng-template>
-                    </p-table>
-
-                </div>
-                <div class="paginator-container" style="margin-top: 1rem; padding-bottom: 1rem;">
-                    <p-paginator 
-                        [rows]="pageSize" 
-                        appendTo="body"
-                        [totalRecords]="totalElements"
-                        (onPageChange)="onPageChange($event)">
-                    </p-paginator>
-                </div>
+                    [consultation]="consultation"
+                    [showSearch]="true"
+                    [showAddButton]="canShowAddButton"
+                    [addButtonLabel]="addButtonLabel || 'Ajouter'"
+                    [isPagination]="isPagination"
+                    [totalElements]="totalElements"
+                    [pageSize]="pageSize"
+                    [currentPage]="currentPage"
+                    [loadingRows]="pageSize"
+                    [minWidth]="minWidth"
+                    [filterFields]="filterFiels"
+                    [actionMenuItems]="actionMenuItems"
+                    (addClick)="openNew()"
+                    (pageChangeEvent)="onPageChange($event)"
+                    (actionClick)="setActionMenu($event.event, $event.menu, $event.rowData)">
+                </app-tableau-affichage>
             </div>
         </div>
     </div>
 </div>
-<p-dialog (onHide)="hidDialog()" [modal]="true" [(visible)]="display" appendTo="body"
-          [style]="{width: dialogWidth}" [maximizable]="true" class="p-fluid" styleClass="ng-dialog">
-    <ng-template pTemplate="header">
-        <div class="flex items-center gap-3">
-            <div class="flex items-center justify-center bg-blue-50 text-blue-500 rounded-full" style="width: 3.5rem; height: 3.5rem">
-                <i class="pi pi-plus-circle text-2xl"></i>
+<app-form-modal 
+    [(visible)]="display" 
+    [title]="rowData?.libelle ? (pageLabel + ' : ' + rowData.libelle) : (rowData ? ('Modification ' + pageLabel) : ('Nouvel élément ' + pageLabel))"
+    [description]="rowData ? 'Mise à jour de l’élément existant' : 'Ajout d’un nouvel élément'"
+    [longDescription]="formLongDescription"
+    [icon]="rowData ? 'pi pi-pencil' : 'pi pi-plus-circle'"
+    [iconBgClass]="rowData ? 'bg-orange-50 dark:bg-orange-900/30' : 'bg-blue-50 dark:bg-[#39bdf82e]'"
+    [iconColorClass]="rowData ? 'text-orange-500' : 'text-blue-500'"
+    [submitLabel]="rowData ? 'Enregistrer' : 'Enregistrer'"
+    [width]="dialogWidth || '40rem'"
+    (onCancel)="hidDialog()"
+    (onSubmit)="save()">
+    
+    <div class="px-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+        <ng-container *ngFor="let col of formCols">
+            <div [ngClass]="(col.class && col.class.includes('md:col-6')) ? 'col-span-1' : 'col-span-1 md:col-span-2'">
+                <app-form-input-template
+                    [col]="col"
+                    [form]="formGroup"
+                    [dropDownObject]="dropDownObject"
+                    [multiSelectObject]="multiselectObject"
+                ></app-form-input-template>
             </div>
-            <div class="flex flex-col">
-                <span class="font-bold text-xl text-900 mb-1">{{ rowData?.libelle ? (pageLabel + ' : ' + rowData.libelle) : (detailTitle || 'Détails ' + pageLabel) }}</span>
-                <span class="text-500 text-sm">Ajout d'un nouvel élément</span>
-            </div>
-        </div>
-    </ng-template>
-    <!-- <ng-template #header>
-        <div class="flex items-center justify-center items-center gap-2">
-            <i class="pi pi-info-circle text-info-500"></i>
-            <span class="popup-header">
-                {{ rowData?.libelle ? (pageLabel + ' : ' + rowData.libelle) : (detailTitle || 'Détails ' + pageLabel) }}
-            </span>
-        </div>
-    </ng-template> -->
-    <form *ngIf="display" [formGroup]="formGroup" autocomplete="off" role="form">
-        <div class="grid p-fluid mt-1">
-            <ng-container *ngFor="let col of formCols">
-                <div *ngIf="col.visible"
-                     [class]="'form-field field-' + col.field"
-                     [ngClass]="col.class ? col.class : (formCols.length >= 10 ? 'col-12 sm:col-6 mb-2' : 'col-12 mb-2')">
-                    <app-form-input-template
-                        [col]="col"
-                        [dropDownObject]="dropDownObject"
-                        [multiSelectObject]="multiselectObject"
-                        [form]="formGroup">
-                    </app-form-input-template>
-                </div>
-            </ng-container>
-        </div>
-    </form>
-    <ng-template #footer>
-        <button size="small" type="button" pRipple pButton icon="pi pi-times" (click)="hidDialog()" label="Annuler"
-                class="p-button-secondary position-left mr-3"></button>
-        <button siLicenceOuverte [disabled]="formGroup.invalid" size="small" severity="info" pRipple pButton type="button" (click)="save()" icon="pi pi-save"
-                label="Enregistrer">
-        </button>
-    </ng-template>
-</p-dialog>
+        </ng-container>
+    </div>
+</app-form-modal>
 
-<p-dialog
-    (onHide)="displayDetails = false"
-    [modal]="true"
-    header="Header"
+<app-detail-modal
     [(visible)]="displayDetails"
-    appendTo="body"
-    [maximizable]="true"
-    class="p-fluid"
-    styleClass="ng-dialog"
-    [style]="{ width: '50rem' }"
-    [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }">
-    <ng-template #headless>
-        <div class="card-main-details">
-            <div class="card-left">
-                <div class="logo-popup">
-                    <img src="assets/logo-quali-sira.svg" alt="logo-popup">
-                </div>
-                <div class="card-info">
-                    <div class="card-info-body">
-                        <p>{{ rowData?.libelle }} {{rowData?.libelleLong}}</p>
-                    </div>
-                    <p-divider />
-                    <div class="card-info-header">
-                        <p>{{ pageLabel }}</p>
-                    </div>
-                    <div class="card-info-footer">
-                        <img src="assets/images/pointier.svg" alt="pointier" width="60" height="60">
-                    </div>
-                </div>
-            </div>
-            <div class="card-right">
-                <div class="grid p-fluid">
-                    <div class="col-12">
-                        <detail-template-component *ngIf="rowData" [cols]="tableCols" [rowData]="rowData" [title]="detailTitle"></detail-template-component>
-                        <div *ngIf="!rowData">
-                            <span class="text-red-500 mt-4 flex justify-content-center opacity-35">Aucune données trouvées</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-right-footer">
-                    <button type="button" size="small" pRipple pButton icon="pi pi-times" (click)="displayDetails = false" label="Fermer"
-                            class="p-button-secondary"></button>
-                </div>
-            </div>
-        </div>
+    [title]="pageLabel"
+    [subtitle]="rowData ? (rowData.libelle || '') + ' ' + (rowData.libelleLong || '') : ''"
+    [longDescription]="detailLongDescription"
+    [itemDescription]="showItemDescriptionOnTop ? rowData?.description : null"
+    [imagePath]="detailImagePath"
+    [width]="'40rem'">
+    
+    <ng-container *ngIf="customDetailTemplate; else defaultDetail">
+        <ng-container *ngTemplateOutlet="customDetailTemplate; context: { $implicit: rowData, data: rowData }"></ng-container>
+    </ng-container>
 
-        <!-- <div class="flex align-items-center justify-content-center items-center gap-2">
-            <i class="pi pi-info-circle text-info-500"></i>
-            <span class="popup-header">
-                {{ rowData?.libelle ? (pageLabel + ' : ' + rowData.libelle) : (detailTitle || 'Détails ' + pageLabel) }}
-            </span>
-        </div> -->
-    </ng-template>
-        <!-- <ng-template #header>
-            <div class="flex align-items-center justify-content-center items-center gap-2">
-                <i class="pi pi-info-circle text-info-500"></i>
-                <span class="popup-header">
-                    {{ rowData?.libelle ? (pageLabel + ' : ' + rowData.libelle) : (detailTitle || 'Détails ' + pageLabel) }}
-                </span>
-            </div>
-        </ng-template>
-        <div class="grid p-fluid">
-            <div class="col-12">
-            <detail-template-component *ngIf="rowData" [cols]="tableCols" [rowData]="rowData" [title]="detailTitle"></detail-template-component>
-            <div *ngIf="!rowData">
-                <span class="text-red-500 mt-4 flex justify-content-center opacity-35">Aucune données trouvées</span>
-            </div>
-            </div>
+    <ng-template #defaultDetail>
+        <detail-template-component *ngIf="rowData" [cols]="detailCols || formCols || tableCols" [rowData]="rowData" [title]="detailTitle"></detail-template-component>
+        <div *ngIf="!rowData">
+            <span class="text-red-500 mt-4 flex justify-content-center opacity-35">Aucune données trouvées</span>
         </div>
-        <ng-template #footer>
-            <button type="button" size="small" pRipple pButton icon="pi pi-times" (click)="displayDetails = false" label="Fermer"
-                    class="p-button-secondary"></button>
-        </ng-template> -->
-</p-dialog>
+    </ng-template>
+</app-detail-modal>
+
+<app-request-password 
+    [(visible)]="displayPasswordDialog"
+    [expectedValue]="deleteExpectedValue"
+    [targetLabel]="deleteTargetLabel"
+    [loading]="passwordLoading"
+    (confirm)="onConfirmDeleteWithPassword()"
+/>
+
 
 <p-confirmPopup key="crudPopup" />

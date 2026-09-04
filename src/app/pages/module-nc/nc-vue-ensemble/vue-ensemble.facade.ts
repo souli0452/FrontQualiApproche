@@ -71,7 +71,7 @@ export class NcVueEnsembleFacade {
     return this.safeArray(ncList).map((nc: any) => {
       if (!nc || nc.status === 'DRAFT' || nc.status === 'Brouillon') return nc;
 
-      const currentOrder = STEP_ORDER[nc.etatTraitement || ''] || 0;
+      const currentOrder = STEP_ORDER[nc.etatDeTraitement || ''] || 0;
       const saisies = nc.workflowState?.saisies || [];
       const docRejetId = nc.docRejet?.id?.toLowerCase();
       const docRejetNom = (nc.docRejet?.nom || nc.docRejet?.nomFichier || '').toLowerCase();
@@ -96,7 +96,7 @@ export class NcVueEnsembleFacade {
         }
       }
 
-      if (!isRejected && nc.etatTraitement === 'SOUMISSION' && nc.status !== 'DRAFT') {
+      if (!isRejected && nc.etatDeTraitement === 'SOUMISSION' && nc.status !== 'DRAFT') {
         isRejected = true;
       }
 
@@ -145,7 +145,7 @@ export class NcVueEnsembleFacade {
    */
   private repartirParEtape(aTraiter: any[]) {
     const parEtape = (etape: EtapeTraitement) =>
-      this.safeArray(aTraiter).filter((nc: any) => nc?.etatTraitement === etape);
+      this.safeArray(aTraiter).filter((nc: any) => nc?.etatDeTraitement === etape);
 
     return {
       receptionData: parEtape(EtapeTraitement.RECEPTION),
@@ -185,7 +185,7 @@ export class NcVueEnsembleFacade {
     if (!planAction) return planAction; // Sécurité
     const relatedNC = allNCs.find(
       (nc: any) =>
-        (planAction.numeroNc != null && nc?.numeroReference === planAction.numeroNc) ||
+        (planAction.numeroNc != null && (nc?.numeroDeReference === planAction.numeroNc || nc?.numeroDeReference === planAction.numeroNc)) ||
         (planAction.nonConformeId != null && nc?.id === planAction.nonConformeId)
     );
 

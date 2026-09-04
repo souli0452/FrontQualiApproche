@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpParams } from '@angular/common/http';
 import moment from 'moment';
 import { MessageService } from 'primeng/api';
 import { NcStats } from '../../models/statsNc';
-import { Structure } from '../../pages/parametrages/structure/structure-config/structure';
+import { Structure } from '../../pages/parametrages/structure/structure.model';
 
 export const createRequestOption = (req?: any): HttpParams => {
     let options: HttpParams = new HttpParams();

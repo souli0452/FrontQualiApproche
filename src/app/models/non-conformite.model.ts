@@ -5,32 +5,39 @@ import { PlanAction } from "./plan-action.model";
 import { Reclamation } from "./reclamation.model";
 
 export interface NonConformite extends UserInfos {
+    // --- NOUVELLES APPELLATIONS CLAIRES (ISO 9001 / AI-READY) ---
+    numeroDeReference?: string;
+    description?: string;
+    sourceDeNonConformiteId?: string;
+    sourceDeNonConformiteLibelle?: string;
+    categorieProcessusId?: string;
+    categorieProcessusLibelle?: string;
+    structureDeSoumissionId?: string;
+    structureDeSoumissionLibelle?: string;
+    agentImputeId?: string;
+    agentImputeNomComplet?: string;
+    agentImputeEmail?: string;
+    actionImmediate?: string;
+    pertinencePilote?: string;
+    pertinenceRs?: string;
+    etatDeTraitement?: string;
+
     id?: string;
-    numeroReference?: string;
     nomProcessus?: string;
     origineService?: string;
     origineServiceLibelleCourt?: string;
     originNonConformiteId?: string;
-    typeProcessusLibelle?: string;
     originNonConformiteLibelle?: string;
     actionLibelle?: string;
-    actionDsc?: string;
     origineId?: string;
-    structureSoumissionLibelle?: string;
-    structureSoumissionId?: string;
     fonctionEmetteur?: string;
     dateVisaEmetteur?: string;  // Le format de date sera manipulé en chaîne (ex: "dd-MM-yyyy HH:mm")
-    justification?: string;
     efficaciteId?: string;  // UUID, sous forme de chaîne
     niveauNonConformiteId?: string;  // UUID, sous forme de chaîne
-    actionId?: string;  // UUID, sous forme de chaîne
-    typeNonConformiteId?: string;  // UUID, sous forme de chaîne
-    typeProcessusId?: string;  // UUID, sous forme de chaîne
-    delaisMiseOeuvre?: string;
-    etatTraitement?: string;  // Enum ou classe de type Etat
-    observationsRq?: string;
+    actionId?: string;  // UUID, sous forme de chaîne  // UUID, sous forme de chaîne  // UUID, sous forme de chaîne
+    delaisMiseOeuvre?: string;  // Enum ou classe de type Etat
+    observationRq?: string;
     niveauNonConformiteLibelle?: string;
-    typeNonConformiteLibelle?: string;
     dateObservationsRq?: string;
     observationsCloture?: string;
     dateVerification?: string;
@@ -44,6 +51,8 @@ export interface NonConformite extends UserInfos {
 export interface NiveauNonConformite extends UserInfos {
     id: string;
     libelle: string;
+    score:number;
+    couleur:string;
     description: string;
 }
 

@@ -32,7 +32,7 @@
                                     Décrivez ici en détail le problème constaté, les circonstances de sa découverte et les éléments permettant de bien comprendre la nature de la non-conformité. Soyez le plus précis possible pour faciliter le traitement.
                                 </div>
                             </p-popover>
-                            <textarea class="w-full" rows="5"cols="30" pTextarea [(ngModel)]="nonConformite.justification" [autoResize]="true" placeholder="Veuillez détailler le problème, les circonstances de son apparition et toute information utile pour l'analyse de la cause."></textarea>
+                            <textarea class="w-full" rows="5"cols="30" pTextarea [(ngModel)]="nonConformite.description" [autoResize]="true" placeholder="Veuillez détailler le problème, les circonstances de son apparition et toute information utile pour l'analyse de la cause."></textarea>
                         </div>
                         <!-- Ligne 2 : Niveau Non-Conformité -->
                         <div class="flex flex-wrap gap-4 mt-4">
@@ -76,7 +76,7 @@
                                     Si une action corrective a déjà été entreprise ou si le problème a été résolu de manière immédiate, décrivez ici les étapes suivies et les résultats obtenus. Laissez vide si aucune action n'a encore été menée.
                                 </div>
                             </p-popover>
-                            <textarea class="w-full" rows="5"cols="30" pTextarea [(ngModel)]="nonConformite.actionDsc" [autoResize]="true" placeholder="Décrivez les actions correctives mises en œuvre pour résoudre la non-conformité et les résultats obtenus."></textarea>
+                            <textarea class="w-full" rows="5"cols="30" pTextarea [(ngModel)]="nonConformite.actionImmediate" [autoResize]="true" placeholder="Décrivez les actions correctives mises en œuvre pour résoudre la non-conformité et les résultats obtenus."></textarea>
                         </div>
                         
                     </div>

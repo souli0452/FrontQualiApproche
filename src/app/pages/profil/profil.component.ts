@@ -9,7 +9,8 @@ import { AuthService } from '../../services/auth-services/auth.service';
 import { currentUserState } from '../../services/auth-services/auth.state';
 import { UserResponse } from '../../models/auth.model';
 import { getCurrentUserStructure } from '../../utils/global/global-utils';
-import { Structure } from '../parametrages/structure/structure-config/structure';
+import { Structure } from '../parametrages/structure/structure.model';
+import { HeaderPage } from '../../shared/header-page/header-page';
 
 /** Même forme que celle qu'accepte le back : indicatif, espaces et ponctuation usuelle. */
 const FORME_TELEPHONE = /^[+()./\-\s0-9]{6,25}$/;
@@ -27,7 +28,7 @@ const LONGUEUR_MINIMALE = 8;
 @Component({
     selector: 'app-profil',
     standalone: true,
-    imports: [CommonModule, NgPrimeModule],
+    imports: [CommonModule, NgPrimeModule, HeaderPage],
     providers: [MessageService],
     templateUrl: './profil.component.html',
     styleUrl: './profil.component.scss'
@@ -49,6 +50,11 @@ export class ProfilComponent implements OnInit, OnDestroy {
         private authService: AuthService,
         private messageService: MessageService
     ) {}
+
+    breadcrumbs = [
+        { label: 'Tableau de bord', url: '' },
+        { label: 'Mon profil', url: '/profil' },
+    ];
 
     ngOnInit() {
         this.construireFormulaires();

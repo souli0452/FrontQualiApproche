@@ -164,7 +164,7 @@ export class NcTableComponent implements OnInit {
         event.stopPropagation();
         this.confirmationService.confirm({
             target: event.target as EventTarget,
-            message: `Voulez-vous archiver la non conformité N° ${rowdata.numeroReference} ? `,
+            message: `Voulez-vous archiver la non conformité N° ${rowdata.numeroDeReference} ? `,
             key: this.confirmKey,
             accept: () => {
                 this.archive.emit(rowdata);
@@ -180,7 +180,7 @@ export class NcTableComponent implements OnInit {
         event.stopPropagation();
         this.confirmationService.confirm({
             target: event.target as EventTarget,
-            message: `Voulez-vous supprimer la non conformité N° ${rowdata.numeroReference} ? `,
+            message: `Voulez-vous supprimer la non conformité N° ${rowdata.numeroDeReference} ? `,
             key: this.confirmKey,
             accept: () => {
                 this.delete.emit(rowdata);
@@ -196,7 +196,7 @@ export class NcTableComponent implements OnInit {
         event.stopPropagation();
         this.confirmationService.confirm({
             target: event.target as EventTarget,
-            message: `Voulez-vous publier la non conformité N° ${rowdata.numeroReference} ? `,
+            message: `Voulez-vous publier la non conformité N° ${rowdata.numeroDeReference} ? `,
             key: this.confirmKey,
             accept: () => {
                 this.publish.emit(rowdata);

@@ -5,11 +5,10 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
 import { NcStatsCardComponent } from '../../../components/non-conformite/nc-stats-card/nc-stats-card';
 import { getCurrentUserStructure } from '../../../utils/global/global-utils';
 import { AuthService } from '../../../services/auth-services/auth.service';
-import { Subject, takeUntil, forkJoin, of } from 'rxjs';
+import { Subject, takeUntil, forkJoin, of, debounceTime } from 'rxjs';
 import { AlerteTraitement } from '../../../components/non-conformite/alerte-traitement/alerte-traitement';
 import { FeaturesService } from '../../../services/feature-service';
 import { RoleService } from '../../../services/non-conformite/role.service';
-import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
 import { buildDashboardStats } from '../../../utils/non-conformite/nc-utils';
 import { DASHBOARD_CARDS_AGENT, DASHBOARD_CARDS_CHEF, DASHBOARD_CARDS_RQ } from '../../../components/non-conformite/dashboard-card/dashboard-card';
@@ -20,6 +19,7 @@ import { AuthData } from '../../../models/auth.model';
 import { TraitementTableComponent } from '../../../components/non-conformite/table-traitement/traitement-table';
 import { EtapeTraitement } from '../../../enums/enums';
 import { NcFilter, NcFilterBarComponent } from '../../../components/non-conformite/nc-filter-bar/nc-filter-bar';
+import { StructureService } from '../../parametrages/structure/structure.service';
 
 @Component({
     selector: 'app-vue-ensemble',
@@ -87,6 +87,14 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     nonConformiteClotureeData: any[] = [];
     soumissionData: any[] = [];
     countSoumission: number = 0;
+
+    // 🛡️ GARDE DE CHARGEMENT — empêche les appels concurrents à loadUserNcData().
+    // Problème observé : reaload$ émettait plusieurs fois après une action workflow
+    // (validation() L70 + hideDialog() L82 + circuitAvance() L244 dans traitement-table),
+    // à des intervalles parfois supérieurs au debounceTime(300ms), ce qui déclenchait
+    // plusieurs loadUserNcData() simultanés et produisait N affichages du même bloc NC.
+    // Solution : si un chargement est déjà en cours, on ignore les appels suivants.
+    private ncDataLoading = false;
 
     stats: any = {
         total: 0,
@@ -200,7 +208,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
             if (process && process.length > 0) {
                 const selectedIds = process.map((p: any) => p.id);
                 // process emetteur can be typeProcessusId or process.id etc.
-                if (!selectedIds.includes(item.typeProcessusId) && !selectedIds.includes(item.nonConformite?.typeProcessusId)) {
+                if (!selectedIds.includes(item.categorieProcessusId) && !selectedIds.includes(item.nonConformite?.categorieProcessusId)) {
                     isValid = false;
                 }
             }
@@ -214,7 +222,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
 
             if (origine && origine.length > 0) {
                 const selectedIds = origine.map((o: any) => o.id);
-                if (!selectedIds.includes(item.typeNonConformiteId) && !selectedIds.includes(item.nonConformite?.typeNonConformiteId)) {
+                if (!selectedIds.includes(item.sourceDeNonConformiteId) && !selectedIds.includes(item.nonConformite?.sourceDeNonConformiteId)) {
                     isValid = false;
                 }
             }
@@ -235,7 +243,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         this.userStructure = getCurrentUserStructure();
         
         this.colsDashboard = [
-            { field: 'numeroReference', header: 'N° Ref', type: 'string', width: '200px' },
+            { field: 'numeroReference', header: 'N° Ref', type: 'string', width: '150px' },
             { 
                 field: 'structureSoumissionLibelle', 
                 header: 'Processus Emetteur', 
@@ -247,20 +255,49 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
             { field: 'niveauNonConformiteLibelle', header: 'Gravité', type: 'badge', width: '150px' }
         ];
 
-        // Charger les données initialement
+        // ─── RESPONSABILITÉ 1 : KPIs / Stats (agrégés depuis la base, par rôle) ───────────
+        // Le backend dispose d'un endpoint dédié par rôle qui calcule les statistiques
+        // directement en base : l'Agent voit ses NC, le Pilote celles de sa structure,
+        // le RQ voit l'ensemble du système. Ce sont des données résumées, indépendantes
+        // de la liste des NC à traiter.
         this.loadDashboardData();
-        
+
+        // ─── RESPONSABILITÉ 2 : Tableau des NC à traiter (piloté par le workflow) ─────────
+        // Depuis la mise en place du moteur workflow, c'est le backend qui décide quelles NC
+        // chaque utilisateur doit traiter (nonConformiteATraiter). Ce chargement est
+        // INDÉPENDANT des KPIs : les deux coexistent sans se déclencher mutuellement.
+        //
+        // ❌ ANCIENNE ARCHITECTURE (commentée) — loadUserNcData() était appelé depuis updateKpis()
+        // ce qui créait un couplage fort et des appels en cascade :
+        //   loadDashboardData() → updateKpis() → loadUserNcData() [cascade non désirée]
+        // ✅ NOUVELLE ARCHITECTURE — chargement direct et indépendant ici :
+        this.loadUserNcData();
+
         if (this.roleService.isAdmin || this.roleService.isRQ) {
             this.loadStructures();
         }
 
-        // On écoute les demandes de rafraîchissement (comme après une suppression)
+        // ─── RAFRAÎCHISSEMENT après action workflow ──────────────────────────────────────
+        // Après toute action (validation, rejet, clôture...), reaload$ est émis.
+        // On rafraîchit les DEUX responsabilités pour maintenir la cohérence :
+        //   - Les KPIs (compteurs peuvent avoir changé)
+        //   - Le tableau des NC à traiter (la liste évolue après chaque action)
+        //
+        // debounceTime(300) : plusieurs composants appellent onReloadRequested() quasi-simultanément
+        // après une action (nc-validation-pilote.ts x2, traitement-table.ts x1, etc.).
+        // Sans debounce, chaque émission déclencherait un rechargement complet — d'où les
+        // N affichages observés. On attend la fin de la "vague" d'émissions avant d'agir.
         this.featureService.reaload$
-            .pipe(takeUntil(this.destroy$))
-            .subscribe(reload => {
-                    // On recharge les données silencieusement !
-                    this.loadUserNcData(); 
-                });
+            .pipe(
+                debounceTime(300),
+                takeUntil(this.destroy$)
+            )
+            .subscribe(() => {
+                // ✅ Rafraîchissement des KPIs : les compteurs ont pu changer suite à l'action
+                this.loadDashboardData();
+                // ✅ Rafraîchissement du tableau : la liste des NC à traiter a évolué
+                this.loadUserNcData();
+            });
             
             this.loadEvolutionStats();
             this.initChart();
@@ -468,12 +505,24 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     }
 
     private loadUserNcData() {
+    // 🛡️ GARDE : si un chargement est déjà en cours, on ignore cet appel.
+    // Raison : reaload$ peut émettre plusieurs fois à des intervalles supérieurs
+    // au debounceTime (ex: émission immédiate après HTTP + émission différée après
+    // animation de fermeture du dialog). Sans ce garde, chaque émission aboutirait
+    // à un rechargement complet indépendant, provoquant N affichages du tableau NC.
+    if (this.ncDataLoading) {
+        console.log('[VueEnsemble] loadUserNcData() ignoré — chargement déjà en cours');
+        return;
+    }
+
     const user = currentUserState.value as AuthData | any;
 
     if (!user || !user?.userId) {
         this.resetUserDataState();
         return;
     }
+
+    this.ncDataLoading = true; // 🔒 Verrouillage
 
     this.facade.loadUserNcData(user, this.roleService, this.userStructure)
         .pipe(takeUntil(this.destroy$))
@@ -512,9 +561,9 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
                 const allNcs = data.allUserNcs || [];
                 this.stats = {
                     total: allNcs.length,
-                    enCours: allNcs.filter((nc: any) => nc.etatTraitement !== 'CLOTURE' && nc.status !== 'DRAFT').length,
-                    published: allNcs.filter((nc: any) => nc.etatTraitement === 'RECEPTION').length,
-                    cloturees: allNcs.filter((nc: any) => nc.etatTraitement === 'CLOTURE').length
+                    enCours: allNcs.filter((nc: any) => nc.etatDeTraitement !== 'CLOTURE' && nc.status !== 'DRAFT').length,
+                    published: allNcs.filter((nc: any) => nc.etatDeTraitement === 'RECEPTION').length,
+                    cloturees: allNcs.filter((nc: any) => nc.etatDeTraitement === 'CLOTURE').length
                 };
             }
 
@@ -568,10 +617,13 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
                 nonTraiter: this.countNonTraiter,
                 soumission: this.countSoumission
             });
+
+            this.ncDataLoading = false; // 🔓 Déverrouillage après succès
         },
         error: (err) => {
             console.error(err);
             this.resetUserDataState();
+            this.ncDataLoading = false; // 🔓 Déverrouillage même en cas d'erreur
         }
         });
     }
@@ -612,7 +664,13 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         // Pour les graphiques
         this.filteredNc = this.dashboardData.nonConformites || this.dashboardData.content || this.dashboardData.ncs || [];
 
-        this.loadUserNcData();
+        // ❌ ANCIENNE ARCHITECTURE — Appel commenté car il créait un couplage non désiré.
+        // updateKpis() est un callback de loadDashboardData() : appeler loadUserNcData() ici
+        // mélangeait deux responsabilités distinctes (KPIs vs. liste NC à traiter) et
+        // provoquait des appels en cascade (loadDashboardData → updateKpis → loadUserNcData).
+        // ✅ NOUVELLE ARCHITECTURE — loadUserNcData() est appelé directement dans ngOnInit(),
+        // en parallèle de loadDashboardData(), de façon indépendante.
+        // this.loadUserNcData();
     }
 
     ngOnDestroy() {

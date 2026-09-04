@@ -8,60 +8,42 @@
 
         <!-- 2. Zone Input avec FloatLabel (Obligatoire) -->
         
+        <!-- Type Section (Titre de groupe) -->
+        <ng-container *ngIf="col.type === 'section'">
+            <div class="mt-1 w-full">
+                <h6 class="text-lg font-semibold mb-1 text-surface-900 dark:text-surface-0 border-b border-surface-200 pb-2">{{ col.header }}</h6>
+                <p *ngIf="col.helpText" class="text-sm text-surface-500 mt-1">{{ col.helpText }}</p>
+            </div>
+        </ng-container>
+
         <!-- Type String -->
         <ng-container *ngIf="col.type === 'string'">
-            <div class="mt-2 w-full">
-                <p-floatlabel variant="on" class="w-full block" style="width: 100%;">
-                    <input pInputText
-                           type="text"
-                           [readonly]="col.readonly"
-                           [placeholder]="col.placeholder || ''"
-                           class="w-full"
-                           style="width: 100%;"
-                           [formControlName]="col.field"
-                           [id]="col.field"
-                           autocomplete="off"
-                           [attr.aria-describedby]="col.field + '-help'"
-                           [name]="col.field" />
-                    <label [for]="col.field">
-                        {{ col.header }}
-                        <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
-                    </label>
-                </p-floatlabel>
+            <div class="flex flex-col gap-2 font-normal mb-1">
+                <label [for]="col.field" class="font-semibold" [ngClass]="{'text-red-500': form.get(col.field!)?.invalid && form.get(col.field!)?.touched}">
+                    {{ col.header }} <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                </label>
+                <input 
+                    pInputText [id]="col.field"
+                    [formControlName]="col.field"
+                    [placeholder]="col.placeholder || ''"
+                    autocomplete="off"
+                />
             </div>
         </ng-container>
 
         <!-- Type Editeur (Garde son style propre) -->
         <ng-container *ngIf="col.type === 'text'">
-            <div class="flex flex-col gap-2">
-                <label [for]="col.field" class="block text-sm text-gray-600">
-                    {{ col.header }}
-                    <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+            <div class="flex flex-col gap-2 font-normal mb-1">
+                <label [for]="col.field" class="font-semibold"  [ngClass]="{'text-red-500': form.get(col.field!)?.invalid && form.get(col.field!)?.touched}">
+                    {{ col.header }} <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
                 </label>
-                <p-editor [formats]="[]" [formControlName]="col.field" 
-                          [id]="col.field" 
-                          [style]="{ height: '70px' }">
-                    <ng-template pTemplate="header">
-                        <span class="ql-formats">
-                            <select class="ql-size"></select>
-                            <select class="ql-font"></select>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-bold" aria-label="Bold"></button>
-                            <button class="ql-italic" aria-label="Italic"></button>
-                            <button class="ql-underline" aria-label="Underline"></button>
-                        </span>
-                        <span class="ql-formats">
-                            <select class="ql-color"></select>
-                            <select class="ql-background"></select>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-list" value="ordered" aria-label="Ordered List"></button>
-                            <button class="ql-list" value="bullet" aria-label="Bullet List"></button>
-                            <select class="ql-align"></select>
-                        </span>
-                    </ng-template>
-                </p-editor>
+                <textarea 
+                    pTextarea 
+                    [formControlName]="col.field"
+                    [placeholder]="col.placeholder || ''"
+                    autocomplete="off"
+                    rows="3">
+                </textarea>
             </div>
         </ng-container>
 
@@ -81,7 +63,7 @@
                         [id]="col.field"
                         [name]="col.field">
                     </p-inputNumber>
-                    <label [for]="col.field">
+                    <label [for]="col.field" class="font-semibold" >
                         {{ col.header }}
                         <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
                     </label>
@@ -91,9 +73,11 @@
 
         <!-- Type Dropdown -->
         <ng-container *ngIf="col.type === 'dropdown'">
-            <div class="mt-2">
-                <p-floatlabel variant="on" class="w-full">
-                    <p-multiSelect
+            <div class="flex flex-col gap-2 font-normal mb-1">
+                    <label [for]="col.field" class="font-semibold"  [ngClass]="{'text-red-500': form.get(col.field!)?.invalid && form.get(col.field!)?.touched}">
+                        {{ col.header }} <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                    </label>
+                    <p-select
                         [options]="dropDownObject[col.field]"
                         [filter]="true"
                         appendTo="body"
@@ -105,22 +89,15 @@
                         styleClass="w-full"
                         [id]="col.field"
                         [name]="col.field"
-                        [selectionLimit]="1"
                         [placeholder]="col.placeholder || ''">
-                    </p-multiSelect>
-                    <label [for]="col.field">
-                        {{ col.header }}
-                        <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
-                    </label>
-                </p-floatlabel>
+                    </p-select>
             </div>
         </ng-container>
-
-        <!-- Type Checkbox -->
+        <!-- Type Checkbox (Toggle Switch) -->
         <ng-container *ngIf="col.type === 'boolean'">
-            <div class="flex items-center p-2">
-                <p-checkbox [binary]="true" [formControlName]="col.field" [id]="col.field"></p-checkbox>
-                <label [for]="col.field" class="ml-2 text-gray-700">
+            <div class="flex items-center gap-3 font-normal mb-1" style="min-height: 44px;">
+                <p-toggleswitch [formControlName]="col.field!" [id]="col.field!"></p-toggleswitch>
+                <label [for]="col.field" class="text-surface-900 font-semibold cursor-pointer">
                     {{ col.header }}
                     <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
                 </label>
@@ -129,9 +106,11 @@
 
         <!-- Type MultiSelect -->
         <ng-container *ngIf="col.type === 'multiselect'">
-            <div class="mt-2">
-                <p-floatlabel variant="on" class="w-full">
-                    <p-multiSelect
+            <div class="flex flex-col gap-2 font-normal mb-1">
+                <label [for]="col.field" class="font-semibold"  [ngClass]="{'text-red-500': form.get(col.field!)?.invalid && form.get(col.field!)?.touched}">
+                    {{ col.header }} <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                </label>
+                <p-multiSelect
                         [options]="multiSelectObject[col.field]"
                         [filter]="true"
                         appendTo="body"
@@ -146,16 +125,55 @@
                         display="chip"
                         [placeholder]="col.placeholder || ''">
                     </p-multiSelect>
-                    <label [for]="col.field">
-                        {{ col.header }}
-                        <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
-                    </label>
-                </p-floatlabel>
             </div>
         </ng-container>
 
+        <!-- Type ColorPicker -->
+        <ng-container *ngIf="col.type === 'color'">
+            <div class="bg-colorcheck">
+                <div class="flex flex-col gap-2 font-normal mb-1">
+                    <label [for]="col.field" class="font-semibold"  [ngClass]="{'text-red-500': form.get(col.field!)?.invalid && form.get(col.field!)?.touched}">
+                        {{ col.header }} <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                    </label>
+                    <div class="flex items-center gap-3">
+                        <p-colorpicker appendTo="body" [formControlName]="col.field" [id]="col.field" inputId="cp-hex"></p-colorpicker>
+                        <span class="text-surface-600 font-medium font-mono border-1 border-surface-200 border-round px-2 py-1 bg-surface-50 uppercase">{{ form.get(col.field!)?.value || '#ff0000' }}</span>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+
+        <!-- Type Knob -->
+        <ng-container *ngIf="col.type === 'knob'">
+            <div class="flex flex-col gap-2 font-normal mb-1">
+                <label [for]="col.field" class="font-semibold"  [ngClass]="{'text-red-500': form.get(col.field!)?.invalid && form.get(col.field!)?.touched}">
+                    {{ col.header }} <span *ngIf="col.required" class="text-red-500 ml-1">*</span>
+                </label>
+                <div class="flex flex-col gap-3">
+                    <p-inputNumber 
+                        [formControlName]="col.field" 
+                        [showButtons]="true" 
+                        buttonLayout="horizontal" 
+                        spinnerMode="horizontal" 
+                        [id]="col.field" 
+                        [min]="col.min ?? 0" 
+                        [max]="col.max ?? 10" 
+                        [step]="col.step ?? 1"
+                        [inputStyle]="{ width: '4rem', 'text-align': 'center' }">
+                        <ng-template #incrementbuttonicon>
+                            <span class="pi pi-plus"></span>
+                        </ng-template>
+                        <ng-template #decrementbuttonicon>
+                            <span class="pi pi-minus"></span>
+                        </ng-template>
+                    </p-inputNumber>
+                </div>
+            </div>
+        </ng-container>
+
+
         <!-- 3. Texte d'aide Inférieur (Optionnel) -->
-        <small *ngIf="col.helpText" [id]="col.field + '-help'" class="block mt-1 text-muted-color">
+        <small *ngIf="col.helpText" [id]="col.field + '-help'" class="block mt-1 text-muted-color block-helper-text break-words whitespace-normal leading-tight">
             {{ col.helpText }}
         </small>
 

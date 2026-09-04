@@ -1,3 +1,162 @@
-.text-center{
-  text-align: center !important;
+.text-center {
+    text-align: center !important;
+}
+
+:host {
+    display: block;
+    width: 100%;
+}
+
+.tableau-card {
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    background-color: var(--surface-card, #ffffff);
+}
+
+.search-pill-input {
+    border-radius: 9999px !important;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+
+    &:focus {
+        border-color: #0000002e !important;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0) !important;
+    }
+}
+
+:host ::ng-deep {
+    .p-datatable {
+        .p-datatable-thead > tr > th {
+            background-color: var(--surface-card, #ffffff) !important;
+            color: var(--text-color, #64748b) !important;
+            font-size: 0.75rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.05em !important;
+            padding: 0.875rem 1rem !important;
+            border-top: none !important;
+            border-left: none !important;
+            border-right: none !important;
+            font-weight: 600 !important;
+            transition: background-color 0.2s;
+
+            &:hover {
+                background-color: var(--surface-hover, #f8fafc) !important;
+            }
+
+            .p-icon {
+                height: 10px !important;
+                width: 10px !important;
+            }
+        }
+
+        .p-datatable-tbody > tr {
+            background-color: var(--surface-card, #ffffff) !important;
+            color: var(--text-color, #334155) !important;
+            transition: background-color 0.2s;
+
+            > td {
+                padding: 0.875rem 1rem !important;
+                border-bottom: 1px solid var(--surface-border, #e2e8f0) !important;
+                border-top: none !important;
+                border-left: none !important;
+                border-right: none !important;
+                white-space: normal !important;
+                overflow-wrap: break-word !important;
+                word-break: normal !important;
+            }
+        }
+    }
+
+    .tag-pill {
+        border-radius: 9999px !important;
+        padding: 0.35rem 0.85rem !important;
+        font-weight: 600 !important;
+        white-space: nowrap !important;
+        display: inline-flex !important;
+        align-items: center !important;
+
+        .p-tag-value {
+            white-space: nowrap !important;
+        }
+    }
+
+}
+
+.bg-blue {
+    background: #0084ca1f !important;
+}
+
+.footer-bar {
+    background-color: #0084ca1f;
+}
+
+.paginator-wrapper {
+    ::ng-deep .p-paginator {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+
+        .p-paginator-pages .p-paginator-page {
+            border-radius: 9999px !important;
+            min-width: 2rem !important;
+            height: 2rem !important;
+            margin: 0 0.125rem !important;
+            font-size: 0.875rem !important;
+
+            &.p-highlight {
+                background: #10b981 !important;
+                color: #ffffff !important;
+            }
+
+            &.p-paginator-page-selected {
+                background: var(--secondary-color, #0084ca) !important;
+                color: #ffffff !important;
+            }
+        }
+
+        .p-paginator-first,
+        .p-paginator-prev,
+        .p-paginator-next,
+        .p-paginator-last {
+            border-radius: 9999px !important;
+            min-width: 2rem !important;
+            height: 2rem !important;
+            background: white !important;
+            border: 1px solid var(--p-surface-200, #e4e4e7) !important;
+        }
+    }
+}
+
+// Mode sombre
+:root[class*='app-dark'],
+.app-dark,
+.dark {
+    .tableau-card {
+        background-color: var(--p-surface-900, #18181b) !important;
+        border-color: var(--p-surface-800, #27272a) !important;
+    }
+
+    .top-bar, .footer-bar {
+        background-color: var(--p-surface-900, #18181b) !important;
+        border-color: var(--p-surface-800, #27272a) !important;
+    }
+
+    .search-pill-input {
+        background-color: var(--p-surface-800, #27272a) !important;
+        color: var(--p-surface-0, #ffffff) !important;
+        border-color: var(--p-surface-700, #3f3f46) !important;
+    }
+
+    .paginator-wrapper {
+        ::ng-deep .p-paginator {
+            .p-paginator-first,
+            .p-paginator-prev,
+            .p-paginator-next,
+            .p-paginator-last {
+                background: var(--p-surface-800, #27272a) !important;
+                border-color: var(--p-surface-700, #3f3f46) !important;
+                color: var(--p-surface-200, #e4e4e7) !important;
+            }
+        }
+    }
 }

@@ -6,6 +6,7 @@ import { NgPrimeModule } from '../../../prime-ng.module';
 import { ModuleAbonnement } from '../../enums/enums';
 import { EtatLicence, LicenceService } from '../../services/licence.service';
 import { hasAnyPermission } from '../../utils/auth/auth-utils';
+import { HeaderPage } from '../../shared/header-page/header-page';
 
 /** Un module de l'abonnement, et son sort sous la licence en cours. */
 interface LigneModule {
@@ -30,14 +31,18 @@ interface LigneModule {
 @Component({
     selector: 'app-licence',
     standalone: true,
-    imports: [CommonModule, NgPrimeModule],
+    imports: [CommonModule, NgPrimeModule, HeaderPage],
     template: `
+        <app-header-page 
+            [title]="'Licence de l\\'installation'" 
+            [subtitle]="'Consultez les modules inclus dans votre abonnement et leur date de validité.'"
+        />
         <div class="card">
             <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
                 <div>
-                    <h5 class="m-0 font-bold text-xl">Licence de l'installation</h5>
-                    <p class="text-surface-500 mt-1 mb-0">
-                        Ce que votre abonnement ouvre, et jusqu'à quand.
+                    <h5 class="m-0 font-bold text-xl">Statut de votre abonnement</h5>
+                    <p class="text-surface-500 mt-1 mb-0 leading-normal">
+                        Consultez ici les modules accessibles et la date de fin de votre validité actuelle. À l'échéance, une nouvelle licence vous sera accordée pour assurer la continuité de vos activités sans interruption.
                     </p>
                 </div>
                 @if (peutInstaller) {

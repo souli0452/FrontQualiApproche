@@ -5,16 +5,28 @@
      de l'application — étapes, actions, champs de saisie — y défilait dans un cadre de 62 rem, et
      la saisie n'avait pas d'adresse. La page en a une (`circuits/edition/:id`, `nouveau` à la
      création) : elle se recharge et se partage. -->
-<div class="flex items-center justify-between mb-3">
+<div class="flex card items-center justify-between mb-0">
     <div class="flex items-center gap-2">
-        <p-button icon="pi pi-arrow-left" [text]="true" [rounded]="true"
-                  pTooltip="Retour à la liste" (onClick)="annuler()"></p-button>
-        <h2 class="text-lg font-semibold m-0">{{ modeEdition ? 'Modifier le circuit' : 'Nouveau circuit' }}</h2>
+        <p-button 
+            icon="pi pi-arrow-left" 
+            size="small" 
+            variant="outlined" 
+            severity="contrast"
+            pTooltip="Retour à la liste" 
+            (onClick)="annuler()">
+        </p-button>
+        <h2 class="text-sm font-semibold m-0">{{ modeEdition ? 'Modifier le circuit' : 'Nouveau circuit' }}</h2>
     </div>
     <!-- Le guide reste atteignable pendant la saisie : c'est là qu'on hésite, et il s'ouvre
          au-dessus de la page — rien à quitter, donc rien à ressaisir. -->
-    <p-button label="Guide de configuration" icon="pi pi-question-circle" size="small"
-              [text]="true" (onClick)="guideOuvert = true"></p-button>
+    <p-button 
+        label="Guide de configuration" 
+        icon="pi pi-question-circle"
+        size="small" 
+        [text]="true" 
+        severity="info"
+            (onClick)="guideOuvert = true">
+        </p-button>
 </div>
 
 <app-workflow-configuration-guide [(visible)]="guideOuvert"></app-workflow-configuration-guide>
@@ -24,409 +36,601 @@
         <i class="pi pi-spin pi-spinner text-2xl text-surface-400"></i>
     </div>
 } @else {
-<div class="card p-fluid">
-    <form [formGroup]="formulaire" class="flex flex-col gap-5">
 
-        <!-- Identité du circuit -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium">Nom du circuit <span class="text-red-500">*</span></label>
-                <input pInputText formControlName="nom" placeholder="Validation documentaire standard" />
-            </div>
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium">Type de ressource <span class="text-red-500">*</span></label>
-                <p-select formControlName="resourceType" [options]="typesRessource" optionLabel="label"
-                          optionValue="value" placeholder="Choisir un type"
-                          [filter]="true" appendTo="body"></p-select>
-            </div>
-            <div class="flex flex-col gap-1 md:col-span-2">
-                <label class="text-sm font-medium">Description</label>
-                <input pInputText formControlName="description" placeholder="À quoi sert ce circuit ?" />
-            </div>
-        </div>
+    <div class="flex flex-col lg:flex-row items-start gap-6 mt-4 !overflow-visible p-2 lg:pr-5">
+        <div class="p-fluid w-full lg:w-8/12 xl:w-8/12 bg-surface-100 dark:bg-surface-900 p-4 rounded-xl">
+            <form [formGroup]="formulaire" class="flex flex-col gap-5">
 
-        <!-- Réservation du circuit à un type de document. Deux axes distincts et non deux niveaux
-             du même : la famille dit à quels dossiers le circuit s'applique et sert d'aiguillage de
-             retour vers le module métier ; la réservation restreint ce circuit à une catégorie de
-             ces dossiers. Vide, le circuit est celui par défaut de sa famille. -->
-        @if (formulaire.get('resourceType')?.value === 'DOCUMENT') {
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium">Réservé à un type de document</label>
-                <app-select-input formControlName="cibleId"
-                                  optionLabel="libelle" optionValue="id"
-                                  placeholder="Aucun — circuit par défaut des documents"
-                                  [lazy]="true" [loadOptions]="qmsService.chargerOptionsTypes"
-                                  [selectedOptions]="typeRetenu()"></app-select-input>
-                <small class="text-surface-400 text-[11px]">
-                    Les documents de ce type suivront ce circuit. Les autres suivent le circuit par
-                    défaut — celui qui ne réserve rien. Un type ne peut suivre qu'un circuit à la
-                    fois : le serveur refuse le second.
-                </small>
-            </div>
-        }
+                <!-- Identité du circuit -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1">
+                        <label class="font-medium">Nom du circuit <span class="text-red-500">*</span></label>
+                        <input pInputText formControlName="nom" placeholder="Validation documentaire standard" />
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="font-medium">Type de ressource <span class="text-red-500">*</span></label>
+                        <p-select formControlName="resourceType" [options]="typesRessource" optionLabel="label"
+                                optionValue="value" placeholder="Choisir un type"
+                                [filter]="true" appendTo="body"></p-select>
+                    </div>
+                    <div class="flex flex-col gap-1 md:col-span-2">
+                        <label class="font-medium">Description</label>
+                        <textarea rows="2" pTextarea formControlName="description" placeholder="À quoi sert ce circuit ?"></textarea>
+                    </div>
+                </div>
 
-        <div class="flex items-start gap-3 rounded-lg border border-surface-200 bg-surface-50 p-3">
-            <p-toggleswitch formControlName="actif"></p-toggleswitch>
-            <div class="text-sm">
-                <div class="font-medium">Circuit actif</div>
-                <p class="text-surface-500 text-xs m-0">
-                    Un circuit désactivé n'est plus ouvrable : le moteur le refuse, même si un type de
-                    document le désigne. Plusieurs circuits d'une même famille peuvent rester actifs —
-                    les dossiers qui n'en désignent aucun prennent le plus ancien.
-                </p>
-            </div>
-        </div>
+                <!-- Réservation du circuit à un type de document. Deux axes distincts et non deux niveaux
+                    du même : la famille dit à quels dossiers le circuit s'applique et sert d'aiguillage de
+                    retour vers le module métier ; la réservation restreint ce circuit à une catégorie de
+                    ces dossiers. Vide, le circuit est celui par défaut de sa famille. -->
+                @if (formulaire.get('resourceType')?.value === 'DOCUMENT') {
+                    <div class="flex flex-col gap-1">
+                        <label class="text-sm font-medium">Réservé à un type de document</label>
+                        <app-select-input formControlName="cibleId"
+                                        optionLabel="libelle" optionValue="id"
+                                        placeholder="Aucun — circuit par défaut des documents"
+                                        [lazy]="true" [loadOptions]="qmsService.chargerOptionsTypes"
+                                        [selectedOptions]="typeRetenu()"></app-select-input>
+                        <small class="text-surface-400 text-[11px]">
+                            Les documents de ce type suivront ce circuit. Les autres suivent le circuit par
+                            défaut — celui qui ne réserve rien. Un type ne peut suivre qu'un circuit à la
+                            fois : le serveur refuse le second.
+                        </small>
+                    </div>
+                }
 
-        <!-- Étapes -->
-        <div>
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="font-semibold text-base m-0">Étapes du circuit</h3>
-                <p-button label="Ajouter une étape" icon="pi pi-plus" size="small" [text]="true"
-                          (onClick)="ajouterEtape()"></p-button>
-            </div>
+                <div class="flex items-center gap-3 rounded-lg border border-surface-200 bg-surface-50 p-3">
+                    <p-toggleswitch formControlName="actif"></p-toggleswitch>
+                    <div class="text-sm">
+                        <div class="font-medium dark:text-black">Circuit actif</div>
+                        <p class="text-surface-500 text-xs m-0">
+                            Un circuit désactivé n'est plus ouvrable : le moteur le refuse, même si un type de
+                            document le désigne. Plusieurs circuits d'une même famille peuvent rester actifs —
+                            les dossiers qui n'en désignent aucun prennent le plus ancien.
+                        </p>
+                    </div>
+                </div>
 
-            <div formArrayName="steps" class="flex flex-col gap-3">
-                @for (etape of etapes.controls; track etape; let i = $index; let premier = $first; let dernier = $last) {
-                    <div [formGroupName]="i" class="rounded-lg border border-surface-200 overflow-hidden">
+                <!-- Étapes -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-base m-0">Étapes du circuit</h3>
+                        <p-button 
+                            label="Ajouter une étape" 
+                            severity="info" 
+                            icon="pi pi-plus" 
+                            size="small" 
+                            [text]="true"
+                            (onClick)="ajouterEtape()">
+                        </p-button>
+                    </div>
 
-                        <!-- En-tête d'étape -->
-                        <div class="flex items-center gap-2 bg-surface-50 px-3 py-2 border-b border-surface-200">
-                            <span class="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-contrast text-xs font-bold">
-                                {{ i + 1 }}
-                            </span>
-                            <span class="font-medium text-sm flex-1">
-                                {{ etape.get('nomEtape')?.value || 'Nouvelle étape' }}
-                            </span>
-                            @if (etape.get('code')?.value) {
-                                <!-- Le code est l'identité fonctionnelle de l'étape : les transitions le
-                                     désignent et les dossiers en cours s'y rapportent. Il ne se modifie pas. -->
-                                <p-tag severity="secondary" [value]="etape.get('code')?.value"
-                                       pTooltip="Code fonctionnel, fixé à la création et non modifiable"></p-tag>
-                            }
-                            <p-button icon="pi pi-arrow-up" [text]="true" [rounded]="true" size="small"
-                                      [disabled]="premier" pTooltip="Monter" (onClick)="deplacerEtape(i, -1)"></p-button>
-                            <p-button icon="pi pi-arrow-down" [text]="true" [rounded]="true" size="small"
-                                      [disabled]="dernier" pTooltip="Descendre" (onClick)="deplacerEtape(i, 1)"></p-button>
-                            <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" size="small"
-                                      pTooltip="Supprimer l'étape" (onClick)="supprimerEtape(i)"></p-button>
-                        </div>
+                    <div formArrayName="steps" class="flex flex-col gap-3">
+                        @for (etape of etapes.controls; track etape; let i = $index; let premier = $first; let dernier = $last) {
+                            <div [formGroupName]="i" class="rounded-lg border border-surface-200 overflow-hidden">
 
-                        <div class="p-3 flex flex-col gap-4">
-                            <!-- Identité de l'étape -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                @if (modelesEtape.length) {
-                                    <div class="flex flex-col gap-1 md:col-span-2">
-                                        <label class="text-xs font-medium text-surface-600">Pré-remplir depuis le catalogue</label>
-                                        <p-select [options]="modelesEtape" optionLabel="nomEtape" optionValue="id"
-                                                  placeholder="Choisir un modèle d'étape (facultatif)" [showClear]="true"
-                                                  (onChange)="appliquerModeleEtape(i, $event.value)"
-                          [filter]="true" appendTo="body"></p-select>
+                                <!-- En-tête d'étape -->
+                                <div class="flex items-center gap-2 bg-surface-50 px-3 py-2 border-b border-surface-200 bg-blue ligne">
+                                    <div class="head-first flex items-center gap-2">
+                                        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-white h-2 w-2 text-xs dark:text-black font-bold">
+                                            {{ i + 1 }}
+                                        </span>
+                                        <span class="font-semibold text-black dark:text-white flex-1">
+                                            {{ etape.get('nomEtape')?.value || 'Nouvelle étape' }}
+                                        </span>
+                                        @if (etape.get('code')?.value) {
+                                            <!-- Le code est l'identité fonctionnelle de l'étape : les transitions le
+                                                désignent et les dossiers en cours s'y rapportent. Il ne se modifie pas. -->
+                                            <p-tag severity="secondary" [value]="etape.get('code')?.value"
+                                                pTooltip="Code fonctionnel, fixé à la création et non modifiable"></p-tag>
+                                        }
                                     </div>
-                                }
-                                <div class="flex flex-col gap-1">
-                                    <label class="text-xs font-medium text-surface-600">Nom de l'étape <span class="text-red-500">*</span></label>
-                                    <input pInputText formControlName="nomEtape" placeholder="Vérification" />
-                                </div>
-                                <div class="flex flex-col gap-1">
-                                    <label class="text-xs font-medium text-surface-600">Rôle responsable <span class="text-red-500">*</span></label>
-                                    <p-select formControlName="responsableRole" [options]="rolesDisponibles"
-                                              optionLabel="label" optionValue="value" [filter]="true"
-                                              placeholder="Qui décide à cette étape ?"
-                          appendTo="body"></p-select>
-                                </div>
-                                <div class="flex flex-col gap-1">
-                                    <label class="text-xs font-medium text-surface-600">État de traitement</label>
-                                    <input pInputText formControlName="etatTraitement" placeholder="VALIDATION_RS" />
-                                    <small class="text-surface-400 text-[11px]">
-                                        Transmis au service métier pour refléter l'avancement du dossier.
-                                    </small>
-                                </div>
-                                <div class="flex flex-col gap-1">
-                                    <label class="text-xs font-medium text-surface-600">Notification à l'arrivée</label>
-                                    <p-select formControlName="emailTemplateCode" [options]="modelesEmail"
-                                              optionLabel="label" optionValue="value"
-                                              placeholder="Aucune notification"
-                          [filter]="true" appendTo="body"></p-select>
-                                    <small class="text-surface-400 text-[11px]">
-                                        Envoyée aux porteurs du rôle responsable.
-                                    </small>
-                                </div>
-                                <div class="flex flex-col gap-1 md:col-span-2">
-                                    <label class="text-xs font-medium text-surface-600">Description</label>
-                                    <input pInputText formControlName="description" placeholder="Ce qui est attendu à cette étape" />
-                                </div>
-                                <!-- Nommer quelqu'un plutôt que d'inventer un rôle : la valeur saisie
-                                     dans ce champ devient le titulaire du dossier, à qui les étapes
-                                     suivantes pourront être réservées. Un rôle « agent imputé » aurait
-                                     ouvert le traitement de tout dossier à tout agent imputable. -->
-                                <div class="flex flex-col gap-1">
-                                    <label class="text-xs font-medium text-surface-600">Champ désignant le titulaire</label>
-                                    <p-select formControlName="champTitulaire" [options]="champsDesignables(i)"
-                                              optionLabel="label" optionValue="value" [showClear]="true"
-                                              placeholder="Cette étape ne désigne personne"
-                                              [filter]="true" appendTo="body"></p-select>
-                                    <small class="text-[11px] text-surface-400">
-                                        La personne saisie dans ce champ devient le titulaire du dossier ;
-                                        les étapes réservées au titulaire ne s'ouvriront qu'à elle.
-                                    </small>
-                                </div>
-                                <!-- Le rôle dit qui peut décider ; ceci nomme qui signe. Un pilote
-                                     qui rédige un document porte le rôle attendu à la vérification,
-                                     et se trouvait donc habilité à vérifier son propre dépôt : c'est
-                                     ce que le rôle ne savait pas exprimer. -->
-                                <div class="flex flex-col gap-1 md:col-span-2">
-                                    <label class="text-xs font-medium text-surface-600">
-                                        Signataires de l'étape
-                                    </label>
-                                    <p-multiSelect formControlName="cosignataires"
-                                                   [options]="utilisateursDisponibles"
-                                                   optionLabel="label" optionValue="value"
-                                                   [filter]="true" [showClear]="true" display="chip"
-                                                   placeholder="Personne — l'étape se décide au rôle seul"
-                                                   appendTo="body"></p-multiSelect>
-                                    <small class="text-[11px] text-surface-400">
-                                        Celui de ces signataires qui a <strong>soumis</strong> le dossier ne
-                                        décidera pas à cette étape : on ne vérifie pas son propre document.
-                                        Les autres décident normalement. Laissé vide, rien ne change — l'étape
-                                        se décide à l'habilitation seule.
-                                    </small>
-                                </div>
-                            </div>
-
-                            <!-- Actions proposées à l'étape -->
-                            <div class="rounded-md bg-surface-50 p-3 flex flex-col gap-3" formArrayName="actions">
-                                <div class="flex items-center justify-between">
-                                    <div class="text-xs font-semibold uppercase text-surface-500">
-                                        Actions proposées à cette étape
+                                    <div class="head-last flex items-center gap-2">
+                                        <p-button 
+                                            icon="pi pi-arrow-up" 
+                                            [text]="true" [rounded]="true" 
+                                            size="small"
+                                            [disabled]="premier" 
+                                            class="bouton-blanc"
+                                            pTooltip="Monter" 
+                                            (onClick)="deplacerEtape(i, -1)">
+                                        </p-button>
+                                        <p-button 
+                                            icon="pi pi-arrow-down" 
+                                            [text]="true" [rounded]="true" 
+                                            size="small"
+                                            [disabled]="dernier" 
+                                            class="bouton-blanc"
+                                            pTooltip="Descendre" 
+                                            (onClick)="deplacerEtape(i, 1)">
+                                        </p-button>
+                                        <p-button 
+                                            icon="pi pi-trash" 
+                                            severity="danger" 
+                                            [text]="true" 
+                                            [rounded]="true" 
+                                            size="small"
+                                            class="bouton-blanc"
+                                            pTooltip="Supprimer l'étape" 
+                                            (onClick)="supprimerEtape(i)">
+                                        </p-button>
                                     </div>
-                                    <p-button label="Ajouter une action" icon="pi pi-plus" size="small" [text]="true"
-                                              (onClick)="ajouterAction(i)"></p-button>
                                 </div>
-                                <!-- Une étape n'offrait que deux issues, l'action se confondant avec sa
-                                     décision. Elle peut désormais en proposer autant qu'il en faut :
-                                     « Valider » et « Demander un complément » approuvent l'une comme
-                                     l'autre, mais ne mènent pas au même endroit. -->
 
-                                @if (termineLeCircuit(i)) {
-                                    <div class="rounded-md border border-dashed border-surface-300 bg-surface-0 p-3
-                                                flex items-start gap-2.5">
-                                        <i class="pi pi-flag-fill text-surface-400 mt-0.5"></i>
-                                        <div class="text-xs text-surface-600 leading-relaxed">
-                                            <span class="font-semibold text-surface-700">Cette étape termine le circuit.</span>
-                                            Sans action, le dossier qui l'atteint s'y arrête : plus personne n'a de
-                                            décision à y prendre, et le circuit est clos. C'est ainsi que se décrit une
-                                            clôture. Le dossier prend l'issue de la décision qui l'y a mené — approuvé,
-                                            clôturé ou refusé.
+                                <div class="p-3 flex flex-col gap-4">
+                                    <!-- Identité de l'étape -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        @if (modelesEtape.length) {
+                                            <div class="flex flex-col gap-1 md:col-span-2">
+                                                <label class="text-xs font-medium text-surface-600">Pré-remplir depuis le catalogue</label>
+                                                <p-select [options]="modelesEtape" optionLabel="nomEtape" optionValue="id"
+                                                        placeholder="Choisir un modèle d'étape (facultatif)" [showClear]="true"
+                                                        (onChange)="appliquerModeleEtape(i, $event.value)"
+                                [filter]="true" appendTo="body"></p-select>
+                                            </div>
+                                        }
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-xs font-medium text-surface-600">Nom de l'étape <span class="text-red-500">*</span></label>
+                                            <input pInputText formControlName="nomEtape" placeholder="Vérification" />
+                                        </div>
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-xs font-medium text-surface-600">Rôle responsable <span class="text-red-500">*</span></label>
+                                            <p-select formControlName="responsableRole" [options]="rolesDisponibles"
+                                                    optionLabel="label" optionValue="value" [filter]="true"
+                                                    placeholder="Qui décide à cette étape ?"
+                                appendTo="body"></p-select>
+                                        </div>
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-xs font-medium text-surface-600">État de traitement</label>
+                                            <input pInputText formControlName="etatTraitement" placeholder="VALIDATION_RS" />
+                                            <small class="text-surface-400 text-[11px]">
+                                                Transmis au service métier pour refléter l'avancement du dossier.
+                                            </small>
+                                        </div>
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-xs font-medium text-surface-600">Notification à l'arrivée</label>
+                                            <p-select formControlName="emailTemplateCode" [options]="modelesEmail"
+                                                    optionLabel="label" optionValue="value"
+                                                    placeholder="Aucune notification"
+                                [filter]="true" appendTo="body"></p-select>
+                                            <small class="text-surface-400 text-[11px]">
+                                                Envoyée aux porteurs du rôle responsable.
+                                            </small>
+                                        </div>
+                                        <div class="flex flex-col gap-1 md:col-span-2">
+                                            <label class="text-xs font-medium text-surface-600">Description</label>
+                                            <input pInputText formControlName="description" placeholder="Ce qui est attendu à cette étape" />
+                                        </div>
+                                        <!-- Nommer quelqu'un plutôt que d'inventer un rôle : la valeur saisie
+                                            dans ce champ devient le titulaire du dossier, à qui les étapes
+                                            suivantes pourront être réservées. Un rôle « agent imputé » aurait
+                                            ouvert le traitement de tout dossier à tout agent imputable. -->
+                                        <div class="flex flex-col gap-1">
+                                            <label class="text-xs font-medium text-surface-600">Champ désignant le titulaire</label>
+                                            <p-select formControlName="champTitulaire" [options]="champsDesignables(i)"
+                                                    optionLabel="label" optionValue="value" [showClear]="true"
+                                                    placeholder="Cette étape ne désigne personne"
+                                                    [filter]="true" appendTo="body"></p-select>
+                                            <small class="text-[11px] text-surface-400">
+                                                La personne saisie dans ce champ devient le titulaire du dossier ;
+                                                les étapes réservées au titulaire ne s'ouvriront qu'à elle.
+                                            </small>
+                                        </div>
+                                        <!-- Le rôle dit qui peut décider ; ceci nomme qui signe. Un pilote
+                                            qui rédige un document porte le rôle attendu à la vérification,
+                                            et se trouvait donc habilité à vérifier son propre dépôt : c'est
+                                            ce que le rôle ne savait pas exprimer. -->
+                                        <div class="flex flex-col gap-1 md:col-span-2">
+                                            <label class="text-xs font-medium text-surface-600">
+                                                Signataires de l'étape
+                                            </label>
+                                            <p-multiSelect formControlName="cosignataires"
+                                                        [options]="utilisateursDisponibles"
+                                                        optionLabel="label" optionValue="value"
+                                                        [filter]="true" [showClear]="true" display="chip"
+                                                        placeholder="Personne — l'étape se décide au rôle seul"
+                                                        appendTo="body"></p-multiSelect>
+                                            <small class="text-[11px] text-surface-400">
+                                                Celui de ces signataires qui a <strong>soumis</strong> le dossier ne
+                                                décidera pas à cette étape : on ne vérifie pas son propre document.
+                                                Les autres décident normalement. Laissé vide, rien ne change — l'étape
+                                                se décide à l'habilitation seule.
+                                            </small>
                                         </div>
                                     </div>
-                                }
 
-                                @for (action of actionsDeLEtape(i).controls; track $index; let j = $index) {
-                                    <div class="rounded-md border border-surface-200 p-3 flex flex-col gap-3"
-                                         [formGroupName]="j">
-
-                                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-                                            <div class="flex flex-col gap-1">
-                                                <label class="text-xs font-medium text-surface-600">Nature</label>
-                                                <p-select formControlName="decision" [options]="naturesAction"
-                                                          optionLabel="label" optionValue="value"
-                                                          appendTo="body"></p-select>
-                                                <small class="text-[11px] text-surface-400">
-                                                    Fait avancer le dossier, ou le renvoie en arrière.
-                                                </small>
+                                    <!-- Actions proposées à l'étape -->
+                                    <div class="rounded-md bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 p-3 flex flex-col gap-3" formArrayName="actions">
+                                        <div class="flex items-center justify-between">
+                                            <div class="text-xs font-semibold uppercase text-black dark:text-white">
+                                                Actions proposées à cette étape
                                             </div>
-                                            <div class="flex flex-col gap-1">
-                                                <label class="text-xs font-medium text-surface-600">Code de l'action</label>
-                                                <input pInputText formControlName="code" placeholder="DEMANDER_COMPLEMENT" />
-                                                <small class="text-[11px] text-surface-400">
-                                                    Identifie l'action dans l'étape. Laissé vide, la nature en tient lieu.
-                                                </small>
-                                            </div>
-                                            <div class="flex flex-col gap-1">
-                                                <label class="text-xs font-medium text-surface-600">Destination</label>
-                                                <p-select formControlName="cible" [options]="ciblesPossibles(i)"
-                                                          optionLabel="label" optionValue="value"
-                                                          placeholder="Fin du circuit"
-                                                          [filter]="true" appendTo="body"></p-select>
-                                            </div>
-                                            <div class="flex flex-col gap-1">
-                                                <label class="text-xs font-medium text-surface-600">Rôle exigé (facultatif)</label>
-                                                <p-select formControlName="requiredRole" [options]="rolesDisponibles"
-                                                          optionLabel="label" optionValue="value" [showClear]="true"
-                                                          placeholder="Celui de l'étape"
-                                                          [filter]="true" appendTo="body"></p-select>
-                                            </div>
+                                            <p-button 
+                                                label="Ajouter une action" 
+                                                icon="pi pi-plus" 
+                                                size="small"
+                                                class="bg-dark"
+                                                [text]="true"
+                                                (onClick)="ajouterAction(i)"
+                                            ></p-button>
                                         </div>
+                                        <!-- Une étape n'offrait que deux issues, l'action se confondant avec sa
+                                            décision. Elle peut désormais en proposer autant qu'il en faut :
+                                            « Valider » et « Demander un complément » approuvent l'une comme
+                                            l'autre, mais ne mènent pas au même endroit. -->
 
-                                        <!-- Apparence du bouton. Laissée vide, la nature fournit la sienne :
-                                             une coche verte pour approuver, une croix rouge pour rejeter.
-                                             Un renvoi en correction et un refus ferme sont deux rejets : la
-                                             couleur est ce qui les distingue à l'écran. -->
-                                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-                                            <div class="flex flex-col gap-1">
-                                                <label class="text-xs font-medium text-surface-600">Libellé du bouton</label>
-                                                <input pInputText formControlName="label" placeholder="Approuver" />
-                                            </div>
-                                            <div class="flex flex-col gap-1">
-                                                <label class="text-xs font-medium text-surface-600">Icône du bouton</label>
-                                                <p-select formControlName="icon" [options]="iconesAction"
-                                                          optionLabel="label" optionValue="value" [showClear]="true"
-                                                          [editable]="true" placeholder="pi pi-check"
-                                                          [filter]="true" appendTo="body">
-                                                    <ng-template let-choix pTemplate="item">
-                                                        <span class="inline-flex items-center gap-2">
-                                                            <i [class]="choix.value"></i><span>{{ choix.label }}</span>
-                                                        </span>
-                                                    </ng-template>
-                                                </p-select>
-                                            </div>
-                                            <div class="flex flex-col gap-1">
-                                                <label class="text-xs font-medium text-surface-600">Couleur du bouton</label>
-                                                <p-select formControlName="severity" [options]="severitesAction"
-                                                          optionLabel="label" optionValue="value" [showClear]="true"
-                                                          placeholder="Celle de la nature"
-                                                          [filter]="true" appendTo="body">
-                                                    <ng-template let-choix pTemplate="item">
-                                                        <span class="inline-flex items-center gap-2">
-                                                            <p-tag [severity]="choix.value" value=" "></p-tag>
-                                                            <span>{{ choix.label }}</span>
-                                                        </span>
-                                                    </ng-template>
-                                                </p-select>
-                                            </div>
-                                            <div class="flex flex-col gap-1">
-                                                <label class="text-xs font-medium text-surface-600">Aperçu</label>
-                                                <p-button
-                                                    [label]="apercuLibelle(action.get('label')?.value, action.get('decision')?.value)"
-                                                    [icon]="apercuIcone(action.get('icon')?.value, action.get('decision')?.value)"
-                                                    [severity]="apercuSeverite(action.get('severity')?.value, action.get('decision')?.value)"
-                                                    size="small" [disabled]="true"></p-button>
-                                            </div>
-                                        </div>
-
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
-                                            <div class="flex flex-col gap-1">
-                                                <label class="text-xs font-medium text-surface-600">Condition à remplir (facultatif)</label>
-                                                <p-select formControlName="conditionRequise" [options]="faitsConnus"
-                                                          optionLabel="label" optionValue="value" [showClear]="true"
-                                                          [editable]="true" placeholder="Aucune condition"
-                                                          [filter]="true" appendTo="body"></p-select>
-                                                <small class="text-[11px] text-surface-400">
-                                                    Fait que le dossier doit porter pour que cette action soit possible —
-                                                    « PLANS_ACTION_SOLDES », par exemple. C'est le module métier qui le déclare.
-                                                </small>
-                                            </div>
-                                            <div class="flex flex-col gap-1">
-                                                <label class="text-xs font-medium text-surface-600">Ce que la condition veut dire</label>
-                                                <input pInputText formControlName="conditionLibelle"
-                                                       placeholder="toutes les actions correctives ont été reconnues efficaces" />
-                                                <small class="text-[11px] text-surface-400">
-                                                    Phrase affichée à qui attend que le dossier avance. Sans elle, l'écran ne peut
-                                                    montrer que le nom technique du fait.
-                                                </small>
-                                            </div>
-                                        </div>
-
-                                        <div class="flex justify-end">
-                                            <p-button label="Retirer cette action" icon="pi pi-trash" size="small"
-                                                      severity="danger" [text]="true"
-                                                      (onClick)="supprimerAction(i, j)"></p-button>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-
-                            <!-- Champs de saisie -->
-                            <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <div class="text-xs font-semibold uppercase text-surface-500">
-                                        Champs à renseigner pour décider
-                                    </div>
-                                    <p-button label="Ajouter un champ" icon="pi pi-plus" size="small" [text]="true"
-                                              (onClick)="ajouterChamp(i)"></p-button>
-                                </div>
-
-                                @if (champsDeLEtape(i).length === 0) {
-                                    <p class="text-xs text-surface-400 m-0">
-                                        Aucun champ : le décideur n'aura qu'un commentaire à saisir.
-                                    </p>
-                                } @else {
-                                    <div formArrayName="fields" class="flex flex-col gap-2">
-                                        @for (champ of champsDeLEtape(i).controls; track champ; let j = $index) {
-                                            <div [formGroupName]="j"
-                                                 class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end rounded-md border border-surface-200 p-2">
-                                                <div class="md:col-span-3 flex flex-col gap-1">
-                                                    <label class="text-[11px] text-surface-500">Libellé affiché</label>
-                                                    <input pInputText formControlName="fieldLabel" placeholder="Avis motivé" />
-                                                </div>
-                                                <div class="md:col-span-3 flex flex-col gap-1">
-                                                    <label class="text-[11px] text-surface-500">Nom technique</label>
-                                                    <input pInputText formControlName="fieldName" placeholder="avis" />
-                                                </div>
-                                                <div class="md:col-span-2 flex flex-col gap-1">
-                                                    <label class="text-[11px] text-surface-500">Type</label>
-                                                    <p-select formControlName="type" [options]="typesChamp"
-                                                              optionLabel="label" optionValue="value"
-                          [filter]="true" appendTo="body"></p-select>
-                                                </div>
-                                                @if (champ.get('type')?.value === 'SELECT') {
-                                                    <div class="md:col-span-2 flex flex-col gap-1">
-                                                        <label class="text-[11px] text-surface-500">Valeurs proposées</label>
-                                                        <p-select formControlName="source" [options]="sourcesDeChoix"
-                                                                  optionLabel="label" optionValue="value"
-                                                                  appendTo="body"></p-select>
-                                                    </div>
-                                                    <!-- Une liste écrite à la main ne vaut que pour des choix figés.
-                                                         Adossée au référentiel, elle suit les créations et les
-                                                         corrections de libellé sans qu'on remanie le circuit. -->
-                                                    @if (!champ.get('source')?.value) {
-                                                        <div class="md:col-span-2 flex flex-col gap-1">
-                                                            <label class="text-[11px] text-surface-500">Choix (séparés par des virgules)</label>
-                                                            <input pInputText formControlName="options" placeholder="Oui,Non" />
-                                                        </div>
-                                                    }
-                                                }
-                                                <div class="md:col-span-2 flex flex-col gap-1">
-                                                    <label class="text-[11px] text-surface-500">Demandé lors de</label>
-                                                    <p-select formControlName="decision" [options]="porteesChamp"
-                                                              optionLabel="label" optionValue="value"
-                                                              appendTo="body"></p-select>
-                                                </div>
-                                                <!-- Portée la plus étroite : le champ n'est demandé que par
-                                                     l'action nommée. Sans elle, le motif que réclame
-                                                     « Demander un complément » serait demandé à qui valide
-                                                     simplement — les deux approuvent. -->
-                                                <div class="md:col-span-2 flex flex-col gap-1">
-                                                    <label class="text-[11px] text-surface-500">Demandé par l'action</label>
-                                                    <p-select formControlName="actionCode" [options]="actionsDesignables(i)"
-                                                              optionLabel="label" optionValue="value" [showClear]="true"
-                                                              placeholder="Toutes les actions"
-                                                              appendTo="body"></p-select>
-                                                </div>
-                                                <div class="md:col-span-1 flex items-center gap-1 pb-2">
-                                                    <p-checkbox formControlName="required" [binary]="true"></p-checkbox>
-                                                    <span class="text-[11px] text-surface-500">Requis</span>
-                                                </div>
-                                                <div class="md:col-span-1 flex justify-end pb-1">
-                                                    <p-button icon="pi pi-trash" severity="danger" [text]="true"
-                                                              [rounded]="true" size="small"
-                                                              (onClick)="supprimerChamp(i, j)"></p-button>
+                                        @if (termineLeCircuit(i)) {
+                                            <div class="rounded-md border border-dashed border-surface-300 bg-surface-0 p-3
+                                                        flex items-start gap-2.5">
+                                                <i class="pi pi-flag-fill text-surface-400 mt-0.5"></i>
+                                                <div class="text-xs text-surface-600 leading-relaxed">
+                                                    <span class="font-semibold text-surface-700">Cette étape termine le circuit.</span>
+                                                    Sans action, le dossier qui l'atteint s'y arrête : plus personne n'a de
+                                                    décision à y prendre, et le circuit est clos. C'est ainsi que se décrit une
+                                                    clôture. Le dossier prend l'issue de la décision qui l'y a mené — approuvé,
+                                                    clôturé ou refusé.
                                                 </div>
                                             </div>
                                         }
+
+                                        @for (action of actionsDeLEtape(i).controls; track $index; let j = $index) {
+                                            <div class="rounded-md border border-surface-200 p-3 flex flex-col gap-3"
+                                                [formGroupName]="j">
+
+                                                <div class="grid items-end">
+                                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                                                        <div class="flex flex-col gap-1">
+                                                            <label class="text-xs font-medium text-surface-600">Nature</label>
+                                                            <p-select 
+                                                                formControlName="decision" 
+                                                                [options]="naturesAction"
+                                                                optionLabel="label" optionValue="value"
+                                                                appendTo="body"
+                                                            ></p-select>
+                                                            <small class="text-[11px] text-surface-400">
+                                                                Fait avancer le dossier, ou le renvoie en arrière.
+                                                            </small>
+                                                        </div>
+                                                        <div class="flex flex-col gap-1">
+                                                            <label class="text-xs font-medium text-surface-600">Code de l'action</label>
+                                                            <input pInputText formControlName="code" placeholder="DEMANDER_COMPLEMENT" />
+                                                            <small class="text-[11px] text-surface-400">
+                                                                Identifie l'action dans l'étape. Laissé vide, la nature en tient lieu.
+                                                            </small>
+                                                        </div>
+                                                        <div class="flex flex-col gap-1">
+                                                            <label class="text-xs font-medium text-surface-600">Destination</label>
+                                                            <p-select 
+                                                                formControlName="cible" 
+                                                                [options]="ciblesPossibles(i)"
+                                                                optionLabel="label" optionValue="value"
+                                                                placeholder="Fin du circuit"
+                                                                [filter]="true" appendTo="body"
+                                                            ></p-select>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+
+                                                        <div class="flex flex-col gap-1">
+                                                            <label class="text-xs font-medium text-surface-600">Rôle exigé (facultatif)</label>
+                                                            <p-select 
+                                                                formControlName="requiredRole" 
+                                                                [options]="rolesDisponibles"
+                                                                optionLabel="label" 
+                                                                optionValue="value" 
+                                                                [showClear]="true"
+                                                                placeholder="Celui de l'étape"
+                                                                [filter]="true" appendTo="body">
+                                                            </p-select>
+                                                        </div>
+                                                        <div class="flex flex-col gap-1">
+                                                            <label class="text-xs font-medium text-surface-600">Libellé du bouton</label>
+                                                            <input pInputText formControlName="label" placeholder="Approuver" />
+                                                        </div>
+                                                        <div class="flex flex-col gap-1">
+                                                            <label class="text-xs font-medium text-surface-600">Icône du bouton</label>
+                                                            <p-select formControlName="icon" [options]="iconesAction"
+                                                                optionLabel="label" optionValue="value" [showClear]="true"
+                                                                [editable]="true" placeholder="pi pi-check"
+                                                                [filter]="true" appendTo="body">
+                                                                <ng-template let-choix pTemplate="item">
+                                                                    <span class="inline-flex items-center gap-2">
+                                                                        <i [class]="choix.value"></i><span>{{ choix.label }}</span>
+                                                                    </span>
+                                                                </ng-template>
+                                                            </p-select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Apparence du bouton. Laissée vide, la nature fournit la sienne :
+                                                    une coche verte pour approuver, une croix rouge pour rejeter.
+                                                    Un renvoi en correction et un refus ferme sont deux rejets : la
+                                                    couleur est ce qui les distingue à l'écran. -->
+                                                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+
+                                                    <div class="flex flex-col gap-1">
+                                                        <label class="text-xs font-medium text-surface-600">Couleur du bouton</label>
+                                                        <p-select formControlName="severity" [options]="severitesAction"
+                                                                optionLabel="label" optionValue="value" [showClear]="true"
+                                                                placeholder="Celle de la nature"
+                                                                [filter]="true" appendTo="body">
+                                                            <ng-template let-choix pTemplate="item">
+                                                                <span class="inline-flex items-center gap-2">
+                                                                    <p-tag [severity]="choix.value" value=" "></p-tag>
+                                                                    <span>{{ choix.label }}</span>
+                                                                </span>
+                                                            </ng-template>
+                                                        </p-select>
+                                                    </div>
+                                                    <div class="flex flex-col gap-1">
+                                                        <label class="text-xs font-medium text-surface-600">Aperçu</label>
+                                                        <p-button
+                                                            [label]="apercuLibelle(action.get('label')?.value, action.get('decision')?.value)"
+                                                            [icon]="apercuIcone(action.get('icon')?.value, action.get('decision')?.value)"
+                                                            [severity]="apercuSeverite(action.get('severity')?.value, action.get('decision')?.value)"
+                                                            size="small" [disabled]="true"></p-button>
+                                                    </div>
+                                                </div>
+
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
+                                                    <div class="flex flex-col gap-1">
+                                                        <label class="text-xs font-medium text-surface-600">Condition à remplir (facultatif)</label>
+                                                        <p-select 
+                                                            formControlName="conditionRequise" 
+                                                            [options]="faitsConnus"
+                                                            optionLabel="label" 
+                                                            optionValue="value" 
+                                                            [showClear]="true"
+                                                            [editable]="true" 
+                                                            placeholder="Aucune condition"
+                                                            [filter]="true" 
+                                                            appendTo="body">
+                                                        </p-select>
+                                                        <small class="text-[11px] text-surface-400">
+                                                            Fait que le dossier doit porter pour que cette action soit possible —
+                                                            « PLANS_ACTION_SOLDES », par exemple. C'est le module métier qui le déclare.
+                                                        </small>
+                                                    </div>
+                                                    <div class="flex flex-col gap-1">
+                                                        <label class="text-xs font-medium text-surface-600">Ce que la condition veut dire</label>
+                                                        <input pInputText formControlName="conditionLibelle"
+                                                            placeholder="toutes les actions correctives ont été reconnues efficaces" />
+                                                        <small class="text-[11px] text-surface-400">
+                                                            Phrase affichée à qui attend que le dossier avance. Sans elle, l'écran ne peut
+                                                            montrer que le nom technique du fait.
+                                                        </small>
+                                                    </div>
+                                                </div>
+
+                                                <div class="flex justify-end">
+                                                    <p-button 
+                                                        label="Retirer cette action" 
+                                                        icon="pi pi-trash" 
+                                                        size="small"
+                                                        variant="outlined" 
+                                                        severity="danger"
+                                                        (onClick)="supprimerAction(i, j)">
+                                                    </p-button>
+                                                </div>
+                                            </div>
+                                        }
+
+                                        <!-- Champs de saisie -->
+                                    <div class="bg-white dark:bg-surface-800 p-3 border rounded-md">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="text-xs font-semibold uppercase text-surface-500">
+                                                Champs à renseigner pour décider
+                                            </div>
+                                            <p-button 
+                                                label="Ajouter un champ" 
+                                                icon="pi pi-plus" 
+                                                class="bg-dark"
+                                                size="small" 
+                                                [text]="true"
+                                                (onClick)="ajouterChamp(i)">
+                                            </p-button>
+                                        </div>
+
+                                        @if (champsDeLEtape(i).length === 0) {
+                                            <p class="text-xs text-surface-400 m-0">
+                                                Aucun champ : le décideur n'aura qu'un commentaire à saisir.
+                                            </p>
+                                        } @else {
+                                            <div formArrayName="fields" class="flex flex-col gap-2">
+                                                @for (champ of champsDeLEtape(i).controls; track champ; let j = $index) {
+                                                    <div [formGroupName]="j" class="flex flex-col gap-2 items-end rounded-md border border-surface-200 p-2">
+                                                        <div class="champs-decideur grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                                                            <div class="flex flex-col w-full">
+                                                                <label class="text-[11px] text-surface-500">Libellé affiché</label>
+                                                                <input class="w-full" pInputText formControlName="fieldLabel" placeholder="Avis motivé" />
+                                                            </div>
+                                                            <div class="flex flex-col w-full">
+                                                                <label class="text-[11px] text-surface-500">Nom technique</label>
+                                                                <input class="w-full" pInputText formControlName="fieldName" placeholder="avis" />
+                                                            </div>
+                                                            <div class="flex flex-col w-full">
+                                                                <label class="text-[11px] text-surface-500">Type</label>
+                                                                <p-select 
+                                                                    formControlName="type" 
+                                                                    class="w-full"
+                                                                    [options]="typesChamp"
+                                                                    optionLabel="label" 
+                                                                    optionValue="value"
+                                                                    [filter]="true" 
+                                                                    appendTo="body"
+                                                                ></p-select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="champs-decideur">
+
+                                                        @if (champ.get('type')?.value === 'SELECT') {
+                                                            <div class="md:col-span-2 flex flex-col gap-1">
+                                                                <label class="text-[11px] text-surface-500">Valeurs proposées</label>
+                                                                <p-select formControlName="source" [options]="sourcesDeChoix"
+                                                                        optionLabel="label" optionValue="value"
+                                                                        appendTo="body"></p-select>
+                                                                </div>
+                                                                <!-- Une liste écrite à la main ne vaut que pour des choix figés.
+                                                                    Adossée au référentiel, elle suit les créations et les
+                                                                    corrections de libellé sans qu'on remanie le circuit. -->
+                                                                @if (!champ.get('source')?.value) {
+                                                                    <div class="md:col-span-2 flex flex-col gap-1">
+                                                                        <label class="text-[11px] text-surface-500">Choix (séparés par des virgules)</label>
+                                                                        <input pInputText formControlName="options" placeholder="Oui,Non" />
+                                                                    </div>
+                                                                }
+                                                            }
+                                                            <div class="champs-decideur flex gap-2 items-end rounded-md border border-surface-200 p-2">
+                                                                <div class="flex flex-col w-full">
+                                                                    <label class="text-[11px] text-surface-500 mb-2">Demandé lors de</label>
+                                                                    <p-select 
+                                                                        formControlName="decision" 
+                                                                        [options]="porteesChamp"
+                                                                        optionLabel="label" 
+                                                                        optionValue="value"
+                                                                        appendTo="body">
+                                                                    </p-select>
+                                                                </div>
+                                                                <!-- Portée la plus étroite : le champ n'est demandé que par
+                                                                    l'action nommée. Sans elle, le motif que réclame
+                                                                    « Demander un complément » serait demandé à qui valide
+                                                                    simplement — les deux approuvent. -->
+                                                                <div class="flex flex-col w-full">
+                                                                    <label class="text-[11px] text-surface-500  mb-2">Demandé par l'action</label>
+                                                                    <p-select 
+                                                                        formControlName="actionCode" 
+                                                                        [options]="actionsDesignables(i)"
+                                                                        optionLabel="label" 
+                                                                        optionValue="value" 
+                                                                        [showClear]="true"
+                                                                        [filter]="true" 
+                                                                        placeholder="Toutes les actions"
+                                                                        appendTo="body">
+                                                                    </p-select>
+                                                                </div>
+                                                                <div class="flex flex-row items-center w-full mt-6">
+                                                                    <p-checkbox formControlName="required" [binary]="true"></p-checkbox>
+                                                                    <span class="text-[11px] text-surface-500 ml-2">Requis</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="md:col-span-1 flex justify-end pb-1">
+                                                            <p-button 
+                                                                icon="pi pi-trash" 
+                                                                severity="danger" 
+                                                                [text]="true"
+                                                                [rounded]="true" 
+                                                                size="small"
+                                                                (onClick)="supprimerChamp(i, j)">
+                                                            </p-button>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
                                     </div>
-                                }
+                                    </div>
+
+                                    
+                                </div>
                             </div>
-                        </div>
+                        }
                     </div>
-                }
+                </div>
+            </form>
+
+            <div class="flex justify-end gap-2 mt-5">
+                <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="annuler()"></p-button>
+                <p-button siLicenceOuverte label="Enregistrer" severity="info" [loading]="enregistrement" (onClick)="enregistrer()"></p-button>
             </div>
         </div>
-    </form>
 
-    <div class="flex justify-end gap-2 mt-5">
-        <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="annuler()"></p-button>
-        <p-button siLicenceOuverte label="Enregistrer" icon="pi pi-check" [loading]="enregistrement" (onClick)="enregistrer()"></p-button>
+        <div class="w-full lg:w-4/12 xl:w-4/12 lg:sticky lg:top-[5rem] self-start">
+            <div class="p-5 bg-white dark:bg-surface-900 rounded-2xl border border-surface-200 dark:border-surface-800 shadow-sm">
+                    <h3 class="text-xl font-semibold text-surface-900 dark:text-surface-0 mt-0 mb-5 tracking-tight">
+                        Conseils rapides
+                    </h3>
+                    
+                    <div class="flex flex-col gap-4">
+                        
+                        <!-- Conseil 1 -->
+                        <div class="flex items-start gap-3">
+                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
+                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
+                                Définissez un <strong>nom explicite</strong> et choisissez le bon type de ressource (Documents, Non-conformités, Plans d'action, Demandes).
+                            </span>
+                        </div>
+
+                        <!-- Conseil 2 -->
+                        <div class="flex items-start gap-3">
+                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
+                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
+                                Tout circuit doit comporter <strong>une étape initiale</strong> pour accueillir le dossier dès sa création (ex: <em>Brouillon</em> ou <em>Soumission</em>).
+                            </span>
+                        </div>
+
+                        <!-- Conseil 3 -->
+                        <div class="flex items-start gap-3">
+                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
+                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
+                                Prévoyez au moins une <strong>étape terminale</strong> (ex: <em>Validé</em>, <em>Clôturé</em>, <em>Rejeté</em>) sans action sortante pour clore le dossier.
+                            </span>
+                        </div>
+
+                        <!-- Conseil 4 -->
+                        <div class="flex items-start gap-3">
+                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
+                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
+                                Chaque transition génère un bouton pour le décideur (<em>Approuver</em>, <em>Rejeter</em>). Veillez à relier chaque étape sans créer d'impasse.
+                            </span>
+                        </div>
+
+                        <!-- Conseil 5 -->
+                        <div class="flex items-start gap-3">
+                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
+                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
+                                Assignez un <strong>rôle responsable</strong> à chaque étape pour déterminer précisément qui est habilité à statuer et valider.
+                            </span>
+                        </div>
+
+                        <!-- Conseil 6 -->
+                        <div class="flex items-start gap-3">
+                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
+                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
+                                Pour les étapes d'évaluation, ajoutez des <strong>champs de saisie</strong> (note, avis motivé) obligatoires avant que le décideur ne valide.
+                            </span>
+                        </div>
+
+                        <!-- Conseil 7 -->
+                        <div class="flex items-start gap-3">
+                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
+                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
+                                Associez des <strong>modèles d'e-mails</strong> aux transitions clés pour notifier automatiquement le prochain décideur par courriel.
+                            </span>
+                        </div>
+
+                        <!-- Conseil 8 -->
+                        <div class="flex items-start gap-3">
+                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
+                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
+                                <strong>Règle d'auto-approbation</strong> : un signataire qui a soumis un dossier ne pourra pas vérifier ou approuver son propre dépôt.
+                            </span>
+                        </div>
+
+                        <!-- Conseil 9 -->
+                        <div class="flex items-start gap-3">
+                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
+                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
+                                Pensez à <strong>activer le circuit</strong> pour qu'il soit immédiatement appliqué par défaut aux nouveaux dossiers créés.
+                            </span>
+                        </div>
+
+                    </div>
+
+            </div>
+        </div>
     </div>
-</div>
 }

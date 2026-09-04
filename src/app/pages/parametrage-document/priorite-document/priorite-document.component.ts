@@ -11,6 +11,8 @@ import { PrioriteDocument } from '../../../models/referentiel-document.model';
 import { PrioriteDocumentService } from '../../../services/module-gestion-documentaire/referentiel-document.service';
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 import { hasAnyPermission } from '../../../utils/auth/auth-utils';
+import { HeaderPage } from '../../../shared/header-page/header-page';
+import { AlertService } from '../../../shared/alert-message/alert-message.service';
 
 /**
  * Référentiel des priorités de document.
@@ -22,13 +24,30 @@ import { hasAnyPermission } from '../../../utils/auth/auth-utils';
 @Component({
     selector: 'app-priorite-document',
     standalone: true,
-    imports: [CommonModule, AppCrudGenericComponent, NgPrimeModule],
-    providers: [MessageService],
+    imports: [
+        HeaderPage,
+        CommonModule, 
+        AppCrudGenericComponent, 
+        NgPrimeModule
+    ],
+    providers: [],
     template: `
-        <p-toast></p-toast>
+        <app-header-page 
+            [title]="pageLabel" 
+            [subtitle]="'Ajoutez ou modifiez les priorités des documents'"
+            [breadcrumbs]="breadcrumbs"
+            [buttonText]="'Nouvelle Priorité'" 
+            buttonIcon="pi pi-plus"
+            (actionClick)="crudGeneric.openNew()"
+        />
         <div class="page-layout">
             <app-crud-generic
-                [addButtonLabel]="'Nouvelle priorité'"
+                #crudGeneric
+                [requireRqPassword]="true"
+                [deleteConfirmField]="'libelle'"
+                [showAddButton]="false"
+                detailLongDescription="Ce référentiel définit les niveaux de priorité applicables aux documents du SMQ. Ils permettent de hiérarchiser les flux de relecture et d'approbation dans les circuits de validation, d'attribuer des codes couleurs d'alerte et de sensibiliser les acteurs sur les délais de traitement attendus."
+                formLongDescription="Renseignez les critères de cette priorité documentaire. Définissez le libellé, le rang d'affichage (1 pour le plus urgent) ainsi qu'une couleur d'identification au format hexadécimal (ex: #dc2626 pour le rouge). Les champs marqués d'un astérisque sont obligatoires."
                 [dialogWidth]="'40rem'"
                 [loading]="loading"
                 [pageLabel]="pageLabel"
@@ -41,7 +60,11 @@ import { hasAnyPermission } from '../../../utils/auth/auth-utils';
                 [formHeader]="formHeader"
                 (newItemEvent)="onSave($event)"
                 (removeEvent)="onDelete($event)"
-                [isPagination]="false"
+                [isPagination]="true"
+                [totalElements]="totalElements"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChangeEvent)="onPageChange($event)"
                 [consultation]="!peutEcrire"
                 [notModif]="!peutEcrire"
                 [notDelete]="!peutEcrire">
@@ -53,6 +76,10 @@ export class PrioriteDocumentComponent implements OnInit, OnDestroy {
 
     loading = true;
     dataList: PrioriteDocument[] = [];
+    totalElements = 0;
+    currentPage = 0;
+    pageSize = 5;
+
     closeDialog = false;
     peutEcrire = false;
 
@@ -68,42 +95,68 @@ export class PrioriteDocumentComponent implements OnInit, OnDestroy {
     constructor(
         protected fb: UntypedFormBuilder,
         protected messageService: MessageService,
-        protected service: PrioriteDocumentService
+        protected service: PrioriteDocumentService,
+        private alertService: AlertService
     ) {
         this.formCols = [
             { field: 'id', label: '', header: 'Id', type: 'string', visible: false, required: false },
             {
-                field: 'libelle', label: 'Libellé (ex : Urgent, Normal)', header: 'Libellé',
+                field: 'libelle', label: 'Libellé de la priorité (ex : Urgent, Normal, Faible)', 
+                helpText: 'Libellé de la priorité (ex : Urgent, Normal, Faible)', 
+                placeholder: 'Exemple : Urgent', header: 'Libellé',
                 type: 'string', visible: true, required: true
             },
             {
-                field: 'ordre', label: 'Rang d\'affichage, du plus urgent au moins urgent',
-                header: 'Rang', type: 'number', visible: true, required: false
-            },
-            {
-                field: 'couleur', label: 'Couleur d\'affichage (ex : #dc2626)', header: 'Couleur',
-                type: 'string', visible: true, required: false
-            },
-            {
-                field: 'description', label: 'Ce que ce niveau signifie pour vos équipes',
+                field: 'description', label: 'Signification et délai cible pour vos équipes',
+                helpText: 'Signification et délai cible pour vos équipes',
+                placeholder: 'Exemple : Traitement impératif sous 48h ouvrées', 
                 header: 'Description', type: 'text', visible: true, required: false
+            },
+            {
+                field: 'couleur', label: 'Couleur d\'identification', 
+                header: 'Couleur',
+                helpText: "Choisissez une couleur distinctive. Elle servira de badge visuel pour identifier immédiatement le degré d'urgence du document dans les listes et circuits de validation.", 
+                type: 'color', visible: true, required: false, class: 'md:col-6' // <-- type: 'color' ici !
+            },
+            {
+                field: 'score', label: 'Rang d\'affichage (1 pour le plus urgent)', 
+                helpText: "Ce nombre détermine la position de la priorité dans les menus déroulants et les classements. Le rang 1 est toujours traité en priorité.",
+                placeholder: '1', header: 'Rang', 
+                type: 'knob', min: 1, max: 4, visible: true, required: false, class: 'md:col-6'
             }
         ];
 
+
         this.tableCols = [
-            { field: 'ordre', header: 'Rang', type: 'number', filter: false, width: '6rem' },
+            { field: 'score', header: 'Rang', type: 'number', filter: false, width: '5rem' },
             { field: 'libelle', header: 'Libellé', type: 'string', filter: true },
+            { 
+                field: 'score', 
+                header: 'Couleur', 
+                type: 'meter', 
+                colorField: 'couleur', 
+                max: 4, 
+                showValue: false, // <-- Masque le texte "2/10"
+                filter: false, 
+                width: '8rem' 
+            },
             { field: 'description', header: 'Description', type: 'string', filter: true }
         ];
 
         this.formGroup = this.fb.group({
             id: [null],
             libelle: [null, Validators.required],
-            ordre: [null],
-            couleur: [null],
+            score: [1],
+            couleur: ['#3b82f6'],
             description: [null]
         });
+
     }
+
+    breadcrumbs = [
+        { label: 'Tableau de bord', routerLink: '/' },
+        { label: 'Priorité de document QMS', routerLink: '' }
+    ];
 
     ngOnInit(): void {
         this.peutEcrire = hasAnyPermission(['priorite-document-write', 'CONFIG_GLOBAL_MANAGE']);
@@ -119,15 +172,23 @@ export class PrioriteDocumentComponent implements OnInit, OnDestroy {
         this.loading = true;
         this.service.liste().pipe(takeUntil(this.destroy$)).subscribe({
             next: (priorites) => {
-                this.dataList = priorites ?? [];
-                this.loading = false;
+                setTimeout(() => {
+                    this.dataList = priorites ?? [];
+                    this.totalElements = this.dataList.length; 
+                    this.loading = false;
+                }, 500);
             },
             error: (error) => {
                 this.loading = false;
-                showToast(StatusEnum.error, error.status, 'Chargement des priorités impossible',
-                    this.messageService, error);
+                this.alertService.showError('Chargement des priorités impossible');
             }
         });
+    }
+
+
+     onPageChange(event: { page: number; size: number }) {
+        this.currentPage = event.page;
+        this.pageSize = event.size;
     }
 
     onSave(objet: PrioriteDocument): void {
@@ -137,29 +198,33 @@ export class PrioriteDocumentComponent implements OnInit, OnDestroy {
 
         requete.pipe(takeUntil(this.destroy$)).subscribe({
             next: () => this.onSuccess(),
-            error: (error) => showToast(StatusEnum.error, error.status,
-                'Enregistrement impossible', this.messageService, error)
+            error: (error) => 
+                this.alertService.showError('Enregistrement impossible')
+                // showToast(StatusEnum.error, error.status,
+                // 'Enregistrement impossible', this.messageService, error)
         });
     }
 
     onDelete(objet: PrioriteDocument): void {
         this.service.delete(objet.id!).pipe(takeUntil(this.destroy$)).subscribe({
             next: () => {
-                this.messageService.add({
-                    severity: 'success', summary: 'Supprimé',
-                    // Conséquence énoncée : les documents qui la portent n'afficheront plus rien.
-                    detail: 'Priorité supprimée. Les documents qui la portaient n\'en affichent plus.'
-                });
+                this.alertService.showSuccess('Priorité supprimée. Les documents qui la portaient n\'en affichent plus.');
+                // this.messageService.add({
+                //     severity: 'success', summary: 'Supprimé',
+                //     // Conséquence énoncée : les documents qui la portent n'afficheront plus rien.
+                //     detail: 'Priorité supprimée. Les documents qui la portaient n\'en affichent plus.'
+                // });
                 this.fetchObject();
             },
-            error: (error) => showToast(StatusEnum.error, error.status,
-                'Suppression impossible', this.messageService, error)
+            error: (error) => this.alertService.showError('Suppression impossible')
+                // showToast(StatusEnum.error, error.status,
+                // 'Suppression impossible', this.messageService, error)
         });
     }
 
     private onSuccess(): void {
         this.closeDialog = true;
         this.fetchObject();
-        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Opération réussie' });
+        this.alertService.showSuccess('Opération réussie');
     }
 }

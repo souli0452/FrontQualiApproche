@@ -1,0 +1,25 @@
+<div *ngIf="rowData" class="flex flex-col gap-3 py-2">
+    <div class="flex flex-col gap-2">
+        @for (col of displayCols; track col.field) {
+            <!-- Champ long (description ou type text) avec séparateur fin -->
+            @if (col.type === 'text' || col.field === 'description' || col.field === 'content') {
+                <div class="pt-2 border-t border-slate-100 dark:border-surface-800">
+                    <span class="font-semibold text-sky-600 block text-sm mb-1">{{ col.header || col.label }} :</span>
+                    <p class="text-slate-700 dark:text-surface-300 m-0 text-sm leading-relaxed whitespace-normal break-words">
+                        {{ rowData[col.field] || 'Aucune description renseignée' }}
+                    </p>
+                </div>
+            } @else {
+                <!-- Champ standard sur une ligne -->
+                <p class="text-slate-700 dark:text-white m-0 text-sm">
+                    <span class="font-semibold text-sky-600">{{ col.header || col.label }} :</span> 
+                    {{ rowData[col.field] || 'N/A' }}
+                </p>
+            }
+        }
+    </div>
+</div>
+
+<div *ngIf="!rowData" class="text-center py-4">
+    <span class="text-slate-400 text-sm">Aucune donnée trouvée</span>
+</div>

@@ -114,7 +114,7 @@ export class TraitementActionTable implements OnInit {
     onArchive(event: Event, rowdata: any) {
         event.stopPropagation();
         this.confirmationService.confirm({
-            message: `Voulez-vous archiver la non conformité N° ${rowdata.numeroReference} ? `,
+            message: `Voulez-vous archiver la non conformité N° ${rowdata.numeroDeReference} ? `,
             key: this.confirmKey,
             accept: () => {
                 this.archive.emit(rowdata);
@@ -130,7 +130,7 @@ export class TraitementActionTable implements OnInit {
     onDelete(event: Event, rowdata: any) {
         event.stopPropagation();
         this.confirmationService.confirm({
-            message: `Voulez-vous supprimer la non conformité N° ${rowdata.numeroReference} ? `,
+            message: `Voulez-vous supprimer la non conformité N° ${rowdata.numeroDeReference} ? `,
             key: this.confirmKey,
             accept: () => {
                 this.delete.emit(rowdata);
@@ -339,7 +339,7 @@ export class TraitementActionTable implements OnInit {
             return row.origineService || row.origineServiceLibelleCourt;
         }
         if (field === 'numeroNc') {
-            return row.numeroReference || row.numeroNc;
+            return row.numeroDeReference || row.numeroNc;
         }
         
         return null;

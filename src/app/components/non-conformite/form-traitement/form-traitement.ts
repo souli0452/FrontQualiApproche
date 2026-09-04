@@ -9,8 +9,6 @@ import { getStatusSeverity } from '../../../utils/global/global-utils';
 import { DetailsDialogComponent } from '../details-dialog/details-dialog';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LightboxComponent } from '../lightbox/lightbox';
-import { Structure } from '../../../pages/parametrages/structure/structure-config/structure';
-import { StructureService } from '../../../pages/parametrages/structure/structure-service/structure-service';
 import { ProcNonConformiteService } from '../../../services/non-conformite/proc-non-conformite.service';
 import { nonConformiteForm } from '../config/proc-non-conformite.data';
 import { ApiResponse } from '../../../models/response.model';
@@ -22,6 +20,8 @@ import { WorkflowGuidanceComponent } from '../../../shared/workflow/workflow-gui
 import { WorkflowHistoriqueComponent } from '../../../shared/workflow/workflow-historique.component';
 import { formatDateToDDMMYYYY } from '../../../utils/formatage/formatage-utils';
 import { map } from 'rxjs';
+import { Structure } from '../../../pages/parametrages/structure/structure.model';
+import { StructureService } from '../../../pages/parametrages/structure/structure.service';
 
 @Component({
     selector: 'app-form-traitement',
@@ -142,9 +142,9 @@ export class FormTraitementComponent {
         // On synchronise les champs de base sans envoyer de chaînes vides ("") 
         // qui font planter la désérialisation Jackson du backend (erreur 400)
         Object.assign(this.demande, {
-            pertinanceRs: clean(formValues.pertinanceRs),
+            pertinanceRs: clean(formValues.pertinenceRs),
             justificationRs: clean(formValues.justificationRs),
-            pertinancePilote: clean(formValues.pertinancePilote),
+            pertinancePilote: clean(formValues.pertinencePilote),
             justificationPilote: clean(formValues.justificationPilote),
             pertinanceRsSuivi: clean(formValues.pertinanceRsSuivi),
             numeroFdac: clean(formValues.numeroFdac),
@@ -273,7 +273,7 @@ export class FormTraitementComponent {
 
      fetchUsersByStructure() {
          // Essayer origineId en priorité, sinon utiliser structureSoumissionId
-         const structureId = this.demande?.origineId || this.demande?.structureSoumissionId;
+         const structureId = this.demande?.origineId || this.demande?.structureDeSoumissionId;
 
          console.log("🔍 fetchUsersByStructure() appelé !");
          console.log("   - ID de structure retenu pour le filtre :", structureId);
@@ -622,13 +622,13 @@ loadStuctures() {
         }
         // L'agent écrit l'action au traitement ; le pilote la relit et désigne son responsable à la
         // validation. Passé ces deux étapes, l'action est engagée et relève de son propre circuit.
-        return this.demande?.etatTraitement === this.BtnActions.TRAITEMENT
-            || this.demande?.etatTraitement === this.BtnActions.VALIDATION;
+        return this.demande?.etatDeTraitement === this.BtnActions.TRAITEMENT
+            || this.demande?.etatDeTraitement === this.BtnActions.VALIDATION;
     }
 
     /** À la validation, le pilote ne reprend pas la description de l'action : il en nomme le responsable. */
     get designationSeule(): boolean {
-        return this.demande?.etatTraitement === this.BtnActions.VALIDATION;
+        return this.demande?.etatDeTraitement === this.BtnActions.VALIDATION;
     }
 
     /**

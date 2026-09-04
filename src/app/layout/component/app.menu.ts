@@ -188,10 +188,6 @@ export class AppMenu {
                 label: 'Configurations globales', icon: 'pi pi-sliders-h', routerLink: ['/configurations'],
                 visible: this.peutVoir(['config-global-read', 'config-global-write', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'])
             },
-            {
-                label: "Licence de l'installation", icon: 'pi pi-fw pi-shield', routerLink: ['/licence'],
-                visible: this.peutVoir(['licence-write', 'config-global-write', 'CONFIG_GLOBAL_MANAGE'])
-            },
             this.sousGroupe('Non-Conformités', 'pi pi-fw pi-exclamation-triangle', [
                 {
                     label: 'Niveau de Non-Conformité', routerLink: ['/niveau-non-conformite'],
@@ -204,11 +200,11 @@ export class AppMenu {
             ]),
             this.sousGroupe('Organigramme', 'pi pi-fw pi-sitemap', [
                 {
-                    label: 'Catégorie de processus', routerLink: ['/type-processus'],
+                    label: 'Catégorie de processus', routerLink: ['/parametrage-organigramme/categorie-processus'],
                     visible: this.peutVoir(['type-processus-read', 'type-processus-write', 'TYPE_PROC_MANAGE', 'CONFIG_READ'])
                 },
                 {
-                    label: 'Processus', routerLink: ['/service'],
+                    label: 'Processus', routerLink: ['/parametrage-organigramme/processus'],
                     visible: this.peutVoir(['structure-read', 'structure-write', 'STRUCT_MANAGE', 'SERVICE_MANAGE'])
                 }
             ]),

@@ -1,42 +1,41 @@
-<div class="card-first overflow-hidden border-none premium-hub transition-colors duration-300">
-    <!-- Header Premium -->
-    <div class="pb-5 flex flex-col border-b border-surface-border">
-        <div class="flex items-center gap-4">
-            <div>
-                <h1 class="text-3xl font-bold m-0 text-surface-900 dark:text-surface-50 flex items-center gap-3">
-                    Gestion des utilisateurs
-                </h1>
-                <p class="text-surface-500 dark:text-surface-400 mt-1 mb-0">Ajoutez ou modifiez les utilisateurs habilités à utiliser la plateforme, et définissez leurs accès.</p>
+<div class="block">
+    <app-header-page 
+        [title]="'Utilisateurs'" 
+        [subtitle]="'Gérer les accès et rôles des utilisateurs de la plateforme.'"
+        [breadcrumbs]="breadcrumbs"
+        [buttonText]="'Nouvel Utilisateur'" 
+        buttonIcon="pi pi-plus"
+        (actionClick)="onAjoutDemande()"
+    />
+    
+    <div class="page-layout mt-4">
+        <div class="row p-2">
+            <div class="col-sm-12">
+                <app-crud-generic
+                    [pageLabel]="pageLabel"
+                    [formCols]="formCols"
+                    [tableCols]="tableCols"
+                    [listeObject]="dataList"
+                    [consultation]="false"
+                    [ajoutExterne]="true"
+                    [notDelete]="true"
+                    (ajoutDemande)="onAjoutDemande()"
+                    (editDemande)="onEditDemande($event)"
+                    [formGroup]="formGroup"
+                    [dropDownObject]="strcutureDropdown"
+                    [multiselectObject]="rolesDropdown"
+                    [customButtons]="customButtons"
+                    (customActionEvent)="handleCustomAction($event)"
+                    [isPagination]="true"
+                    [totalElements]="totalElements"
+                    [pageSize]="pageSize"
+                    [currentPage]="currentPage"
+                    (pageChangeEvent)="onPageChange($event)"
+                    (addClick)="onAjoutDemande()"
+                    [formLongDescription]="formHeader"
+                    [loading]="loading">
+                </app-crud-generic>
             </div>
         </div>
-        <div>
-            <p-breadcrumb [home]="home" [model]="items" />
-        </div>
     </div>
-
-<app-crud-generic
-    [dialogWidth]="'40rem'"
-    [addButtonLabel]="'Nouvel utilisateur'"
-    [pageLabel]="pageLabel"
-    [tableCols]="tableCols"
-    [listeObject]="dataList"
-    [formGroup]="formGroup"
-    [formCols]="formCols"
-    [loading]="loading"
-    [closeDialog]="closeDialog"
-    [formHeader]="formHeader"
-    [dropdownList]="dropdownList"
-    [multiSelectList]="multiSelectList"
-    [customButtons]="customButtons"
-    (customActionEvent)="handleCustomAction($event)"
-    (newItemEvent)="onSave($event)"
-    [notDelete]="true"
-    [totalElements]="totalElements"
-    [isPagination]="false"
-    [currentPage]="currentPage"
-    [pageSize]="pageSize"
-    (pageChangeEvent)="onPageChange($event)"
-    >
-</app-crud-generic>
-
-</div> 
+</div>

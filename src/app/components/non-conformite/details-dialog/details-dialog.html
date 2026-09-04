@@ -36,7 +36,7 @@
     <!-- Section Principale -->
     <div class="grid">
         <div class="field mt-5 mb-4"
-            *ngIf="(demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.SUIVI_RQ)&&demande.btnActions!==EtapeTraitement.CLOTURE">
+            *ngIf="(demande.etatDeTraitement===EtapeTraitement.VALIDATION||demande.etatDeTraitement===EtapeTraitement.SUIVI_RQ)&&demande.btnActions!==EtapeTraitement.CLOTURE">
             <!-- <label for="justification" class="block font-bold  mb-2">Action préventive (facultative)</label>
             <textarea pInputTextarea id="justification" [(ngModel)]="demande.actionPreventive" name="justification"
                 rows="5" [autoResize]="true" placeholder="Décrivez les actions préventives..."
@@ -81,40 +81,40 @@
                 <div class="nc-details-grid">
                     <div class="nc-detail-item">
                         <span class="nc-detail-label">Référence :</span>
-                        <span class="nc-detail-value font-bold bg-surface-100 p-2">{{demande.numeroReference}}</span>
+                        <span class="nc-detail-value font-bold bg-surface-100 p-2">{{demande.numeroReference || demande.numeroReference}}</span>
                     </div>
                     <div class="nc-detail-item" *ngIf="demande.origineService">
                         <span class="nc-detail-label">Processus Destinataire :</span>
-                        <span class="nc-detail-value">{{demande.origineService}}
+                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">{{demande.origineService}}
                             ({{demande.origineServiceLibelleCourt}})</span>
                     </div>
                     <div class="nc-detail-item">
                         <span class="nc-detail-label">Processus de soumission :</span>
-                        <span class="nc-detail-value">{{demande.structureSoumissionLibelle}}</span>
+                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">{{demande.structureSoumissionLibelle || demande.structureSoumissionLibelle}}</span>
                     </div>
                     <div class="nc-detail-item">
                         <span class="nc-detail-label">Émetteur :</span>
-                        <span class="nc-detail-value">{{demande.currentUserfullName}}</span>
+                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">{{demande.currentUserfullName}}</span>
                     </div>
                     <div class="nc-detail-item">
                         <span class="nc-detail-label">Date de création :</span>
-                        <span class="nc-detail-value">{{demande.createdAt | date:'dd/MM/yyyy HH:mm'}}</span>
+                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">{{demande.createdAt | date:'dd/MM/yyyy HH:mm'}}</span>
                     </div>
                     <div class="nc-detail-item" *ngIf="demande.typeProcessusLibelle">
-                        <span class="nc-detail-label">Type de processus:</span>
-                        <span class="nc-detail-value">{{demande.typeProcessusLibelle}}</span>
+                        <span class="nc-detail-label">Catégorie de processus:</span>
+                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">{{demande.typeProcessusLibelle}}</span>
                     </div>
                     <div class="nc-detail-item" *ngIf="demande.typeNonConformiteLibelle">
                         <span class="nc-detail-label">Origine de la non-conformité :</span>
-                        <span class="nc-detail-value">{{demande.typeNonConformiteLibelle}}</span>
+                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">{{demande.typeNonConformiteLibelle}}</span>
                     </div>
                     <div class="nc-detail-item" *ngIf="demande.actionLibelle">
                         <span class="nc-detail-label">Type d'action :</span>
-                        <span class="nc-detail-value">{{demande.actionLibelle}}</span>
+                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">{{demande.actionLibelle}}</span>
                     </div>
                     <div class="nc-detail-item" *ngIf="demande.niveauNonConformiteLibelle">
                         <span class="nc-detail-label">Niveau de la non conformité:</span>
-                        <span class="nc-detail-value">
+                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">
                             <p-tag [style]="{'font-weight': 'bold'}" [severity]="getStatusSeverity(demande.niveauNonConformiteLibelle)" [value]="demande.niveauNonConformiteLibelle"> </p-tag>
                             </span>
                     </div>
@@ -131,12 +131,12 @@
                     </div>
                 </ng-template>
                 <div class="nc-description">
-                    <div [innerHTML]="demande.justification || 'Aucune description fournie'"></div>
+                    <div [innerHTML]="demande.description || 'Aucune description fournie'"></div>
                 </div>
             </p-fieldset>
 
             <!-- Validation Pilote -->
-            <div class="mt-4" *ngIf="demande.pertinancePilote">
+            <div class="mt-4" *ngIf="demande.pertinencePilote">
             <p-fieldset [toggleable]="true" styleClass="mb-4">
                 <ng-template pTemplate="header">
                     <div class="flex items-center gap-2 text-primary">
@@ -146,14 +146,14 @@
                 <div class="nc-details-grid">
                     <div class="nc-detail-item">
                         <span class="nc-detail-label">Pertinence :</span>
-                        <span class="nc-detail-value">
-                            <p-tag [severity]="getStatusSeverity(demande.pertinancePilote)"
-                                [value]="demande.pertinancePilote"> </p-tag>
+                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">
+                            <p-tag [severity]="getStatusSeverity(demande.pertinencePilote)"
+                                [value]="demande.pertinencePilote"> </p-tag>
                         </span>
                     </div>
-                    <div class="nc-detail-item" *ngIf="demande.justificationPilote">
+                    <div class="nc-detail-item" *ngIf="demande.observationPilote">
                         <span class="nc-detail-label">Justification :</span>
-                        <span class="nc-detail-value" [innerHTML]="demande.justificationPilote"></span>
+                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block" [innerHTML]="demande.observationPilote"></span>
                     </div>
                 </div>
             </p-fieldset>
@@ -163,7 +163,7 @@
         <!-- Colonne Droite -->
         <div class="col-12 lg:col-6">
             <!-- Actions entreprises -->
-            <div class="mt-4" *ngIf="demande.actionDsc ">
+            <div class="mt-4" *ngIf="demande.actionImmediate ">
             <p-fieldset [toggleable]="true" styleClass="mb-4">
                 <ng-template pTemplate="header">
                     <div class="flex items-center gap-2 text-primary">
@@ -171,7 +171,7 @@
                     </div>
                 </ng-template>
                 <div class="nc-description">
-                    <div [innerHTML]="demande.actionDsc || 'Aucune action entreprise'"></div>
+                    <div [innerHTML]="demande.actionImmediate || 'Aucune action entreprise'"></div>
                 </div>
             </p-fieldset>
             </div>
@@ -230,7 +230,7 @@
         <app-lightbox #maLightbox></app-lightbox>
 
         <!-- Validation RS -->
-        <div class="col-12 lg:col-6" *ngIf="demande.pertinanceRs">
+        <div class="col-12 lg:col-6" *ngIf="demande.pertinenceRs">
             <div class="mt-4">
             <p-fieldset [toggleable]="true" styleClass="mb-4">
                 <ng-template pTemplate="header">
@@ -242,16 +242,16 @@
                     <div class="nc-detail-item">
                         
                         <span class="nc-detail-label">Pertinence :</span> 
-                        <span class="nc-detail-value">
+                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">
                             <p-tag
-                            [severity]="getStatusSeverity(demande.pertinanceRs)" [value]="demande.pertinanceRs">
+                            [severity]="getStatusSeverity(demande.pertinenceRs)" [value]="demande.pertinenceRs">
                         </p-tag>
                         </span>
 
                     </div>
-                    <div class="nc-detail-item" *ngIf="demande.justificationRs">
+                    <div class="nc-detail-item" *ngIf="demande.observationRs">
                         <span class="nc-detail-label">Justification :</span>
-                        <span class="nc-detail-value" [innerHTML]="demande.justificationRs"></span>
+                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block" [innerHTML]="demande.observationRs"></span>
                     </div>
                 </div>
             </p-fieldset>
@@ -271,7 +271,7 @@
                     <div class="nc-detail-item">
                         <span class="nc-detail-label">Pertinence :</span> 
 
-                        <span class="nc-detail-value">
+                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">
                             <p-tag
                             [severity]="getStatusSeverity(demande.pertinanceRsSuivi)"
                             [value]="demande.pertinanceRsSuivi"> </p-tag>
@@ -280,7 +280,7 @@
 
                     <div class="nc-detail-item">
                         <span class="nc-detail-label">Date :</span>
-                        <span class="nc-detail-value">{{demande.dateSuivi | date : 'dd/MM/yyyy HH:mm'}}</span>
+                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">{{demande.dateSuivi | date : 'dd/MM/yyyy HH:mm'}}</span>
                     </div>
                 </div>
             </p-fieldset>
@@ -374,7 +374,7 @@
                                 <th class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 130px;">Échéance</th>
                                 <th class="bg-surface-50 text-700 font-semibold white-space-nowrap text-center" style="min-width: 110px;">Statut</th>
                                 <th pFrozenColumn alignFrozen="right" class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 80px; z-index: 10; text-align: center;"
-                                    *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT||demande.etatTraitement===EtapeTraitement.CLOTURE||demande.etatTraitement===EtapeTraitement.SUIVI_RQ">
+                                    *ngIf="demande.etatDeTraitement===EtapeTraitement.VALIDATION||demande.etatDeTraitement===EtapeTraitement.TRAITEMENT||demande.etatDeTraitement===EtapeTraitement.CLOTURE||demande.etatDeTraitement===EtapeTraitement.SUIVI_RQ">
                                     Actions</th>
                             </tr>
                         </ng-template>
@@ -417,11 +417,11 @@
                                             pTooltip="Voir détails" tooltipPosition="top" />
                                     </div>
                                 </td>
-                                <td pFrozenColumn alignFrozen="right" class="text-center bg-white" style="z-index: 1;" *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT||demande.etatTraitement===EtapeTraitement.CLOTURE">
+                                <td pFrozenColumn alignFrozen="right" class="text-center bg-white" style="z-index: 1;" *ngIf="demande.etatDeTraitement===EtapeTraitement.VALIDATION||demande.etatDeTraitement===EtapeTraitement.TRAITEMENT||demande.etatDeTraitement===EtapeTraitement.CLOTURE">
                                     <div class="flex items-center justify-center gap-2" style="min-width: 140px">
                                         <p-button [text]="true" [rounded]="true" severity="info" size="small"
                                             icon="pi pi-pencil"
-                                            *ngIf="(demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT)&&(plan.status==='NON_TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
+                                            *ngIf="(demande.etatDeTraitement===EtapeTraitement.VALIDATION||demande.etatDeTraitement===EtapeTraitement.TRAITEMENT)&&(plan.status==='NON_TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
                                             (onClick)="edit(plan)"
                                             pTooltip="Modifier" tooltipPosition="top" />
                                         <!-- <button 
@@ -434,11 +434,11 @@
                                             pTooltip="Visualiser" tooltipPosition="top" />
                                         <p-button [text]="true" [rounded]="true" severity="danger" size="small"
                                             icon="pi pi-ban"
-                                            *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
+                                            *ngIf="demande.etatDeTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
                                             (onClick)="displayRejet(plan)"
                                             pTooltip="Rejeter" tooltipPosition="top" />
                                         <!-- <button pButton pRipple type="button"
-                                            *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
+                                            *ngIf="demande.etatDeTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
                                             icon="pi pi-arrow-up" (click)="displayRejet(plan)"
                                             class="p-button-rounded p-button-text p-button-danger p-button-sm" pTooltip="Rejeter"
                                             tooltipPosition="top">
@@ -450,7 +450,7 @@
                         
                         <ng-template pTemplate="emptymessage">
                             <tr>
-                                <td [attr.colspan]="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT ? 7 : 6"
+                                <td [attr.colspan]="demande.etatDeTraitement===EtapeTraitement.VALIDATION||demande.etatDeTraitement===EtapeTraitement.TRAITEMENT ? 7 : 6"
                                     class="text-center p-5">
                                     <div class="flex flex-col items-center justify-center text-500">
                                         <i class="pi pi-inbox text-4xl mb-3 text-300"></i>

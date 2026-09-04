@@ -1,15 +1,15 @@
-<div class="flex flex-wrap items-center gap-3 p-4 w-full">
+<div class="flex flex-wrap items-center gap-3 py-1 px-0 w-full">
     
     <div class="filter-item-date shrink-0">
         <!-- Le bouton déclencheur principal (affiche les dates sélectionnées) -->
         <button pButton pRipple type="button" 
-                class="p-button-outlined p-button-secondary border-round-lg w-full flex items-center justify-between px-3 py-2 text-700 bg-transparent border-1 border-surface-border"
+                class="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-surface-900 border border-slate-200 dark:border-surface-700 rounded-xl shadow-xs hover:border-slate-300 transition-colors"
                 (click)="datePanel.toggle($event)">
             <span class="flex items-center gap-2">
-                <i class="pi pi-calendar"></i>
-                <span>{{ getFormattedRangeLabel() }}</span>
+                <i class="pi pi-calendar text-slate-400"></i>
+                <span class="font-medium text-xs">{{ getFormattedRangeLabel() }}</span>
             </span>
-            <i class="pi pi-chevron-down text-xs text-500"></i>
+            <i class="pi pi-chevron-down text-xs text-slate-400"></i>
         </button>
 
         <!-- Panel de sélection personnalisé -->

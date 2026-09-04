@@ -2,10 +2,10 @@
 
 .layout-sidebar {
     position: fixed;
-    width: 20rem;
+    width: 19rem;
     height: calc(100vh - 0rem);
     z-index: 999;
-    overflow-y: auto;
+    overflow-y: visible; /* Modified for absolute toggle button */
     user-select: none;
     top: 0rem;
     left: 0rem;
@@ -13,12 +13,40 @@
         transform var(--layout-section-transition-duration),
         left var(--layout-section-transition-duration);
     background-color: var(--primary-color);
-    padding: 1.5rem 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.5rem 10px 10px;
     border-radius: 5px;
+
+        &.collapsed-sidebar {
+        .sidebar-toggle-btn {
+            right: -3rem; /* Push it completely outside when collapsed */
+        }
+    }
+
+    /* Personnalisation du scrollbar du menu */
+    .overflow-y-auto {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+
+        &::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+
+            &:hover {
+                background-color: rgba(255, 255, 255, 0.4);
+            }
+        }
+    }
 }
 
 .layout-menu-logo {
-    padding: 0 1.5rem 1.5rem;
+    padding: 0 1.5rem 1.5rem 0; 
 }
 
 .layout-menu-logo {
@@ -54,6 +82,30 @@
     }
 }
 
+.sidebar-toggle-btn {
+    position: absolute;
+    top: 1rem;
+    right: -15px;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.2s;
+    font-size: 22px;
+    z-index: 1000;
+}
+
+.sidebar-toggle-btn:hover {
+    background-color: #0073b3;
+    transform: translateX(-2px);
+}
+
 .layout-menu {
     margin: 0;
     padding: 0;
@@ -63,10 +115,10 @@
         > .layout-menuitem-root-text {
             font-size: 0.8rem;
             text-transform: uppercase;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.452);
-            margin: 0.5rem 0 0.5rem 0;
-            padding: 10px .5rem;
+            font-weight: 700;
+            color: rgb(255 255 255 / 65%);
+            margin: 0.5rem 0px;
+            padding: 8px 0.5rem;
         }
 
         > a {
@@ -80,6 +132,19 @@
         &.active-menuitem {
             > .layout-submenu-toggler {
                 transform: rotate(-180deg);
+            }
+        }
+    }
+
+    li {
+        &:has(.active-route) > a.parent-menu-item {
+            // background-color: rgba(255, 255, 255, 0.1); // Garde le style quand un enfant est actif
+            background-color: var(--secondary-color);
+            border-radius: 5px;
+            
+            .layout-menuitem-icon {
+                background-color: rgba(0, 131, 202, 0.6);
+                color: white;
             }
         }
     }
@@ -105,9 +170,14 @@
             color: rgba(255, 255, 255, 1);
             cursor: pointer;
             padding: 0.35rem;
+            margin-bottom: 0.25rem;
             transition:
                 background-color var(--element-transition-duration),
                 box-shadow var(--element-transition-duration);
+                
+            &.parent-menu-item {
+                border-radius: 5px;
+            }
 
             .layout-menuitem-icon {
                 margin-right: 0.5rem;
@@ -128,8 +198,8 @@
             }
 
             &.active-route {
-                color: #00ddff !important;
-                background-color: #75c5ec38;
+                color: white !important;
+                background-color: var(--secondary-color);
                 border-radius: 5px;
                 
                 .layout-menuitem-icon {
@@ -160,41 +230,77 @@
 
         ul {
             overflow: hidden;
-            border-radius: var(--content-border-radius);
+            position: relative; // Nécessaire pour positionner la ligne ::before
             padding: 0;
+            margin-left: .95rem; // S'aligne sous l'icône du parent
+            padding-left: 1.25rem; // Espace entre la ligne et le texte
+
+            // La ligne verticale (Capture 3) positionnée à l'intérieur pour éviter le overflow:hidden
+            &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 6px; // Ligne placée à l'intérieur du ul
+                width: 1px;
+                background-color: rgba(255, 255, 255, 0.3);
+            }
 
             li {
+                position: relative;
+                
+                // Le point de la timeline
+                &::before {
+                    content: '';
+                    position: absolute;
+                    left: -11px; // Doit être aligné exactement sur la ligne
+                    top: 50%;
+                    width: 6px;
+                    height: 6px;
+                    transform: translate(-50%, -50%); // Centrage parfait sur la ligne
+                    border-radius: 50%;
+                    background-color: rgba(255, 255, 255, 0.6);
+                    z-index: 1;
+                    transition: all 0.2s;
+                }
+                
+                &:has(> a.active-route) {
+                    &::before {
+                        background-color: #ffffff;
+                        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+                        width: 8px;
+                        height: 8px;
+                    }
+                }
+
                 a {
-                    margin-left: 1rem;
+                    margin-left: 0 !important;
+                    padding: 0.25rem 0.5rem;
+                    min-height: 2rem;
+                    background-color: transparent !important;
+                    font-size: 13px;
+                    display: flex;
+                    justify-content: flex-start;
+                    padding-left: 20px;
+
+                    i {
+                        display: none !important;
+                    }
+                    
+                    &:hover {
+                        background-color: rgba(255, 255, 255, 0.1) !important;
+                    }
+                    
+                    &.active-route {
+                        background-color: rgba(255, 255, 255, 0.15) !important;
+                        // font-weight: 600;
+                    }
                 }
 
                 li {
+                    // Si on a encore des sous-menus profonds
                     a {
-                        margin-left: 2rem;
-                    }
-
-                    li {
-                        a {
-                            margin-left: 2.5rem;
-                        }
-
-                        li {
-                            a {
-                                margin-left: 3rem;
-                            }
-
-                            li {
-                                a {
-                                    margin-left: 3.5rem;
-                                }
-
-                                li {
-                                    a {
-                                        margin-left: 4rem;
-                                    }
-                                }
-                            }
-                        }
+                        margin-left: 1rem !important;
                     }
                 }
             }

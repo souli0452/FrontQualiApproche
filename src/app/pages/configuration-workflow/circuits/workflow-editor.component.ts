@@ -22,6 +22,7 @@ import {
   WorkflowTransitionDto
 } from '../../../models/workflow.model';
 import { LicenceOuverteDirective } from '../../../shared/licence/licence-ouverte.directive';
+import { AlertService } from '../../../shared/alert-message/alert-message.service';
 
 /** Option de liste déroulante. */
 interface Option<T = string> {
@@ -113,9 +114,15 @@ type SeveriteBouton = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'he
 @Component({
   selector: 'app-workflow-editor',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgPrimeModule,
-    WorkflowConfigurationGuideComponent, SelectInputComponent, LicenceOuverteDirective],
-  providers: [MessageService],
+  imports: [
+    CommonModule, 
+    ReactiveFormsModule, 
+    FormsModule, 
+    NgPrimeModule,
+    WorkflowConfigurationGuideComponent, 
+    SelectInputComponent, 
+    LicenceOuverteDirective],
+  providers: [],
   templateUrl: './workflow-editor.component.html'
 })
 export class WorkflowEditorComponent implements OnInit, OnDestroy {
@@ -123,6 +130,7 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   private readonly workflowService = inject(WorkflowService);
   private readonly roleService = inject(AppRoleService);
   private readonly stepTemplateService = inject(WorkflowStepTemplateService);
+  private readonly alertService = inject(AlertService);
   /**
    * Résout les sources de valeurs du moteur — dont `@UTILISATEURS`, qui alimente le choix des
    * signataires d'une étape. Le même service sert déjà les champs de saisie à liste : les
@@ -824,19 +832,11 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   enregistrer(): void {
     if (this.formulaire.invalid) {
       this.formulaire.markAllAsTouched();
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Formulaire incomplet',
-        detail: 'Renseignez les champs obligatoires avant d’enregistrer.'
-      });
+      this.alertService.showWarning('Renseignez les champs obligatoires avant d’enregistrer.');
       return;
     }
     if (this.etapes.length === 0) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Circuit vide',
-        detail: 'Un circuit doit comporter au moins une étape.'
-      });
+      this.alertService.showWarning('Un circuit doit comporter au moins une étape.');
       return;
     }
 
@@ -850,6 +850,7 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     requete.pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.enregistrement = false;
+        this.alertService.showSuccess(`Le circuit « ${payload.nom} » a été enregistré avec succès.`);
         // Le message de succès est confié à la liste via l'état de navigation : cette page est
         // détruite par le retour, et un toast émis ici mourrait avec elle.
         this.router.navigate(['/configurations/circuits'], {
@@ -858,7 +859,7 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
       },
       error: (erreur: WorkflowError) => {
         this.enregistrement = false;
-        this.signalerErreur(erreur);
+        this.alertService.showError(erreur?.message || "Échec de l'enregistrement du circuit.");
       }
     });
   }

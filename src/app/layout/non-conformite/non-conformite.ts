@@ -11,6 +11,7 @@ import { RoleService } from '../../services/non-conformite/role.service';
 import { ProcNonConformiteService } from '../../services/non-conformite/proc-non-conformite.service';
 import { NonConformiteService } from '../../services/non-conformite/non-conformite.service';
 import { LicenceOuverteDirective } from '../../shared/licence/licence-ouverte.directive';
+import { HeaderPage } from '../../shared/header-page/header-page';
 
 
 @Component({
@@ -21,7 +22,8 @@ import { LicenceOuverteDirective } from '../../shared/licence/licence-ouverte.di
     NgPrimeModule, 
     RouterModule,
     NcModule,
-    LicenceOuverteDirective
+    // LicenceOuverteDirective,
+    HeaderPage
   ],
   templateUrl: './non-conformite.html',
   styleUrl: './non-conformite.scss'
@@ -45,6 +47,11 @@ export class NonConformiteLayoutComponent implements OnInit, OnDestroy {
             }
         });
     }
+
+    breadcrumbs = [
+        { label: 'Tableau de bord', routerLink: '/' },
+        { label: 'Non-Conformités', routerLink: '/non-conformite' }
+    ];
 
     ngOnInit() {
         this.activeTab = this.router.url.split('?')[0];
@@ -184,6 +191,10 @@ export class NonConformiteLayoutComponent implements OnInit, OnDestroy {
         if (url && typeof url === 'string') {
             this.router.navigate([url]);
         }
+    }
+
+    trackByRouterLink(_index: number, item: MenuItem): string {
+        return (item.routerLink as string) || item.label || '';
     }
 
 

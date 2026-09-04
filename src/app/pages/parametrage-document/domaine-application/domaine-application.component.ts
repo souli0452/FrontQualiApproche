@@ -11,6 +11,8 @@ import { DomaineApplication } from '../../../models/referentiel-document.model';
 import { DomaineApplicationService } from '../../../services/module-gestion-documentaire/referentiel-document.service';
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 import { hasAnyPermission } from '../../../utils/auth/auth-utils';
+import { HeaderPage } from '../../../shared/header-page/header-page';
+import { AlertService } from '../../../shared/alert-message/alert-message.service';
 
 /**
  * Référentiel des domaines de document.
@@ -22,26 +24,49 @@ import { hasAnyPermission } from '../../../utils/auth/auth-utils';
 @Component({
     selector: 'app-domaine-application',
     standalone: true,
-    imports: [CommonModule, AppCrudGenericComponent, NgPrimeModule],
-    providers: [MessageService],
+    imports: [
+        HeaderPage,
+        CommonModule, 
+        AppCrudGenericComponent, 
+        NgPrimeModule
+    ],
+    providers: [],
     template: `
-        <p-toast></p-toast>
+        <app-header-page 
+            [title]="pageLabel" 
+            [subtitle]="'Ajoutez ou modifiez les domaines d\\'application'"
+            [breadcrumbs]="breadcrumbs"
+            [buttonText]="'Nouveau domaine'" 
+            buttonIcon="pi pi-plus"
+            (actionClick)="crudGeneric.openNew()"
+        />
         <div class="page-layout">
             <app-crud-generic
-                [addButtonLabel]="'Nouveau domaine'"
+                #crudGeneric
+                [requireRqPassword]="true"
+                [deleteConfirmField]="'libelle'"
+                [showAddButton]="false"
+                detailLongDescription="Ce référentiel définit les domaines d'application documentaires de votre organisation. Chaque domaine circonscrit le périmètre métier (RH, Achats, Production, SI, etc.) auquel se rattachent vos documents qualité afin d'harmoniser la classification thématique et le suivi du fonds documentaire."
+                formLongDescription="Renseignez les informations requises pour configurer un domaine d'application. Définissez un libellé normalisé représentant une fonction ou un secteur clé, ainsi que son rang d'affichage dans les sélecteurs. Les champs avec astérisque sont obligatoires."
                 [dialogWidth]="'40rem'"
+                [showItemDescriptionOnTop]="false"
                 [loading]="loading"
                 [pageLabel]="pageLabel"
                 [tableCols]="tableCols"
                 [listeObject]="dataList"
                 [formGroup]="formGroup"
                 [formCols]="formCols"
+                [detailCols]="detailCols"
                 [isAffich]="true"
                 [closeDialog]="closeDialog"
                 [formHeader]="formHeader"
                 (newItemEvent)="onSave($event)"
                 (removeEvent)="onDelete($event)"
-                [isPagination]="false"
+                [isPagination]="true"
+                [totalElements]="totalElements"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChangeEvent)="onPageChange($event)"
                 [consultation]="!peutEcrire"
                 [notModif]="!peutEcrire"
                 [notDelete]="!peutEcrire">
@@ -53,6 +78,9 @@ export class DomaineApplicationComponent implements OnInit, OnDestroy {
 
     loading = true;
     dataList: DomaineApplication[] = [];
+    totalElements = 0;
+    currentPage = 0;
+    pageSize = 10;
     closeDialog = false;
     peutEcrire = false;
 
@@ -62,27 +90,30 @@ export class DomaineApplicationComponent implements OnInit, OnDestroy {
     formGroup: UntypedFormGroup;
     formCols: FormGroupColumn[];
     tableCols: TableColumn[];
+    detailCols: FormGroupColumn[] | undefined;
 
     private readonly destroy$ = new Subject<boolean>();
 
     constructor(
         protected fb: UntypedFormBuilder,
         protected messageService: MessageService,
-        protected service: DomaineApplicationService
+        protected service: DomaineApplicationService,
+        private alertService: AlertService
     ) {
         this.formCols = [
             { field: 'id', label: '', header: 'Id', type: 'string', visible: false, required: false },
             {
-                field: 'libelle', label: 'Libellé (ex : Ressources humaines, Achats)', header: 'Libellé',
+                field: 'libelle', label: 'Libellé (ex : Ressources humaines, Achats)', placeholder: 'Libellé (ex : Ressources humaines, Achats)', header: 'Libellé',
                 type: 'string', visible: true, required: true
             },
             {
-                field: 'ordre', label: 'Rang d\'affichage',
-                header: 'Rang', type: 'number', visible: true, required: false
+                field: 'description', label: 'Ce que ce domaine recouvre', placeholder: 'Ce que ce domaine recouvre',
+                helpText: 'Définissez ici le périmètre opérationnel ou fonctionnel de ce domaine.',
+                header: 'Description', type: 'text', visible: true, required: false
             },
             {
-                field: 'description', label: 'Ce que ce domaine recouvre',
-                header: 'Description', type: 'text', visible: true, required: false
+                field: 'ordre', label: 'Rang d\'affichage', min: 1, max: 10, helpText: "Détermine l'ordre d'apparition de ce domaine dans les listes déroulantes et filtres de documents. Les numéros les plus bas (ex : 1, 2) apparaissent en premier, facilitant l'accès aux domaines les plus sollicités.",
+                header: 'Rang', type: 'knob', visible: true, required: false
             }
         ];
 
@@ -92,6 +123,12 @@ export class DomaineApplicationComponent implements OnInit, OnDestroy {
             { field: 'description', header: 'Description', type: 'string', filter: true }
         ];
 
+        this.detailCols = [
+            { field: 'ordre', header: 'Rang'},
+            { field: 'libelle', header: 'Domaine' },
+            { field: 'description', header: 'Description' }
+        ];
+
         this.formGroup = this.fb.group({
             id: [null],
             libelle: [null, Validators.required],
@@ -99,6 +136,11 @@ export class DomaineApplicationComponent implements OnInit, OnDestroy {
             description: [null]
         });
     }
+
+    breadcrumbs = [
+        { label: 'Tableau de bord', routerLink: '/' },
+        { label: 'Domaines d\'application', routerLink: '' }
+    ];
 
     ngOnInit(): void {
         this.peutEcrire = hasAnyPermission(['domaine-application-write', 'CONFIG_GLOBAL_MANAGE']);
@@ -112,18 +154,30 @@ export class DomaineApplicationComponent implements OnInit, OnDestroy {
 
     fetchObject(): void {
         this.loading = true;
-        this.service.liste().pipe(takeUntil(this.destroy$)).subscribe({
-            next: (priorites) => {
-                this.dataList = priorites ?? [];
-                this.loading = false;
-            },
-            error: (error) => {
-                this.loading = false;
-                showToast(StatusEnum.error, error.status, 'Chargement des domaines impossible',
-                    this.messageService, error);
-            }
-        });
+        this.service.findAll(this.currentPage, this.pageSize)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (res: any) => {
+                    setTimeout(() => {
+                        this.dataList = res?.data?.content ?? res?.data ?? [];
+                        this.totalElements = res?.data?.totalElements ?? this.dataList.length;
+                        this.loading = false;
+                    }, 300);
+                },
+                error: (error) => {
+                    this.loading = false;
+                    this.alertService.showError('Chargement des domaines impossible');
+                }
+            });
     }
+
+
+    onPageChange(event: { page: number; size: number }) {
+        this.currentPage = event.page;
+        this.pageSize = event.size;
+        this.fetchObject(); // 👈 C'est cet appel qui manquait pour recharger la nouvelle page !
+    }
+
 
     onSave(objet: DomaineApplication): void {
         const requete = objet.id
@@ -132,29 +186,23 @@ export class DomaineApplicationComponent implements OnInit, OnDestroy {
 
         requete.pipe(takeUntil(this.destroy$)).subscribe({
             next: () => this.onSuccess(),
-            error: (error) => showToast(StatusEnum.error, error.status,
-                'Enregistrement impossible', this.messageService, error)
+            error: (error) => this.alertService.showError('Enregistrement impossible')
         });
     }
 
     onDelete(objet: DomaineApplication): void {
         this.service.delete(objet.id!).pipe(takeUntil(this.destroy$)).subscribe({
             next: () => {
-                this.messageService.add({
-                    severity: 'success', summary: 'Supprimé',
-                    // Conséquence énoncée : les documents qui la portent n'afficheront plus rien.
-                    detail: 'Domaine supprimé. Les documents qui le portaient n\'en affichent plus.'
-                });
+                this.alertService.showSuccess('Domaine supprimé avec succès');
                 this.fetchObject();
             },
-            error: (error) => showToast(StatusEnum.error, error.status,
-                'Suppression impossible', this.messageService, error)
+            error: (error) => this.alertService.showError('Suppression impossible')
         });
     }
 
     private onSuccess(): void {
+        this.alertService.showSuccess('Domaine enregistré avec succès');
         this.closeDialog = true;
         this.fetchObject();
-        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Opération réussie' });
     }
 }

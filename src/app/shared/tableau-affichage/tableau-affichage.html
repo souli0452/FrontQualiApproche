@@ -1,0 +1,205 @@
+<div class="tableau-card shadow-1 border-round-xl overflow-hidden border-1 border-slate-100">
+    <!-- Top Bar (Search & Optional Add Button) -->
+    <div *ngIf="showSearch || showAddButton" class="top-bar flex align-items-center justify-content-between p-3 border-b-1 border-slate-100 bg-blue">
+        <!-- Search Input (Pill style on Left with fixed width) -->
+        <div class="search-container relative flex align-items-center" *ngIf="showSearch" style="width: 280px;">
+            <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400"></i>
+            <input 
+                pInputText 
+                type="text" 
+                [(ngModel)]="searchValue"
+                [placeholder]="placeholderRecherche" 
+                (input)="filterGlobal(searchValue)"
+                class="w-full search-pill-input text-sm p-2 bg-white border-1 border-slate-200 border-round-3xl" 
+                style="padding-left: 2.25rem !important;"
+            />
+        </div>
+
+        <!-- Optional Add Button on Right -->
+        <div class="actions-right flex align-items-center gap-2" *ngIf="showAddButton">
+            <p-button 
+                [label]="addButtonLabel" 
+                icon="pi pi-plus" 
+                severity="info" 
+                (onClick)="onAddClick()" 
+                size="small"
+                styleClass="p-button-rounded border-round-3xl px-3">
+            </p-button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <p-table
+        [resizableColumns]="true"
+        columnResizeMode="expand"
+        #dt
+        [size]="'small'"
+        [columns]="tableCols"
+        [value]="listeObject"
+        selectionMode="single"
+        dataKey="id"
+        [paginator]="false"
+        [loading]="loading"
+        [showLoader]="false"
+        styleClass="p-datatable-sm p-datatable-custom"
+        [globalFilterFields]="filterFields"
+        [tableStyle]="{ 'min-width': minWidth }"
+        [scrollable]="true">
+        
+        <!-- Table Header -->
+        <ng-template pTemplate="header" let-columns>
+            <tr class="header-row border-b-1 border-slate-100">
+                <th *ngFor="let col of columns; let first = first" [pSortableColumn]="col.field" [style.width]="col.width" class="uppercase py-3 px-4 bg-white dark:bg-slate-900" pFrozenColumn [frozen]="first">
+                    <div class="flex align-items-center gap-2">
+                        <span class="text-[13px] font-semibold text-black dark:text-white">{{ col.header }}</span>
+                        <p-sortIcon [field]="col.field"></p-sortIcon>
+                    </div>
+                </th>
+                <th *ngIf="!consultation" pFrozenColumn alignFrozen="right" class="text-right text-[13px] font-semibold text-black dark:text-white uppercase py-3 px-4 bg-white dark:bg-slate-900" style="width: 4.5rem; z-index: 1;">ACTION</th>
+            </tr>
+        </ng-template>
+
+        <!-- Table Body -->
+        <ng-template pTemplate="body" let-rowData let-columns="columns" let-ri="rowIndex">
+            <tr *ngIf="!loading" [pSelectableRow]="rowData" class="body-row border-b-1 border-slate-100 transition-colors hover:bg-slate-50">
+                <td *ngFor="let col of columns; let first = first" [style.width]="col.width" class="py-3 px-4 align-middle text-slate-700 dark:text-slate-200 font-medium bg-white dark:bg-slate-900 group-hover:bg-slate-50" pFrozenColumn [frozen]="first">
+                    <!-- Column Type: string -->
+                    <span *ngIf="col.type === 'string'">
+                        <ng-container *ngIf="col.header === 'Réference' || col.header === 'Référence'">
+                            <p-tag severity="info" [value]="rowData[col.field]" styleClass="tag-pill" />
+                        </ng-container>
+                        <ng-container *ngIf="col.header === 'Statut'">
+                            <p-tag severity="warn" [value]="rowData[col.field]" styleClass="tag-pill" />
+                        </ng-container>
+                        <ng-container *ngIf="col.header !== 'Réference' && col.header !== 'Référence' && col.header !== 'Statut'">
+                            <span [innerHTML]="rowData[col.field]"></span>
+                        </ng-container>
+                    </span>
+
+                    <!-- Column Type: badge -->
+                    <span *ngIf="col.type === 'badge'">
+                        <p-tag [value]="rowData[col.field]"
+                               [severity]="(col.severityField && rowData[col.severityField]) || 'info'"
+                               styleClass="tag-pill" />
+                    </span>
+
+                    <!-- Column Type: number -->
+                    <span *ngIf="col.type === 'number'" class="font-semibold">
+                        {{ rowData[col.field] }}
+                    </span>
+
+                    <!-- Column Type: date -->
+                    <span *ngIf="col.type === 'date'" class="text-slate-500">
+                        {{ rowData[col.field] | date: 'dd/MM/yyyy HH:mm' }}
+                    </span>
+
+                    <!-- Column Type: boolean -->
+                    <span *ngIf="col.type === 'boolean'">
+                        <span *ngIf="rowData[col.field]">
+                            <p-tag severity="success" [value]="col.labelTrue || 'Oui'" styleClass="tag-pill" />
+                        </span>
+                        <span *ngIf="!rowData[col.field]">
+                            <p-tag severity="warning" [value]="col.labelFalse || 'Non'" styleClass="tag-pill" />
+                        </span>
+                    </span>
+
+                    <!-- Column Type: meter (Jauge dynamique avec couleur personnalisée) -->
+                    <span *ngIf="col.type === 'meter'">
+                        <div class="flex items-center gap-2.5" [title]="(rowData[col.field] || 0) + '/' + (col.max || 10)">
+                            <!-- Barre de jauge un peu plus large et arrondie -->
+                            <div class="w-24 bg-slate-100 dark:bg-surface-800 rounded-full h-2.5 overflow-hidden shadow-inner">
+                                <div class="h-2.5 rounded-full transition-all duration-500"
+                                     [style.width.%]="((rowData[col.field] || 0) / (col.max || 10)) * 100"
+                                     [style.backgroundColor]="rowData[col.colorField || 'couleur'] || rowData['color'] || '#3b82f6'">
+                                </div>
+                            </div>
+                            <!-- Valeur chiffrée (masquée si showValue est false ou non défini) -->
+                            <span *ngIf="col.showValue" class="text-xs font-semibold font-mono text-slate-600 dark:text-surface-300">
+                                {{ rowData[col.field] || 0 }}/{{ col.max || 10 }}
+                            </span>
+                        </div>
+                    </span>
+
+                    <!-- Column Type: color (avec gestion si couleur non définie) -->
+                    <span *ngIf="col.type === 'color'">
+                        <div *ngIf="rowData[col.field]" 
+                             [style.backgroundColor]="rowData[col.field]" 
+                             class="w-6 h-6 rounded-lg shadow-sm border border-slate-200 dark:border-surface-700" 
+                             title="{{ rowData[col.field] }}">
+                        </div>
+                        <span *ngIf="!rowData[col.field]" class="text-slate-300 dark:text-surface-600 text-xs italic">
+                            Non définie
+                        </span>
+                    </span>
+
+                    <!-- Column Type: list -->
+                    <span *ngIf="col.type === 'list'">
+                        <span *ngFor="let val of rowData[col.field]" class="mr-1">
+                            <p-tag severity="info" [value]="val[col.optionLabel || 'libelle']" styleClass="tag-pill" />
+                        </span>
+                    </span>
+                </td>
+
+                <!-- Action Cell (Vertical Ellipsis) -->
+                <td style="text-align:right" *ngIf="!consultation" pFrozenColumn alignFrozen="right" class="py-3 px-4 align-middle bg-white dark:bg-slate-900 group-hover:bg-slate-50" style="z-index: 1;">
+                    <p-button
+                        size="small"
+                        icon="pi pi-ellipsis-v"
+                        [rounded]="true"
+                        [text]="true"
+                        (click)="onActionClick($event, menu, rowData)"
+                        pTooltip="Actions"
+                        tooltipPosition="bottom"
+                        styleClass="text-black dark:text-white font-bold custom-taille">
+                    </p-button>
+                    <p-menu #menu [model]="actionMenuItems" [popup]="true" appendTo="body"></p-menu>
+                </td>
+            </tr>
+        </ng-template>
+
+        <!-- Skeleton Loading Body -->
+        <ng-template pTemplate="loadingbody">
+            <tr *ngFor="let i of [].constructor(loadingRows)">
+                <td *ngFor="let col of tableCols" class="py-3 px-4">
+                    <p-skeleton width="100%" height="1.2rem"></p-skeleton>
+                </td>
+                <td *ngIf="!consultation" class="text-center py-3 px-4">
+                    <p-skeleton width="100%" height="1.2rem"></p-skeleton>
+                </td>
+            </tr>
+        </ng-template>
+
+        <!-- Empty Message -->
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td [attr.colspan]="tableCols.length + (!consultation ? 1 : 0)" class="text-center py-6">
+                    <div class="h-60 flex flex-col items-center justify-center">
+                        <i class="pi pi-inbox text-5xl text-slate-300 mb-3"></i>
+                        <span class="text-slate-500 font-medium">Aucune donnée trouvée</span>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <!-- Footer / Pagination Bar -->
+    <div *ngIf="isPagination" class="footer-bar flex items-center justify-between p-3 bg-blue border-t-1 border-slate-100 flex-col md:flex-row">
+        <!-- Pagination Info (Left) -->
+        <div class="text-slate-500 text-sm font-normal flex items-center gap-2 mb-4  md:mb-0">
+            Affichage de 
+            <span class="font-medium text-slate-800 dark:text-slate-200">{{ totalElements > 0 ? (currentPage * pageSize + 1) : 0 }}</span>–<span class="font-medium text-slate-800 dark:text-slate-200">{{ ((currentPage + 1) * pageSize) > totalElements ? totalElements : ((currentPage + 1) * pageSize) }}</span>
+            sur <span class="font-medium text-slate-800 dark:text-slate-200">{{ totalElements }}</span> {{ recordName }}
+        </div>
+
+        <!-- Paginator (Right) -->
+        <div class="paginator-wrapper">
+            <p-paginator 
+                [first]="currentPage * pageSize"
+                [rows]="pageSize" 
+                appendTo="body"
+                [totalRecords]="totalElements"
+                (onPageChange)="onPageChange($event)">
+            </p-paginator>
+        </div>
+    </div>
+</div>

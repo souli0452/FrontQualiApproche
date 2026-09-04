@@ -12,8 +12,6 @@ import {
   // DocumentQms, QmsDocumentType, QmsDocumentVersion, QmsAuditLog
 } from '../../../services/module-gestion-documentaire/qms-document.service';
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
-import { Structure } from '../../parametrages/structure/structure-config/structure';
-import { StructureService } from '../../parametrages/structure/structure-service/structure-service';
 import { WorkflowError, WorkflowService } from '../../../services/workflow.service';
 import { AuthService } from '../../../services/auth-services/auth.service';
 import {
@@ -38,6 +36,8 @@ import { WorkflowHistoriqueComponent } from '../../../shared/workflow/workflow-h
 import { QmsAssignWorkflowDialogComponent } from './components/qms-assign-workflow-dialog.component';
 import { QmsReclassementDialogComponent } from './components/qms-reclassement-dialog.component';
 import { QmsDocumentAccessDialogComponent, AccessGrant } from './components/qms-document-access-dialog.component';
+import { StructureService } from '../../parametrages/structure/structure.service';
+import { Structure } from '../../parametrages/structure/structure.model';
 
 /**
  * Les six regards portés sur un document, réunis en onglets d'une même fiche.

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild, inject } from '@angular/core';
 import { Router, RouterModule, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { LayoutService } from '../service/layout.service';
@@ -26,8 +26,8 @@ import { AuthData } from '../../models/auth.model';
     imports: [RouterModule, NgPrimeModule, CommonModule, FormsModule, ReactiveFormsModule],
     template: ` 
     <div class="pre-layout-topbar">
-        <div class="layout-topbar">
-            <div class="layout-topbar-logo-container">
+        <div class="layout-topbar" [ngClass]="{'topbar-scrolled': isScrolled}">
+            <div class="layout-topbar-logo-container cacher">
                 <button class="layout-menu-button p-button-secondary  layout-topbar-action" (click)="layoutService.onMenuToggle()">
                     <i class="pi pi-bars"></i>
                 </button>
@@ -35,9 +35,8 @@ import { AuthData } from '../../models/auth.model';
                     {{ pageTitle }}
                 </div>
             </div>
-
-            <div class="layout-topbar-search md:flex items-center flex-1 justify-center max-w-[500px]">
-                <p-iconField iconPosition="left" class="w-full mx-4">
+            <div class="layout-topbar-search md:flex items-center flex-1 justify-center max-w-[350px] ml-12">
+                <p-iconField iconPosition="left" class="w-full">
                     <p-inputIcon styleClass="pi pi-search"></p-inputIcon>
                     <input type="text" 
                         pInputText 
@@ -117,11 +116,17 @@ import { AuthData } from '../../models/auth.model';
                             <span class="font-medium text-sm text-surface-900 dark:text-surface-0 leading-tight">{{ user?.firstName }} {{ user?.lastName }}</span>
                             <span class="text-xs text-slate-500 font-normal">En ligne</span>
                         </div>
-                        <button type="button" class="p-button p-button-link p-0 text-sm font-normal text-slate-500 bg-profil rounded-md" (click)="goToProfile()">Profil</button>
+                        <p-button severity="info" [rounded]="true" size="small" (click)="goToProfile()">Profil</p-button>
                     </div>
 
+                    <!-- Item Réglages -->
+                    <a *ngSwitchCase="'settings'" (click)="item.command()" class="flex text-[14px] mt-2 items-center p-2 gap-2 text-surface-900 dark:text-surface-0 hover:bg-surface-100 dark:hover:bg-surface-900 transition-colors cursor-pointer rounded-md mx-2">
+                        <i [class]="item.icon + ' text-slate-500'"></i>
+                        <span class="font-normal">{{ item.label }}</span>
+                    </a>
+
                     <!-- Item de déconnexion standard -->
-                    <a *ngSwitchCase="'logout'" (click)="item.command()" class="flex text-[14px] mt-2 items-center p-2 gap-2 text-surface-900 dark:text-surface-0 hover:bg-surface-100 dark:hover:bg-surface-900 transition-colors cursor-pointer rounded-md mx-2 mb-2">
+                    <a *ngSwitchCase="'logout'" (click)="item.command()" class="flex text-[14px] mt-1 items-center p-2 gap-2 text-surface-900 dark:text-surface-0 hover:bg-surface-100 dark:hover:bg-surface-900 transition-colors cursor-pointer rounded-md mx-2 mb-2">
                         <i [class]="item.icon"></i>
                         <span class="font-normal">{{ item.label }}</span>
                     </a>
@@ -248,6 +253,12 @@ export class AppTopbar implements OnInit {
     destroy$: Subject<boolean> = new Subject<boolean>();
 
     private readonly licence = inject(LicenceService);
+    isScrolled = false;
+
+    @HostListener('window:scroll', [])
+    onWindowScroll() {
+        this.isScrolled = window.scrollY > 10;
+    }
 
     /**
      * Jours restants d'essai, ou `null` hors essai en cours.
@@ -318,6 +329,7 @@ export class AppTopbar implements OnInit {
 
         this.items = [
             { id: 'profile-header' },
+            { id: 'settings', label: 'Réglages', icon: 'pi pi-cog', command: () => this.goToSettings() },
             { id: 'logout', label: 'Se déconnecter', icon: 'pi pi-sign-out', command: () => this.authService.logout() }
         ];
 
@@ -518,6 +530,10 @@ export class AppTopbar implements OnInit {
 
     goToProfile() {
         this.router.navigate(['/profil']);
+    }
+
+    goToSettings() {
+        this.router.navigate(['/configurations']);
     }
 
     onSearchInput() {

@@ -53,18 +53,43 @@ interface SectionGuide {
   standalone: true,
   imports: [CommonModule, ButtonModule, DialogModule, TagModule],
   template: `
-    <p-dialog [visible]="visible" (visibleChange)="visibleChange.emit($event)" [modal]="true"
-              [draggable]="false" [maximizable]="true" [style]="{ width: '58rem' }"
-              header="Comprendre la configuration d'un circuit">
+    <p-dialog 
+      [visible]="visible" 
+      (visibleChange)="visibleChange.emit($event)" 
+      [modal]="true"
+      [draggable]="false" 
+      [maximizable]="true"
+      maskStyleClass="backdrop-blur-sm"
+      [style]="{ width: '58rem' }"
+      [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
+      header="Comprendre la configuration d'un circuit">
+
+      <ng-template pTemplate="header">
+        <div class="flex flex-col items-start sm:flex-row sm:items-center sm:gap-2 gap-4">
+          <div class="flex items-center justify-center w-12 h-12 rounded-xl shrink-0 bg-sky-50 dark:bg-sky-950/50 text-sky-600">
+            <i class="pi pi-question-circle text-xl"></i>
+          </div>
+          <div>
+            <h4 class="text-lg font-semibold text-surface-900 dark:text-surface-0 m-0">
+              Comprendre la configuration d'un circuit
+            </h4>
+            <p class="text-sm text-surface-500 m-0 mt-1 leading-snug">
+              Principes, étapes, transitions et règles de validation des circuits
+            </p>
+          </div>
+        </div>
+      </ng-template>
 
       <div class="flex flex-col gap-5 text-sm">
 
-        <p class="m-0 text-surface-600">
-          Un circuit décrit la suite des décisions par lesquelles passe un dossier — un document,
-          une non-conformité, un plan d'action, une demande sur document. C'est lui, et lui seul,
-          qui détermine les boutons offerts au décideur, ce qu'il doit saisir, qui est averti, et
-          l'état que le dossier prend ensuite. Rien de tout cela n'est codé dans les écrans métier.
-        </p>
+        <div class="bg-sky-50 dark:bg-sky-800/50 p-4 rounded-lg border-l-4 border-l-sky-500">
+          <p class="m-0 text-slate-700 dark:text-surface-300 leading-relaxed">
+            Un circuit décrit la suite des décisions par lesquelles passe un dossier — un document,
+            une non-conformité, un plan d'action, une demande sur document. C'est lui, et lui seul,
+            qui détermine les boutons offerts au décideur, ce qu'il doit saisir, qui est averti, et
+            l'état que le dossier prend ensuite.
+          </p>
+        </div>
 
         @for (section of sections; track section.titre; let rang = $index) {
           <section class="rounded-lg border border-surface-200 overflow-hidden">

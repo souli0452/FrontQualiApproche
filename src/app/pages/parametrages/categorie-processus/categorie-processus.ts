@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -9,31 +9,42 @@ import { ApiItemResponse } from '../../../models/response.model';
 import { FormGroupColumn, TableColumn } from '../../../models/generique.model';
 import { CategorieProcessus } from '../../../models/categore-processus.model';
 import { CategorieProcessusService } from '../../../services/non-conformite/type-processus.service';
+import { HeaderPage } from '../../../shared/header-page/header-page';
+import { AlertService } from '../../../shared/alert-message/alert-message.service';
 
 @Component({
     selector: 'app-type-processus',
     standalone: true,
-    imports: [CommonModule, AppCrudGenericComponent],
+    imports: [
+        CommonModule, 
+        AppCrudGenericComponent,
+        HeaderPage
+    ],
     template: `
-                        <div class="page-layout">
+        <app-header-page 
+            title="Catégorie de processus" 
+            subtitle="Ajoutez ou modifiez les différentes catégories de processus."
+            [breadcrumbs]="breadcrumbs"
+            [buttonText]="'Nouvelle catégorie de processus'" 
+            buttonIcon="pi pi-plus"
+            (actionClick)="crudGeneric.openNew()"
+        />
+        <div class="page-layout">
             <div class="card-first overflow-hidden border-none premium-hub transition-colors duration-300">
-                <!-- Header Premium -->
-                <div class="pb-5 flex justify-between items-center border-b border-surface-border">
-                    <div class="flex items-center gap-4">
-                        <div>
-                            <h1 class="text-3xl font-bold m-0 text-surface-900 dark:text-surface-50 flex items-center gap-3">
-                                Catégories de processus
-                            </h1>
-                            <p class="text-surface-500 dark:text-surface-400 mt-1 mb-0">Ajoutez ou modifiez les différentes catégories de processus.</p>
-                        </div>
-                    </div>
-                </div>
-            <app-crud-generic
-                [addButtonLabel]="'Nouvelle catégorie de processus'"
+
+            <app-crud-generic 
+                #crudGeneric
+                [requireRqPassword]="true"
+                [showAddButton]="false"
                 [dialogWidth]="'40rem'"
+                [formLongDescription]="'Remplissez ce formulaire pour créer ou modifier une catégorie de processus. Les champs marqués d\\'un astérisque sont obligatoires.'"
+                [detailLongDescription]="'Consultez ci-dessous l\\'ensemble des informations relatives à cette catégorie de processus. Les catégories sont essentielles pour structurer l\\'approche qualité de votre organisation en regroupant logiquement vos activités. Vous y retrouverez le libellé exact de la catégorie ainsi que la description détaillée de son rôle au sein de votre système de management intégré.'"
+                [detailImagePath]="'assets/logo-quali-sira.svg'"
+                [showItemDescriptionOnTop]="false"
                 [loading]="loading"
                 [pageLabel]="pageLabel"
                 [tableCols]="tableCols"
+                [detailCols]="detailCols"
                 [listeObject]="dataList"
                 [formGroup]="formGroup"
                 [formCols]="formCols"
@@ -42,13 +53,14 @@ import { CategorieProcessusService } from '../../../services/non-conformite/type
                 [formHeader]="formHeader"
                 (newItemEvent)="onSave($event)"
                 [totalElements]="totalElements"
-                [isPagination]="false"
+                [isPagination]="true"
                 [currentPage]="currentPage"
                 [pageSize]="pageSize"
                 (pageChangeEvent)="onPageChange($event)"
                 (removeEvent)="onDelete($event)">
-            </app-crud-generic>
-    </div>
+                    
+                </app-crud-generic>
+        </div>
     </div>
     `
 })
@@ -58,29 +70,39 @@ export class CategorieProcessusComponent {
       dataList: CategorieProcessus[] = [];
       totalElements: number = 0;
       currentPage: number = 0;
-      pageSize: number = 0;
+      pageSize: number = 10;
       totalPages: number = 0;
 
       closeDialog = false;
       formGroup: UntypedFormGroup;
       tableCols: TableColumn[];
       formCols: FormGroupColumn[];
-      pageLabel = 'Types de processus';
-      formHeader = 'Création et mise à jour d\'un type de processus';
+      detailCols: FormGroupColumn[] | undefined;
+      pageLabel = 'Catégorie de processus';
+      formHeader = 'Création et mise à jour d\'une catégorie de processus';
 
-      constructor(protected fb: UntypedFormBuilder,
-                  protected messageService: MessageService,
-                  protected categorieProcessusService: CategorieProcessusService) {
+      constructor(
+        protected fb: UntypedFormBuilder,
+        protected messageService: MessageService,
+        protected categorieProcessusService: CategorieProcessusService,
+        private alertService: AlertService
+      ) {
+
           this.formCols = [
               {field: 'id', label: "", header: 'Id', type: 'number', visible: false, required: false},
-              {field: 'libelle', label: "Libellé du type de processus (Réalisation - Support)", header: 'Libellé', type: 'string', visible: true, required: true},
-              {field: 'description', label: "Description du type de processus", header: 'Description', type: 'text', visible: true, required: false}
+              {field: 'libelle', label: "Libellé de la catégorie de processus (Réalisation - Support)", placeholder: "Exemple : Réalisation", helpText: "Libellé de la catégorie de processus (Réalisation - Support)", header: 'Libellé', type: 'string', visible: true, required: true},
+              {field: 'description', label: "Description de la catégorie de processus", placeholder: "Exemple : Catégorie de processus de réalisation", helpText: 'Description de la catégorie de processus', header: 'Description', type: 'text', visible: true, required: false}
           ];
 
           this.tableCols = [
               {field: 'libelle', header: 'Libellé', type: 'string', filter: true},
               {field: 'description', header: 'Description', type: 'string', filter: true},
           ];
+
+          this.detailCols = [
+            { field: 'libelle', header: 'Catégorie' },
+            { field: 'description', header: 'Description', type: 'text' }
+        ];
 
           this.formGroup = this.fb.group({
               id: [null],
@@ -90,6 +112,12 @@ export class CategorieProcessusComponent {
 
           });
       }
+
+    breadcrumbs = [
+        { label: 'Tableau de bord', routerLink: '/' },
+        { label: 'Processus', routerLink: '/parametrage-organigramme/processus' },
+        { label: 'Catégories de processus', routerLink: '/parametrage-organigramme/categorie-processus' }
+    ];
 
       ngOnInit(): void {
           this.fetchObject();
@@ -102,22 +130,18 @@ export class CategorieProcessusComponent {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
             next: (res: any) => {
-                console.log(res);
-                
-                this.dataList = res.data.content || [];
-                this.totalElements = res.data.totalElements;
-                this.currentPage = res.data.pageNumber || 0;
-                this.pageSize = res.data.pageSize;
-                this.totalPages = res.data.totalPages;
-                
-                // Si votre méthode renvoie une simple liste (Option 1 de la réponse précédente) :
-                // this.dataList = res || [];
-                
-                this.loading = false;
+                setTimeout(() => {
+                    this.dataList = res.data.content || [];
+                    this.totalElements = res.data.totalElements;
+                    this.currentPage = res.data.pageNumber || 0;
+                    this.pageSize = res.data.pageSize;
+                    this.totalPages = res.data.totalPages;
+                    this.loading = false;
+                }, 300);
             },
             error: (error: any) => {
                 this.loading = false;
-                showToast(StatusEnum.error, error.status, null, this.messageService, error);
+                this.alertService.showError('Chargement des catégories de processus impossible');
             }
         });
     }
@@ -134,8 +158,7 @@ export class CategorieProcessusComponent {
     onSuccess(res: ApiItemResponse<any>) {
         this.closeDialog = true;
         this.fetchObject();
-
-        showToast(StatusEnum.success, res.statusCode, res.message, this.messageService);
+        this.alertService.showSuccess(res.message);
     }
 
     onSave(object: CategorieProcessus) {
@@ -148,7 +171,7 @@ export class CategorieProcessusComponent {
                 this.onSuccess(res);
             },
             error: (error) => {
-                showToast(StatusEnum.error, error.status, null, this.messageService, error);
+                this.alertService.showError(error.error?.message); 
             }
         });
     }
@@ -159,7 +182,7 @@ export class CategorieProcessusComponent {
             next: res => {
                 this.onSuccess(res);
             }, error: error => {
-                showToast(StatusEnum.error, error.status, null, this.messageService, error);
+                this.alertService.showError(error.error?.message); 
             }
         });
     }

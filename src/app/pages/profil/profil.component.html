@@ -1,14 +1,12 @@
 <p-toast></p-toast>
 
-<div class="page-layout profil">
+<app-header-page 
+    title="Mon profil" 
+    subtitle="Vos informations personnelles et la sécurité de votre compte."
+    [breadcrumbs]="breadcrumbs"
+/>
 
-    <!-- Titre de page -->
-    <div class="mb-6">
-        <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0 m-0">Mon profil</h1>
-        <p class="text-sm text-surface-500 dark:text-surface-400 mt-1 mb-0">
-            Vos informations personnelles et la sécurité de votre compte.
-        </p>
-    </div>
+<div class="page-layout profil">
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 

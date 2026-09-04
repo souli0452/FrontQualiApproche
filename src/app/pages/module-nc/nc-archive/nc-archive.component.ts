@@ -3,7 +3,7 @@ import { Subject } from 'rxjs';
 import { NonConformStatus } from '../../../enums/enums';
 import { getCurrentUserStructure } from '../../../utils/global/global-utils';
 import { NonConformiteService } from '../../../services/non-conformite/non-conformite.service';
-import { Structure } from '../../parametrages/structure/structure-config/structure';
+import { Structure } from '../../parametrages/structure/structure.model';
 
 @Component({
     selector: 'app-nc-archive',

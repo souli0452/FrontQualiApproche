@@ -1,6 +1,11 @@
-<div class="card-first p-0 overflow-hidden border-none bg-surface-0 dark:bg-surface-900 transition-colors duration-300">
+<app-header-page 
+    title="Configuration Générale" 
+    subtitle="Gestion des accès, référentiels et structures de l'application"
+    [breadcrumbs]="breadcrumbs"
+/>
+<div class="card-first p-0 !overflow-visible border-none bg-surface-0 dark:bg-surface-900 transition-colors duration-300">
     <!-- Header de la zone de configuration -->
-    <div class="bg-primary-50 dark:bg-surface-800 p-5 flex justify-between items-center border-b border-surface-border">
+    <!-- <div class="bg-primary-50 dark:bg-surface-800 p-5 flex justify-between items-center border-b border-surface-border">
         <div>
             <h1 class="text-2xl font-bold m-0 flex items-center gap-3 text-surface-900 dark:text-surface-50">
                 <i class="pi pi-sliders-h text-primary dark:text-primary-400"></i>
@@ -14,14 +19,14 @@
                 <input pInputText type="text" placeholder="Rechercher un paramètre..." class="w-full p-inputtext-sm border-none bg-transparent focus:ring-0 text-surface-900 dark:text-surface-50" />
             </p-iconfield>
         </div>
-    </div>
+    </div> -->
 
     <!-- Navigation Hub (Topbar) -->
-    <div class="pt-2 bg-surface-0 dark:bg-surface-900 border-b border-surface-border">
+    <div class="bg-surface-0 dark:bg-surface-900">
         <p-tabs [value]="activeTab" [scrollable]="true" (valueChange)="onTabChange($event)">
             <p-tablist>
                 <p-tab *ngFor="let tab of items" [value]="tab.routerLink">
-                    <a [routerLink]="tab.routerLink" routerLinkActive="text-primary font-bold" class="flex items-center gap-2 text-inherit no-underline outline-none px-2 py-1">
+                    <a [routerLink]="tab.routerLink" routerLinkActive="text-primary font-semibold" class="flex items-center gap-2 text-inherit no-underline outline-none px-2 py-1">
                         <i [class]="tab.icon"></i>
                         <span class="whitespace-nowrap">{{ tab.label }}</span>
                     </a>
@@ -32,7 +37,7 @@
 
     <!-- Contenu dynamique (Router Outlet) -->
     <div class="bg-surface-50/50 dark:bg-surface-950/40 min-h-[500px]">
-        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl overflow-hidden">
+        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl !overflow-visible">
             <router-outlet></router-outlet>
         </div>
     </div>
