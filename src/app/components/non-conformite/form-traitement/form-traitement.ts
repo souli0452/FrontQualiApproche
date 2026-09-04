@@ -1,5 +1,5 @@
 import { Component, Input, ViewChild } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, UntypedFormGroup } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { EtapeTraitement } from '../../../enums/enums';
@@ -44,8 +44,6 @@ export class FormTraitementComponent {
     responsable: any;
     planActions: any[] = [];
     protected readonly BtnActions = EtapeTraitement;
-    planActionForm: FormGroup;
-    actions: FormArray;
     user: any = undefined;
 
     isEdit: boolean = false;
@@ -84,25 +82,6 @@ export class FormTraitementComponent {
         this.fetchUsers();
         this.loadStuctures();
         this.fetchActions();
-        if (this.demande?.planActions?.length > 0) {
-            const actionsArray = this.fb.array([]);
-
-            for (let i = 0; i < this.demande.planActions.length; i++) {
-                // Ajouter un nouveau FormGroup pour chaque plan d'action existant
-                // @ts-ignore
-                actionsArray.push(this.createAction(this.demande.planActions[i]));
-            }
-
-            this.planActionForm = this.fb.group({
-                actions: actionsArray
-            });
-        } else {
-            this.planActionForm = this.fb.group({
-                actions: this.fb.array([this.createAction()])
-            });
-        }
-
-        this.actions = this.planActionForm.get('actions') as FormArray;
         this.editForm = this.fb.group(nonConformiteForm);
     }
 
@@ -183,33 +162,8 @@ export class FormTraitementComponent {
             this.demande.actionLibelle = null;
         }
 
-        // Note: We no longer sync from planActionForm.actions because plan actions are managed via the dialog and stored directly in this.demande.planActions
     }
 
-    setCircuit(value: string) {
-        this.editForm.get('circuit')?.setValue(value);
-        this.onInputChange();
-    }
-
-    createAction(): FormGroup {
-        return this.fb.group({
-            numeroOdre: ['', Validators.required],
-            causeIdentifiees: [''],
-            solutionRetenues: [''],
-            responsable: ['', Validators.required],
-            dateEcheance: ['', Validators.required],
-            mail: [''],
-            numeroTelephone: [],
-            responsableId: [''],
-            responsableNomComplet: [''],
-            responsableEmail: [''],
-            critereEfficacite: [''],
-            nonConformiteID: [this.demande?.id]
-        });
-    }
-    addAction(): void {
-        this.actions.push(this.createAction());
-    }
      private extractUserInfos(u: any): any {
          const userObj = u.user ? u.user : u;
          const id = userObj.userId || userObj.id || u.id || '';
@@ -368,18 +322,6 @@ loadStuctures() {
             }
         });
 }
-
-    removeAction(index: number): void {
-        if (this.actions.length > 1) {
-            this.actions.removeAt(index);
-        } else {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Attention',
-                detail: 'Vous devez garder au moins une action'
-            });
-        }
-    }
 
     protected readonly getStatusSeverity = getStatusSeverity;
     openDialog() {

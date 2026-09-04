@@ -32,9 +32,6 @@ export abstract class QualiCrudService<T, ID> implements CrudOperations<T, ID> {
     update(t: T): Observable<HttpResponse<T>> {
         return this.http.put<T>(this.uri + "/update", t, {observe: 'response'});
     }
-    updateG(t: T,id:string): Observable<HttpResponse<T>> {
-        return this.http.put<T>(this.uri + `/update/${id}`, t, {observe: 'response'});
-    }
     // findAll(): Observable<HttpResponse<Array<T>>> {
     //     return this.http.get<T[]>(this.uri + "/all", {observe: 'response'});
     // }
@@ -51,15 +48,8 @@ export abstract class QualiCrudService<T, ID> implements CrudOperations<T, ID> {
         return this.http.get<ApiResponse<T>>(`${this.uri}/all?page=${page}&size=${size}`);
     }
 
-    findAllNc(status?: string,id?:any): Observable<HttpResponse<Array<T>>> {
-        const params = createRequestOption({status,id});
-        return this.http.get<T[]>(this.uri, {params, observe: 'response'});
-    }
     findById(id:string): Observable<HttpResponse<T>> {
         return this.http.get<T>(this.uri+`/get/${id}`, {observe: 'response'});
-    }
-    findByNumero(id:string): Observable<HttpResponse<T>> {
-        return this.http.get<T>(this.uri+`/get/numero/${id}`, {observe: 'response'});
     }
 
     delete(id: ID): Observable<HttpResponse<void>> {

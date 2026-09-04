@@ -67,11 +67,6 @@ export class StructureService {
                 })
             );
 
-    public getAllDirections(typeStructure?: TypeStructure): Observable<HttpResponse<Array<Structure>>> {
-        const params = createRequestOption({typeStructure});
-        return this.http.get<Array<Structure>>(StructureEndpoint.STRUCTURE_ROOT_URL, {observe: 'response', params});
-    }
-
     // getByStructureId(id: string | undefined): Observable<any> {
     //     return this.http.get(formatUrl(StructureEndpoint.STRUCTURE_BY_ID_URL, id));
     // }

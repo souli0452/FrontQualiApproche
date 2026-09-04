@@ -69,20 +69,6 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
             this.breadcrumbs[2] = { label: 'Modifier le rôle', routerLink: '' };
         }
     }
-    toggleModuleAll(select: boolean) {
-        let selected: string[] = [];
-        if (select) {
-            // On récupère toutes les valeurs de toutes les permissions
-            this.groupedPermissions.forEach((group) => {
-                group.permissions.forEach((p) => selected.push(p.value));
-                group.allSelected = true;
-            });
-        } else {
-            // On vide tout
-            this.groupedPermissions.forEach((group) => (group.allSelected = false));
-        }
-        this.roleForm.patchValue({ permissions: selected });
-    }
     ngOnDestroy(): void {
         this.destroy$.next(true);
         this.destroy$.complete();
@@ -211,7 +197,7 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
                 this.alertService.showSuccess(this.isEdit ? 'Rôle modifié avec succès' : 'Rôle créé avec succès');
                 this.router.navigate(['/roles']);
             },
-            error: (error) => {
+            error: (error: any) => { // 👈 Ajouter ': any' ici
                 this.loading = false;
                 console.error("Erreur lors de l'enregistrement du rôle :", error);
                 this.alertService.showError(error?.error?.detail || error?.error?.message || "Échec de l'enregistrement");

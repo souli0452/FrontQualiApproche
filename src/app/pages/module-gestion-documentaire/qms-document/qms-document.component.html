@@ -37,20 +37,6 @@
     </app-qms-document-list>
   </div>
 <!-- ========================================================================= -->
-<!-- 2. STATE TRANSITION DIALOG -->
-<!-- ========================================================================= -->
-<app-qms-transition-dialog
-  [document]="selectedDocument"
-  [transitionOptions]="selectedDocument ? getTransitionOptions(selectedDocument) : []"
-  [loading]="loading"
-  [statusLabel]="statusLabelFn"
-  [statusSeverity]="statusSeverityFn"
-  [visible]="showTransitionModal"
-  (visibleChange)="showTransitionModal = $event"
-  (confirm)="submitTransition($event)">
-</app-qms-transition-dialog>
-
-<!-- ========================================================================= -->
 <!-- 3. FICHE DU DOCUMENT, EN ONGLETS                                          -->
 <!-- =========================================================================
      Six regards sur un même document : sa fiche, ses versions, ses partages, sa piste d'audit,
@@ -195,20 +181,6 @@
 <!-- Les accès ne sont plus servis par un dialogue : ils sont l'onglet « Partages » de la fiche
      ci-dessus. Les regarder supposait d'ouvrir une fenêtre par-dessus le document, qu'elle
      masquait. -->
-
-<!-- ========================================================================= -->
-<!-- 7. ASSIGNATION WORKFLOW DIALOG -->
-<!-- ========================================================================= -->
-<app-qms-assign-workflow-dialog
-  [document]="selectedDocument"
-  [availableWorkflows]="availableWorkflows"
-  [loading]="loading"
-  [statusLabel]="statusLabelFn"
-  [statusSeverity]="statusSeverityFn"
-  [visible]="showAssignWorkflowModal"
-  (visibleChange)="showAssignWorkflowModal = $event"
-  (confirm)="submitWorkflowAssignment($event)">
-</app-qms-assign-workflow-dialog>
 
 <!-- ========================================================================= -->
 <!-- 7 bis. RECLASSEMENT : NIVEAU DE CONFIDENTIALITÉ -->

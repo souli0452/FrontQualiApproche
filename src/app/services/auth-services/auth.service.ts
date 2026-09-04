@@ -116,10 +116,6 @@ export class AuthService extends BaseCrudService<AuthData, number> {
     }
 
 
-    public isAuthenticated(): Observable<boolean> {
-        return this.isLoggedIn.asObservable();
-    }
-
     hasPermission(permission: string): boolean {
         // On récupère la valeur actuelle stockée dans le BehaviorSubject
         const authData = currentUserState.value; 
@@ -147,22 +143,10 @@ export class AuthService extends BaseCrudService<AuthData, number> {
         return this.http.post(QualiUrlConfig.REFRESH_TOKEN_URL, {}, { withCredentials: true });
     }
 
-    // Gestion du token expiré (si utilisée ailleurs)
-    handleExpiredToken(): Observable<any> {
-        return this.refreshToken();
-    }
     getAllUsers(page: number = 0, size: number = 10): Observable<ApiResponse<AuthData>> {
         return this.http.get<ApiResponse<AuthData>>(`${QualiUrlConfig.USERS_URL}?page=${page}&size=${size}`);
     }
 
-    getUserById(id: string): Observable<HttpResponse<AuthData>> {
-        const params = new HttpParams().set('userId', id);
-        return this.http.get<AuthData>(QualiUrlConfig.USERS_BY_ID_URL, { params, observe: 'response' });
-    }
-    // getUserById(id: string): Observable<HttpResponse<AuthResponse>> {
-    //     const params = new HttpParams().set('userId', id);
-    //     return this.http.get<AuthResponse>(QualiUrlConfig.USERS_BY_ID_URL, { params, observe: 'response' });
-    // }
     loadAgentPublicByService(structureId: string): Observable<ApiResponse<AuthData>> {
         return this.http.get<ApiResponse<AuthData>>(this.replaceArgs(new Map().set('structureId', structureId), QualiUrlConfig.USERS_BY_STRUCTURE_URL));
     }
@@ -172,9 +156,6 @@ export class AuthService extends BaseCrudService<AuthData, number> {
 
     updateUser(user: AuthData): Observable<HttpResponse<void>> {
         return this.http.put<void>(`${QualiUrlConfig.USERS_URL}/update`, user, { observe: 'response' });
-    }
-    getUserRoles(id: string): Observable<HttpResponse<Array<any>>> {
-        return this.http.get<Array<any>>(`${QualiUrlConfig.ROLE_URL}/user-roles/${id}`, { observe: 'response' });
     }
     resetPassword(userId: string, password: string): Observable<HttpResponse<void>> {
         const params = new HttpParams().set('userId', userId).set('password', password);
@@ -194,14 +175,6 @@ export class AuthService extends BaseCrudService<AuthData, number> {
     emailVerifcation(userId: string, token: string): Observable<HttpResponse<void>> {
         const params = new HttpParams().set('token', token).set('userId', userId);
         return this.http.put<void>(QualiUrlConfig.VERIFY_EMAIL_URL, null, {
-            params,
-            observe: 'response'
-        });
-    }
-
-    isEmailVerifiedd(userId: string, token: string): Observable<HttpResponse<void>> {
-        const params = new HttpParams().set('userId', userId).set('token', token);
-        return this.http.put<void>(QualiUrlConfig.IS_EMAIL_VERIFIED_URL, null, {
             params,
             observe: 'response'
         });

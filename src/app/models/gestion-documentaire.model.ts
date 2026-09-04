@@ -1,11 +1,4 @@
 import { UserInfos } from "./auth.model";
-import {
-  StepDecision,
-  WorkflowDto,
-  WorkflowStepDto,
-  WorkflowStepFieldDto,
-  WorkflowTransitionDto
-} from "./workflow.model";
 
 export interface QmsDocumentType {
   id?: string;
@@ -169,19 +162,6 @@ export interface SharedDocumentDto {
   partagePar?: string;
 }
 
-/**
- * Étape, transition et champ de saisie : alias du contrat canonique de workflow-service.
- *
- * Ces trois formes étaient décrites une seconde fois ici, et les deux descriptions avaient
- * divergé — le module documentaire ignorait `etatTraitement`, le contrat canonique ignorait
- * `terminal`. Un seul jeu de définitions fait désormais foi ({@code models/workflow.model.ts}),
- * ces noms restant disponibles pour les écrans documentaires qui s'y réfèrent.
- */
-export type WorkflowDecision = StepDecision;
-export type WorkflowTransition = WorkflowTransitionDto;
-export type WorkflowStep = WorkflowStepDto;
-export type WorkflowStepField = WorkflowStepFieldDto;
-
 export interface WorkflowStepTemplate {
   id?: string;
   /** Code fonctionnel du catalogue : unique, immuable, hérité par les étapes qui s'en inspirent. */
@@ -190,18 +170,4 @@ export interface WorkflowStepTemplate {
   responsableRole: string;
   description?: string;
   createdAt?: string;
-}
-
-/**
- * Circuit tel que le manipule le module documentaire.
- *
- * Étend le contrat canonique de workflow-service ({@link WorkflowDto}) au lieu de le redéfinir :
- * les deux descriptions avaient divergé, celle-ci ignorant notamment `actif`, sur lequel repose
- * le choix du circuit ouvert par les services métier. Seuls les attributs propres à l'affichage
- * documentaire restent déclarés ici.
- */
-export interface DocumentWorkflow extends WorkflowDto {
-  documentType?: string;
-  createdAt?: string;
-  createdBy?: string;
 }

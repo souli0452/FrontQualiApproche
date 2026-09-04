@@ -17,24 +17,16 @@ export class RoleService extends BaseCrudService<AppRole> {
     }
 }
 
-@Injectable({ providedIn: 'root' }) // ✅ IMPORTANT
+@Injectable({ providedIn: 'root' })
 export class AppRoleService extends BaseCrudService<AppRole> {
     constructor(public override http: HttpClient) {
         super(http, QualiUrlConfig.APP_ROLE_URL);
     }
-
     createRole(role: AppRole): Observable<AppRole> {
-        return this.http.post<AppRole>(QualiUrlConfig.APP_ROLE_URL, role);
+        return this.updateRole(role);
     }
-
     updateRole(role: AppRole): Observable<AppRole> {
-        return this.http.post<AppRole>(QualiUrlConfig.APP_ROLE_URL, role); // Utilise Post pour Save (Create or Update)
-    }
-
-    assignRoleToUser(userId: string, roleId: string): Observable<any> {
-        return this.http.post<any>(`${QualiUrlConfig.APP_ROLE_URL}/assign`, {}, {
-            params: { userId, roleId }
-        });
+        return this.http.post<AppRole>(QualiUrlConfig.APP_ROLE_URL, role);
     }
 
     getPermissionsDictionary(): Observable<any> {

@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, map, Observable } from 'rxjs';
-import { NcStats } from '../../models/statsNc';
 import { QualiCrudService } from '../quali-crud.service';
 import { QualiUrlConfig } from '../quali-url-configs';
 import { BaseCrudService } from '../base-crud.service';
@@ -10,6 +9,7 @@ import { EtapeTraitement, NonConformStatus } from '../../enums/enums';
 import { ApiItemResponse, ApiResponse } from '../../models/response.model';
 import { NonConformite } from '../../models/non-conformite.model';
 import { CriteriaDto } from '../../models/criteria.model';
+import { NcStats } from '../../models/statsNc';
 
 
 
@@ -42,9 +42,9 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
             `${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/search`, criteres, { params });
     }
 
-//     getCountByStatus(id:any): Observable<HttpResponse<Array<NcStats>>> {
-//         return this.http.get<any>(`${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/count-by-status/${id}`, {observe: 'response'});
-//     }
+    getCountByStatus(id:any): Observable<HttpResponse<Array<NcStats>>> {
+        return this.http.get<any>(`${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/count-by-status/${id}`, {observe: 'response'});
+    }
 
     /**
      * Enregistre la déclaration et la soumet aussitôt au pilote du processus.
@@ -364,13 +364,13 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
     /**
      * Récupérer les Non-Conformités en validation RQ
      */
-//     nonConformiteValidationRQGet(etapeTraitement: EtapeTraitement): Observable<NonConformite[]> {
-//         return this.getListFromUrl(
-//             `${NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL}${etapeTraitement}`,
-//             {},
-//             { 'X-Skip-Loader': 'true' }
-//         );
-//     }
+    nonConformiteValidationRQGet(etapeTraitement: EtapeTraitement): Observable<NonConformite[]> {
+        return this.getListFromUrl(
+            `${NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL}${etapeTraitement}`,
+            {},
+            { 'X-Skip-Loader': 'true' }
+        );
+    }
 
     nonConformiteParUtilisateurGetPagination(
         userId: string,
@@ -389,23 +389,23 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
     /**
      * Récupérer les NC avec pagination + filtre status + id
      */
-//     getAllNC(
-//         page: number = 0,
-//         size: number = 10,
-//         status?: string,
-//         id?: any,
-//         headers?: Record<string, string>
-//     ): Observable<ApiResponse<NonConformite>> {
-//         return this.getPageFromUrl(
-//             NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL,
-//             { page, size, status, id },
-//             headers
-//         );
-//     }
+    getAllNC(
+        page: number = 0,
+        size: number = 10,
+        status?: string,
+        id?: any,
+        headers?: Record<string, string>
+    ): Observable<ApiResponse<NonConformite>> {
+        return this.getPageFromUrl(
+            NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL,
+            { page, size, status, id },
+            headers
+        );
+    }
 
-//     nonConformiteImputeParUtilisateur(userId:string): Observable<HttpResponse<any>> {
-//         return this.http.get<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL + "user/"+userId+"/imputed", { observe: 'response' });
-//     }
+    nonConformiteImputeParUtilisateur(userId:string): Observable<HttpResponse<any>> {
+        return this.http.get<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL + "user/"+userId+"/imputed", { observe: 'response' });
+    }
 
     /**
      * Récupérer les stats pour le Dashboard de l'Agent
@@ -433,10 +433,6 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
         return this.http.get<any>(NonConformiteUrlConfig.GET_NON_CONFORMITE_BY_STATUS_ROOT_URL + "stats/evolution", { params, observe: 'response' });
     }
 
-
-    nonConformitePlanActionsGet(email:string,status:any): Observable<HttpResponse<Array<any>>> {
-        return this.http.get<Array<any>>(NonConformiteUrlConfig.GET_PLAN_ACTION+email+`/${status}`, {observe: 'response'});
-    }
 
     nonConformiteUpdatePlanAction(demande: any): Observable<HttpResponse<any>> {
         return this.http.put<any>(NonConformiteUrlConfig.UPDATE_PLAN_ACTION , demande, {observe: 'response'});

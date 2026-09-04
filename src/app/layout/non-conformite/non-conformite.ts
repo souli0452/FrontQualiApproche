@@ -32,7 +32,6 @@ export class NonConformiteLayoutComponent implements OnInit, OnDestroy {
     items: MenuItem[] | undefined;
     activeTab: string = '';
     routerSubscription: any;
-    submitNCVisible: boolean = false;
     destroy$: Subject<boolean> = new Subject<boolean>();
 
     constructor(
@@ -197,10 +196,6 @@ export class NonConformiteLayoutComponent implements OnInit, OnDestroy {
         return (item.routerLink as string) || item.label || '';
     }
 
-
-    openSubmitNC() {
-        this.submitNCVisible = true;
-    }
 
     ngOnDestroy() {
         if (this.routerSubscription) {

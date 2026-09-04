@@ -105,14 +105,6 @@ export class NcFilterBarComponent implements OnInit {
         { label: 'Mois dernier', value: 'lastMonth' },
     ];
 
-    onDateRangeChange() {
-        if (this.rangeDates && this.rangeDates[0] && this.rangeDates[1]) {
-            this.dateDebut = this.rangeDates[0];
-            this.dateFin = this.rangeDates[1];
-            this.applyFilters();
-        }
-    }
-
     getFormattedRangeLabel(): string {
     if (this.dateDebut && this.dateFin) {
         const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: '2-digit' };
@@ -213,18 +205,5 @@ applyDateSelection(panel: any) {
         if (this.selectedGravite && this.selectedGravite.length > 0) count++;
         if (this.selectedOrigine && this.selectedOrigine.length > 0) count++;
         return count;
-    }
-
-    applyFiltersInPanel(panel: any) {
-        this.applyFilters();
-        panel.hide();
-    }
-
-    resetFiltersInPanel(panel: any) {
-        this.selectedProcess = [];
-        this.selectedGravite = [];
-        this.selectedOrigine = [];
-        this.applyFilters();
-        panel.hide();
     }
 }

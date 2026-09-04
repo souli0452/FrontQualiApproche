@@ -767,12 +767,4 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
 
     protected readonly TypeDemande = TypeDemande;
 
-    private isContentEmpty(content: any): boolean {
-        if (!content) return true;
-        if (typeof content !== 'string') return false;
-        // Supprime les balises HTML et les espaces vides pour voir s'il reste du texte
-        const stripped = content.replace(/<[^>]*>/g, '').trim();
-        return stripped.length === 0;
-    }
-
 }
