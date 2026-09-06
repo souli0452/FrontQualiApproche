@@ -1,0 +1,27 @@
+<app-header-page 
+    title="Configurations Globales" 
+    subtitle="Gestion des réglages généraux et circuits de validation de l'application"
+    [breadcrumbs]="breadcrumbs"
+/>
+<div class="card-first p-0 !overflow-visible border-none bg-surface-0 dark:bg-surface-900 transition-colors duration-300">
+    <!-- Navigation Hub (Topbar) -->
+    <div class="bg-surface-0 dark:bg-surface-900">
+        <p-tabs [value]="activeTab" [scrollable]="true" (valueChange)="onTabChange($event)">
+            <p-tablist>
+                <p-tab *ngFor="let tab of items" [value]="tab.routerLink">
+                    <a [routerLink]="tab.routerLink" routerLinkActive="text-primary font-semibold" class="flex items-center gap-2 text-inherit no-underline outline-none px-2 py-1">
+                        <i [class]="tab.icon"></i>
+                        <span class="whitespace-nowrap">{{ tab.label }}</span>
+                    </a>
+                </p-tab>
+            </p-tablist>
+        </p-tabs>
+    </div>
+
+    <!-- Contenu dynamique (Router Outlet) -->
+    <div class="bg-surface-50/50 dark:bg-surface-950/40 min-h-[500px]">
+        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl !overflow-visible">
+            <router-outlet></router-outlet>
+        </div>
+    </div>
+</div>

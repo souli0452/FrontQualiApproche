@@ -49,13 +49,13 @@
         <!-- Table Header -->
         <ng-template pTemplate="header" let-columns>
             <tr class="header-row border-b-1 border-slate-100">
-                <th *ngFor="let col of columns; let first = first" [pSortableColumn]="col.field" [style.width]="col.width" class="uppercase py-3 px-4 bg-white dark:bg-slate-900" pFrozenColumn [frozen]="first">
+                <th scope="col" *ngFor="let col of columns; let first = first" [pSortableColumn]="col.field" [style.width]="col.width" class="uppercase py-3 px-4 bg-white dark:bg-slate-900" pFrozenColumn [frozen]="first">
                     <div class="flex align-items-center gap-2">
                         <span class="text-[13px] font-semibold text-black dark:text-white">{{ col.header }}</span>
                         <p-sortIcon [field]="col.field"></p-sortIcon>
                     </div>
                 </th>
-                <th *ngIf="!consultation" pFrozenColumn alignFrozen="right" class="text-right text-[13px] font-semibold text-black dark:text-white uppercase py-3 px-4 bg-white dark:bg-slate-900" style="width: 4.5rem; z-index: 1;">ACTION</th>
+                <th scope="col" *ngIf="!consultation" pFrozenColumn alignFrozen="right" class="text-right text-[13px] font-semibold text-black dark:text-white uppercase py-3 px-4 bg-white dark:bg-slate-900" style="width: 4.5rem; z-index: 1;">ACTION</th>
             </tr>
         </ng-template>
 
@@ -196,7 +196,8 @@
             <p-paginator 
                 [first]="currentPage * pageSize"
                 [rows]="pageSize" 
-                appendTo="body"
+                [rowsPerPageOptions]="[5, 10, 20, 50, 100]"
+                dropdownAppendTo="body"
                 [totalRecords]="totalElements"
                 (onPageChange)="onPageChange($event)">
             </p-paginator>

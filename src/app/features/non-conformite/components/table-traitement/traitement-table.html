@@ -1,0 +1,412 @@
+<div class="tableau-card shadow-1 border-round-xl overflow-hidden border border-slate-100 dark:border-surface-700">
+<p-table 
+    #dt 
+    [columns]="cols" 
+    [value]="demandeList!" 
+    [paginator]="paginator" 
+    dataKey="id"
+    [(selection)]="selectionMultiple"
+    [tableStyle]="{ 'min-width': '50rem' }" 
+    [rows]="10" 
+    [rowsPerPageOptions]="[10, 25, 50]"
+    [globalFilterFields]="colsFilter" 
+    [loading]="loading"
+    [showLoader]="false"
+    [resizableColumns]="true" 
+    [scrollable]="true"
+    [columnResizeMode]="'expand'" 
+    [rowHover]="true"
+    [stripedRows]="true"
+    [showGridlines]="showGridlines"
+    [size]="'small'"
+    styleClass="p-datatable-sm premium-table"
+    >
+
+    <ng-template pTemplate="caption">
+        <div class="top-bar flex flex-wrap items-center justify-between gap-3 p-3 border-b border-slate-100 dark:border-surface-700 bg-blue rounded-t-xl">
+            <!-- Partie Gauche : Filtres ou Titre/Badge -->
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+                @if (hasFilters) {
+                    <ng-content select="[filters]"></ng-content>
+                } @else {
+                    <div>
+                        <h5 class="m-0 font-bold text-surface-900 dark:text-surface-0 text-lg flex items-center gap-2">
+                            @if (title) {
+                                <span>{{ title }}</span>
+                            } @else {
+                                <span *ngIf="btnActions===BtnActions.IMPUTATION">Demandes à imputer</span>
+                                <span *ngIf="btnActions===BtnActions.TRAITEMENT">Demandes à traiter</span>
+                                <span *ngIf="btnActions===BtnActions.VALIDATION || btnActions===BtnActions.VALIDATION_RS">Demandes en attente de validation</span>
+                                <span *ngIf="btnActions===BtnActions.RECEPTION">Demandes en attente de réception</span>
+                                <span *ngIf="btnActions!==BtnActions.IMPUTATION && btnActions!==BtnActions.TRAITEMENT && btnActions!==BtnActions.VALIDATION && btnActions!==BtnActions.VALIDATION_RS && btnActions!==BtnActions.RECEPTION && btnActions!==BtnActions.CLOTURE">Non-Conformité en attente de clôture</span>
+                                <span *ngIf="btnActions===BtnActions.CLOTURE">Non-Conformité clôturées</span>
+                            }
+                            <p-badge [value]="demandeList.length.toString()" styleClass="ml-1" severity="info"></p-badge>
+                        </h5>
+                        @if (subtitle) {
+                            <p class="text-xs text-surface-500 dark:text-surface-400 mt-1 mb-0 font-normal">
+                                {{ subtitle }}
+                            </p>
+                        }
+                    </div>
+                }
+            </div>
+            
+            <!-- Partie Droite : Recherche Pill & Actions groupées -->
+            <div class="actions-right flex items-center gap-3 shrink-0">
+                <div class="search-container relative flex items-center" *ngIf="showSearch" style="width: 240px;">
+                    <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-xs"></i>
+                    <input 
+                        pInputText 
+                        type="text" 
+                        placeholder="Rechercher..."
+                        [value]="currentSearchQuery"
+                        (input)="onLocalSearchInput($any($event.target).value)"
+                        class="w-full search-pill-input text-xs py-2 pr-3 bg-white dark:bg-surface-900 border border-slate-200 dark:border-surface-700 rounded-full" 
+                        style="padding-left: 2.25rem !important;"
+                    />
+                </div>
+
+                @if (messageSansActionCommune) {
+                    <span class="ml-2 flex items-center gap-1.5 text-xs text-surface-500 max-w-md">
+                        <i class="pi pi-info-circle text-surface-400"></i>
+                        {{ messageSansActionCommune }}
+                    </span>
+                }
+                @for (action of actionsCommunes; track action.code) {
+                    <p-button
+                        [label]="action.libelle + ' (' + selectionMultiple.length + ')'"
+                        [icon]="action.icon || 'pi pi-directions'"
+                        [severity]="severiteDe(action)"
+                        size="small"
+                        styleClass="border-round-3xl px-3 whitespace-nowrap"
+                        [disabled]="lotEnCours"
+                        (onClick)="ouvrirDecisionGroupee(action)"></p-button>
+                }
+            </div>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="header" let-columns>
+        <tr class="header-row border-b border-slate-100 dark:border-surface-700">
+            <th scope="col" pFrozenColumn alignFrozen="left" class="py-3 px-3 text-center bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-surface-700" style="width: 3rem;">
+                <p-tableHeaderCheckbox/>
+            </th>
+            @for (col of columns; track col) {
+            <th scope="col" pFrozenColumn [frozen]="col.field === 'numeroReference'" alignFrozen="left"
+                [pSortableColumn]="col.field"
+                [style.width]="col.width"
+                [style.minWidth]="col.width"
+                [ngClass]="col.field === 'numeroReference' ? 'text-left' : 'text-center'"
+                class="py-3 px-4 uppercase bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-surface-700">
+                    <div class="flex items-center gap-2 w-full" [ngClass]="col.field === 'numeroReference' ? 'justify-start' : 'justify-center'">
+                        <span class="text-[13px] font-semibold text-black dark:text-slate-200">{{ col.header }}</span>
+                        <p-sortIcon [field]="col.field"></p-sortIcon>
+                    </div>
+            </th>
+            }
+            <th scope="col" pFrozenColumn alignFrozen="right" class="text-right text-[13px] font-semibold text-black dark:text-slate-200 uppercase py-3 px-4 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-surface-700" style="width: 4.5rem; z-index: 1;">ACTION</th>
+        </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-rowData let-columns="columns">
+        <tr *ngIf="!loading" class="body-row border-b border-slate-100 dark:border-surface-700 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40">
+            <td pFrozenColumn alignFrozen="left" class="py-3 px-3 text-center bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-surface-700">
+                <p-tableCheckbox [value]="rowData"/>
+            </td>
+            @for (col of columns; track col) {
+                <td pFrozenColumn [frozen]="col.field === 'numeroReference'" alignFrozen="left"
+                    [style.width]="col.width"
+                    [style.minWidth]="col.width"
+                    [ngClass]="col.field === 'numeroReference' ? 'text-left' : 'text-center'"
+                    class="py-3 px-4 align-middle text-slate-700 dark:text-slate-200 font-medium bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-surface-700">
+                    <!-- Contenu des cellules -->
+                    <div *ngIf="col.type === 'string'" class="flex flex-col gap-0.5" [ngClass]="col.field === 'numeroReference' ? 'text-left' : 'text-center'">
+                        <span *ngIf="col.field === 'numeroReference'">
+                            <p-tag severity="info" [value]="getCellValue(rowData, col)" styleClass="tag-pill" />
+                        </span>
+                        <span *ngIf="col.field !== 'numeroReference'" class="font-medium text-slate-700 dark:text-slate-200">
+                            {{ getCellValue(rowData, col) }}
+                        </span>
+                        
+                        <!-- Type de processus en plus petit et moins gras en dessous de la structure -->
+                        <span *ngIf="col.field === 'structureSoumissionLibelle'" class="text-xs text-slate-400 dark:text-slate-400 font-normal mt-0.5">
+                            {{ rowData.categorieProcessusLibelle || rowData.nonConformite?.categorieProcessusLibelle || '' }}
+                        </span>
+
+                        @if (col.subField) {
+                            <span class="text-xs text-slate-400 dark:text-slate-400 mt-0.5">
+                                @if (col.subFieldType === 'date') {
+                                    {{ rowData[col.subField] | date:'dd/MM/yyyy HH:mm' }}
+                                } @else {
+                                    {{ rowData[col.subField] }}
+                                }
+                            </span>
+                        }
+                    </div>
+                    <span class="block text-slate-500 dark:text-slate-400 text-sm" [ngClass]="col.field === 'numeroReference' ? 'text-left' : 'text-center'" style="white-space: nowrap;" *ngIf="col.type === 'date'">
+                        {{ rowData[col.field] | date:'dd/MM/yyyy HH:mm' }}
+                    </span>
+                    <!-- Pastille gravité style tag-pill -->
+                    <span *ngIf="col.type === 'badge' && getCellValue(rowData, col)" class="flex w-full justify-center">
+                        <span class="font-semibold text-xs px-2.5 py-1 rounded-full uppercase tracking-wider" [ngStyle]="getGravityStyle(getCellValue(rowData, col))">
+                            {{ getCellValue(rowData, col) }}
+                        </span>
+                    </span>
+
+                    <!-- Type 'user' avec avatar et nom en gras (SaaS style) -->
+                    <span *ngIf="col.type === 'user'" class="flex items-center gap-2 w-full" [ngClass]="col.field === 'numeroReference' ? 'justify-start' : 'justify-center'">
+                        <div class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 font-semibold flex items-center justify-center text-xs border border-slate-200 shrink-0">
+                            {{ getInitials(rowData[col.field]) }}
+                        </div>
+                        <div class="flex flex-col text-left">
+                            <span class="font-medium text-slate-800 dark:text-slate-100 text-sm">{{ rowData[col.field] || 'Utilisateur' }}</span>
+                            <span class="text-xs text-slate-400 dark:text-slate-400 font-normal">
+                                {{ rowData.currentUserEmail || rowData.nonConformite?.currentUserEmail || '' }}
+                            </span>
+                        </div>
+                    </span>
+
+                    <!-- Étape courante / statut -->
+                    <span *ngIf="col.type === 'enum'" class="flex w-full justify-center">
+                        <p-tag *ngIf="rowData.workflowState?.currentStateName"
+                            styleClass="tag-pill"
+                            [style]="{'font-weight': 'normal'}"
+                            [severity]="getWorkflowStatusSeverity(rowData.workflowState.currentStateName, rowData)"
+                            [value]="formatWorkflowStatusName(rowData.workflowState.currentStateName, rowData)">
+                        </p-tag>
+                        <span *ngIf="!rowData.workflowState?.currentStateName" class="text-slate-500 text-sm">
+                            {{ formatWorkflowStatusName(rowData[col.field], rowData) }}
+                        </span>
+                    </span>
+                </td>
+            }
+            <td pFrozenColumn alignFrozen="right" class="text-right py-3 px-4 align-middle bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-surface-700" style="z-index: 1;">
+                <div class="flex gap-1 justify-end">
+                    <p-button
+                        size="small"
+                        icon="pi pi-ellipsis-v"
+                        [rounded]="true"
+                        [text]="true"
+                        (click)="buildRowMenu(rowData); menu.toggle($event)"
+                        pTooltip="Actions"
+                        tooltipPosition="left"
+                        styleClass="text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    </p-button>
+                </div>
+            </td>
+        </tr>
+    </ng-template>
+
+    <ng-template pTemplate="loadingbody">
+        <tr *ngFor="let i of skeletonRows">
+            <td class="bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700" *ngIf="btnActions === BtnActions.RECEPTION || btnActions === BtnActions.VALIDATION|| btnActions === BtnActions.IMPUTATION">
+                <p-skeleton width="1rem" height="1rem" styleClass="m-2"></p-skeleton>
+            </td>
+            @for (col of cols; track col) {
+                <td class="bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
+                    <p-skeleton width="100%" height="1rem" styleClass="m-2"></p-skeleton>
+                </td>
+            }
+            <td class="text-center bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
+                <p-skeleton width="100%" height="1rem" styleClass="m-2"></p-skeleton>
+            </td>
+        </tr>
+    </ng-template>
+
+    <!-- <ng-template pTemplate="emptymessage">
+        <div class="h-60">
+            <div class="centrer-image mt-6">
+                <img src="../../../assets/images/empty.svg" alt="Image vide" style="width: 150px; height: auto;">
+                <span class="text-red-500 mt-4 flex justify-content-center opacity-35">Aucune données trouvées</span>
+            </div>
+        </div>
+    </ng-template> -->
+</p-table>
+
+    <!-- Footer / Pagination Bar -->
+    <div *ngIf="totalElements > 0" class="footer-bar flex items-center justify-between p-3 bg-blue border-t border-slate-100 dark:border-surface-700 flex-col md:flex-row">
+        <!-- Pagination Info (Left) -->
+        <div class="text-slate-500 text-sm font-normal flex items-center gap-2 mb-4 md:mb-0">
+            Affichage de 
+            <span class="font-medium text-slate-800 dark:text-slate-200">{{ totalElements > 0 ? (currentPage * pageSize + 1) : 0 }}</span>–<span class="font-medium text-slate-800 dark:text-slate-200">{{ ((currentPage + 1) * pageSize) > totalElements ? totalElements : ((currentPage + 1) * pageSize) }}</span>
+            sur <span class="font-medium text-slate-800 dark:text-slate-200">{{ totalElements }}</span> {{ recordName }}
+        </div>
+
+        <!-- Paginator (Right) -->
+        <div class="paginator-wrapper">
+            <p-paginator 
+                [first]="currentPage * pageSize"
+                [rows]="pageSize" 
+                [rowsPerPageOptions]="rowsPerPageOptions"
+                dropdownAppendTo="body"
+                [totalRecords]="totalElements" 
+                (onPageChange)="onPageChange($event)">
+            </p-paginator>
+        </div>
+    </div>
+</div>
+    
+<!-- Le dialogue de recherche d'agent est retiré : l'imputation est une décision du circuit, et
+     l'étape propose elle-même les agents de la structure du pilote. Deux chemins pour désigner la
+     même personne, dont un seul passait par le moteur. -->
+
+<p-dialog
+    (onHide)="closeDetailsDialog()" [modal]="true" [maximizable]="true"
+    [closable]="true" maskStyleClass="backdrop-blur-sm"
+    [(visible)]="displayDetail" [style]="{width: '60vw'}" [breakpoints]="{ '960px': '95vw' }">
+    <ng-template pTemplate="header">
+        <div class="flex items-center gap-3">
+            <!-- Icône dynamique selon l'action -->
+            <div class="flex items-center justify-center bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 rounded-full" style="width: 2.5rem; height: 2.5rem;">
+                <i class="pi text-xl" 
+                   [ngClass]="{
+                       'pi-check-circle': btnActions === BtnActions.CLOTURE,
+                       'pi-inbox': btnActions === BtnActions.RECEPTION || btnActions === BtnActions.SUIVI_RQ,
+                       'pi-sitemap': btnActions === BtnActions.IMPUTATION,
+                       'pi-wrench': btnActions === BtnActions.TRAITEMENT,
+                       'pi-shield': btnActions === BtnActions.VALIDATION_RS || btnActions === BtnActions.VALIDATION
+                   }"></i>
+            </div>
+            
+            <div class="flex flex-col">
+                <h4 class="text-xl font-bold m-0 text-surface-900 dark:text-surface-0 flex items-center">
+                    <span *ngIf="btnActions === BtnActions.CLOTURE || btnActions === BtnActions.RECEPTION || btnActions === BtnActions.SUIVI_RQ">
+                        Détails de la demande
+                    </span>
+                    <span *ngIf="btnActions === BtnActions.IMPUTATION">
+                        Affectation à des responsables
+                    </span>
+                    <span *ngIf="btnActions === BtnActions.TRAITEMENT">
+                        Traitement de la demande
+                    </span>
+                    <span *ngIf="btnActions === BtnActions.VALIDATION_RS || btnActions === BtnActions.VALIDATION">
+                        Validation de la demande
+                    </span>
+                    
+                    <span class="text-primary-500 text-sm text-red-500 font-bold ml-2">
+                        <!-- #{{ selectedDemande.numeroReference }} -->
+                        <p-tag severity="info" [value]="selectedDemande.numeroReference" styleClass="tag-pill" />
+                    </span>
+                    
+                    <span class="ml-3 px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-full flex items-center" *ngIf="isRejet(selectedDemande)">
+                        <i class="pi pi-exclamation-triangle mr-1 text-xs"></i>
+                        Réjetée
+                    </span>
+                </h4>
+                
+                <!-- Sous-titre standard toujours visible -->
+                <p class="m-0 mt-1 text-sm text-surface-500 dark:text-surface-400">
+                    Consultez et gérez les informations relatives à cette non-conformité.
+                </p>
+                
+                <p *ngIf="hasNonTraiter && totalActions > 0" class="m-0 mt-1 text-sm text-surface-500 dark:text-surface-400">
+                    <i class="pi pi-clock mr-1 text-orange-500"></i>
+                    En attente de traitements des actions (<span class="font-bold text-green-500">{{nombreTraites}}</span> traitées sur <span class="font-bold text-green-500">{{totalActions}}</span>)
+                </p>
+                <p *ngIf="hasInactive && totalActions > 0" class="m-0 mt-1 text-sm text-surface-500 dark:text-surface-400">
+                    <i class="pi pi-exclamation-circle mr-1 text-red-500"></i>
+                    Vous devez valider les plans d'actions (<span class="font-bold text-green-500">{{nombreNonTraites}}</span> validés sur <span class="font-bold text-green-500">{{nbreInactive}}</span>)
+                </p>
+            </div>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="content" #detailContainer>
+
+
+    </ng-template>
+
+    <ng-template #footer>
+        <div class="flex justify-between flex-wrap p-4 bg-surface-100 w-full">
+            <button type="button" size="small" pRipple pButton icon="pi pi-times-circle"
+                    class="p-button-secondary position-left mr-3"
+                    label="Quitter" (click)="displayDetails()">
+            </button>
+            <!-- Les actions qui font avancer le dossier viennent du circuit, et de lui seul.
+                 Chacune des précédentes — Réceptionner, Imputer, Valider, Soumettre, Clôturer —
+                 était offerte selon l'étape affichée, indépendamment de ce que le moteur autorisait
+                 réellement à l'appelant : le bouton s'affichait, la décision était ensuite
+                 refusée. Le libellé, l'icône et la couleur viennent maintenant de la transition
+                 elle-même. -->
+            <app-workflow-actions
+                [resourceId]="selectedDemande?.id"
+                [reference]="selectedDemande?.numeroDeReference"
+                [state]="selectedDemande?.workflowState"
+                [deposerFichier]="deposerFichier"
+                (executed)="circuitAvance()"></app-workflow-actions>
+
+            @if (selectedDemande?.etatDeTraitement === BtnActions.CLOTURE || selectedDemande?.status === 'CLOTURE') {
+            <!-- L'édition n'avance pas le dossier : elle l'imprime. Elle reste donc au pied de la
+                 fiche, à côté de Quitter — et partout où un dossier clôturé s'ouvre, non plus sur
+                 le seul écran Suivi : c'est l'état du dossier qui la justifie, pas l'écran. -->
+            <p-button icon="pi pi-file-pdf" severity="warn" size="small" [outlined]="true"
+                      styleClass="position-left mr-3" [loading]="ficheEnCours"
+                      (onClick)="editerFicheCloture()" label="Éditer la fiche">
+            </p-button>}
+        </div>
+
+    </ng-template>
+</p-dialog>
+<!-- La décision groupée emprunte le même dialogue que la décision unitaire : mêmes champs, même
+     commentaire. Les dossiers cochés partagent nécessairement leur étape, puisque l'action offerte
+     est celle que le moteur ouvre sur tous. -->
+<app-workflow-decision-dialog
+    [reference]="referenceDeLaSelection"
+    [etapeCourante]="etapeDeLaSelection"
+    [action]="actionGroupee"
+    [stepFields]="champsDeLaSelection"
+    [loading]="lotEnCours"
+    [visible]="decisionGroupeeOuverte"
+    (visibleChange)="decisionGroupeeOuverte = $event"
+    (confirm)="executerDecisionGroupee($event)"></app-workflow-decision-dialog>
+
+<p-confirmDialog #cd [key]="imputationKey" [baseZIndex]="1100999">
+    <ng-template pTemplate="headless" let-message>
+        <div class="p-5 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-2xl shadow-xl text-center" 
+             style="display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; max-width: 380px; min-width: 380px; width: 100% !important; box-sizing: border-box !important; border-radius: 16px !important;">
+            
+            <!-- Badge d'icône d'avertissement circulaire -->
+            <div class="bg-red-50 text-red-500 mb-4" 
+                 style="display: flex !important; align-items: center !important; justify-content: center !important; width: 3.5rem !important; height: 3.5rem !important; border-radius: 50% !important;">
+                <i class="pi pi-exclamation-triangle text-2xl" style="font-size: 1.5rem !important;"></i>
+            </div>
+            
+            <!-- Titre élégant -->
+            <h3 class="text-lg font-bold text-gray-900 mb-2 mt-0" style="font-size: 1.125rem !important; font-weight: 700 !important; color: #111827 !important; margin: 0 0 0.5rem 0 !important;">
+                Confirmation
+            </h3>
+            
+            <!-- Texte du message -->
+            <p class="text-sm text-gray-500 mb-4 px-2" style="font-size: 0.875rem !important; color: #6B7280 !important; margin: 0 0 1rem 0 !important; line-height: 1.5 !important; font-weight: 500 !important;">
+                {{ message.message }}
+            </p>
+            
+            <!-- Ligne de séparation douce -->
+            <div style="width: 100% !important; border-top: 1px solid #F3F4F6 !important; margin: 0.75rem 0 !important;"></div>
+            
+            <!-- Boutons d'actions modernes et équilibrés -->
+            <div style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important; gap: 0.75rem !important; width: 100% !important; padding-top: 0.5rem !important;">
+                <button 
+                    type="button" 
+                    pButton 
+                    label="Non, annuler" 
+                    class="p-button-outlined p-button-secondary p-button-sm"
+                    style="flex: 1 !important; justify-content: center !important; border-radius: 8px !important; padding: 0.5rem 1rem !important;"
+                    (click)="cd.onReject()">
+                </button>
+                <button 
+                    type="button" 
+                    pButton 
+                    label="Oui, confirmer" 
+                    class="p-button-primary p-button-sm"
+                    style="flex: 1 !important; justify-content: center !important; border-radius: 8px !important; padding: 0.5rem 1rem !important;"
+                    (click)="cd.onAccept()">
+                </button>
+            </div>
+        </div>
+    </ng-template>
+</p-confirmDialog>
+
+<p-menu #menu [model]="rowMenuItems" [popup]="true" appendTo="body"></p-menu>
+

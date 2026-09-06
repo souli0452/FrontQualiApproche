@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UntypedFormGroup } from '@angular/forms';
 import { FormGroupColumn } from '../../models/generique.model';
-import { FormInputTemplateComponent } from '../../components/form-input-template/form-input-template.component';
+import { FormInputTemplateComponent } from '../form-input-template/form-input-template.component';
 import { NgPrimeModule } from '../../../prime-ng.module';
 
 export interface QuickTip {

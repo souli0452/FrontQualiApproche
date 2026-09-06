@@ -5,8 +5,8 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils/global/global-utils';
 import { HttpResponse } from '@angular/common/http';
-import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
-import { ReclamationService } from '../../services/reclamation.service';
+import { AppCrudGenericComponent } from '@shared';
+import { ReclamationService } from './reclamation.service';
 import { FormGroupColumn, TableColumn } from '../../models/generique.model';
 import { Reclamation } from '../../models/reclamation.model';
 
@@ -87,10 +87,10 @@ export class ReclamationComponent {
             });
     }
 
-    onSuccess(res: HttpResponse<any>) {
+    onSuccess(res: any) {
         this.closeDialog = true;
         this.fetchReclamation();
-        showToast(StatusEnum.success, res.status, null, this.messageService);
+        showToast(StatusEnum.success, res?.statusCode ?? res?.status ?? 200, null, this.messageService);
     }
 
     onSave(object: Reclamation) {

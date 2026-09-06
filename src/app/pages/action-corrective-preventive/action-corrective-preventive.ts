@@ -5,8 +5,8 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils/global/global-utils';
 import { HttpResponse } from '@angular/common/http';
-import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
-import { ActionCorrectivePreventiveService } from '../../services/non-conformite/action-corrective-preventive.service';
+import { AppCrudGenericComponent } from '@shared';
+import { ActionCorrectivePreventiveService } from '@features/non-conformite';
 import { FormGroupColumn, TableColumn } from '../../models/generique.model';
 import { ActionCorrectivePreventive } from '../../models/non-conformite.model';
 
@@ -105,11 +105,11 @@ export class ActionCorrectivePreventiveComponent {
                       });
               }
           
-              onSuccess(res: HttpResponse<any>) {
-                  this.closeDialog = true;
-                  this.fetchAction();
-                  showToast(StatusEnum.success, res.status, null, this.messageService);
-              }
+              onSuccess(res: any) {
+        this.closeDialog = true;
+        this.fetchAction();
+        showToast(StatusEnum.success, res?.statusCode ?? res?.status ?? 200, null, this.messageService);
+    }
           
               onSave(object: ActionCorrectivePreventive) {
                   if (object.id != null || undefined) {

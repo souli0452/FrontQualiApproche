@@ -1,0 +1,148 @@
+<p-toast></p-toast>
+<p-confirmDialog #cd [baseZIndex]="1100999" styleClass="border-none bg-transparent shadow-none" [style]="{background: 'transparent', border: 'none', boxShadow: 'none'}">
+    <ng-template pTemplate="headless" let-message>
+        <div class="p-6 bg-white dark:bg-surface-900 border border-slate-100 dark:border-surface-800 rounded-3xl shadow-2xl text-center flex flex-col items-center justify-center max-w-sm w-full mx-auto">
+
+            <!-- Badge d'icône rouge circulaire -->
+            <div class="bg-red-50 dark:bg-red-950/40 text-red-500 mb-4 w-14 h-14 rounded-full flex items-center justify-center">
+                <i class="pi pi-exclamation-triangle text-2xl"></i>
+            </div>
+
+            <!-- Titre élégant -->
+            <h3 class="text-lg font-bold text-slate-900 dark:text-surface-0 mb-2 mt-0">
+                {{ message.header || 'Confirmation de suppression' }}
+            </h3>
+
+            <!-- Texte du message -->
+            <p class="text-sm text-slate-500 dark:text-surface-400 mb-5 px-2 leading-relaxed">
+                {{ message.message }}
+            </p>
+
+            <!-- Ligne de séparation douce -->
+            <div class="w-full border-t border-slate-100 dark:border-surface-800 mb-4"></div>
+
+            <!-- Boutons d'actions modernes -->
+            <div class="flex items-center gap-3 w-full">
+                <button type="button" pButton label="Annuler"
+                    class="p-button-outlined p-button-secondary p-button-sm flex-1 justify-center rounded-xl py-2 font-medium"
+                    (click)="cd.onReject()">
+                </button>
+                <button type="button" pButton label="Supprimer" 
+                    class="p-button-danger p-button-sm flex-1 justify-center rounded-xl py-2 font-medium"
+                    (click)="cd.onAccept()">
+                </button>
+            </div>
+        </div>
+    </ng-template>
+</p-confirmDialog>
+
+
+<!-- L'écran d'édition expose la totalité du contrat du serveur, mais les libellés d'aide sous les
+     champs ne peuvent pas dire ce que chaque réglage produit, ni ce que le serveur fait à sa place
+     quand il est laissé vide. Le guide le dit, dans l'ordre de l'écran. -->
+<!-- <div class="flex justify-end mb-3">
+    <p-button 
+        label="Comprendre la configuration d'un circuit" 
+        icon="pi pi-question-circle"
+        size="small" [text]="true" 
+        (onClick)="guideOuvert = true">
+    </p-button>
+</div> -->
+
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 my-4 p-2">
+    <!-- Bouton guide (À droite, aligné) -->
+    <div>
+        <p-button 
+            label="Comprendre la configuration d'un circuit" 
+            icon="pi pi-question-circle"
+            size="small" 
+            [text]="true" 
+            severity="info"
+            (onClick)="guideOuvert = true">
+        </p-button>
+    </div>
+    <!-- Filtre par type de ressource (À gauche) -->
+    <div class="flex flex-col gap-1.5 w-full sm:w-80">
+        <p-select 
+            [options]="filtres[0].list" 
+            [(ngModel)]="typeFiltre"
+            (ngModelChange)="filtrerParType($event)"
+            [placeholder]="'Type de ressource'"
+            [showClear]="true"
+            appendTo="body"
+            styleClass="w-full text-sm">
+        </p-select>
+    </div>
+</div>
+
+<app-workflow-configuration-guide 
+    [(visible)]="guideOuvert">
+</app-workflow-configuration-guide>
+
+@if (typesEnConflit.length) {
+    <!-- Informatif, et non plus une alerte : plusieurs circuits actifs sont normaux dès qu'un type
+         de document désigne le sien. Ce qui mérite d'être dit est lequel sert de repli. -->
+    <div class="flex items-start gap-2 mb-4 p-3 border-round bg-blue-50 text-blue-900 text-sm">
+        <i class="pi pi-info-circle mt-0.5"></i>
+        <span>
+            Plusieurs circuits sont actifs pour {{ typesEnConflit.join(', ') }} : les dossiers qui ne
+            désignent pas de circuit — un type de document sans circuit attribué, par exemple —
+            prennent le <strong>plus ancien</strong> d'entre eux.
+        </span>
+    </div>
+}
+
+<!-- Tableau générique : même composant que le catalogue d'étapes et que les autres écrans de
+     configuration. Les actions passent par son menu de ligne ; la consultation et la saisie sont
+     des pages (`circuits/detail/:id`, `circuits/edition/:id`), qu'aucun formulaire générique ne
+     saurait décrire (étapes, transitions, champs de saisie). -->
+<!-- <app-crud-generic 
+    [loading]="chargement" 
+    [tableCols]="colonnes" 
+    [listeObject]="circuits"
+    [pageLabel]="titrePage" 
+    [addButtonLabel]="'Nouveau circuit'"
+    [addFilter]="true" 
+    [searchField]="filtres" 
+    (filterEvent)="filtrerParType($event)"
+    [ajoutExterne]="true" 
+    (ajoutDemande)="creerCircuit()"
+    [formGroup]="formulaireTableau" [formCols]="[]" 
+    [notModif]="true" 
+    [notDelete]="true"
+    [isAffich]="false" 
+    [asRoleEdit]="true" 
+    [customButtons]="actionsLigne"
+    (customActionEvent)="executerAction($event)"
+    [consultation]="!peutEcrire"
+    [isPagination]="circuits.length > 10">
+</app-crud-generic> -->
+
+<app-crud-generic 
+    #crudGeneric
+    [loading]="loading"
+    [requireRqPassword]="true"
+    [deleteConfirmField]="'nom'"
+    [tableCols]="colonnes" 
+    [listeObject]="circuits"
+    [pageLabel]="titrePage" 
+    [addButtonLabel]="'Nouveau circuit'"
+    [addFilter]="false" 
+    [ajoutExterne]="true" 
+    (ajoutDemande)="creerCircuit()"
+    [formGroup]="formulaireTableau" 
+    [formCols]="[]" 
+    [notModif]="true" 
+    [notDelete]="!peutEcrire"
+    [isAffich]="false" 
+    [asRoleEdit]="true" 
+    [customButtons]="actionsLigne"
+    (customActionEvent)="executerAction($event)"
+    [consultation]="!peutEcrire"
+    [isPagination]="true"
+    [totalElements]="totalElements"
+    [pageSize]="pageSize"
+    [currentPage]="currentPage"
+    (pageChangeEvent)="onPageChange($event)"
+    (removeEvent)="supprimerCircuit($event)">
+</app-crud-generic>

@@ -5,8 +5,8 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils/global/global-utils';
 import { HttpResponse } from '@angular/common/http';
-import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
-import { AuditService } from '../../services/audit.service';
+import { AppCrudGenericComponent } from '@shared';
+import { AuditService } from './audite.service';
 import { FormGroupColumn, TableColumn } from '../../models/generique.model';
 import { Audite } from '../../models/audite.model';
 
@@ -110,10 +110,10 @@ export class AuditeComponent {
                         });
                 }
             
-                onSuccess(res: HttpResponse<any>) {
+                onSuccess(res: any) {
                     this.closeDialog = true;
                     this.fetchAudit();
-                    showToast(StatusEnum.success, res.status, null, this.messageService);
+                    showToast(StatusEnum.success, res?.statusCode ?? res?.status ?? 200, null, this.messageService);
                 }
             
                 onSave(object: Audite) {

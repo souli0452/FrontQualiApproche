@@ -8,13 +8,13 @@ import { definePreset } from '@primeng/themes';
 import { providePrimeNG } from 'primeng/config';
 import { appRoutes } from './app.routes';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { AuthInterceptor } from './app/services/auth-interceptor/auth.interceptor';
+import { AuthInterceptor } from './app/core/interceptors/auth.interceptor';
 import { DatePipe, LocationStrategy, PathLocationStrategy } from '@angular/common';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ToastModule } from 'primeng/toast';
 import { UntypedFormBuilder } from '@angular/forms';
-import { LoaderInterceptor } from './app/interceptors/loader.interceptor';
-import { LicenceInterceptor } from './app/interceptors/licence.interceptor';
+import { LoaderInterceptor } from './app/core/interceptors/loader.interceptor';
+import { LicenceInterceptor } from './app/core/interceptors/licence.interceptor';
 // Définition de votre thème bleu QualiSira
 const MyPreset = definePreset(Aura, {
     semantic: {

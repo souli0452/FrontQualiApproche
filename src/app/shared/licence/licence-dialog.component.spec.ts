@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { MessageService } from 'primeng/api';
 
-import { EtatLicence, LicenceService } from '../../services/licence.service';
+import { EtatLicence, LicenceService } from '@core/licence';
 import { LicenceDialogComponent } from './licence-dialog.component';
 
 /**

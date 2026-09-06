@@ -1,0 +1,16 @@
+sonar.projectKey=QualiSira-Front
+sonar.projectName=QualiSira-Front
+sonar.projectVersion=1.0.0
+sonar.host.url=https://sonar.qualisira.com
+sonar.login=VOTRE_TOKEN_SONARQUBE_ICI
+
+sonar.sources=src
+sonar.tests=src
+sonar.test.inclusions=**/*.spec.ts
+sonar.exclusions=**/node_modules/**,**/dist/**,**/.angular/**
+
+# Exclure le boilerplate répétitif des services d'entité de la détection de duplication (CPD)
+sonar.cpd.exclusions=src/app/pages/**/*.service.ts
+
+# Analyse TypeScript sémantique avec vérification des types
+sonar.typescript.tsconfigPaths=tsconfig.json

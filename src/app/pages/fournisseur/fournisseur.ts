@@ -3,11 +3,10 @@ import { Component } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { FormationService } from '../../services/formation.service';
 import { showToast, StatusEnum } from '../../utils/global/global-utils';
 import { HttpResponse } from '@angular/common/http';
-import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
-import { FournisseurService } from '../../services/fournisseur.service';
+import { AppCrudGenericComponent } from '@shared';
+import { FournisseurService } from './fournisseur.service';
 import { FormGroupColumn, TableColumn } from '../../models/generique.model';
 import { Fournisseur } from '../../models/fournisseur.model';
 
@@ -99,10 +98,10 @@ export class FournisseurComponent {
                 });
         }
     
-        onSuccess(res: HttpResponse<any>) {
+        onSuccess(res: any) {
             this.closeDialog = true;
             this.fetchFournisseur();
-            showToast(StatusEnum.success, res.status, null, this.messageService);
+            showToast(StatusEnum.success, res?.statusCode ?? res?.status ?? 200, null, this.messageService);
         }
     
         onSave(object: Fournisseur) {

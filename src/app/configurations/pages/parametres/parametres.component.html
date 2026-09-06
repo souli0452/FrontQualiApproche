@@ -1,0 +1,201 @@
+<p-toast></p-toast>
+
+<div class="card mb-0">
+    <div class="bg-sky-50 dark:bg-sky-800/50 p-4 rounded-lg">
+        <h4 class="text-xl mb-2 font-semibold">Réglages de l'organisation</h4>
+        <p class="m-0">
+            Ces réglages alimentent ce que la plateforme envoie à l'extérieur : le pied de page des
+            courriels (nom, logo, contact) et la mise en copie du responsable qualité sur les
+            courriels de non-conformité. Un réglage laissé vide n'apparaît nulle part.
+        </p>
+        <p class="m-0 mt-2 text-sm text-gray-600">
+            La liste est celle des réglages que la plateforme sait lire : ils sont créés au démarrage,
+            il n'y a qu'à renseigner leur valeur.
+        </p>
+    </div>
+</div>
+
+<div class="tableau-card mt-6 shadow-1 border-round-xl rounded-2xl overflow-hidden border border-slate-100 bg-white dark:bg-surface-900">
+    <!-- Top Bar avec le style exact de TableauAffichageComponent -->
+    <div class="top-bar flex items-center justify-between p-3 border-b border-slate-100" style="background: #0084ca1f !important;">
+        <!-- Search Input (Pill style à gauche avec width: 280px) -->
+        <div class="search-container relative flex items-center" style="width: 280px;">
+            <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+            <input 
+                pInputText 
+                type="text" 
+                [(ngModel)]="recherche" 
+                [ngModelOptions]="{ standalone: true }"
+                (keyup.enter)="charger()"
+                placeholder="Rechercher un réglage..." 
+                class="w-full text-sm p-2 bg-white dark:bg-surface-900 border border-slate-200 dark:border-surface-600 rounded-full shadow-xs" 
+                style="padding-left: 2.25rem !important; border-radius: 9999px !important;"
+            />
+        </div>
+
+        <!-- Bouton Actualiser à droite -->
+        <div class="actions-right flex items-center gap-2">
+            <p-button label="Actualiser" icon="pi pi-refresh" severity="secondary" [text]="true"
+                      size="small" (click)="charger()" styleClass="rounded-full px-3 text-slate-700 dark:text-surface-300 font-medium"></p-button>
+        </div>
+    </div>
+
+
+    <!-- Table avec en-têtes et lignes stylisées comme le tableau générique -->
+    <p-table [value]="reglages" [loading]="chargement" dataKey="id" [scrollable]="true"
+             styleClass="p-datatable-sm p-datatable-custom">
+        <ng-template pTemplate="header">
+            <tr class="border-b border-slate-200 dark:border-surface-700 bg-slate-50/50 dark:bg-surface-800/30">
+                <th scope="col" class="py-3 px-4 text-[13px] font-bold text-slate-700 dark:text-surface-200 uppercase tracking-wider" style="min-width: 20rem">
+                    RÉGLAGE
+                </th>
+                <th scope="col" class="py-3 px-4 text-[13px] font-bold text-slate-700 dark:text-surface-200 uppercase tracking-wider" style="min-width: 16rem">
+                    VALEUR
+                </th>
+                <th scope="col" class="py-3 px-4 text-[13px] font-bold text-slate-700 dark:text-surface-200 uppercase tracking-wider" style="width: 10rem">
+                    NATURE
+                </th>
+                <th scope="col" class="py-3 px-4 text-right text-[13px] font-bold text-slate-700 dark:text-surface-200 uppercase tracking-wider" style="width: 8rem">
+                    ACTION
+                </th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-reglage>
+            <tr class="border-b border-slate-100 dark:border-surface-800 hover:bg-slate-50/70 dark:hover:bg-surface-800/40 transition-colors">
+                <td class="py-3.5 px-4">
+                    <div class="font-semibold text-slate-900 dark:text-surface-100 text-sm">{{ reglage.libelle }}</div>
+                    <div class="text-xs text-slate-400 font-mono mt-0.5">{{ reglage.cle }}</div>
+                    @if (reglage.description) {
+                        <div class="text-xs text-slate-500 dark:text-surface-400 mt-1 leading-relaxed">{{ reglage.description }}</div>
+                    }
+                </td>
+                <td class="py-3.5 px-4">
+                    @if (estUneImage(reglage)) {
+                        <img [src]="reglage.valeur" alt="" class="max-h-10 rounded-lg shadow-xs border border-slate-200" />
+                    } @else if (estRenseigne(reglage)) {
+                        <span class="whitespace-pre-line break-words text-sm font-medium text-slate-800 dark:text-surface-200">{{ reglage.valeur }}</span>
+                    } @else {
+                        <p-tag value="Non renseigné" severity="warn" [rounded]="true" styleClass="text-xs font-semibold px-2.5 py-0.5"></p-tag>
+                    }
+                </td>
+                <td class="py-3.5 px-4">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-surface-800 text-slate-600 dark:text-surface-300">
+                        {{ libelleNature(reglage.type) }}
+                    </span>
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                    @if (peutEcrire) {
+                        <p-button icon="pi pi-pencil" label="Renseigner" severity="info"
+                                  [text]="true" size="small"
+                                  (click)="ouvrirModification(reglage)"
+                                  styleClass="font-semibold text-xs px-2.5 py-1.5 rounded-lg hover:bg-sky-50 dark:hover:bg-sky-950/40">
+                        </p-button>
+                    }
+                </td>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="4" class="text-center py-10">
+                    <div class="flex flex-col items-center justify-center">
+                        <i class="pi pi-inbox text-4xl text-slate-300 dark:text-surface-600 mb-3"></i>
+                        <span class="text-slate-500 dark:text-surface-400 font-medium text-sm">
+                            Aucun réglage trouvé.
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<p-dialog 
+    [(visible)]="dialogueOuvert" 
+    [modal]="true" 
+    [style]="{ width: '42rem' }"
+    [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
+    maskStyleClass="backdrop-blur-sm"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="p-fluid">
+
+        <ng-template pTemplate="header">
+            <div class="flex items-center gap-4">
+                <!-- Icône bleue avec background -->
+                <div class="flex items-center justify-center w-12 h-12 rounded-xl shrink-0 bg-sky-50 dark:bg-sky-950/50 text-sky-600">
+                    <i class="pi pi-sliders-h text-xl"></i>
+                </div>
+                <!-- Titre et description courte -->
+                <div>
+                    <h4 class="text-lg font-semibold text-surface-900 dark:text-surface-0 m-0">Renseigner le réglage</h4>
+                    <p class="text-sm text-surface-500 m-0 mt-1 leading-snug">Configurez la valeur pour ce paramètre système</p>
+                </div>
+            </div>
+        </ng-template>
+
+        <div class="flex flex-col gap-6 mt-2">
+            <div class="bg-sky-50 dark:bg-sky-800/50 p-4 rounded-lg border-l-4 border-l-sky-500">
+                <p class="text-sm text-slate-600 dark:text-surface-300 m-0 leading-relaxed whitespace-normal break-words">
+                    Les clés techniques et intitulés sont figés par la plateforme. Modifiez uniquement la valeur requise ci-dessous afin qu'elle soit prise en compte par les notifications et modèles.
+                </p>
+            </div>
+    <form [formGroup]="formulaire" class="flex flex-col gap-4">
+
+        <div class="flex flex-col gap-1">
+            <label for="cle" class="font-semibold text-sm">Clé <span class="text-red-500">*</span></label>
+            <input pInputText id="cle" formControlName="cle" class="w-full font-mono"
+                   placeholder="Ex : CONTACT_EMAIL" autocomplete="off" />
+            <small class="text-gray-500">
+                La clé n'est pas modifiable : c'est par elle que la plateforme désigne ce réglage.
+            </small>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label for="libelle" class="font-semibold text-sm">
+                Intitulé <span class="text-red-500">*</span>
+            </label>
+            <input pInputText id="libelle" formControlName="libelle" class="w-full"
+                   placeholder="Ex : Courriel de contact" autocomplete="off" />
+            <small class="text-gray-500">Ce que lit l'administrateur ; la clé est technique.</small>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label for="type" class="font-semibold text-sm">Nature de la valeur</label>
+            <p-select inputId="type" formControlName="type" [options]="natures" optionLabel="label"
+                      optionValue="value" class="w-full" appendTo="body"></p-select>
+            @if (natureRetenue) {
+                <small class="text-gray-500">{{ natureRetenue.aide }}</small>
+            }
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label for="valeur" class="font-semibold text-sm">Valeur</label>
+            @if (formulaire.get('type')?.value === 'ADRESSE') {
+                <textarea pTextarea id="valeur" formControlName="valeur" rows="3"
+                          class="w-full"></textarea>
+            } @else {
+                <input pInputText id="valeur" formControlName="valeur" class="w-full"
+                       autocomplete="off" />
+            }
+            <small class="text-gray-500">Laissée vide, elle n'apparaît nulle part.</small>
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label for="description" class="font-semibold text-sm">Usage</label>
+            <textarea pTextarea id="description" formControlName="description" rows="2"
+                      class="w-full"></textarea>
+            <small class="text-gray-500">À quoi sert ce réglage, pour qui le reprendra après vous.</small>
+        </div>
+
+    </form>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Annuler" severity="secondary" [text]="true"
+                  (click)="dialogueOuvert = false"></p-button>
+        <p-button siLicenceOuverte label="Enregistrer" severity="info" [loading]="enregistrement"
+                  [disabled]="formulaire.invalid" (click)="enregistrer()"></p-button>
+    </ng-template>
+</p-dialog>

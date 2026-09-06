@@ -3,7 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { EtatLicence, LicenceService } from '../../services/licence.service';
+import { EtatLicence, LicenceService } from '@core/licence';
 import { LicenceOuverteDirective } from './licence-ouverte.directive';
 
 @Component({

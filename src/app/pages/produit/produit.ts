@@ -5,8 +5,8 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils/global/global-utils';
 import { HttpResponse } from '@angular/common/http';
-import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
-import { ProduitService } from '../../services/produit.service';
+import { AppCrudGenericComponent } from '@shared';
+import { ProduitService } from './produit.service';
 import { FormGroupColumn, TableColumn } from '../../models/generique.model';
 import { Produit } from '../../models/produit.model';
 
@@ -90,11 +90,11 @@ export class ProduitComponent {
               });
       }
   
-      onSuccess(res: HttpResponse<any>) {
-          this.closeDialog = true;
-          this.fetchProduit();
-          showToast(StatusEnum.success, res.status, null, this.messageService);
-      }
+      onSuccess(res: any) {
+        this.closeDialog = true;
+        this.fetchProduit();
+        showToast(StatusEnum.success, res?.statusCode ?? res?.status ?? 200, null, this.messageService);
+    }
   
       onSave(object: Produit) {
           if (object.id != null || undefined) {

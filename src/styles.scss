@@ -2,7 +2,6 @@
 @use './tailwind.css';
 @use './assets/layout/layout.scss';
 @use 'primeicons/primeicons.css';
-@use './assets/demo/demo.scss';
 @use './assets/fonts/Golos/stylesheet.css';
 /* styles.css ou styles.scss */
 :root {
@@ -12,7 +11,7 @@
 }
 
 body{
-    font-family: 'Golos Text';
+    font-family: 'Golos Text', sans-serif;
     font-weight: normal;
 }
 

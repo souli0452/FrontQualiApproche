@@ -1,30 +1,4 @@
-export const app_roles = {
-    NC: ['SUBMIT_NC', 
-        'IMPUTATION_NC', 
-        'TRAITEMENT_NC', 
-        'VALIDATION_NC',
-        'RQ_NC',
-        'RECEPTION_NC',
-        'SUPER_ADMIN'
-    ]
-};
-
-export interface AppRole {
-    id?: string;
-    name: string;
-    description?: string;
-    permissions: string[];
-}
-
-export interface Permission {
-    label: string;
-    value: string;
-    module: string;
-}
-
-export interface KcRole {
-    id?: string;
-    name?: string;
-    description?: string;
-    composite?: boolean;
-}
+/**
+ * @deprecated Déplacé vers `@features/gestion-utilisateurs/models` (src/app/features/gestion-utilisateurs/models/role.model.ts).
+ */
+export * from '../features/gestion-utilisateurs/models/role.model';

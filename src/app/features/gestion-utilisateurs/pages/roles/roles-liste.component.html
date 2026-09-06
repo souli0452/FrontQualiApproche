@@ -1,0 +1,39 @@
+<div class="block">
+    <app-header-page 
+        [title]="'Gestion des rôles'" 
+        [subtitle]="'Ajoutez ou modifiez les rôles ainsi que les permissions des utilisateurs habilités à utiliser la plateforme.'"
+        [breadcrumbs]="breadcrumbs"
+        [buttonText]="'Nouveau Rôle'" 
+        buttonIcon="pi pi-plus"
+        [withLicence]="true"
+        (actionClick)="goToDetail()"
+    />
+
+    <div class="page-layout mt-4">
+        <div class="row p-2">
+            <div class="col-sm-12">
+                <app-crud-generic #crud
+                    [pageLabel]="'rôle'"
+                    [requireRqPassword]="true"
+                    [deleteConfirmField]="'name'"
+                    [tableCols]="tableCols"
+                    [formCols]="formCols"
+                    [formGroup]="roleForm"
+                    [listeObject]="dataList"
+                    [multiSelectList]="multiSelectList"
+                    [customButtons]="customButtons"
+                    [notModif]="true"
+                    [loading]="loading"
+                    [asRoleEdit]="true"
+                    (customActionEvent)="handleCustomAction($event)"
+                    [totalElements]="totalElements"
+                    [isPagination]="true"
+                    [currentPage]="currentPage"
+                    [pageSize]="pageSize"
+                    (pageChangeEvent)="onPageChange($event)"
+                    (removeEvent)="onDelete($event)">
+                </app-crud-generic>
+            </div>
+        </div>
+    </div>
+</div>

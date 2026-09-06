@@ -1,0 +1,160 @@
+<!-- En-tête : titre, sous-titre, action de rafraîchissement -->
+<div class="flex flex-column md:flex-row md:items-end justify-content-between gap-3 mb-5">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900 m-0 tracking-tight">Gestion documentaire</h1>
+    <p class="text-sm text-slate-500 mt-1 mb-0">
+      Cycle de vie, versions et conformité de vos documents qualité.
+    </p>
+  </div>
+  <button pButton pRipple label="Actualiser" icon="pi pi-refresh"
+    class="p-button-outlined p-button-secondary p-button-sm shrink-0" (click)="refresh.emit()"></button>
+</div>
+
+<!-- Filtres : une seule ligne sur grand écran, la recherche occupe la moitié -->
+<div class="bg-white border border-slate-200 rounded-lg shadow-sm p-4 mb-4">
+  <div class="grid grid-cols-12 gap-3 items-end">
+    <div class="col-span-12 lg:col-span-6">
+      <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Recherche</label>
+      <span class="p-input-icon-left w-full">
+        <i class="pi pi-search text-slate-400"></i>
+        <input pInputText type="text" [ngModel]="searchQuery" (ngModelChange)="searchQueryChange.emit($event)"
+          placeholder="Numéro, titre ou rédacteur…" class="w-full" (keyup.enter)="refresh.emit()" />
+      </span>
+    </div>
+
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+      <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Type</label>
+      <app-select-input [ngModel]="selectedType" (ngModelChange)="selectedTypeChange.emit($event)"
+        optionLabel="libelle" optionValue="code" placeholder="Tous les types"
+        [lazy]="true" [loadOptions]="chargerTypes" (selectionChange)="refresh.emit()"></app-select-input>
+    </div>
+
+    <!-- Réservé à la qualité et à l'administration générale : seuls leurs fonds portent sur
+         plusieurs structures. Pour les autres, le serveur borne déjà la liste à leur propre
+         structure, et choisir une autre structure ne pouvait que la vider. -->
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3" *ngIf="peutFiltrerParProcessusEmetteur">
+      <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Processus émetteur</label>
+      <app-select-input [ngModel]="selectedService" (ngModelChange)="selectedServiceChange.emit($event)"
+        optionLabel="libelleLong" optionValue="id" placeholder="Tous les services"
+        [lazy]="true" [loadOptions]="chargerStructures" (selectionChange)="refresh.emit()"></app-select-input>
+    </div>
+
+    <div class="col-span-12 sm:col-span-6 lg:col-span-4">
+      <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Priorité</label>
+      <app-select-input [ngModel]="selectedPriorite"
+        (ngModelChange)="selectedPrioriteChange.emit($event)"
+        optionLabel="libelle" optionValue="id" placeholder="Toutes les priorités"
+        [lazy]="true" [loadOptions]="chargerPriorites" (selectionChange)="refresh.emit()"></app-select-input>
+    </div>
+
+    <!-- Seuls les niveaux permis à l'utilisateur sont proposés : filtrer sur un niveau classé
+         au-dessus de ses droits ne rendrait rien, le serveur ayant déjà écarté ces documents. -->
+    <div class="col-span-12 sm:col-span-6 lg:col-span-4">
+      <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Confidentialité</label>
+      <app-select-input [ngModel]="selectedNiveauConfidentialite"
+        (ngModelChange)="selectedNiveauConfidentialiteChange.emit($event)"
+        optionLabel="libelle" optionValue="id" placeholder="Tous les niveaux"
+        [lazy]="true" [loadOptions]="chargerNiveauxConfidentialite" (selectionChange)="refresh.emit()"></app-select-input>
+    </div>
+
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+      <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Domaine</label>
+      <app-select-input [ngModel]="selectedDomaine"
+        (ngModelChange)="selectedDomaineChange.emit($event)"
+        optionLabel="libelle" optionValue="id" placeholder="Tous les domaines"
+        [lazy]="true" [loadOptions]="chargerDomaines" (selectionChange)="refresh.emit()"></app-select-input>
+    </div>
+
+    <div class="col-span-12 sm:col-span-6 lg:col-span-1">
+      <button pButton pRipple icon="pi pi-filter" class="w-full p-button-secondary" pTooltip="Appliquer les filtres"
+        (click)="refresh.emit()"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Tableau -->
+<div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+  <p-table [value]="documents" [loading]="loading" [paginator]="true"
+    [lazy]="true" [totalRecords]="totalDocuments" [first]="premiereLigne" [rows]="taillePage"
+    (onLazyLoad)="pageChange.emit({ first: $event.first ?? 0, rows: $event.rows ?? taillePage })"
+    [rowsPerPageOptions]="[15, 30, 50]" [responsiveLayout]="'scroll'"
+    currentPageReportTemplate="{first}–{last} sur {totalRecords} documents" [showCurrentPageReport]="true"
+    styleClass="p-datatable-sm">
+
+    <ng-template pTemplate="header">
+      <tr class="bg-slate-50">
+        <th scope="col" class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Document</th>
+        <th scope="col" class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Rédacteur</th>
+        <th scope="col" class="text-xs font-semibold text-slate-500 uppercase tracking-wide text-center w-8rem">Version</th>
+        <th scope="col" class="text-xs font-semibold text-slate-500 uppercase tracking-wide">État</th>
+        <th scope="col" class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Créé le</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-doc>
+      <!-- La ligne entière ouvre la fiche : c'est la seule action de la liste. -->
+      <tr class="cursor-pointer hover:bg-indigo-50 transition-colors" (click)="open.emit(doc)">
+        <!-- Cellule principale : le titre porte l'identification, le numéro le référencement -->
+        <td class="py-3">
+          <div class="flex align-items-center gap-3">
+            <span class="flex align-items-center justify-content-center bg-indigo-50 text-indigo-600
+                         border border-indigo-100 rounded w-2rem h-2rem shrink-0">
+              <i class="pi pi-file text-sm"></i>
+            </span>
+            <div class="min-w-0">
+              <div class="font-semibold text-slate-800 truncate">{{ doc.titre || doc.documentNumber }}</div>
+              <div class="text-xs text-slate-400 font-mono mt-0.5">{{ doc.documentNumber }}</div>
+            </div>
+          </div>
+        </td>
+
+        <td class="text-sm text-slate-600">{{ doc.redacteur }}</td>
+
+        <td class="text-center">
+          <span class="font-mono text-xs bg-slate-100 text-slate-600 border border-slate-200 px-2 py-1 rounded">
+            v{{ doc.numeroVersion ?? 0 }}
+          </span>
+        </td>
+
+        <td>
+          <div class="flex flex-column gap-1">
+            <p-tag [value]="statusLabel(doc)" [severity]="statusSeverity(doc)" styleClass="text-xs w-fit"></p-tag>
+
+            <!-- Étape telle que la connaît le moteur, à défaut celle recopiée sur le document. -->
+            <span class="text-xs text-slate-400" *ngIf="etapeDeCircuit(doc) && !circuitTermine(doc)">
+              <i class="pi pi-arrow-right text-xs mr-1"></i>{{ etapeDeCircuit(doc) }}
+            </span>
+            <span class="text-xs text-emerald-600" *ngIf="circuitTermine(doc)">
+              <i class="pi pi-check-circle text-xs mr-1"></i>Circuit terminé
+            </span>
+
+            <!-- Le serveur ne rend que les actions ouvertes à l'appelant : cette pastille
+                 signale donc précisément les dossiers que cet utilisateur doit traiter. -->
+            <p-tag *ngIf="aUneDecisionAttendue(doc)" severity="warn" icon="pi pi-bell"
+              value="Action attendue" styleClass="text-xs w-fit"></p-tag>
+          </div>
+        </td>
+
+        <td class="text-sm text-slate-500 whitespace-nowrap">{{ doc.createdAt }}</td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="loadingbody">
+      <tr *ngFor="let i of [1,2,3,4,5]">
+        <td colspan="5" class="py-3"><p-skeleton height="1.5rem"></p-skeleton></td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="5" class="text-center py-8">
+          <i class="pi pi-inbox text-5xl text-slate-300 block mb-3"></i>
+          <div class="text-slate-600 font-semibold mb-1">Aucun document</div>
+          <div class="text-sm text-slate-400">
+            Aucun document ne correspond à ces critères. Ajustez la recherche ou les filtres.
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

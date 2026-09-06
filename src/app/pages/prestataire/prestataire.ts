@@ -5,8 +5,8 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils/global/global-utils';
 import { HttpResponse } from '@angular/common/http';
-import { AppCrudGenericComponent } from '../../components/app-crud-generic/app-crud-generic.component';
-import { PrestataireService } from '../../services/prestataire.service';
+import { AppCrudGenericComponent } from '@shared';
+import { PrestataireService } from './prestataire.service';
 import { FormGroupColumn, TableColumn } from '../../models/generique.model';
 import { Prestataire } from '../../models/prestataire.model';
 
@@ -100,10 +100,10 @@ export class PrestataireComponent {
                   });
           }
       
-          onSuccess(res: HttpResponse<any>) {
+          onSuccess(res: any) {
               this.closeDialog = true;
               this.fetchPrestataire();
-              showToast(StatusEnum.success, res.status, null, this.messageService);
+              showToast(StatusEnum.success, res?.statusCode ?? res?.status ?? 200, null, this.messageService);
           }
       
           onSave(object: Prestataire) {

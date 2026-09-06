@@ -17,6 +17,17 @@
         "importHelpers": true,
         "target": "ES2022",
         "module": "ES2022",
+        "baseUrl": "./",
+        "paths": {
+            "@core": ["src/app/core/index.ts"],
+            "@core/*": ["src/app/core/*"],
+            "@shared": ["src/app/shared/index.ts"],
+            "@shared/*": ["src/app/shared/*"],
+            "@features/*": ["src/app/features/*"],
+            "@configurations": ["src/app/configurations/index.ts"],
+            "@configurations/*": ["src/app/configurations/*"],
+            "@prime-ng": ["src/prime-ng.module"]
+        }
     },
     "angularCompilerOptions": {
         "enableI18nLegacyMessageIdFormat": false,

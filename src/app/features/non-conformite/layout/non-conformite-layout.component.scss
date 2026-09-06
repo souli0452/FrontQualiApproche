@@ -1,0 +1,24 @@
+.premium-dialog {
+    ::ng-deep {
+        .p-dialog-header {
+            border-bottom: 1px solid var(--surface-border);
+            padding: 1.5rem;
+            background: var(--surface-card);
+        }
+        
+        .p-dialog-content {
+            padding: 1.5rem;
+            background: var(--surface-ground);
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+        }
+    }
+}
+
+.p-tab-active {
+    border-bottom: 1px solid var(--secondary-color) !important;
+}
+
+.p-tab:hover {
+    background-color: var(--surface-ground) !important;
+}

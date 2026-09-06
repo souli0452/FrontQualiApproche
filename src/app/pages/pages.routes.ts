@@ -1,7 +1,5 @@
 import { Routes } from '@angular/router';
-import { Documentation } from './documentation/documentation';
-import { Crud } from './crud/crud';
-import { Empty } from './empty/empty';
+
 import { FormationComponent } from './formation/formation';
 import { FournisseurComponent } from './fournisseur/fournisseur';
 import { PrestataireComponent } from './prestataire/prestataire';
@@ -12,53 +10,58 @@ import { RisqueComponent } from './risque/risque';
 import { AuditeComponent } from './audite/audite';
 import { reglementationComponent } from './reglementation/reglementation';
 import { CritereEvaluationComponent } from './critere-evaluation/critere-evaluation';
-import { ModuleAbonnement, TypeStructure } from '../enums/enums';
-import { KcUserComponent } from './kc-user/kc-user.component';
-import { KcUserFormComponent } from './kc-user/kc-user-form/kc-user-form.component';
-import { ProfilComponent } from './profil/profil.component';
-import { ParametresComponent } from './parametres/parametres.component';
-import { SearchResultsComponent } from './recherche/search-results';
-import { RoleComponent } from './role/role-table/role.component';
-import { RoleDetailComponent } from './role/role-detail/role-detail.component';
-import { NonConformiteLayoutComponent } from '../layout/non-conformite/non-conformite';
-import { NcVueEnsembleComponent } from './module-nc/nc-vue-ensemble/vue-ensemble';
+import { ModuleAbonnement, TypeStructure } from '@core/enums';
+import { 
+    UtilisateursListeComponent as KcUserComponent, 
+    UtilisateurFormComponent as KcUserFormComponent, 
+    RolesListeComponent as RoleComponent, 
+    RoleDetailComponent 
+} from '@features/gestion-utilisateurs';
+import { ProfilComponent } from '@features/auth';
+import { ConfigurationsComponent, ParametresComponent } from '../configurations';
+import { RechercheGlobaleComponent } from '@shared';
+import { NonConformiteLayoutComponent } from '@features/non-conformite/layout';
+import { 
+    NcVueEnsembleComponent, 
+    NcPublieesComponent, 
+    NcComposeComponent, 
+    NCTraitementSuiviComponent 
+} from '@features/non-conformite/pages';
 // ❌ SUPPRIMÉS — Ces pages par étape sont remplacées par nc-traitement-suivi (moteur workflow).
 // Les dossiers correspondants peuvent être supprimés physiquement.
 // import { NCAffectationActionComponent } from './module-nc/nc-affectation-action/nc-affectation-action';
 // import { AnalyseReceptionComponent } from './module-nc/nc-analyse-reception/nc-analyse-reception';
 // import { NCSuiviComponent } from './module-nc/nc-suivi/nc-suivi';
-import { ParametragesComponent } from './parametrages/parametrages.component';
-import { NcPublieesComponent } from './module-nc/nc-publiees/nc-publiees';
 // import { AnalyseValidationComponent } from './module-nc/nc-analyse-validation/nc-analyse-validation';
 // import { TraitementGlobalComponent } from './module-nc/nc-action-a-mener/nc-traitement-global';
-import { ActionNonConformiteComponent } from './parametrages/parametrage-non-conformite/action-nc/action';
-import { NiveauNonConformiteComponent } from './parametrages/parametrage-non-conformite/niveau-nc/niveau';
-import { SourceNonConformite } from './parametrages/parametrage-non-conformite/origine-nc/origine';
-import { CategorieProcessusComponent } from './parametrages/categorie-processus/categorie-processus';
-import { StructureComponent } from './parametrages/structure/structure.component';
-import { StructureFormComponent } from './parametrages/structure/structure-form/structure-form.component';
-import { NcComposeComponent } from './module-nc/nc-compose/nc-compose.component';
+import { NiveauNonConformiteComponent, SourceNonConformite } from '@features/non-conformite/referentiel';
+import { CategorieProcessusComponent, StructureComponent, StructureFormComponent } from '@features/organigramme/pages';
 // import { ValidationPilote } from './module-nc/nc-validation-pilote/nc-validation-pilote';
 // import { AnalyseClotureComponent } from './module-nc/nc-analyse-cloture/nc-analyse-cloture';
-import { QmsDocumentComponent } from './module-gestion-documentaire/qms-document/qms-document.component';
-import { QmsDocumentCreateComponent } from './module-gestion-documentaire/qms-document-create/qms-document-create.component';
-import { QmsDocumentTypeComponent } from './module-gestion-documentaire/qms-document-type/qms-document-type.component';
-import { WorkflowStepTemplateComponent } from './module-gestion-documentaire/workflow-step-template/workflow-step-template.component';
-import { QmsVueEnsembleComponent } from './module-gestion-documentaire/qms-vue-ensemble/qms-vue-ensemble.component';
-import { QmsDocumentsPartagesComponent } from './module-gestion-documentaire/qms-documents-partages/qms-documents-partages.component';
-import { QmsDemandesComponent } from './module-gestion-documentaire/qms-demandes/qms-demandes.component';
-import { QmsDemandeCreateComponent } from './module-gestion-documentaire/qms-demande-create/qms-demande-create.component';
-import { GestionDocumentaireLayoutComponent } from '../layout/gestion-documentaire/gestion-documentaire';
-import { DomaineApplicationComponent } from './parametrage-document/domaine-application/domaine-application.component';
-import { PrioriteDocumentComponent } from './parametrage-document/priorite-document/priorite-document.component';
-import { NiveauConfidentialiteComponent } from './parametrage-document/niveau-confidentialite/niveau-confidentialite.component';
-import { EmailTemplateWorkflowComponent } from './configuration-workflow/email-template/email-template.component';
-import { WorkflowEditorComponent } from './configuration-workflow/circuits/workflow-editor.component';
-import { CircuitsListeComponent } from './configuration-workflow/circuits/circuits-liste.component';
-import { CircuitDetailPageComponent } from './configuration-workflow/circuits/circuit-detail-page.component';
-import { permissionGuard } from '../components/auth/permission.guard';
-import { LicenceComponent } from './licence/licence.component';
-import { NCTraitementSuiviComponent } from './module-nc/nc-traitement-suivi/nc-traitement-suivi';
+import { 
+    QmsDocumentComponent, 
+    QmsDocumentCreateComponent, 
+    QmsVueEnsembleComponent, 
+    QmsDocumentsPartagesComponent, 
+    QmsDemandesComponent, 
+    QmsDemandeCreateComponent 
+} from '@features/gestion-documentaire/pages';
+import { GestionDocumentaireLayoutComponent } from '@features/gestion-documentaire/layout';
+import { 
+    QmsDocumentTypeComponent, 
+    PrioriteDocumentComponent, 
+    NiveauConfidentialiteComponent, 
+    DomaineApplicationComponent 
+} from '@features/gestion-documentaire/referentiel';
+import { 
+    CircuitsListeComponent, 
+    CircuitDetailPageComponent, 
+    WorkflowEditorComponent,
+    WorkflowStepTemplateComponent,
+    EmailTemplateWorkflowComponent
+} from '@features/workflow';
+import { permissionGuard } from '../core/guards/permission.guard';
+import { LicenceComponent } from '@core/licence';
 
 // Les permissions déclarées ici reprennent celles du menu (app.menu.ts) : une entrée masquée
 // correspond à une route fermée. Les noms en majuscules sont les anciennes permissions, encore
@@ -68,7 +71,7 @@ import { NCTraitementSuiviComponent } from './module-nc/nc-traitement-suivi/nc-t
 // restreinte déclare donc le sien. Le garde posé sur un parent couvre en revanche tous ses
 // enfants, et ceux-ci ne font qu'affiner.
 export default [
-    { path: 'recherche', component: SearchResultsComponent, title: 'Résultats de recherche' },
+    { path: 'recherche', component: RechercheGlobaleComponent, title: 'Résultats de recherche' },
     {
         // Aucun module exigé : la licence se consulte et se pose quel que soit l'abonnement —
         // en exiger un fermerait l'écran qui sert précisément à en ouvrir.
@@ -76,8 +79,7 @@ export default [
         canActivate: [permissionGuard],
         data: { permissions: ['licence-write', 'config-global-write', 'CONFIG_GLOBAL_MANAGE'] }
     },
-    { path: 'documentation', component: Documentation },
-    { path: 'crud', component: Crud },
+
     {
         path: 'formation', component: FormationComponent, title: 'Formations',
         canActivate: [permissionGuard],
@@ -250,21 +252,13 @@ export default [
     { path: 'workflows-gestion-documentaire/detail/:id', redirectTo: '/configurations/circuits', pathMatch: 'full' },
     {
         path: 'configurations',
-        component: ParametragesComponent,
+        component: ConfigurationsComponent,
         canActivate: [permissionGuard],
-        // Le parent laisse passer qui détient l'une quelconque des configurations ; chaque enfant
-        // restreint ensuite à la sienne.
         data: {
             breadcrumb: 'Configurations Globales',
             permissions: [
-                'config-global-read', 'config-global-write', 'structure-read', 'structure-write',
-                'type-processus-read', 'type-processus-write', 'type-nc-read', 'type-nc-write',
-                'niveau-nc-read', 'niveau-nc-write', 'action-read', 'action-write',
-                'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE', 'MANAGE_USER', 'ROLE_MANAGE',
-                'STRUCT_MANAGE', 'SERVICE_MANAGE', 'TYPE_PROC_MANAGE', 'NC_ORIGIN_MANAGE',
-                'NC_LEVEL_MANAGE', 'ACTION_TYPE_MANAGE',
-                // Sans ces deux-là, le garde du parent fermerait la porte à qui ne détient que la
-                // configuration des circuits — et ses onglets avec.
+                'config-global-read', 'config-global-write',
+                'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE',
                 'workflow-read', 'workflow-write'
             ]
         },
@@ -277,80 +271,10 @@ export default [
                 data: { permissions: ['config-global-read', 'config-global-write', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'] }
             },
             {
-                path: 'utilisateurs', component: KcUserComponent, title: 'Utilisateurs',
-                canActivate: [permissionGuard],
-                data: { permissions: ['MANAGE_USER'] }
-            },
-            {
-                path: 'utilisateurs/create', component: KcUserFormComponent, title: 'Nouvel Utilisateur',
-                canActivate: [permissionGuard],
-                data: { permissions: ['MANAGE_USER'] }
-            },
-            {
-                path: 'utilisateurs/edit/:id', component: KcUserFormComponent, title: 'Modifier Utilisateur',
-                canActivate: [permissionGuard],
-                data: { permissions: ['MANAGE_USER'] }
-            },
-            {
-                path: 'roles', component: RoleComponent, title: 'Rôles',
-                canActivate: [permissionGuard],
-                data: { permissions: ['ROLE_MANAGE'] }
-            },
-            {
-                path: 'roles/:id', component: RoleDetailComponent, title: 'Détail Rôle',
-                canActivate: [permissionGuard],
-                data: { permissions: ['ROLE_MANAGE'] }
-            },
-            {
-                path: 'parametrage-organigramme/categorie-processus', component: CategorieProcessusComponent, title: 'Categorie de processus',
-                canActivate: [permissionGuard],
-                data: { permissions: ['type-processus-read', 'type-processus-write', 'TYPE_PROC_MANAGE', 'CONFIG_READ'] }
-            },
-            {
-                path: 'type-nc', component: SourceNonConformite, title: 'Types NC',
-                canActivate: [permissionGuard],
-                data: { permissions: ['type-nc-read', 'type-nc-write', 'NC_ORIGIN_MANAGE'], module: ModuleAbonnement.NON_CONFORMITE }
-            },
-            {
-                path: 'niveau-nc', component: NiveauNonConformiteComponent, title: 'Niveaux NC',
-                canActivate: [permissionGuard],
-                data: { permissions: ['niveau-nc-read', 'niveau-nc-write', 'NC_LEVEL_MANAGE'], module: ModuleAbonnement.NON_CONFORMITE }
-            },
-            {
-                path: 'type-action', component: ActionNonConformiteComponent, title: 'Actions',
-                canActivate: [permissionGuard],
-                data: { permissions: ['action-read', 'action-write', 'ACTION_TYPE_MANAGE'], module: ModuleAbonnement.NON_CONFORMITE }
-            },
-            {
-                path: 'direction', component: StructureComponent, title: 'Liste des Directions',
-                canActivate: [permissionGuard],
-                data: {
-                    typeStructure: TypeStructure.DIRECTION,
-                    permissions: ['structure-read', 'structure-write', 'STRUCT_MANAGE', 'SERVICE_MANAGE']
-                }
-            },
-            {
-                path: 'service', component: StructureComponent, title: 'Services',
-                canActivate: [permissionGuard],
-                data: {
-                    typeStructure: TypeStructure.SERVICE,
-                    permissions: ['structure-read', 'structure-write', 'STRUCT_MANAGE', 'SERVICE_MANAGE']
-                }
-            },
-
-            // Configuration des circuits de validation, désormais servie par les onglets du centre
-            // de configuration. Les trois écrans y sont repris ensemble : n'y déplacer que les
-            // circuits aurait laissé le catalogue d'étapes et les modèles d'e-mail sans aucun
-            // chemin depuis le menu.
-            {
                 path: 'circuits', component: CircuitsListeComponent, title: 'Circuits de validation',
                 canActivate: [permissionGuard],
                 data: { permissions: ['workflow-read', 'workflow-write'] }
             },
-            // La consultation et la saisie d'un circuit sont des pages, non plus des dialogues
-            // au-dessus de la liste : l'objet le plus profond de l'application — étapes, actions,
-            // champs — tenait à l'étroit dans une fenêtre, et la saisie n'avait pas d'adresse.
-            // `nouveau` tient lieu d'identifiant à la création, la convention de `roles/:id`.
             {
                 path: 'circuits/detail/:id', component: CircuitDetailPageComponent, title: 'Détail du circuit',
                 canActivate: [permissionGuard],
@@ -453,15 +377,17 @@ export default [
         children: [
             { path: '', redirectTo: 'vue-ensemble', pathMatch: 'full' },
             {
-                path: 'declaration', component: NcComposeComponent, title: 'Declaration d\'une Non-Conformité',
+                path: 'create', component: NcComposeComponent, title: 'Déclaration d\'une Non-Conformité',
                 canActivate: [permissionGuard],
                 data: { permissions: ['nc-write', 'SUBMIT_NC'] }
             },
             {
-                path: 'declaration/:id', component: NcComposeComponent, title: 'Modification d\'une Non-Conformité',
+                path: 'edit/:id', component: NcComposeComponent, title: 'Modification d\'une Non-Conformité',
                 canActivate: [permissionGuard],
                 data: { permissions: ['nc-write', 'SUBMIT_NC'] }
             },
+            { path: 'declaration', redirectTo: 'create', pathMatch: 'full' },
+            { path: 'declaration/:id', redirectTo: 'edit/:id', pathMatch: 'full' },
             {
                 path: 'vue-ensemble', component: NcVueEnsembleComponent, title: 'Vue d\'ensemble',
                 canActivate: [permissionGuard],
@@ -500,6 +426,7 @@ export default [
                 canActivate: [permissionGuard],
                 data: { permissions: ['nc-read', 'NC_READ', 'CONSULTATION_NC'] }
             },
+            { path: 'nc-publiees', redirectTo: 'publiees', pathMatch: 'full' },
             // { path: 'actions', component: TraitementGlobalComponent, ... }, // ❌ Absorbé par /traitement-suivi
         ]
     },
@@ -518,11 +445,6 @@ export default [
         path: 'niveau-nc', component: NiveauNonConformiteComponent, title: 'Niveaux des non-conformités',
         canActivate: [permissionGuard],
         data: { permissions: ['niveau-nc-read', 'niveau-nc-write', 'NC_LEVEL_MANAGE'], module: ModuleAbonnement.NON_CONFORMITE }
-    },
-    {
-        path: 'type-action', component: ActionNonConformiteComponent, title: 'Types d\'actions',
-        canActivate: [permissionGuard],
-        data: { permissions: ['action-read', 'action-write', 'ACTION_TYPE_MANAGE'], module: ModuleAbonnement.NON_CONFORMITE }
     },
     {
         path: 'gestion-documentaire',
@@ -573,14 +495,15 @@ export default [
                 data: { permissions: ['document-read', 'document-write', 'DOC_READ'], module: ModuleAbonnement.DOCUMENTAIRE }
             },
             {
-                path: 'nouveau',
+                path: 'create',
                 component: QmsDocumentCreateComponent,
                 title: 'Créer un Document QMS',
                 canActivate: [permissionGuard],
                 data: { permissions: ['document-write'], module: ModuleAbonnement.DOCUMENTAIRE }
             },
+            { path: 'nouveau', redirectTo: 'create', pathMatch: 'full' },
         ]
     },
-    { path: 'empty', component: Empty },
+
     { path: '**', redirectTo: '/notfound' },
 ] as Routes;
