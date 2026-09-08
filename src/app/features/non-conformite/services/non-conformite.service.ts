@@ -75,12 +75,18 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
 
     /**
     * Récupère la ventilation exacte des NC attendant l'utilisateur par étape (calculé par le moteur de workflow).
+    *
+    * Le `data` de l'enveloppe, et non l'enveloppe : le back renvoie `{ message, data, statusCode }`
+    * comme partout ailleurs. Lue telle quelle, la réponse passait pour la carte elle-même et
+    * l'écran y trouvait trois « étapes » nommées `message`, `data` et `statusCode` — même sans
+    * aucune NC à traiter.
+    *
     * @backend GET `${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/dashboard/par-etape`
     */
     getNonConformitesParEtape(): Observable<{ [etape: string]: number }> {
-        return this.http.get<{ [etape: string]: number }>(
+        return this.http.get<ApiItemResponse<{ [etape: string]: number }>>(
             `${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/dashboard/par-etape`
-        );
+        ).pipe(map(response => response?.data ?? {}));
     }
 
 
