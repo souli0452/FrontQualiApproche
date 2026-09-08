@@ -590,27 +590,37 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
 
     soumettreBrouillon(rowData: any) {
         this.confirmationService.confirm({
-            message: 'Voulez-vous vraiment soumettre cette non-conformité ?',
+            message: 'Voulez-vous vraiment soumettre cette non-conformité au pilote ?',
             header: 'Confirmation',
-            icon: 'pi pi-exclamation-triangle',
-            acceptLabel: 'Oui',
-            rejectLabel: 'Non',
+            icon: 'pi pi-send',
+            acceptLabel: 'Oui, soumettre',
+            rejectLabel: 'Annuler',
             accept: () => {
                 this.loading = true;
-                this.globalNcService.updateStatus(rowData.id, 'PUBLISHED').subscribe({
+                this.globalNcService.soumettre(rowData.id).subscribe({
                     next: () => {
-                        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'La non-conformité a été soumise avec succès.' });
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Succès',
+                            detail: 'La non-conformité a été transmise au pilote avec succès.'
+                        });
                         this.featureService.onReloadRequested(true);
                         this.loading = false;
                     },
-                    error: () => {
-                        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Une erreur est survenue lors de la soumission.' });
+                    error: (err) => {
+                        console.error('Erreur lors de la soumission au pilote :', err);
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Erreur',
+                            detail: err?.error?.message || 'Une erreur est survenue lors de la soumission au pilote.'
+                        });
                         this.loading = false;
                     }
                 });
             }
         });
     }
+
 
     supprimerBrouillon(rowData: any) {
         this.confirmationService.confirm({

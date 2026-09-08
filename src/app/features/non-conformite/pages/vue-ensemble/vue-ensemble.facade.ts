@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { NonConformiteService, RoleService } from '../../services';
 import { forkJoin, map } from 'rxjs';
 import { EtapeTraitement } from '../../models';
-import { styleEvolutionDatasets } from '../../utils';
+// A SUPPRIMER : Import pour le graphique d'évolution commenté
+// import { styleEvolutionDatasets } from '../../utils';
 
 
 @Injectable({
@@ -222,6 +223,8 @@ export class NcVueEnsembleFacade {
     );
   }
 
+  // A SUPPRIMER : Méthode du graphique d'évolution (commenté dans le composant et le template)
+  /*
   loadEvolutionStats(annee: number, mois?: number, structureId?: string) {
 
     return this.nonConformiteService.nonConformiteEvolutionGet(annee, mois, structureId).pipe(
@@ -254,7 +257,6 @@ export class NcVueEnsembleFacade {
       })
     );
   }
-
-
+  */
 
 }

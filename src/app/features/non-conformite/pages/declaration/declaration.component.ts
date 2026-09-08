@@ -1,24 +1,21 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { Location } from '@angular/common';
-import { getCurrentUserStructure } from '@core/auth';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Location, CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { HttpErrorResponse } from '@angular/common/http';
-import { FeaturesService } from '@core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { NonConformStatus, EtapeTraitement } from '../../models';
-import { NonConformiteService, NiveauNonConformiteService, OrigineNonConformiteService } from '../../services';
-
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { NgPrimeModule } from '@prime-ng';
-import { FileUploadComponent } from '../../components';
-import { ApiItemResponse, PaginatedData } from '../../../../models/response.model';
-import { ActionNonConformite, NiveauNonConformite, NonConformite, OrigineNonConformite } from '../../models';
-import { CategorieProcessus } from '../../../../models/categore-processus.model';
-import { Reclamation } from '../../../../models/reclamation.model';
-import { convertFilesToBase64, PieceJointe } from '../../../../utils/fichier/fichier-utils';
-import { LicenceOuverteDirective } from '../../../../shared/licence/licence-ouverte.directive';
+
+import { FeaturesService } from '@core';
+import { currentUserState, getCurrentUserStructure } from '@core/auth';
 import { Structure, StructureService } from '@features/organigramme';
+import { FileUploadComponent } from '../../components';
+import { LicenceOuverteDirective } from '../../../../shared/licence/licence-ouverte.directive';
+import { ApiItemResponse, PaginatedData } from '../../../../models/response.model';
+import { convertFilesToBase64 } from '../../../../utils/fichier/fichier-utils';
+import { NonConformiteService, NiveauNonConformiteService, OrigineNonConformiteService } from '../../services';
+import { EtapeTraitement, NonConformStatus, NiveauNonConformite, NonConformite, OrigineNonConformite } from '../../models';
+
 
 @Component({
     selector: 'app-nc-compose',
@@ -27,124 +24,87 @@ import { Structure, StructureService } from '@features/organigramme';
     standalone: true,
     imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent, LicenceOuverteDirective]
 })
-export class NcComposeComponent {
+export class NcComposeComponent implements OnInit {
     @Input() editId: any;
     @Output() closeDialog = new EventEmitter<void>();
 
     userStructure: Structure = {};
-    nc: any = { pieceJointes: [] };
-    hasImage: any;
-    pieceJointe: PieceJointe = {};
-    pieceJointes: PieceJointe[] = [];
-
     structures: Structure[] = [];
     typesNcs: OrigineNonConformite[] = [];
     niveauNcs: NiveauNonConformite[] = [];
-    categorieProcessus: CategorieProcessus[] = [];
-    reclamationsClients: Reclamation[] = [];
-    formSubmitted: boolean = false;
     uploadedFiles: any[] = [];
     nonConformite: NonConformite = {};
-    typesActions: ActionNonConformite[] = [];
+    formSubmitted: boolean = false;
+
+    // Sélection des listes déroulantes
+    nc: {
+        niveauNonConformite?: NiveauNonConformite;
+        typeNonformite?: OrigineNonConformite;
+    } = {};
+
     constructor(
         private location: Location,
         private messageService: MessageService,
         protected nonConformiteService: NonConformiteService,
         private featureService: FeaturesService,
         private structureService: StructureService,
-        // private typeProcessusService: TypeProcessusService,
         private origineNonConformiteService: OrigineNonConformiteService,
-        // private reclamationService: ReclamationService,
         private niveauService: NiveauNonConformiteService,
-        // protected actionNonConformiteService: ActionNonConformiteService,
         private activatedRoute: ActivatedRoute,
         private router: Router
     ) {
-        this.loadStuctures();
-        this.loadNiveau();
-        // this.loadReclamations();
-        this.loadTypeNonConformite();
-        // this.loadProcessus();
-        // this.fetchActions();
+        this.loadStructures();
+        this.loadNiveaux();
+        this.loadTypesNonConformite();
     }
-
-    goBack() {
-        if (this.editId) {
-            this.closeDialog.emit();
-        } else {
-            this.location.back();
-        }
-    }
-    removeExistingFile(index: number) {
-        if (this.nonConformite.fichiers) {
-            this.nonConformite.fichiers.splice(index, 1);
-        }
-    }
-
 
     ngOnInit(): void {
-        this.userStructure = getCurrentUserStructure();
-        const id = this.editId || this.activatedRoute.snapshot.paramMap.get('id');
+        const stored = getCurrentUserStructure();
+        this.userStructure = stored?.data ?? stored ?? {};
 
+        const user = (currentUserState.value as any)?.user;
+        const structId = this.userStructure?.id || (typeof user?.structure === 'string' ? user.structure : user?.structure?.id);
+
+        if (structId && !this.userStructure?.libelleCourt) {
+            this.structureService.getByStructureId(structId).subscribe({
+                next: (res: any) => {
+                    this.userStructure = res?.data ?? res ?? {};
+                }
+            });
+        }
+
+        const id = this.editId || this.activatedRoute.snapshot.paramMap.get('id');
         if (id && id !== '' && id !== 'create') {
-            this.nonConformiteService
-                .findNCById(id)
-                .pipe()
-                .subscribe({
-                    next: (data) => {
-                        if (data.data) {
-                            this.nonConformite = data.data;
-                        }
-                        this.nc.origineService = this.structures.find((value) => value.id === this.nonConformite.origineId);
-                        // this.nc.typeProcedure = this.typeProcessus.find((value) => value.id === this.nonConformite.categorieProcessusId);
-                        this.nc.typeNonformite = this.typesNcs.find((value) => value.id === this.nonConformite.sourceDeNonConformiteId);
-                        this.nc.niveauNonConformite = this.niveauNcs.find((value) => value.id === this.nonConformite.niveauNonConformiteId);
-                        // this.nc.typeAction = this.typesActions.find((value) => value.id === this.nonConformite.actionId);
-                        // this.nc.reclamationClient = this.reclamationsClients.find((value) => value.id === this.nonConformite.originNonConformiteId);
+            this.nonConformiteService.findNCById(id).subscribe({
+                next: (data) => {
+                    if (data.data) {
+                        this.nonConformite = data.data;
                     }
-                });
+                    this.nc.typeNonformite = this.typesNcs.find(t => t.id === this.nonConformite.typeNonConformiteId);
+                    this.nc.niveauNonConformite = this.niveauNcs.find(n => n.id === this.nonConformite.niveauNonConformiteId);
+                }
+            });
         }
     }
 
     async onSave(publish: boolean = false) {
         this.formSubmitted = true;
 
-        // Vérification de base pour éviter les erreurs d'accès à undefined
         if (!this.nc.niveauNonConformite || !this.nc.typeNonformite) {
             this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Veuillez remplir tous les champs obligatoires.' });
             return;
         }
 
-        // Remplir les champs requis
-        this.nonConformite.niveauNonConformiteId = this.nc.niveauNonConformite.id;
-        this.nonConformite.sourceDeNonConformiteId = this.nc.typeNonformite.id;
-        this.nonConformite.sourceDeNonConformiteLibelle = this.nc.typeNonformite.libelle;
-        this.nonConformite.structureDeSoumissionLibelle = this.userStructure?.libelleCourt;
-        this.nonConformite.structureDeSoumissionId = this.userStructure?.id;
-        this.nonConformite.categorieProcessusId = this.userStructure?.typeProcessusId;
-        this.nonConformite.categorieProcessusLibelle = this.userStructure?.typeProcessusLibelle;
-        this.nonConformite.description = this.nonConformite.description;
-        this.nonConformite.actionImmediate = this.nonConformite.actionImmediate;
-        this.nonConformite.sourceDeNonConformiteId = this.nc.typeNonformite.id;
-        this.nonConformite.structureDeSoumissionLibelle = this.userStructure?.libelleCourt;
-        this.nonConformite.structureDeSoumissionId = this.userStructure?.id;
-        // On récupère le type de processus lié à la structure de l'utilisateur
-        this.nonConformite.categorieProcessusId = this.userStructure?.typeProcessusId;
-        this.nonConformite.categorieProcessusLibelle = this.userStructure?.typeProcessusLibelle;
+        // 1. Résolution dynamique de la structure émettrice et de son sigle
+        const user = (currentUserState.value as any)?.user;
+        const structId = this.userStructure?.id || (typeof user?.structure === 'string' ? user.structure : user?.structure?.id);
+        const structTrouvee = this.structures.find(s => s.id === structId);
+        const struct = structTrouvee || this.userStructure || {};
+        const structSigle = struct?.libelleCourt || struct?.libelleLong;
 
-        if (this.nc.typeAction) {
-            this.nonConformite.actionLibelle = this.nc.typeAction.libelle;
-            this.nonConformite.actionId = this.nc.typeAction.id;
-        }
-
-        this.nonConformite.fonctionEmetteur = '';
-        this.nonConformite.niveauNonConformiteLibelle = this.nc.niveauNonConformite.libelle;
-        this.nonConformite.sourceDeNonConformiteLibelle = this.nc.typeNonformite.libelle;
-
-        // Préparer la liste des pièces jointes sans muter l'état local en cas d'échec
+        // 2. Traitement des pièces jointes
         const fichiersExistants = (this.nonConformite.fichiers || []).filter(f => !!f.url);
         let nouveauxFichiers: any[] = [];
-
         if (this.uploadedFiles && this.uploadedFiles.length > 0) {
             try {
                 const base64Files = await convertFilesToBase64(this.uploadedFiles);
@@ -159,37 +119,61 @@ export class NcComposeComponent {
             }
         }
 
-        const payload: any = {
-            ...this.nonConformite,
+                // 3. Payload officiel aligné sur le projet d'origine et le Backend Java
+        const payload: NonConformite = {
+            id: this.nonConformite.id,
+
+            // Constat et correction immédiate (termes exacts de l'entité Java)
+            justification: this.nonConformite.justification,
+            actionDsc: this.nonConformite.actionDsc,
+
+            // Qualification du constat
+            niveauNonConformiteId: this.nc.niveauNonConformite.id,
+            niveauNonConformiteLibelle: this.nc.niveauNonConformite.libelle,
+            typeNonConformiteId: this.nc.typeNonformite.id,
+            typeNonConformiteLibelle: this.nc.typeNonformite.libelle,
+
+            // Structure et Processus émetteur (dynamiques)
+            structureSoumissionId: structId,
+            structureSoumissionLibelle: structSigle,
+            typeProcessusId: struct?.typeProcessusId,
+            typeProcessusLibelle: struct?.typeProcessusLibelle,
+
             fichiers: [...fichiersExistants, ...nouveauxFichiers]
         };
 
-        if (!payload.id) {
+        // Gestion stricte de la publication vs brouillon (comme dans PROJET-SOURCE)
+        if (publish) {
+            payload.status = NonConformStatus.PUBLISHED;
+            payload.etatTraitement = EtapeTraitement.RECEPTION;
+        } else if (!payload.id) {
             payload.status = NonConformStatus.DRAFT;
+            payload.etatTraitement = EtapeTraitement.SOUMISSION;
         }
 
-        console.log("DONNÉES ENVOYÉES AU SERVEUR (Payload) :", payload);
+        console.log("📤 [NC COMPOSE] Données officielles envoyées :", payload);
 
         if (payload.id != null && publish) {
             const dejaEnregistre = payload.id;
             this.nonConformiteService.update(payload).subscribe({
-                next: () => this.nonConformiteService.soumettre(dejaEnregistre)
-                    .subscribe(this.onResponse(true)),
+                next: () => this.nonConformiteService.soumettre(dejaEnregistre).subscribe(this.onResponse(true)),
                 error: this.onResponse(true).error
             });
         } else if (payload.id != null) {
-            this.nonConformiteService.update(payload).subscribe(this.onResponse(publish));
+            this.nonConformiteService.update(payload).subscribe(this.onResponse(false));
         } else if (publish) {
+            // Création avec soumission directe vers l'étape RECEPTION (pilote)
             this.nonConformiteService.creerEtSoumettre(payload).subscribe(this.onResponse(true));
         } else {
+            // Enregistrement simple en brouillon
             this.nonConformiteService.create(payload).subscribe(this.onResponse(false));
         }
+
     }
 
     onResponse(publish: boolean) {
         return {
-            next: (res: ApiItemResponse<NonConformite>) => { // ✅ correction ici
-                console.log("RÉPONSE DU SERVEUR (Succès) :", res);
+            next: (res: ApiItemResponse<NonConformite>) => {
                 this.messageService.add({
                     severity: 'success',
                     summary: publish ? 'Non-conformité soumise' : 'Brouillon enregistré',
@@ -205,13 +189,9 @@ export class NcComposeComponent {
                         this.location.back();
                     }
                 }
-
                 this.featureService.onReloadRequested(true);
             },
-
             error: (error: HttpErrorResponse) => {
-                console.log("ERREUR :", error);
-
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erreur',
@@ -221,101 +201,48 @@ export class NcComposeComponent {
         };
     }
 
-    // loadStuctures() {
-    //     this.structureService
-    //         .getAllStructures()
-    //         .pipe()
-    //         .subscribe({
-    //             next: (resp: HttpResponse<Structure[]>) => {
-    //                 this.structures = resp.data.content || [];
-    //             },
-    //             error: (error: HttpErrorResponse) => {}
-    //         });
-    // }
-
-    loadStuctures() {
-    this.structureService
-        .getAllStructure() // Assurez-vous que le nom de la méthode est correct
-        .subscribe({
+    loadStructures() {
+        this.structureService.getAllStructure().subscribe({
             next: (data: PaginatedData<Structure>) => {
                 this.structures = data.content || [];
             },
-            error: (error: HttpErrorResponse) => {
-                console.error("Erreur lors du chargement des structures", error);
-            }
+            error: (error: HttpErrorResponse) => console.error("Erreur structures", error)
         });
     }
 
-
-    // loadNiveau() {
-    //     this.niveauService
-    //         .findAll()
-    //         .pipe()
-    //         .subscribe({
-    //             next: (data: PaginatedData<NiveauNonConformite>) => {
-    //                 this.niveauNcs = data.content || [];
-    //             },
-    //             error: (error: HttpErrorResponse) => {}
-    //         });
-    // }
-
-
-
-    loadNiveau() {
+    loadNiveaux() {
         this.niveauService.findAll().subscribe({
             next: (resp) => {
                 this.niveauNcs = resp.data.content || [];
             },
-            error: (error: HttpErrorResponse) => {
-                console.error(error);
-            }
+            error: (error: HttpErrorResponse) => console.error(error)
         });
     }
 
-
-
-    
-    // loadReclamations() {
-    //     this.reclamationService
-    //         .findAll()
-    //         .subscribe({
-    //             next: (resp) => {
-    //                 this.reclamationsClients = resp.data.content || [];
-    //             },
-    //             error: (error: HttpErrorResponse) => {}
-    //         });
-    // }
-    loadTypeNonConformite() {
-        this.origineNonConformiteService
-            .findAll()
-            .subscribe({
-                next: (resp) => {
-                    this.typesNcs = resp.data.content || [];
-                },
-                error: (error: HttpErrorResponse) => {}
-            });
+    loadTypesNonConformite() {
+        this.origineNonConformiteService.findAll().subscribe({
+            next: (resp) => {
+                this.typesNcs = resp.data.content || [];
+            },
+            error: (error: HttpErrorResponse) => console.error(error)
+        });
     }
-    // loadProcessus() {
-    //     this.typeProcessusService
-    //         .findAll()
-    //         .subscribe({
-    //             next: (resp) => {
-    //                 this.typeProcessus = resp.data.content || [];
-    //             },
-    //             error: (error: HttpErrorResponse) => {}
-    //         });
-    // }
+
     handleFileUpload(files: any[]) {
         this.uploadedFiles = files;
     }
-    // fetchActions() {
-    //     this.actionNonConformiteService
-    //         .findAll()
-    //         .subscribe({
-    //             next: (res) => {
-    //                 this.typesActions = res.data.content || [];
-    //             },
-    //             error: (error: HttpErrorResponse) => {}
-    //         });
-    // }
+
+    removeExistingFile(index: number) {
+        if (this.nonConformite.fichiers) {
+            this.nonConformite.fichiers.splice(index, 1);
+        }
+    }
+
+    goBack() {
+        if (this.editId) {
+            this.closeDialog.emit();
+        } else {
+            this.location.back();
+        }
+    }
 }

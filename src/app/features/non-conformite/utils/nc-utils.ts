@@ -4,23 +4,17 @@ import { NcFilter, NcStats } from '../models';
 export function buildDashboardStats(data: any) {
   const stats = data?.statsByStatus || {};
 
-  return {
-    total: data?.totalNC || Object.values(stats).reduce((a: any, b: any) => a + b, 0) || 0,
-    enCours: (stats.PENDING_PILOT || 0) + (stats.PENDING_RQ || 0) + (stats.PENDING_ASSIGNMENT || 0) + (stats.IN_PROGRESS || 0) + (stats.PENDING_PILOT_REVIEW || 0) + (stats.PENDING_CLOSURE || 0),
-    retard: stats.OVERDUE || data?.retard || 0, 
-    imputees: (stats.IMPUTED || 0),
-    cloturees: stats.CLOSED || stats.ARCHIVED || 0,
+ return {
+    total: data?.total ?? data?.totalNC ?? 0,
+    enCours: data?.enCours ?? 0,
+    retard: data?.enRetard ?? data?.retard ?? 0, 
+    cloturees: data?.cloturees ?? 0,
+    tauxSla: data?.tauxSla ?? null,
+    tauxResolution: data?.tauxResolution ?? null,
+    imputees: stats.IMPUTED || 0,
     draft: stats.DRAFT || 0,
     published: stats.PUBLISHED || 0,
-    pendingPilot: stats.PENDING_PILOT || 0,
-    rejectedByPilot: stats.REJECTED_BY_PILOT || 0,
-    pendingRq: stats.PENDING_RQ || 0,
-    rejectedByRq: stats.REJECTED_BY_RQ || 0,
-    pendingAssignment: stats.PENDING_ASSIGNMENT || 0,
     inProgress: stats.IN_PROGRESS || 0,
-    pendingPilotReview: stats.PENDING_PILOT_REVIEW || 0,
-    pendingClosure: stats.PENDING_CLOSURE || 0,
-    closed: stats.CLOSED || 0,
     archived: stats.ARCHIVED || 0
   };
 }

@@ -3,17 +3,19 @@ import { CommonModule } from '@angular/common';
 
 import { NgPrimeModule } from '@prime-ng';
 import { 
-    NcStatsCardComponent, 
+    // A SUPPRIMER
+    // NcStatsCardComponent, 
     AlerteTraitement, 
     DASHBOARD_CARDS_AGENT, 
     DASHBOARD_CARDS_CHEF, 
     DASHBOARD_CARDS_RQ, 
     TraitementTableComponent, 
-    NcFilter, 
+    // A SUPPRIMER
+    // NcFilter, 
     NcFilterBarComponent 
 } from '../../components';
-import { AuthService, isUserInRoles, currentUserState, getCurrentUserStructure } from '@core/auth';
-import { Subject, takeUntil, forkJoin, of, debounceTime } from 'rxjs';
+import { AuthService, /* A SUPPRIMER : isUserInRoles, */ currentUserState, getCurrentUserStructure } from '@core/auth';
+import { Subject, takeUntil, /* A SUPPRIMER : forkJoin, of, */ debounceTime } from 'rxjs';
 import { FeaturesService } from '@core';
 import { RoleService, NonConformiteService } from '../../services';
 import { buildDashboardStats } from '../../utils';
@@ -22,16 +24,20 @@ import { AuthData } from '../../../../models/auth.model';
 import { EtapeTraitement } from '../../models';
 import { StructureService } from '@features/organigramme/services';
 
+import { CardStatsAdminComponent } from '@shared';
+
 @Component({
     selector: 'app-vue-ensemble',
     standalone: true,
     imports: [
         CommonModule, 
         NgPrimeModule,
-        NcStatsCardComponent,
-        AlerteTraitement,
-        NcFilterBarComponent,
-        TraitementTableComponent
+        // A SUPPRIMER
+        // NcStatsCardComponent,
+        CardStatsAdminComponent,
+        // AlerteTraitement,
+        // NcFilterBarComponent,
+        // TraitementTableComponent
     ],
     templateUrl: './vue-ensemble.component.html',
     styleUrl: './vue-ensemble.component.scss'
@@ -40,7 +46,9 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
 
     loading: boolean = false;
     dashboardData: any;
-    filteredNc: any[] = [];
+
+    // A SUPPRIMER : Variable jamais utilisée dans le template ni dans les calculs
+    // filteredNc: any[] = [];
 
     countBrouillon: number = 0;
     countImputees: number = 0;
@@ -54,12 +62,14 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     countNonTraiter: number = 0;
     countNonConformiteCloturee: number = 0;
 
+    // A SUPPRIMER : Variables du graphique d'évolution (commenté dans le HTML)
+    /*
     evolutionTotal: number = 0;
     evolutionPourcentage: string = '';
     countCritique: number = 0;
     countMajeure: number = 0;
     countMineure: number = 0;
-
+    */
 
     // Calcul automatique du total global basé sur la liste unique de toutes les NC actives
     get countTotal(): number {
@@ -68,18 +78,26 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
 
     brouillonData: any[] = [];
     allActiveNCs: any[] = [];
+
+    // A SUPPRIMER : Pagination et filtres du tableau (commenté dans le HTML)
+    /*
     filteredActiveNCs: any[] = [];
     paginatedNCs: any[] = [];
     currentPage: number = 0;
     pageSize: number = 10;
     currentFilters: any = {};
     colsDashboard: any[] = [];
+    */
+
     imputationsData: any[] = [];
     receptionData: any[] = [];
     validationRqData: any[] = [];
     validationRqAffectationData: any[] = [];
     affectationData: any[] = [];
-    currentUser: AuthData | null = null;
+
+    // A SUPPRIMER : currentUser n'est pas lu, le composant utilise directement currentUserState.value
+    // currentUser: AuthData | null = null;
+
     userStructure: any = {};
     validationPiloteData: any[] = [];
     clotureData: any[] = [];
@@ -89,11 +107,6 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     countSoumission: number = 0;
 
     // 🛡️ GARDE DE CHARGEMENT — empêche les appels concurrents à loadUserNcData().
-    // Problème observé : reaload$ émettait plusieurs fois après une action workflow
-    // (validation() L70 + hideDialog() L82 + circuitAvance() L244 dans traitement-table),
-    // à des intervalles parfois supérieurs au debounceTime(300ms), ce qui déclenchait
-    // plusieurs loadUserNcData() simultanés et produisait N affichages du même bloc NC.
-    // Solution : si un chargement est déjà en cours, on ignore les appels suivants.
     private ncDataLoading = false;
 
     stats: any = {
@@ -116,14 +129,15 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         archived: 0
     };
 
+    // A SUPPRIMER : Variables du graphique d'évolution (commenté dans le HTML)
+    /*
     chartData: any;
     chartOptions: any;
-
-    // Variables pour les filtres du graphique
-    selectedYear: Date = new Date(); // Par défaut : l'année en cours
-    selectedMonth: Date | null = null; // Pas de mois sélectionné par défaut
+    selectedYear: Date = new Date();
+    selectedMonth: Date | null = null;
     selectedStructure: string | null = null;
-    structuresList: any[] = []; // Liste de vos structures (à charger si vous l'avez)
+    structuresList: any[] = [];
+    */
 
 
     private destroy$ = new Subject<void>();
@@ -172,6 +186,8 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         private facade: NcVueEnsembleFacade,
     ) {} 
 
+    // A SUPPRIMER : Méthodes de filtrage du tableau (commenté dans le HTML)
+    /*
     handleFilter(event: NcFilter) {
         this.currentFilters = event;
         this.currentPage = 0; // Reset pagination when filtering
@@ -233,15 +249,21 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         this.filteredActiveNCs = this.allActiveNCs.filter(filterFn);
         this.updatePaginatedNCs();
     }
+    */
 
     ngOnInit(): void {
+        // A SUPPRIMER : souscription à currentUser non exploitée
+        /*
         this.authService.currentUser$
             .pipe(takeUntil(this.destroy$))
             .subscribe(user => {
                 this.currentUser = user;
         });
+        */
         this.userStructure = getCurrentUserStructure();
         
+        // A SUPPRIMER : colonnes du tableau (commenté dans le HTML)
+        /*
         this.colsDashboard = [
             { field: 'numeroReference', header: 'N° Ref', type: 'string', width: '150px' },
             { 
@@ -254,66 +276,53 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
             { field: 'workflowStatus', header: 'Étape du circuit', type: 'enum', width: '220px' },
             { field: 'niveauNonConformiteLibelle', header: 'Gravité', type: 'badge', width: '150px' }
         ];
+        */
 
         // ─── RESPONSABILITÉ 1 : KPIs / Stats (agrégés depuis la base, par rôle) ───────────
-        // Le backend dispose d'un endpoint dédié par rôle qui calcule les statistiques
-        // directement en base : l'Agent voit ses NC, le Pilote celles de sa structure,
-        // le RQ voit l'ensemble du système. Ce sont des données résumées, indépendantes
-        // de la liste des NC à traiter.
         this.loadDashboardData();
 
         // ─── RESPONSABILITÉ 2 : Tableau des NC à traiter (piloté par le workflow) ─────────
-        // Depuis la mise en place du moteur workflow, c'est le backend qui décide quelles NC
-        // chaque utilisateur doit traiter (nonConformiteATraiter). Ce chargement est
-        // INDÉPENDANT des KPIs : les deux coexistent sans se déclencher mutuellement.
-        //
-        // ❌ ANCIENNE ARCHITECTURE (commentée) — loadUserNcData() était appelé depuis updateKpis()
-        // ce qui créait un couplage fort et des appels en cascade :
-        //   loadDashboardData() → updateKpis() → loadUserNcData() [cascade non désirée]
-        // ✅ NOUVELLE ARCHITECTURE — chargement direct et indépendant ici :
         this.loadUserNcData();
 
+        // A SUPPRIMER : Chargement structures et initialisation du graphique (commenté dans le HTML)
+        /*
         if (this.roleService.isAdmin || this.roleService.isRQ) {
             this.loadStructures();
         }
+        */
 
         // ─── RAFRAÎCHISSEMENT après action workflow ──────────────────────────────────────
-        // Après toute action (validation, rejet, clôture...), reaload$ est émis.
-        // On rafraîchit les DEUX responsabilités pour maintenir la cohérence :
-        //   - Les KPIs (compteurs peuvent avoir changé)
-        //   - Le tableau des NC à traiter (la liste évolue après chaque action)
-        //
-        // debounceTime(300) : plusieurs composants appellent onReloadRequested() quasi-simultanément
-        // après une action (nc-validation-pilote.ts x2, traitement-table.ts x1, etc.).
-        // Sans debounce, chaque émission déclencherait un rechargement complet — d'où les
-        // N affichages observés. On attend la fin de la "vague" d'émissions avant d'agir.
         this.featureService.reaload$
             .pipe(
                 debounceTime(300),
                 takeUntil(this.destroy$)
             )
             .subscribe(() => {
-                // ✅ Rafraîchissement des KPIs : les compteurs ont pu changer suite à l'action
                 this.loadDashboardData();
-                // ✅ Rafraîchissement du tableau : la liste des NC à traiter a évolué
                 this.loadUserNcData();
             });
             
-            this.loadEvolutionStats();
-            this.initChart();
+        // A SUPPRIMER : Stats et options du graphique d'évolution (commenté dans le HTML)
+        /*
+        this.loadEvolutionStats();
+        this.initChart();
+        */
 
-            // À insérer temporairement dans ngOnInit()
-            console.log("Rôles de l'utilisateur connecté :", this.roleService);
-            console.log("Permissions de l'utilisateur connecté :", this.currentUser?.permissions);
-            console.log("STRUCTURE DE L'UTILISATEUR CONNECTE (vue-ensemble) :", this.userStructure);
-            console.log("ETAT DE L'UTILISATEUR COURANT (vue-ensemble) :", currentUserState.value);
+        // A SUPPRIMER : Logs de debug
+        /*
+        console.log("Rôles de l'utilisateur connecté :", this.roleService);
+        console.log("Permissions de l'utilisateur connecté :", this.currentUser?.permissions);
+        console.log("STRUCTURE DE L'UTILISATEUR CONNECTE (vue-ensemble) :", this.userStructure);
+        console.log("ETAT DE L'UTILISATEUR COURANT (vue-ensemble) :", currentUserState.value);
+        */
     }
 
+    // A SUPPRIMER : Méthodes liées au graphique d'évolution et aux structures (commenté dans le HTML)
+    /*
     loadStructures() {
         this.structureService.getAllStructures().subscribe({
         next: (res) => {
             if (res.data) {
-                // C'est ici le changement : s.libelleCourt
                 this.structuresList = res.data.content.map((s: any) => ({
                     nom: s.libelleCourt, 
                     id: s.id
@@ -326,43 +335,37 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         });
     }
 
-
-
     loadEvolutionStats() {
+        const annee = this.selectedYear
+            ? this.selectedYear.getFullYear()
+            : new Date().getFullYear();
 
-    const annee = this.selectedYear
-        ? this.selectedYear.getFullYear()
-        : new Date().getFullYear();
+        const mois = this.selectedMonth
+            ? this.selectedMonth.getMonth() + 1
+            : undefined;
 
-    const mois = this.selectedMonth
-        ? this.selectedMonth.getMonth() + 1
-        : undefined;
+        const structureId =
+            this.roleService.isChef
+            ? this.userStructure?.id
+            : (this.selectedStructure || undefined);
 
-    const structureId =
-        this.roleService.isChef
-        ? this.userStructure?.id
-        : (this.selectedStructure || undefined);
-
-    this.facade.loadEvolutionStats(annee, mois, structureId)
-        .subscribe({
-        next: (data: any) => {
-
-            this.chartData = data.chartData;
-            this.evolutionTotal = data.evolutionTotal;
-            this.evolutionPourcentage = data.evolutionPourcentage;
-            this.countCritique = data.countCritique;
-            this.countMajeure = data.countMajeure;
-            this.countMineure = data.countMineure;
-
-        },
-        error: (err) => {
-            console.error("Erreur lors de la récupération des stats d'évolution", err);
-        }
-        });
+        this.facade.loadEvolutionStats(annee, mois, structureId)
+            .subscribe({
+            next: (data: any) => {
+                this.chartData = data.chartData;
+                this.evolutionTotal = data.evolutionTotal;
+                this.evolutionPourcentage = data.evolutionPourcentage;
+                this.countCritique = data.countCritique;
+                this.countMajeure = data.countMajeure;
+                this.countMineure = data.countMineure;
+            },
+            error: (err) => {
+                console.error("Erreur lors de la récupération des stats d'évolution", err);
+            }
+            });
     }
 
     initChart() {
-        // On ne garde QUE la configuration visuelle du graphique
         this.chartOptions = {
             responsive: true,
             maintainAspectRatio: false,
@@ -412,6 +415,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
             }
         };
     }
+    */
 
     loadDashboardData() {
         this.loading = true;
@@ -450,31 +454,13 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
                 .subscribe({
                 next: (response: any) => {
                     this.dashboardData = response.body.data;
-                    this.updateKpis(); // ✅ maintenant correct
+                    this.updateKpis();
                     this.loading = false;
                 },
                 error: (error: any) => {
                     this.loading = false;
                 }
                 });
-
-            // ✅ Récupération et log des NC clôturées de la structure du Pilote
-            this.nonConformiteService.nonConformiteParStructureEtTraitementGet(
-                EtapeTraitement.CLOTURE,
-                this.userStructure?.id
-            ).pipe(takeUntil(this.destroy$)).subscribe({
-                next: (res: any) => {
-                    console.log("NC CLOTUREES DE LA STRUCTURE DU PILOTE (Brut) :", res);
-                    const count = res.data?.content?.length || 0;
-                    if (!this.stats) {
-                        this.stats = {};
-                    }
-                    this.stats.cloturees = count;
-                },
-                error: (err: any) => {
-                    console.error("Erreur lors du chargement des NC clôturées du Pilote :", err);
-                }
-            });
             break;
 
             case 'RQ':
@@ -491,7 +477,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
                 }
                 });
             break;
-        }
+                }
     }
 
     private loadUserNcData() {
@@ -549,13 +535,27 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
             // ✅ Recalcul des statistiques du tableau de bord pour l'Agent en se basant sur le circuit réel (etatTraitement)
             if (this.roleService.isAgent) {
                 const allNcs = data.allUserNcs || [];
+                const isCloturee = (nc: any) =>
+                    (nc.etatTraitement === 'CLOTURE' ||
+                     nc.etatDeTraitement === 'CLOTURE' ||
+                     nc.workflowStatus === 'Clôture' ||
+                     nc.workflowStatus === 'CLOTURE');
+
                 this.stats = {
                     total: allNcs.length,
-                    enCours: allNcs.filter((nc: any) => nc.etatDeTraitement !== 'CLOTURE' && nc.status !== 'DRAFT').length,
-                    published: allNcs.filter((nc: any) => nc.etatDeTraitement === 'RECEPTION').length,
-                    cloturees: allNcs.filter((nc: any) => nc.etatDeTraitement === 'CLOTURE').length
+                    enCours: allNcs.filter((nc: any) => !isCloturee(nc) && nc.status !== 'DRAFT').length,
+                    published: allNcs.filter((nc: any) => (nc.etatTraitement || nc.etatDeTraitement) === 'RECEPTION').length,
+                    cloturees: allNcs.filter((nc: any) => isCloturee(nc)).length
                 };
             }
+
+
+            console.log('🔄 [VUE-ENSEMBLE] Sous-indicateurs et stats mis à jour par loadUserNcData :', {
+                countValidationPilote: this.countValidationPilote,
+                countValidationRQ: this.countValidationRQ,
+                countNonConformiteCloturee: this.countNonConformiteCloturee,
+                statsAgent: this.roleService.isAgent ? this.stats : 'N/A'
+            });
 
             // ✅ Fusionner toutes les listes actives dans allActiveNCs
             const mergedList: any[] = [];
@@ -589,24 +589,28 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
             });
 
             this.allActiveNCs = mergedList;
-            this.applyLocalFilters();
+            // A SUPPRIMER : Filtrage local du tableau (commenté dans le HTML)
+            // this.applyLocalFilters();
 
             // ✅ countSoumission compte toutes les NC rejetées pour la notification "Non-Conformités rejetées"
             this.countSoumission = this.allActiveNCs.filter((nc: any) => nc.rejeter).length;
 
             // ✅ Mise à jour du badge dans le menu global et les onglets spécifiques
-            this.nonConformiteService.notificationsNC$.next({
-                total: this.countTotal,
-                brouillons: this.countBrouillon,
-                imputees: this.countImputees,
-                reception: this.countReception,
-                validationRQ: this.countValidationRQ + this.countValidationRqAffectation,
-                validationPilote: this.countValidationPilote,
-                cloture: this.countCloture,
-                affectation: this.countAffectation,
-                nonTraiter: this.countNonTraiter,
-                soumission: this.countSoumission
-            });
+            // this.nonConformiteService.notificationsNC$.next({
+            //     total: this.countTotal,
+            //     brouillons: this.countBrouillon,
+            //     imputees: this.countImputees,
+            //     reception: this.countReception,
+            //     validationRQ: this.countValidationRQ + this.countValidationRqAffectation,
+            //     validationPilote: this.countValidationPilote,
+            //     cloture: this.countCloture,
+            //     affectation: this.countAffectation,
+            //     nonTraiter: this.countNonTraiter,
+            //     soumission: this.countSoumission
+            // });
+            
+            // ✅ Utilise le résumé officiel du backend sans écraser par des données locales
+            this.nonConformiteService.rafraichirNotifications();
 
             this.ncDataLoading = false; // 🔓 Déverrouillage après succès
         },
@@ -618,6 +622,8 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         });
     }
 
+    // A SUPPRIMER : Pagination manuelle du tableau (commenté dans le HTML)
+    /*
     onPageChange(event: any) {
         this.currentPage = event.page;
         this.pageSize = event.size;
@@ -629,6 +635,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         const end = start + this.pageSize;
         this.paginatedNCs = this.filteredActiveNCs.slice(start, end);
     }
+    */
 
     /**Recuperation des Non Conformités de l'utilisateur connecté en fonction de son rôle | FIN */
 
@@ -643,16 +650,55 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
 
     private updateKpis() {
         if (!this.dashboardData) return;
-        console.log("DASHBOARD DATA RECEIVED:", this.dashboardData);
 
-        const stats = this.dashboardData.statsByStatus || {};
-
-        // Affichage des 4 blocs
         this.stats = buildDashboardStats(this.dashboardData);
-        console.log("CALCULATED STATS OBJECT:", this.stats);
 
-        // Pour les graphiques
-        this.filteredNc = this.dashboardData.nonConformites || this.dashboardData.content || this.dashboardData.ncs || [];
+        // 🔍 LOG COMPLET DES DONNÉES ALIMENTANT LES CARDS STATS
+        console.group('📊 [VUE-ENSEMBLE] ALIMENTATION DES CARDS STATS (updateKpis)');
+        console.log('👤 Rôle actif :', this.getUserRole());
+        console.log('📦 Données brutes reçues du backend (dashboardData) :', this.dashboardData);
+        console.log('🧮 Objet stats calculé (this.stats) :', this.stats);
+        console.table({
+            'Card 1 - Total': { 
+                valeur: this.stats?.total, 
+                source: 'dashboardData.total' 
+            },
+            'Card 2 - En cours': { 
+                valeur: this.stats?.enCours, 
+                source: 'dashboardData.enCours' 
+            },
+            'Card 3 - En retard': { 
+                valeur: this.stats?.retard, 
+                source: 'dashboardData.enRetard' 
+            },
+            'Card 4 - Clôturées': { 
+                valeur: this.stats?.cloturees, 
+                source: 'dashboardData.cloturees' 
+            },
+            'Taux SLA (%)': {
+                valeur: this.stats?.tauxSla,
+                source: 'dashboardData.tauxSla'
+            },
+            'Taux Résolution (%)': {
+                valeur: this.stats?.tauxResolution,
+                source: 'dashboardData.tauxResolution'
+            },
+            'Sous-métrique : Validation Pilote': { 
+                valeur: this.countValidationPilote, 
+                source: 'countValidationPilote' 
+            },
+            'Sous-métrique : Validation RQ': { 
+                valeur: this.countValidationRQ, 
+                source: 'countValidationRQ' 
+            }
+        });
+        console.groupEnd();
+
+        // A SUPPRIMER : Log de debug
+        // console.log("CALCULATED STATS OBJECT:", this.stats);
+
+        // A SUPPRIMER : Variable jamais utilisée
+        // this.filteredNc = this.dashboardData.nonConformites || this.dashboardData.content || this.dashboardData.ncs || [];
 
         // ❌ ANCIENNE ARCHITECTURE — Appel commenté car il créait un couplage non désiré.
         // updateKpis() est un callback de loadDashboardData() : appeler loadUserNcData() ici
@@ -672,6 +718,6 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     dashboardCardsChef = DASHBOARD_CARDS_CHEF;
     dashboardCardsRQ = DASHBOARD_CARDS_RQ;
 
-
-    protected readonly isUserInRoles = isUserInRoles;
+    // A SUPPRIMER : isUserInRoles n'est pas utilisé dans le template
+    // protected readonly isUserInRoles = isUserInRoles;
 }

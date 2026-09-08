@@ -19,5 +19,6 @@ export * from './form-input-template/form-input-template.component';
 export * from './alert-message/alert-message.service';
 export * from './alert-message/alert-message.component';
 export * from './pagination/pagination';
+export * from './card-stats-admin';
 
 

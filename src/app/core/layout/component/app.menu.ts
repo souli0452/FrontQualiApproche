@@ -248,19 +248,27 @@ export class AppMenu {
 
         // On écoute les changements du badge !
         this.nonConformiteService.notificationsNC$.subscribe((notifs: any) => {
-            const total = notifs.total;
-            // La rubrique peut être masquée pour cet utilisateur : il n'y a alors pas de badge à poser.
+            const total = notifs?.total ?? 0;
+            console.log('📌 [MENU] Réception notifs NC pour badge menu :', total);
+
             const menuQualite = this.model.find(m => m.label === 'Qualité & Conformité');
             if (menuQualite && menuQualite.items) {
-                const menuNC = menuQualite.items.find(i => i.label === 'Non-Conformités');
+                const indexNC = menuQualite.items.findIndex(i => i.label === 'Non-Conformités');
 
-                if (menuNC) {
-                    // PrimeNG permet d'ajouter un 'badge' sur n'importe quel MenuItem
-                    menuNC.badge = total > 0 ? total.toString() : undefined;
-                    menuNC.badgeStyleClass = 'bg-red-500 text-white font-bold';
+                if (indexNC !== -1) {
+                    // 1. On crée une nouvelle référence d'objet pour forcer Angular à redessiner le badge
+                    menuQualite.items[indexNC] = {
+                        ...menuQualite.items[indexNC],
+                        badge: total > 0 ? total.toString() : undefined,
+                        badgeStyleClass: 'bg-red-500 text-white font-bold'
+                    };
+                    // 2. On réassigne le modèle pour déclencher la détection de changement
+                    this.model = [...this.model];
+                    this.cdr.markForCheck();
                     this.cdr.detectChanges();
                 }
             }
         });
+
     }
 }

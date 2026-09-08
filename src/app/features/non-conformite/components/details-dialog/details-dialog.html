@@ -131,7 +131,7 @@
                     </div>
                 </ng-template>
                 <div class="nc-description">
-                    <div [innerHTML]="demande.description || 'Aucune description fournie'"></div>
+                    <div [innerHTML]="demande.justification || 'Aucune description fournie'"></div>
                 </div>
             </p-fieldset>
 
@@ -163,7 +163,7 @@
         <!-- Colonne Droite -->
         <div class="col-12 lg:col-6">
             <!-- Actions entreprises -->
-            <div class="mt-4" *ngIf="demande.actionImmediate ">
+            <div class="mt-4" *ngIf="demande.actionDsc ">
             <p-fieldset [toggleable]="true" styleClass="mb-4">
                 <ng-template pTemplate="header">
                     <div class="flex items-center gap-2 text-primary">
@@ -171,7 +171,7 @@
                     </div>
                 </ng-template>
                 <div class="nc-description">
-                    <div [innerHTML]="demande.actionImmediate || 'Aucune action entreprise'"></div>
+                    <div [innerHTML]="demande.actionDsc || 'Aucune action entreprise'"></div>
                 </div>
             </p-fieldset>
             </div>

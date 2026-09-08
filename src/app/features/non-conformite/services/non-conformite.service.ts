@@ -7,6 +7,7 @@ import { EtapeTraitement, NonConformStatus } from '../models';
 import { ApiItemResponse, ApiResponse } from '../../../models/response.model';
 import { CriteriaDto } from '../../../models/criteria.model';
 import { NonConformite, NcStats } from '../models';
+import { NcNotificationsResumeDto, NotificationClocheDto } from '../models/nc-notifications';
 
 /**
  * Service principal et canonique du module **Non-Conformité**.
@@ -56,6 +57,99 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
         nonTraiter: 0,
         soumission: 0
     });
+
+
+        // =========================================================================
+    // NOTIFICATIONS OFFICIELLES BACKEND
+    // =========================================================================
+
+    /**
+     * Récupère le résumé chiffré des alertes NC pour alimenter les badges du menu (Sidebar).
+     * @backend GET `${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/notifications/resume`
+     */
+    getResumeNotifications(): Observable<NcNotificationsResumeDto> {
+        return this.http.get<NcNotificationsResumeDto>(
+            `${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/notifications/resume`
+        );
+    }
+
+    /**
+    * Récupère la ventilation exacte des NC attendant l'utilisateur par étape (calculé par le moteur de workflow).
+    * @backend GET `${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/dashboard/par-etape`
+    */
+    getNonConformitesParEtape(): Observable<{ [etape: string]: number }> {
+        return this.http.get<{ [etape: string]: number }>(
+            `${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/dashboard/par-etape`
+        );
+    }
+
+
+    /**
+     * Récupère toutes les notifications consolidées pour la cloche (TopBar).
+     * Interroge la passerelle API qui agrège Amélioration, Support et Référentiel.
+     * @backend GET `${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/notifications/cloche`
+     */
+    getNotificationsCloche(): Observable<NotificationClocheDto[]> {
+        return this.http.get<ApiItemResponse<NotificationClocheDto[]>>(`${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/notifications`).pipe(
+            map(response => response?.data || [])
+        );
+    }
+
+    /**
+     * Déclenche un rafraîchissement des pastilles/badges NC dans toute l'application.
+     */
+    rafraichirNotifications(): void {
+        this.getResumeNotifications().subscribe({
+            next: (res: any) => {
+                const data = res?.data ?? res;
+                const total = data.totalAlertes ?? 0;
+                const brouillons = data.brouillons ?? 0;
+                const aTraiter = data.atraiter ?? data.aTraiter ?? 0;
+                const enAttenteValidation = data.enAttenteValidation ?? 0;
+
+                                // On interroge la ventilation fine par étape du moteur
+                this.getNonConformitesParEtape().subscribe({
+                    next: (res: any) => {
+                        // 1. Déballer les données
+                        const parEtape = res?.data ?? res ?? {};
+                        console.log('📊 [VENTILATION DÉTAILLÉE DU MOTEUR]', parEtape);
+
+                        // 2. Calculer le total réel des dossiers attendant cet utilisateur
+                        const totalEtapes = Object.values(parEtape).reduce((acc: number, val: any) => acc + (Number(val) || 0), 0);
+
+                        this.notificationsNC$.next({
+                            total: totalEtapes > 0 ? totalEtapes : total,
+                            brouillons: parEtape['Soumission'] ?? parEtape['SOUMISSION'] ?? brouillons,
+                            imputees: parEtape['Traitement'] ?? parEtape['TRAITEMENT'] ?? aTraiter,
+                            enAttenteValidation: enAttenteValidation,
+                            reception: parEtape['Réception'] ?? parEtape['RECEPTION'] ?? 0,
+                            validationRQ: parEtape['Validation RQ'] ?? parEtape['VALIDATION_RQ'] ?? 0,
+                            validationPilote: parEtape['Validation'] ?? parEtape['VALIDATION'] ?? 0,
+                            cloture: parEtape['Clôture'] ?? parEtape['CLOTURE'] ?? 0
+                        });
+                    },
+                    error: () => {
+                        // Repli de secours sur le résumé standard
+                        this.notificationsNC$.next({
+                            total: total,
+                            brouillons: brouillons,
+                            imputees: aTraiter,
+                            enAttenteValidation: enAttenteValidation,
+                            reception: enAttenteValidation,
+                            validationRQ: 0,
+                            validationPilote: 0,
+                            cloture: 0
+                        });
+                    }
+                });
+            },
+            error: (err) => console.warn('Erreur lors du rafraîchissement des notifications NC', err)
+        });
+    }
+
+
+
+
 
     // =========================================================================
     // 2. RECHERCHE MULTI-CRITÈRES & CONSULTATION
@@ -608,4 +702,9 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
             map((res: any) => res.data?.content ?? [])
         );
     }
+
+    toutesLesNonConformites(page: number = 0, size: number = 200): Observable<NonConformite[]> {
+        return this.getListFromUrl(NonConformiteUrlConfig.GET_NON_CONFORMITE_ALL, { page, size });
+    }
+
 }

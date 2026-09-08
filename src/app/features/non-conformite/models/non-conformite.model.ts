@@ -1,52 +1,56 @@
-import { PieceJointe } from '../../../utils/fichier/fichier-utils';
-import { UserInfos } from '../../../models/auth.model';
-import { PlanAction } from './plan-action.model';
+import { UserInfos } from "@features/auth";
+import { PieceJointe } from "src/app/utils/fichier/fichier-utils";
+import { PlanAction } from "./plan-action.model";
 
 /**
- * Entité principale représentant une Non-Conformité (NC) dans le système QualiSira.
- * Aligné sur les standards ISO 9001 et le workflow de traitement qualité.
+ * Données strictes pour la Déclaration d'une Non-Conformité (Saisie Agent)
  */
-export interface NonConformite extends UserInfos {
-    // --- NOUVELLES APPELLATIONS CLAIRES (ISO 9001 / AI-READY) ---
-    numeroDeReference?: string;
-    description?: string;
-    sourceDeNonConformiteId?: string;
-    sourceDeNonConformiteLibelle?: string;
-    categorieProcessusId?: string;
-    categorieProcessusLibelle?: string;
-    structureDeSoumissionId?: string;
-    structureDeSoumissionLibelle?: string;
-    agentImputeId?: string;
-    agentImputeNomComplet?: string;
-    agentImputeEmail?: string;
-    actionImmediate?: string;
-    pertinencePilote?: string;
-    pertinenceRs?: string;
-    etatDeTraitement?: string;
-
-    // --- PROPRIÉTÉS HISTORIQUES & COMPATIBILITÉ BACKEND ---
+export interface DeclarationNonConformite {
     id?: string;
-    nomProcessus?: string;
-    origineService?: string;
-    origineServiceLibelleCourt?: string;
-    originNonConformiteId?: string;
-    originNonConformiteLibelle?: string;
-    actionLibelle?: string;
-    origineId?: string;
-    fonctionEmetteur?: string;
-    dateVisaEmetteur?: string;
-    efficaciteId?: string;
-    niveauNonConformiteId?: string;
-    actionId?: string;
-    delaisMiseOeuvre?: string;
-    observationRq?: string;
-    niveauNonConformiteLibelle?: string;
-    dateObservationsRq?: string;
-    observationsCloture?: string;
-    dateVerification?: string;
-    dispositionPreventives?: string;
-    dateClotureRq?: string;
     status?: string;
+    etatTraitement?: string;
+    
+    // Constat
+    justification?: string;
+    actionDsc?: string;
+    
+    // Qualification
+    niveauNonConformiteId?: string;
+    niveauNonConformiteLibelle?: string;
+    typeNonConformiteId?: string;
+    typeNonConformiteLibelle?: string;
+    
+    // Structure émettrice
+    structureSoumissionId?: string;
+    structureSoumissionLibelle?: string;
+    typeProcessusId?: string;
+    typeProcessusLibelle?: string;
+    
     fichiers?: PieceJointe[];
+}
+
+/**
+ * Dossier complet de Non-Conformité (Cycle de vie complet, Consultation & Suivi)
+ */
+export interface NonConformite extends DeclarationNonConformite, UserInfos {
+    numeroReference?: string;
+    workflowStatus?: string;
+    workflowId?: string;
+    
+    // Affectation & Traitement
+    structureResponsableId?: string;
+    structureResponsableSigle?: string;
+    userImputId?: string;
+    userImputFullName?: string;
     planActions?: PlanAction[];
+    
+    // Validations & Visas
+    pertinancePilote?: string;
+    justificationPilote?: string;
+    pertinanceRs?: string;
+    justificationRs?: string;
+    observationsRq?: string;
+    observationsCloture?: string;
+    efficaciteLibelle?: string;
+    dateClotureRq?: string;
 }

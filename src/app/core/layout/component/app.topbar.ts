@@ -6,7 +6,7 @@ import { AuthService, hasAnyPermission, currentUserState } from '../../auth';
 import { MenuItem, MessageService } from 'primeng/api';
 import { Title } from '@angular/platform-browser';
 import { filter, map, takeUntil } from 'rxjs/operators';
-import { FormsModule, ReactiveFormsModule, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, UntypedFormBuilder} from '@angular/forms';
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { Popover } from 'primeng/popover';
 import { Subject } from 'rxjs';
@@ -329,115 +329,210 @@ export class AppTopbar implements OnInit {
             { id: 'logout', label: 'Se déconnecter', icon: 'pi pi-sign-out', command: () => this.authService.logout() }
         ];
 
+
         this.ecouterLeDocumentaire();
 
         // Souscription aux notifications globales de NC
-        this.nonConformiteService.notificationsNC$.pipe(takeUntil(this.destroy$)).subscribe((notifs: any) => {
-            this.totalNC = notifs.total || 0;
-            this.notificationsNC = [];
+        // this.nonConformiteService.notificationsNC$.pipe(takeUntil(this.destroy$)).subscribe((notifs: any) => {
+        //     this.totalNC = notifs.total || 0;
+        //     this.notificationsNC = [];
 
-            if (notifs.brouillons > 0) {
-                this.notificationsNC.push({
-                    title: "Brouillons en cours",
-                    detail: `Vous avez ${notifs.brouillons} Non-Conformité(s) en attente de finalisation.`,
-                    time: "À l'instant",
-                    icon: "pi pi-pencil",
-                    colorClass: "bg-orange-100 text-orange-600",
-                    read: false
-                });
-            }
-            if (notifs.reception > 0) {
-                this.notificationsNC.push({
-                    title: "Non-conformités de votre service",
-                    detail: `Votre service a ${notifs.reception} Non-Conformité(s) publiée(s) en attente de validation.`,
-                    time: "À l'instant",
-                    icon: "pi pi-users",
-                    colorClass: "bg-orange-100 text-orange-600",
-                    read: false
-                });
-            }
-            if (notifs.imputees > 0) {
-                this.notificationsNC.push({
-                    title: "Actions à traiter",
-                    detail: `Vous avez ${notifs.imputees} Non-Conformité(s) imputée(s) pour traitement.`,
-                    time: "Urgent",
-                    icon: "pi pi-exclamation-circle",
-                    colorClass: "bg-red-100 text-red-600",
-                    read: false
-                });
-            }
-            if (notifs.validationRQ > 0) {
-                this.notificationsNC.push({
-                    title: "Validation RQ",
-                    detail: `Vous avez ${notifs.validationRQ} Non-Conformité(s) que vous devez valider.`,
-                    time: "Urgent",
-                    icon: "pi pi-shield",
-                    colorClass: "bg-red-100 text-red-600",
-                    read: false
-                });
-            }
-            if (notifs.enAttenteValidation > 0) {
-                this.notificationsNC.push({
-                    title: "Validation Globale",
-                    detail: `Il y a ${notifs.enAttenteValidation} Non-Conformité(s) en attente de validation.`,
-                    time: "Urgent",
-                    icon: "pi pi-shield",
-                    colorClass: "bg-red-100 text-red-600",
-                    read: false
-                });
-            }
-            if (notifs.validationPilote > 0) {
-                this.notificationsNC.push({
-                    title: "Validation des plans d'actions",
-                    detail: `Il y a ${notifs.validationPilote} plan(s) d'actions en attente de validation.`,
-                    time: "Urgent",
-                    icon: "pi pi-shield",
-                    colorClass: "bg-red-100 text-red-600",
-                    read: false
-                });
-            }
-            if (notifs.cloture > 0) {
-                this.notificationsNC.push({
-                    title: "Clôture des Non-Conformités",
-                    detail: `Il y a ${notifs.cloture} Non-Conformité(s) en attente de clôture.`,
-                    time: "À traiter",
-                    icon: "pi pi-check-circle",
-                    colorClass: "bg-green-100 text-green-600",
-                    read: false
-                });
-            }
-            if (notifs.affectation > 0) {
-                this.notificationsNC.push({
-                    title: "Affectation",
-                    detail: `Vous avez ${notifs.affectation} Non-Conformité(s) en attente d'affectation.`,
-                    time: "Urgent",
-                    icon: "pi pi-shield",
-                    colorClass: "bg-red-100 text-red-600",
-                    read: false
-                });
-            }
-            if (notifs.nonTraiter > 0) {
-                this.notificationsNC.push({
-                    title: "Traitement",
-                    detail: `Vous avez ${notifs.nonTraiter} Plan(s) d'actions en attente de traitement.`,
-                    time: "Urgent",
-                    icon: "pi pi-shield",
-                    colorClass: "bg-red-100 text-red-600",
-                    read: false
-                });
-            }
-            if (notifs.soumission > 0) {
-                this.notificationsNC.push({
-                    title: "Non-Conformités rejetées",
-                    detail: `Vous avez ${notifs.soumission} Non-Conformité(s) rejetée(s) en attente de correction.`,
-                    time: "À corriger",
-                    icon: "pi pi-exclamation-triangle",
-                    colorClass: "bg-red-100 text-red-600",
-                    read: false
-                });
-            }
-        });
+        //     if (notifs.brouillons > 0) {
+        //         this.notificationsNC.push({
+        //             title: "Brouillons en cours",
+        //             detail: `Vous avez ${notifs.brouillons} Non-Conformité(s) en attente de finalisation.`,
+        //             time: "À l'instant",
+        //             icon: "pi pi-pencil",
+        //             colorClass: "bg-orange-100 text-orange-600",
+        //             read: false
+        //         });
+        //     }
+        //     if (notifs.reception > 0) {
+        //         this.notificationsNC.push({
+        //             title: "Non-conformités de votre service",
+        //             detail: `Votre service a ${notifs.reception} Non-Conformité(s) publiée(s) en attente de validation.`,
+        //             time: "À l'instant",
+        //             icon: "pi pi-users",
+        //             colorClass: "bg-orange-100 text-orange-600",
+        //             read: false
+        //         });
+        //     }
+        //     if (notifs.imputees > 0) {
+        //         this.notificationsNC.push({
+        //             title: "Actions à traiter",
+        //             detail: `Vous avez ${notifs.imputees} Non-Conformité(s) imputée(s) pour traitement.`,
+        //             time: "Urgent",
+        //             icon: "pi pi-exclamation-circle",
+        //             colorClass: "bg-red-100 text-red-600",
+        //             read: false
+        //         });
+        //     }
+        //     if (notifs.validationRQ > 0) {
+        //         this.notificationsNC.push({
+        //             title: "Validation RQ",
+        //             detail: `Vous avez ${notifs.validationRQ} Non-Conformité(s) que vous devez valider.`,
+        //             time: "Urgent",
+        //             icon: "pi pi-shield",
+        //             colorClass: "bg-red-100 text-red-600",
+        //             read: false
+        //         });
+        //     }
+        //     if (notifs.enAttenteValidation > 0) {
+        //         this.notificationsNC.push({
+        //             title: "Validation Globale",
+        //             detail: `Il y a ${notifs.enAttenteValidation} Non-Conformité(s) en attente de validation.`,
+        //             time: "Urgent",
+        //             icon: "pi pi-shield",
+        //             colorClass: "bg-red-100 text-red-600",
+        //             read: false
+        //         });
+        //     }
+        //     if (notifs.validationPilote > 0) {
+        //         this.notificationsNC.push({
+        //             title: "Validation des plans d'actions",
+        //             detail: `Il y a ${notifs.validationPilote} plan(s) d'actions en attente de validation.`,
+        //             time: "Urgent",
+        //             icon: "pi pi-shield",
+        //             colorClass: "bg-red-100 text-red-600",
+        //             read: false
+        //         });
+        //     }
+        //     if (notifs.cloture > 0) {
+        //         this.notificationsNC.push({
+        //             title: "Clôture des Non-Conformités",
+        //             detail: `Il y a ${notifs.cloture} Non-Conformité(s) en attente de clôture.`,
+        //             time: "À traiter",
+        //             icon: "pi pi-check-circle",
+        //             colorClass: "bg-green-100 text-green-600",
+        //             read: false
+        //         });
+        //     }
+        //     if (notifs.affectation > 0) {
+        //         this.notificationsNC.push({
+        //             title: "Affectation",
+        //             detail: `Vous avez ${notifs.affectation} Non-Conformité(s) en attente d'affectation.`,
+        //             time: "Urgent",
+        //             icon: "pi pi-shield",
+        //             colorClass: "bg-red-100 text-red-600",
+        //             read: false
+        //         });
+        //     }
+        //     if (notifs.nonTraiter > 0) {
+        //         this.notificationsNC.push({
+        //             title: "Traitement",
+        //             detail: `Vous avez ${notifs.nonTraiter} Plan(s) d'actions en attente de traitement.`,
+        //             time: "Urgent",
+        //             icon: "pi pi-shield",
+        //             colorClass: "bg-red-100 text-red-600",
+        //             read: false
+        //         });
+        //     }
+        //     if (notifs.soumission > 0) {
+        //         this.notificationsNC.push({
+        //             title: "Non-Conformités rejetées",
+        //             detail: `Vous avez ${notifs.soumission} Non-Conformité(s) rejetée(s) en attente de correction.`,
+        //             time: "À corriger",
+        //             icon: "pi pi-exclamation-triangle",
+        //             colorClass: "bg-red-100 text-red-600",
+        //             read: false
+        //         });
+        //     }
+        // });
+
+                // 1. Initialiser les compteurs des badges du menu
+        this.nonConformiteService.rafraichirNotifications();
+        // 2. Charger les vraies notifications de la cloche
+        this.chargerNotificationsCloche();
     }
+
+
+    chargerNotificationsCloche(): void {
+        this.nonConformiteService.getNotificationsCloche()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (notifs) => {
+                    // 👇 VOS LOGS ICI
+                    console.log('🔔 [CLOCHE] Données brutes reçues du backend :', notifs);
+                    if (notifs && notifs.length > 0) {
+                        console.table(notifs); // 👈 Affiche un joli tableau dans la console F12
+                    } else {
+                        console.log('🔔 [CLOCHE] Aucune notification active pour cet utilisateur.');
+                    }
+
+                    let totalCount = 0;
+                    this.notificationsNC = notifs.map(n => {
+                        totalCount += (n.nombre || 1);
+                        return this.mapperNotification(n);
+                    });
+                    this.totalNC = totalCount;
+                },
+                error: (err) => {
+                    console.error('❌ [CLOCHE] Erreur lors de la récupération des notifications :', err);
+                    this.notificationsNC = [];
+                    this.totalNC = 0;
+                }
+            });
+    }
+
+
+    /**
+     * Associe à chaque code de notification backend une icône, une couleur et sa route de redirection.
+     */
+    private mapperNotification(n: any) {
+        let icon = 'pi pi-bell';
+        let colorClass = 'bg-blue-100 text-blue-600';
+        let route = '/non-conformite/traitement-suivi';
+
+        switch (n.code) {
+            case 'NC_A_DECIDER':
+                icon = 'pi pi-exclamation-circle';
+                colorClass = 'bg-orange-100 text-orange-600';
+                route = '/non-conformite/traitement-suivi';
+                break;
+
+            case 'PLAN_ACTION_A_DECIDER':
+                icon = 'pi pi-list-check';
+                colorClass = 'bg-orange-100 text-orange-600';
+                route = '/non-conformite/traitement-suivi';
+                break;
+
+            case 'PLAN_ACTION_ECHEANCE_DEPASSEE':
+                icon = 'pi pi-exclamation-triangle';
+                colorClass = 'bg-red-100 text-red-600';
+                route = '/non-conformite/traitement-suivi';
+                break;
+
+            case 'PLAN_ACTION_ECHEANCE_PROCHE':
+                icon = 'pi pi-clock';
+                colorClass = 'bg-amber-100 text-amber-600';
+                route = '/non-conformite/traitement-suivi';
+                break;
+
+            case 'NC_BROUILLON':
+                icon = 'pi pi-pencil';
+                colorClass = 'bg-blue-100 text-blue-600';
+                route = '/non-conformite/vue-ensemble';
+                break;
+
+            case 'DOCUMENT_A_TRAITER':
+            case 'DEMANDE_DOCUMENT_A_INSTRUIRE':
+                icon = 'pi pi-file';
+                colorClass = 'bg-purple-100 text-purple-600';
+                route = '/gestion-documentaire/vue-ensemble';
+                break;
+        }
+
+        return {
+            title: n.titre,
+            detail: n.detail,
+            time: n.gravite === 'URGENT' ? 'Urgent' : 'À traiter',
+            icon: icon,
+            colorClass: colorClass,
+            read: false,
+            route: route
+        };
+    }
+
 
     /**
      * Ce que l'utilisateur a à traiter côté documentaire, annoncé par la cloche.

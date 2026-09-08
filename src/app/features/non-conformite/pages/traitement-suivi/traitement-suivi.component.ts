@@ -147,7 +147,7 @@ export class NCTraitementSuiviComponent extends BasePaginationComponent {
             // 1. Pour les Processus
             if (process && process.length > 0) {
                 const selectedIds = process.map((p: any) => p.id);
-                if (!selectedIds.includes(item.categorieProcessusId)) {
+                if (!selectedIds.includes(item.typeProcessusId)) { // au lieu de categorieProcessusId
                     isValid = false;
                 }
             }
@@ -163,7 +163,7 @@ export class NCTraitementSuiviComponent extends BasePaginationComponent {
             // 3. Pour les Origines
             if (origine && origine.length > 0) {
                 const selectedIds = origine.map((o: any) => o.id);
-                if (!selectedIds.includes(item.sourceDeNonConformiteId)) {
+                if (!selectedIds.includes(item.typeNonConformiteId)) { // au lieu de sourceDeNonConformiteId
                     isValid = false;
                 }
             }
@@ -225,6 +225,9 @@ export class NCTraitementSuiviComponent extends BasePaginationComponent {
             next: (res: any) => {
                 const ncList = res.ncATraiter || [];
                 const planList = res.planActions || [];
+                console.log('📋 [TRAITEMENT-SUIVI] NC à décider reçues du moteur :', ncList);
+                console.log('📋 [TRAITEMENT-SUIVI] Plans à décider reçus :', planList);
+
                 
                 if (planList.length > 0) {
                     const enrichmentRequests = planList.map((plan: any) => {
@@ -281,17 +284,19 @@ export class NCTraitementSuiviComponent extends BasePaginationComponent {
             const getCount = (etape: string) =>
                 this.rawDemandeList.filter((item: any) => item.etatDeTraitement === etape && !this.isRejet(item)).length;
 
-            const currentNotifs = this.nonConformiteService.notificationsNC$.value;
-            this.nonConformiteService.notificationsNC$.next({
-                ...currentNotifs,
-                total:            this.rawDemandeList.length,
-                reception:        getCount('RECEPTION'),
-                validationRQ:     getCount('VALIDATION_RQ') + getCount('VALIDATION_RS'),
-                affectation:      getCount('IMPUTATION'),
-                validationPilote: getCount('VALIDATION'),
-                cloture:          getCount('SUIVI_RQ'),
-                soumission:       this.rawDemandeList.filter((item: any) => this.isRejet(item)).length,
-            });
+            // const currentNotifs = this.nonConformiteService.notificationsNC$.value;
+            // this.nonConformiteService.notificationsNC$.next({
+            //     ...currentNotifs,
+            //     total:            this.rawDemandeList.length,
+            //     reception:        getCount('RECEPTION'),
+            //     validationRQ:     getCount('VALIDATION_RQ') + getCount('VALIDATION_RS'),
+            //     affectation:      getCount('IMPUTATION'),
+            //     validationPilote: getCount('VALIDATION'),
+            //     cloture:          getCount('SUIVI_RQ'),
+            //     soumission:       this.rawDemandeList.filter((item: any) => this.isRejet(item)).length,
+            // });
+
+            this.nonConformiteService.rafraichirNotifications();
 
             this.featureService.onReloadRequested(true);
             this.loading = false;
@@ -299,7 +304,7 @@ export class NCTraitementSuiviComponent extends BasePaginationComponent {
                 this.ficheDeLAdresseOuverte = true;
                 this.ouvrirLaFicheDeLAdresse();
             }
-        }, 500);
+        }, 300);
     }
 
     onSuccess(res: HttpResponse<any>) {

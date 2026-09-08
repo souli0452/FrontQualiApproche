@@ -1,0 +1,154 @@
+<div 
+    class="card-stats p-5 h-full relative overflow-hidden transition-all duration-300 border"
+    [ngClass]="[
+        'card-' + color,
+        clickable || routerLink ? 'cursor-pointer' : ''
+    ]"
+    [routerLink]="routerLink"
+    (click)="onCardClick($event)">
+
+    <!-- ====================================================================
+         SQUELETTE DE CHARGEMENT (Loading State)
+         ==================================================================== -->
+    <div *ngIf="loading" class="relative z-10 flex flex-col justify-between h-full">
+        <div>
+            <div class="flex justify-between items-center mb-3">
+                <p-skeleton width="6rem" height="1.5rem" styleClass="rounded-md"></p-skeleton>
+                <p-skeleton shape="circle" size="2rem"></p-skeleton>
+            </div>
+            <p-skeleton width="4rem" height="3rem" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="85%" height="1.25rem" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="65%" height="0.9rem"></p-skeleton>
+        </div>
+        <div class="mt-4 pt-3 border-t border-black/5 dark:border-white/5" *ngIf="progressionItems.length > 0">
+            <p-skeleton width="100%" height="1.5rem"></p-skeleton>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         CONTENU RÉEL DE LA CARTE
+         ==================================================================== -->
+    <ng-container *ngIf="!loading">
+
+        <!-- Motifs géométriques en filigrane (Watermarks) par couleur -->
+        <ng-container [ngSwitch]="color">
+            <!-- Motif Orange : 4 carrés arrondis inclinés à 45° -->
+            <div *ngSwitchCase="'orange'" class="watermark-pattern -right-6 top-1/2 -translate-y-1/2 rotate-45">
+                <div class="w-10 h-10 bg-[#FFDCA8] dark:bg-[#f97316]/20 rounded-2xl m-1"></div>
+                <div class="w-10 h-10 bg-[#FFDCA8] dark:bg-[#f97316]/20 rounded-2xl m-1"></div>
+                <div class="w-10 h-10 bg-[#FFDCA8] dark:bg-[#f97316]/20 rounded-2xl m-1"></div>
+                <div class="w-10 h-10 bg-[#FFDCA8] dark:bg-[#f97316]/20 rounded-2xl m-1"></div>
+            </div>
+
+            <!-- Motif Bleu : Damier de 4 quadrants arrondis -->
+            <div *ngSwitchCase="'blue'" class="watermark-pattern -right-4 top-4">
+                <div class="w-10 h-10 bg-[#C6D8FF] dark:bg-[#3b82f6]/20 m-1 rounded-tl-lg"></div>
+                <div class="w-10 h-10 bg-[#C6D8FF] dark:bg-[#3b82f6]/20 m-1 rounded-tr-full"></div>
+                <div class="w-10 h-10 bg-[#C6D8FF] dark:bg-[#3b82f6]/20 m-1 rounded-bl-full"></div>
+                <div class="w-10 h-10 bg-[#C6D8FF] dark:bg-[#3b82f6]/20 m-1 rounded-br-lg"></div>
+            </div>
+
+            <!-- Motif Rouge : Capsules superposées -->
+            <div *ngSwitchCase="'red'" class="watermark-pattern -right-2 top-1/2 -translate-y-1/2 flex-col w-16 h-20">
+                <div class="w-16 h-10 bg-[#FFC9C9] dark:bg-[#ef4444]/20 rounded-bl-full mb-1"></div>
+                <div class="w-16 h-10 bg-[#FFC9C9] dark:bg-[#ef4444]/20 rounded-tl-full mt-1"></div>
+            </div>
+
+            <!-- Motif Vert : Losange arrondi avec fenêtre intérieure -->
+            <div *ngSwitchCase="'green'" class="watermark-pattern -right-6 top-1/2 -translate-y-1/2 w-24 h-24 bg-[#C5E8CE] dark:bg-[#22c55e]/20 rotate-45 rounded-[1.5rem] flex items-center justify-center">
+                <div class="w-12 h-12 bg-[#EEF7F0] dark:bg-surface-900 rounded-xl"></div>
+            </div>
+
+            <!-- Motif Violet : Cercles imbriqués -->
+            <div *ngSwitchDefault class="watermark-pattern -right-4 bottom-0">
+                <div class="w-20 h-20 bg-[#D8B4FE] dark:bg-[#a855f7]/20 rounded-full m-1"></div>
+            </div>
+        </ng-container>
+
+        <!-- Structure principale de la carte -->
+        <div class="relative z-10 flex flex-col justify-between h-full">
+            <div>
+                <!-- En-tête : Badge Label + Bouton d'action circulaire -->
+                <div class="flex justify-between items-start mb-3 gap-2">
+                    <span 
+                        *ngIf="label"
+                        class="label-badge bg-white dark:bg-surface-800 text-[11px] font-semibold px-2.5 py-1 rounded-md inline-block shadow-xs transition-colors"
+                        [ngClass]="'text-' + color + '-dark'">
+                        {{ label }}
+                    </span>
+                    <span *ngIf="!label"></span>
+
+                    <!-- Bouton rond d'action (Flèche ou icône personnalisée) -->
+                    <button 
+                        type="button" 
+                        class="action-btn h-8 w-8 rounded-full bg-white dark:bg-surface-800 text-surface-700 dark:text-surface-200 hover:shadow-md transition-all flex items-center justify-center border border-white/60 dark:border-surface-700 shadow-xs"
+                        [ngClass]="'hover:text-' + color + '-dark'"
+                        (click)="onActionBtnClick($event)"
+                        [attr.aria-label]="label || title">
+                        <i [class]="icon + ' text-xs'"></i>
+                    </button>
+                </div>
+
+                <!-- Titre principal en gras sous le chiffre -->
+                <div *ngIf="title" class="text-surface-900 dark:text-surface-100 font-semibold text-sm mb-1">
+                    {{ title }}
+                </div>
+
+                <!-- Grand Numéro / Valeur principale -->
+                <div class="flex items-baseline gap-2 mb-1">
+                    <span class="text-3xl sm:text-4xl font-semibold text-surface-900 dark:text-surface-50 leading-none tracking-tight">
+                        {{ value }}
+                    </span>
+
+                    <!-- Indicateur de tendance optionnel (+12%, -5%) -->
+                    <span 
+                        *ngIf="trend" 
+                        class="inline-flex items-center gap-1 text-xs font-semibold px-1.5 py-0.5 rounded-full"
+                        [ngClass]="trend.isPositive !== false ? 'text-green-600 bg-green-500/10' : 'text-red-600 bg-red-500/10'">
+                        <i [class]="trend.isPositive !== false ? 'pi pi-arrow-up-right' : 'pi pi-arrow-down-right'" class="text-[10px]"></i>
+                        {{ trend.value }}
+                        <span *ngIf="trend.label" class="text-surface-500 font-normal text-[10px]">{{ trend.label }}</span>
+                    </span>
+                </div>
+
+                <!-- Description secondaire -->
+                <p *ngIf="description" class="text-surface-600 dark:text-surface-400 text-sm mb-0">
+                    {{ description }}
+                </p>
+
+                <!-- Barre de progression linéaire optionnelle -->
+                <div *ngIf="progress !== null && progress !== undefined" class="mt-3">
+                    <div class="flex justify-between items-center text-[10px] font-medium text-surface-500 mb-1">
+                        <span>Progression</span>
+                        <span>{{ progress }}%</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden">
+                        <div 
+                            class="h-full rounded-full transition-all duration-500"
+                            [ngClass]="'bg-' + color + '-dark'"
+                            [style.width.%]="progress">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sous-indicateurs d'avancement (Progression Items) -->
+            <div *ngIf="progressionItems && progressionItems.length > 0" class="flex flex-wrap items-center justify-between gap-3 mt-4 pt-3 border-t border-black/5 dark:border-white/10">
+                <span 
+                    *ngFor="let item of progressionItems" 
+                    class="flex items-center gap-1.5 text-xs text-surface-700 dark:text-surface-300">
+                    <i [class]="(item.icon || 'pi pi-check-circle') + ' text-xs'" [ngClass]="'text-' + color + '-dark'"></i>
+                    <span class="text-[11px]">{{ item.label }}</span>
+                    <span class="font-bold text-surface-900 dark:text-surface-100 ml-0.5">{{ item.value }}</span>
+                </span>
+            </div>
+
+            <!-- Slot libre pour projection de contenu personnalisé -->
+            <div class="mt-2">
+                <ng-content></ng-content>
+            </div>
+        </div>
+
+    </ng-container>
+
+</div>
