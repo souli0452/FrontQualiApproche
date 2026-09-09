@@ -52,6 +52,7 @@ import { DecisionConfirmee, WorkflowDecisionDialogComponent } from './workflow-d
             [etapeCourante]="state?.currentStateName ?? undefined"
             [action]="actionRetenue"
             [stepFields]="state?.currentStepFields"
+            [structureId]="structureIdCible"
             [deposerFichier]="deposerFichier"
             [loading]="loading"
             [visible]="dialogueOuvert"
@@ -66,6 +67,8 @@ export class WorkflowActionsComponent {
     @Input() reference?: string;
     /** État rendu par le serveur : étape courante, actions ouvertes, champs à saisir. */
     @Input() state?: WorkflowStateDto | null;
+    /** Structure rattachée au dossier (ex: structure destinataire). */
+    @Input() structureId?: string;
     /**
      * Dépôt d'une pièce jointe exigée par une étape, rendant la référence qui la désigne.
      *
@@ -80,6 +83,23 @@ export class WorkflowActionsComponent {
     loading = false;
     dialogueOuvert = false;
     actionRetenue?: WorkflowActionDto;
+
+    /**
+     * Structure ciblée pour l'étape (ex: la structure destinataire choisie au visa RQ).
+     * Utilisée par les champs dynamiques comme @UTILISATEURS_MA_STRUCTURE.
+     */
+    get structureIdCible(): string | undefined {
+        if (this.structureId) {
+            return this.structureId;
+        }
+        const saisies = this.state?.saisies ?? [];
+        const saisieDest = saisies.find(s =>
+            s.fieldName === 'structureDestinataireId' ||
+            s.fieldName === 'structureDestinataire' ||
+            s.fieldName?.toLowerCase().includes('structure')
+        );
+        return saisieDest?.value;
+    }
 
     constructor(
         private readonly workflowService: WorkflowService,

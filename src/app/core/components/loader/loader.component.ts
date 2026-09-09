@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { BlockUI } from 'primeng/blockui';
 import { FeaturesService } from '../../services';
 import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-loader',
@@ -9,29 +10,34 @@ import { CommonModule } from '@angular/common';
     imports: [BlockUI, CommonModule],
     styleUrl: './loader.component.scss'
 })
-export class LoaderComponent implements OnInit {
-    loader: boolean = true;
+export class LoaderComponent implements OnInit, OnDestroy {
+    loader: boolean = false;
     progress: number = 0;
     private progressInterval: any;
+    private completeTimeout: any;
+    private subscription: Subscription;
 
     constructor(private featureService: FeaturesService) {
-        this.featureService.loader.subscribe((res) => {
+        this.subscription = this.featureService.loader.subscribe((res) => {
             if (res) {
-                // Démarre le chargement
+                if (this.completeTimeout) {
+                    clearTimeout(this.completeTimeout);
+                    this.completeTimeout = null;
+                }
                 this.loader = true;
                 this.startProgress();
-            } else {
-                // Termine le chargement
+            } else if (this.loader) {
                 this.completeProgress();
             }
         });
     }
 
-    ngOnInit(): void {
-        // En conditions réelles, on vérifie juste si un chargement est déjà en cours à l'initialisation
-        if (this.loader) {
-            this.startProgress();
-        }
+    ngOnInit(): void {}
+
+    ngOnDestroy(): void {
+        if (this.progressInterval) clearInterval(this.progressInterval);
+        if (this.completeTimeout) clearTimeout(this.completeTimeout);
+        this.subscription?.unsubscribe();
     }
 
     startProgress() {
@@ -63,9 +69,11 @@ export class LoaderComponent implements OnInit {
         this.progress = 100; // Saute directement à 100%
         
         // Attend une demi-seconde pour que l'utilisateur voie le "100%" avant de disparaître
-        setTimeout(() => {
+        this.completeTimeout = setTimeout(() => {
+            if (this.progressInterval) clearInterval(this.progressInterval);
             this.loader = false;
             this.progress = 0;
+            this.completeTimeout = null;
         }, 400);
     }
 }

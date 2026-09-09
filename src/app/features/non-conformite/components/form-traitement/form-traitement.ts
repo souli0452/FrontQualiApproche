@@ -50,6 +50,23 @@ export class FormTraitementComponent {
 
     isEdit: boolean = false;
     submitted = false;
+
+    // Pagination pour l'affichage en cartes des plans d'action (1 plan par vue pour navigation pas-à-pas)
+    planActionFirst: number = 0;
+    planActionRows: number = 1;
+
+    onPlanActionPageChange(event: any) {
+        this.planActionFirst = event.first;
+        this.planActionRows = event.rows || 1;
+    }
+
+    get pagedPlanActions(): any[] {
+        if (!this.demande?.planActions?.length) return [];
+        if (this.planActionFirst >= this.demande.planActions.length) {
+            this.planActionFirst = Math.max(0, this.demande.planActions.length - 1);
+        }
+        return this.demande.planActions.slice(this.planActionFirst, this.planActionFirst + this.planActionRows);
+    }
     displayDialog: boolean = false;
     planAction: any = {};
     participants: any[] = [];
@@ -566,13 +583,13 @@ loadStuctures() {
         }
         // L'agent écrit l'action au traitement ; le pilote la relit et désigne son responsable à la
         // validation. Passé ces deux étapes, l'action est engagée et relève de son propre circuit.
-        return this.demande?.etatDeTraitement === this.BtnActions.TRAITEMENT
-            || this.demande?.etatDeTraitement === this.BtnActions.VALIDATION;
+        return this.demande?.etatTraitement === this.BtnActions.TRAITEMENT
+            || this.demande?.etatTraitement === this.BtnActions.VALIDATION;
     }
 
     /** À la validation, le pilote ne reprend pas la description de l'action : il en nomme le responsable. */
     get designationSeule(): boolean {
-        return this.demande?.etatDeTraitement === this.BtnActions.VALIDATION;
+        return this.demande?.etatTraitement === this.BtnActions.VALIDATION;
     }
 
     /**
@@ -613,7 +630,8 @@ loadStuctures() {
      * lectures, et mieux vaut la recueillir à tort que découvrir plus tard qu'elle manque.</p>
      */
     get causeDemandee(): boolean {
-        return this.demande?.circuit !== 'CORRECTION';
+        const c = (this.demande?.circuit || '').toUpperCase();
+        return c !== 'CORRECTION' && c !== 'B';
     }
 
     /**

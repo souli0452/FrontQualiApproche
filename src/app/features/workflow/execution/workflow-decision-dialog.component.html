@@ -1,21 +1,20 @@
 <p-dialog [visible]="visible" (visibleChange)="visible = $event; visibleChange.emit($event)"
   [modal]="true" [style]="{ width: '44rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }"
-  [draggable]="false" styleClass="p-fluid" [closable]="true" maskStyleClass="backdrop-blur-sm">
+  [draggable]="false" [resizable]="false" styleClass="p-fluid" [closable]="true" maskStyleClass="backdrop-blur-sm">
 
   <!-- En-tête porté par le contenu plutôt que par l'attribut `header` : la décision engage son
        auteur, et le titre doit dire laquelle, sur quel document, et depuis quelle étape. -->
   <ng-template pTemplate="header">
     <div class="flex items-center gap-3">
-      <span class="flex items-center justify-center w-11 h-11 rounded-full bg-blue-50 text-blue-500 shrink-0">
-        <i class="pi pi-directions text-xl"></i>
+      <span class="flex items-center justify-center w-11 h-11 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50 shrink-0">
+        <i [class]="action?.icon || 'pi pi-directions'" class="text-xl"></i>
       </span>
       <div class="min-w-0">
-        <div class="text-lg font-bold text-slate-900 leading-tight">
+        <div class="text-lg font-bold text-slate-900 dark:text-surface-0 leading-tight">
           {{ action?.libelle || 'Décision' }}
         </div>
-        <div class="text-xs text-slate-500 mt-0.5" *ngIf="reference">
-          {{ reference }}
-          <span *ngIf="etapeCourante"> — étape « {{ etapeCourante }} »</span>
+        <div class="text-xs text-slate-500 dark:text-surface-400 mt-1 leading-normal">
+          {{ sousTitre }}
         </div>
       </div>
     </div>
@@ -28,13 +27,13 @@
       <!-- Champs exigés par l'étape courante. Le serveur refuse la décision tant qu'un champ
            requis manque : les présenter ici évite un aller-retour perdu. -->
       <ng-container *ngIf="stepFields.length">
-        <div class="flex flex-col gap-3 rounded-lg border border-slate-200 p-4">
-          <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-            <i class="pi pi-pencil text-blue-500"></i>Informations demandées à cette étape
+        <div class="flex flex-col gap-3 rounded-lg border border-slate-200 dark:border-surface-700 bg-slate-50/50 dark:bg-surface-800/40 p-4">
+          <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-surface-400">
+            <i class="pi pi-pencil text-blue-500 dark:text-blue-400"></i>Informations demandées à cette étape
           </div>
 
           <div *ngFor="let champ of stepFields" class="flex flex-col gap-1">
-            <label class="block text-sm font-bold text-slate-700">
+            <label class="block text-sm font-bold text-slate-700 dark:text-surface-200">
               {{ champ.fieldLabel || champ.fieldName }}
               <span class="text-red-500" *ngIf="champ.required">*</span>
             </label>
@@ -49,9 +48,7 @@
               <input *ngSwitchCase="'DATE'" pInputText type="date" class="w-full"
                 [formControlName]="nomDeControle(champ)" />
 
-              <!-- Le sélecteur partagé plutôt qu'un `select` natif : il porte le filtre, ce qu'une
-                   liste de trente utilisateurs réclame, et il a l'apparence des autres champs de
-                   l'application. -->
+              <!-- Le sélecteur partagé plutôt qu'un `select` natif -->
               <app-select-input *ngSwitchCase="'SELECT'"
                 [formControlName]="nomDeControle(champ)"
                 [options]="choixDuChamp(champ)"
@@ -62,59 +59,34 @@
                 placeholder="Sélectionner…"
                 [showClear]="!champ.required"></app-select-input>
 
-              <!-- Le moteur ne transporte que des chaînes : le fichier est déposé d'abord, et
-                   c'est sa référence qui devient la valeur du champ. -->
-              <!-- Sans moyen de déposer la pièce, le champ n'est pas rendu du tout : un
-                   sélecteur de fichier inerte, ou un message expliquant que l'écran ne sait pas
-                   faire, n'aide personne. Le champ n'est alors pas exigé non plus — c'est le
-                   serveur qui dira, dans ses mots, ce qui manque. -->
-              <!-- Ancien code mis en commentaire -->
-              <!-- <div *ngSwitchCase="'FILE'" class="flex flex-col gap-1" [hidden]="!deposerFichier">
-                <input type="file" class="w-full text-sm" *ngIf="deposerFichier"
-                  [disabled]="depotsEnCours.has(nomDeControle(champ))"
-                  (change)="choisirFichier($event, nomDeControle(champ))" />
-
-                <small class="text-slate-500 flex items-center gap-1"
-                  *ngIf="depotsEnCours.has(nomDeControle(champ))">
-                  <i class="pi pi-spinner pi-spin text-xs"></i> Dépôt en cours…
-                </small>
-                <small class="text-emerald-700 flex items-center gap-1"
-                  *ngIf="fichiersDeposes[nomDeControle(champ)] && !depotsEnCours.has(nomDeControle(champ))">
-                  <i class="pi pi-check text-xs"></i> {{ fichiersDeposes[nomDeControle(champ)] }}
-                </small>
-                <small class="p-error" *ngIf="depotsEnEchec.has(nomDeControle(champ))">
-                  Le dépôt a échoué : la pièce n'est pas jointe. Réessayez.
-                </small>
-              </div> -->
-
-              <!-- Nouveau bloc d'upload stylisé -->
+              <!-- Bloc d'upload stylisé -->
               <div *ngSwitchCase="'FILE'" class="flex flex-col gap-2" [hidden]="!deposerFichier">
-                <div class="flex items-center gap-3 p-3 border border-dashed border-slate-300 rounded-lg bg-slate-50/50 hover:bg-slate-50 transition-colors relative">
+                <div class="flex items-center gap-3 p-3 border border-dashed border-slate-300 dark:border-surface-600 rounded-lg bg-slate-50/50 dark:bg-surface-800/40 hover:bg-slate-50 dark:hover:bg-surface-800 transition-colors relative">
                   <input type="file" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
                     *ngIf="deposerFichier"
                     [disabled]="depotsEnCours.has(nomDeControle(champ))"
                     (change)="choisirFichier($event, nomDeControle(champ)); $event.stopPropagation(); $event.preventDefault();" />
                   
-                  <div class="flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-500 shrink-0">
+                  <div class="flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-500 dark:bg-blue-950/60 dark:text-blue-400 shrink-0">
                     <i class="pi pi-upload text-lg" *ngIf="!depotsEnCours.has(nomDeControle(champ))"></i>
                     <i class="pi pi-spinner pi-spin text-lg" *ngIf="depotsEnCours.has(nomDeControle(champ))"></i>
                   </div>
                   
                   <div class="flex flex-col min-w-0 flex-grow">
-                    <span class="text-sm font-semibold text-slate-800">
+                    <span class="text-sm font-semibold text-slate-800 dark:text-surface-100">
                       {{ fichiersDeposes[nomDeControle(champ)] || 'Sélectionner un fichier ou une image...' }}
                     </span>
-                    <span class="text-xs text-slate-500">
+                    <span class="text-xs text-slate-500 dark:text-surface-400">
                       Cliquez pour parcourir vos fichiers (Max 10 Mo)
                     </span>
                   </div>
                 </div>
 
-                <small class="text-emerald-700 flex items-center gap-1 mt-1"
+                <small class="text-emerald-700 dark:text-emerald-400 flex items-center gap-1 mt-1"
                   *ngIf="fichiersDeposes[nomDeControle(champ)] && !depotsEnCours.has(nomDeControle(champ))">
                   <i class="pi pi-check text-xs"></i> Fichier associé avec succès.
                 </small>
-                <small class="p-error flex items-center gap-1 mt-1" *ngIf="depotsEnEchec.has(nomDeControle(champ))">
+                <small class="text-red-600 dark:text-red-400 flex items-center gap-1 mt-1" *ngIf="depotsEnEchec.has(nomDeControle(champ))">
                   <i class="pi pi-exclamation-circle text-xs"></i> {{ erreursDeDepot[nomDeControle(champ)] || 'Le dépôt a échoué. Veuillez réessayer.' }}
                 </small>
               </div>
@@ -122,24 +94,18 @@
               <input *ngSwitchDefault pInputText type="text" class="w-full"
                 [formControlName]="nomDeControle(champ)" />
             </ng-container>
-
-            <!-- <small class="p-error block" *ngIf="estInvalide(nomDeControle(champ))">
-              Ce champ est obligatoire pour valider cette étape.
-            </small> -->
           </div>
         </div>
       </ng-container>
 
       <!-- L'observation est la raison d'être de ce dialogue : c'est elle qui restera dans la
-           traçabilité, lue par qui reprendra le dossier ou l'auditera. Elle est donc présentée
-           comme telle — cadre à part, motif énoncé — et non comme un champ de plus en bas de
-           formulaire. -->
-      <div class="flex flex-col gap-2 rounded-lg border border-blue-100 bg-blue-50/40 p-4">
-        <label for="comments" class="flex items-center gap-2 text-sm font-bold text-slate-800">
-          <i class="pi pi-comment text-blue-500"></i>
+           traçabilité, lue par qui reprendra le dossier ou l'auditera. -->
+      <div class="flex flex-col gap-2 rounded-xl border border-blue-100 dark:border-surface-700 bg-blue-50/40 dark:bg-surface-800/80 p-4">
+        <label for="comments" class="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-surface-100">
+          <i class="pi pi-comment text-blue-500 dark:text-blue-400"></i>
           Observation <span class="text-red-500">*</span>
         </label>
-        <p class="m-0 text-xs text-slate-500">
+        <p class="m-0 text-xs text-slate-500 dark:text-surface-400 leading-normal">
           Elle est conservée avec la décision et apparaîtra dans la traçabilité du circuit, à côté
           de votre nom et de la date.
         </p>
@@ -147,8 +113,8 @@
           [class.ng-invalid]="estInvalide('comments')"
           placeholder="Ce qui motive cette décision : constat, réserve, consigne pour l'étape suivante…"
           class="w-full"></textarea>
-        <small class="text-red-600" *ngIf="estInvalide('comments')">
-          <i class="pi pi-exclamation-circle mr-1"></i>
+        <small class="text-red-600 dark:text-red-400 flex items-center gap-1" *ngIf="estInvalide('comments')">
+          <i class="pi pi-exclamation-circle text-xs"></i>
           Sans observation, la décision ne peut pas être tracée : le serveur la refuserait.
         </small>
       </div>
@@ -156,12 +122,12 @@
   </div>
 
   <ng-template pTemplate="footer">
-    <div class="flex items-center justify-between gap-3 flex-wrap">
-      <span class="text-xs text-slate-500 flex items-center gap-1">
-        <i class="pi pi-lock text-slate-400"></i>
+    <div class="flex items-center justify-between gap-3 flex-wrap w-full">
+      <span class="text-xs text-slate-500 dark:text-surface-400 flex items-center gap-1.5">
+        <i class="pi pi-lock text-slate-400 dark:text-surface-500"></i>
         Décision définitive : elle fait avancer le circuit et reste inscrite au dossier.
       </span>
-      <div class="flex justify-between gap-2 w-full">
+      <div class="flex justify-between gap-2 w-full pt-2">
         <p-button label="Annuler" variant="outlined" severity="secondary"
           (onClick)="fermer()"></p-button>
         <p-button severity="info" [label]="action?.libelle || 'Confirmer'"

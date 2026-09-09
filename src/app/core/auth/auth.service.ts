@@ -108,6 +108,8 @@ export class AuthService extends BaseCrudService<AuthData, number> {
     }
     private clearSession(): void {
         sessionStorage.removeItem('userId');
+        sessionStorage.removeItem('current_user_structure');
+        localStorage.removeItem('current_user_structure');
         this.isLoggedIn.next(false);
         currentUserState.next(null);
         this.router.navigate(['/login']);

@@ -36,7 +36,7 @@
     <!-- Section Principale -->
     <div class="grid">
         <div class="field mt-5 mb-4"
-            *ngIf="(demande.etatDeTraitement===EtapeTraitement.VALIDATION||demande.etatDeTraitement===EtapeTraitement.SUIVI_RQ)&&demande.btnActions!==EtapeTraitement.CLOTURE">
+            *ngIf="(demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.SUIVI_RQ)&&demande.btnActions!==EtapeTraitement.CLOTURE">
             <!-- <label for="justification" class="block font-bold  mb-2">Action préventive (facultative)</label>
             <textarea pInputTextarea id="justification" [(ngModel)]="demande.actionPreventive" name="justification"
                 rows="5" [autoResize]="true" placeholder="Décrivez les actions préventives..."
@@ -367,14 +367,14 @@
                         <ng-template pTemplate="header">
                             <tr>
                                 <th scope="col" pFrozenColumn alignFrozen="left" class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 70px; width: 70px; z-index: 10;">N°</th>
-                                <th scope="col" *ngIf="demande.circuit === 'B'" class="bg-surface-50 text-700 font-semibold" style="min-width: 250px;">Causes</th>
+                                <th scope="col" *ngIf="causeDemandee" class="bg-surface-50 text-700 font-semibold" style="min-width: 250px;">Causes</th>
                                 <th scope="col" class="bg-surface-50 text-700 font-semibold" style="min-width: 250px;">Solutions</th>
                                 <th scope="col" class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 180px;">Responsable</th>
                                 <th scope="col" class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 180px;">Critère d'efficacité</th>
                                 <th scope="col" class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 130px;">Échéance</th>
                                 <th scope="col" class="bg-surface-50 text-700 font-semibold white-space-nowrap text-center" style="min-width: 110px;">Statut</th>
                                 <th scope="col" pFrozenColumn alignFrozen="right" class="bg-surface-50 text-700 font-semibold white-space-nowrap" style="min-width: 80px; z-index: 10; text-align: center;"
-                                    *ngIf="demande.etatDeTraitement===EtapeTraitement.VALIDATION||demande.etatDeTraitement===EtapeTraitement.TRAITEMENT||demande.etatDeTraitement===EtapeTraitement.CLOTURE||demande.etatDeTraitement===EtapeTraitement.SUIVI_RQ">
+                                    *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT||demande.etatTraitement===EtapeTraitement.CLOTURE||demande.etatTraitement===EtapeTraitement.SUIVI_RQ">
                                     Actions</th>
                             </tr>
                         </ng-template>
@@ -382,7 +382,7 @@
                         <ng-template pTemplate="body" let-plan>
                             <tr class="text-sm">
                                 <td pFrozenColumn alignFrozen="left" class="font-bold text-600 text-center bg-white" style="z-index: 1;">{{plan.numeroOdre}}</td>
-                                <td *ngIf="demande.circuit === 'B'">
+                                <td *ngIf="causeDemandee">
                                     <div [innerHTML]="plan.causeIdentifiees" class="line-height-3 flex items-center text-center text-700 m-0 p-0" style="min-width: 250px; white-space: normal; word-break: break-word;"></div>
                                 </td>
                                 <td>
@@ -417,11 +417,11 @@
                                             pTooltip="Voir détails" tooltipPosition="top" />
                                     </div>
                                 </td>
-                                <td pFrozenColumn alignFrozen="right" class="text-center bg-white" style="z-index: 1;" *ngIf="demande.etatDeTraitement===EtapeTraitement.VALIDATION||demande.etatDeTraitement===EtapeTraitement.TRAITEMENT||demande.etatDeTraitement===EtapeTraitement.CLOTURE">
+                                <td pFrozenColumn alignFrozen="right" class="text-center bg-white" style="z-index: 1;" *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT||demande.etatTraitement===EtapeTraitement.CLOTURE">
                                     <div class="flex items-center justify-center gap-2" style="min-width: 140px">
                                         <p-button [text]="true" [rounded]="true" severity="info" size="small"
                                             icon="pi pi-pencil"
-                                            *ngIf="(demande.etatDeTraitement===EtapeTraitement.VALIDATION||demande.etatDeTraitement===EtapeTraitement.TRAITEMENT)&&(plan.status==='NON_TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
+                                            *ngIf="(demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT)&&(plan.status==='NON_TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
                                             (onClick)="edit(plan)"
                                             pTooltip="Modifier" tooltipPosition="top" />
                                         <!-- <button 
@@ -434,11 +434,11 @@
                                             pTooltip="Visualiser" tooltipPosition="top" />
                                         <p-button [text]="true" [rounded]="true" severity="danger" size="small"
                                             icon="pi pi-ban"
-                                            *ngIf="demande.etatDeTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
+                                            *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
                                             (onClick)="displayRejet(plan)"
                                             pTooltip="Rejeter" tooltipPosition="top" />
                                         <!-- <button pButton pRipple type="button"
-                                            *ngIf="demande.etatDeTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
+                                            *ngIf="demande.etatTraitement===EtapeTraitement.VALIDATION&&(plan.status==='TRAITER'&&demande.btnActions!==EtapeTraitement.CLOTURE)"
                                             icon="pi pi-arrow-up" (click)="displayRejet(plan)"
                                             class="p-button-rounded p-button-text p-button-danger p-button-sm" pTooltip="Rejeter"
                                             tooltipPosition="top">
@@ -450,7 +450,7 @@
                         
                         <ng-template pTemplate="emptymessage">
                             <tr>
-                                <td [attr.colspan]="demande.etatDeTraitement===EtapeTraitement.VALIDATION||demande.etatDeTraitement===EtapeTraitement.TRAITEMENT ? 7 : 6"
+                                <td [attr.colspan]="demande.etatTraitement===EtapeTraitement.VALIDATION||demande.etatTraitement===EtapeTraitement.TRAITEMENT ? 7 : 6"
                                     class="text-center p-5">
                                     <div class="flex flex-col items-center justify-center text-500">
                                         <i class="pi pi-inbox text-4xl mb-3 text-300"></i>
@@ -480,7 +480,8 @@
 
 <!-- Dialog Modification Plan d'action -->
 <p-dialog [(visible)]="motifRejetDialog" [modal]="true"
-    [style]="{ width: '40rem' }" [breakpoints]="{ '960px': '95vw' }">
+    [style]="{ width: '40rem' }" [breakpoints]="{ '960px': '95vw' }"
+    [draggable]="false" [resizable]="false">
     <ng-template pTemplate="header">
         <div class="flex items-center gap-3">
             <div class="flex items-center justify-center bg-blue-50 text-blue-500 rounded-full" style="width: 3.5rem; height: 3.5rem">
@@ -494,7 +495,7 @@
     </ng-template>
     
     <div class="grid p-fluid mt-2">
-        <div *ngIf="demande.circuit === 'B'" class="col-12 field my-2">
+        <div *ngIf="causeDemandee" class="col-12 field my-2">
             <div class="flex mb-2 gap-2">
                 <label for="causes" class="font-normal m-0 font-semibold">Causes identifiées</label>
                 <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCauses.toggle($event)"></i>
@@ -576,7 +577,8 @@
 
 <!-- Dialog Détails Plan d'action -->
 <p-dialog [(visible)]="afficheDialog" [style]="{ width: '50rem' }" maskStyleClass="backdrop-blur-sm"
-    [breakpoints]="{ '960px': '95vw' }" [modal]="true" >
+    [breakpoints]="{ '960px': '95vw' }" [modal]="true" [closable]="true"
+    [draggable]="false" [resizable]="false">
     
     <ng-template pTemplate="header">
         <div class="flex items-center gap-3">
@@ -584,8 +586,8 @@
                 <i class="pi pi-info-circle text-blue-500 text-2xl"></i>
             </div>
             <div class="flex flex-col">
-                <span class="font-bold text-xl text-900 dark:text-0 mb-1">Détails du plan d'action</span>
-                <span class="text-sm text-500 font-medium">Consultez les informations relatives à ce plan</span>
+                <span class="font-bold text-xl text-surface-900 dark:text-surface-0 mb-1">Détails du plan d'action</span>
+                <span class="text-sm text-surface-500 dark:text-surface-400 font-medium">Consultez les informations relatives à ce plan</span>
             </div>
         </div>
     </ng-template>
@@ -600,22 +602,22 @@
                 </div>
                 <div class="flex flex-wrap gap-4">
                     <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 shadow-sm flex-1 min-w-max">
-                        <span class="text-500 text-sm block mb-1">N° Ordre</span>
-                        <span class="font-bold text-900 text-lg">{{ planAction.numeroOdre }}</span>
+                        <span class="text-surface-500 dark:text-surface-400 text-sm block mb-1">N° Ordre</span>
+                        <span class="font-bold text-surface-900 dark:text-surface-0 text-lg">{{ planAction.numeroOdre }}</span>
                     </div>
                     <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 shadow-sm flex-1 min-w-max">
-                        <span class="text-500 text-sm block mb-1">Responsable</span>
+                        <span class="text-surface-500 dark:text-surface-400 text-sm block mb-1">Responsable</span>
                         <div class="flex items-center gap-2">
                             <i class="pi pi-user text-primary-400"></i>
-                            <span class="font-bold text-900">{{planAction.responsableNomComplet}}</span>
+                            <span class="font-bold text-surface-900 dark:text-surface-0">{{planAction.responsableNomComplet}}</span>
                         </div>
-                        <span class="text-xs text-500 mt-1 block">{{planAction.responsableEmail}}</span>
+                        <span class="text-xs text-surface-500 dark:text-surface-400 mt-1 block">{{planAction.responsableEmail}}</span>
                     </div>
                     <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 shadow-sm flex-1 min-w-max">
-                        <span class="text-500 text-sm block mb-1">Date d'échéance</span>
+                        <span class="text-surface-500 dark:text-surface-400 text-sm block mb-1">Date d'échéance</span>
                         <div class="flex items-center gap-2">
                             <i class="pi pi-calendar text-primary-400"></i>
-                            <span class="font-bold text-900">{{planAction.dateEcheance }}</span>
+                            <span class="font-bold text-surface-900 dark:text-surface-0">{{planAction.dateEcheance }}</span>
                         </div>
                     </div>
                 </div>
@@ -717,7 +719,7 @@
 </p-dialog>
 
 <p-dialog (onHide)="displayDialog = false" [modal]="true" [(visible)]="displayDialog" [style]="{width: '50rem'}"
-    [maximizable]="true" class="p-fluid" styleClass="ng-dialog">
+    [draggable]="false" [resizable]="false" [maximizable]="true" class="p-fluid" styleClass="ng-dialog">
     <ng-template pTemplate="header">
         <!-- <div class="inline-flex align-items-center justify-content-center gap-2">
             <span class="font-bold white-space-nowrap uppercase">Réjet du plan d'action n° {{planAction.numeroOdre}} de

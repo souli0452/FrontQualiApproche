@@ -6,3 +6,4 @@ export * from './enums';
 export * from './licence';
 export * from './components';
 export * from './services';
+export * from './notifications/app-notification.service';

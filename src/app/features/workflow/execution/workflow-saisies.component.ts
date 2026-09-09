@@ -16,7 +16,7 @@ import { PieceJointeFichierService, ProcNonConformiteService } from '@features/n
         @if (saisies.length) {
             <div class="wf-saisies" [class.wf-saisies--rejet]="isRejet">
                 @if (titre) {
-                    <div class="wf-saisies-titre flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
+                    <div class="wf-saisies-titre flex items-center gap-2 mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
                         <i class="pi pi-info-circle text-primary-500 text-lg"></i>
                         <span>{{ titre }}</span>
                     </div>
@@ -63,12 +63,12 @@ import { PieceJointeFichierService, ProcNonConformiteService } from '@features/n
                                     }
                                 </div>
                                 <div class="wf-saisies-metadata flex items-center gap-1.5 text-xs font-medium">
-                                    <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-semibold">{{ getOrigineStep(saisie) }}</span>
-                                    <span class="text-slate-300">•</span>
-                                    <span class="text-slate-800 font-bold">{{ getOrigineUser(saisie) }}</span>
+                                    <span class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded text-[11px] font-semibold">{{ getOrigineStep(saisie) }}</span>
+                                    <span class="text-slate-300 dark:text-slate-600">•</span>
+                                    <span class="text-slate-800 dark:text-slate-200 font-bold">{{ getOrigineUser(saisie) }}</span>
                                     @if (getOrigineDate(saisie)) {
-                                        <span class="text-slate-300">•</span>
-                                        <span class="text-slate-500">{{ getOrigineDate(saisie) }}</span>
+                                        <span class="text-slate-300 dark:text-slate-600">•</span>
+                                        <span class="text-slate-500 dark:text-slate-400">{{ getOrigineDate(saisie) }}</span>
                                     }
                                 </div>
                             </div>
@@ -149,39 +149,36 @@ import { PieceJointeFichierService, ProcNonConformiteService } from '@features/n
         .wf-saisie-file-card {
             display: inline-flex;
             align-items: center;
-            background: #fff;
-            border: 1px solid #fca5a5;
-            border-radius: 0.5rem;
-            padding: 0.375rem 0.75rem;
+            background: #ffffff;
+            border: 1px solid #fecaca;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
         .wf-saisie-file-name {
-            font-size: 0.85rem;
+            font-weight: 600;
             color: #b91c1c;
-            max-width: 250px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 0.8125rem;
+            margin-right: 0.5rem;
         }
         .wf-saisie-file-actions button {
-            border: none;
             background: transparent;
+            border: none;
+            color: #ef4444;
             cursor: pointer;
-            color: #dc2626;
-            display: inline-flex;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+            display: flex;
             align-items: center;
             justify-content: center;
-            width: 1.5rem;
-            height: 1.5rem;
-            border-radius: 9999px;
-            transition: all 0.2s;
+            transition: all 0.15s;
         }
         .wf-saisie-file-actions button:hover {
             background-color: #fee2e2;
             color: #991b1b;
         }
 
-        /* Style spécial pour rejet */
+        /* État Rejet */
         .wf-saisies--rejet {
             border-color: #fca5a5 !important;
             background-color: #fff5f5 !important;
@@ -190,37 +187,63 @@ import { PieceJointeFichierService, ProcNonConformiteService } from '@features/n
             color: #b91c1c !important;
         }
 
-        /* Dark mode */
+        /* Dark mode (.app-dark & .dark) */
+        :host-context(.app-dark) .wf-saisies,
         :host-context(.dark) .wf-saisies {
             background-color: #1e293b;
             border-color: #334155;
         }
+        :host-context(.app-dark) .wf-saisies-card,
         :host-context(.dark) .wf-saisies-card {
             background-color: #0f172a;
             border-color: #1e293b;
         }
+        :host-context(.app-dark) .wf-saisies-card:hover,
         :host-context(.dark) .wf-saisies-card:hover {
             background-color: #1e293b;
             border-color: #3b82f6;
         }
+        :host-context(.app-dark) .wf-saisies-icon,
+        :host-context(.dark) .wf-saisies-icon {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+        }
+        :host-context(.app-dark) .wf-saisies-label,
+        :host-context(.dark) .wf-saisies-label {
+            color: #e2e8f0;
+        }
+        :host-context(.app-dark) .wf-saisies-valeur,
         :host-context(.dark) .wf-saisies-valeur {
             background-color: #1e293b;
             border-color: #334155;
             color: #f8fafc;
         }
+        :host-context(.app-dark) .wf-saisie-file-card,
         :host-context(.dark) .wf-saisie-file-card {
             background: #1e1e1e;
             border-color: #7f1d1d;
         }
+        :host-context(.app-dark) .wf-saisie-file-name,
         :host-context(.dark) .wf-saisie-file-name {
             color: #fca5a5;
         }
+        :host-context(.app-dark) .wf-saisie-file-actions button,
         :host-context(.dark) .wf-saisie-file-actions button {
             color: #f87171;
         }
+        :host-context(.app-dark) .wf-saisie-file-actions button:hover,
         :host-context(.dark) .wf-saisie-file-actions button:hover {
             background-color: #450a0a;
             color: #fecaca;
+        }
+        :host-context(.app-dark) .wf-saisies--rejet,
+        :host-context(.dark) .wf-saisies--rejet {
+            border-color: #7f1d1d !important;
+            background-color: #450a0a !important;
+        }
+        :host-context(.app-dark) .wf-saisies--rejet .wf-saisies-titre,
+        :host-context(.dark) .wf-saisies--rejet .wf-saisies-titre {
+            color: #fca5a5 !important;
         }
 
         @media (max-width: 640px) {
@@ -303,7 +326,7 @@ export class WorkflowSaisiesComponent implements OnChanges {
             '9': 9  // CLOTURE
         };
 
-        const currentStep = parent?.etatDeTraitement || state?.currentStateCode || '';
+        const currentStep = parent?.etatTraitement || state?.currentStateCode || '';
         const currentOrder = STEP_ORDER[currentStep] || 0;
 
         const saisies = state?.saisies || [];

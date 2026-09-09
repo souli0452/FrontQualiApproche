@@ -8,16 +8,16 @@ import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '@prime-ng';
 import { FeaturesService } from '@core';
 import { TraitementTableComponent, NcFilter, NcFilterBarComponent } from '../../components';
-import { AuthService } from '@core/auth';
+import { AuthService, currentUserState } from '@core/auth';
 import { forkJoin, of, Subject } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, debounceTime, takeUntil } from 'rxjs/operators';
 import { NonConformiteService } from '../../services';
 import { AlertService } from '@shared';
 
 @Component({
-    selector: 'app-nc-traitement-suivi',
-    templateUrl: './traitement-suivi.component.html',
-    styleUrl: './traitement-suivi.component.scss',
+    selector: 'app-nc-traitement',
+    templateUrl: './traitement.component.html',
+    styleUrl: './traitement.component.scss',
     standalone: true,
     imports:[
         CommonModule,
@@ -26,14 +26,23 @@ import { AlertService } from '@shared';
         TraitementTableComponent
     ]
 })
-export class NCTraitementSuiviComponent extends BasePaginationComponent {
-    demandeList: any = [];
-    rawDemandeList: any[] = [];
+export class NCTraitementComponent extends BasePaginationComponent {
     filteredDemandeList: any[] = [];
+    hasActiveFilters: boolean = false;
+
+    get demandeList(): any[] {
+        return this.hasActiveFilters ? this.filteredDemandeList : this.dataList;
+    }
+    get rawDemandeList(): any[] {
+        return this.dataList;
+    }
+    get currentTotalElements(): number {
+        return this.hasActiveFilters ? this.filteredDemandeList.length : this.totalElements;
+    }
 
     currentFilters: NcFilter | undefined;
 
-    title = 'Consultations des non-conformités';
+    title = 'Traitement des non-conformités';
     cols: any[] = [];
     private destroy$ = new Subject<void>();
 
@@ -66,12 +75,47 @@ export class NCTraitementSuiviComponent extends BasePaginationComponent {
 
     handleFilter(event: NcFilter) {
         this.currentFilters = event;
-        this.currentPage = 0;
+        const { process, gravite, origine } = event || {};
+        const hasProcess = !!(process && process.length > 0);
+        const hasGravite = !!(gravite && gravite.length > 0);
+        const hasOrigine = !!(origine && origine.length > 0);
+
+        // Un filtre est actif si un processus, une gravité ou une origine est sélectionné
+        this.hasActiveFilters = hasProcess || hasGravite || hasOrigine;
         this.applyLocalFilters();
     }
 
     ngOnInit() {
+        const cur: any = currentUserState.value ?? JSON.parse(localStorage.getItem('currentUser') || '{}');
+        const roles: string[] = cur?.roles || cur?.user?.roles || [];
+        const perms: string[] = cur?.permissions || [];
+
+        console.group('%c🔍 [DIAGNOSTIC TRAITEMENT NC] Profil & Habilitations', 'color: #0284c7; font-weight: bold; font-size: 13px;');
+        console.table({
+            'Utilisateur connecté': cur?.email || cur?.user?.email || cur?.username || 'Inconnu',
+            'Nom complet': cur?.fullName || cur?.user?.fullName || (cur?.firstName ? `${cur.firstName} ${cur.lastName}` : 'Inconnu'),
+            'Structure ID': cur?.structure?.id || cur?.user?.structureId || cur?.structureId || 'Aucune',
+            'Structure Libellé': cur?.structure?.libelleCourt || cur?.structure?.libelle || cur?.user?.structureLibelle || 'Aucune',
+            'Rôles': roles.join(', ') || 'Aucun',
+            'Rôle RESPONSABLE_QUALITE ?': roles.map((r: string) => r.toUpperCase()).includes('RESPONSABLE_QUALITE'),
+            'Permission TOUTES_STRUCTURES ?': perms.includes('portee-toutes-structures') || perms.includes('TOUTES_STRUCTURES'),
+            'Permission DECIDER_PARTOUT ?': perms.includes('circuit-decider-partout') || perms.includes('DECIDER_PARTOUT'),
+            'Toutes les permissions': perms.join(', ') || 'Aucune'
+        });
+        console.log('Session brute complète :', cur);
+        console.groupEnd();
+
         this.fetchObject();
+
+        this.featureService.reaload$
+            .pipe(
+                debounceTime(300),
+                takeUntil(this.destroy$)
+            )
+            .subscribe(() => {
+                this.getDemandeList();
+                this.nonConformiteService.rafraichirNotifications();
+            });
     }
 
     fetchObject(): void {
@@ -119,6 +163,11 @@ export class NCTraitementSuiviComponent extends BasePaginationComponent {
      * venues des plans d'action.</p>
      */
     applyLocalFilters() {
+        if (!this.hasActiveFilters) {
+            this.filteredDemandeList = [...this.dataList];
+            return;
+        }
+
         const filters = this.currentFilters || {} as any;
         const { dateDebut, dateFin, process, gravite, origine } = filters;
 
@@ -127,27 +176,29 @@ export class NCTraitementSuiviComponent extends BasePaginationComponent {
             let isValid = true;
 
             if (dateDebut || dateFin) {
-                const itemDateStr = item.dateCreation || item.createdAt || item.date;
+                const itemDateStr = item.dateVisaEmetteur || item.dateCreation || item.createdAt || item.date;
                 if (itemDateStr) {
                     const itemDate = new Date(itemDateStr);
-                    itemDate.setHours(0,0,0,0);
-                    
-                    if (dateDebut) {
-                        const start = new Date(dateDebut);
-                        start.setHours(0,0,0,0);
-                        if (itemDate < start) isValid = false;
-                    }
-                    if (dateFin) {
-                        const end = new Date(dateFin);
-                        end.setHours(23,59,59,999);
-                        if (itemDate > end) isValid = false;
+                    if (!isNaN(itemDate.getTime())) {
+                        itemDate.setHours(0,0,0,0);
+                        
+                        if (dateDebut) {
+                            const start = new Date(dateDebut);
+                            start.setHours(0,0,0,0);
+                            if (itemDate < start) isValid = false;
+                        }
+                        if (dateFin) {
+                            const end = new Date(dateFin);
+                            end.setHours(23,59,59,999);
+                            if (itemDate > end) isValid = false;
+                        }
                     }
                 }
             }
             // 1. Pour les Processus
             if (process && process.length > 0) {
                 const selectedIds = process.map((p: any) => p.id);
-                if (!selectedIds.includes(item.typeProcessusId)) { // au lieu de categorieProcessusId
+                if (!selectedIds.includes(item.typeProcessusId) && !selectedIds.includes(item.structureSoumissionId) && !selectedIds.includes(item.origineId)) {
                     isValid = false;
                 }
             }
@@ -163,7 +214,7 @@ export class NCTraitementSuiviComponent extends BasePaginationComponent {
             // 3. Pour les Origines
             if (origine && origine.length > 0) {
                 const selectedIds = origine.map((o: any) => o.id);
-                if (!selectedIds.includes(item.typeNonConformiteId)) { // au lieu de sourceDeNonConformiteId
+                if (!selectedIds.includes(item.typeNonConformiteId)) {
                     isValid = false;
                 }
             }
@@ -171,16 +222,7 @@ export class NCTraitementSuiviComponent extends BasePaginationComponent {
             return isValid;
         };
 
-        this.filteredDemandeList = this.rawDemandeList.filter(filterFn);
-        this.totalElements = this.filteredDemandeList.length;
-        this.totalPages = Math.ceil(this.totalElements / this.pageSize) || 1;
-        this.updatePaginatedDemandes();
-    }
-
-    updatePaginatedDemandes() {
-        const start = this.currentPage * this.pageSize;
-        const end = start + this.pageSize;
-        this.demandeList = this.filteredDemandeList.slice(start, end);
+        this.filteredDemandeList = this.dataList.filter(filterFn);
     }
 
 
@@ -218,56 +260,18 @@ export class NCTraitementSuiviComponent extends BasePaginationComponent {
 
     getDemandeList() {
         this.loading = true;
-        forkJoin({
-            ncATraiter: this.nonConformiteService.nonConformiteATraiter(0, 200),
-            planActions: this.nonConformiteService.planActionsATraiter(0, 200)
-        }).subscribe({
+        this.nonConformiteService.nonConformiteATraiterPage(this.currentPage, this.pageSize).subscribe({
             next: (res: any) => {
-                const ncList = res.ncATraiter || [];
-                const planList = res.planActions || [];
-                console.log('📋 [TRAITEMENT-SUIVI] NC à décider reçues du moteur :', ncList);
-                console.log('📋 [TRAITEMENT-SUIVI] Plans à décider reçus :', planList);
-
-                
-                if (planList.length > 0) {
-                    const enrichmentRequests = planList.map((plan: any) => {
-                        const localParent = ncList.find((nc: any) => nc.id === plan.nonConformeId);
-                        if (localParent) {
-                            plan.nonConformite = { ...plan.nonConformite, ...localParent };
-                            return of(plan);
-                        } else if (plan.nonConformeId) {
-                            return this.nonConformiteService.findNCById(plan.nonConformeId).pipe(
-                                map((ncRes: any) => {
-                                    const parentNC = ncRes?.data ?? ncRes;
-                                    if (parentNC) {
-                                        plan.nonConformite = { ...plan.nonConformite, ...parentNC };
-                                    }
-                                    return plan;
-                                }),
-                                catchError(() => of(plan))
-                            );
-                        } else {
-                            return of(plan);
-                        }
-                    });
-
-                    forkJoin(enrichmentRequests).subscribe({
-                        next: (enrichedPlans: any) => {
-                            this.rawDemandeList = [...ncList, ...enrichedPlans];
-                            this.finalizeDemandeList();
-                        },
-                        error: () => {
-                            this.rawDemandeList = [...ncList, ...planList];
-                            this.finalizeDemandeList();
-                        }
-                    });
-                } else {
-                    this.rawDemandeList = [...ncList];
-                    this.finalizeDemandeList();
-                }
+                console.log('%c📥 [RÉPONSE GET /non-conformite/a-traiter] :', 'color: #10b981; font-weight: bold;', res);
+                console.log('%c📋 [Détail dossiers reçus] :', 'color: #10b981;', 'Total :', res?.data?.totalElements ?? res?.data?.length, 'Contenu :', res?.data?.content ?? res?.data);
+                this.applyPagination(res);
+                this.finalizeDemandeList();
             },
             error: (error) => {
-                this.loading = false;
+                    console.error('Erreur chargement traitement NC', error);
+                    this.dataList = [];
+                    this.totalElements = 0;
+                    this.loading = false;
             }
         });
     }
@@ -275,30 +279,6 @@ export class NCTraitementSuiviComponent extends BasePaginationComponent {
     private finalizeDemandeList() {
         setTimeout(() => {
             this.applyLocalFilters();
-
-            // ✅ Synchronise le badge "Traitement & Suivi" avec les données fraîches.
-            // On recalcule chaque compteur spécifique à partir de la liste chargée :
-            // le badge était périmé car la vue d'ensemble ne se recharge pas automatiquement
-            // après chaque action de workflow (resoumission, validation…).
-            // Les clés propres aux plans d'action (imputees, nonTraiter) sont préservées via le spread.
-            const getCount = (etape: string) =>
-                this.rawDemandeList.filter((item: any) => item.etatDeTraitement === etape && !this.isRejet(item)).length;
-
-            // const currentNotifs = this.nonConformiteService.notificationsNC$.value;
-            // this.nonConformiteService.notificationsNC$.next({
-            //     ...currentNotifs,
-            //     total:            this.rawDemandeList.length,
-            //     reception:        getCount('RECEPTION'),
-            //     validationRQ:     getCount('VALIDATION_RQ') + getCount('VALIDATION_RS'),
-            //     affectation:      getCount('IMPUTATION'),
-            //     validationPilote: getCount('VALIDATION'),
-            //     cloture:          getCount('SUIVI_RQ'),
-            //     soumission:       this.rawDemandeList.filter((item: any) => this.isRejet(item)).length,
-            // });
-
-            this.nonConformiteService.rafraichirNotifications();
-
-            this.featureService.onReloadRequested(true);
             this.loading = false;
             if (!this.ficheDeLAdresseOuverte) {
                 this.ficheDeLAdresseOuverte = true;
@@ -322,12 +302,6 @@ export class NCTraitementSuiviComponent extends BasePaginationComponent {
 
             }
         })
-    }
-
-    override onPageChange(event: { page: number, size: number }) {
-        this.currentPage = event.page;
-        this.pageSize = event.size;
-        this.updatePaginatedDemandes();
     }
 
     // L'édition de la fiche de clôture est le fait de la fiche elle-même (traitement-table) :
@@ -359,7 +333,7 @@ export class NCTraitementSuiviComponent extends BasePaginationComponent {
             '9': 9  // CLOTURE
         };
 
-        const currentOrder = STEP_ORDER[rowData.etatDeTraitement || ''] || 0;
+        const currentOrder = STEP_ORDER[rowData.etatTraitement || ''] || 0;
 
         // Rechercher dans l'historique à quelle étape le document de rejet a été attaché
         const saisies = rowData.workflowState?.saisies || [];
@@ -386,7 +360,7 @@ export class NCTraitementSuiviComponent extends BasePaginationComponent {
         }
 
         // Cas de repli : retour à l'étape initiale SOUMISSION
-        if (rowData.etatDeTraitement === 'SOUMISSION' && rowData.status !== 'DRAFT') {
+        if (rowData.etatTraitement === 'SOUMISSION' && rowData.status !== 'DRAFT') {
             return true;
         }
 

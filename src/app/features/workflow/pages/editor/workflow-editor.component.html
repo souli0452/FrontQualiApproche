@@ -1,4 +1,3 @@
-<p-toast></p-toast>
 
 <!-- ------------------------------------------------------------------ Édition (pleine page)
      Le formulaire s'ouvrait dans un dialogue modal au-dessus de la liste : l'objet le plus profond
@@ -37,21 +36,34 @@
     </div>
 } @else {
 
-    <div class="flex flex-col lg:flex-row items-start gap-6 mt-4 !overflow-visible p-2 lg:pr-5">
-        <div class="p-fluid w-full lg:w-8/12 xl:w-8/12 bg-surface-100 dark:bg-surface-900 p-4 rounded-xl">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-4 p-2 lg:pr-5 items-start">
+        <div class="p-fluid w-full lg:col-span-8 bg-surface-100 dark:bg-surface-900 p-4 rounded-xl min-w-0">
             <form [formGroup]="formulaire" class="flex flex-col gap-5">
 
                 <!-- Identité du circuit -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="flex flex-col gap-1">
                         <label class="font-medium">Nom du circuit <span class="text-red-500">*</span></label>
-                        <input pInputText formControlName="nom" placeholder="Validation documentaire standard" />
+                        <input pInputText formControlName="nom" [class.p-invalid]="isFieldInvalid(formulaire.get('nom'))" placeholder="Validation documentaire standard" />
+                        @if (isFieldInvalid(formulaire.get('nom'))) {
+                            <small class="text-red-500 text-xs flex items-center gap-1">
+                                <i class="pi pi-exclamation-circle text-xs"></i>
+                                Le nom du circuit est obligatoire.
+                            </small>
+                        }
                     </div>
                     <div class="flex flex-col gap-1">
                         <label class="font-medium">Type de ressource <span class="text-red-500">*</span></label>
                         <p-select formControlName="resourceType" [options]="typesRessource" optionLabel="label"
                                 optionValue="value" placeholder="Choisir un type"
+                                [class.p-invalid]="isFieldInvalid(formulaire.get('resourceType'))"
                                 [filter]="true" appendTo="body"></p-select>
+                        @if (isFieldInvalid(formulaire.get('resourceType'))) {
+                            <small class="text-red-500 text-xs flex items-center gap-1">
+                                <i class="pi pi-exclamation-circle text-xs"></i>
+                                Le type de ressource est obligatoire.
+                            </small>
+                        }
                     </div>
                     <div class="flex flex-col gap-1 md:col-span-2">
                         <label class="font-medium">Description</label>
@@ -107,17 +119,24 @@
 
                     <div formArrayName="steps" class="flex flex-col gap-3">
                         @for (etape of etapes.controls; track etape; let i = $index; let premier = $first; let dernier = $last) {
-                            <div [formGroupName]="i" class="rounded-lg border border-surface-200 overflow-hidden">
+                            <div [id]="'etape-card-' + i" [formGroupName]="i" class="rounded-lg border overflow-hidden transition-colors"
+                                 [ngClass]="isFieldInvalid(etape) ? 'border-red-300 dark:border-red-800 ring-1 ring-red-300 dark:ring-red-800' : 'border-surface-200'">
 
                                 <!-- En-tête d'étape -->
-                                <div class="flex items-center gap-2 bg-surface-50 px-3 py-2 border-b border-surface-200 bg-blue ligne">
-                                    <div class="head-first flex items-center gap-2">
-                                        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-white h-2 w-2 text-xs dark:text-black font-bold">
+                                <div class="flex items-center justify-between gap-2 px-3 py-2 border-b"
+                                     [ngClass]="isFieldInvalid(etape) ? 'bg-red-50/70 dark:bg-red-950/30 border-red-200 dark:border-red-800' : 'bg-surface-50 border-surface-200'">
+                                    <div class="head-first flex items-center gap-2 flex-1 min-w-0">
+                                        <span class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0"
+                                              [ngClass]="isFieldInvalid(etape) ? 'bg-red-500 text-white' : 'bg-white text-black dark:text-black'">
                                             {{ i + 1 }}
                                         </span>
-                                        <span class="font-semibold text-black dark:text-white flex-1">
+                                        <span class="font-semibold text-black dark:text-white truncate">
                                             {{ etape.get('nomEtape')?.value || 'Nouvelle étape' }}
                                         </span>
+                                        @if (isFieldInvalid(etape)) {
+                                            <p-tag severity="danger" value="Incomplète" icon="pi pi-exclamation-triangle"
+                                                pTooltip="Cette étape contient des champs obligatoires non renseignés"></p-tag>
+                                        }
                                         @if (etape.get('code')?.value) {
                                             <!-- Le code est l'identité fonctionnelle de l'étape : les transitions le
                                                 désignent et les dossiers en cours s'y rapportent. Il ne se modifie pas. -->
@@ -125,7 +144,7 @@
                                                 pTooltip="Code fonctionnel, fixé à la création et non modifiable"></p-tag>
                                         }
                                     </div>
-                                    <div class="head-last flex items-center gap-2">
+                                    <div class="head-last flex items-center gap-2 shrink-0">
                                         <p-button 
                                             icon="pi pi-arrow-up" 
                                             [text]="true" [rounded]="true" 
@@ -171,14 +190,28 @@
                                         }
                                         <div class="flex flex-col gap-1">
                                             <label class="text-xs font-medium text-surface-600">Nom de l'étape <span class="text-red-500">*</span></label>
-                                            <input pInputText formControlName="nomEtape" placeholder="Vérification" />
+                                            <input pInputText formControlName="nomEtape" placeholder="Vérification"
+                                                   [class.p-invalid]="isFieldInvalid(etape.get('nomEtape'))" />
+                                            @if (isFieldInvalid(etape.get('nomEtape'))) {
+                                                <small class="text-red-500 text-xs flex items-center gap-1">
+                                                    <i class="pi pi-exclamation-circle text-xs"></i>
+                                                    Le nom de l'étape est obligatoire.
+                                                </small>
+                                            }
                                         </div>
                                         <div class="flex flex-col gap-1">
                                             <label class="text-xs font-medium text-surface-600">Rôle responsable <span class="text-red-500">*</span></label>
                                             <p-select formControlName="responsableRole" [options]="rolesDisponibles"
                                                     optionLabel="label" optionValue="value" [filter]="true"
                                                     placeholder="Qui décide à cette étape ?"
-                                appendTo="body"></p-select>
+                                                    [class.p-invalid]="isFieldInvalid(etape.get('responsableRole'))"
+                                                    appendTo="body"></p-select>
+                                            @if (isFieldInvalid(etape.get('responsableRole'))) {
+                                                <small class="text-red-500 text-xs flex items-center gap-1">
+                                                    <i class="pi pi-exclamation-circle text-xs"></i>
+                                                    Le rôle responsable est obligatoire.
+                                                </small>
+                                            }
                                         </div>
                                         <div class="flex flex-col gap-1">
                                             <label class="text-xs font-medium text-surface-600">État de traitement</label>
@@ -274,73 +307,75 @@
                                         }
 
                                         @for (action of actionsDeLEtape(i).controls; track $index; let j = $index) {
-                                            <div class="rounded-md border border-surface-200 p-3 flex flex-col gap-3"
-                                                [formGroupName]="j">
-
-                                                <div class="grid items-end">
-                                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                                                        <div class="flex flex-col gap-1">
-                                                            <label class="text-xs font-medium text-surface-600">Nature</label>
-                                                            <p-select 
-                                                                formControlName="decision" 
-                                                                [options]="naturesAction"
-                                                                optionLabel="label" optionValue="value"
-                                                                appendTo="body"
-                                                            ></p-select>
-                                                            <small class="text-[11px] text-surface-400">
-                                                                Fait avancer le dossier, ou le renvoie en arrière.
+                                            <div class="rounded-md border border-surface-200 p-3 flex flex-col gap-3" [formGroupName]="j">
+                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                    <div class="flex flex-col gap-1">
+                                                        <label class="text-xs font-medium text-surface-600">Nature <span class="text-red-500">*</span></label>
+                                                        <p-select 
+                                                            formControlName="decision" 
+                                                            [options]="naturesAction"
+                                                            optionLabel="label" optionValue="value"
+                                                            [class.p-invalid]="isFieldInvalid(action.get('decision'))"
+                                                            appendTo="body"
+                                                        ></p-select>
+                                                        @if (isFieldInvalid(action.get('decision'))) {
+                                                            <small class="text-red-500 text-xs flex items-center gap-1">
+                                                                <i class="pi pi-exclamation-circle text-xs"></i>
+                                                                La nature de l'action est obligatoire.
                                                             </small>
-                                                        </div>
-                                                        <div class="flex flex-col gap-1">
-                                                            <label class="text-xs font-medium text-surface-600">Code de l'action</label>
-                                                            <input pInputText formControlName="code" placeholder="DEMANDER_COMPLEMENT" />
-                                                            <small class="text-[11px] text-surface-400">
-                                                                Identifie l'action dans l'étape. Laissé vide, la nature en tient lieu.
-                                                            </small>
-                                                        </div>
-                                                        <div class="flex flex-col gap-1">
-                                                            <label class="text-xs font-medium text-surface-600">Destination</label>
-                                                            <p-select 
-                                                                formControlName="cible" 
-                                                                [options]="ciblesPossibles(i)"
-                                                                optionLabel="label" optionValue="value"
-                                                                placeholder="Fin du circuit"
-                                                                [filter]="true" appendTo="body"
-                                                            ></p-select>
-                                                        </div>
+                                                        }
+                                                        <small class="text-[11px] text-surface-400">
+                                                            Fait avancer le dossier, ou le renvoie en arrière.
+                                                        </small>
                                                     </div>
+                                                    <div class="flex flex-col gap-1">
+                                                        <label class="text-xs font-medium text-surface-600">Code de l'action</label>
+                                                        <input pInputText formControlName="code" placeholder="DEMANDER_COMPLEMENT" />
+                                                        <small class="text-[11px] text-surface-400">
+                                                            Identifie l'action dans l'étape. Laissé vide, la nature en tient lieu.
+                                                        </small>
+                                                    </div>
+                                                    <div class="flex flex-col gap-1">
+                                                        <label class="text-xs font-medium text-surface-600">Destination</label>
+                                                        <p-select 
+                                                            formControlName="cible" 
+                                                            [options]="ciblesPossibles(i)"
+                                                            optionLabel="label" optionValue="value"
+                                                            placeholder="Fin du circuit"
+                                                            [filter]="true" appendTo="body"
+                                                        ></p-select>
+                                                    </div>
+                                                </div>
 
-                                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-
-                                                        <div class="flex flex-col gap-1">
-                                                            <label class="text-xs font-medium text-surface-600">Rôle exigé (facultatif)</label>
-                                                            <p-select 
-                                                                formControlName="requiredRole" 
-                                                                [options]="rolesDisponibles"
-                                                                optionLabel="label" 
-                                                                optionValue="value" 
-                                                                [showClear]="true"
-                                                                placeholder="Celui de l'étape"
-                                                                [filter]="true" appendTo="body">
-                                                            </p-select>
-                                                        </div>
-                                                        <div class="flex flex-col gap-1">
-                                                            <label class="text-xs font-medium text-surface-600">Libellé du bouton</label>
-                                                            <input pInputText formControlName="label" placeholder="Approuver" />
-                                                        </div>
-                                                        <div class="flex flex-col gap-1">
-                                                            <label class="text-xs font-medium text-surface-600">Icône du bouton</label>
-                                                            <p-select formControlName="icon" [options]="iconesAction"
-                                                                optionLabel="label" optionValue="value" [showClear]="true"
-                                                                [editable]="true" placeholder="pi pi-check"
-                                                                [filter]="true" appendTo="body">
-                                                                <ng-template let-choix pTemplate="item">
-                                                                    <span class="inline-flex items-center gap-2">
-                                                                        <i [class]="choix.value"></i><span>{{ choix.label }}</span>
-                                                                    </span>
-                                                                </ng-template>
-                                                            </p-select>
-                                                        </div>
+                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                    <div class="flex flex-col gap-1">
+                                                        <label class="text-xs font-medium text-surface-600">Rôle exigé (facultatif)</label>
+                                                        <p-select 
+                                                            formControlName="requiredRole" 
+                                                            [options]="rolesDisponibles"
+                                                            optionLabel="label" 
+                                                            optionValue="value" 
+                                                            [showClear]="true"
+                                                            placeholder="Celui de l'étape"
+                                                            [filter]="true" appendTo="body">
+                                                        </p-select>
+                                                    </div>
+                                                    <div class="flex flex-col gap-1">
+                                                        <label class="text-xs font-medium text-surface-600">Libellé du bouton</label>
+                                                        <input pInputText formControlName="label" placeholder="Approuver" />
+                                                    </div>
+                                                    <div class="flex flex-col gap-1">
+                                                        <label class="text-xs font-medium text-surface-600">Icône du bouton</label>
+                                                        <p-select formControlName="icon" [options]="iconesAction"
+                                                            optionLabel="label" optionValue="value" [showClear]="true"
+                                                            [editable]="true" placeholder="pi pi-check"
+                                                            [filter]="true" appendTo="body">
+                                                            <ng-template let-choix pTemplate="item">
+                                                                <span class="inline-flex items-center gap-2">
+                                                                    <i [class]="choix.value"></i><span>{{ choix.label }}</span>
+                                                                </span>
+                                                            </ng-template>
+                                                        </p-select>
                                                     </div>
                                                 </div>
 
@@ -416,128 +451,148 @@
                                                 </div>
                                             </div>
                                         }
+                                    </div>
 
-                                        <!-- Champs de saisie -->
+                                    <!-- Champs de saisie -->
                                     <div class="bg-white dark:bg-surface-800 p-3 border rounded-md">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <div class="text-xs font-semibold uppercase text-surface-500">
-                                                Champs à renseigner pour décider
+                                            <div class="flex items-center justify-between mb-2">
+                                                <div class="text-xs font-semibold uppercase text-surface-500">
+                                                    Champs à renseigner pour décider
+                                                </div>
+                                                <p-button 
+                                                    label="Ajouter un champ" 
+                                                    icon="pi pi-plus" 
+                                                    class="bg-dark"
+                                                    size="small" 
+                                                    [text]="true"
+                                                    (onClick)="ajouterChamp(i)">
+                                                </p-button>
                                             </div>
-                                            <p-button 
-                                                label="Ajouter un champ" 
-                                                icon="pi pi-plus" 
-                                                class="bg-dark"
-                                                size="small" 
-                                                [text]="true"
-                                                (onClick)="ajouterChamp(i)">
-                                            </p-button>
-                                        </div>
 
-                                        @if (champsDeLEtape(i).length === 0) {
-                                            <p class="text-xs text-surface-400 m-0">
-                                                Aucun champ : le décideur n'aura qu'un commentaire à saisir.
-                                            </p>
-                                        } @else {
-                                            <div formArrayName="fields" class="flex flex-col gap-2">
-                                                @for (champ of champsDeLEtape(i).controls; track champ; let j = $index) {
-                                                    <div [formGroupName]="j" class="flex flex-col gap-2 items-end rounded-md border border-surface-200 p-2">
-                                                        <div class="champs-decideur grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                                                            <div class="flex flex-col w-full">
-                                                                <label class="text-[11px] text-surface-500">Libellé affiché</label>
-                                                                <input class="w-full" pInputText formControlName="fieldLabel" placeholder="Avis motivé" />
-                                                            </div>
-                                                            <div class="flex flex-col w-full">
-                                                                <label class="text-[11px] text-surface-500">Nom technique</label>
-                                                                <input class="w-full" pInputText formControlName="fieldName" placeholder="avis" />
-                                                            </div>
-                                                            <div class="flex flex-col w-full">
-                                                                <label class="text-[11px] text-surface-500">Type</label>
-                                                                <p-select 
-                                                                    formControlName="type" 
-                                                                    class="w-full"
-                                                                    [options]="typesChamp"
-                                                                    optionLabel="label" 
-                                                                    optionValue="value"
-                                                                    [filter]="true" 
-                                                                    appendTo="body"
-                                                                ></p-select>
-                                                            </div>
-                                                        </div>
-                                                        <div class="champs-decideur">
-
-                                                        @if (champ.get('type')?.value === 'SELECT') {
-                                                            <div class="md:col-span-2 flex flex-col gap-1">
-                                                                <label class="text-[11px] text-surface-500">Valeurs proposées</label>
-                                                                <p-select formControlName="source" [options]="sourcesDeChoix"
-                                                                        optionLabel="label" optionValue="value"
-                                                                        appendTo="body"></p-select>
-                                                                </div>
-                                                                <!-- Une liste écrite à la main ne vaut que pour des choix figés.
-                                                                    Adossée au référentiel, elle suit les créations et les
-                                                                    corrections de libellé sans qu'on remanie le circuit. -->
-                                                                @if (!champ.get('source')?.value) {
-                                                                    <div class="md:col-span-2 flex flex-col gap-1">
-                                                                        <label class="text-[11px] text-surface-500">Choix (séparés par des virgules)</label>
-                                                                        <input pInputText formControlName="options" placeholder="Oui,Non" />
-                                                                    </div>
-                                                                }
-                                                            }
-                                                            <div class="champs-decideur flex gap-2 items-end rounded-md border border-surface-200 p-2">
+                                            @if (champsDeLEtape(i).length === 0) {
+                                                <p class="text-xs text-surface-400 m-0">
+                                                    Aucun champ : le décideur n'aura qu'un commentaire à saisir.
+                                                </p>
+                                            } @else {
+                                                <div formArrayName="fields" class="flex flex-col gap-2">
+                                                    @for (champ of champsDeLEtape(i).controls; track champ; let j = $index) {
+                                                        <div [formGroupName]="j" class="flex flex-col gap-2 items-end rounded-md border border-surface-200 p-2">
+                                                            <div class="champs-decideur grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
                                                                 <div class="flex flex-col w-full">
-                                                                    <label class="text-[11px] text-surface-500 mb-2">Demandé lors de</label>
+                                                                    <label class="text-[11px] text-surface-500 font-medium">Libellé affiché <span class="text-red-500">*</span></label>
+                                                                    <input class="w-full" pInputText formControlName="fieldLabel" placeholder="Avis motivé"
+                                                                           [class.p-invalid]="isFieldInvalid(champ.get('fieldLabel'))" />
+                                                                    @if (isFieldInvalid(champ.get('fieldLabel'))) {
+                                                                        <small class="text-red-500 text-[10px] flex items-center gap-1 mt-1">
+                                                                            <i class="pi pi-exclamation-circle text-[10px]"></i>
+                                                                            Libellé obligatoire.
+                                                                        </small>
+                                                                    }
+                                                                </div>
+                                                                <div class="flex flex-col w-full">
+                                                                    <label class="text-[11px] text-surface-500 font-medium">Nom technique <span class="text-red-500">*</span></label>
+                                                                    <input class="w-full" pInputText formControlName="fieldName" placeholder="avis"
+                                                                           [class.p-invalid]="isFieldInvalid(champ.get('fieldName'))" />
+                                                                    @if (isFieldInvalid(champ.get('fieldName'))) {
+                                                                        <small class="text-red-500 text-[10px] flex items-center gap-1 mt-1">
+                                                                            <i class="pi pi-exclamation-circle text-[10px]"></i>
+                                                                            Nom technique obligatoire.
+                                                                        </small>
+                                                                    }
+                                                                </div>
+                                                                <div class="flex flex-col w-full">
+                                                                    <label class="text-[11px] text-surface-500 font-medium">Type <span class="text-red-500">*</span></label>
                                                                     <p-select 
-                                                                        formControlName="decision" 
-                                                                        [options]="porteesChamp"
+                                                                        formControlName="type" 
+                                                                        class="w-full"
+                                                                        [options]="typesChamp"
                                                                         optionLabel="label" 
                                                                         optionValue="value"
-                                                                        appendTo="body">
-                                                                    </p-select>
-                                                                </div>
-                                                                <!-- Portée la plus étroite : le champ n'est demandé que par
-                                                                    l'action nommée. Sans elle, le motif que réclame
-                                                                    « Demander un complément » serait demandé à qui valide
-                                                                    simplement — les deux approuvent. -->
-                                                                <div class="flex flex-col w-full">
-                                                                    <label class="text-[11px] text-surface-500  mb-2">Demandé par l'action</label>
-                                                                    <p-select 
-                                                                        formControlName="actionCode" 
-                                                                        [options]="actionsDesignables(i)"
-                                                                        optionLabel="label" 
-                                                                        optionValue="value" 
-                                                                        [showClear]="true"
                                                                         [filter]="true" 
-                                                                        placeholder="Toutes les actions"
-                                                                        appendTo="body">
-                                                                    </p-select>
-                                                                </div>
-                                                                <div class="flex flex-row items-center w-full mt-6">
-                                                                    <p-checkbox formControlName="required" [binary]="true"></p-checkbox>
-                                                                    <span class="text-[11px] text-surface-500 ml-2">Requis</span>
+                                                                        [class.p-invalid]="isFieldInvalid(champ.get('type'))"
+                                                                        appendTo="body"
+                                                                    ></p-select>
+                                                                    @if (isFieldInvalid(champ.get('type'))) {
+                                                                        <small class="text-red-500 text-[10px] flex items-center gap-1 mt-1">
+                                                                            <i class="pi pi-exclamation-circle text-[10px]"></i>
+                                                                            Type obligatoire.
+                                                                        </small>
+                                                                    }
                                                                 </div>
                                                             </div>
-                                                        </div>
+                                                            <div class="champs-decideur">
 
-                                                        <div class="md:col-span-1 flex justify-end pb-1">
-                                                            <p-button 
-                                                                icon="pi pi-trash" 
-                                                                severity="danger" 
-                                                                [text]="true"
-                                                                [rounded]="true" 
-                                                                size="small"
-                                                                (onClick)="supprimerChamp(i, j)">
-                                                            </p-button>
-                                                        </div>
-                                                    </div>
-                                                }
-                                            </div>
-                                        }
-                                    </div>
-                                    </div>
+                                                            @if (champ.get('type')?.value === 'SELECT') {
+                                                                <div class="md:col-span-2 flex flex-col gap-1">
+                                                                    <label class="text-[11px] text-surface-500">Valeurs proposées</label>
+                                                                    <p-select formControlName="source" [options]="sourcesDeChoix"
+                                                                            optionLabel="label" optionValue="value"
+                                                                            appendTo="body"></p-select>
+                                                                    </div>
+                                                                    <!-- Une liste écrite à la main ne vaut que pour des choix figés.
+                                                                        Adossée au référentiel, elle suit les créations et les
+                                                                        corrections de libellé sans qu'on remanie le circuit. -->
+                                                                    @if (!champ.get('source')?.value) {
+                                                                        <div class="md:col-span-2 flex flex-col gap-1">
+                                                                            <label class="text-[11px] text-surface-500">Choix (séparés par des virgules)</label>
+                                                                            <input pInputText formControlName="options" placeholder="Oui,Non" />
+                                                                        </div>
+                                                                    }
+                                                                }
+                                                                <div class="champs-decideur flex gap-2 items-end rounded-md border border-surface-200 p-2">
+                                                                    <div class="flex flex-col w-full">
+                                                                        <label class="text-[11px] text-surface-500 mb-2">Demandé lors de</label>
+                                                                        <p-select 
+                                                                            formControlName="decision" 
+                                                                            [options]="porteesChamp"
+                                                                            optionLabel="label" 
+                                                                            optionValue="value"
+                                                                            appendTo="body">
+                                                                        </p-select>
+                                                                    </div>
+                                                                    <!-- Portée la plus étroite : le champ n'est demandé que par
+                                                                        l'action nommée. Sans elle, le motif que réclame
+                                                                        « Demander un complément » serait demandé à qui valide
+                                                                        simplement — les deux approuvent. -->
+                                                                    <div class="flex flex-col w-full">
+                                                                        <label class="text-[11px] text-surface-500  mb-2">Demandé par l'action</label>
+                                                                        <p-select 
+                                                                            formControlName="actionCode" 
+                                                                            [options]="actionsDesignables(i)"
+                                                                            optionLabel="label" 
+                                                                            optionValue="value" 
+                                                                            [showClear]="true"
+                                                                            [filter]="true" 
+                                                                            placeholder="Toutes les actions"
+                                                                            appendTo="body">
+                                                                        </p-select>
+                                                                    </div>
+                                                                    <div class="flex flex-row items-center w-full mt-6">
+                                                                        <p-checkbox formControlName="required" [binary]="true"></p-checkbox>
+                                                                        <span class="text-[11px] text-surface-500 ml-2">Requis</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
 
-                                    
+                                                            <div class="md:col-span-1 flex justify-end pb-1">
+                                                                <p-button 
+                                                                    icon="pi pi-trash" 
+                                                                    severity="danger" 
+                                                                    [text]="true"
+                                                                    [rounded]="true" 
+                                                                    size="small"
+                                                                    (onClick)="supprimerChamp(i, j)">
+                                                                </p-button>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
                         }
+                    
                     </div>
                 </div>
             </form>
@@ -548,7 +603,7 @@
             </div>
         </div>
 
-        <div class="w-full lg:w-4/12 xl:w-4/12 lg:sticky lg:top-[5rem] self-start">
+        <div class="w-full lg:col-span-4 lg:sticky lg:top-[5rem] self-start min-w-0">
             <div class="p-5 bg-white dark:bg-surface-900 rounded-2xl border border-surface-200 dark:border-surface-800 shadow-sm">
                     <h3 class="text-xl font-semibold text-surface-900 dark:text-surface-0 mt-0 mb-5 tracking-tight">
                         Conseils rapides

@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, catchError, forkJoin, map, of, tap } from 
 import { DemandeDocumentDto, DocumentQms } from '../models';
 import { DemandeDocumentService } from './demande.service';
 import { QmsDocumentService } from './document.service';
+import { AppNotificationService } from '@core';
 
 /** Ce que l'utilisateur a à traiter dans le module documentaire, à l'instant où il regarde. */
 export interface DocumentaireATraiter {
@@ -39,6 +40,7 @@ export class DocumentaireATraiterService {
 
     private readonly documentService = inject(QmsDocumentService);
     private readonly demandeService = inject(DemandeDocumentService);
+    private readonly appNotificationService = inject(AppNotificationService); 
 
     private readonly etat$ = new BehaviorSubject<DocumentaireATraiter>(VIDE);
 
@@ -74,12 +76,17 @@ export class DocumentaireATraiterService {
             demandes: this.demandeService.aTraiter().pipe(
                 catchError(() => of(this.etat$.value.demandes)))
         }).pipe(
-            tap(({ documents, demandes }) => this.etat$.next({
-                documents: documents ?? [],
-                demandes: demandes ?? [],
-                chargement: false,
-                charge: true
-            })),
+            tap(({ documents, demandes }) => {
+                const totalDoc = (documents?.length || 0) + (demandes?.length || 0);
+                // 🚀 On envoie le badge documentaire directement au Hub central !
+                this.appNotificationService.setModuleBadge('DOC', totalDoc);
+                this.etat$.next({
+                    documents: documents ?? [],
+                    demandes: demandes ?? [],
+                    chargement: false,
+                    charge: true
+                });
+            }),
             catchError(() => {
                 this.etat$.next({ ...this.etat$.value, chargement: false, charge: true });
                 return of(null);

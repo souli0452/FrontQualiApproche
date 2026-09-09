@@ -481,31 +481,31 @@ export class AppTopbar implements OnInit {
     private mapperNotification(n: any) {
         let icon = 'pi pi-bell';
         let colorClass = 'bg-blue-100 text-blue-600';
-        let route = '/non-conformite/traitement-suivi';
+        let route = '/non-conformite/traitement';
 
         switch (n.code) {
             case 'NC_A_DECIDER':
                 icon = 'pi pi-exclamation-circle';
                 colorClass = 'bg-orange-100 text-orange-600';
-                route = '/non-conformite/traitement-suivi';
+                route = '/non-conformite/traitement';
                 break;
 
             case 'PLAN_ACTION_A_DECIDER':
                 icon = 'pi pi-list-check';
                 colorClass = 'bg-orange-100 text-orange-600';
-                route = '/non-conformite/traitement-suivi';
+                route = '/non-conformite/traitement';
                 break;
 
             case 'PLAN_ACTION_ECHEANCE_DEPASSEE':
                 icon = 'pi pi-exclamation-triangle';
                 colorClass = 'bg-red-100 text-red-600';
-                route = '/non-conformite/traitement-suivi';
+                route = '/non-conformite/traitement';
                 break;
 
             case 'PLAN_ACTION_ECHEANCE_PROCHE':
                 icon = 'pi pi-clock';
                 colorClass = 'bg-amber-100 text-amber-600';
-                route = '/non-conformite/traitement-suivi';
+                route = '/non-conformite/traitement';
                 break;
 
             case 'NC_BROUILLON':
@@ -523,6 +523,7 @@ export class AppTopbar implements OnInit {
         }
 
         return {
+            id: n.id, // 👈 Indispensable pour que notification.id soit défini lors du clic !
             title: n.titre,
             detail: n.detail,
             time: n.gravite === 'URGENT' ? 'Urgent' : 'À traiter',
@@ -585,11 +586,20 @@ export class AppTopbar implements OnInit {
 
     /** Conduit là où la notification se traite, quand elle désigne un écran. */
     ouvrirNotification(notification: any): void {
+        // 💡 Passer la notification à "lue" pour éteindre le point bleu
+        notification.read = true;
+
+        // 💡 Si un identifiant de notification existe, appeler l'API backend
+        if (notification?.id) {
+            this.nonConformiteService.marquerNotificationLue(notification.id).subscribe();
+        }
+
         if (notification?.route) {
             this.notificationPopover?.hide();
             this.router.navigate([notification.route]);
         }
     }
+
 
     toggleDarkMode() {
         const config = this.layoutService.layoutConfig();

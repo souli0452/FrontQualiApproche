@@ -55,37 +55,30 @@ export class NonConformiteLayoutComponent implements OnInit, OnDestroy {
             });
     }
 
-    buildMenu(notifs: any) {
-        // On somme toutes les tâches actives en cours de traitement (tout sauf les brouillons)
-        let totalBadge = (notifs?.reception || 0) 
-            + (notifs?.affectation || 0) 
-            + (notifs?.validationPilote || 0) 
-            + (notifs?.validationRQ || 0) 
-            + (notifs?.cloture || 0) 
-            + (notifs?.imputees || 0)
-            + (notifs?.nonTraiter || 0)
-            + (notifs?.soumission || 0);
 
-        // Déclaration des 3 onglets principaux accessibles à tous
+    buildMenu(notifs?: any) {
+        // Les dossiers du circuit sont directement donnés par notifs.total (qui vaut 2)
+        const totalDossiersEnCircuit = notifs?.total || 0;
+        const totalPlansATraiter = notifs?.nonTraiter || 0;
+
         this.items = [
-            { 
-                label: "Vue d'ensemble", 
-                icon: 'pi pi-chart-bar', 
-                routerLink: '/non-conformite/vue-ensemble' 
-            },
+            { label: "Vue d'ensemble", icon: 'pi pi-chart-bar', routerLink: '/non-conformite/vue-ensemble' },
             {
-                label: 'Traitement & Suivi',
+                label: 'Traitement',
                 icon: 'pi pi-cog',
-                routerLink: '/non-conformite/traitement-suivi',
-                badge: totalBadge > 0 ? totalBadge.toString() : undefined
+                routerLink: '/non-conformite/traitement',
+                badge: totalDossiersEnCircuit > 0 ? totalDossiersEnCircuit.toString() : undefined
             },
             {
-                label: 'Mes Non-Conformités publiées',
-                icon: 'pi pi-calendar',
-                routerLink: '/non-conformite/publiees'
-            }
+                label: "Plan d'action",
+                icon: 'pi pi-file-edit',
+                routerLink: '/non-conformite/plan-action',
+                badge: totalPlansATraiter > 0 ? totalPlansATraiter.toString() : undefined
+            },
+            { label: 'Suivi', icon: 'pi pi-calendar', routerLink: '/non-conformite/suivi' }
         ];
     }
+
 
     onTabChange(url: any) {
         if (url && typeof url === 'string') {

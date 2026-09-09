@@ -13,7 +13,7 @@
      Une non-conformité s'analyse rarement seul, et savoir qui a cherché les causes fait partie de
      la traçabilité de l'analyse. Saisi là où elle se mène — au traitement, par la personne
      imputée — et lu partout ailleurs. -->
-@if (demande.etatDeTraitement == BtnActions.TRAITEMENT) {
+@if (demande.etatTraitement == BtnActions.TRAITEMENT) {
     <div class="col-12">
         <div class="bg-white border-1 surface-border shadow-1 border-round-xl p-4 mt-4">
             <div class="flex items-center gap-2 mb-2">
@@ -47,44 +47,40 @@
 
      Ce qu'on peut en faire, en revanche, dépend de l'étape : seul l'agent imputé, au traitement,
      en ajoute et les corrige. Voir n'est pas décider. -->
-@if (demande.planActions?.length || demande.etatDeTraitement == BtnActions.TRAITEMENT) {
+@if (demande.planActions?.length || demande.etatTraitement == BtnActions.TRAITEMENT) {
                 <div class="col-12" style="max-width: 100%; overflow: hidden;">
-                    <div class="bg-white border-1 surface-border shadow-1 border-round-xl overflow-hidden mt-4">
+                    <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 shadow-sm rounded-xl overflow-hidden mt-4">
                         <!-- Premium Header -->
-                        <div class="flex items-center justify-between pt-0 p-4 border-bottom-1 surface-border bg-surface-50 flex-wrap gap-3">
+                        <div class="flex items-center justify-between pt-0 p-4 border-b border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/60 flex-wrap gap-3">
                             <div class="flex items-center gap-3">
                                 <div>
-                                    @if (demande.etatDeTraitement == BtnActions.TRAITEMENT) {
-                                        <h5 class="m-0 font-bold text-900 text-lg">Plans d'action</h5>
-                                        <p class="text-sm text-500 m-0 mt-1">
+                                    @if (demande.etatTraitement == BtnActions.TRAITEMENT) {
+                                        <h5 class="m-0 font-bold text-surface-900 dark:text-surface-0 text-lg">Plans d'action</h5>
+                                        <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">
                                             Recherchez la ou les causes, puis proposez pour chacune une action
                                             complète&nbsp;: {{ causeDemandee ? 'cause, ' : '' }}solution retenue,
                                             action proposée, responsable, échéance et critère d'efficacité. Soumettez
                                             ensuite le traitement à votre pilote, au pied de la fiche.
                                         </p>
-                                    } @else if (demande.etatDeTraitement == BtnActions.VALIDATION) {
-                                        <h5 class="m-0 font-bold text-900 text-lg">Validation des plans d'action</h5>
-                                        <p class="text-sm text-500 m-0 mt-1">Examinez les plans proposés par l'agent</p>
+                                    } @else if (demande.etatTraitement == BtnActions.VALIDATION) {
+                                        <h5 class="m-0 font-bold text-surface-900 dark:text-surface-0 text-lg">Validation des plans d'action</h5>
+                                        <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">Examinez les plans proposés par l'agent</p>
                                     } @else {
-                                        <h5 class="m-0 font-bold text-900 text-lg">Plans d'action</h5>
-                                        <p class="text-sm text-500 m-0 mt-1">
+                                        <h5 class="m-0 font-bold text-surface-900 dark:text-surface-0 text-lg">Plans d'action</h5>
+                                        <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">
                                             Les actions correctives engagées sur ce dossier, et où chacune en est.
                                         </p>
                                     }
                                 </div>
-                                <i class="pi pi-question-circle ml-3 mr-3 text-500 cursor-pointer hover:text-primary transition-colors" (click)="validationPopover.toggle($event)"></i>
+                                <i class="pi pi-question-circle ml-3 mr-3 text-500 dark:text-surface-400 cursor-pointer hover:text-primary transition-colors" (click)="validationPopover.toggle($event)"></i>
                             </div>
                             <div>
-                                @if (demande.etatDeTraitement == BtnActions.TRAITEMENT) {
+                                @if (demande.etatTraitement == BtnActions.TRAITEMENT) {
                                     <button size="small" pButton pRipple label="Ajouter un plan d'action"
                                         icon="pi pi-plus" class="p-button-primary font-bold border-round-md shadow-2"
                                         (click)="openDialog()">
                                     </button>
                                 }
-                                <!-- La validation des plans est une décision du circuit : elle
-                                     s'obtient par la barre d'actions au pied de la fiche, à l'étape
-                                     qui l'autorise. Le bouton qui était ici la déclenchait en
-                                     parallèle, par un point d'entrée que le circuit ignorait. -->
                                 <p-popover #validationPopover appendTo="body">
                                     <div class="p-2 text-sm text-700 line-height-3" style="max-width: 320px;">
                                         La loupe ouvre le détail d'une action : ce sur quoi on s'est engagé, puis ce
@@ -101,6 +97,119 @@
                         <!-- Table -->
                         <div class="p-2 w-full" style="min-width: 100%;">
                             <p-menu #menu [model]="rowMenuItems" [popup]="true" appendTo="body"></p-menu>
+                            <!-- ========================================================================= -->
+                            <!-- NOUVELLE DISPOSITION : CARTES EN LIGNE AVEC PAGINATION PRIMENG          -->
+                            <!-- ========================================================================= -->
+                            <div class="p-3 flex flex-col gap-4 w-full">
+                                @if (!demande.planActions?.length) {
+                                    <div class="flex flex-col items-center justify-center p-8 text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800/40 rounded-xl border border-dashed border-surface-300 dark:border-surface-700">
+                                        <i class="pi pi-inbox text-4xl mb-3 text-surface-400 dark:text-surface-500"></i>
+                                        <span class="font-medium text-base">Aucun plan d'action défini.</span>
+                                        <p class="text-xs text-surface-400 dark:text-surface-500 mt-1 m-0">Cliquez sur « Ajouter un plan d'action » ci-dessus pour commencer.</p>
+                                    </div>
+                                } @else {
+                                    <div class="flex flex-col gap-3">
+                                        @for (plan of pagedPlanActions; track plan.id || plan.numeroOdre) {
+                                            <div class="bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-xl shadow-xs hover:border-surface-300 dark:hover:border-surface-600 transition-all overflow-hidden">
+                                                
+                                                <!-- En-tête de la carte -->
+                                                <div class="flex items-center justify-between p-3.5 bg-surface-50 dark:bg-surface-800/80 border-b border-surface-200/80 dark:border-surface-700 flex-wrap gap-2">
+                                                    <div class="flex items-center gap-2.5">
+                                                        <span class="inline-flex items-center justify-center font-bold px-2.5 py-1 rounded-lg text-xs bg-slate-200/70 text-slate-800 dark:bg-surface-700 dark:text-surface-100 border border-slate-300/60 dark:border-surface-600">
+                                                            N° {{ plan.numeroOdre }}
+                                                        </span>
+                                                        <p-tag [severity]="couleurEtapeDuPlan(plan)"
+                                                               [value]="etapeDuPlan(plan)"
+                                                               [rounded]="true"></p-tag>
+                                                    </div>
+
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="flex items-center gap-1.5 text-xs text-slate-600 dark:text-surface-300 bg-white dark:bg-surface-900 px-3 py-1 rounded-md border border-slate-200 dark:border-surface-700 shadow-xs">
+                                                            <i class="pi pi-calendar text-primary"></i>
+                                                            <span>Échéance : <strong class="text-slate-800 dark:text-surface-100">{{ plan.dateEcheance || 'Non définie' }}</strong></span>
+                                                        </div>
+
+                                                        <p-button [text]="true" [rounded]="true" icon="pi pi-ellipsis-v"
+                                                            (click)="menu.toggle($event); $event.stopPropagation(); buildRowMenu(plan)"
+                                                            severity="secondary" size="small"
+                                                            pTooltip="Actions" tooltipPosition="left" />
+                                                    </div>
+                                                </div>
+
+                                                <!-- Contenu de la carte -->
+                                                <div class="p-4 flex flex-col gap-3">
+                                                    <!-- Cause identifiée (si demandée) -->
+                                                    @if (causeDemandee) {
+                                                        <div class="rounded-lg p-3 bg-slate-50 dark:bg-surface-900/50 border border-slate-200/60 dark:border-surface-700">
+                                                            <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-surface-400 mb-1 flex items-center gap-1.5">
+                                                                <i class="pi pi-search text-xs text-slate-400"></i> Cause identifiée
+                                                            </div>
+                                                            <p class="text-sm text-slate-800 dark:text-surface-100 m-0 leading-relaxed font-normal">
+                                                                {{ plan.causeIdentifiees || 'À renseigner' }}
+                                                            </p>
+                                                        </div>
+                                                    }
+
+                                                    <!-- Grille : Solution retenue & Critère d'efficacité -->
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        <!-- Solution retenue -->
+                                                        <div class="rounded-lg p-3 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40">
+                                                            <div class="text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-300 mb-1 flex items-center gap-1.5">
+                                                                <i class="pi pi-check-circle text-xs text-blue-500"></i> Solution retenue
+                                                            </div>
+                                                            <p class="text-sm text-slate-800 dark:text-surface-100 m-0 leading-relaxed font-normal">
+                                                                {{ plan.solutionRetenues || 'À renseigner' }}
+                                                            </p>
+                                                        </div>
+
+                                                        <!-- Critère d'efficacité -->
+                                                        <div class="rounded-lg p-3 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
+                                                            <div class="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
+                                                                <i class="pi pi-bullseye text-xs text-emerald-500"></i> Critère d'efficacité
+                                                            </div>
+                                                            <p class="text-sm text-slate-800 dark:text-surface-100 m-0 leading-relaxed font-normal">
+                                                                {{ plan.critereEfficacite || 'À renseigner' }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Pied de carte : Responsable -->
+                                                <div class="px-4 py-2.5 bg-surface-50/60 dark:bg-surface-800/60 border-t border-surface-200/60 dark:border-surface-700/60 flex items-center justify-between text-xs flex-wrap gap-2">
+                                                    <div class="flex items-center gap-2.5">
+                                                        <div class="w-7 h-7 rounded-full bg-slate-200/80 dark:bg-surface-700 text-slate-700 dark:text-surface-200 font-bold flex items-center justify-center text-xs border border-slate-300/60 dark:border-surface-600 flex-shrink-0">
+                                                            {{ getResponsableInitials(plan) }}
+                                                        </div>
+                                                        <div class="flex items-center gap-2 flex-wrap">
+                                                            <span class="text-slate-500 dark:text-surface-400">Responsable :</span>
+                                                            <span class="font-semibold text-slate-800 dark:text-surface-100">{{ getResponsableName(plan) }}</span>
+                                                            @if (plan.responsable?.email || plan.responsableEmail) {
+                                                                <span class="text-slate-400 dark:text-surface-500">({{ plan.responsable?.email || plan.responsableEmail }})</span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <!-- Pagination PrimeNG : 1 plan par affichage avec navigation pas-à-pas -->
+                                    <div class="mt-2 pt-2 border-t border-surface-200 dark:border-surface-700">
+                                        <p-paginator [rows]="planActionRows" [first]="planActionFirst"
+                                            [totalRecords]="demande.planActions?.length || 0"
+                                            [showCurrentPageReport]="true"
+                                            currentPageReportTemplate="Plan d'action {first} sur {totalRecords}"
+                                            (onPageChange)="onPlanActionPageChange($event)">
+                                        </p-paginator>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- ========================================================================= -->
+                            <!-- ANCIENNE VUE TABLEAU (COMMENTÉE POUR REVENIR RAPIDEMENT SI BESOIN)       -->
+                            <!-- ========================================================================= -->
+                            <!--
                             <p-table [value]="demande.planActions" [rowHover]="true" styleClass="p-datatable-sm w-full"
                                 responsiveLayout="scroll" [scrollable]="true" [paginator]="true" [rows]="10"
                                 [showCurrentPageReport]="true"
@@ -108,65 +217,62 @@
                                 
                                 <ng-template pTemplate="header">
                                     <tr>
-                                        <!-- Ordre est une colonne technique dont la valeur est un nombre :
-                                             l'en-tête et les cellules s'alignent au milieu des
-                                             lignes. -->
-                                        <th scope="col" pFrozenColumn alignFrozen="left" class="first:rounded-l-lg !py-3 text-center !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 70px; z-index: 10;">N°</th>
-                                        <th scope="col" *ngIf="causeDemandee" class="!py-3 text-left !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 240px">Cause</th>
-                                        <th scope="col" class="!py-3 text-left !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 240px">Solution retenue</th>
-                                        <th scope="col" class="!py-3 text-left !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 200px">Responsable</th>
-                                        <th scope="col" class="!py-3 text-center !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 150px">Échéance</th>
-                                        <th scope="col" class="!py-3 text-left !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 240px">Critère d'efficacité</th>
-                                        <th scope="col" class="!py-3 text-center !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 140px">Étape</th>
-                                        <th scope="col" pFrozenColumn alignFrozen="right" class="last:rounded-r-lg !py-3 text-center !bg-slate-100 text-slate-700 font-bold border-b border-slate-200" style="min-width: 80px; z-index: 10;">Actions</th>
+                                        <th scope="col" pFrozenColumn alignFrozen="left" class="first:rounded-l-lg !py-3 text-center !bg-slate-100 dark:!bg-surface-800 text-slate-700 dark:text-surface-200 font-bold border-b border-slate-200 dark:border-surface-700" style="min-width: 70px; z-index: 10;">N°</th>
+                                        <th scope="col" *ngIf="causeDemandee" class="!py-3 text-left !bg-slate-100 dark:!bg-surface-800 text-slate-700 dark:text-surface-200 font-bold border-b border-slate-200 dark:border-surface-700" style="min-width: 240px">Cause</th>
+                                        <th scope="col" class="!py-3 text-left !bg-slate-100 dark:!bg-surface-800 text-slate-700 dark:text-surface-200 font-bold border-b border-slate-200 dark:border-surface-700" style="min-width: 240px">Solution retenue</th>
+                                        <th scope="col" class="!py-3 text-left !bg-slate-100 dark:!bg-surface-800 text-slate-700 dark:text-surface-200 font-bold border-b border-slate-200 dark:border-surface-700" style="min-width: 200px">Responsable</th>
+                                        <th scope="col" class="!py-3 text-center !bg-slate-100 dark:!bg-surface-800 text-slate-700 dark:text-surface-200 font-bold border-b border-slate-200 dark:border-surface-700" style="min-width: 150px">Échéance</th>
+                                        <th scope="col" class="!py-3 text-left !bg-slate-100 dark:!bg-surface-800 text-slate-700 dark:text-surface-200 font-bold border-b border-slate-200 dark:border-surface-700" style="min-width: 240px">Critère d'efficacité</th>
+                                        <th scope="col" class="!py-3 text-center !bg-slate-100 dark:!bg-surface-800 text-slate-700 dark:text-surface-200 font-bold border-b border-slate-200 dark:border-surface-700" style="min-width: 140px">Étape</th>
+                                        <th scope="col" pFrozenColumn alignFrozen="right" class="last:rounded-r-lg !py-3 text-center !bg-slate-100 dark:!bg-surface-800 text-slate-700 dark:text-surface-200 font-bold border-b border-slate-200 dark:border-surface-700" style="min-width: 80px; z-index: 10;">Actions</th>
                                     </tr>
                                 </ng-template>
                                 <ng-template pTemplate="body" let-plan>
-                                    <tr class="hover:bg-slate-50 transition-colors">
-                                        <td pFrozenColumn alignFrozen="left" class="font-bold text-slate-600 text-center bg-white border-b border-slate-100" style="z-index: 1;">{{plan.numeroOdre}}</td>
-                                        <td *ngIf="causeDemandee" class="border-b border-slate-100">
-                                            <div class="line-height-3 text-slate-700 m-0 p-0" style="min-width: 240px; white-space: normal; word-break: break-word;">
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-surface-800/40 transition-colors">
+                                        <td pFrozenColumn alignFrozen="left" class="font-bold text-slate-600 dark:text-surface-200 text-center bg-white dark:bg-surface-900 border-b border-slate-100 dark:border-surface-800" style="z-index: 1;">{{plan.numeroOdre}}</td>
+                                        <td *ngIf="causeDemandee" class="border-b border-slate-100 dark:border-surface-800">
+                                            <div class="line-height-3 text-slate-700 dark:text-surface-200 m-0 p-0" style="min-width: 240px; white-space: normal; word-break: break-word;">
                                                 <span *ngIf="plan.causeIdentifiees; else causeAbsente">{{plan.causeIdentifiees}}</span>
                                                 <ng-template #causeAbsente><span class="italic text-slate-400">À renseigner</span></ng-template>
                                             </div>
                                         </td>
-                                        <td class="border-b border-slate-100">
-                                            <div class="line-height-3 text-slate-700 m-0 p-0" style="min-width: 240px; white-space: normal; word-break: break-word;">
+                                        <td class="border-b border-slate-100 dark:border-surface-800">
+                                            <div class="line-height-3 text-slate-700 dark:text-surface-200 m-0 p-0" style="min-width: 240px; white-space: normal; word-break: break-word;">
                                                 <span *ngIf="plan.solutionRetenues; else solutionAbsente">{{plan.solutionRetenues}}</span>
                                                 <ng-template #solutionAbsente><span class="italic text-slate-400">À renseigner</span></ng-template>
                                             </div>
                                         </td>
-                                        <td class="border-b border-slate-100">
+                                        <td class="border-b border-slate-100 dark:border-surface-800">
                                             <div class="flex items-center gap-2" style="min-width: 200px">
-                                                <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center text-xs border border-slate-200 flex-shrink-0">
+                                                <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-surface-800 text-slate-600 dark:text-surface-200 font-bold flex items-center justify-center text-xs border border-slate-200 dark:border-surface-700 flex-shrink-0">
                                                     {{ getResponsableInitials(plan) }}
                                                 </div>
                                                 <div class="flex flex-col gap-0.5">
-                                                    <span class="font-semibold text-slate-900">{{ getResponsableName(plan) }}</span>
-                                                    <span class="text-xs text-slate-500">{{ plan.responsable?.email || plan.responsableEmail }}</span>
+                                                    <span class="font-semibold text-slate-900 dark:text-surface-0">{{ getResponsableName(plan) }}</span>
+                                                    <span class="text-xs text-slate-500 dark:text-surface-400">{{ plan.responsable?.email || plan.responsableEmail }}</span>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="border-b border-slate-100">
+                                        <td class="border-b border-slate-100 dark:border-surface-800">
                                             <div class="flex items-center justify-center gap-2" style="min-width: 150px">
                                                 <i class="pi pi-calendar text-slate-400"></i>
-                                                <span class="text-slate-700 font-medium">{{plan.dateEcheance}}</span>
+                                                <span class="text-slate-700 dark:text-surface-200 font-medium">{{plan.dateEcheance}}</span>
                                             </div>
                                         </td>
-                                        <td class="border-b border-slate-100">
-                                            <div class="line-height-3 text-slate-700 m-0 p-0" style="min-width: 240px; white-space: normal; word-break: break-word;">
+                                        <td class="border-b border-slate-100 dark:border-surface-800">
+                                            <div class="line-height-3 text-slate-700 dark:text-surface-200 m-0 p-0" style="min-width: 240px; white-space: normal; word-break: break-word;">
                                                 <span *ngIf="plan.critereEfficacite; else critereAbsent">{{plan.critereEfficacite}}</span>
                                                 <ng-template #critereAbsent><span class="italic text-slate-400">À renseigner</span></ng-template>
                                             </div>
                                         </td>
-                                        <td class="text-center border-b border-slate-100">
+                                        <td class="text-center border-b border-slate-100 dark:border-surface-800">
                                             <div style="min-width: 140px">
                                                 <p-tag [severity]="couleurEtapeDuPlan(plan)"
                                                        [value]="etapeDuPlan(plan)"
                                                        [rounded]="true"></p-tag>
                                             </div>
                                         </td>
-                                        <td pFrozenColumn alignFrozen="right" class="text-center bg-white border-b border-slate-100" style="z-index: 1;">
+                                        <td pFrozenColumn alignFrozen="right" class="text-center bg-white dark:bg-surface-900 border-b border-slate-100 dark:border-surface-800" style="z-index: 1;">
                                             <div style="min-width: 80px" class="flex items-center justify-center">
                                                 <p-button [text]="true" [rounded]="true" icon="pi pi-ellipsis-v"
                                                     (click)="menu.toggle($event); $event.stopPropagation(); buildRowMenu(plan)"
@@ -186,13 +292,15 @@
                                     </tr>
                                 </ng-template>
                             </p-table>
+                            -->
                         </div>
                     </div>
                 </div>
 }
 
 <p-dialog [(visible)]="displayDialog" [modal]="true"
-    [style]="{ width: '40rem' }" [breakpoints]="{ '960px': '95vw' }">
+    [style]="{ width: '40rem' }" [breakpoints]="{ '960px': '95vw' }"
+    [draggable]="false" [resizable]="false">
     <ng-template pTemplate="header">
         <div class="flex items-center gap-3">
             <div class="flex items-center justify-center bg-blue-50 text-blue-500 rounded-full" style="width: 3.5rem; height: 3.5rem">
@@ -361,7 +469,8 @@
 
 <!-- Dialog Détails Plan d'action -->
 <p-dialog [(visible)]="afficheDialog" [style]="{ width: '50rem' }"
-    [breakpoints]="{ '960px': '95vw' }" [modal]="true" [dismissableMask]="true" [closable]="true">
+    [breakpoints]="{ '960px': '95vw' }" [modal]="true" [dismissableMask]="true" [closable]="true"
+    [draggable]="false" [resizable]="false" (onHide)="hideDialogAffich()">
     
     <ng-template pTemplate="header">
         <div class="flex items-center gap-3">
@@ -369,8 +478,8 @@
                 <i class="pi pi-info-circle text-blue-500 text-2xl"></i>
             </div>
             <div class="flex flex-col">
-                <span class="font-bold text-xl text-900 dark:text-0 mb-1">Détails du plan d'action</span>
-                <span class="text-sm text-500 font-medium">Consultez les informations relatives à ce plan</span>
+                <span class="font-bold text-xl text-surface-900 dark:text-surface-0 mb-1">Détails du plan d'action</span>
+                <span class="text-sm text-surface-500 dark:text-surface-400 font-medium">Consultez les informations relatives à ce plan</span>
             </div>
         </div>
     </ng-template>
@@ -411,47 +520,38 @@
                 </div>
                 <div class="flex flex-wrap gap-4">
                     <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 shadow-sm flex-1 min-w-max">
-                        <span class="text-500 text-sm block mb-1">N° Ordre</span>
-                        <span class="font-bold text-900 text-lg">{{ planAction.numeroOdre || '—' }}</span>
+                        <span class="text-surface-500 dark:text-surface-400 text-sm block mb-1">N° Ordre</span>
+                        <span class="font-bold text-surface-900 dark:text-surface-0 text-lg">{{ planAction.numeroOdre || '—' }}</span>
                     </div>
                     <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 shadow-sm flex-1 min-w-max">
-                        <span class="text-500 text-sm block mb-1">Responsable</span>
+                        <span class="text-surface-500 dark:text-surface-400 text-sm block mb-1">Responsable</span>
                         <div class="flex items-center gap-2">
                             <i class="pi pi-user text-primary-400"></i>
-                            <span class="font-bold text-900">{{ getResponsableName(planAction) }}</span>
+                            <span class="font-bold text-surface-900 dark:text-surface-0">{{ getResponsableName(planAction) }}</span>
                         </div>
-                        <span class="text-xs text-500 mt-1 block">{{ planAction.responsable?.email || planAction.responsableEmail }}</span>
+                        <span class="text-xs text-surface-500 dark:text-surface-400 mt-1 block">{{ planAction.responsable?.email || planAction.responsableEmail }}</span>
                     </div>
                     <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 shadow-sm flex-1 min-w-max">
-                        <span class="text-500 text-sm block mb-1">Date d'échéance</span>
+                        <span class="text-surface-500 dark:text-surface-400 text-sm block mb-1">Date d'échéance</span>
                         <div class="flex items-center gap-2">
                             <i class="pi pi-calendar text-primary-400"></i>
-                            <span class="font-bold text-900">{{ planAction.dateEcheance || '—' }}</span>
+                            <span class="font-bold text-surface-900 dark:text-surface-0">{{ planAction.dateEcheance || '—' }}</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- La cause et la solution retenue relèvent de la proposition : c'est la personne
-                     imputée qui recherche l'une et arrête l'autre, et son supérieur ne peut se
-                     prononcer que sur un plan entier. Elles se lisaient plus bas, parmi ce que le
-                     responsable rapportait une fois l'action menée, si bien qu'on validait une
-                     intention sans savoir à quoi elle répondait. -->
                 <div class="mt-4 bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700"
                      *ngIf="causeDemandee">
-                    <span class="text-500 text-sm block mb-2">Cause</span>
-                    <div [innerHTML]="planAction.causeIdentifiees || '<span class=\'italic text-500\'>Aucune cause identifiée</span>'" class="line-height-3 text-700 m-0"></div>
+                    <span class="text-surface-500 dark:text-surface-400 text-sm block mb-2">Cause</span>
+                    <div [innerHTML]="planAction.causeIdentifiees || '<span class=\'italic text-500\'>Aucune cause identifiée</span>'" class="line-height-3 text-surface-700 dark:text-surface-200 m-0"></div>
                 </div>
                 <div class="mt-3 bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700">
-                    <span class="text-500 text-sm block mb-2">Solution retenue</span>
-                    <div [innerHTML]="planAction.solutionRetenues || '<span class=\'italic text-500\'>Aucune solution retenue</span>'" class="line-height-3 text-700 m-0"></div>
+                    <span class="text-surface-500 dark:text-surface-400 text-sm block mb-2">Solution retenue</span>
+                    <div [innerHTML]="planAction.solutionRetenues || '<span class=\'italic text-500\'>Aucune solution retenue</span>'" class="line-height-3 text-surface-700 dark:text-surface-200 m-0"></div>
                 </div>
-                <!-- <div class="mt-3 bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700">
-                    <span class="text-500 text-sm block mb-2">Action proposée</span>
-                    <div [innerHTML]="planAction.actionCorrective || '<span class=\'italic text-500\'>Action non décrite</span>'" class="line-height-3 text-700 m-0"></div>
-                </div> -->
                 <div class="mt-3 bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700">
-                    <span class="text-500 text-sm block mb-2">Critère d'efficacité attendu</span>
-                    <div [innerHTML]="planAction.critereEfficacite || '<span class=\'italic text-500\'>Aucun critère défini</span>'" class="line-height-3 text-700 m-0 nc-description"></div>
+                    <span class="text-surface-500 dark:text-surface-400 text-sm block mb-2">Critère d'efficacité attendu</span>
+                    <div [innerHTML]="planAction.critereEfficacite || '<span class=\'italic text-500\'>Aucun critère défini</span>'" class="line-height-3 text-surface-700 dark:text-surface-200 m-0 nc-description"></div>
                 </div>
             </div>
         </div>

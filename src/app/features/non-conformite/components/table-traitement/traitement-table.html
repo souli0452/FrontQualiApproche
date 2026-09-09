@@ -122,7 +122,10 @@
                     class="py-3 px-4 align-middle text-slate-700 dark:text-slate-200 font-medium bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-surface-700">
                     <!-- Contenu des cellules -->
                     <div *ngIf="col.type === 'string'" class="flex flex-col gap-0.5" [ngClass]="col.field === 'numeroReference' ? 'text-left' : 'text-center'">
-                        <span *ngIf="col.field === 'numeroReference'">
+                        <span *ngIf="col.field === 'numeroReference'"
+                        (click)="displayDetails(rowData)" 
+                        class="cursor-pointer inline-block transition-transform hover:scale-105"
+                        >
                             <p-tag severity="info" [value]="getCellValue(rowData, col)" styleClass="tag-pill" />
                         </span>
                         <span *ngIf="col.field !== 'numeroReference'" class="font-medium text-slate-700 dark:text-slate-200">
@@ -147,9 +150,12 @@
                     <span class="block text-slate-500 dark:text-slate-400 text-sm" [ngClass]="col.field === 'numeroReference' ? 'text-left' : 'text-center'" style="white-space: nowrap;" *ngIf="col.type === 'date'">
                         {{ rowData[col.field] | date:'dd/MM/yyyy HH:mm' }}
                     </span>
-                    <!-- Pastille gravité style tag-pill -->
+                    <!-- Pastille gravité style tag-pill avec couleur définie -->
                     <span *ngIf="col.type === 'badge' && getCellValue(rowData, col)" class="flex w-full justify-center">
-                        <span class="font-semibold text-xs px-2.5 py-1 rounded-full uppercase tracking-wider" [ngStyle]="getGravityStyle(getCellValue(rowData, col))">
+                        <span class="text-xs px-2.5 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5 transition-all"
+                              [ngStyle]="getGravityBadgeStyle(getCellValue(rowData, col), rowData)">
+                            <span class="w-1.5 h-1.5 rounded-full shrink-0" 
+                                  [ngStyle]="{'background-color': getGravityColor(getCellValue(rowData, col), rowData)}"></span>
                             {{ getCellValue(rowData, col) }}
                         </span>
                     </span>
@@ -169,15 +175,12 @@
 
                     <!-- Étape courante / statut -->
                     <span *ngIf="col.type === 'enum'" class="flex w-full justify-center">
-                        <p-tag *ngIf="rowData.workflowState?.currentStateName"
+                        <p-tag
                             styleClass="tag-pill"
-                            [style]="{'font-weight': 'normal'}"
-                            [severity]="getWorkflowStatusSeverity(rowData.workflowState.currentStateName, rowData)"
-                            [value]="formatWorkflowStatusName(rowData.workflowState.currentStateName, rowData)">
+                            [style]="{'font-weight': '500'}"
+                            [severity]="getWorkflowStatusSeverity(rowData.workflowState?.currentStateName || rowData[col.field], rowData)"
+                            [value]="formatWorkflowStatusName(rowData.workflowState?.currentStateName || rowData[col.field], rowData)">
                         </p-tag>
-                        <span *ngIf="!rowData.workflowState?.currentStateName" class="text-slate-500 text-sm">
-                            {{ formatWorkflowStatusName(rowData[col.field], rowData) }}
-                        </span>
                     </span>
                 </td>
             }
@@ -253,7 +256,7 @@
 
 <p-dialog
     (onHide)="closeDetailsDialog()" [modal]="true" [maximizable]="true"
-    [closable]="true" maskStyleClass="backdrop-blur-sm"
+    [closable]="true" [draggable]="false" [resizable]="false" maskStyleClass="backdrop-blur-sm"
     [(visible)]="displayDetail" [style]="{width: '60vw'}" [breakpoints]="{ '960px': '95vw' }">
     <ng-template pTemplate="header">
         <div class="flex items-center gap-3">
@@ -318,7 +321,7 @@
     </ng-template>
 
     <ng-template #footer>
-        <div class="flex justify-between flex-wrap p-4 bg-surface-100 w-full">
+        <div class="flex justify-between flex-wrap p-4 bg-surface-100 dark:bg-surface-900 border-t border-surface-200 dark:border-surface-800 w-full">
             <button type="button" size="small" pRipple pButton icon="pi pi-times-circle"
                     class="p-button-secondary position-left mr-3"
                     label="Quitter" (click)="displayDetails()">
@@ -331,12 +334,13 @@
                  elle-même. -->
             <app-workflow-actions
                 [resourceId]="selectedDemande?.id"
-                [reference]="selectedDemande?.numeroDeReference"
+                [reference]="selectedDemande?.numeroReference || selectedDemande?.numeroDeReference || selectedDemande?.numeroNc || selectedDemande?.reference"
                 [state]="selectedDemande?.workflowState"
+                [structureId]="selectedDemande?.origineId || selectedDemande?.structureSoumissionId"
                 [deposerFichier]="deposerFichier"
                 (executed)="circuitAvance()"></app-workflow-actions>
 
-            @if (selectedDemande?.etatDeTraitement === BtnActions.CLOTURE || selectedDemande?.status === 'CLOTURE') {
+            @if (selectedDemande?.etatTraitement === BtnActions.CLOTURE || selectedDemande?.status === 'CLOTURE') {
             <!-- L'édition n'avance pas le dossier : elle l'imprime. Elle reste donc au pied de la
                  fiche, à côté de Quitter — et partout où un dossier clôturé s'ouvre, non plus sur
                  le seul écran Suivi : c'est l'état du dossier qui la justifie, pas l'écran. -->

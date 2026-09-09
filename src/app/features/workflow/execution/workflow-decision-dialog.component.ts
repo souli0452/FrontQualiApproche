@@ -57,6 +57,20 @@ export class WorkflowDecisionDialogComponent {
 
   @Input() loading = false;
 
+  /** Structure rattachée au dossier (ex: structure destinataire à imputer). */
+  @Input()
+  set structureId(valeur: string | null | undefined) {
+    if (this._structureId !== valeur) {
+      this._structureId = valeur;
+      delete this.choixParSource['@UTILISATEURS_MA_STRUCTURE'];
+      this.chargerLesSources();
+    }
+  }
+  get structureId(): string | null | undefined {
+    return this._structureId;
+  }
+  private _structureId?: string | null;
+
   /** Champs déclarés par l'étape courante du circuit. */
   @Input()
   set stepFields(champs: WorkflowStepFieldDto[] | undefined) {
@@ -141,6 +155,37 @@ export class WorkflowDecisionDialogComponent {
 
   get depotEnCours(): boolean {
     return this.depotsEnCours.size > 0;
+  }
+
+  /**
+   * Sous-titre explicite et contextuel pour la décision.
+   */
+  get sousTitre(): string {
+    const etape = this.etapeCourante ? `Étape : ${this.etapeCourante}` : '';
+    const ref = this.reference ? `Dossier ${this.reference}` : '';
+    const contexte = [ref, etape].filter(Boolean).join(' • ');
+
+    const libelle = (this.action?.libelle || '').toLowerCase();
+    const decision = this.action?.decision;
+
+    if (decision === 'APPROUVE' || libelle.includes('valid') || libelle.includes('approuv')) {
+      return contexte
+        ? `${contexte} — Valider et transmettre le dossier à l'étape suivante`
+        : "Validation et transmission du dossier pour l'étape suivante du circuit";
+    }
+    if (decision === 'REJETE' || libelle.includes('rejet') || libelle.includes('refus')) {
+      return contexte
+        ? `${contexte} — Rejeter et retourner le dossier avec vos observations`
+        : "Rejet et retour du dossier avec vos observations";
+    }
+    if (decision === 'CLOTURE' || libelle.includes('clôtur') || libelle.includes('clotur')) {
+      return contexte
+        ? `${contexte} — Clôturer définitivement le dossier`
+        : "Clôture définitive du dossier";
+    }
+    return contexte
+      ? `${contexte} — Enregistrement de votre décision`
+      : "Confirmez votre décision pour actualiser le circuit de validation.";
   }
 
   constructor(
@@ -274,11 +319,23 @@ export class WorkflowDecisionDialogComponent {
     if (enCache) {
       return enCache;
     }
+    const estCircuit = champ.fieldName === 'circuitTraitement' || (champ.fieldLabel && champ.fieldLabel.toLowerCase().includes('circuit'));
     const choix = options
       .split(',')
       .map((valeur: string) => valeur.trim())
       .filter((valeur: string) => valeur.length > 0)
-      .map((valeur: string) => ({ label: valeur, value: valeur }));
+      .map((valeur: string) => {
+        const maj = valeur.toUpperCase();
+        if (estCircuit || maj === 'CORRECTIVE' || maj === 'ACTION CORRECTIVE' || maj === 'ACTION_CORRECTIVE') {
+          if (maj === 'CORRECTIVE' || maj === 'ACTION CORRECTIVE' || maj === 'ACTION_CORRECTIVE') {
+            return { label: 'Action corrective', value: 'ACTION_CORRECTIVE' };
+          }
+          if (maj === 'CORRECTION') {
+            return { label: 'Correction', value: 'CORRECTION' };
+          }
+        }
+        return { label: valeur, value: valeur };
+      });
     this.choixLitteraux.set(options, choix);
     return choix;
   }
@@ -303,11 +360,12 @@ export class WorkflowDecisionDialogComponent {
   private chargerLesSources(): void {
     for (const champ of this._stepFields) {
       const options = (champ.options ?? '').trim();
-      if (!this.choixService.estUneSource(options) || this.choixParSource[options.toUpperCase()]) {
+      const cle = options.toUpperCase();
+      if (!this.choixService.estUneSource(options) || this.choixParSource[cle]) {
         continue;
       }
-      this.choixService.choix(options).subscribe((choix) => {
-        this.choixParSource[options.toUpperCase()] = choix;
+      this.choixService.choix(options, this._structureId).subscribe((choix) => {
+        this.choixParSource[cle] = choix;
       });
     }
   }
@@ -336,7 +394,17 @@ export class WorkflowDecisionDialogComponent {
       }
       const valeur = valeurs[this.nomDeControle(champ)];
       if (valeur !== null && valeur !== undefined && `${valeur}`.length > 0) {
-        champs[champ.id] = `${valeur}`;
+        let valStr = `${valeur}`.trim();
+        const maj = valStr.toUpperCase();
+        const estCircuit = champ.fieldName === 'circuitTraitement' || (champ.fieldLabel && champ.fieldLabel.toLowerCase().includes('circuit'));
+        if (estCircuit || maj === 'CORRECTIVE' || maj === 'ACTION CORRECTIVE') {
+          if (maj === 'CORRECTIVE' || maj === 'ACTION CORRECTIVE' || maj === 'ACTION_CORRECTIVE') {
+            valStr = 'ACTION_CORRECTIVE';
+          } else if (maj === 'CORRECTION') {
+            valStr = 'CORRECTION';
+          }
+        }
+        champs[champ.id] = valStr;
       }
     }
 

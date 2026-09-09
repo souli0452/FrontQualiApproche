@@ -1,13 +1,14 @@
 <div class="border-t-20 border-t-white dark:border-t-surface-900">
     <app-traitement-table
         [demandeList]="demandeList"
+        [btnActions]="BtnActions.TRAITEMENT"
         [showSearch]="false"
         [cols]="cols"
         [hasFilters]="true"
         [loading]="loading"
         [paginator]="false"
         [showGridlines]="false"
-        [totalElements]="totalElements"
+        [totalElements]="currentTotalElements"
         [currentPage]="currentPage"
         [pageSize]="pageSize"
         (pageChangeEvent)="onPageChange($event)"
@@ -15,7 +16,7 @@
         <app-nc-filter-bar filters (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
     </app-traitement-table>
 
-<div *ngIf="filteredDemandeList.length === 0 && !loading" 
+<div *ngIf="demandeList.length === 0 && !loading" 
       class="flex flex-col items-center justify-center p-4 text-center">
     
     <img src="assets/images/empty.svg" 

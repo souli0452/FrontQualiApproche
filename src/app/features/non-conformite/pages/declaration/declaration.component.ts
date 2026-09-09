@@ -184,7 +184,7 @@ export class NcComposeComponent implements OnInit {
 
                 if (!this.editId) {
                     if (publish) {
-                        this.router.navigate(['/non-conformite/publiees']);
+                        this.router.navigate(['/non-conformite/suivi']);
                     } else {
                         this.location.back();
                     }

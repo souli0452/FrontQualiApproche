@@ -254,6 +254,13 @@
     word-break: break-word;
 }
 
+:host-context(.app-dark) .nc-description,
+:host-context(.dark) .nc-description {
+    background-color: #0f172a !important;
+    border: 1px solid #334155;
+    color: #e2e8f0 !important;
+}
+
 /* Rejet */
 .nc-rejection {
     border-left: 4px solid #ef4444;
