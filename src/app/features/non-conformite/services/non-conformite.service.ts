@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, map, Observable } from 'rxjs';
-import { QualiUrlConfig, BaseCrudService } from '@core';
+import { BehaviorSubject, catchError, map, Observable, of } from 'rxjs';
+import { QualiUrlConfig, BaseCrudService, AppNotificationService } from '@core';
 import { NonConformiteUrlConfig } from '../components';
 import { EtapeTraitement, NonConformStatus } from '../models';
 import { ApiItemResponse, ApiResponse } from '../../../models/response.model';
@@ -19,7 +19,10 @@ import { NcNotificationsResumeDto, NotificationClocheDto } from '../models/nc-no
 @Injectable({ providedIn: 'root' })
 export class NonConformiteService extends BaseCrudService<NonConformite, string> {
 
-    constructor(public override http: HttpClient) {
+    constructor(
+        public override http: HttpClient,
+        private appNotificationService: AppNotificationService
+    ) {
         super(http, QualiUrlConfig.NON_CONFORMITE_ROOT_URL);
     }
 
@@ -112,26 +115,39 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
                     next: (res: any) => {
                         // 1. Déballer les données
                         const parEtape = res?.data ?? res ?? {};
-                        console.log('📊 [VENTILATION DÉTAILLÉE DU MOTEUR]', parEtape);
-
                         // 2. Calculer le total réel des dossiers attendant cet utilisateur
+                                                // 2. Calculer le total réel des dossiers attendant cet utilisateur
                         const totalEtapes = Object.values(parEtape).reduce((acc: number, val: any) => acc + (Number(val) || 0), 0);
+                        // Ce que l'utilisateur a réellement à traiter (moteur par étape ou aTraiter du résumé)
+                        const dossiersATraiter = totalEtapes > 0 ? totalEtapes : aTraiter;
 
+                        // 🚀 1. On informe notre Hub central pour le menu latéral !
+                        this.appNotificationService.setModuleBadge('NC', dossiersATraiter);
+
+                        // 2. On garde la compatibilité avec l'existant
                         this.notificationsNC$.next({
-                            total: totalEtapes > 0 ? totalEtapes : total,
+                            total: dossiersATraiter,
+                            aTraiter: dossiersATraiter,
+                            totalAlertes: total,
                             brouillons: parEtape['Soumission'] ?? parEtape['SOUMISSION'] ?? brouillons,
-                            imputees: parEtape['Traitement'] ?? parEtape['TRAITEMENT'] ?? aTraiter,
+                            soumission: parEtape['Soumission'] ?? parEtape['SOUMISSION'] ?? 0,
+                            imputees: parEtape['Imputation'] ?? parEtape['IMPUTATION'] ?? parEtape['Traitement'] ?? 0,
                             enAttenteValidation: enAttenteValidation,
                             reception: parEtape['Réception'] ?? parEtape['RECEPTION'] ?? 0,
                             validationRQ: parEtape['Validation RQ'] ?? parEtape['VALIDATION_RQ'] ?? 0,
                             validationPilote: parEtape['Validation'] ?? parEtape['VALIDATION'] ?? 0,
                             cloture: parEtape['Clôture'] ?? parEtape['CLOTURE'] ?? 0
                         });
+
+
                     },
                     error: () => {
-                        // Repli de secours sur le résumé standard
+                        // Repli de secours sur le résumé standard (ce qui est à traiter)
+                        this.appNotificationService.setModuleBadge('NC', aTraiter);
                         this.notificationsNC$.next({
-                            total: total,
+                            total: aTraiter,
+                            aTraiter: aTraiter,
+                            totalAlertes: total,
                             brouillons: brouillons,
                             imputees: aTraiter,
                             enAttenteValidation: enAttenteValidation,
@@ -147,6 +163,14 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
         });
     }
 
+
+        /**
+     * Marque une notification comme lue dans le workflow-service.
+     * @backend POST `/workflow-service/api/v1/notifications/{id}/lue`
+     */
+    marquerNotificationLue(id: string): Observable<any> {
+        return this.http.post<any>(`${QualiUrlConfig.NON_CONFORMITE_ROOT_URL}/notifications/${id}/lue`, {})
+    }
 
 
 
@@ -307,6 +331,14 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
     // =========================================================================
 
     /**
+     * Retourne la page paginée des non-conformités à traiter par l'appelant (par défaut 10 éléments).
+     * @backend GET `${AMELIORATION_SERVICE}/non-conformite/a-traiter`
+     */
+    nonConformiteATraiterPage(page: number = 0, size: number = 10): Observable<ApiResponse<any>> {
+        return this.getPageFromUrl(NonConformiteUrlConfig.NON_CONFORMITE_A_TRAITER, { page, size });
+    }
+
+    /**
      * Retourne les non-conformités sur lesquelles l'utilisateur connecté doit impérativement statuer.
      *
      * <p>C'est le moteur de workflow backend qui résout dynamiquement la liste en croisant les habilitations
@@ -318,6 +350,14 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
      */
     nonConformiteATraiter(page: number = 0, size: number = 200): Observable<NonConformite[]> {
         return this.getListFromUrl(NonConformiteUrlConfig.NON_CONFORMITE_A_TRAITER, { page, size });
+    }
+
+    /**
+     * Retourne la page paginée des actions à traiter par l'appelant (par défaut 10 éléments).
+     * @backend GET `${AMELIORATION_SERVICE}/plan-action/a-traiter`
+     */
+    planActionsATraiterPage(page: number = 0, size: number = 10): Observable<ApiResponse<any>> {
+        return this.getPageFromUrl(NonConformiteUrlConfig.PLAN_ACTION_A_TRAITER, { page, size });
     }
 
     /**

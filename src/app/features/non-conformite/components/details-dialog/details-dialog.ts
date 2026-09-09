@@ -41,6 +41,15 @@ export class DetailsDialogComponent {
     @Input() masquerPlansAction: boolean = false;
 
     /**
+     * La cause est-elle demandée sur ce dossier ?
+     * En action corrective, elle est exigée. En correction, elle n'est pas demandée.
+     */
+    get causeDemandee(): boolean {
+        const c = (this.demande?.circuit || '').toUpperCase();
+        return c !== 'CORRECTION';
+    }
+
+    /**
      * L'historique nomme des personnes et rapporte leurs appréciations : il ne s'ouvre qu'à qui a
      * le droit de lire le circuit. À défaut, l'onglet n'existe pas — plutôt qu'un onglet visible
      * menant à un refus.

@@ -537,14 +537,13 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
                 const allNcs = data.allUserNcs || [];
                 const isCloturee = (nc: any) =>
                     (nc.etatTraitement === 'CLOTURE' ||
-                     nc.etatDeTraitement === 'CLOTURE' ||
                      nc.workflowStatus === 'Clôture' ||
                      nc.workflowStatus === 'CLOTURE');
 
                 this.stats = {
                     total: allNcs.length,
                     enCours: allNcs.filter((nc: any) => !isCloturee(nc) && nc.status !== 'DRAFT').length,
-                    published: allNcs.filter((nc: any) => (nc.etatTraitement || nc.etatDeTraitement) === 'RECEPTION').length,
+                    published: allNcs.filter((nc: any) => nc.etatTraitement === 'RECEPTION').length,
                     cloturees: allNcs.filter((nc: any) => isCloturee(nc)).length
                 };
             }

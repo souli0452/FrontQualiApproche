@@ -6,11 +6,13 @@ import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { Router } from '@angular/router';
 import { AuthService, accesAutorise } from '../../auth';
 import { TooltipModule } from 'primeng/tooltip';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'app-sidebar',
     standalone: true,
-    imports: [AppMenu, NgClass, CommonModule, ScrollPanelModule, TooltipModule],
+    imports: [AppMenu, NgClass, CommonModule, ScrollPanelModule, TooltipModule, DialogModule, ButtonModule],
     template: ` 
     <div class="layout-sidebar flex flex-col justify-between" [class.collapsed-sidebar]="!isMenuActive()">
         <!-- Bouton toggle -->
@@ -45,16 +47,61 @@ import { TooltipModule } from 'primeng/tooltip';
                     <button *ngIf="canViewLicence()" (click)="goToLicence()" class="flex items-center justify-center w-10 h-10 rounded-full bg-sky-500/20 hover:bg-sky-500/40 text-white transition-all duration-200 border border-sky-500/30 hover:scale-105 cursor-pointer" pTooltip="Licence" tooltipPosition="top">
                         <i class="pi pi-shield text-lg"></i>
                     </button>
-                    <button (click)="logout()" class="flex items-center justify-center w-10 h-10 rounded-full bg-red-500/20 hover:bg-red-500/40 text-white transition-all duration-200 border border-red-500/30 hover:scale-105 cursor-pointer" pTooltip="Déconnexion" tooltipPosition="top">
+                    <button (click)="demanderDeconnexion()" class="flex items-center justify-center w-10 h-10 rounded-full bg-red-500/20 hover:bg-red-500/40 text-white transition-all duration-200 border border-red-500/30 hover:scale-105 cursor-pointer" pTooltip="Déconnexion" tooltipPosition="top">
                         <i class="pi pi-power-off text-lg"></i>
                     </button>
                 </div>
                 <p class="text-white/80 text-[13px] text-center m-0">QualiSira © 2026. Tous droits réservés.</p>
             </div>
         </div>
+
+        <!-- Dialogue de confirmation de déconnexion -->
+        <p-dialog 
+            [(visible)]="displayLogoutDialog" 
+            [modal]="true" 
+            [closable]="false" 
+            [dismissableMask]="true"
+            maskStyleClass="backdrop-blur-sm"
+            [style]="{ width: '90vw', maxWidth: '380px' }"
+            styleClass="border-none shadow-2xl rounded-2xl overflow-hidden p-0">
+            
+            <div class="p-6 bg-white dark:bg-surface-900 text-center flex flex-col items-center justify-center rounded-2xl">
+                <!-- Badge d'icône rouge circulaire -->
+                <div class="bg-red-50 dark:bg-red-950/40 text-red-500 mb-4 w-14 h-14 rounded-full flex items-center justify-center">
+                    <i class="pi pi-power-off text-2xl"></i>
+                </div>
+
+                <!-- Titre -->
+                <h3 class="text-lg font-bold text-surface-900 dark:text-surface-0 mb-2 mt-0">
+                    Confirmation
+                </h3>
+
+                <!-- Message -->
+                <p class="text-sm text-surface-500 dark:text-surface-400 mb-5 px-2 leading-relaxed">
+                    Êtes-vous sûr de vouloir vous déconnecter de votre session ?
+                </p>
+
+                <!-- Ligne de séparation douce -->
+                <div class="w-full border-t border-surface-100 dark:border-surface-800 mb-4"></div>
+
+                <!-- Boutons d'actions -->
+                <div class="flex items-center gap-3 w-full">
+                    <button type="button" pButton label="Annuler"
+                        class="p-button-outlined p-button-secondary p-button-sm flex-1 justify-center rounded-xl py-2 font-medium"
+                        (click)="displayLogoutDialog = false">
+                    </button>
+                    <button type="button" pButton label="Se déconnecter" 
+                        class="p-button-danger p-button-sm flex-1 justify-center rounded-xl py-2 font-medium"
+                        (click)="confirmLogout()">
+                    </button>
+                </div>
+            </div>
+        </p-dialog>
     </div>`
 })
 export class AppSidebar {
+    displayLogoutDialog: boolean = false;
+
     constructor(
         public el: ElementRef, 
         public layoutService: LayoutService,
@@ -72,8 +119,17 @@ export class AppSidebar {
         this.router.navigate(['/licence']);
     }
 
-    logout() {
+    demanderDeconnexion() {
+        this.displayLogoutDialog = true;
+    }
+
+    confirmLogout() {
+        this.displayLogoutDialog = false;
         this.authService.logout();
+    }
+
+    logout() {
+        this.demanderDeconnexion();
     }
 
     canViewLicence(): boolean {

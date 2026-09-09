@@ -103,14 +103,79 @@ import { WorkflowStateDto, WorkflowActionDto, WorkflowStepFieldDto } from '../mo
         .wf-guidance-titre { font-weight: 700; color: var(--text-color, #0f172a); }
         .wf-guidance--rejet .wf-guidance-titre { color: #b91c1c; }
         
-        /* Dark mode */
-        :host-context(.dark) .wf-guidance--rejet {
-            background: rgba(220, 38, 38, 0.1);
-            border-color: rgba(220, 38, 38, 0.3);
-            border-left-color: #ef4444;
+        /* Dark mode (.app-dark & .dark) */
+        :host-context(.app-dark) .wf-guidance--neutre,
+        :host-context(.dark) .wf-guidance--neutre {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+            border-left-color: #64748b !important;
         }
+        :host-context(.app-dark) .wf-guidance--neutre .wf-guidance-icone,
+        :host-context(.dark) .wf-guidance--neutre .wf-guidance-icone {
+            color: #94a3b8 !important;
+        }
+        :host-context(.app-dark) .wf-guidance--action,
+        :host-context(.dark) .wf-guidance--action {
+            background: rgba(34, 197, 94, 0.15) !important;
+            border-color: rgba(34, 197, 94, 0.3) !important;
+            border-left-color: #22c55e !important;
+        }
+        :host-context(.app-dark) .wf-guidance--action .wf-guidance-icone,
+        :host-context(.dark) .wf-guidance--action .wf-guidance-icone {
+            color: #4ade80 !important;
+        }
+        :host-context(.app-dark) .wf-guidance--attente,
+        :host-context(.dark) .wf-guidance--attente {
+            background: rgba(59, 130, 246, 0.15) !important;
+            border-color: rgba(59, 130, 246, 0.3) !important;
+            border-left-color: #3b82f6 !important;
+        }
+        :host-context(.app-dark) .wf-guidance--attente .wf-guidance-icone,
+        :host-context(.dark) .wf-guidance--attente .wf-guidance-icone {
+            color: #60a5fa !important;
+        }
+        :host-context(.app-dark) .wf-guidance--fin,
+        :host-context(.dark) .wf-guidance--fin {
+            background: rgba(100, 116, 139, 0.2) !important;
+            border-color: rgba(100, 116, 139, 0.4) !important;
+            border-left-color: #94a3b8 !important;
+        }
+        :host-context(.app-dark) .wf-guidance--fin .wf-guidance-icone,
+        :host-context(.dark) .wf-guidance--fin .wf-guidance-icone {
+            color: #94a3b8 !important;
+        }
+        :host-context(.app-dark) .wf-guidance--rejet,
+        :host-context(.dark) .wf-guidance--rejet {
+            background: rgba(220, 38, 38, 0.1) !important;
+            border-color: rgba(220, 38, 38, 0.3) !important;
+            border-left-color: #ef4444 !important;
+        }
+        :host-context(.app-dark) .wf-guidance--rejet .wf-guidance-titre,
         :host-context(.dark) .wf-guidance--rejet .wf-guidance-titre {
-            color: #fca5a5;
+            color: #fca5a5 !important;
+        }
+        :host-context(.app-dark) .wf-guidance--rejet .wf-guidance-icone,
+        :host-context(.dark) .wf-guidance--rejet .wf-guidance-icone {
+            color: #f87171 !important;
+        }
+        :host-context(.app-dark) .wf-guidance-titre,
+        :host-context(.dark) .wf-guidance-titre {
+            color: #f8fafc !important;
+        }
+        :host-context(.app-dark) .wf-guidance-detail,
+        :host-context(.dark) .wf-guidance-detail {
+            color: #cbd5e1 !important;
+        }
+        :host-context(.app-dark) .wf-guidance-liste,
+        :host-context(.dark) .wf-guidance-liste {
+            color: #f8fafc !important;
+        }
+        :host-context(.app-dark) .wf-guidance-champs,
+        :host-context(.dark) .wf-guidance-champs,
+        :host-context(.app-dark) .wf-guidance-attente-liste,
+        :host-context(.dark) .wf-guidance-attente-liste {
+            border-top-color: #334155 !important;
+            color: #94a3b8 !important;
         }
 
         .wf-guidance-detail { color: var(--text-color-secondary, #475569); margin-top: 0.125rem; }
@@ -209,7 +274,7 @@ export class WorkflowGuidanceComponent {
             '9': 9  // CLOTURE
         };
 
-        const currentStep = parent?.etatDeTraitement || state?.currentStateCode || '';
+        const currentStep = parent?.etatTraitement || state?.currentStateCode || '';
         const currentOrder = STEP_ORDER[currentStep] || 0;
 
         const saisies = state?.saisies || [];

@@ -31,23 +31,32 @@ export class ChoixDeChampService {
 
     /**
      * Valeurs proposées pour une source.
+     * Si une structureId est fournie (ex: structure destinataire du dossier), elle est utilisée en priorité.
      */
-    choix(source: string): Observable<ChoixDeChamp[]> {
+    choix(source: string, structureId?: string | null): Observable<ChoixDeChamp[]> {
         const cle = source.trim().toUpperCase();
-        const dejaDemande = this.cache.get(cle);
+        const sId = structureId || (cle === '@UTILISATEURS_MA_STRUCTURE' ? getCurrentUserStructure()?.id : null);
+        const cacheKey = sId ? `${cle}:${sId}` : cle;
+
+        const dejaDemande = this.cache.get(cacheKey);
         if (dejaDemande) {
             return dejaDemande;
         }
 
-        const flux = this.interroger(cle).pipe(
+        const flux = this.interroger(cle, sId).pipe(
             catchError(() => of([] as ChoixDeChamp[])),
             shareReplay({ bufferSize: 1, refCount: false })
         );
-        this.cache.set(cle, flux);
+        this.cache.set(cacheKey, flux);
         return flux;
     }
 
-    private interroger(cle: string): Observable<ChoixDeChamp[]> {
+    /** Vide le cache en mémoire (ex: lors d'une déconnexion ou changement de contexte). */
+    nettoyerCache(): void {
+        this.cache.clear();
+    }
+
+    private interroger(cle: string, structureId?: string | null): Observable<ChoixDeChamp[]> {
         switch (cle) {
             case '@STRUCTURES':
                 return this.structureService.getAllStructure().pipe(
@@ -57,11 +66,11 @@ export class ChoixDeChampService {
                     })))
                 );
             case '@UTILISATEURS_MA_STRUCTURE': {
-                const maStructure = getCurrentUserStructure();
-                if (!maStructure?.id) {
+                const sId = structureId || getCurrentUserStructure()?.id;
+                if (!sId) {
                     return of([]);
                 }
-                return this.authService.loadAgentPublicByService(maStructure.id).pipe(
+                return this.authService.loadAgentPublicByService(sId).pipe(
                     map((reponse: any) => (reponse?.data?.content ?? []).map((agent: any) => {
                         const userObj = agent.user ? agent.user : agent;
                         return {

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
@@ -599,7 +599,7 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     const type = this.route.snapshot.queryParamMap.get('type');
     this.formulaire.reset({ actif: true, resourceType: type ?? null });
     this.etapes.clear();
-    this.ajouterEtape();
+    this.ajouterEtape(false);
   }
 
   private chargerCircuit(id: string): void {
@@ -612,8 +612,8 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (complet) => {
-          this.chargement = false;
           this.remplirFormulaire(complet);
+          this.chargement = false;
         },
         error: (erreur: WorkflowError) => {
           this.chargement = false;
@@ -712,8 +712,9 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     return identifiantParCode.get(transition.toStepCode) ?? null;
   }
 
-  ajouterEtape(): void {
+  ajouterEtape(autoScroll = true): void {
     const precedente = this.etapes.length > 0 ? this.etapes.at(this.etapes.length - 1) : null;
+    const nouvelIndex = this.etapes.length;
     this.etapes.push(
       this.fb.group({
         identifiantLocal: [nouvelIdentifiantLocal()],
@@ -737,6 +738,17 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
         fields: this.fb.array([])
       })
     );
+
+    if (autoScroll) {
+      setTimeout(() => {
+        const element = document.getElementById(`etape-card-${nouvelIndex}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const premierInput = element.querySelector('input') as HTMLInputElement | null;
+          premierInput?.focus();
+        }
+      }, 100);
+    }
   }
 
   supprimerEtape(index: number): void {
@@ -829,10 +841,73 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
 
   // ---------------------------------------------------------------- enregistrement
 
+  isFieldInvalid(control: AbstractControl | null | undefined): boolean {
+    return !!control && control.invalid && (control.touched || control.dirty);
+  }
+
+  private trouverPremierMessageErreur(): string | null {
+    if (this.formulaire.get('nom')?.invalid) {
+      return 'Le nom du circuit est obligatoire.';
+    }
+    if (this.formulaire.get('resourceType')?.invalid) {
+      return 'Le type de ressource est obligatoire.';
+    }
+    for (let i = 0; i < this.etapes.length; i++) {
+      const etape = this.etapes.at(i);
+      const nomEtape = etape.get('nomEtape')?.value || `Étape ${i + 1}`;
+      if (etape.get('nomEtape')?.invalid) {
+        return `Étape ${i + 1} : le nom de l’étape est obligatoire.`;
+      }
+      if (etape.get('responsableRole')?.invalid) {
+        return `« ${nomEtape} » : le rôle responsable est obligatoire.`;
+      }
+      const actions = etape.get('actions') as FormArray;
+      if (actions) {
+        for (let j = 0; j < actions.length; j++) {
+          if (actions.at(j).get('decision')?.invalid) {
+            return `« ${nomEtape} » (Action ${j + 1}) : la nature de l’action est obligatoire.`;
+          }
+        }
+      }
+      const fields = etape.get('fields') as FormArray;
+      if (fields) {
+        for (let k = 0; k < fields.length; k++) {
+          const field = fields.at(k);
+          if (field.get('fieldLabel')?.invalid) {
+            return `« ${nomEtape} » (Champ ${k + 1}) : le libellé affiché est obligatoire.`;
+          }
+          if (field.get('fieldName')?.invalid) {
+            return `« ${nomEtape} » (Champ ${k + 1}) : le nom technique est obligatoire.`;
+          }
+          if (field.get('type')?.invalid) {
+            return `« ${nomEtape} » (Champ ${k + 1}) : le type de champ est obligatoire.`;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private scrollerVersPremierInvalide(): void {
+    setTimeout(() => {
+      const premierInvalide = document.querySelector(
+        '.ng-invalid:not(form):not([formGroupName]):not([formArrayName]), [aria-invalid="true"]'
+      ) as HTMLElement | null;
+      if (premierInvalide) {
+        premierInvalide.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (premierInvalide instanceof HTMLInputElement || premierInvalide instanceof HTMLTextAreaElement) {
+          premierInvalide.focus();
+        }
+      }
+    }, 100);
+  }
+
   enregistrer(): void {
     if (this.formulaire.invalid) {
       this.formulaire.markAllAsTouched();
-      this.alertService.showWarning('Renseignez les champs obligatoires avant d’enregistrer.');
+      const messageErreur = this.trouverPremierMessageErreur();
+      this.alertService.showWarning(messageErreur || 'Renseignez les champs obligatoires avant d’enregistrer.');
+      this.scrollerVersPremierInvalide();
       return;
     }
     if (this.etapes.length === 0) {

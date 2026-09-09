@@ -23,9 +23,9 @@ import { RechercheGlobaleComponent } from '@shared';
 import { NonConformiteLayoutComponent } from '@features/non-conformite/layout';
 import { 
     NcVueEnsembleComponent, 
-    NcPublieesComponent, 
+    NcSuiviComponent, 
     NcComposeComponent, 
-    NCTraitementSuiviComponent 
+    NCTraitementComponent 
 } from '@features/non-conformite/pages';
 // ❌ SUPPRIMÉS — Ces pages par étape sont remplacées par nc-traitement-suivi (moteur workflow).
 // Les dossiers correspondants peuvent être supprimés physiquement.
@@ -62,6 +62,7 @@ import {
 } from '@features/workflow';
 import { permissionGuard } from '../core/guards/permission.guard';
 import { LicenceComponent } from '@core/licence';
+import { PlanActionComponent } from '@features/non-conformite/pages/plan-action/plan-action.component';
 
 // Les permissions déclarées ici reprennent celles du menu (app.menu.ts) : une entrée masquée
 // correspond à une route fermée. Les noms en majuscules sont les anciennes permissions, encore
@@ -408,7 +409,21 @@ export default [
             // { path: 'analyse-cloture', component: AnalyseClotureComponent, ... },
             // { path: 'suivi', component: NCSuiviComponent, ... },
             {
-                path: 'traitement-suivi', component: NCTraitementSuiviComponent, title: 'Traitement & Suivi',
+                path: 'traitement', component: NCTraitementComponent, title: 'Traitement',
+                canActivate: [permissionGuard],
+                data: { 
+                    permissions: [
+                        'nc-read', 'NC_READ', 'CONSULTATION_NC', 
+                        'nc-impute', 'IMPUTATION_NC', 
+                        'nc-receive', 'RECEPTION_NC', 
+                        'nc-validate', 'VALIDATION_RQ', 'VALIDATION_CHEF', 
+                        'nc-close', 'RQ_NC', 
+                        'plan-action-read', 'plan-action-write', 'TRAITEMENT_PLAN'
+                    ] 
+                }
+            },
+                        {
+                path: 'plan-action', component: PlanActionComponent, title: 'Plan d\'action',
                 canActivate: [permissionGuard],
                 data: { 
                     permissions: [
@@ -422,11 +437,11 @@ export default [
                 }
             },
             {
-                path: 'publiees', component: NcPublieesComponent, title: 'Mes Non-Conformitées publiées',
+                path: 'suivi', component: NcSuiviComponent, title: 'Suivi des non-conformités',
                 canActivate: [permissionGuard],
                 data: { permissions: ['nc-read', 'NC_READ', 'CONSULTATION_NC'] }
             },
-            { path: 'nc-publiees', redirectTo: 'publiees', pathMatch: 'full' },
+            // { path: 'suivi', redirectTo: 'suivi', pathMatch: 'full' },
             // { path: 'actions', component: TraitementGlobalComponent, ... }, // ❌ Absorbé par /traitement-suivi
         ]
     },

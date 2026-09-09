@@ -10,7 +10,7 @@ import { NgPrimeModule } from '@prime-ng';
 import { WorkflowActionsComponent, WorkflowDecisionDialogComponent, DecisionConfirmee } from '@shared';
 import { WorkflowService } from '@features/workflow';
 import { ResultatDecisionDto, StepDecision, WorkflowActionDto } from '@features/workflow/models';
-import { ProcNonConformiteService, NonConformiteService } from '../../services';
+import { ProcNonConformiteService, NonConformiteService, NiveauNonConformiteService } from '../../services';
 import { Router } from '@angular/router';
 import { GlobalSearchService } from '@shared';
 
@@ -83,6 +83,7 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
 
     rowMenuItems: MenuItem[] = [];
     activeRow: any;
+    gravitesMap = new Map<string, string>();
 
     constructor(
         private messageService: MessageService,
@@ -93,7 +94,8 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
         private workflowService: WorkflowService,
         private router: Router,
         private globalNcService: NonConformiteService,
-        private globalSearchService: GlobalSearchService
+        private globalSearchService: GlobalSearchService,
+        private niveauService: NiveauNonConformiteService
     ) {
     }
 
@@ -256,12 +258,28 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
 
     circuitAvance() {
         this.closeDetailsDialog();
+        this.nonConformiteService.rafraichirNotifications();
         this.featureService.onReloadRequested(true);
     }
 
     ngOnInit() {
         this.updateColsFilter();
-        console.log("DONNEES DU TABLEAU INITIALES (ngOnInit) :", this.demandeList);
+        this.chargerCouleursGravites();
+    }
+
+    private chargerCouleursGravites() {
+        this.niveauService.findAll().subscribe({
+            next: (res: any) => {
+                const list = res?.data?.content || res?.data || (Array.isArray(res) ? res : []);
+                list.forEach((niveau: any) => {
+                    if (niveau.couleur) {
+                        if (niveau.id) this.gravitesMap.set(niveau.id, niveau.couleur);
+                        if (niveau.libelle) this.gravitesMap.set(niveau.libelle.toLowerCase().trim(), niveau.couleur);
+                    }
+                });
+            },
+            error: () => { /* repli automatique sur les couleurs par défaut */ }
+        });
     }
 
     ngAfterViewInit() {
@@ -300,7 +318,7 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
             'numeroReference', 'numeroDeReference', 'numeroNc',
             'structureSoumissionLibelle', 'structureDeSoumissionLibelle', 'procEmetteur',
             'typeNonConformiteLibelle', 'sourceDeNonConformiteLibelle',
-            'niveauNonConformiteLibelle', 'etatDeTraitement', 'status',
+            'niveauNonConformiteLibelle', 'etatTraitement', 'status',
             'description', 'justification'
         ];
         this.colsFilter = Array.from(new Set([...baseFields, ...extraFields]));
@@ -402,18 +420,53 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
         return 'secondary';
     }
 
-    getGravityStyle(gravity: string): { [key: string]: string } {
-        const severity = this.getSeverity(gravity);
-        switch (severity) {
-            case 'danger':
-                return { 'color': '#ef4444' };
-            case 'warn':
-                return { 'color': '#f97316' };
-            case 'info':
-                return { 'color': '#0084ca' };
-            default:
-                return { 'color': '#64748b' };
+    getGravityColor(gravity: string, rowData?: any): string {
+        const id = rowData?.niveauNonConformiteId || rowData?.nonConformite?.niveauNonConformiteId;
+        if (id && this.gravitesMap.has(id)) {
+            return this.gravitesMap.get(id)!;
         }
+        const libelle = (gravity || '').toLowerCase().trim();
+        if (libelle && this.gravitesMap.has(libelle)) {
+            return this.gravitesMap.get(libelle)!;
+        }
+        // Couleurs harmonieuses par défaut si non trouvé
+        if (libelle.includes('critique') || libelle.includes('danger')) return '#ef4444';
+        if (libelle.includes('majeur')) return '#f97316';
+        if (libelle.includes('mineur')) return '#0284c7';
+        return '#64748b';
+    }
+
+    private hexToRgb(hex: string): { r: number, g: number, b: number } | null {
+        if (!hex) return null;
+        let c = hex.replace('#', '');
+        if (c.length === 3) {
+            c = c.split('').map(char => char + char).join('');
+        }
+        if (c.length === 6) {
+            const num = parseInt(c, 16);
+            return {
+                r: (num >> 16) & 255,
+                g: (num >> 8) & 255,
+                b: num & 255
+            };
+        }
+        return null;
+    }
+
+    getGravityBadgeStyle(gravity: string, rowData?: any): { [key: string]: string } {
+        const hex = this.getGravityColor(gravity, rowData);
+        const rgb = this.hexToRgb(hex) || { r: 100, g: 116, b: 139 };
+        return {
+            'background-color': `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`,
+            'color': hex,
+            'border': `1px solid rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.28)`,
+            'font-weight': '600',
+            'letter-spacing': '0.025em'
+        };
+    }
+
+    getGravityStyle(gravity: string): { [key: string]: string } {
+        return { 'color': this.getGravityColor(gravity) };
     }
 
     isRejet(rowData: any): boolean {
@@ -442,7 +495,7 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
             '9': 9  // CLOTURE
         };
 
-        const currentOrder = STEP_ORDER[rowData.etatDeTraitement || ''] || 0;
+        const currentOrder = STEP_ORDER[rowData.etatTraitement || ''] || 0;
 
         // Rechercher dans l'historique à quelle étape le document de rejet a été attaché
         const saisies = rowData.workflowState?.saisies || [];
@@ -469,7 +522,7 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
         }
 
         // Cas de repli : retour à l'étape initiale SOUMISSION
-        if (rowData.etatDeTraitement === 'SOUMISSION' && rowData.status !== 'DRAFT') {
+        if (rowData.etatTraitement === 'SOUMISSION' && rowData.status !== 'DRAFT') {
             return true;
         }
 
@@ -479,11 +532,23 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
     getWorkflowStatusSeverity(statusName: string, rowData?: any): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
         if (!statusName) return 'info';
         const val = statusName.toLowerCase().trim();
-        if (this.isRejet(rowData)) {
+        if (this.isRejet(rowData) || val.includes('rejet') || val === 'rejected') {
             return 'danger'; // 🔴 Rouge pour indiquer un rejet
         }
-        if (val.includes('clôture') || val.includes('cloture')) {
+        if (val.includes('clôture') || val.includes('cloture') || val === 'closed') {
             return 'success'; // 🟢 Vert
+        }
+        if (val === 'draft' || val === 'brouillon') {
+            return 'secondary';
+        }
+        if (val === 'in_progress' || val === 'en cours') {
+            return 'info';
+        }
+        if (val === 'published' || val === 'publié' || val === 'publiée') {
+            return 'info';
+        }
+        if (val === 'archived' || val === 'archivé') {
+            return 'secondary';
         }
         return 'info'; // 🔵 Bleu par défaut
     }
@@ -494,8 +559,21 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
         if (this.isRejet(rowData)) {
             return 'Rejetée (À corriger)';
         }
-        if (val.toLowerCase() === 'clôture' || val.toLowerCase() === 'cloture') {
+        const lower = val.toLowerCase();
+        if (lower === 'clôture' || lower === 'cloture' || lower === 'closed') {
             return 'Clôturé';
+        }
+        if (lower === 'in_progress') {
+            return 'En cours';
+        }
+        if (lower === 'draft' || lower === 'brouillon') {
+            return 'Brouillon';
+        }
+        if (lower === 'published' || lower === 'publié' || lower === 'publiée') {
+            return 'Publiée';
+        }
+        if (lower === 'archived' || lower === 'archivé') {
+            return 'Archivé';
         }
         return val;
     }
@@ -548,7 +626,7 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
             });
         } else {
             // Si c'est rejeté à l'étape SOUMISSION, on permet la modification et la suppression
-            if (this.isRejet(rowData) && rowData.etatDeTraitement === 'SOUMISSION') {
+            if (this.isRejet(rowData) && rowData.etatTraitement === 'SOUMISSION') {
                 this.rowMenuItems.push({
                     label: 'Modifier',
                     icon: 'pi pi-pencil',
