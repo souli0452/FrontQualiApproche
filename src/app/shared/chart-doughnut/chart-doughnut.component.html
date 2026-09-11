@@ -1,0 +1,29 @@
+<div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 sm:p-5 shadow-sm">
+    
+    <!-- Titre optionnel avec margin-bottom réduit (mb-2 au lieu de mb-4) -->
+    <h3 *ngIf="title" class="text-base font-bold text-surface-900 dark:text-surface-50 mb-2">
+        {{ title }}
+    </h3>
+    
+    <!-- Zone du graphique avec une hauteur fixe (ex: 200px) et sans flex-grow -->
+    <div class="h-[250px] max-[1300px]:h-[300px] w-full relative">
+        
+        <!-- Graphique PrimeNG (on enlève flex justify-center pour laisser ChartJS gérer) -->
+        <p-chart *ngIf="data && data.datasets && data.datasets[0]?.data?.length; else emptyChart" 
+                 type="doughnut" 
+                 [data]="data" 
+                 [options]="options" 
+                 [plugins]="customPlugins" 
+                 class="block w-full h-full quali-doughnut">
+        </p-chart>
+        
+        <!-- Affichage si aucune donnée -->
+        <ng-template #emptyChart>
+            <div class="h-full w-full flex flex-col items-center justify-center text-surface-400 text-sm italic gap-3">
+                <i class="pi pi-chart-pie text-3xl text-surface-300"></i>
+                <span>Aucune donnée disponible</span>
+            </div>
+        </ng-template>
+        
+    </div>
+</div>

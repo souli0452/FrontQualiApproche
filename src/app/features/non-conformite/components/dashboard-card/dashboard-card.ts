@@ -29,12 +29,12 @@ export const DASHBOARD_CARDS_AGENT: StatsCardConfig[] = [
     description: "Vos Non-Conformités en cours de traitement"
   },
   {
-    label: 'En attente',
-    valueKey: 'published',
+    label: 'Mes Actions en Retard',
+    valueKey: 'retard',
     color: 'red',
-    icon: 'pi pi-exclamation-triangle',
-    badge: 'En attente',
-    description: "Non-conformités en attente d'approbation de votre Pilote"
+    icon: 'pi pi-clock',
+    badge: 'En retard',
+    description: "Plans d'action dont l'échéance est dépassée"
   },
   {
     label: 'Cloturées',
@@ -52,7 +52,7 @@ export const DASHBOARD_CARDS_CHEF: StatsCardConfig[] = [
     label: 'Total Déclarées',
     valueKey: 'total',
     color: 'orange',
-    icon: 'pi pi-arrow-right',
+    icon: 'pi pi-chart-line',
     badge: 'Non-Conformités totales déclarées',
     description: "Toutes les anomalies relevées par l'ensemble des utilisateurs de votre service"
   },
@@ -60,7 +60,7 @@ export const DASHBOARD_CARDS_CHEF: StatsCardConfig[] = [
     label: 'En cours de traitement',
     valueKey: 'enCours',
     color: 'blue',
-    icon: 'pi pi-arrow-right',
+    icon: 'pi pi-sync',
     badge: 'Non-Conformités en cours de traitement',
     description: "Centralisation de tous les dossiers actifs dans votre service"
   },
@@ -68,52 +68,56 @@ export const DASHBOARD_CARDS_CHEF: StatsCardConfig[] = [
     label: 'En Retard',
     valueKey: 'retard',
     color: 'red',
-    icon: 'pi pi-arrow-right',
+    icon: 'pi pi-clock',
     badge: "Délais d'exécution dépassés",
-    description: "Actions correctives hors délais dans votre service"
+    description: "NC & actions hors délais dans votre service",
+    hasExtra: true
   },
   {
     label: 'Clôturées',
     valueKey: 'cloturees',
     color: 'green',
-    icon: 'pi pi-arrow-right',
+    icon: 'pi pi-check-circle',
     badge: "Anomalies résolues",
-    description: "Anomalies entièrement résolues"
+    description: "Anomalies entièrement résolues",
+    hasExtra: true
   }
 ];
 
 export const DASHBOARD_CARDS_RQ: StatsCardConfig[] = [
-        {
-            label: 'Total Déclarées',
-            valueKey: 'total',
-            color: 'orange',
-            icon: 'pi pi-arrow-right',
-            badge: 'Non-Conformités totales déclarées',
-            description: "Toutes les anomalies relevées dans le système"
-        },
-        {
-            label: 'En cours de traitement',
-            valueKey: 'enCours',
-            color: 'blue',
-            icon: 'pi pi-arrow-right',
-            badge: 'Non-Conformités en cours de traitement',
-            description: "Dossiers actifs",
-            hasExtra: true
-        },
-        {
-            label: 'En Retard',
-            valueKey: 'retard',
-            color: 'red',
-            icon: 'pi pi-arrow-right',
-            badge: "Délais dépassés",
-            description: "Actions hors délais"
-        },
-        {
-            label: 'Clôturées',
-            valueKey: 'cloturees',
-            color: 'green',
-            icon: 'pi pi-arrow-right',
-            badge: "Résolues",
-            description: "Anomalies clôturées"
-        }
-    ];
+  {
+    label: 'Total Déclarées',
+    valueKey: 'total',
+    color: 'orange',
+    icon: 'pi pi-chart-line',
+    badge: 'Non-Conformités totales déclarées',
+    description: "Toutes les anomalies"
+  },
+  {
+    label: 'En cours de traitement',
+    valueKey: 'enCours',
+    color: 'blue',
+    icon: 'pi pi-sync',
+    badge: 'Non-Conformités en cours de traitement',
+    description: "Dossiers actifs",
+    hasExtra: true
+  },
+  {
+    label: 'En Retard',
+    valueKey: 'retard',
+    color: 'red',
+    icon: 'pi pi-clock',
+    badge: "Délais dépassés",
+    description: "NC & actions hors délais",
+    hasExtra: true
+  },
+  {
+    label: 'Clôturées',
+    valueKey: 'cloturees',
+    color: 'green',
+    icon: 'pi pi-check-circle',
+    badge: "Résolues",
+    description: "Anomalies clôturées",
+    hasExtra: true
+  }
+];

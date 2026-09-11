@@ -1,30 +1,27 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
 import { NgPrimeModule } from '@prime-ng';
+import { Subject, takeUntil, debounceTime } from 'rxjs';
+
+import { FeaturesService } from '@core';
+import { currentUserState, getCurrentUserStructure } from '@core/auth';
+import { AuthData } from '../../../../models/auth.model';
+import { EtapeTraitement, NiveauNonConformite } from '../../models';
+
 import { 
-    // A SUPPRIMER
-    // NcStatsCardComponent, 
-    AlerteTraitement, 
     DASHBOARD_CARDS_AGENT, 
     DASHBOARD_CARDS_CHEF, 
     DASHBOARD_CARDS_RQ, 
-    TraitementTableComponent, 
-    // A SUPPRIMER
-    // NcFilter, 
-    NcFilterBarComponent 
+    StatsCardConfig,
+    KpiCardComponent,
+    TraitementTableComponent 
 } from '../../components';
-import { AuthService, /* A SUPPRIMER : isUserInRoles, */ currentUserState, getCurrentUserStructure } from '@core/auth';
-import { Subject, takeUntil, /* A SUPPRIMER : forkJoin, of, */ debounceTime } from 'rxjs';
-import { FeaturesService } from '@core';
-import { RoleService, NonConformiteService } from '../../services';
+
+import { RoleService, NonConformiteService, NiveauNonConformiteService } from '../../services';
+import { StructureService, CategorieProcessusService } from '@features/organigramme/services';
 import { buildDashboardStats } from '../../utils';
 import { NcVueEnsembleFacade } from './vue-ensemble.facade';
-import { AuthData } from '../../../../models/auth.model';
-import { EtapeTraitement } from '../../models';
-import { StructureService } from '@features/organigramme/services';
-
-import { CardStatsAdminComponent } from '@shared';
+import { BreakdownItem, SmartAlertBannerComponent, SmartAlertItem, ChartEvolutionComponent, ChartFilterEvent } from '@shared';
 
 @Component({
     selector: 'app-vue-ensemble',
@@ -32,396 +29,269 @@ import { CardStatsAdminComponent } from '@shared';
     imports: [
         CommonModule, 
         NgPrimeModule,
-        // A SUPPRIMER
-        // NcStatsCardComponent,
-        CardStatsAdminComponent,
-        // AlerteTraitement,
-        // NcFilterBarComponent,
-        // TraitementTableComponent
+        KpiCardComponent,
+        SmartAlertBannerComponent,
+        ChartEvolutionComponent,
+        TraitementTableComponent
     ],
     templateUrl: './vue-ensemble.component.html',
     styleUrl: './vue-ensemble.component.scss'
 })
 export class NcVueEnsembleComponent implements OnInit, OnDestroy {
 
+    // =========================================================================
+    // 1. ÉTATS & PROPRIÉTÉS GÉNÉRALES
+    // =========================================================================
     loading: boolean = false;
     dashboardData: any;
-
-    // A SUPPRIMER : Variable jamais utilisée dans le template ni dans les calculs
-    // filteredNc: any[] = [];
-
-    countBrouillon: number = 0;
-    countImputees: number = 0;
-    countReception: number = 0;
-    countValidationRQ: number = 0;
-    /** Dossiers en attente de validation et d'affectation par le responsable qualité. */
-    countValidationRqAffectation: number = 0;
-    countAffectation: number = 0;
-    countValidationPilote: number = 0;
-    countCloture: number = 0;
-    countNonTraiter: number = 0;
-    countNonConformiteCloturee: number = 0;
-
-    // A SUPPRIMER : Variables du graphique d'évolution (commenté dans le HTML)
-    /*
-    evolutionTotal: number = 0;
-    evolutionPourcentage: string = '';
-    countCritique: number = 0;
-    countMajeure: number = 0;
-    countMineure: number = 0;
-    */
-
-    // Calcul automatique du total global basé sur la liste unique de toutes les NC actives
-    get countTotal(): number {
-        return this.allActiveNCs.length;
-    }
-
-    brouillonData: any[] = [];
-    allActiveNCs: any[] = [];
-
-    // A SUPPRIMER : Pagination et filtres du tableau (commenté dans le HTML)
-    /*
-    filteredActiveNCs: any[] = [];
-    paginatedNCs: any[] = [];
-    currentPage: number = 0;
-    pageSize: number = 10;
-    currentFilters: any = {};
-    colsDashboard: any[] = [];
-    */
-
-    imputationsData: any[] = [];
-    receptionData: any[] = [];
-    validationRqData: any[] = [];
-    validationRqAffectationData: any[] = [];
-    affectationData: any[] = [];
-
-    // A SUPPRIMER : currentUser n'est pas lu, le composant utilise directement currentUserState.value
-    // currentUser: AuthData | null = null;
-
     userStructure: any = {};
-    validationPiloteData: any[] = [];
-    clotureData: any[] = [];
-    nonTraiterData: any[] = [];
-    nonConformiteClotureeData: any[] = [];
-    soumissionData: any[] = [];
-    countSoumission: number = 0;
+    private destroy$ = new Subject<void>();
 
-    // 🛡️ GARDE DE CHARGEMENT — empêche les appels concurrents à loadUserNcData().
-    private ncDataLoading = false;
-
+    // Statistiques consolidées issues du backend
     stats: any = {
         total: 0,
         enCours: 0,
         retard: 0,
-        imputees: 0,
         cloturees: 0,
+        imputees: 0,
         draft: 0,
         published: 0,
-        pendingPilot: 0,
-        rejectedByPilot: 0,
-        pendingRq: 0,
-        rejectedByRq: 0,
-        pendingAssignment: 0,
-        inProgress: 0,
-        pendingPilotReview: 0,
-        pendingClosure: 0,
-        closed: 0,
-        archived: 0
+        inProgress: 0
     };
 
-    // A SUPPRIMER : Variables du graphique d'évolution (commenté dans le HTML)
-    /*
+    // Sous-métriques de validation (pour Chef et RQ)
+    countValidationRQ: number = 0;
+    countValidationPilote: number = 0;
+    countPlansActionEnCours: number = 0;
+    countNonConformiteCloturee: number = 0;
+
+    // Compteurs pour la Smart Inbox d'alertes
+    countNcATraiter: number = 0;
+    countPlansATraiter: number = 0;
+
+    // =========================================================================
+    // 2. CONFIGURATION DES KPI CARDS
+    // =========================================================================
+    dashboardCardsAgent = DASHBOARD_CARDS_AGENT;
+    dashboardCardsChef  = DASHBOARD_CARDS_CHEF;
+    dashboardCardsRQ    = DASHBOARD_CARDS_RQ;
+
+    get managerCards(): StatsCardConfig[] {
+        if (this.roleService.isAgent) return this.dashboardCardsAgent;
+        if (this.roleService.isChef)  return this.dashboardCardsChef;
+        return this.dashboardCardsRQ;
+    }
+
+    get countTotal(): number {
+        return this.stats?.total || 0;
+    }
+
+    get totalSubText(): string {
+        const enCours = this.stats?.enCours || 0;
+        const retard  = this.stats?.retard || 0;
+        return `• ${enCours} Active${enCours > 1 ? 's' : ''} • ${retard} Retard`;
+    }
+
+    get meterMax(): number {
+        const total = this.stats?.total || 0;
+        return total > 0 ? total : 100;
+    }
+
+    // =========================================================================
+    // 3. SMART ALERTS (Bandeau de notification d'action requise)
+    // =========================================================================
+    get smartAlerts(): SmartAlertItem[] {
+        const list: SmartAlertItem[] = [];
+        if (this.countNcATraiter > 0) {
+            list.push({
+                id: 'nc-a-traiter',
+                count: this.countNcATraiter,
+                badgeText: 'Action requise',
+                message: `Non-conformité${this.countNcATraiter > 1 ? 's' : ''} en attente de traitement`,
+                icon: 'pi pi-exclamation-circle',
+                color: 'amber',
+                routerLink: '/non-conformite/traitement',
+                actionLabel: 'Traiter'
+            });
+        }
+        if (this.countPlansATraiter > 0) {
+            list.push({
+                id: 'plans-a-traiter',
+                count: this.countPlansATraiter,
+                badgeText: "Plan d'action",
+                message: `Plan${this.countPlansATraiter > 1 ? 's' : ''} d'action à réaliser`,
+                icon: 'pi pi-file-edit',
+                color: 'sky',
+                routerLink: '/non-conformite/plan-action',
+                actionLabel: 'Consulter'
+            });
+        }
+        return list;
+    }
+
+    // =========================================================================
+    // 4. RÉFÉRENTIELS & GAUGES (MeterGroup, Gravités & Processus)
+    // =========================================================================
+    niveauxReferentiel: NiveauNonConformite[] = [];
+    niveauxMeterData: any[] = [];
+    totalNcNiveaux: number = 0;
+    scoreSeveriteMoyen: number = 0;
+    appreciationRisque: string = 'Aucun incident';
+    couleurRisque: string = 'text-surface-500';
+
+    retardMeterData: any[] = [];
+    retardProgressionItems: any[] = [];
+    clotureMeterData: any[] = [];
+    clotureProgressionItems: any[] = [];
+
+    processusReferentiel: any[] = [];
+    processusItems: any[] = [];
+
+    // =========================================================================
+    // 5. GRAPHIQUE D'ÉVOLUTION & PERFORMANCE DES DÉLAIS
+    // =========================================================================
     chartData: any;
     chartOptions: any;
     selectedYear: Date = new Date();
     selectedMonth: Date | null = null;
     selectedStructure: string | null = null;
     structuresList: any[] = [];
-    */
+    evolutionTotal: number = 0;
+    evolutionPourcentage: string = '';
+    evolutionBreakdownItems: BreakdownItem[] = [];
 
+    performanceChartData: any;
+    performanceChartOptions: any;
+    tauxResolutionNC: number = 0;
+    slaRespecte: number = 0;
+    slaRetard: number = 0;
+    slaRetardPct: number = 0;
+    moyResolution: string = '12';
 
-    private destroy$ = new Subject<void>();
-
-    private resetUserDataState(): void {
-        this.countBrouillon = 0;
-        this.brouillonData = [];
-        this.allActiveNCs = [];
-
-        this.countImputees = 0;
-        this.imputationsData = [];
-
-        this.countReception = 0;
-        this.receptionData = [];
-
-        this.countAffectation = 0;
-        this.affectationData = [];
-
-        this.countValidationPilote = 0;
-        this.validationPiloteData = [];
-
-        this.countValidationRQ = 0;
-        this.validationRqData = [];
-        this.countValidationRqAffectation = 0;
-        this.validationRqAffectationData = [];
-
-        this.countCloture = 0;
-        this.clotureData = [];
-
-        this.countNonTraiter = 0;
-        this.nonTraiterData = [];
-
-        this.countNonConformiteCloturee = 0;
-        this.nonConformiteClotureeData = [];
-
-        this.countSoumission = 0;
-        this.soumissionData = [];
+    get tauxResolution(): number {
+        const total = this.stats?.total || 0;
+        const cloturees = this.stats?.cloturees || 0;
+        if (total === 0) return 100;
+        return Math.round((cloturees / total) * 100);
     }
-    
+
+    // Plugin de centrage du texte dans le Doughnut Chart
+    performancePlugins = [{
+        id: 'centerTextPerf',
+        beforeDraw: (chart: any) => {
+            const ctx = chart.ctx;
+            const meta = chart.getDatasetMeta(0);
+            if (!meta || !meta.data || meta.data.length === 0) return;
+            
+            const centerX = meta.data[0].x;
+            const centerY = meta.data[0].y;
+            
+            ctx.save();
+            ctx.font = 'bold 22px sans-serif';
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-color') || '#0f172a';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(this.tauxResolution + '%', centerX, centerY - 7);
+            
+            ctx.font = '600 11px sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('résolution', centerX, centerY + 13);
+            ctx.restore();
+        }
+    }];
+
+    // =========================================================================
+    // 6. TABLEAUX OPÉRATIONNELS (Traitements & Plans d'action)
+    // =========================================================================
+    protected readonly BtnActions = EtapeTraitement;
+
+    // Colonnes compactes optimisées pour les widgets de dashboard
+    colsTraitement = [
+        { field: 'numeroReference', header: 'N° Réf', type: 'string', width: '70px' },
+    ];
+    colsPlanAction = [
+        { field: 'numeroReference', header: 'N° Réf NC', type: 'string', width: '80px' },
+        { field: 'numeroOdre', header: 'N°', type: 'string', width: '30px', centered: true },
+    ];
+
+    traitementsList: any[] = [];
+    totalTraitements: number = 0;
+    loadingTraitements: boolean = false;
+    pageTraitement: number = 0;
+
+    plansActionList: any[] = [];
+    totalPlansAction: number = 0;
+    loadingPlans: boolean = false;
+    pagePlanAction: number = 0;
+
+    // =========================================================================
+    // CONSTRUCTEUR
+    // =========================================================================
     constructor(
         private nonConformiteService: NonConformiteService,
-        private authService: AuthService,
+        private niveauService: NiveauNonConformiteService,
         private featureService: FeaturesService,
         private structureService: StructureService,
+        private categorieProcessusService: CategorieProcessusService,
         public roleService: RoleService,
-        private facade: NcVueEnsembleFacade,
-    ) {} 
+        private facade: NcVueEnsembleFacade
+    ) {}
 
-    // A SUPPRIMER : Méthodes de filtrage du tableau (commenté dans le HTML)
-    /*
-    handleFilter(event: NcFilter) {
-        this.currentFilters = event;
-        this.currentPage = 0; // Reset pagination when filtering
-        this.applyLocalFilters();
-    }
-
-    applyLocalFilters() {
-        const filters = this.currentFilters || {} as any;
-        const { dateDebut, dateFin, process, gravite, origine } = filters;
-
-        const filterFn = (item: any) => {
-            if (!item) return false;
-            let isValid = true;
-
-            if (dateDebut || dateFin) {
-                const itemDateStr = item.dateCreation || item.createdAt || item.date || item.dateVisaEmetteur;
-                if (itemDateStr) {
-                    const itemDate = new Date(itemDateStr);
-                    itemDate.setHours(0,0,0,0);
-                    
-                    if (dateDebut) {
-                        const start = new Date(dateDebut);
-                        start.setHours(0,0,0,0);
-                        if (itemDate < start) isValid = false;
-                    }
-                    if (dateFin) {
-                        const end = new Date(dateFin);
-                        end.setHours(23,59,59,999);
-                        if (itemDate > end) isValid = false;
-                    }
-                }
-            }
-            
-            if (process && process.length > 0) {
-                const selectedIds = process.map((p: any) => p.id);
-                // process emetteur can be typeProcessusId or process.id etc.
-                if (!selectedIds.includes(item.categorieProcessusId) && !selectedIds.includes(item.nonConformite?.categorieProcessusId)) {
-                    isValid = false;
-                }
-            }
-
-            if (gravite && gravite.length > 0) {
-                const selectedIds = gravite.map((g: any) => g.id);
-                if (!selectedIds.includes(item.niveauNonConformiteId) && !selectedIds.includes(item.nonConformite?.niveauNonConformiteId)) {
-                    isValid = false;
-                }
-            }
-
-            if (origine && origine.length > 0) {
-                const selectedIds = origine.map((o: any) => o.id);
-                if (!selectedIds.includes(item.sourceDeNonConformiteId) && !selectedIds.includes(item.nonConformite?.sourceDeNonConformiteId)) {
-                    isValid = false;
-                }
-            }
-
-            return isValid;
-        };
-
-        this.filteredActiveNCs = this.allActiveNCs.filter(filterFn);
-        this.updatePaginatedNCs();
-    }
-    */
-
+    // =========================================================================
+    // CYCLE DE VIE DU COMPOSANT
+    // =========================================================================
     ngOnInit(): void {
-        // A SUPPRIMER : souscription à currentUser non exploitée
-        /*
-        this.authService.currentUser$
-            .pipe(takeUntil(this.destroy$))
-            .subscribe(user => {
-                this.currentUser = user;
-        });
-        */
         this.userStructure = getCurrentUserStructure();
-        
-        // A SUPPRIMER : colonnes du tableau (commenté dans le HTML)
-        /*
-        this.colsDashboard = [
-            { field: 'numeroReference', header: 'N° Ref', type: 'string', width: '150px' },
-            { 
-                field: 'structureSoumissionLibelle', 
-                header: 'Processus Emetteur', 
-                type: 'string', 
-                width: 'fit-content'
-            },
-            { field: 'dateVisaEmetteur', header: 'Date soumission', type: 'string', width: '200px' },
-            { field: 'workflowStatus', header: 'Étape du circuit', type: 'enum', width: '220px' },
-            { field: 'niveauNonConformiteLibelle', header: 'Gravité', type: 'badge', width: '150px' }
-        ];
-        */
 
-        // ─── RESPONSABILITÉ 1 : KPIs / Stats (agrégés depuis la base, par rôle) ───────────
+        // 1. Chargement des données métier de base
         this.loadDashboardData();
+        this.loadNiveauxReferentiel();
+        this.loadCategoriesProcessus();
+        this.loadEvolutionStats();
 
-        // ─── RESPONSABILITÉ 2 : Tableau des NC à traiter (piloté par le workflow) ─────────
-        this.loadUserNcData();
+        // 2. Chargement des deux tables opérationnelles
+        this.loadTraitements();
+        this.loadPlansAction();
 
-        // A SUPPRIMER : Chargement structures et initialisation du graphique (commenté dans le HTML)
-        /*
-        if (this.roleService.isAdmin || this.roleService.isRQ) {
-            this.loadStructures();
-        }
-        */
+        // 3. Écoute réactive des notifications pour la Smart Inbox
+        this.nonConformiteService.notificationsNC$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(notifs => {
+                this.countNcATraiter    = notifs?.aTraiter || 0;
+                this.countPlansATraiter = notifs?.planAction || 0;
+            });
 
-        // ─── RAFRAÎCHISSEMENT après action workflow ──────────────────────────────────────
+        // 4. Ventilation par étape pour les managers
+        this.chargerVentilationEtapes();
+
+        // 5. Rechargement global réactif lors d'actions workflow
         this.featureService.reaload$
-            .pipe(
-                debounceTime(300),
-                takeUntil(this.destroy$)
-            )
+            .pipe(debounceTime(300), takeUntil(this.destroy$))
             .subscribe(() => {
                 this.loadDashboardData();
-                this.loadUserNcData();
+                this.loadTraitements();
+                this.loadPlansAction();
+                this.nonConformiteService.rafraichirNotifications();
+                this.chargerVentilationEtapes();
             });
-            
-        // A SUPPRIMER : Stats et options du graphique d'évolution (commenté dans le HTML)
-        /*
-        this.loadEvolutionStats();
-        this.initChart();
-        */
 
-        // A SUPPRIMER : Logs de debug
-        /*
-        console.log("Rôles de l'utilisateur connecté :", this.roleService);
-        console.log("Permissions de l'utilisateur connecté :", this.currentUser?.permissions);
-        console.log("STRUCTURE DE L'UTILISATEUR CONNECTE (vue-ensemble) :", this.userStructure);
-        console.log("ETAT DE L'UTILISATEUR COURANT (vue-ensemble) :", currentUserState.value);
-        */
-    }
-
-    // A SUPPRIMER : Méthodes liées au graphique d'évolution et aux structures (commenté dans le HTML)
-    /*
-    loadStructures() {
-        this.structureService.getAllStructures().subscribe({
-        next: (res) => {
-            if (res.data) {
-                this.structuresList = res.data.content.map((s: any) => ({
-                    nom: s.libelleCourt, 
-                    id: s.id
-                }));
-            }
-        },
-        error: (err) => {
-            console.error("Erreur lors du chargement des structures", err);
+        // 6. Charger les structures pour le filtre si profil habilité
+        if (this.roleService.isAdmin || this.roleService.isRQ || this.roleService.isChef) {
+            this.loadStructures();
         }
-        });
     }
 
-    loadEvolutionStats() {
-        const annee = this.selectedYear
-            ? this.selectedYear.getFullYear()
-            : new Date().getFullYear();
-
-        const mois = this.selectedMonth
-            ? this.selectedMonth.getMonth() + 1
-            : undefined;
-
-        const structureId =
-            this.roleService.isChef
-            ? this.userStructure?.id
-            : (this.selectedStructure || undefined);
-
-        this.facade.loadEvolutionStats(annee, mois, structureId)
-            .subscribe({
-            next: (data: any) => {
-                this.chartData = data.chartData;
-                this.evolutionTotal = data.evolutionTotal;
-                this.evolutionPourcentage = data.evolutionPourcentage;
-                this.countCritique = data.countCritique;
-                this.countMajeure = data.countMajeure;
-                this.countMineure = data.countMineure;
-            },
-            error: (err) => {
-                console.error("Erreur lors de la récupération des stats d'évolution", err);
-            }
-            });
+    ngOnDestroy(): void {
+        this.destroy$.next();
+        this.destroy$.complete();
     }
 
-    initChart() {
-        this.chartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false 
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
-                    padding: 10,
-                    cornerRadius: 8,
-                    mode: 'index', 
-                    intersect: false
-                }
-            },
-            scales: {
-                x: {
-                    stacked: true,
-                    grid: {
-                        display: false,
-                        drawBorder: false
-                    },
-                    ticks: {
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        font: {
-                            size: 11
-                        }
-                    }
-                },
-                y: {
-                    stacked: true,
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)',
-                        drawBorder: false,
-                        borderDash: [5, 5]
-                    },
-                    ticks: {
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        font: {
-                            size: 11
-                        },
-                        stepSize: 5
-                    }
-                }
-            }
-        };
-    }
-    */
-
-    loadDashboardData() {
+    // =========================================================================
+    // CHARGEMENT DES DONNÉES (API)
+    // =========================================================================
+    loadDashboardData(): void {
         this.loading = true;
-
         const authData = currentUserState.value as AuthData | any;
-
         if (!authData || !authData.permissions) {
             this.loading = false;
             return;
@@ -430,293 +300,495 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         const currentUserId = authData.userId;
         const role = this.getUserRole();
 
-        // ✅ ROUTAGE PAR RÔLE
+        // Aiguillage API selon le profil connecté
         switch (role) {
-
             case 'AGENT':
-            this.nonConformiteService.nonConformiteDashboardAgent(currentUserId!)
-                .pipe(takeUntil(this.destroy$))
-                .subscribe({
-                next: (response: any) => {
-                    this.dashboardData = response.body.data;
-                    this.updateKpis();
-                    this.loading = false;
-                },
-                error: (error: any) => {
-                    this.loading = false;
-                }
-                });
-            break;
+                this.nonConformiteService.nonConformiteDashboardAgent(currentUserId!)
+                    .pipe(takeUntil(this.destroy$))
+                    .subscribe({
+                        next: (response: any) => {
+                            this.dashboardData = response.body.data;
+                            this.updateKpis();
+                            this.loading = false;
+                        },
+                        error: () => this.loading = false
+                    });
+                break;
 
             case 'CHEF':
-            this.nonConformiteService.nonConformiteDashboardPilot(this.userStructure?.id)
-                .pipe(takeUntil(this.destroy$))
-                .subscribe({
-                next: (response: any) => {
-                    this.dashboardData = response.body.data;
-                    this.updateKpis();
-                    this.loading = false;
-                },
-                error: (error: any) => {
-                    this.loading = false;
-                }
-                });
-            break;
+                this.nonConformiteService.nonConformiteDashboardPilot(this.userStructure?.id)
+                    .pipe(takeUntil(this.destroy$))
+                    .subscribe({
+                        next: (response: any) => {
+                            this.dashboardData = response.body.data;
+                            this.updateKpis();
+                            this.loading = false;
+                        },
+                        error: () => this.loading = false
+                    });
+                break;
 
             case 'RQ':
-            this.nonConformiteService.nonConformiteDashboardRq()
-                .pipe(takeUntil(this.destroy$))
-                .subscribe({
-                next: (response: any) => {
-                    this.dashboardData = response.body.data;
-                    this.updateKpis();
-                    this.loading = false;
-                },
-                error: (error: any) => {
-                    this.loading = false;
-                }
-                });
-            break;
-                }
-    }
-
-    private loadUserNcData() {
-    // 🛡️ GARDE : si un chargement est déjà en cours, on ignore cet appel.
-    // Raison : reaload$ peut émettre plusieurs fois à des intervalles supérieurs
-    // au debounceTime (ex: émission immédiate après HTTP + émission différée après
-    // animation de fermeture du dialog). Sans ce garde, chaque émission aboutirait
-    // à un rechargement complet indépendant, provoquant N affichages du tableau NC.
-    if (this.ncDataLoading) {
-        console.log('[VueEnsemble] loadUserNcData() ignoré — chargement déjà en cours');
-        return;
-    }
-
-    const user = currentUserState.value as AuthData | any;
-
-    if (!user || !user?.userId) {
-        this.resetUserDataState();
-        return;
-    }
-
-    this.ncDataLoading = true; // 🔒 Verrouillage
-
-    this.facade.loadUserNcData(user, this.roleService, this.userStructure)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-        next: (data: any) => {
-            console.log("loadUserNcData", data);
-            console.log("TOUTES LES NC DE L'UTILISATEUR (allUserNcs) :", data.allUserNcs);
-            
-            this.brouillonData = data.brouillonData;
-            this.imputationsData = data.imputationsData;
-            this.receptionData = data.receptionData;
-            this.affectationData = data.affectationData;
-            this.validationPiloteData = data.validationPiloteData;
-            this.validationRqData = data.validationRqData;
-            this.validationRqAffectationData = data.validationRqAffectationData;
-            this.clotureData = data.clotureData;
-            this.nonConformiteClotureeData = data.nonConformiteClotureeData;
-            this.nonTraiterData = data.nonTraiterData;
-            this.soumissionData = data.soumissionData || [];
-
-            // ✅ Calcul des compteurs en excluant les NC rejetées (qui sont comptées à part dans countSoumission)
-            this.countBrouillon = this.brouillonData.length;
-            this.countImputees = this.imputationsData.filter((nc: any) => !nc.rejeter).length;
-            this.countReception = this.receptionData.filter((nc: any) => !nc.rejeter).length;
-            this.countAffectation = this.affectationData.filter((nc: any) => !nc.rejeter).length;
-            this.countValidationPilote = this.validationPiloteData.filter((nc: any) => !nc.rejeter).length;
-            this.countValidationRQ = this.validationRqData.filter((nc: any) => !nc.rejeter).length;
-            this.countValidationRqAffectation = this.validationRqAffectationData.filter((nc: any) => !nc.rejeter).length;
-            this.countCloture = this.clotureData.filter((nc: any) => !nc.rejeter).length;
-            this.countNonConformiteCloturee = this.nonConformiteClotureeData.length;
-            this.countNonTraiter = this.nonTraiterData.length;
-            this.countSoumission = this.soumissionData.length;
-
-            // ✅ Recalcul des statistiques du tableau de bord pour l'Agent en se basant sur le circuit réel (etatTraitement)
-            if (this.roleService.isAgent) {
-                const allNcs = data.allUserNcs || [];
-                const isCloturee = (nc: any) =>
-                    (nc.etatTraitement === 'CLOTURE' ||
-                     nc.workflowStatus === 'Clôture' ||
-                     nc.workflowStatus === 'CLOTURE');
-
-                this.stats = {
-                    total: allNcs.length,
-                    enCours: allNcs.filter((nc: any) => !isCloturee(nc) && nc.status !== 'DRAFT').length,
-                    published: allNcs.filter((nc: any) => nc.etatTraitement === 'RECEPTION').length,
-                    cloturees: allNcs.filter((nc: any) => isCloturee(nc)).length
-                };
-            }
-
-
-            console.log('🔄 [VUE-ENSEMBLE] Sous-indicateurs et stats mis à jour par loadUserNcData :', {
-                countValidationPilote: this.countValidationPilote,
-                countValidationRQ: this.countValidationRQ,
-                countNonConformiteCloturee: this.countNonConformiteCloturee,
-                statsAgent: this.roleService.isAgent ? this.stats : 'N/A'
-            });
-
-            // ✅ Fusionner toutes les listes actives dans allActiveNCs
-            const mergedList: any[] = [];
-            
-            if (this.brouillonData && this.brouillonData.length > 0) {
-                this.brouillonData.forEach(item => {
-                    mergedList.push({ ...item, status: 'DRAFT' });
-                });
-            }
-
-            const otherActiveLists = [
-                this.receptionData,
-                this.validationRqAffectationData,
-                this.affectationData,
-                this.imputationsData,
-                this.validationRqData,
-                this.validationPiloteData,
-                this.clotureData,
-                this.nonTraiterData,
-                this.soumissionData
-            ];
-
-            otherActiveLists.forEach(list => {
-                if (list && list.length > 0) {
-                    list.forEach(item => {
-                        if (!mergedList.some(existing => existing.id === item.id)) {
-                            mergedList.push(item);
-                        }
+                this.nonConformiteService.nonConformiteDashboardRq()
+                    .pipe(takeUntil(this.destroy$))
+                    .subscribe({
+                        next: (response: any) => {
+                            this.dashboardData = response.body.data;
+                            this.updateKpis();
+                            this.loading = false;
+                        },
+                        error: () => this.loading = false
                     });
+                break;
+        }
+    }
+
+    loadTraitements(): void {
+        this.loadingTraitements = true;
+        this.nonConformiteService.nonConformiteATraiterPage(this.pageTraitement, 5)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (res: any) => {
+                    this.traitementsList = res?.data?.content ?? res?.content ?? [];
+                    this.totalTraitements = res?.data?.totalElements ?? res?.totalElements ?? 0;
+                    this.loadingTraitements = false;
+                },
+                error: () => this.loadingTraitements = false
+            });
+    }
+
+    loadPlansAction(): void {
+        this.loadingPlans = true;
+        this.nonConformiteService.planActionsATraiterPage(this.pagePlanAction, 5)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (res: any) => {
+                    this.plansActionList = res?.data?.content ?? res?.content ?? [];
+                    this.totalPlansAction = res?.data?.totalElements ?? res?.totalElements ?? 0;
+                    this.loadingPlans = false;
+                },
+                error: () => this.loadingPlans = false
+            });
+    }
+
+    onPageChangeTraitement(event: { page: number, size: number }): void {
+        this.pageTraitement = event.page;
+        this.loadTraitements();
+    }
+
+    onPageChangePlanAction(event: { page: number, size: number }): void {
+        this.pagePlanAction = event.page;
+        this.loadPlansAction();
+    }
+
+    loadStructures(): void {
+        this.structureService.getAllStructures()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (res: any) => {
+                    const list = res?.data?.content || (Array.isArray(res?.data) ? res.data : []);
+                    this.structuresList = list.map((s: any) => ({
+                        nom: s.libelleCourt || s.libelle || s.nom,
+                        id: s.id
+                    }));
+                },
+                error: (err) => console.error("Erreur chargement des structures", err)
+            });
+    }
+
+    loadNiveauxReferentiel(): void {
+        this.niveauService.findAllAsList(0, 50, undefined, { 'X-Skip-Loader': 'true' })
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (res: any) => {
+                    const list = Array.isArray(res) ? res : (res?.data || res?.content || []);
+                    this.niveauxReferentiel = (list && list.length > 0)
+                        ? [...list].sort((a, b) => (a.score || 0) - (b.score || 0))
+                        : this.getFallbackNiveaux();
+                    this.calculerMeterGroupData();
+                },
+                error: () => {
+                    this.niveauxReferentiel = this.getFallbackNiveaux();
+                    this.calculerMeterGroupData();
                 }
             });
-
-            this.allActiveNCs = mergedList;
-            // A SUPPRIMER : Filtrage local du tableau (commenté dans le HTML)
-            // this.applyLocalFilters();
-
-            // ✅ countSoumission compte toutes les NC rejetées pour la notification "Non-Conformités rejetées"
-            this.countSoumission = this.allActiveNCs.filter((nc: any) => nc.rejeter).length;
-
-            // ✅ Mise à jour du badge dans le menu global et les onglets spécifiques
-            // this.nonConformiteService.notificationsNC$.next({
-            //     total: this.countTotal,
-            //     brouillons: this.countBrouillon,
-            //     imputees: this.countImputees,
-            //     reception: this.countReception,
-            //     validationRQ: this.countValidationRQ + this.countValidationRqAffectation,
-            //     validationPilote: this.countValidationPilote,
-            //     cloture: this.countCloture,
-            //     affectation: this.countAffectation,
-            //     nonTraiter: this.countNonTraiter,
-            //     soumission: this.countSoumission
-            // });
-            
-            // ✅ Utilise le résumé officiel du backend sans écraser par des données locales
-            this.nonConformiteService.rafraichirNotifications();
-
-            this.ncDataLoading = false; // 🔓 Déverrouillage après succès
-        },
-        error: (err) => {
-            console.error(err);
-            this.resetUserDataState();
-            this.ncDataLoading = false; // 🔓 Déverrouillage même en cas d'erreur
-        }
-        });
     }
 
-    // A SUPPRIMER : Pagination manuelle du tableau (commenté dans le HTML)
-    /*
-    onPageChange(event: any) {
-        this.currentPage = event.page;
-        this.pageSize = event.size;
-        this.updatePaginatedNCs();
+    loadCategoriesProcessus(): void {
+        this.categorieProcessusService.findAll(0, 100)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (res: any) => {
+                    this.processusReferentiel = res?.data?.content || res?.content || (Array.isArray(res) ? res : []);
+                    this.calculerProcessusData();
+                },
+                error: (err) => console.error('Erreur chargement processus', err)
+            });
     }
 
-    updatePaginatedNCs() {
-        const start = this.currentPage * this.pageSize;
-        const end = start + this.pageSize;
-        this.paginatedNCs = this.filteredActiveNCs.slice(start, end);
+    loadEvolutionStats(): void {
+        const annee = this.selectedYear ? this.selectedYear.getFullYear() : new Date().getFullYear();
+        const mois  = this.selectedMonth ? this.selectedMonth.getMonth() + 1 : undefined;
+        const structureId = this.roleService.isChef ? this.userStructure?.id : (this.selectedStructure || undefined);
+
+        this.facade.loadEvolutionStats(annee, mois, structureId)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (data: any) => {
+                    this.chartData = data.chartData;
+                    this.evolutionTotal = data.totalEvolution;
+                    
+                    const maxScore = this.niveauxReferentiel.length > 0 
+                        ? Math.max(...this.niveauxReferentiel.map(n => n.score || 1)) 
+                        : 5;
+
+                    let scoreTotalPondere = 0;
+
+                    if (data.gravites && Array.isArray(data.gravites)) {
+                        const fallbackColors = ['#ef4444', '#f97316', '#22c55e', '#3b82f6', '#a855f7'];
+
+                        this.evolutionBreakdownItems = data.gravites.map((g: any, idx: number) => {
+                            const libelle = g.nom || g.libelle || g.label || 'Niveau';
+                            const count = g.count ?? g.nombre ?? 0;
+                            
+                            const matchRef = this.niveauxReferentiel.find(r => 
+                                (r.id && g.id && r.id === g.id) || 
+                                (r.libelle && libelle && r.libelle.trim().toLowerCase() === libelle.trim().toLowerCase())
+                            );
+
+                            const scoreUnit = g.score ?? matchRef?.score ?? 1;
+                            const colorHex = g.couleur || matchRef?.couleur || fallbackColors[idx % fallbackColors.length];
+                            scoreTotalPondere += count * scoreUnit;
+
+                            return { label: libelle, count: count, customColor: colorHex };
+                        });
+
+                        if (this.chartData && Array.isArray(this.chartData.datasets)) {
+                            this.chartData.datasets = this.chartData.datasets.map((ds: any, idx: number) => {
+                                const itemColor = this.evolutionBreakdownItems[idx]?.customColor || ds.backgroundColor || '#ef4444';
+                                return {
+                                    ...ds,
+                                    type: 'bar',
+                                    backgroundColor: this.hexToRgba(itemColor, 0.85),
+                                    borderColor: itemColor,
+                                    borderWidth: 1,
+                                    borderRadius: 0,
+                                    borderSkipped: false,
+                                    maxBarThickness: 24
+                                };
+                            });
+                        }
+
+                        if (this.evolutionTotal > 0 && maxScore > 0) {
+                            const maxPossibleScore = this.evolutionTotal * maxScore;
+                            const indiceSeveritePct = Math.round((scoreTotalPondere / maxPossibleScore) * 100);
+                            this.evolutionPourcentage = `Sévérité : ${indiceSeveritePct}%`;
+                        } else {
+                            this.evolutionPourcentage = data.pourcentageEvolution || '0%';
+                        }
+                    } else {
+                        this.evolutionBreakdownItems = [];
+                        this.evolutionPourcentage = '0%';
+                    }
+                },
+                error: (err: any) => console.error("Erreur stats d'évolution", err)
+            });
     }
-    */
 
-    /**Recuperation des Non Conformités de l'utilisateur connecté en fonction de son rôle | FIN */
-
-
-
-    private getUserRole(): 'AGENT' | 'CHEF' | 'RQ' {
-        if (this.roleService.isAgent) return 'AGENT';
-        if (this.roleService.isChef) return 'CHEF';
-        return 'RQ'; // ✅ RQ ou Admin traité pareil ici
+    onChartFilterChange(event: ChartFilterEvent): void {
+        this.selectedYear      = new Date(event.annee, 0, 1);
+        this.selectedMonth     = event.mois ? new Date(event.annee, event.mois - 1, 1) : null;
+        this.selectedStructure = event.structureId || null;
+        this.loadEvolutionStats();
     }
 
+    private chargerVentilationEtapes(): void {
+        this.nonConformiteService.getNonConformitesParEtape()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (res: any) => {
+                    const parEtape = res?.data ?? res ?? {};
+                    this.countValidationPilote = parEtape['EN_ATTENTE_VALIDATION_PILOTE'] ?? 0;
+                    this.countValidationRQ     = parEtape['EN_ATTENTE_VALIDATION_RQ']     ?? 0;
+                },
+                error: () => {
+                    this.countValidationPilote = 0;
+                    this.countValidationRQ     = 0;
+                }
+            });
+    }
 
-    private updateKpis() {
+    // =========================================================================
+    // CALCULS MÉTIER & RÉPARTITIONS
+    // =========================================================================
+    private updateKpis(): void {
         if (!this.dashboardData) return;
 
         this.stats = buildDashboardStats(this.dashboardData);
 
-        // 🔍 LOG COMPLET DES DONNÉES ALIMENTANT LES CARDS STATS
-        console.group('📊 [VUE-ENSEMBLE] ALIMENTATION DES CARDS STATS (updateKpis)');
-        console.log('👤 Rôle actif :', this.getUserRole());
-        console.log('📦 Données brutes reçues du backend (dashboardData) :', this.dashboardData);
-        console.log('🧮 Objet stats calculé (this.stats) :', this.stats);
-        console.table({
-            'Card 1 - Total': { 
-                valeur: this.stats?.total, 
-                source: 'dashboardData.total' 
-            },
-            'Card 2 - En cours': { 
-                valeur: this.stats?.enCours, 
-                source: 'dashboardData.enCours' 
-            },
-            'Card 3 - En retard': { 
-                valeur: this.stats?.retard, 
-                source: 'dashboardData.enRetard' 
-            },
-            'Card 4 - Clôturées': { 
-                valeur: this.stats?.cloturees, 
-                source: 'dashboardData.cloturees' 
-            },
-            'Taux SLA (%)': {
-                valeur: this.stats?.tauxSla,
-                source: 'dashboardData.tauxSla'
-            },
-            'Taux Résolution (%)': {
-                valeur: this.stats?.tauxResolution,
-                source: 'dashboardData.tauxResolution'
-            },
-            'Sous-métrique : Validation Pilote': { 
-                valeur: this.countValidationPilote, 
-                source: 'countValidationPilote' 
-            },
-            'Sous-métrique : Validation RQ': { 
-                valeur: this.countValidationRQ, 
-                source: 'countValidationRQ' 
-            }
+        this.calculerMeterGroupData();
+        this.calculerProcessusData();
+
+        // ─── Carte Rouge : métriques SLA ────────────────────────────────────
+        const tauxSla        = this.dashboardData?.tauxSla        ?? 100;
+        const tauxResolution = this.dashboardData?.tauxResolution ?? 0;
+        const tauxDepassement = Math.max(0, Math.round((100 - tauxSla) * 10) / 10);
+
+        this.retardProgressionItems = [
+            { label: 'Taux SLA',   value: `${tauxSla}%` },
+            { label: 'Résolution', value: `${tauxResolution}%` }
+        ];
+
+        this.retardMeterData = [
+            { label: 'Dans les délais', value: tauxSla,         color: '#22c55e' },
+            { label: 'Hors délais',     value: tauxDepassement, color: '#ef4444' }
+        ].filter(item => item.value > 0);
+
+        // ─── Carte Verte : Performance SMQ (résolution) ─────────────────────
+        const cloturees  = this.stats?.cloturees ?? 0;
+        const totalNc    = this.stats?.total     ?? 0;
+        const enCours    = this.stats?.enCours   ?? 0;
+        const tauxResolV = totalNc > 0 ? Math.round((cloturees / totalNc) * 100) : (cloturees > 0 ? 100 : 0);
+        
+        const performanceSmq = tauxResolV >= 80 ? 'Optimale' : tauxResolV >= 50 ? 'Satisfaisante' : 'En progression';
+
+        this.clotureProgressionItems = [
+            { label: 'Taux résol.',  value: `${tauxResolV}%` },
+            { label: 'Performance',  value: performanceSmq }
+        ];
+
+        this.clotureMeterData = [
+            { label: 'Clôturées', value: cloturees, color: '#22c55e' },
+            { label: 'En cours',  value: enCours,   color: '#3b82f6' }
+        ].filter(item => item.value > 0);
+    }
+
+    calculerMeterGroupData(): void {
+        if (!this.niveauxReferentiel || this.niveauxReferentiel.length === 0) return;
+
+        let totalPoints = 0;
+        let totalNcComptees = 0;
+
+        const counts = this.niveauxReferentiel.map(niveau => {
+            const count = this.compterNcPourNiveau(niveau);
+            const score = Number(niveau.score) || 1;
+            totalNcComptees += count;
+            totalPoints += count * score;
+            return { niveau, count, score };
         });
-        console.groupEnd();
 
-        // A SUPPRIMER : Log de debug
-        // console.log("CALCULATED STATS OBJECT:", this.stats);
+        const statsTotal = this.stats?.total || 0;
 
-        // A SUPPRIMER : Variable jamais utilisée
-        // this.filteredNc = this.dashboardData.nonConformites || this.dashboardData.content || this.dashboardData.ncs || [];
+        if (totalNcComptees === 0 && statsTotal > 0) {
+            const enCours   = this.stats?.enCours   || 0;
+            const cloturees = this.stats?.cloturees || 0;
+            const retard    = this.stats?.retard    || 0;
+            const autres    = Math.max(0, statsTotal - enCours - cloturees - retard);
 
-        // ❌ ANCIENNE ARCHITECTURE — Appel commenté car il créait un couplage non désiré.
-        // updateKpis() est un callback de loadDashboardData() : appeler loadUserNcData() ici
-        // mélangeait deux responsabilités distinctes (KPIs vs. liste NC à traiter) et
-        // provoquait des appels en cascade (loadDashboardData → updateKpis → loadUserNcData).
-        // ✅ NOUVELLE ARCHITECTURE — loadUserNcData() est appelé directement dans ngOnInit(),
-        // en parallèle de loadDashboardData(), de façon indépendante.
-        // this.loadUserNcData();
+            const fallback: any[] = [];
+            if (enCours > 0)   fallback.push({ label: 'En cours',   value: enCours,   color: '#3b82f6' });
+            if (cloturees > 0) fallback.push({ label: 'Clôturées', value: cloturees, color: '#22c55e' });
+            if (retard > 0)    fallback.push({ label: 'En retard',  value: retard,    color: '#ef4444' });
+            if (autres > 0)    fallback.push({ label: 'Autres',     value: autres,    color: '#f59e0b' });
+
+            this.niveauxMeterData   = fallback;
+            this.totalNcNiveaux     = 0;
+            this.scoreSeveriteMoyen = 0;
+            this.appreciationRisque = retard > 0 ? 'Retards détectés' : 'En cours de traitement';
+            this.couleurRisque      = retard > 0 ? 'text-amber-600' : 'text-sky-600';
+            return;
+        }
+
+        if (statsTotal === 0) {
+            this.niveauxMeterData   = [];
+            this.totalNcNiveaux     = 0;
+            this.scoreSeveriteMoyen = 0;
+            this.appreciationRisque = 'Aucun incident';
+            this.couleurRisque      = 'text-surface-500';
+            return;
+        }
+
+        const meterItems = counts.map(({ niveau, count, score }) => ({
+            label: niveau.libelle,
+            value: count,
+            color: (niveau.couleur && niveau.couleur.trim()) ? niveau.couleur.trim() : this.getDefaultColorForScore(score),
+            score: score,
+            icon: score >= 3 ? 'pi pi-exclamation-triangle' : 'pi pi-circle-fill'
+        }));
+
+        this.niveauxMeterData = meterItems.some(i => i.value > 0) ? meterItems.filter(i => i.value > 0) : [];
+        this.totalNcNiveaux   = totalNcComptees;
+        this.scoreSeveriteMoyen = totalNcComptees > 0 ? Math.round((totalPoints / totalNcComptees) * 10) / 10 : 0;
+
+        if (totalNcComptees === 0) {
+            this.appreciationRisque = 'Aucun incident';
+            this.couleurRisque      = 'text-surface-500';
+        } else if (this.scoreSeveriteMoyen <= 1.5) {
+            this.appreciationRisque = 'Risque Faible';
+            this.couleurRisque      = 'text-green-600';
+        } else if (this.scoreSeveriteMoyen <= 2.5) {
+            this.appreciationRisque = 'Risque Modéré';
+            this.couleurRisque      = 'text-amber-600';
+        } else {
+            this.appreciationRisque = 'Risque Critique';
+            this.couleurRisque      = 'text-red-600';
+        }
+
+        // ─── PERFORMANCE DÉLAIS (Doughnut Chart) ────────────────────────────
+        const total = this.stats.total;
+        this.slaRespecte      = this.stats.cloturees || 0;
+        this.tauxResolutionNC = Math.round((this.slaRespecte / total) * 100);
+        this.slaRetard        = this.stats.enRetard || 0;
+        this.slaRetardPct     = Math.round((this.slaRetard / total) * 100);
+
+        this.performanceChartOptions = {
+            cutout: '74%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false }
+            }
+        };
+
+        const surface200 = getComputedStyle(document.documentElement).getPropertyValue('--surface-200') || '#e2e8f0';
+
+        this.performanceChartData = {
+            labels: ['SLA respecté', 'Non résolu'],
+            datasets: [{
+                data: [this.slaRespecte, Math.max(0, total - this.slaRespecte)],
+                backgroundColor: ['#0084ca', surface200],
+                hoverBackgroundColor: ['#0084ca', surface200],
+                borderWidth: 0
+            }]
+        };
     }
 
-    ngOnDestroy() {
-        this.destroy$.next();
-        this.destroy$.complete();
+    private compterNcPourNiveau(niveau: NiveauNonConformite): number {
+        if (!niveau) return 0;
+        const targetLibelle = (niveau.libelle || '').trim().toLowerCase();
+        const targetId = niveau.id ? String(niveau.id).trim().toLowerCase() : '';
+        let total = 0;
+
+        const statsGravity = this.dashboardData?.statsByStatusAndGravity || this.dashboardData?.statsByGravity;
+        if (statsGravity && typeof statsGravity === 'object') {
+            Object.values(statsGravity).forEach((gravMap: any) => {
+                if (gravMap && typeof gravMap === 'object') {
+                    const key = Object.keys(gravMap).find(k => {
+                        const cleanK = k.trim().toLowerCase();
+                        return cleanK === targetLibelle || (targetId && cleanK === targetId);
+                    });
+                    if (key && typeof gravMap[key] === 'number') total += gravMap[key];
+                }
+            });
+        }
+        return total;
     }
 
-    dashboardCardsAgent = DASHBOARD_CARDS_AGENT;
-    dashboardCardsChef = DASHBOARD_CARDS_CHEF;
-    dashboardCardsRQ = DASHBOARD_CARDS_RQ;
+    private calculerProcessusData(): void {
+        if (!this.stats || this.stats.total === 0 || !this.processusReferentiel.length) {
+            this.processusItems = [];
+            return;
+        }
 
-    // A SUPPRIMER : isUserInRoles n'est pas utilisé dans le template
-    // protected readonly isUserInRoles = isUserInRoles;
+        const statsProc = this.dashboardData?.repartitionParProcessus || this.dashboardData?.statsByProcess;
+        const totalProc = this.stats.total;
+        const results: any[] = [];
+        const couleursPalette = ['#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e'];
+        let indexCouleur = 0;
+
+        if (statsProc && typeof statsProc === 'object') {
+            Object.keys(statsProc).forEach(key => {
+                const count = statsProc[key] || 0;
+                if (count > 0) {
+                    const ref = this.processusReferentiel.find(p => p.id === key || p.libelle?.toLowerCase() === key.toLowerCase());
+                    results.push({
+                        label: ref ? ref.libelle : key,
+                        value: count,
+                        percentage: Math.round((count / totalProc) * 100),
+                        color: couleursPalette[indexCouleur % couleursPalette.length]
+                    });
+                    indexCouleur++;
+                }
+            });
+        }
+        this.processusItems = results.sort((a, b) => b.value - a.value);
+    }
+
+    // =========================================================================
+    // HELPERS POUR LES KPI CARDS
+    // =========================================================================
+    getCardValue(card: StatsCardConfig): number | string {
+        if (card.isCustomValue) {
+            return this.countNonConformiteCloturee || 0;
+        }
+        return this.stats?.[card.valueKey] || 0;
+    }
+
+    getCardPercentage(card: StatsCardConfig): number | undefined {
+        const total = this.stats?.total || 0;
+        if (total === 0 && card.valueKey !== 'total') return 0;
+
+        switch (card.valueKey) {
+            case 'total':     return 15;
+            case 'enCours':   return Math.round(((this.stats?.enCours || 0) / total) * 100);
+            case 'cloturees': return Math.round(((this.stats?.cloturees || 0) / total) * 100);
+            case 'retard':    return Math.round(((this.stats?.retard || 0) / total) * 100);
+            default:          return undefined;
+        }
+    }
+
+    getCardProgressionItems(card: StatsCardConfig): any[] {
+        if (!card.hasExtra) return [];
+        if (card.valueKey === 'retard')    return this.retardProgressionItems;
+        if (card.valueKey === 'cloturees') return this.clotureProgressionItems;
+
+        return [
+            { label: 'Validation Pilote', value: this.countValidationPilote || 0 },
+            { label: 'Validation RQ',     value: this.countValidationRQ     || 0 },
+            { label: "Plans d'action",    value: this.countPlansATraiter    || 0 }
+        ];
+    }
+
+    // =========================================================================
+    // UTILITAIRES INTERNES
+    // =========================================================================
+    private getUserRole(): 'AGENT' | 'CHEF' | 'RQ' {
+        if (this.roleService.isAgent) return 'AGENT';
+        if (this.roleService.isChef)  return 'CHEF';
+        return 'RQ';
+    }
+
+    private getFallbackNiveaux(): NiveauNonConformite[] {
+        return [
+            { id: '1', libelle: 'Mineure',  score: 1, couleur: '#22c55e', description: '' },
+            { id: '2', libelle: 'Majeure',  score: 2, couleur: '#f59e0b', description: '' },
+            { id: '3', libelle: 'Critique', score: 3, couleur: '#ef4444', description: '' }
+        ];
+    }
+
+    private getDefaultColorForScore(score: number): string {
+        switch (score) {
+            case 1: return '#22c55e';
+            case 2: return '#3b82f6';
+            case 3: return '#f59e0b';
+            case 4: return '#ef4444';
+            default: return '#64748b';
+        }
+    }
+
+    hexToRgba(hex: string, alpha: number = 0.15): string {
+        if (!hex) return `rgba(148, 163, 184, ${alpha})`;
+        let cleanHex = hex.replace('#', '').trim();
+        if (cleanHex.length === 3) {
+            cleanHex = cleanHex.split('').map(char => char + char).join('');
+        }
+        if (cleanHex.length === 6 || cleanHex.length === 8) {
+            const r = parseInt(cleanHex.substring(0, 2), 16);
+            const g = parseInt(cleanHex.substring(2, 4), 16);
+            const b = parseInt(cleanHex.substring(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+        return hex;
+    }
 }

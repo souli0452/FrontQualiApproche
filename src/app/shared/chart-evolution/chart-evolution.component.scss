@@ -1,0 +1,141 @@
+:host {
+    display: block;
+    width: 100%;
+}
+
+:host ::ng-deep {
+    /* Harmonisation complète des 3 filtres (Services, Année, Mois) - Style Bleu Corporate Compact */
+    p-select.select-clean-filter,
+    .p-select.select-clean-filter,
+    p-datepicker.select-clean-filter,
+    .p-datepicker.select-clean-filter {
+        display: inline-flex !important;
+        align-items: center !important;
+        height: 30px !important;
+        min-height: 30px !important;
+        border-radius: 5px !important;
+        background: var(--info-color) !important;
+        border: none !important;
+        box-shadow: none !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+
+    /* Style du composant PrimeNG Select */
+    p-select.select-clean-filter,
+    .p-select.select-clean-filter {
+        padding: 0 4px !important;
+        min-width: 120px !important;
+
+        &:hover {
+            background: var(--info-color) !important;
+            border-color: none !important;
+        }
+
+        &.p-focus, &:focus-within {
+            border-color: #0084ca !important;
+            box-shadow: 0 0 0 2px rgba(0, 132, 202, 0.3) !important;
+        }
+
+        .p-select-label {
+            color: #ffffff !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            padding: 0.2rem 0.5rem !important;
+
+            &.p-placeholder {
+                color: rgba(255, 255, 255, 0.85) !important;
+                font-weight: 500 !important;
+            }
+        }
+
+        .p-select-dropdown {
+            color: #ffffff !important;
+            width: 1.3rem !important;
+            
+            .p-icon, svg, i {
+                color: #ffffff !important;
+                fill: #ffffff !important;
+                width: 0.75rem !important;
+                height: 0.75rem !important;
+            }
+        }
+
+        .p-select-clear-icon {
+            color: rgba(255, 255, 255, 0.85) !important;
+            font-size: 11px !important;
+        }
+    }
+
+    /* Style du composant PrimeNG Datepicker */
+    p-datepicker.select-clean-filter,
+    .p-datepicker.select-clean-filter {
+        min-width: 105px !important;
+
+        .p-inputtext {
+            height: 30px !important;
+            min-height: 30px !important;
+            background: var(--info-color) !important;
+            width: 100px;
+            border: none !important;
+            border-radius: 5px !important;
+            color: #ffffff !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            padding: 0.2rem 2.2rem 0.2rem 0.6rem !important;
+            box-shadow: none !important;
+            transition: all 0.2s ease-in-out !important;
+
+            &:hover {
+                background: var(--info-color) !important;
+                border-color: none !important;
+            }
+
+            &:focus {
+                border-color: var(--info-color) !important;
+                box-shadow: 0 0 0 2px rgba(0, 132, 202, 0.3) !important;
+            }
+
+            &::placeholder {
+                color: rgba(255, 255, 255, 0.85) !important;
+                font-weight: 500 !important;
+            }
+        }
+
+        .p-datepicker-input-icon-container,
+        .p-datepicker-dropdown,
+        .p-datepicker-trigger {
+            right: 0.5rem !important;
+            color: #ffffff !important;
+
+            .p-icon, svg, i {
+                width: 0.8rem !important;
+                height: 0.8rem !important;
+                color: #ffffff !important;
+                fill: #ffffff !important;
+            }
+        }
+
+        .p-datepicker-clear-icon {
+            color: rgba(255, 255, 255, 0.85) !important;
+            font-size: 11px !important;
+        }
+    }
+
+    /* Dark mode overrides */
+    .dark {
+        p-select.select-clean-filter,
+        .p-select.select-clean-filter,
+        p-datepicker.select-clean-filter,
+        .p-datepicker.select-clean-filter {
+            background: #1e3a5f !important;
+            border-color: #1e3a5f !important;
+        }
+
+        p-datepicker.select-clean-filter .p-inputtext,
+        .p-datepicker.select-clean-filter .p-inputtext {
+            background: #1e3a5f !important;
+            border-color: #1e3a5f !important;
+            color: #ffffff !important;
+        }
+    }
+}

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, catchError, map, Observable, of } from 'rxjs';
+import { BehaviorSubject, catchError, forkJoin, map, Observable, of } from 'rxjs';
 import { QualiUrlConfig, BaseCrudService, AppNotificationService } from '@core';
 import { NonConformiteUrlConfig } from '../components';
 import { EtapeTraitement, NonConformStatus } from '../models';
@@ -35,30 +35,11 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
      * Alimente directement les badges dynamiques du sous-menu / layout Non-Conformité.
      */
     public notificationsNC$ = new BehaviorSubject<{
-        total?: number;
-        brouillons?: number;
-        imputees?: number;
-        reception?: number;
-        validationRQ?: number;
-        enAttenteValidation?: number;
-        validationPilote?: number;
-        cloture?: number;
-        affectation?: number;
-        nonTraiter?: number;
-        soumission?: number;
-        [key: string]: any;
+        aTraiter: number;    // Non-Conformités en attente de traitement (onglet Traitement & alerte 1)
+        planAction: number;  // Actions correctives à réaliser (onglet Plan d'action & alerte 2)
     }>({
-        total: 0,
-        brouillons: 0,
-        imputees: 0,
-        reception: 0,
-        validationRQ: 0,
-        enAttenteValidation: 0,
-        validationPilote: 0,
-        cloture: 0,
-        affectation: 0,
-        nonTraiter: 0,
-        soumission: 0
+        aTraiter: 0,
+        planAction: 0
     });
 
 
@@ -99,69 +80,38 @@ export class NonConformiteService extends BaseCrudService<NonConformite, string>
     }
 
     /**
-     * Déclenche un rafraîchissement des pastilles/badges NC dans toute l'application.
+     * Déclenche un rafraîchissement précis des pastilles/badges NC dans toute l'application.
+     * Interroge directement les deux mêmes sources que les tables réelles de chaque onglet.
      */
     rafraichirNotifications(): void {
-        this.getResumeNotifications().subscribe({
-            next: (res: any) => {
-                const data = res?.data ?? res;
-                const total = data.totalAlertes ?? 0;
-                const brouillons = data.brouillons ?? 0;
-                const aTraiter = data.atraiter ?? data.aTraiter ?? 0;
-                const enAttenteValidation = data.enAttenteValidation ?? 0;
+        forkJoin({
+            ncRes:    this.nonConformiteATraiterPage(0, 1).pipe(catchError(() => of(null))),
+            plansRes: this.planActionsATraiterPage(0, 1).pipe(catchError(() => of(null)))
+        }).subscribe({
+            next: ({ ncRes, plansRes }) => {
+                // 1. Compteur réel des dossiers NC de l'onglet Traitement
+                const ncData = (ncRes as any)?.data ?? ncRes ?? {};
+                const dossiersATraiter = ncData?.totalElements ?? ncData?.total ?? 0;
 
-                                // On interroge la ventilation fine par étape du moteur
-                this.getNonConformitesParEtape().subscribe({
-                    next: (res: any) => {
-                        // 1. Déballer les données
-                        const parEtape = res?.data ?? res ?? {};
-                        // 2. Calculer le total réel des dossiers attendant cet utilisateur
-                                                // 2. Calculer le total réel des dossiers attendant cet utilisateur
-                        const totalEtapes = Object.values(parEtape).reduce((acc: number, val: any) => acc + (Number(val) || 0), 0);
-                        // Ce que l'utilisateur a réellement à traiter (moteur par étape ou aTraiter du résumé)
-                        const dossiersATraiter = totalEtapes > 0 ? totalEtapes : aTraiter;
+                // 2. Compteur réel des plans d'action de l'onglet Plan d'action
+                const plansData = (plansRes as any)?.data ?? plansRes ?? {};
+                const planAction = plansData?.totalElements ?? plansData?.total ?? 0;
 
-                        // 🚀 1. On informe notre Hub central pour le menu latéral !
-                        this.appNotificationService.setModuleBadge('NC', dossiersATraiter);
+                // 🚀 3. Badge global pour la Sidebar (ex: 0 NC + 1 Plan = 1)
+                this.appNotificationService.setModuleBadge('NC', dossiersATraiter + planAction);
 
-                        // 2. On garde la compatibilité avec l'existant
-                        this.notificationsNC$.next({
-                            total: dossiersATraiter,
-                            aTraiter: dossiersATraiter,
-                            totalAlertes: total,
-                            brouillons: parEtape['Soumission'] ?? parEtape['SOUMISSION'] ?? brouillons,
-                            soumission: parEtape['Soumission'] ?? parEtape['SOUMISSION'] ?? 0,
-                            imputees: parEtape['Imputation'] ?? parEtape['IMPUTATION'] ?? parEtape['Traitement'] ?? 0,
-                            enAttenteValidation: enAttenteValidation,
-                            reception: parEtape['Réception'] ?? parEtape['RECEPTION'] ?? 0,
-                            validationRQ: parEtape['Validation RQ'] ?? parEtape['VALIDATION_RQ'] ?? 0,
-                            validationPilote: parEtape['Validation'] ?? parEtape['VALIDATION'] ?? 0,
-                            cloture: parEtape['Clôture'] ?? parEtape['CLOTURE'] ?? 0
-                        });
-
-
-                    },
-                    error: () => {
-                        // Repli de secours sur le résumé standard (ce qui est à traiter)
-                        this.appNotificationService.setModuleBadge('NC', aTraiter);
-                        this.notificationsNC$.next({
-                            total: aTraiter,
-                            aTraiter: aTraiter,
-                            totalAlertes: total,
-                            brouillons: brouillons,
-                            imputees: aTraiter,
-                            enAttenteValidation: enAttenteValidation,
-                            reception: enAttenteValidation,
-                            validationRQ: 0,
-                            validationPilote: 0,
-                            cloture: 0
-                        });
-                    }
+                // 4. Émission des compteurs dédiés pour chaque onglet
+                this.notificationsNC$.next({
+                    aTraiter: dossiersATraiter,
+                    planAction: planAction
                 });
             },
-            error: (err) => console.warn('Erreur lors du rafraîchissement des notifications NC', err)
+            error: (err) => {
+                console.warn('Erreur lors du rafraîchissement des notifications NC', err);
+            }
         });
     }
+
 
 
         /**

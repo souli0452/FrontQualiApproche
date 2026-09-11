@@ -832,3 +832,26 @@ app-traitement-table app-nc-filter-bar > div {
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
 }
+
+
+/* kpi-card.component.scss */
+.kpi-value {
+    /* Tu colles tes classes Tailwind après @apply */
+    @apply text-4xl font-semibold text-surface-900 dark:text-surface-50 pl-12;
+}
+.kpi-label {
+    @apply text-sm font-semibold ml-2;
+}
+
+.quali-doughnut canvas {
+    height: 250px !important;
+}
+.doughnut-droit {
+    height: 100%;
+}
+
+@media(max-width: 600px) {
+    .doughnut-droit {
+        height: auto !important;
+    }
+}

@@ -81,7 +81,9 @@
                 <div class="nc-details-grid">
                     <div class="nc-detail-item">
                         <span class="nc-detail-label">Référence :</span>
-                        <span class="nc-detail-value font-bold bg-surface-100 p-2">{{demande.numeroReference || demande.numeroReference}}</span>
+                        <div class="mt-1">
+                            <p-tag severity="info" [value]="demande.numeroReference" styleClass="tag-pill" />
+                        </div>
                     </div>
                     <div class="nc-detail-item" *ngIf="demande.origineService">
                         <span class="nc-detail-label">Processus Destinataire :</span>
@@ -113,10 +115,16 @@
                         <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">{{demande.actionLibelle}}</span>
                     </div>
                     <div class="nc-detail-item" *ngIf="demande.niveauNonConformiteLibelle">
-                        <span class="nc-detail-label">Niveau de la non conformité:</span>
-                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">
-                            <p-tag [style]="{'font-weight': 'bold'}" [severity]="getStatusSeverity(demande.niveauNonConformiteLibelle)" [value]="demande.niveauNonConformiteLibelle"> </p-tag>
+                        <span class="nc-detail-label">Niveau de la non conformité :</span>
+                        <div class="mt-1">
+                            <span class="text-xs px-2.5 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5 transition-all"
+                                [ngStyle]="getGravityBadgeStyle(demande.niveauNonConformiteLibelle)">
+                                <!-- Point coloré assorti -->
+                                <span class="w-1.5 h-1.5 rounded-full shrink-0" 
+                                    [ngStyle]="{'background-color': getGravityColor(demande.niveauNonConformiteLibelle)}"></span>
+                                {{ demande.niveauNonConformiteLibelle }}
                             </span>
+                        </div>
                     </div>
 
                 </div>

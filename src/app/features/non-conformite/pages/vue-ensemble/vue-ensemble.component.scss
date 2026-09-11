@@ -1,0 +1,162 @@
+:host ::ng-deep {
+    /* ==========================================================================
+       1. Filtres épurés modernes (Style Fintech / SaaS Haut de Gamme)
+       ========================================================================== */
+    p-select.select-clean-structure,
+    .p-select.select-clean-structure {
+        width: 100% !important;
+        display: inline-flex !important;
+        background: var(--surface-50, #f8fafc) !important;
+        border: 1px solid var(--surface-200, #e2e8f0) !important;
+        border-radius: 0.75rem !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        align-items: center !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03) !important;
+
+        &:hover {
+            border-color: var(--primary-color, #0084ca) !important;
+            background: var(--surface-100, #f1f5f9) !important;
+            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05) !important;
+        }
+
+        .p-select-label {
+            color: var(--surface-800, #1e293b) !important;
+            font-size: 0.8125rem !important;
+            font-weight: 500 !important;
+            padding: 0.4rem 0.65rem !important;
+
+            &.p-placeholder {
+                color: var(--surface-400, #94a3b8) !important;
+            }
+        }
+
+        .p-select-dropdown {
+            margin-right: 0.4rem !important;
+
+            .p-icon {
+                color: var(--surface-500, #64748b) !important;
+                width: 0.75rem !important;
+                height: 0.75rem !important;
+            }
+        }
+    }
+
+    p-datepicker.select-clean-date,
+    .p-datepicker.select-clean-date {
+        width: 100% !important;
+        display: block !important;
+
+        .p-datepicker {
+            width: 100% !important;
+            display: block !important;
+        }
+
+        .p-inputtext {
+            width: 100% !important;
+            background: var(--surface-50, #f8fafc) !important;
+            border: 1px solid var(--surface-200, #e2e8f0) !important;
+            border-radius: 0.75rem !important;
+            color: var(--surface-800, #1e293b) !important;
+            font-size: 0.8125rem !important;
+            font-weight: 500 !important;
+            padding: 0.4rem 0.6rem !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03) !important;
+
+            &:hover {
+                border-color: var(--primary-color, #0084ca) !important;
+                background: var(--surface-100, #f1f5f9) !important;
+                box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05) !important;
+            }
+
+            &::placeholder {
+                color: var(--surface-400, #94a3b8) !important;
+            }
+        }
+
+        .p-datepicker-input-icon-container {
+            .p-icon {
+                color: var(--surface-500, #64748b) !important;
+                width: 0.75rem !important;
+                height: 0.75rem !important;
+            }
+        }
+    }
+
+    /* ==========================================================================
+       2. Conteneur Chart.js étendu à 100% (Area Chart)
+       ========================================================================== */
+    .chart-full-wrapper {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0 !important;
+        min-height: 120px !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
+        position: relative !important;
+
+        p-chart {
+            display: block !important;
+            width: 100% !important;
+            height: 100% !important;
+            flex: 1 1 auto !important;
+
+            .p-chart {
+                display: block !important;
+                width: 100% !important;
+                height: 100% !important;
+                position: relative !important;
+
+                canvas {
+                    width: 100% !important;
+                    height: 100% !important;
+                    display: block !important;
+                }
+            }
+        }
+    }
+}
+
+.quali-doughnut {
+    position: relative;
+    top: -45px;
+}
+
+.bloc-droite {
+    margin-top: 40px;
+}
+
+
+:host ::ng-deep .vue-ensemble-table {
+    .bg-blue{
+        border-radius: 0px !important;
+
+        span {
+            font-weight: 500 !important;
+        }
+    }
+    // 1. Masquer la colonne de case à cocher
+    th:first-child,
+    td:first-child {
+        display: none !important;
+    }
+    th:last-child,
+    td:last-child {
+        width: 40px !important;
+        max-width: 40px !important;
+        white-space: nowrap !important;
+    }
+    // 2. Verrouiller la largeur de la colonne N° Réf
+    th:nth-child(2),
+    td:nth-child(2) {
+        width: 50px !important;
+        max-width: 50px !important;
+        white-space: nowrap !important;
+    }
+    // 3. Optionnel : rendre le badge N° Réf plus compact
+    .tag-pill {
+        font-size: 11px !important;
+        padding: 0.2rem 0.5rem !important;
+    }
+}

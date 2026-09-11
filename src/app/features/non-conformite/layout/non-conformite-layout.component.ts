@@ -57,9 +57,9 @@ export class NonConformiteLayoutComponent implements OnInit, OnDestroy {
 
 
     buildMenu(notifs?: any) {
-        // Les dossiers du circuit sont directement donnés par notifs.total (qui vaut 2)
-        const totalDossiersEnCircuit = notifs?.total || 0;
-        const totalPlansATraiter = notifs?.nonTraiter || 0;
+        // Plans d'action en attente de réalisation (alimenté par planActionsATraiterPage)
+        const totalPlansATraiter = notifs?.planAction || 0;
+        const totalDossiersEnCircuit = notifs?.aTraiter || 0;
 
         this.items = [
             { label: "Vue d'ensemble", icon: 'pi pi-chart-bar', routerLink: '/non-conformite/vue-ensemble' },

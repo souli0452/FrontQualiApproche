@@ -14,10 +14,10 @@ import {
     WorkflowSaisiesComponent, 
     WorkflowHistoriqueComponent 
 } from '@features/workflow';
-import { ProcNonConformiteService, PieceJointeFichierService } from '../../services';
 import { convertFilesToBase64 } from '../../../../utils/fichier/fichier-utils';
 import { formatDateToDDMMYYYY } from '../../../../utils/formatage/formatage-utils';
 import { LicenceOuverteDirective } from '@shared';
+import { ProcNonConformiteService, PieceJointeFichierService } from '../../services';
 
 @Component({
     selector: 'app-details-dialog',
@@ -191,6 +191,29 @@ export class DetailsDialogComponent {
     }
 
     protected readonly EtapeTraitement = EtapeTraitement;
+
+
+    getGravityColor(gravity: string): string {
+        const val = (gravity || '').toLowerCase();
+        if (this.demande?.couleur) return this.demande.couleur;
+        if (val.includes('critique') || val.includes('danger')) return '#ef4444';
+        if (val.includes('majeur')) return '#f97316';
+        if (val.includes('mineur')) return '#0284c7';
+        return '#64748b';
+    }
+
+    getGravityBadgeStyle(gravity: string): { [key: string]: string } {
+        const c = this.getGravityColor(gravity);
+        return {
+            'background-color': `${c}1f`,
+            'color': c,
+            'border': `1px solid ${c}47`,
+            'font-weight': '600'
+        };
+    }
+
+
+
 
     getStatusSeverity(gravity: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
         if (!gravity) return 'secondary';

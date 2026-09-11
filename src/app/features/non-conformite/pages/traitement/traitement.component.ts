@@ -90,21 +90,6 @@ export class NCTraitementComponent extends BasePaginationComponent {
         const roles: string[] = cur?.roles || cur?.user?.roles || [];
         const perms: string[] = cur?.permissions || [];
 
-        console.group('%c🔍 [DIAGNOSTIC TRAITEMENT NC] Profil & Habilitations', 'color: #0284c7; font-weight: bold; font-size: 13px;');
-        console.table({
-            'Utilisateur connecté': cur?.email || cur?.user?.email || cur?.username || 'Inconnu',
-            'Nom complet': cur?.fullName || cur?.user?.fullName || (cur?.firstName ? `${cur.firstName} ${cur.lastName}` : 'Inconnu'),
-            'Structure ID': cur?.structure?.id || cur?.user?.structureId || cur?.structureId || 'Aucune',
-            'Structure Libellé': cur?.structure?.libelleCourt || cur?.structure?.libelle || cur?.user?.structureLibelle || 'Aucune',
-            'Rôles': roles.join(', ') || 'Aucun',
-            'Rôle RESPONSABLE_QUALITE ?': roles.map((r: string) => r.toUpperCase()).includes('RESPONSABLE_QUALITE'),
-            'Permission TOUTES_STRUCTURES ?': perms.includes('portee-toutes-structures') || perms.includes('TOUTES_STRUCTURES'),
-            'Permission DECIDER_PARTOUT ?': perms.includes('circuit-decider-partout') || perms.includes('DECIDER_PARTOUT'),
-            'Toutes les permissions': perms.join(', ') || 'Aucune'
-        });
-        console.log('Session brute complète :', cur);
-        console.groupEnd();
-
         this.fetchObject();
 
         this.featureService.reaload$
@@ -262,8 +247,6 @@ export class NCTraitementComponent extends BasePaginationComponent {
         this.loading = true;
         this.nonConformiteService.nonConformiteATraiterPage(this.currentPage, this.pageSize).subscribe({
             next: (res: any) => {
-                console.log('%c📥 [RÉPONSE GET /non-conformite/a-traiter] :', 'color: #10b981; font-weight: bold;', res);
-                console.log('%c📋 [Détail dossiers reçus] :', 'color: #10b981;', 'Total :', res?.data?.totalElements ?? res?.data?.length, 'Contenu :', res?.data?.content ?? res?.data);
                 this.applyPagination(res);
                 this.finalizeDemandeList();
             },

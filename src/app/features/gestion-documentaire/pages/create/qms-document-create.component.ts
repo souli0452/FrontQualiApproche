@@ -17,7 +17,7 @@ import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '../
 import { Subject, takeUntil } from 'rxjs';
 import { ToggleSwitch } from 'primeng/toggleswitch';
 import { SelectInputComponent } from '@shared';
-import { FileUploadComponent } from '@features/non-conformite';
+import { FileUploadComponent } from '@features/non-conformite/components';
 import { LicenceOuverteDirective } from '@shared';
 import { Structure, StructureService } from '@features/organigramme';
 

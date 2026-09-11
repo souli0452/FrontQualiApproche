@@ -51,7 +51,7 @@ type LigneDemande = DemandeDocumentDto & {
 })
 export class QmsDemandesComponent implements OnInit, OnDestroy {
 
-    loading = true;
+   loading: boolean = true;
     demandes: LigneDemande[] = [];
 
     readonly titrePage = 'Demandes sur les documents';

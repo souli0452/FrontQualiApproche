@@ -1,298 +1,237 @@
+
 <p-card>
-
 <!-- ====================================================================
-     1. BANDEAU D'ALERTES (Commenté temporairement pour test des cards)
+     1. BANDEAU D'ALERTES
      ==================================================================== -->
-<!--
-<app-alerte-traitement
-    [countBrouillon]="countBrouillon" 
-    [countImputees]="countImputees" 
-    [countReception]="countReception"
-    [countValidationRqAffectation]="countValidationRQ + countValidationRqAffectation"
-    [countValidationPilote]="countValidationPilote"
-    [countCloture]="countCloture"
-    [countAffectation]="countAffectation"
-    [countNonTraiter]="countNonTraiter"
-    [countSoumission]="countSoumission"
+<app-smart-alert-banner 
+    [alerts]="smartAlerts" 
     [loading]="loading">
-</app-alerte-traitement>
--->
+</app-smart-alert-banner>
 
 <!-- ====================================================================
-     2. SECTION DASHBOARD RQ
+     2. SECTION DASHBOARD MANAGERS (RQ / Chef / Admin)
      ==================================================================== -->
-<div class="grid grid-cols-1 xl:grid-cols-12 gap-6 mt-2 m4-4" *ngIf="roleService.isAdmin || roleService.isRQ">
-    <!-- SECTION GAUCHE : Les 4 blocs de statistiques (ACTIFS) -->
-    <div class="xl:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-5" *ngIf="roleService.isRQ">
-        <app-card-stats-admin 
-            *ngFor="let card of dashboardCardsRQ"
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-5 my-4" *ngIf="roleService.isAdmin || roleService.isRQ || roleService.isChef">
+    <!-- SECTION GAUCHE : Les 4 blocs de statistiques compacts (2x2) -->
+    <div class="col-span-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
+        <app-kpi-card 
+            *ngFor="let card of managerCards; let i = index"
             [label]="card.label"
-            [value]="card.isCustomValue 
-                ? (countNonConformiteCloturee || 0) 
-                : (stats?.[card.valueKey] || 0)"
+            [title]="card.badge"
+            [value]="getCardValue(card)"
             [color]="card.color"
             [icon]="card.icon"
-            [title]="card.badge"
             [description]="card.description"
             [loading]="loading"
-            [progressionItems]="card.hasExtra ? [
-                { label: 'Validation Pilote', value: countValidationPilote, icon: 'pi pi-check-circle' },
-                { label: 'Validation RQ', value: countValidationRQ, icon: 'pi pi-check-circle' }
-            ] : []">
-        </app-card-stats-admin>
+            [percentage]="getCardPercentage(card)"
+            [subText]="i === 0 ? totalSubText : undefined"
+            [meterData]="i === 0 ? niveauxMeterData : (i === 2 ? retardMeterData : undefined)"
+            [meterMax]="i === 0 ? meterMax : (i === 2 ? 100 : undefined)">
+        </app-kpi-card>
+    </div>
+</div>
+<div class="col-span-full grid grid-cols-1 lg:grid-cols-12 gap-5 mt-4" *ngIf="roleService.isAdmin || roleService.isRQ || roleService.isChef">
+    <!-- Bloc 1 : Graphique d'Évolution (Fluide ~65% sur PC) -->
+    <div class="lg:col-span-7 xl:col-span-8 min-w-0 w-full">
+        <app-chart-evolution
+            [title]="'Évolution des NC'"
+            [total]="evolutionTotal"
+            [pourcentage]="evolutionPourcentage"
+            [chartData]="chartData"
+            [chartOptions]="chartOptions"
+            [structuresList]="structuresList"
+            [showStructureFilter]="roleService.isAdmin || roleService.isRQ"
+            [selectedYear]="selectedYear"
+            [selectedMonth]="selectedMonth"
+            [selectedStructure]="selectedStructure"
+            [breakdownItems]="evolutionBreakdownItems"
+            (filterChange)="onChartFilterChange($event)">
+        </app-chart-evolution>
     </div>
 
-    <!-- SECTION DROITE : Le grand bloc du graphique (Commenté temporairement) -->
-    <!--
-    <div class="xl:col-span-5 bg-[#0084ca] rounded-[1.5rem] p-5 flex flex-col relative overflow-hidden shadow-lg">
-        <div class="flex justify-between items-start mb-4 relative z-10">
-            <div>
-                <div class="flex justify-between items-center gap-2 relative z-20 mb-4">
-                    /* 1. Sélecteur de Structure */
-                    <p-select 
-                        [options]="structuresList" 
-                        [(ngModel)]="selectedStructure" 
-                        optionLabel="nom" 
-                        optionValue="id"
-                        [showClear]="true" 
-                        placeholder="Services"
-                        styleClass="p-inputtext-sm"
-                        class="select-structure"
-                        appendTo="body"
-                        size="small"
-                        (onChange)="loadEvolutionStats()">
-                    </p-select>
+    <!-- Bloc 2 : Performance des délais (Compact ~35% sur PC) -->
+    <div class="doughnut-droit lg:col-span-5 xl:col-span-4 min-w-0 w-full bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 sm:p-5 shadow-sm flex flex-col justify-between h-auto lg:h-full">
+        <!-- En-tête -->
+        <div>
+            <h3 class="text-base font-bold text-surface-900 dark:text-surface-50 mb-1">Performance des délais</h3>
+            <p class="text-xs text-surface-500 dark:text-surface-400 mb-2 leading-relaxed">
+                Suivi du respect des SLA et du taux de résolution des non-conformités.
+            </p>
+        </div>
 
-                    /* 2. Sélecteur d'Année (Requis) */
-                    <p-datepicker 
-                        [(ngModel)]="selectedYear" 
-                        view="year" 
-                        dateFormat="yy" 
-                        size="small"
-                        placeholder="Année"
-                        (ngModelChange)="loadEvolutionStats()"
-                        [showIcon]="true" 
-                        appendTo="body"
-                        panelStyleClass="min-w-[18rem]"
-                        class="date-select"
-                        iconDisplay="input">
-                    </p-datepicker>
-
-                    /* 3. Sélecteur de Mois (Optionnel) */
-                    <p-datepicker 
-                        [(ngModel)]="selectedMonth" 
-                        view="month" 
-                        dateFormat="mm" 
-                        size="small"
-                        placeholder="Mois"
-                        [readonlyInput]="true" 
-                        [showClear]="true"
-                        (ngModelChange)="loadEvolutionStats()"
-                        [showIcon]="true" 
-                        appendTo="body"
-                        class="date-select"
-                        panelStyleClass="min-w-[18rem]"
-                        iconDisplay="input">
-                    </p-datepicker>
-                </div>
-
-                <div class="flex flex-row items-center">
-                    <h3 class="text-white text-xl font-bold m-0 px-2 tracking-tight">Évolution des NC</h3>
-                    <div class="flex items-center gap-3">
-                        <span class="text-white text-4xl font-bold">{{ evolutionTotal }}</span>
-                        <span class="bg-white/20 text-white text-xs font-semibold px-2 py-1 rounded-md backdrop-blur-sm"
-                            *ngIf="evolutionPourcentage">{{ evolutionPourcentage }}</span>
-                    </div>
-                </div>
+        <!-- Section Centrale (Doughnut + 3 Indicateurs parfaitement alignés) -->
+        <div class="my-auto py-2">
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5">
                 
-                /* Breakdown par gravité */
-                <div class="flex items-center gap-2 mt-4">
-                    <div class="flex items-center gap-1.5 text-xs font-medium bg-red-500/30 text-white px-2 py-1 rounded-md border border-red-400/50 shadow-sm backdrop-blur-sm">
-                        <span class="w-2 h-2 rounded-full bg-red-400"></span> Critique ({{ countCritique }})
-                    </div>
-                    <div class="flex items-center gap-1.5 text-xs font-medium bg-orange-500/30 text-white px-2 py-1 rounded-md border border-orange-400/50 shadow-sm backdrop-blur-sm">
-                        <span class="w-2 h-2 rounded-full bg-orange-400"></span> Majeure ({{ countMajeure }})
-                    </div>
-                    <div class="flex items-center gap-1.5 text-xs font-medium bg-green-500/30 text-white px-2 py-1 rounded-md border border-green-400/50 shadow-sm backdrop-blur-sm">
-                        <span class="w-2 h-2 rounded-full bg-green-400"></span> Mineure ({{ countMineure }})
-                    </div>
+                <!-- Gauche : Graphique Doughnut (Taille 135px x 135px) -->
+                <div class="w-[135px] h-[135px] relative shrink-0 flex items-center justify-center mx-auto sm:mx-0">
+                    <p-chart *ngIf="performanceChartData" 
+                             type="doughnut" 
+                             [data]="performanceChartData" 
+                             [options]="performanceChartOptions"
+                             [plugins]="performancePlugins"
+                             class="block w-full h-full quali-doughnut">
+                    </p-chart>
                 </div>
 
+                <!-- Droite : 3 cartes d'indicateurs -->
+                <div class="flex-1 w-full flex flex-col sm:h-[135px] sm:justify-between gap-2">
+                    
+                    <!-- 1. SLA respecté -->
+                    <div class="flex items-center gap-3 bg-green-50/60 dark:bg-green-950/20 p-2 sm:p-2.5 rounded-lg border border-green-100 dark:border-green-900/30">
+                        <div class="w-7 h-7 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center shrink-0">
+                            <i class="pi pi-check text-green-600 dark:text-green-400 text-xs font-bold"></i>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-[11px] text-surface-500 dark:text-surface-400 font-medium truncate">SLA respecté</span>
+                            <span class="text-xs font-bold text-surface-900 dark:text-surface-100">{{ slaRespecte }} ({{ tauxResolution }}%)</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. SLA en retard -->
+                    <div class="flex items-center gap-3 bg-red-50/60 dark:bg-red-950/20 p-2 sm:p-2.5 rounded-lg border border-red-100 dark:border-red-900/30">
+                        <div class="w-7 h-7 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center shrink-0">
+                            <i class="pi pi-clock text-red-500 dark:text-red-400 text-xs font-bold"></i>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-[11px] text-surface-500 dark:text-surface-400 font-medium truncate">SLA en retard</span>
+                            <span class="text-xs font-bold text-surface-900 dark:text-surface-100">{{ slaRetard }} ({{ slaRetardPct }}%)</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Temps moyen de résolution -->
+                    <div class="flex items-center gap-3 bg-slate-50 dark:bg-surface-800 p-2 sm:p-2.5 rounded-lg border border-slate-200/60 dark:border-surface-700">
+                        <div class="w-7 h-7 rounded-full bg-slate-200/70 dark:bg-slate-700 flex items-center justify-center shrink-0">
+                            <i class="pi pi-calendar text-slate-600 dark:text-slate-300 text-xs"></i>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-[11px] text-surface-500 dark:text-surface-400 font-medium truncate">Moy. de résolution</span>
+                            <span class="text-xs font-bold text-surface-900 dark:text-surface-100">{{ moyResolution }} jours</span>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
 
-        /* Graphique PrimeNG (p-chart) */
-        <div class="flex-grow relative z-10 min-h-[140px] w-full mt-2">
-            <p-chart type="bar" [data]="chartData" [options]="chartOptions" height="150px"></p-chart>
+        <!-- Pied de carte : Cible SLA & Synthèse Globale -->
+        <div class="mt-2 pt-2.5 border-t border-surface-100 dark:border-surface-800 flex flex-col gap-2">
+            <div class="flex items-center justify-between text-[11px] text-surface-400">
+                <span>Objectif SLA : 80%</span>
+                <span [class]="tauxResolution >= 80 ? 'text-green-600 font-semibold' : 'text-amber-600 font-semibold'">
+                    {{ tauxResolution >= 80 ? 'Objectif atteint' : 'En progression' }}
+                </span>
+            </div>
+            
+            <!-- Encadré Synthèse combinée des 2 graphiques -->
+            <div class="p-2.5 rounded-lg bg-surface-50 dark:bg-surface-800/60 border border-surface-200/60 dark:border-surface-700/60 flex items-start gap-2">
+                <i class="pi pi-chart-line text-primary text-xs mt-0.5 shrink-0"></i>
+                <p class="text-[11px] text-surface-600 dark:text-surface-300 leading-snug">
+                    <strong class="text-surface-800 dark:text-surface-100">Synthèse :</strong> 
+                    Sur <span class="font-bold text-surface-900 dark:text-surface-50">{{ totalNcNiveaux || countTotal || 2 }} NC</span> enregistrées, 
+                    <span class="font-bold text-green-600 dark:text-green-400">{{ slaRespecte }} ({{ tauxResolution }}%)</span> sont résolues dans les délais SLA avec un traitement moyen de {{ moyResolution }} jours.
+                </p>
+            </div>
         </div>
-
-        /* Élément décoratif en arrière-plan */
-        <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-white opacity-5 rounded-full blur-2xl pointer-events-none"></div>
     </div>
-    -->
 </div>
 
-<!-- ====================================================================
-     3. SECTION DASHBOARD PILOTE / CHEF
-     ==================================================================== -->
-<div class="grid grid-cols-1 xl:grid-cols-12 gap-6 mt-2 my-4" *ngIf="roleService.isChef">
-    <!-- SECTION GAUCHE : Les 4 blocs (ACTIFS) -->
-    <div class="xl:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <app-card-stats-admin
-            *ngFor="let card of dashboardCardsChef"
-            [label]="card.label"
-            [value]="card.isCustomValue 
-                ? (countNonConformiteCloturee || 0) 
-                : (stats?.[card.valueKey] || 0)"
-            [color]="card.color"
-            [icon]="card.icon"
-            [title]="card.badge"
-            [description]="card.description"
-            [loading]="loading">
-        </app-card-stats-admin>
-    </div>
-
-    <!-- SECTION DROITE : Le grand bloc du graphique (Commenté temporairement) -->
-    <!--
-    <div class="xl:col-span-5 bg-[#0084ca] rounded-[1.5rem] p-5 flex flex-col relative overflow-hidden shadow-lg">
-        <div class="flex flex-col items-start mb-4 relative z-10">
-            <div class="customFlex">
-                <div class="flex items-center flex-row">
-                    <h3 class="text-white text-xl font-bold m-0 px-2">Évolution des non-conformités</h3>
-                    <div class="flex items-center gap-3">
-                        <span class="text-white text-4xl font-bold">{{ evolutionTotal }}</span>
-                        <span class="bg-white/20 text-white text-xs font-semibold px-2 py-1 rounded-md backdrop-blur-sm"
-                            *ngIf="evolutionPourcentage">{{ evolutionPourcentage }}</span>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-2 relative z-20 customWidth">
-                    /* 2. Sélecteur d'Année (Requis) */
-                    <p-datepicker 
-                        [(ngModel)]="selectedYear" 
-                        view="year" 
-                        dateFormat="yy" 
-                        size="small"
-                        placeholder="Année"
-                        (ngModelChange)="loadEvolutionStats()"
-                        [showIcon]="true" 
-                        appendTo="body"
-                        panelStyleClass="min-w-[18rem]"
-                        class="date-select"
-                        iconDisplay="input">
-                    </p-datepicker>
-
-                    /* 3. Sélecteur de Mois (Optionnel) */
-                    <p-datepicker 
-                        [(ngModel)]="selectedMonth" 
-                        view="month" 
-                        dateFormat="mm" 
-                        size="small"
-                        placeholder="Mois"
-                        [readonlyInput]="true" 
-                        [showClear]="true"
-                        (ngModelChange)="loadEvolutionStats()"
-                        [showIcon]="true" 
-                        appendTo="body"
-                        class="date-select"
-                        panelStyleClass="min-w-[18rem]"
-                        iconDisplay="input">
-                    </p-datepicker>
-                </div>
-            </div>
-
-            /* Breakdown par gravité */
-            <div class="flex items-center gap-2 mt-4">
-                <div class="flex items-center gap-1.5 text-xs font-medium bg-red-500/30 text-white px-2 py-1 rounded-md border border-red-400/50 shadow-sm backdrop-blur-sm">
-                    <span class="w-2 h-2 rounded-full bg-red-400"></span> Critique ({{ countCritique }})
-                </div>
-                <div class="flex items-center gap-1.5 text-xs font-medium bg-orange-500/30 text-white px-2 py-1 rounded-md border border-orange-400/50 shadow-sm backdrop-blur-sm">
-                    <span class="w-2 h-2 rounded-full bg-orange-400"></span> Majeure ({{ countMajeure }})
-                </div>
-                <div class="flex items-center gap-1.5 text-xs font-medium bg-green-500/30 text-white px-2 py-1 rounded-md border border-green-400/50 shadow-sm backdrop-blur-sm">
-                    <span class="w-2 h-2 rounded-full bg-green-400"></span> Mineure ({{ countMineure }})
-                </div>
-            </div>
-        </div>
-
-        /* Graphique PrimeNG (p-chart) */
-        <div class="flex-grow relative z-10 min-h-[140px] w-full mt-2">
-            <p-chart type="bar" [data]="chartData" [options]="chartOptions" height="150px"></p-chart>
-        </div>
-
-        /* Élément décoratif en arrière-plan */
-        <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-white opacity-5 rounded-full blur-2xl pointer-events-none"></div>
-    </div>
-    -->
-</div>
 
 <!-- ====================================================================
-     4. SECTION DASHBOARD AGENT (ACTIFS)
+     3. SECTION DASHBOARD AGENT (4 Cartes en ligne)
      ==================================================================== -->
 <div class="grid grid-cols-12 gap-4 my-4" *ngIf="roleService.isAgent">
-    <div *ngFor="let card of dashboardCardsAgent" class="col-span-12 md:col-span-6 xl:col-span-3">
-        <app-card-stats-admin
+    <div class="col-span-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
+        <app-kpi-card 
+            *ngFor="let card of managerCards; let i = index"
             [label]="card.label"
-            [loading]="loading"
-            [value]="stats?.[card.valueKey] || 0"
-            [icon]="card.icon"
-            [color]="card.color"
             [title]="card.badge"
-            [description]="card.description">
-        </app-card-stats-admin>
+            [value]="getCardValue(card)"
+            [color]="card.color"
+            [icon]="card.icon"
+            [description]="card.description"
+            [loading]="loading"
+            [percentage]="getCardPercentage(card)"
+            [subText]="i === 0 ? totalSubText : undefined"
+            [meterData]="i === 0 ? niveauxMeterData : (i === 2 ? retardMeterData : undefined)"
+            [meterMax]="i === 0 ? meterMax : (i === 2 ? 100 : undefined)">
+        </app-kpi-card>
     </div>
 </div>
 
 <!-- ====================================================================
-     5. TABLEAU UNIFIÉ DES NON-CONFORMITÉS (Commenté temporairement)
+     SECTION TABLEAUX OPÉRATIONNELS (Présente pour tout le monde)
      ==================================================================== -->
-<!--
-<div *ngIf="allActiveNCs.length > 0" class="my-4 bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl shadow-sm overflow-hidden">
-    <app-traitement-table 
-        [demandeList]="paginatedNCs" 
-        [cols]="colsDashboard"
-        [title]="'Traitement et suivi des non-conformités'"
-        [subtitle]="'Consultez toutes les non-conformités qui requièrent une action de votre part.'"
-        [loading]="loading"
-        [paginator]="false"
-        [hasFilters]="true"
-        [showGridlines]="false"
-        [totalElements]="filteredActiveNCs.length"
-        [currentPage]="currentPage"
-        [pageSize]="pageSize"
-        (pageChangeEvent)="onPageChange($event)">
-        <app-nc-filter-bar filters (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
-    </app-traitement-table>
-</div>
--->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-6 items-stretch">
+    
+    <!-- BLOC GAUCHE : Traitements en attente (Hauteur fixée à 320px) -->
+    <div class="lg:col-span-6 min-w-0 flex flex-col h-[320px]">
+        <!-- 1. Si des données existent : afficher la table -->
+        <app-traitement-table
+            *ngIf="traitementsList.length > 0 || loadingTraitements"
+            class="h-full block overflow-hidden rounded-xl border vue-ensemble-table border-slate-200 dark:border-surface-700"
+            [title]="'Traitements en cours'"
+            [subtitle]="'Non-conformités nécessitant une action ou décision'"
+            [demandeList]="traitementsList"
+            [cols]="colsTraitement"
+            [tableStyle]="{ 'min-width': '100%' }"
+            [btnActions]="BtnActions.TRAITEMENT"
+            [loading]="loadingTraitements"
+            [hasFilters]="false"
+            [showSearch]="false"
+            [paginator]="false"
+            [pageSize]="5"
+            [totalElements]="totalTraitements">
+        </app-traitement-table>
 
-<!-- ====================================================================
-     6. EMPTY STATE GLOBAL (Commenté temporairement)
-     ==================================================================== -->
-<!--
-<div *ngIf="allActiveNCs.length === 0 && !loading" 
-     class="flex flex-col items-center justify-center p-4 mt-8 bg-surface-0 dark:bg-surface-900 text-center">
-    
-    /* Image en noir et blanc */
-    <img src="assets/images/empty.svg" 
-         alt="Aucune donnée" 
-         class="w-[220px] h-auto mb-6 opacity-60 transition-all duration-300 hover:opacity-80 hover:grayscale-0" 
-         style="filter: grayscale(100%);">
-    
-    /* Titre */
-    <h3 class="text-2xl font-bold text-surface-900 dark:text-surface-50 mb-3">
-        Aucun dossier en cours
-    </h3>
-    
-    /* Texte rassurant */
-    <p class="text-surface-500 dark:text-surface-400 max-w-2xl leading-relaxed text-lg mb-0 mx-auto">
-        Votre espace de travail est parfaitement vide ! 🎉
-        <br><br>
-        Actuellement, il n'y a aucune non-conformité, aucun brouillon et aucune action nécessitant votre intervention sur l'ensemble de votre périmètre. 
-        Profitez de ce moment de répit !
-    </p>
+        <!-- 2. Si la liste est vide : carte centrée avec la même hauteur exacte -->
+        <div *ngIf="traitementsList.length === 0 && !loadingTraitements" 
+             class="bg-white dark:bg-surface-900 border border-slate-200 dark:border-surface-700 rounded-xl p-6 shadow-xs flex flex-col items-center justify-center text-center h-full">
+            <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center mb-3 text-blue-500">
+                <i class="pi pi-check-circle text-2xl"></i>
+            </div>
+            <h5 class="text-base font-bold text-surface-900 dark:text-surface-50 mb-1">Traitements en cours</h5>
+            <p class="text-sm text-surface-500 dark:text-surface-400 m-0">
+                Aucune non-conformité en attente de traitement.
+            </p>
+        </div>
+    </div>
+
+    <!-- BLOC DROIT : Plans d'action à réaliser (Hauteur fixée à 320px) -->
+    <div class="lg:col-span-6 min-w-0 flex flex-col h-[320px]">
+        <!-- 1. Si des données existent : afficher la table -->
+        <app-traitement-table
+            *ngIf="plansActionList.length > 0 || loadingPlans"
+            class="h-full block overflow-hidden vue-ensemble-table rounded-xl border border-slate-200 dark:border-surface-700"
+            [title]="'Plans d\'action à réaliser'"
+            [subtitle]="'Actions correctives assignées en attente d\'exécution'"
+            [demandeList]="plansActionList"
+            [cols]="colsPlanAction"
+            [tableStyle]="{ 'min-width': '100%' }"
+            [loading]="loadingPlans"
+            [hasFilters]="false"
+            [showSearch]="false"
+            [paginator]="false"
+            [pageSize]="5"
+            [totalElements]="totalPlansAction">
+        </app-traitement-table>
+
+        <!-- 2. Si la liste est vide : carte centrée avec la même hauteur exacte -->
+        <div *ngIf="plansActionList.length === 0 && !loadingPlans" 
+             class="bg-white dark:bg-surface-900 border border-slate-200 dark:border-surface-700 rounded-xl p-6 shadow-xs flex flex-col items-center justify-center text-center h-full">
+            <div class="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center mb-3 text-orange-500">
+                <i class="pi pi-check-circle text-2xl"></i>
+            </div>
+            <h5 class="text-base font-bold text-surface-900 dark:text-surface-50 mb-1">Plans d'action à réaliser</h5>
+            <p class="text-sm text-surface-500 dark:text-surface-400 m-0">
+                Aucun plan d'action à réaliser à ce jour.
+            </p>
+        </div>
+    </div>
 
 </div>
--->
+
+
+
 
 </p-card>

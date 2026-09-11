@@ -8,5 +8,6 @@ export * from './form-traitement/form-traitement';
 export * from './lightbox/lightbox';
 export * from './nc-filter-bar/nc-filter-bar';
 export * from './nc-stats-card/nc-stats-card';
+export * from '../../../shared/kpi-card/kpi-card.component';
 export * from './search-agent-component/search-agent.component';
 export * from './table-traitement/traitement-table';

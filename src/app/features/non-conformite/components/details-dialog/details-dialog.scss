@@ -151,3 +151,12 @@ font-weight: 400;
         grid-template-columns: 1fr;
     }
 }
+
+
+::ng-deep .tag-pill {
+    border-radius: 9999px !important;
+    padding: 0.35rem 0.85rem !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}

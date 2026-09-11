@@ -1,0 +1,95 @@
+<div [class]="'bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5 shadow-sm flex flex-col relative overflow-hidden ' + bgClass">
+    <div class="flex justify-between items-start mb-2 relative z-10">
+        <div class="w-full">
+            <!-- Barre des filtres -->
+            <div class="flex justify-between items-center gap-2 relative z-20 mb-4 flex-wrap">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <!-- 1. Sélecteur de Structure / Service -->
+                    <p-select 
+                        *ngIf="showStructureFilter"
+                        [options]="structuresList" 
+                        [(ngModel)]="selectedStructure" 
+                        optionLabel="nom" 
+                        optionValue="id"
+                        [showClear]="true" 
+                        placeholder="Services"
+                        styleClass="select-clean-filter"
+                        size="small"
+                        appendTo="body"
+                        (onChange)="onFilterChange()"
+                        (onClear)="onFilterChange()">
+                    </p-select>
+
+                    <!-- 2. Sélecteur d'Année -->
+                    <p-datepicker 
+                        [(ngModel)]="selectedYear" 
+                        view="year" 
+                        dateFormat="yy" 
+                        placeholder="Année"
+                        styleClass="select-clean-filter"
+                        size="small"
+                        (ngModelChange)="onFilterChange()"
+                        [showIcon]="true" 
+                        appendTo="body"
+                        panelStyleClass="min-w-[18rem]"
+                        iconDisplay="input">
+                    </p-datepicker>
+
+                    <!-- 3. Sélecteur de Mois (Optionnel) -->
+                    <p-datepicker 
+                        [(ngModel)]="selectedMonth" 
+                        view="month" 
+                        dateFormat="mm" 
+                        placeholder="Mois"
+                        styleClass="select-clean-filter"
+                        size="small"
+                        [readonlyInput]="true" 
+                        [showClear]="true"
+                        (ngModelChange)="onFilterChange()"
+                        (onClear)="onFilterChange()"
+                        [showIcon]="true" 
+                        appendTo="body"
+                        panelStyleClass="min-w-[18rem]"
+                        iconDisplay="input">
+                    </p-datepicker>
+                </div>
+            </div>
+
+            <!-- Titre et Total -->
+            <div class="flex flex-row items-center justify-between gap-3 mb-2">
+                <div class="flex items-center gap-3">
+                    <h3 class="text-surface-900 dark:text-surface-50 text-base font-bold m-0 tracking-tight">{{ title }}</h3>
+                    <span class="text-surface-900 dark:text-surface-50 text-2xl font-extrabold">{{ total }}</span>
+                </div>
+                
+                <span 
+                    *ngIf="pourcentage" 
+                    class="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/60 text-xs font-semibold px-2.5 py-1 rounded-full shadow-2xs">
+                    {{ pourcentage }}
+                </span>
+            </div>
+
+            <!-- Ventilation par gravité / badges dynamiques -->
+            <div class="flex items-center gap-2 mt-3 flex-wrap" *ngIf="breakdownItems && breakdownItems.length > 0">
+                <div 
+                    *ngFor="let item of breakdownItems" 
+                    [class]="'flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all shadow-2xs ' + (item.colorClass || '')"
+                    [style.backgroundColor]="item.customColor ? (item.customColor + '15') : null"
+                    [style.borderColor]="item.customColor ? (item.customColor + '40') : null"
+                    [style.color]="item.customColor || null">
+                    <span 
+                        [class]="'w-2 h-2 rounded-full shrink-0 ' + (item.dotClass || '')"
+                        [style.backgroundColor]="item.customColor || null">
+                    </span> 
+                    <span>{{ item.label }} ({{ item.count }})</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphique PrimeNG (p-chart Bar) -->
+    <div class="flex-grow relative z-10 min-h-[180px] w-full mt-3">
+        <p-chart type="bar" [data]="chartData" [options]="chartOptions" height="200px"></p-chart>
+    </div>
+</div>
+

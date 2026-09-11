@@ -6,6 +6,7 @@ import { Subject, forkJoin, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
 import { DocStatsCardComponent } from '../../components';
+import { KpiCardComponent } from '@shared';
 import { QmsDocumentService } from '../../services';
 import { DemandeDocumentService } from '../../services';
 import {
@@ -45,7 +46,7 @@ interface DimensionEntry {
 @Component({
     selector: 'app-qms-vue-ensemble',
     standalone: true,
-    imports: [CommonModule, NgPrimeModule, DocStatsCardComponent, QmsATraiterComponent],
+    imports: [CommonModule, KpiCardComponent, NgPrimeModule, QmsATraiterComponent],
     // Le dialogue de décision des lignes rend compte par messages : sans fournisseur ni conteneur,
     // ni le succès ni le refus du serveur ne seraient dits.
     providers: [MessageService],
@@ -59,9 +60,9 @@ export class QmsVueEnsembleComponent implements OnInit, OnDestroy {
     private readonly router = inject(Router);
 
     /** Chargement des chiffres de stock ; les listes de travail ont le leur. */
-    loading = true;
+    loading: boolean = true;
     /** Chargement des listes de travail : « rien à faire » ne doit pas s'afficher avant de le savoir. */
-    chargementATraiter = true;
+    chargementATraiter: boolean = true;
 
     stats: DocumentStatsDto | null = null;
 
@@ -94,8 +95,39 @@ export class QmsVueEnsembleComponent implements OnInit, OnDestroy {
         this.aTraiterService.aTraiter$
             .pipe(takeUntil(this.destroy$))
             .subscribe((etat) => {
+                console.group('🔍 [QMS VUE-ENSEMBLE] Données "À Traiter"');
+                console.log('📦 État global brut :', etat);
+                console.log('📄 Documents bruts reçus (%d) :', etat.documents?.length || 0, etat.documents);
+                console.log('📝 Demandes brutes reçues (%d) :', etat.demandes?.length || 0, etat.demandes);
                 this.documentsATraiter = (etat.documents ?? []).map(doc => this.ligneDeDocument(doc));
                 this.demandesATraiter = (etat.demandes ?? []).map(demande => this.ligneDeDemande(demande));
+                if (this.documentsATraiter.length > 0) {
+                    console.log('📋 Tableau formaté - Documents attendant décision :');
+                    console.table(this.documentsATraiter.map(d => ({
+                        Réf: d.reference || '—',
+                        Titre: d.titre,
+                        Étape: d.etape || '—',
+                        Type: d.badge,
+                        Détail: d.detail || '—',
+                        'Nb Actions Possibles': d.workflowState?.allowedActions?.length || 0
+                    })));
+                } else {
+                    console.log('ℹ️ Aucun document à traiter pour l\'utilisateur connecté.');
+                }
+                if (this.demandesATraiter.length > 0) {
+                    console.log('📋 Tableau formaté - Demandes à instruire :');
+                    console.table(this.demandesATraiter.map(d => ({
+                        Réf: d.reference || '—',
+                        Titre: d.titre,
+                        Étape: d.etape || '—',
+                        Type: d.badge,
+                        Détail: d.detail || '—',
+                        'Nb Actions Possibles': d.workflowState?.allowedActions?.length || 0
+                    })));
+                } else {
+                    console.log('ℹ️ Aucune demande à instruire pour l\'utilisateur connecté.');
+                }
+                console.groupEnd();
                 this.chargementATraiter = etat.chargement || !etat.charge;
             });
 
@@ -150,6 +182,7 @@ export class QmsVueEnsembleComponent implements OnInit, OnDestroy {
      * qui fait foi, et le champ local peut être en retard d'une transition.</p>
      */
     private ligneDeDocument(doc: DocumentQms): LigneATraiter {
+        const etapeNom = doc.workflowState?.currentStateName || doc.currentEtape || 'Rédaction';
         return {
             id: doc.id!,
             reference: doc.documentNumber,
@@ -157,29 +190,38 @@ export class QmsVueEnsembleComponent implements OnInit, OnDestroy {
             detail: [doc.serviceLibelle, doc.redacteur].filter(Boolean).join(' — ') || undefined,
             badge: doc.documentType,
             badgeSeverite: 'secondary',
-            etape: doc.workflowState?.currentStateName || doc.currentEtape,
+            etape: etapeNom,
+            depuis: doc.createdAt ? formatDateToDDMMYYYY(doc.createdAt) : undefined,
+            auteur: doc.redacteur || (doc as any).currentUserFullName || 'Non renseigné',
+            iconeFichier: this.getIconeFichier(doc.currentObjectName),
+            iconeEtape: this.getIconeEtape(etapeNom),
+            delaiRelatif: this.getDelaiRelatif(doc.createdAt),
+            statutDelai: 'À soumettre',
             deposerFichier: (fichier: File) =>
                 this.qmsService.deposerFichierDEtape(doc.id ?? '', fichier),
-            depuis: doc.createdAt ? formatDateToDDMMYYYY(doc.createdAt) : undefined,
             workflowState: doc.workflowState
         };
     }
 
+
     private ligneDeDemande(demande: DemandeDocumentDto): LigneATraiter {
+        const etapeNom = demande.workflowState?.currentStateName || demande.currentEtape || 'Instruction';
         return {
             id: demande.id,
             reference: demande.documentNumber,
             titre: demande.objectif || demande.documentTitre || 'Demande',
-            // Le document visé, puis qui demande : c'est ce qui permet d'instruire sans ouvrir la fiche.
             detail: [demande.documentTitre, demande.demandeurNom].filter(Boolean).join(' — ') || undefined,
             badge: demande.type === 'SUPPRESSION' ? 'Suppression' : 'Modification',
-            // Une suppression retire un document, une modification le remplace : la distinction
-            // doit sauter aux yeux avant qu'on décide.
             badgeSeverite: demande.type === 'SUPPRESSION' ? 'danger' : 'info',
-            etape: demande.workflowState?.currentStateName || demande.currentEtape,
+            etape: etapeNom,
+            depuis: demande.createdAt ? formatDateToDDMMYYYY(demande.createdAt) : undefined,
+            auteur: demande.demandeurNom || 'Demandeur',
+            iconeFichier: 'assets/images/doc-file.png',
+            iconeEtape: this.getIconeEtape(etapeNom),
+            delaiRelatif: this.getDelaiRelatif(demande.createdAt),
+            statutDelai: 'À instruire',
             deposerFichier: (fichier: File) =>
                 this.demandeService.deposerFichierDEtape(demande.id, fichier),
-            depuis: demande.createdAt ? formatDateToDDMMYYYY(demande.createdAt) : undefined,
             workflowState: demande.workflowState
         };
     }
@@ -221,6 +263,41 @@ export class QmsVueEnsembleComponent implements OnInit, OnDestroy {
         return Object.entries(map)
             .map(([label, count]) => ({ label, count: Number(count) || 0 }))
             .sort((a, b) => b.count - a.count);
+    }
+
+        /** Détecte l'extension du fichier et retourne l'icône correspondante dans assets */
+    private getIconeFichier(nomFichier?: string): string {
+        if (!nomFichier) return 'assets/images/doc-file.png';
+        const lower = nomFichier.toLowerCase();
+        if (lower.endsWith('.pdf')) return 'assets/images/pdf-file.png';
+        if (lower.endsWith('.doc') || lower.endsWith('.docx')) return 'assets/images/doc-file.png';
+        if (lower.endsWith('.xls') || lower.endsWith('.xlsx')) return 'assets/images/xls-file.png';
+        if (lower.endsWith('.txt')) return 'assets/images/txt-file.png';
+        if (lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png')) return 'assets/images/jpeg-file.png';
+        return 'assets/images/doc-file.png';
+    }
+
+    /** Calcule le temps écoulé de manière lisible (ex: "Il y a 17 jours") */
+    private getDelaiRelatif(dateStr?: string | Date): string {
+        if (!dateStr) return '';
+        const created = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now.getTime() - created.getTime();
+        const diffJours = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (diffJours <= 0) return "Aujourd'hui";
+        if (diffJours === 1) return "Il y a 1 jour";
+        return `Il y a ${diffJours} jours`;
+    }
+
+    /** Icône PrimeNG adaptée à l'étape du workflow */
+    private getIconeEtape(etape?: string): string {
+        const lower = (etape || '').toLowerCase();
+        if (lower.includes('rédac') || lower.includes('redac')) return 'pi pi-pencil';
+        if (lower.includes('vérif') || lower.includes('verif')) return 'pi pi-search';
+        if (lower.includes('approb') || lower.includes('valid')) return 'pi pi-check-circle';
+        if (lower.includes('diffus') || lower.includes('public')) return 'pi pi-send';
+        return 'pi pi-file-edit';
     }
 
     ngOnDestroy(): void {

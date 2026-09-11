@@ -39,8 +39,7 @@ import { CategorieProcessusComponent, StructureComponent, StructureFormComponent
 // import { ValidationPilote } from './module-nc/nc-validation-pilote/nc-validation-pilote';
 // import { AnalyseClotureComponent } from './module-nc/nc-analyse-cloture/nc-analyse-cloture';
 import { 
-    QmsDocumentComponent, 
-    QmsDocumentCreateComponent, 
+    QmsDocumentComponent,
     QmsVueEnsembleComponent, 
     QmsDocumentsPartagesComponent, 
     QmsDemandesComponent, 
@@ -511,12 +510,12 @@ export default [
             },
             {
                 path: 'create',
-                component: QmsDocumentCreateComponent,
+                loadComponent: () => import('@features/gestion-documentaire/pages/create/qms-document-create.component').then(m => m.QmsDocumentCreateComponent),
                 title: 'Créer un Document QMS',
-                canActivate: [permissionGuard],
-                data: { permissions: ['document-write'], module: ModuleAbonnement.DOCUMENTAIRE }
+                // canActivate: [permissionGuard],
+                // data: { permissions: ['document-write', 'DOC_WRITE', 'document-read', 'DOC_READ'], module: ModuleAbonnement.DOCUMENTAIRE }
             },
-            { path: 'nouveau', redirectTo: 'create', pathMatch: 'full' },
+            // { path: 'nouveau', redirectTo: 'create', pathMatch: 'full' },
         ]
     },
 

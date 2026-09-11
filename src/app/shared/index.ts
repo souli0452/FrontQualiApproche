@@ -19,6 +19,10 @@ export * from './form-input-template/form-input-template.component';
 export * from './alert-message/alert-message.service';
 export * from './alert-message/alert-message.component';
 export * from './pagination/pagination';
-export * from './card-stats-admin';
-
+export * from './smart-alert-banner/smart-alert-banner.model';
+export * from './smart-alert-banner/smart-alert-banner.component';
+export * from './kpi-card/kpi-card.component';
+export * from './chart-doughnut/chart-doughnut.component';
+export * from './chart-evolution/chart-evolution.model';
+export * from './chart-evolution/chart-evolution.component';
 

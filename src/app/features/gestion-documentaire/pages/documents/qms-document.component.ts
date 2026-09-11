@@ -70,7 +70,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   filteredUsers: any[] = [];
   selectedStructureFilter?: string;
   selectedUser?: any;
-  loading = false;
+  loading = true;
   destroy$ = new Subject<void>();
 
   // Filter properties

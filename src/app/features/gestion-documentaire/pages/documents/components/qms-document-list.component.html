@@ -74,7 +74,7 @@
 
 <!-- Tableau -->
 <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-  <p-table [value]="documents" [loading]="loading" [paginator]="true"
+  <p-table [value]="documents" [showLoader]="false" [loading]="loading" [paginator]="true"
     [lazy]="true" [totalRecords]="totalDocuments" [first]="premiereLigne" [rows]="taillePage"
     (onLazyLoad)="pageChange.emit({ first: $event.first ?? 0, rows: $event.rows ?? taillePage })"
     [rowsPerPageOptions]="[15, 30, 50]" [responsiveLayout]="'scroll'"

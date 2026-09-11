@@ -1,0 +1,82 @@
+<div class="relative overflow-hidden rounded-xl border p-3.5 sm:p-4 min-h-[120px] flex flex-col justify-between transition-all duration-300 shadow-xs hover:shadow-md hover:-translate-y-0.5"
+     [ngClass]="[
+        theme.cardBorder,
+        theme.cardBg,
+        (clickable || routerLink) ? 'cursor-pointer' : ''
+     ]"
+     [routerLink]="routerLink"
+     (click)="onCardClick($event)"
+     [title]="description || ''">
+
+    <!-- Effet de lumière diffuse en arrière-plan (Glow) -->
+    <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full blur-2xl pointer-events-none"
+         [ngClass]="theme.glowBg">
+    </div>
+
+    <!-- ====================================================================
+         1. ÉTAT DE CHARGEMENT (SKELETON)
+         ==================================================================== -->
+    <div *ngIf="loading" class="relative z-10 flex flex-col justify-between h-full">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <p-skeleton shape="circle" size="2rem"></p-skeleton>
+                <p-skeleton width="5rem" height="1.2rem" styleClass="rounded-md"></p-skeleton>
+            </div>
+            <p-skeleton shape="circle" size="1.5rem"></p-skeleton>
+        </div>
+        <div>
+            <p-skeleton width="3.5rem" height="2rem" styleClass="mb-1"></p-skeleton>
+            <p-skeleton width="70%" height="0.9rem"></p-skeleton>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         2. CONTENU RÉEL (Style Proposition 1)
+         ==================================================================== -->
+    <ng-container *ngIf="!loading">
+
+        <div class="flex flex-row items-center">
+            <!-- 1. Icône -->
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm"
+                [ngClass]="[theme.iconBg, theme.iconColor]">
+                <i [class]="icon || 'pi pi-chart-line'" class="text-lg"></i>
+            </div>
+            <!-- 2. Label -->
+            <div class="kpi-label" [ngClass]="theme.iconColor">
+                {{ label || title }}
+            </div>
+        </div>
+        
+        
+
+        <!-- 2. Valeur -->
+        <div class="kpi-value flex">
+            <span>{{ value }}</span>
+
+            <!-- Le Pourcentage Dynamique -->
+            <span *ngIf="percentage !== undefined" 
+                  class="text-xs font-bold px-2 py-0.5 rounded-md flex items-center gap-1"
+                  [ngClass]="{
+                      'text-emerald-600 dark:text-emerald-400': percentage >= 50,
+                      'text-rose-600 dark:text-rose-400': percentage < 50
+                  }">
+                
+                <!-- L'icône de flèche qui change toute seule -->
+                <i class="text-[9px]" [ngClass]="percentage >= 50 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"></i>
+                
+                <!-- Le chiffre avec le symbole % -->
+                {{ percentage }}%
+            </span>
+        </div>
+        <!-- 4. Pourcentage (metaBadge) et 5. Description -->
+        <div class="flex items-center gap-2 pl-12">
+            <!-- La Description -->
+            <span *ngIf="description" class="text-[11px] text-surface-400 font-medium">
+                {{ description }}
+            </span>
+        </div>
+        
+    </ng-container>
+
+
+</div>

@@ -331,114 +331,7 @@ export class AppTopbar implements OnInit {
 
 
         this.ecouterLeDocumentaire();
-
-        // Souscription aux notifications globales de NC
-        // this.nonConformiteService.notificationsNC$.pipe(takeUntil(this.destroy$)).subscribe((notifs: any) => {
-        //     this.totalNC = notifs.total || 0;
-        //     this.notificationsNC = [];
-
-        //     if (notifs.brouillons > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Brouillons en cours",
-        //             detail: `Vous avez ${notifs.brouillons} Non-Conformité(s) en attente de finalisation.`,
-        //             time: "À l'instant",
-        //             icon: "pi pi-pencil",
-        //             colorClass: "bg-orange-100 text-orange-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.reception > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Non-conformités de votre service",
-        //             detail: `Votre service a ${notifs.reception} Non-Conformité(s) publiée(s) en attente de validation.`,
-        //             time: "À l'instant",
-        //             icon: "pi pi-users",
-        //             colorClass: "bg-orange-100 text-orange-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.imputees > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Actions à traiter",
-        //             detail: `Vous avez ${notifs.imputees} Non-Conformité(s) imputée(s) pour traitement.`,
-        //             time: "Urgent",
-        //             icon: "pi pi-exclamation-circle",
-        //             colorClass: "bg-red-100 text-red-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.validationRQ > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Validation RQ",
-        //             detail: `Vous avez ${notifs.validationRQ} Non-Conformité(s) que vous devez valider.`,
-        //             time: "Urgent",
-        //             icon: "pi pi-shield",
-        //             colorClass: "bg-red-100 text-red-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.enAttenteValidation > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Validation Globale",
-        //             detail: `Il y a ${notifs.enAttenteValidation} Non-Conformité(s) en attente de validation.`,
-        //             time: "Urgent",
-        //             icon: "pi pi-shield",
-        //             colorClass: "bg-red-100 text-red-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.validationPilote > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Validation des plans d'actions",
-        //             detail: `Il y a ${notifs.validationPilote} plan(s) d'actions en attente de validation.`,
-        //             time: "Urgent",
-        //             icon: "pi pi-shield",
-        //             colorClass: "bg-red-100 text-red-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.cloture > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Clôture des Non-Conformités",
-        //             detail: `Il y a ${notifs.cloture} Non-Conformité(s) en attente de clôture.`,
-        //             time: "À traiter",
-        //             icon: "pi pi-check-circle",
-        //             colorClass: "bg-green-100 text-green-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.affectation > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Affectation",
-        //             detail: `Vous avez ${notifs.affectation} Non-Conformité(s) en attente d'affectation.`,
-        //             time: "Urgent",
-        //             icon: "pi pi-shield",
-        //             colorClass: "bg-red-100 text-red-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.nonTraiter > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Traitement",
-        //             detail: `Vous avez ${notifs.nonTraiter} Plan(s) d'actions en attente de traitement.`,
-        //             time: "Urgent",
-        //             icon: "pi pi-shield",
-        //             colorClass: "bg-red-100 text-red-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.soumission > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Non-Conformités rejetées",
-        //             detail: `Vous avez ${notifs.soumission} Non-Conformité(s) rejetée(s) en attente de correction.`,
-        //             time: "À corriger",
-        //             icon: "pi pi-exclamation-triangle",
-        //             colorClass: "bg-red-100 text-red-600",
-        //             read: false
-        //         });
-        //     }
-        // });
-
+        
                 // 1. Initialiser les compteurs des badges du menu
         this.nonConformiteService.rafraichirNotifications();
         // 2. Charger les vraies notifications de la cloche
@@ -451,14 +344,6 @@ export class AppTopbar implements OnInit {
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (notifs) => {
-                    // 👇 VOS LOGS ICI
-                    console.log('🔔 [CLOCHE] Données brutes reçues du backend :', notifs);
-                    if (notifs && notifs.length > 0) {
-                        console.table(notifs); // 👈 Affiche un joli tableau dans la console F12
-                    } else {
-                        console.log('🔔 [CLOCHE] Aucune notification active pour cet utilisateur.');
-                    }
-
                     let totalCount = 0;
                     this.notificationsNC = notifs.map(n => {
                         totalCount += (n.nombre || 1);
@@ -493,19 +378,19 @@ export class AppTopbar implements OnInit {
             case 'PLAN_ACTION_A_DECIDER':
                 icon = 'pi pi-list-check';
                 colorClass = 'bg-orange-100 text-orange-600';
-                route = '/non-conformite/traitement';
+                route = '/non-conformite/plan-action';
                 break;
 
             case 'PLAN_ACTION_ECHEANCE_DEPASSEE':
                 icon = 'pi pi-exclamation-triangle';
                 colorClass = 'bg-red-100 text-red-600';
-                route = '/non-conformite/traitement';
+                route = '/non-conformite/plan-action';
                 break;
 
             case 'PLAN_ACTION_ECHEANCE_PROCHE':
                 icon = 'pi pi-clock';
                 colorClass = 'bg-amber-100 text-amber-600';
-                route = '/non-conformite/traitement';
+                route = '/non-conformite/plan-action';
                 break;
 
             case 'NC_BROUILLON':

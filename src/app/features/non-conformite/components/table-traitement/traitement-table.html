@@ -228,7 +228,7 @@
 </p-table>
 
     <!-- Footer / Pagination Bar -->
-    <div *ngIf="totalElements > 0" class="footer-bar flex items-center justify-between p-3 bg-blue border-t border-slate-100 dark:border-surface-700 flex-col md:flex-row">
+    <div *ngIf="paginator && totalElements > 0" class="footer-bar flex items-center justify-between p-3 bg-blue border-t border-slate-100 dark:border-surface-700 flex-col md:flex-row">
         <!-- Pagination Info (Left) -->
         <div class="text-slate-500 text-sm font-normal flex items-center gap-2 mb-4 md:mb-0">
             Affichage de 

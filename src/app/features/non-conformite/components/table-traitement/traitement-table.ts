@@ -30,6 +30,9 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
     @Input() showGridlines: boolean = true;
     @Input() balanceFrozen: boolean = false;
 
+    @Input() tableStyle: any = { 'min-width': '50rem' };
+
+
     @Input() totalElements: number = 0;
     @Input() pageSize: number = 10;
     @Input() currentPage: number = 0;
@@ -57,6 +60,7 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
     @Output() onReceptionner = new EventEmitter<any>();
     @Output() onArchive = new EventEmitter<any>();
     @Output() onDelete = new EventEmitter<any>();
+    @Output() onDetails = new EventEmitter<any>();
 
     @ViewChild('detailContainer', { read: ViewContainerRef, static: true }) detailContainer?: ViewContainerRef;
     @ViewChild('dt') dt?: Table;
@@ -298,7 +302,6 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
             this.updateColsFilter();
         }
         if (changes.demandeList) {
-            console.log("DONNEES DU TABLEAU MISES A JOUR (ngOnChanges) :", this.demandeList);
             if (this.dt && this.currentSearchQuery) {
                 setTimeout(() => {
                     this.dt?.filterGlobal(this.currentSearchQuery, 'contains');
@@ -338,7 +341,10 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
 
     }
     displayDetails(rowData?: any) {
-        console.log("DONNEES DE LA DEMANDE SELECTIONNEE (displayDetails) :", rowData);
+        if (this.onDetails.observed && rowData) {
+            this.onDetails.emit(rowData);
+            return;
+        }
         if (this.displayDetail) {
             this.closeDetailsDialog();
         } else {

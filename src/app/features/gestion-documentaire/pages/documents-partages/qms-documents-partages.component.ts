@@ -16,7 +16,7 @@ import { MessageService } from 'primeng/api';
     styleUrl: './qms-documents-partages.component.scss'
 })
 export class QmsDocumentsPartagesComponent implements OnInit, OnDestroy {
-    loading = true;
+    loading: boolean = true;
     sharedDocuments: SharedDocumentDto[] = [];
 
     private destroy$ = new Subject<void>();
