@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { QualiUrlConfig } from '@core';
-import { WorkflowStepTemplate } from '../../../models/gestion-documentaire.model';
+import { QualiUrlConfig } from '@core/services/url-config';
+import { WorkflowStepTemplate } from '@features/gestion-documentaire/models/document.model';
 
 /**
  * Service de gestion du référentiel des modèles d'étapes (Catalogue des Étapes).

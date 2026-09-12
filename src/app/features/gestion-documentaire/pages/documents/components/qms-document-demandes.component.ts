@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '@prime-ng';
-import { DemandeDocumentDto } from '../../../models';
-import { DocumentQms } from '../../../models';
+import { DocumentQms } from '@features/gestion-documentaire/models/document.model';
+import { DemandeDocumentDto } from '@features/gestion-documentaire/models/demande.model';
 
 /**
  * Demandes de modification et de suppression portées sur un document.

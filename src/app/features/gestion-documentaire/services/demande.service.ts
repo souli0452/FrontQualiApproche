@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { QualiUrlConfig } from '@core';
-import { DemandeDocumentDto, TypeDemande } from '../models';
+import { QualiUrlConfig } from '@core/services/url-config';
+import { TypeDemande } from '@features/non-conformite/models/nc-status.model';
+import { DemandeDocumentDto } from '../models/demande.model';
 
 /**
  * Demandes de modification et de suppression de document.

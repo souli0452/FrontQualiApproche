@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, shareReplay } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { AuthService, getCurrentUserStructure } from '@core/auth';
-import { StructureService } from '@features/organigramme/services';
+import { AuthService } from '@core/auth/auth.service';
+import { getCurrentUserStructure } from '@core/auth/auth-utils';
+import { StructureService } from '@features/organigramme/services/structure.service';
 
 /** Une valeur proposée à l'utilisateur : ce qu'il lit, et ce qui part au serveur. */
 export interface ChoixDeChamp {

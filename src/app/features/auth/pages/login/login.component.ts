@@ -1,16 +1,17 @@
 import {Component, OnInit} from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService, isUserInRoles } from '@core/auth';
 import { MessageService } from 'primeng/api';
 import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../../../utils/global/global-utils';
-import { AuthData, LoginRequest } from '../../models';
 import { ApiItemResponse } from '../../../../models/response.model';
-import { StructureService } from '@features/organigramme';
+import { AuthService } from '@core/auth/auth.service';
+import { isUserInRoles } from '@core/auth/auth-utils';
+import { AuthData, LoginRequest } from '@features/auth/models/auth.model';
+import { StructureService } from '@features/organigramme/services/structure.service';
 
 @Component({
     selector: 'app-login',

@@ -3,25 +3,32 @@ import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '@prime-ng';
 import { Subject, takeUntil, debounceTime } from 'rxjs';
 
-import { FeaturesService } from '@core';
-import { currentUserState, getCurrentUserStructure } from '@core/auth';
 import { AuthData } from '../../../../models/auth.model';
-import { EtapeTraitement, NiveauNonConformite } from '../../models';
 
 import { 
     DASHBOARD_CARDS_AGENT, 
     DASHBOARD_CARDS_CHEF, 
     DASHBOARD_CARDS_RQ, 
-    StatsCardConfig,
-    KpiCardComponent,
-    TraitementTableComponent 
-} from '../../components';
-
-import { RoleService, NonConformiteService, NiveauNonConformiteService } from '../../services';
-import { StructureService, CategorieProcessusService } from '@features/organigramme/services';
-import { buildDashboardStats } from '../../utils';
+    StatsCardConfig
+} from '../../components/dashboard-card/dashboard-card';
+import { TraitementTableComponent } from '../../components/table-traitement/traitement-table';
+import { KpiCardComponent } from '../../../../shared/kpi-card/kpi-card.component';
 import { NcVueEnsembleFacade } from './vue-ensemble.facade';
-import { BreakdownItem, SmartAlertBannerComponent, SmartAlertItem, ChartEvolutionComponent, ChartFilterEvent } from '@shared';
+import { SmartAlertBannerComponent } from '../../../../shared/smart-alert-banner/smart-alert-banner.component';
+import { SmartAlertItem } from '../../../../shared/smart-alert-banner/smart-alert-banner.model';
+import { ChartEvolutionComponent } from '../../../../shared/chart-evolution/chart-evolution.component';
+import { BreakdownItem, ChartFilterEvent } from '../../../../shared/chart-evolution/chart-evolution.model';
+import { FeaturesService } from '@core/services/feature-service';
+import { getCurrentUserStructure } from '@core/auth/auth-utils';
+import { currentUserState } from '@core/auth/auth.state';
+import { NiveauNonConformite } from '@features/non-conformite/models/referentiel.model';
+import { EtapeTraitement } from '@features/non-conformite/models/nc-status.model';
+import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
+import { NiveauNonConformiteService } from '@features/non-conformite/services/niveau-non-conformite.service';
+import { RoleService } from '@features/non-conformite/services/role.service';
+import { buildDashboardStats } from '@features/non-conformite/utils/nc-utils';
+import { StructureService } from '@features/organigramme/services/structure.service';
+import { CategorieProcessusService } from '@features/organigramme/services/categorie-processus.service';
 
 @Component({
     selector: 'app-vue-ensemble',

@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgPrimeModule } from '@prime-ng';
-import { DemandeDocumentDto } from '../../models';
 import { ValidationHistoryDto, WorkflowActionDto, WorkflowStateDto } from '../../../../models/workflow.model';
-import { WorkflowHistoriqueComponent } from '@features/workflow';
+import { WorkflowHistoriqueComponent } from '../../../workflow/execution/workflow-historique.component';
+import { DemandeDocumentDto } from '@features/gestion-documentaire/models/demande.model';
 
 /**
  * Fiche d'une demande : ce qu'elle porte, où elle en est, et ce qu'on peut en faire.
@@ -15,6 +15,12 @@ import { WorkflowHistoriqueComponent } from '@features/workflow';
  * principe que la fiche d'un document : l'écran ne propose jamais une décision qui serait
  * refusée.</p>
  */
+console.error('>>> [DEBUG QmsDemandeDetailComponent imports]:', {
+    CommonModule: typeof CommonModule,
+    NgPrimeModule: typeof NgPrimeModule,
+    WorkflowHistoriqueComponent: typeof WorkflowHistoriqueComponent
+});
+
 @Component({
     selector: 'app-qms-demande-detail',
     standalone: true,

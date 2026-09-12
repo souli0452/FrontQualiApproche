@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '@shared';
+import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '../../../workflow/execution/workflow-decision-dialog.component';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -7,20 +7,20 @@ import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
-import { AppCrudGenericComponent } from '@shared';
+import { AppCrudGenericComponent } from '../../../../shared/app-crud-generic/app-crud-generic.component';
 import { TableColumn } from '../../../../models/generique.model';
-import { DemandeDocumentDto } from '../../models';
-import { DemandeDocumentService } from '../../services';
+import { DemandeDocumentDto } from '../../models/demande.model';
+import { DemandeDocumentService } from '../../services/demande.service';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
 import { QmsDemandeDetailComponent } from './qms-demande-detail.component';
-import { WorkflowService } from '@features/workflow';
+import { WorkflowService } from '../../../workflow/services/workflow.service';
 import {
     ValidationHistoryDto,
     WorkflowActionDto,
     WorkflowStateDto,
     WorkflowValidationRequestDto
 } from '../../../../models/workflow.model';
-import { hasAnyPermission } from '@core/auth';
+import { hasAnyPermission } from '../../../../core/auth/auth-utils';
 
 /** Ligne du tableau : la demande, augmentée de ce que la colonne affiche telle quelle. */
 type LigneDemande = DemandeDocumentDto & {
@@ -44,8 +44,14 @@ type LigneDemande = DemandeDocumentDto & {
 @Component({
     selector: 'app-qms-demandes',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, AppCrudGenericComponent,
-        QmsDemandeDetailComponent, WorkflowDecisionDialogComponent],
+    imports: [
+        CommonModule, 
+        ReactiveFormsModule, 
+        NgPrimeModule, 
+        AppCrudGenericComponent,
+        QmsDemandeDetailComponent, 
+        WorkflowDecisionDialogComponent
+    ],
     providers: [MessageService],
     templateUrl: './qms-demandes.component.html'
 })

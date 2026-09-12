@@ -3,10 +3,10 @@ import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import {takeUntil} from 'rxjs/operators';
 import {Subject} from 'rxjs';
-import { AuthService } from '@core/auth';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
+import { AuthService } from '@core/auth/auth.service';
 
 @Component({
   selector: 'app-email-verification',

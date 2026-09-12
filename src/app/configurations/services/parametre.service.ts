@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { QualiUrlConfig } from '@core/services/url-config';
 import { Observable, map } from 'rxjs';
 
-import { QualiUrlConfig } from '@core';
 
 /** Nature de la valeur d'un réglage, telle que le serveur l'énumère. */
 export type NatureParametre = 'TEXTE' | 'COURRIEL' | 'TELEPHONE' | 'URL' | 'IMAGE' | 'ADRESSE' | 'NOMBRE';

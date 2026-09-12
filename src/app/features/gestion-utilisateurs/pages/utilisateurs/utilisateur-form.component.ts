@@ -1,22 +1,19 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import { MessageService } from 'primeng/api';
 
-import { AuthService } from '@core/auth';
 import { AppRoleService } from '../../services/role.service';
-import { TypeStructure } from '@core/enums';
-import { FormGroupColumn, DropdownSelector, MultiSelectSelector } from '../../../../models/generique.model';
+import { FormGroupColumn } from '../../../../models/generique.model';
 import { FormPageComponent, QuickTip } from '../../../../shared/form-page/form-page.component';
 import { HeaderPage } from '../../../../shared/header-page/header-page';
-import { AlertMessageComponent } from '../../../../shared/alert-message/alert-message.component';
-import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
 import { ApiResponse } from '../../../../models/response.model';
 import { AppRole } from '../../models/role.model';
 import { AlertService } from '../../../../shared/alert-message/alert-message.service';
-import { StructureService } from '@features/organigramme';
+import { AuthService } from '@core/auth/auth.service';
+import { TypeStructure } from '@core/enums/type-structure.enum';
+import { StructureService } from '@features/organigramme/services/structure.service';
 
 @Component({
     selector: 'app-utilisateur-form',

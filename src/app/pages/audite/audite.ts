@@ -4,11 +4,10 @@ import { Subject, takeUntil } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils/global/global-utils';
-import { HttpResponse } from '@angular/common/http';
-import { AppCrudGenericComponent } from '@shared';
 import { AuditService } from './audite.service';
 import { FormGroupColumn, TableColumn } from '../../models/generique.model';
 import { Audite } from '../../models/audite.model';
+import { AppCrudGenericComponent } from '@shared/app-crud-generic/app-crud-generic.component';
 
 @Component({
     selector: 'app-audite',

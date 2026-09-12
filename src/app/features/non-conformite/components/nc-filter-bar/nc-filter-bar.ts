@@ -2,14 +2,16 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgPrimeModule } from '@prime-ng';
-import { NiveauNonConformiteService, OrigineNonConformiteService } from '../../services';
-import { NiveauNonConformite, OrigineNonConformite } from '../../models';
-import { CategorieProcessusService } from '@features/organigramme';
-import { TypeStructure } from '@core/enums';
-import { MultiselectInputComponent } from '@shared';
-import { Structure, StructureService } from '@features/organigramme';
-import { NcFilter } from '../../models';
-import { RoleService } from '../../services';
+import { TypeStructure } from '@core/enums/type-structure.enum';
+import { NcFilter } from '@features/non-conformite/models/nc-filter.model';
+import { NiveauNonConformite, OrigineNonConformite } from '@features/non-conformite/models/referentiel.model';
+import { NiveauNonConformiteService } from '@features/non-conformite/services/niveau-non-conformite.service';
+import { OrigineNonConformiteService } from '@features/non-conformite/services/type-non-conformite.service';
+import { RoleService } from '@features/non-conformite/services/role.service';
+import { MultiselectInputComponent } from '@shared/ui/multiselect-input/multiselect-input.component';
+import { Structure } from '@features/organigramme/models/structure.model';
+import { CategorieProcessusService } from '@features/organigramme/services/categorie-processus.service';
+import { StructureService } from '@features/organigramme/services/structure.service';
 
 export type { NcFilter };
 

@@ -5,13 +5,13 @@ import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
-import { AppCrudGenericComponent } from '@shared';
+import { AppCrudGenericComponent } from '../../../../shared/app-crud-generic/app-crud-generic.component';
 import { FormGroupColumn, TableColumn } from '../../../../models/generique.model';
 import { EmailTemplateDto } from '../../../../models/workflow.model';
-import { WorkflowService } from '@features/workflow';
-import { hasAnyPermission } from '@core/auth';
+import { WorkflowService } from '../../services/workflow.service';
 import { BasePaginationComponent } from '../../../../shared/pagination/pagination';
 import { AlertService } from '../../../../shared/alert-message/alert-message.service';
+import { hasAnyPermission } from '@core/auth/auth-utils';
 
 /**
  * Modèles d'e-mail des circuits de validation.

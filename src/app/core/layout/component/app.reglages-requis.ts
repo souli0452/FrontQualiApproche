@@ -4,10 +4,11 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MessageService } from 'primeng/api';
 import { Observable, Subject, forkJoin, of, takeUntil } from 'rxjs';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { LicenceService } from '../../licence';
-import { Parametre, ParametreService } from '@configurations';
-import { hasAnyPermission } from '../../auth';
+import { Parametre } from '@configurations/services/parametre.service';
+import { ParametreService } from '@configurations/services/parametre.service';
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
+import { LicenceService } from '@core/licence/services/licence.service';
+import { hasAnyPermission } from '@core/auth/auth-utils';
 
 /** Réglage exigé au lancement, avec ce qu'il faut pour le créer s'il manque. */
 interface ReglageRequis {

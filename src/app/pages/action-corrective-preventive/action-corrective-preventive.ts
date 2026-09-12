@@ -4,11 +4,10 @@ import { Subject, takeUntil } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils/global/global-utils';
-import { HttpResponse } from '@angular/common/http';
-import { AppCrudGenericComponent } from '@shared';
-import { ActionCorrectivePreventiveService } from '@features/non-conformite';
 import { FormGroupColumn, TableColumn } from '../../models/generique.model';
-import { ActionCorrectivePreventive } from '../../models/non-conformite.model';
+import { ActionCorrectivePreventive } from '@features/non-conformite/models/plan-action.model';
+import { ActionCorrectivePreventiveService } from '@features/non-conformite/services/action-corrective-preventive.service';
+import { AppCrudGenericComponent } from '@shared/app-crud-generic/app-crud-generic.component';
 
 @Component({
     selector: 'app-action-corrective-preventive',

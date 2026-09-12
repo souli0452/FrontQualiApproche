@@ -1,4 +1,5 @@
-import { REFERENTIEL_SERVICE } from '@core';
+import { REFERENTIEL_SERVICE } from "@core/services/url-config";
+
 
 export class StructureEndpoint {
     static readonly STRUCTURE_ROOT_URL = `${REFERENTIEL_SERVICE}/structures`;

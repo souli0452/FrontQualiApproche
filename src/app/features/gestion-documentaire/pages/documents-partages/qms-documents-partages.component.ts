@@ -2,10 +2,10 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { NgPrimeModule } from '@prime-ng';
-import { QmsDocumentService } from '../../services';
-import { SharedDocumentDto } from '../../models';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
 import { MessageService } from 'primeng/api';
+import { SharedDocumentDto } from '@features/gestion-documentaire/models/document.model';
+import { QmsDocumentService } from '@features/gestion-documentaire/services/document.service';
 
 @Component({
     selector: 'app-qms-documents-partages',

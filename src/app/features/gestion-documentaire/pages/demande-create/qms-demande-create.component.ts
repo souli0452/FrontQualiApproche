@@ -6,13 +6,13 @@ import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
-import { SelectInputComponent } from '@shared';
-import { FileUploadComponent } from '@features/non-conformite';
-import { DocumentQms } from '../../models';
-import { TypeDemande } from '../../models';
-import { DemandeDocumentService } from '../../services';
-import { QmsDocumentService } from '../../services';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
+import { FileUploadComponent } from '@features/non-conformite/components/file-upload/file-upload.component';
+import { SelectInputComponent } from '@shared/ui/select-input/select-input.component';
+import { DocumentQms } from '@features/gestion-documentaire/models/document.model';
+import { TypeDemande } from '@features/gestion-documentaire/models/demande.model';
+import { DemandeDocumentService } from '@features/gestion-documentaire/services/demande.service';
+import { QmsDocumentService } from '@features/gestion-documentaire/services/document.service';
 
 /**
  * Dépôt d'une demande de modification ou de suppression de document.

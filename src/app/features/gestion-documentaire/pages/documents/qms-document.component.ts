@@ -5,36 +5,30 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MessageService, MenuItem } from 'primeng/api';
-import { isUserInRoles } from '@core/auth';
 import { NgPrimeModule } from '@prime-ng';
-import {
-  QmsDocumentService,
-  // DocumentQms, QmsDocumentType, QmsDocumentVersion, QmsAuditLog
-} from '../../services';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
-import { WorkflowError, WorkflowService } from '@features/workflow';
-import { AuthService } from '@core/auth';
-import {
-  DomaineApplicationService,
-  NiveauConfidentialiteService,
-  PrioriteDocumentService
-} from '../../services';
-import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '../../models';
-import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentType, QmsDocumentVersion } from '../../models';
 import { WorkflowStateDto, WorkflowActionDto, ValidationHistoryDto } from '../../../../models/workflow.model';
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
 import { QmsDocumentListComponent } from './components/qms-document-list.component';
 import { QmsDocumentDetailComponent } from './components/qms-document-detail.component';
 import { QmsDocumentHistoryComponent } from './components/qms-document-history.component';
 import { QmsDocumentAuditComponent } from './components/qms-document-audit.component';
-import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '@shared';
 import { QmsDocumentDemandesComponent } from './components/qms-document-demandes.component';
-import { DemandeDocumentService } from '../../services';
-import { DemandeDocumentDto } from '../../models';
-import { WorkflowHistoriqueComponent } from '@features/workflow';
 import { QmsReclassementDialogComponent } from './components/qms-reclassement-dialog.component';
 import { QmsDocumentAccessDialogComponent, AccessGrant } from './components/qms-document-access-dialog.component';
-import { Structure, StructureService } from '@features/organigramme';
+import { AuthService } from '@core/auth/auth.service';
+import { isUserInRoles } from '@core/auth/auth-utils';
+import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '@features/workflow/execution/workflow-decision-dialog.component';
+import { WorkflowHistoriqueComponent } from '@features/workflow/execution/workflow-historique.component';
+import { WorkflowError, WorkflowService } from '@features/workflow/services/workflow.service';
+import { Structure } from '@features/organigramme/models/structure.model';
+import { StructureService } from '@features/organigramme/services/structure.service';
+import { DomaineApplication, NiveauConfidentialite, PrioriteDocument, QmsDocumentType } from '@features/gestion-documentaire/models/referentiel.model';
+import { DemandeDocumentDto } from '@features/gestion-documentaire/models/demande.model';
+import { QmsDocumentService } from '@features/gestion-documentaire/services/document.service';
+import { DemandeDocumentService } from '@features/gestion-documentaire/services/demande.service';
+import { DomaineApplicationService, NiveauConfidentialiteService, PrioriteDocumentService } from '@features/gestion-documentaire/services/referentiel.service';
+import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentVersion } from '@features/gestion-documentaire/models/document.model';
 
 /**
  * Les six regards portés sur un document, réunis en onglets d'une même fiche.

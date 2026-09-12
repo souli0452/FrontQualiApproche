@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { Observable } from 'rxjs';
-import { WorkflowService } from '../services';
-import { WorkflowActionDto, WorkflowStateDto } from '../models';
 import { DecisionConfirmee, WorkflowDecisionDialogComponent } from './workflow-decision-dialog.component';
+import { WorkflowActionDto, WorkflowStateDto } from 'src/app/models/workflow.model';
+import { WorkflowService } from '../services/workflow.service';
 
 /**
  * Barre d'actions du circuit de validation, pour n'importe quel dossier suivi par le moteur.

@@ -2,9 +2,10 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgPrimeModule } from '@prime-ng';
-import { DocumentQms } from '../../../models';
-import { OptionsLoader, SelectInputComponent } from '@shared';
-import { NiveauConfidentialite } from '../../../models';
+import { SelectInputComponent } from '@shared/ui/select-input/select-input.component';
+import { DocumentQms } from '@features/gestion-documentaire/models/document.model';
+import { OptionsLoader } from '@shared/ui/lazy-options.model';
+import { NiveauConfidentialite } from '@features/gestion-documentaire/models/referentiel.model';
 
 /**
  * Changement du niveau de confidentialité d'un document déjà déposé.

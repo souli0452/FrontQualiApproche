@@ -5,18 +5,16 @@ import { MessageService } from 'primeng/api';
 import { Subject, forkJoin, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
-import { DocStatsCardComponent } from '../../components';
-import { KpiCardComponent } from '@shared';
-import { QmsDocumentService } from '../../services';
-import { DemandeDocumentService } from '../../services';
-import {
-    DocumentaireATraiterService
-} from '../../services';
-import { DocumentQms, DocumentStatsDto } from '../../models';
-import { DemandeDocumentDto } from '../../models';
-import { hasAnyPermission } from '@core/auth';
 import { formatDateToDDMMYYYY } from '../../../../utils/formatage/formatage-utils';
 import { LigneATraiter, QmsATraiterComponent } from './qms-a-traiter.component';
+import { hasAnyPermission } from '@core/auth/auth-utils';
+import { KpiCardComponent } from '@shared/kpi-card/kpi-card.component';
+import { QmsDocumentService } from '@features/gestion-documentaire/services/document.service';
+import { DemandeDocumentService } from '@features/gestion-documentaire/services/demande.service';
+import { DocumentaireATraiterService } from '@features/gestion-documentaire/services/documentaire-a-traiter.service';
+import { DocumentQms } from '@features/gestion-documentaire/models/document.model';
+import { DemandeDocumentDto } from '@features/gestion-documentaire/models/demande.model';
+import { DocumentStatsDto } from '@features/gestion-documentaire/models/stats.model';
 
 interface DimensionEntry {
     label: string;

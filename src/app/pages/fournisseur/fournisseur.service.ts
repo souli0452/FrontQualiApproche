@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BaseCrudService, UrlConfig } from '@core';
+
 import { Fournisseur } from '../../models/fournisseur.model';
+import { BaseCrudService } from '@core/services/base-crud.service';
+import { UrlConfig } from '@core/services/url-config';
 
 @Injectable({ providedIn: 'root' })
 export class FournisseurService extends BaseCrudService<Fournisseur, string> {

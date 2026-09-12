@@ -2,12 +2,11 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-
-import { ModuleAbonnement } from '@core/enums';
 import { HeaderPage } from '../../../shared/header-page/header-page';
-import { hasAnyPermission } from '@core/auth';
 import { EtatLicence } from '../models/etat-licence.model';
 import { LicenceService } from '../services/licence.service';
+import { ModuleAbonnement } from '@core/enums/module-abonnement.enum';
+import { hasAnyPermission } from '@core/auth/auth-utils';
 
 /** Un module de l'abonnement, et son sort sous la licence en cours. */
 interface LigneModule {

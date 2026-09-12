@@ -1,23 +1,21 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { CommonModule, DatePipe, formatDate } from '@angular/common';
+import { Component, Input, ViewChild } from '@angular/core';
+import { CommonModule} from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Tag } from 'primeng/tag';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { MessageService } from 'primeng/api';
 import { NgPrimeModule } from '@prime-ng';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
-import { FeaturesService } from '@core';
-import { AuthService, hasAnyPermission } from '@core/auth';
-import { EtapeTraitement } from '../../models';
 import { LightboxComponent } from '../lightbox/lightbox';
-import { 
-    WorkflowGuidanceComponent, 
-    WorkflowSaisiesComponent, 
-    WorkflowHistoriqueComponent 
-} from '@features/workflow';
 import { convertFilesToBase64 } from '../../../../utils/fichier/fichier-utils';
 import { formatDateToDDMMYYYY } from '../../../../utils/formatage/formatage-utils';
-import { LicenceOuverteDirective } from '@shared';
-import { ProcNonConformiteService, PieceJointeFichierService } from '../../services';
+import { hasAnyPermission } from '@core/auth/auth-utils';
+import { AuthService } from '@core/auth/auth.service';
+import { EtapeTraitement } from '@features/non-conformite/models/nc-status.model';
+import { ProcNonConformiteService } from '@features/non-conformite/services/proc-non-conformite.service';
+import { PieceJointeFichierService } from '@features/non-conformite/services/piece-jointe-fichier.service';
+import { WorkflowGuidanceComponent } from '@features/workflow/execution/workflow-guidance.component';
+import { WorkflowSaisiesComponent } from '@features/workflow/execution/workflow-saisies.component';
+import { WorkflowHistoriqueComponent } from '@features/workflow/execution/workflow-historique.component';
+import { LicenceOuverteDirective } from '@shared/licence/licence-ouverte.directive';
 
 @Component({
     selector: 'app-details-dialog',
@@ -69,8 +67,6 @@ export class DetailsDialogComponent {
     confirmKey = 'confirmKey';
 
     constructor(
-        private featureService: FeaturesService,
-        private confirmationService: ConfirmationService,
         private service: ProcNonConformiteService,
         private messageService: MessageService,
         private authService: AuthService,

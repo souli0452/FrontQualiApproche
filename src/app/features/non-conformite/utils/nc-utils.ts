@@ -1,4 +1,5 @@
-import { NcFilter, NcStats } from '../models';
+import { NcFilter } from "../components/nc-filter-bar/nc-filter-bar";
+import { NcStats } from "../models/nc-stats.model";
 
 
 export function buildDashboardStats(data: any) {

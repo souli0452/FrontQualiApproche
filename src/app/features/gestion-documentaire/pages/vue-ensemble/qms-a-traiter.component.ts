@@ -6,8 +6,8 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { WorkflowActionsComponent } from '@features/workflow';
 import { WorkflowStateDto } from '../../../../models/workflow.model';
+import { WorkflowActionsComponent } from '@features/workflow/execution/workflow-actions.component';
 
 /**
  * Une ligne de la liste de travail, réduite à ce qu'il faut pour décider.

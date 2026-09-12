@@ -3,10 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { NgPrimeModule } from '@prime-ng';
-import { WorkflowActionDto, WorkflowStepFieldDto } from '../models';
-import { SelectInputComponent } from '@shared';
+import { SelectInputComponent } from '../../../shared/ui/select-input/select-input.component';
 import { ChoixDeChamp, ChoixDeChampService } from '../services/choix-de-champ.service';
 import { MessageService } from 'primeng/api';
+import { WorkflowActionDto, WorkflowStepFieldDto } from 'src/app/models/workflow.model';
 
 /** Décision confirmée : commentaire et valeurs saisies, prêtes pour l'appel au serveur. */
 export interface DecisionConfirmee {
@@ -27,6 +27,13 @@ export interface DecisionConfirmee {
  * champs, et une manière de déposer un fichier. C'est ce qui lui permet de servir n'importe quel
  * dossier suivi par le moteur.</p>
  */
+console.error('>>> [DEBUG WorkflowDecisionDialogComponent imports]:', {
+  CommonModule: typeof CommonModule,
+  ReactiveFormsModule: typeof ReactiveFormsModule,
+  NgPrimeModule: typeof NgPrimeModule,
+  SelectInputComponent: typeof SelectInputComponent
+});
+
 @Component({
   selector: 'app-workflow-decision-dialog',
   standalone: true,

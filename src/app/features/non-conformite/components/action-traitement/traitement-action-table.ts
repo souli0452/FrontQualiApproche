@@ -6,7 +6,6 @@ import { Table } from 'primeng/table';
 import { Location } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { NonConformStatus } from '@features/non-conformite/models';
-import { FeaturesService } from '@core';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
 
 
@@ -25,6 +24,7 @@ import { NonConformiteService, PlanActionService, PieceJointeFichierService } fr
 import { GlobalSearchService } from '@shared';
 import { forkJoin, map } from 'rxjs';
 import { LicenceOuverteDirective } from '@shared';
+import { FeaturesService } from '@core/services/feature-service';
 
 @Component({
     selector: 'app-traitement-action',

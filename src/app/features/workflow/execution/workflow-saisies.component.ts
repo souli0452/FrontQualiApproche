@@ -1,9 +1,10 @@
 import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { SaisieDto, WorkflowStateDto } from '../models';
 import { ChoixDeChampService } from '../services/choix-de-champ.service';
-import { PieceJointeFichierService, ProcNonConformiteService } from '@features/non-conformite';
+import { PieceJointeFichierService } from '@features/non-conformite/services/piece-jointe-fichier.service';
+import { ProcNonConformiteService } from '@features/non-conformite/services/proc-non-conformite.service';
+import { SaisieDto, WorkflowStateDto } from 'src/app/models/workflow.model';
 
 /**
  * Ce que le dossier a recueilli au fil de son circuit, rassemblé au même endroit.

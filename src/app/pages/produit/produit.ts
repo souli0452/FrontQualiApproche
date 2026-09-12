@@ -4,11 +4,10 @@ import { Subject, takeUntil } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils/global/global-utils';
-import { HttpResponse } from '@angular/common/http';
-import { AppCrudGenericComponent } from '@shared';
 import { ProduitService } from './produit.service';
 import { FormGroupColumn, TableColumn } from '../../models/generique.model';
 import { Produit } from '../../models/produit.model';
+import { AppCrudGenericComponent } from '@shared/app-crud-generic/app-crud-generic.component';
 
 @Component({
     selector: 'app-produit',

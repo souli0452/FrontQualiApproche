@@ -7,12 +7,12 @@ import { Router } from '@angular/router';
 
 import { TableColumn, FormGroupColumn, MultiSelectSelector } from '../../../../models/generique.model';
 import { NgPrimeModule } from '@prime-ng';
-import { AppCrudGenericComponent } from '@shared';
 import { AppRoleService, RoleService } from '../../services/role.service';
 import { AppRole, Permission } from '../../models/role.model';
 import { HeaderPage } from '../../../../shared/header-page/header-page';
 import { BasePaginationComponent } from '../../../../shared/pagination/pagination';
 import { AlertService } from '../../../../shared/alert-message/alert-message.service';
+import { AppCrudGenericComponent } from '@shared/app-crud-generic/app-crud-generic.component';
 
 @Component({
   selector: 'app-roles-liste',

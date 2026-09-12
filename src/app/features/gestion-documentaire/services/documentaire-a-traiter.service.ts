@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, catchError, forkJoin, map, of, tap } from 'rxjs';
 
-import { DemandeDocumentDto, DocumentQms } from '../models';
 import { DemandeDocumentService } from './demande.service';
 import { QmsDocumentService } from './document.service';
-import { AppNotificationService } from '@core';
+import { AppNotificationService } from '@core/notifications/app-notification.service';
+import { DocumentQms } from '../models/document.model';
+import { DemandeDocumentDto } from 'src/app/models/demande-document.model';
 
 /** Ce que l'utilisateur a à traiter dans le module documentaire, à l'instant où il regarde. */
 export interface DocumentaireATraiter {

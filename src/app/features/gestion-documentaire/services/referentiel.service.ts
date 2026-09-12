@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { BaseCrudService, QualiUrlConfig } from '@core';
-import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '../models';
 import { OptionsLoadEvent, OptionsLoader } from '../../../shared/ui/lazy-options.model';
+import { BaseCrudService } from '@core/services/base-crud.service';
+import { QualiUrlConfig } from '@core/services/url-config';
+import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from 'src/app/models/referentiel-document.model';
 
 /**
  * Les deux services reprennent `BaseCrudService` — mêmes chemins que les autres référentiels — et

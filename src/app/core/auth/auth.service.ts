@@ -4,11 +4,12 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { map } from 'rxjs/operators';
-import { QualiUrlConfig, BaseCrudService } from '../services';
 import { currentUserState } from './auth.state';
 import { AuthData, LoginRequest, UserResponse } from '../../models/auth.model';
 import { ApiItemResponse, ApiResponse } from '../../models/response.model';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { BaseCrudService } from '@core/services/base-crud.service';
+import { QualiUrlConfig } from '@core/services/url-config';
 
 @Injectable({
     providedIn: 'root'

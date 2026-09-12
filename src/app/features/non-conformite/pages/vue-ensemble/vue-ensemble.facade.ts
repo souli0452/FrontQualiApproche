@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { NonConformiteService } from '../../services';
+import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
 import { map } from 'rxjs';
 
 @Injectable({

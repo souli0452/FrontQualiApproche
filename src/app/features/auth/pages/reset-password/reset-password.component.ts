@@ -1,12 +1,12 @@
 import { Component,OnDestroy,OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { AuthService } from '@core/auth';
 import { Router } from '@angular/router';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
+import { AuthService } from '@core/auth/auth.service';
 
 @Component({
   selector: 'app-reset-password',

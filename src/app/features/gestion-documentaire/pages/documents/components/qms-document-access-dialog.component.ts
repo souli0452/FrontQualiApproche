@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgPrimeModule } from '@prime-ng';
-import { DocumentQms, DocumentUserAccess } from '../../../models';
+import { DocumentQms, DocumentUserAccess } from '@features/gestion-documentaire/models/document.model';
 
 /** Droit d'accès à octroyer sur un document. */
 export interface AccessGrant {

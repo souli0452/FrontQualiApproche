@@ -1,8 +1,8 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, catchError, tap, throwError } from 'rxjs';
-import { REFERENTIEL_SERVICE } from '../../services';
 import { EtatLicence } from '../models/etat-licence.model';
+import { REFERENTIEL_SERVICE } from '@core/services/url-config';
 
 /**
  * La licence de l'installation, telle que le serveur la tient.

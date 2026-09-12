@@ -6,15 +6,21 @@ import { MessageService } from 'primeng/api';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgPrimeModule } from '@prime-ng';
 
-import { FeaturesService } from '@core';
-import { currentUserState, getCurrentUserStructure } from '@core/auth';
-import { Structure, StructureService } from '@features/organigramme';
-import { FileUploadComponent } from '../../components';
 import { LicenceOuverteDirective } from '../../../../shared/licence/licence-ouverte.directive';
 import { ApiItemResponse, PaginatedData } from '../../../../models/response.model';
 import { convertFilesToBase64 } from '../../../../utils/fichier/fichier-utils';
-import { NonConformiteService, NiveauNonConformiteService, OrigineNonConformiteService } from '../../services';
-import { EtapeTraitement, NonConformStatus, NiveauNonConformite, NonConformite, OrigineNonConformite } from '../../models';
+import { FeaturesService } from '@core/services/feature-service';
+import { getCurrentUserStructure } from '@core/auth/auth-utils';
+import { currentUserState } from '@core/auth/auth.state';
+import { FileUploadComponent } from '@features/non-conformite/components/file-upload/file-upload.component';
+import { NiveauNonConformite, OrigineNonConformite } from '@features/non-conformite/models/referentiel.model';
+import { NonConformite } from '@features/non-conformite/models/non-conformite.model';
+import { EtapeTraitement, NonConformStatus } from '@features/non-conformite/models/nc-status.model';
+import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
+import { OrigineNonConformiteService } from '@features/non-conformite/services/type-non-conformite.service';
+import { NiveauNonConformiteService } from '@features/non-conformite/services/niveau-non-conformite.service';
+import { StructureService } from '@features/organigramme/services/structure.service';
+import { Structure } from '@features/organigramme/models/structure.model';
 
 
 @Component({

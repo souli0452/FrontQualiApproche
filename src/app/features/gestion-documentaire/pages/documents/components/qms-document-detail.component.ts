@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '@prime-ng';
-import { DocumentQms } from '../../../models';
 import { WorkflowActionDto, WorkflowStateDto } from '../../../../../models/workflow.model';
+import { DocumentQms } from '@features/gestion-documentaire/models/document.model';
 
 /**
  * Fiche d'un document : caractéristiques, état, et barre d'actions.

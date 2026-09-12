@@ -4,10 +4,10 @@ import { map, Observable } from 'rxjs';
 import { Structure } from '../models/structure.model';
 import { StructureEndpoint } from './structure-url-config';
 import { createRequestOption } from '../../../utils/global/global-utils';
-import { TypeStructure } from '@core/enums';
 import { ApiResponse, PaginatedData } from '../../../models/response.model';
 import { OptionsLoadEvent, OptionsLoader } from '../../../shared/ui/lazy-options.model';
 import { formatUrl } from '../../../utils/formatage/formatage-utils';
+import { TypeStructure } from '@core/enums/type-structure.enum';
 
 
 @Injectable({providedIn: 'root'})

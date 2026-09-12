@@ -1,23 +1,16 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { MessageService } from 'primeng/api';
-import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
-import { AuthService } from '@core/auth';
-import { AppCrudGenericComponent } from '@shared';
 import { NgPrimeModule } from '@prime-ng';
-import { TypeStructure } from '@core/enums';
-import { AppRoleService, RoleService } from '../../services/role.service';
-import { ApiResponse } from '../../../../models/response.model';
-import { AppRole } from '../../models/role.model';
-import { DropdownSelector, FormGroupColumn, MultiSelectSelector, TableColumn } from '../../../../models/generique.model';
-import { Breadcrumb } from 'primeng/breadcrumb';
+import {  FormGroupColumn, TableColumn } from '../../../../models/generique.model';
 import { RouterModule, Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { HeaderPage } from '../../../../shared/header-page/header-page';
 import { AlertService } from '../../../../shared/alert-message/alert-message.service';
 import { BasePaginationComponent } from '../../../../shared/pagination/pagination';
+import { AuthService } from '@core/auth/auth.service';
+import { AppCrudGenericComponent } from '@shared/app-crud-generic/app-crud-generic.component';
 
 @Component({
     selector: 'app-utilisateurs-liste',
@@ -63,7 +56,6 @@ export class UtilisateursListeComponent extends BasePaginationComponent implemen
 
     constructor(
         private fb: UntypedFormBuilder,
-        private messageService: MessageService,
         private authService: AuthService,
         private router: Router,
         private alertService: AlertService

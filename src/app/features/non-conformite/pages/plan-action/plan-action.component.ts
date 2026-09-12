@@ -1,17 +1,24 @@
 import { Component, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { HttpResponse } from '@angular/common/http';
-import { BasePaginationComponent, AlertService } from '@shared';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '@prime-ng';
-import { FeaturesService } from '@core';
-import { TraitementTableComponent, NcFilter, NcFilterBarComponent, LightboxComponent, DetailsDialogComponent } from '../../components';
-import { AuthService } from '@core/auth';
+
 import { forkJoin, of, Subject } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { NonConformiteService, PlanActionService, PieceJointeFichierService } from '../../services';
-import { WorkflowActionsComponent, WorkflowGuidanceComponent, WorkflowHistoriqueComponent } from '@features/workflow';
+import { FeaturesService } from '@core/services/feature-service';
+import { NcFilter, NcFilterBarComponent } from '@features/non-conformite/components/nc-filter-bar/nc-filter-bar';
+import { TraitementTableComponent } from '@features/non-conformite/components/table-traitement/traitement-table';
+import { LightboxComponent } from '@features/non-conformite/components/lightbox/lightbox';
+import { DetailsDialogComponent } from '@features/non-conformite/components/details-dialog/details-dialog';
+import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
+import { PlanActionService } from '@features/non-conformite/services/plan-action.service';
+import { PieceJointeFichierService } from '@features/non-conformite/services/piece-jointe-fichier.service';
+import { WorkflowActionsComponent } from '@features/workflow/execution/workflow-actions.component';
+import { WorkflowGuidanceComponent } from '@features/workflow/execution/workflow-guidance.component';
+import { WorkflowHistoriqueComponent } from '@features/workflow/execution/workflow-historique.component';
+import { BasePaginationComponent } from '@shared/pagination/pagination';
+import { AlertService } from '@shared/alert-message/alert-message.service';
 
 @Component({
     selector: 'app-plan-action',
@@ -63,13 +70,11 @@ export class PlanActionComponent extends BasePaginationComponent {
     constructor(
         private featureService: FeaturesService,
         protected messageService: MessageService,
-        private service: NonConformiteService,
         private nonConformiteService: NonConformiteService,
         private planActionService: PlanActionService,
         private fichiersService: PieceJointeFichierService,
         private route: ActivatedRoute,
         private alertService: AlertService,
-        private authService: AuthService
     ) {
         super();
         this.cols = [

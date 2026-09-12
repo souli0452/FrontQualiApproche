@@ -13,7 +13,7 @@ import { MenuItem } from 'primeng/api';
 import { Table } from 'primeng/table';
 import { TableColumn } from '../../models/generique.model';
 import { NgPrimeModule } from '../../../prime-ng.module';
-import { GlobalSearchService } from '../recherche-globale';
+import { GlobalSearchService } from '../recherche-globale/global-search.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 

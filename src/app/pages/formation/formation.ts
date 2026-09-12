@@ -5,11 +5,10 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { MessageService } from 'primeng/api';
 import { FormationService } from './formation.service';
 import { showToast, StatusEnum } from '../../utils/global/global-utils';
-import { HttpResponse } from '@angular/common/http';
-import { AppCrudGenericComponent } from '@shared';
 import { FormGroupColumn, TableColumn } from '../../models/generique.model';
 import { Formation } from '../../models/formation.model';
 import { ApiItemResponse } from '../../models/response.model';
+import { AppCrudGenericComponent } from '@shared/app-crud-generic/app-crud-generic.component';
 
 @Component({
     selector: 'app-formation',

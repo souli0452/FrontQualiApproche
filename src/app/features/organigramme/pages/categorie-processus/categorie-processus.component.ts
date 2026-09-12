@@ -3,8 +3,6 @@ import { Component, ViewChild } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { AppCrudGenericComponent } from '@shared';
-import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
 import { ApiItemResponse } from '../../../../models/response.model';
 import { FormGroupColumn, TableColumn } from '../../../../models/generique.model';
 import { CategorieProcessus } from '../../models/categorie-processus.model';
@@ -12,6 +10,7 @@ import { CategorieProcessusService } from '../../services/categorie-processus.se
 import { HeaderPage } from '../../../../shared/header-page/header-page';
 import { AlertService } from '../../../../shared/alert-message/alert-message.service';
 import { BasePaginationComponent } from '../../../../shared/pagination/pagination';
+import { AppCrudGenericComponent } from '@shared/app-crud-generic/app-crud-generic.component';
 
 @Component({
     selector: 'app-type-processus',

@@ -1,6 +1,6 @@
 import { AfterViewInit, Directive, ElementRef, OnDestroy, Renderer2, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { LicenceService } from '@core/licence';
+import { LicenceService } from '../../core/licence/services/licence.service';
 
 /**
  * Désactive un bouton d'action tant que la licence ne les permet pas.

@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
-import { QualiUrlConfig, BaseCrudService } from '@core';
 import { ApiResponse } from '../../../models/response.model';
 import { AppRole, Permission } from '../models/role.model';
+import { BaseCrudService } from '@core/services/base-crud.service';
+import { QualiUrlConfig } from '@core/services/url-config';
 
 @Injectable({ providedIn: 'root' })
 export class RoleService extends BaseCrudService<AppRole> {

@@ -6,9 +6,10 @@ import { MenuItem } from 'primeng/api';
 
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { LayoutService } from '@core/layout';
-import { RoleService, NonConformiteService } from '../services';
 import { HeaderPage } from '@shared/header-page/header-page';
+import { LayoutService } from '@core/layout/service/layout.service';
+import { NonConformiteService } from '../services/non-conformite.service';
+import { RoleService } from '@features/gestion-utilisateurs/services/role.service';
 
 @Component({
   selector: 'app-non-conformite-layout',

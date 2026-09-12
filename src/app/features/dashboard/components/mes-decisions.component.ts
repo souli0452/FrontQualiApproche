@@ -7,21 +7,15 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { Observable, Subject, catchError, map, of, takeUntil } from 'rxjs';
-
-import { ModuleAbonnement } from '@core/enums';
-import { accesAutorise } from '@core/auth';
-import { WorkflowStateDto } from '@features/workflow/models';
-import { 
-    DemandeDocumentService, 
-    DocumentaireATraiterService, 
-    QmsDocumentService 
-} from '@features/gestion-documentaire/services';
-import { 
-    NonConformiteService, 
-    PlanActionService, 
-    ProcNonConformiteService 
-} from '@features/non-conformite/services';
-import { WorkflowActionsComponent } from '@features/workflow';
+import { accesAutorise } from '@core/auth/auth-utils';
+import { ModuleAbonnement } from '@core/enums/module-abonnement.enum';
+import { WorkflowStateDto } from 'src/app/models/workflow.model';
+import { WorkflowActionsComponent } from '@features/workflow/execution/workflow-actions.component';
+import { DocumentaireATraiterService } from '@features/gestion-documentaire/services/documentaire-a-traiter.service';
+import { QmsDocumentService } from '@features/gestion-documentaire/services/document.service';
+import { DemandeDocumentService } from '@features/gestion-documentaire/services/demande.service';
+import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
+import { PlanActionService } from '@features/non-conformite/services/plan-action.service';
 
 /** Un dossier qui attend une décision de l'utilisateur, quelle que soit sa famille. */
 interface DecisionAttendue {
@@ -220,7 +214,7 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
     private readonly documentService = inject(QmsDocumentService);
     private readonly demandeService = inject(DemandeDocumentService);
     private readonly ncService = inject(NonConformiteService);
-    private readonly ncFichiers = inject(ProcNonConformiteService);
+    private readonly ncFichiers = inject(NonConformiteService);
     private readonly planService = inject(PlanActionService);
     private readonly router = inject(Router);
     private readonly destroy$ = new Subject<void>();

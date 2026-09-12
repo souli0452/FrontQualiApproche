@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { hasAnyPermission } from '@core/auth';
+import { hasAnyPermission } from '@core/auth/auth-utils';
 
 @Injectable({
   providedIn: 'root' // Ce paramètre rend le service globalement accessible partout
