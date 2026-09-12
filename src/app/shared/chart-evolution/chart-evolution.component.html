@@ -20,53 +20,121 @@
                         (onClear)="onFilterChange()">
                     </p-select>
 
-                    <!-- 2. Sélecteur d'Année -->
-                    <p-datepicker 
-                        [(ngModel)]="selectedYear" 
-                        view="year" 
-                        dateFormat="yy" 
-                        placeholder="Année"
-                        styleClass="select-clean-filter"
-                        size="small"
-                        (ngModelChange)="onFilterChange()"
-                        [showIcon]="true" 
-                        appendTo="body"
-                        panelStyleClass="min-w-[18rem]"
-                        iconDisplay="input">
-                    </p-datepicker>
+                    <!-- 2. Sélecteur de Période (Style popover moderne dédié au graphique) -->
+                    <div class="relative inline-flex items-center">
+                        <button 
+                            type="button" 
+                            class="select-period-btn flex items-center gap-2 cursor-pointer shadow-2xs"
+                            (click)="openPeriodPanel(periodPanel, $event)">
+                            <i class="pi pi-calendar text-xs opacity-90"></i>
+                            <span>{{ getFormattedPeriodLabel() }}</span>
+                            <i class="pi pi-chevron-down text-[10px] opacity-80 ml-1"></i>
+                        </button>
 
-                    <!-- 3. Sélecteur de Mois (Optionnel) -->
-                    <p-datepicker 
-                        [(ngModel)]="selectedMonth" 
-                        view="month" 
-                        dateFormat="mm" 
-                        placeholder="Mois"
-                        styleClass="select-clean-filter"
-                        size="small"
-                        [readonlyInput]="true" 
-                        [showClear]="true"
-                        (ngModelChange)="onFilterChange()"
-                        (onClear)="onFilterChange()"
-                        [showIcon]="true" 
-                        appendTo="body"
-                        panelStyleClass="min-w-[18rem]"
-                        iconDisplay="input">
-                    </p-datepicker>
+                        <!-- Popover des périodes -->
+                        <p-popover #periodPanel [style]="{ width: '360px', maxWidth: '95vw' }">
+                            <div class="flex flex-col text-surface-700 dark:text-surface-200">
+                                <!-- Raccourcis rapides -->
+                                <div class="p-3 border-b border-surface-200 dark:border-surface-700">
+                                    <span class="text-[11px] font-bold uppercase tracking-wider text-surface-400 block mb-2">Raccourcis</span>
+                                    <div class="grid grid-cols-2 gap-1.5">
+                                        <button 
+                                            type="button"
+                                            *ngFor="let preset of periodPresets"
+                                            [class]="'text-left px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer border-none ' + (activePreset === preset.id ? 'bg-primary text-white font-semibold' : 'bg-surface-100 dark:bg-surface-800 hover:bg-surface-200 dark:hover:bg-surface-700 text-surface-700 dark:text-surface-200')"
+                                            (click)="applyPreset(preset, periodPanel)">
+                                            {{ preset.label }}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Personnalisation -->
+                                <div class="p-3 bg-surface-50 dark:bg-surface-950/40">
+                                    <span class="text-[11px] font-bold uppercase tracking-wider text-surface-400 block mb-2">Période personnalisée</span>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-[11px] font-medium text-surface-500 mb-1">Année</label>
+                                            <p-datepicker 
+                                                [(ngModel)]="tempYear" 
+                                                view="year" 
+                                                dateFormat="yy" 
+                                                placeholder="Année"
+                                                size="small"
+                                                appendTo="body"
+                                                panelStyleClass="min-w-[16rem]"
+                                                styleClass="w-full">
+                                            </p-datepicker>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-medium text-surface-500 mb-1">Mois (optionnel)</label>
+                                            <p-datepicker 
+                                                [(ngModel)]="tempMonth" 
+                                                view="month" 
+                                                dateFormat="mm" 
+                                                placeholder="Tous les mois"
+                                                size="small"
+                                                appendTo="body"
+                                                panelStyleClass="min-w-[16rem]"
+                                                [showClear]="true"
+                                                styleClass="w-full">
+                                            </p-datepicker>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="flex items-center justify-between p-2.5 border-t border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900">
+                                    <button 
+                                        type="button" 
+                                        class="text-xs text-surface-500 hover:text-surface-800 dark:hover:text-surface-200 underline cursor-pointer bg-transparent border-none p-1" 
+                                        (click)="resetToCurrentYear(periodPanel)">
+                                        Cette année
+                                    </button>
+                                    <div class="flex items-center gap-2">
+                                        <button 
+                                            pButton 
+                                            type="button" 
+                                            label="Annuler" 
+                                            class="p-button-text p-button-secondary p-button-sm text-xs" 
+                                            (click)="periodPanel.hide()">
+                                        </button>
+                                        <button 
+                                            pButton 
+                                            type="button" 
+                                            label="Appliquer" 
+                                            severity="info" 
+                                            class="p-button-sm text-xs font-semibold px-3" 
+                                            (click)="applyCustomPeriod(periodPanel)">
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </p-popover>
+                    </div>
                 </div>
             </div>
 
-            <!-- Titre et Total -->
-            <div class="flex flex-row items-center justify-between gap-3 mb-2">
-                <div class="flex items-center gap-3">
-                    <h3 class="text-surface-900 dark:text-surface-50 text-base font-bold m-0 tracking-tight">{{ title }}</h3>
-                    <span class="text-surface-900 dark:text-surface-50 text-2xl font-extrabold">{{ total }}</span>
+            <!-- Titre, Total et Bloc Décisionnel de Sévérité (Haut-Droit) -->
+            <div class="flex flex-row items-start justify-between gap-4 mb-2 flex-wrap sm:flex-nowrap">
+                <!-- Gauche : Titre et Compteur global -->
+                <div class="flex items-center gap-3 shrink-0">
+                    <h3 class="text-surface-900 dark:text-surface-50 text-base font-semibold m-0">{{ title }}</h3>
+                    <span class="text-surface-900 dark:text-surface-50 text-2xl font-bold tracking-tight">{{ total }}</span>
                 </div>
                 
-                <span 
-                    *ngIf="pourcentage" 
-                    class="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/60 text-xs font-semibold px-2.5 py-1 rounded-full shadow-2xs">
-                    {{ pourcentage }}
-                </span>
+                <!-- Droite : Diagnostic Qualité dynamique (Palier de sévérité & Aide à la décision) -->
+                <div class="flex flex-col items-end text-right shrink-0" *ngIf="severiteInfo">
+                    <!-- 1. Badge d'évaluation du risque avec pastille colorée -->
+                    <div [class]="'inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border shadow-2xs transition-colors ' + severiteInfo.badgeClass">
+                        <span [class]="'w-2 h-2 rounded-full shrink-0 ' + severiteInfo.dotClass"></span>
+                        <span>{{ severiteInfo.label }}</span>
+                    </div>
+
+                    <!-- 2. Texte d'aide à la décision (Recommandation managériale selon le palier) -->
+                    <span class="text-[11px] font-medium text-surface-500 dark:text-surface-400 mt-1 max-w-[320px] sm:max-w-none leading-tight">
+                        {{ severiteInfo.conseil }}
+                    </span>
+                </div>
             </div>
 
             <!-- Ventilation par gravité / badges dynamiques -->
@@ -87,9 +155,25 @@
         </div>
     </div>
 
-    <!-- Graphique PrimeNG (p-chart Bar) -->
-    <div class="flex-grow relative z-10 min-h-[180px] w-full mt-3">
-        <p-chart type="bar" [data]="chartData" [options]="chartOptions" height="200px"></p-chart>
+    <!-- Graphique ApexCharts (Stacked Column) -->
+    <div class="flex-grow relative z-10 min-h-[200px] w-full mt-3" *ngIf="series && series.length > 0">
+        <apx-chart
+            [series]="series"
+            [chart]="chart"
+            [xaxis]="xaxis"
+            [yaxis]="yaxis"
+            [colors]="colors"
+            [plotOptions]="plotOptions"
+            [dataLabels]="dataLabels"
+            [tooltip]="tooltip"
+            [grid]="grid"
+            [legend]="legend"
+            [responsive]="responsive">
+        </apx-chart>
     </div>
+    <div *ngIf="!series || series.length === 0" class="flex items-center justify-center h-[180px] text-surface-400 text-xs italic">
+        Aucune donnée d'évolution disponible
+    </div>
+
 </div>
 

@@ -129,12 +129,32 @@
 
 
 :host ::ng-deep .vue-ensemble-table {
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    border-radius: 5px;
+    
     .bg-blue{
+        background: rgba(0, 0, 0, 0.05) !important;
         border-radius: 0px !important;
 
         span {
-            font-weight: 500 !important;
+            font-size: 12px !important;
+            text-transform: uppercase !important;
+            font-weight: 600 !important;
         }
+    }
+    .tableau-card{
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        background-color: #ef070700 !important;
+        border: none !important;
+        overflow: hidden !important;
+    }
+
+    // Suppression de tout débordement / scrollbars horizontales et verticales
+    .p-datatable-table-container,
+    .p-datatable-wrapper,
+    .p-datatable {
+        overflow: hidden !important;
     }
     // 1. Masquer la colonne de case à cocher
     th:first-child,
@@ -143,9 +163,13 @@
     }
     th:last-child,
     td:last-child {
-        width: 40px !important;
-        max-width: 40px !important;
+        width: 60px !important;
+        max-width: 60px !important;
+        text-align: right !important; /* 👈 Centre le titre "ACTION" */
         white-space: nowrap !important;
+        div {
+            justify-content: right !important;
+        }
     }
     // 2. Verrouiller la largeur de la colonne N° Réf
     th:nth-child(2),
@@ -158,5 +182,31 @@
     .tag-pill {
         font-size: 11px !important;
         padding: 0.2rem 0.5rem !important;
+    }
+
+    // 1. Supprimer la pagination doublon du haut (blanche)
+    p-table .p-paginator,
+    .p-datatable .p-paginator {
+        display: none !important;
+    }
+    // 2. Épurer la barre de pagination du bas
+    .footer-bar {
+        background: transparent !important;
+        justify-content: center !important;
+        padding: 0.25rem 0.5rem !important;
+        // Masquer le texte "Affichage de 1 – 2 sur 2..."
+        > div:first-child {
+            display: none !important;
+        }
+        // Centrer les boutons de pages
+        .paginator-wrapper {
+            display: flex;
+            justify-content: center;
+            // Masquer le sélecteur déroulant "5 ˅"
+            .p-paginator-rpp-dropdown,
+            .p-select {
+                display: none !important;
+            }
+        }
     }
 }

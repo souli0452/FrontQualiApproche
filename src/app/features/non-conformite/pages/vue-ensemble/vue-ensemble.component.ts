@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '@prime-ng';
 import { Subject, takeUntil, debounceTime } from 'rxjs';
@@ -29,6 +29,7 @@ import { RoleService } from '@features/non-conformite/services/role.service';
 import { buildDashboardStats } from '@features/non-conformite/utils/nc-utils';
 import { StructureService } from '@features/organigramme/services/structure.service';
 import { CategorieProcessusService } from '@features/organigramme/services/categorie-processus.service';
+import { PlanActionDialogComponent } from '@features/non-conformite/components/plan-action-dialog/plan-action-dialog.component';
 
 @Component({
     selector: 'app-vue-ensemble',
@@ -39,7 +40,8 @@ import { CategorieProcessusService } from '@features/organigramme/services/categ
         KpiCardComponent,
         SmartAlertBannerComponent,
         ChartEvolutionComponent,
-        TraitementTableComponent
+        TraitementTableComponent,
+        PlanActionDialogComponent
     ],
     templateUrl: './vue-ensemble.component.html',
     styleUrl: './vue-ensemble.component.scss'
@@ -104,6 +106,47 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         return total > 0 ? total : 100;
     }
 
+    getCardSubText(i: number): string | undefined {
+        if (i === 0) return this.totalSubText;
+        if (i === 1) {
+            const enCours = this.stats?.enCours || 0;
+            const total = this.stats?.total || 0;
+            const pct = total > 0 ? Math.round((enCours / total) * 100) : 0;
+            return `• ${pct}% des dossiers actifs`;
+        }
+        if (i === 2) {
+            const tauxSla = this.dashboardData?.tauxSla ?? 100;
+            return `• Respect SLA : ${tauxSla}%`;
+        }
+        if (i === 3) {
+            const cloturees = this.stats?.cloturees ?? 0;
+            const total = this.stats?.total || 0;
+            const tauxResolV = total > 0 ? Math.round((cloturees / total) * 100) : (cloturees > 0 ? 100 : 0);
+            return `• Taux résol. : ${tauxResolV}%`;
+        }
+        return undefined;
+    }
+
+    getCardMeterData(i: number): any[] | undefined {
+        if (i === 0) return this.niveauxMeterData;
+        if (i === 1) return this.enCoursMeterData;
+        if (i === 2) return this.retardMeterData;
+        if (i === 3) return this.clotureMeterData;
+        return undefined;
+    }
+
+    trackByCard(index: number, card: any): any {
+        return card.label || index;
+    }
+
+    getCardMeterMax(i: number): number {
+        if (i === 0) return this.meterMax;
+        if (i === 1) return this.meterMax;
+        if (i === 2) return 100;
+        if (i === 3) return this.meterMax;
+        return 100;
+    }
+
     // =========================================================================
     // 3. SMART ALERTS (Bandeau de notification d'action requise)
     // =========================================================================
@@ -140,12 +183,14 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     // 4. RÉFÉRENTIELS & GAUGES (MeterGroup, Gravités & Processus)
     // =========================================================================
     niveauxReferentiel: NiveauNonConformite[] = [];
+    rawEvolutionData: any = null;
     niveauxMeterData: any[] = [];
     totalNcNiveaux: number = 0;
     scoreSeveriteMoyen: number = 0;
     appreciationRisque: string = 'Aucun incident';
     couleurRisque: string = 'text-surface-500';
 
+    enCoursMeterData: any[] = [];
     retardMeterData: any[] = [];
     retardProgressionItems: any[] = [];
     clotureMeterData: any[] = [];
@@ -214,11 +259,12 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
 
     // Colonnes compactes optimisées pour les widgets de dashboard
     colsTraitement = [
-        { field: 'numeroReference', header: 'N° Réf', type: 'string', width: '70px' },
+        { field: 'numeroReference', header: 'N° Réf', type: 'string', width: '120px' },
+        { field: 'niveauNonConformiteLibelle', header: 'Gravité', type: 'badge', width: '50px' }
     ];
     colsPlanAction = [
-        { field: 'numeroReference', header: 'N° Réf NC', type: 'string', width: '80px' },
-        { field: 'numeroOdre', header: 'N°', type: 'string', width: '30px', centered: true },
+        { field: 'numeroReference', header: 'N° Réf', type: 'string', width: '120px' },
+        { field: 'numeroOdre', header: 'N° Ordre', type: 'string', width: '50px' },
     ];
 
     traitementsList: any[] = [];
@@ -230,6 +276,10 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     totalPlansAction: number = 0;
     loadingPlans: boolean = false;
     pagePlanAction: number = 0;
+
+    // Dialogue direct de consultation et décision du Plan d'action
+    affichePlanDialog: boolean = false;
+    selectedPlan: any = null;
 
     // =========================================================================
     // CONSTRUCTEUR
@@ -411,12 +461,20 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
                     const list = Array.isArray(res) ? res : (res?.data || res?.content || []);
                     this.niveauxReferentiel = (list && list.length > 0)
                         ? [...list].sort((a, b) => (a.score || 0) - (b.score || 0))
-                        : this.getFallbackNiveaux();
+                        : [];
                     this.calculerMeterGroupData();
+
+                    // Synchronisation : si les stats d'évolution sont déjà arrivées, recalculer la sévérité avec les coefficients réels
+                    if (this.rawEvolutionData) {
+                        this.processEvolutionStats(this.rawEvolutionData);
+                    }
                 },
                 error: () => {
-                    this.niveauxReferentiel = this.getFallbackNiveaux();
+                    this.niveauxReferentiel = [];
                     this.calculerMeterGroupData();
+                    if (this.rawEvolutionData) {
+                        this.processEvolutionStats(this.rawEvolutionData);
+                    }
                 }
             });
     }
@@ -442,64 +500,76 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (data: any) => {
-                    this.chartData = data.chartData;
-                    this.evolutionTotal = data.totalEvolution;
-                    
-                    const maxScore = this.niveauxReferentiel.length > 0 
-                        ? Math.max(...this.niveauxReferentiel.map(n => n.score || 1)) 
-                        : 5;
-
-                    let scoreTotalPondere = 0;
-
-                    if (data.gravites && Array.isArray(data.gravites)) {
-                        const fallbackColors = ['#ef4444', '#f97316', '#22c55e', '#3b82f6', '#a855f7'];
-
-                        this.evolutionBreakdownItems = data.gravites.map((g: any, idx: number) => {
-                            const libelle = g.nom || g.libelle || g.label || 'Niveau';
-                            const count = g.count ?? g.nombre ?? 0;
-                            
-                            const matchRef = this.niveauxReferentiel.find(r => 
-                                (r.id && g.id && r.id === g.id) || 
-                                (r.libelle && libelle && r.libelle.trim().toLowerCase() === libelle.trim().toLowerCase())
-                            );
-
-                            const scoreUnit = g.score ?? matchRef?.score ?? 1;
-                            const colorHex = g.couleur || matchRef?.couleur || fallbackColors[idx % fallbackColors.length];
-                            scoreTotalPondere += count * scoreUnit;
-
-                            return { label: libelle, count: count, customColor: colorHex };
-                        });
-
-                        if (this.chartData && Array.isArray(this.chartData.datasets)) {
-                            this.chartData.datasets = this.chartData.datasets.map((ds: any, idx: number) => {
-                                const itemColor = this.evolutionBreakdownItems[idx]?.customColor || ds.backgroundColor || '#ef4444';
-                                return {
-                                    ...ds,
-                                    type: 'bar',
-                                    backgroundColor: this.hexToRgba(itemColor, 0.85),
-                                    borderColor: itemColor,
-                                    borderWidth: 1,
-                                    borderRadius: 0,
-                                    borderSkipped: false,
-                                    maxBarThickness: 24
-                                };
-                            });
-                        }
-
-                        if (this.evolutionTotal > 0 && maxScore > 0) {
-                            const maxPossibleScore = this.evolutionTotal * maxScore;
-                            const indiceSeveritePct = Math.round((scoreTotalPondere / maxPossibleScore) * 100);
-                            this.evolutionPourcentage = `Sévérité : ${indiceSeveritePct}%`;
-                        } else {
-                            this.evolutionPourcentage = data.pourcentageEvolution || '0%';
-                        }
-                    } else {
-                        this.evolutionBreakdownItems = [];
-                        this.evolutionPourcentage = '0%';
-                    }
+                    this.rawEvolutionData = data;
+                    this.processEvolutionStats(data);
                 },
                 error: (err: any) => console.error("Erreur stats d'évolution", err)
             });
+    }
+
+    private processEvolutionStats(data: any): void {
+        if (!data) return;
+        this.chartData = data.chartData;
+        this.evolutionTotal = data.totalEvolution;
+        
+        // Détermination du score maximum (100% dynamique) :
+        // Le référentiel de l'entreprise en base est la source de vérité absolue.
+        // Si la réponse du référentiel est en transit, on prend le score max retourné directement par l'API dans gravites.
+        let maxScore = 0;
+        if (this.niveauxReferentiel.length > 0) {
+            maxScore = Math.max(...this.niveauxReferentiel.map(n => n.score || 1));
+        } else if (data.gravites && Array.isArray(data.gravites) && data.gravites.length > 0) {
+            maxScore = Math.max(...data.gravites.map((g: any) => g.score || 1));
+        }
+
+        let scoreTotalPondere = 0;
+
+        if (data.gravites && Array.isArray(data.gravites)) {
+            const fallbackColors = ['#ef4444', '#f97316', '#22c55e', '#3b82f6', '#a855f7'];
+
+            this.evolutionBreakdownItems = data.gravites.map((g: any, idx: number) => {
+                const libelle = g.nom || g.libelle || g.label || 'Niveau';
+                const count = g.count ?? g.nombre ?? 0;
+                
+                const matchRef = this.niveauxReferentiel.find(r => 
+                    (r.id && g.id && r.id === g.id) || 
+                    (r.libelle && libelle && r.libelle.trim().toLowerCase() === libelle.trim().toLowerCase())
+                );
+
+                const scoreUnit = g.score ?? matchRef?.score ?? 1;
+                const colorHex = g.couleur || matchRef?.couleur || fallbackColors[idx % fallbackColors.length];
+                scoreTotalPondere += count * scoreUnit;
+
+                return { label: libelle, count: count, customColor: colorHex };
+            });
+
+            if (this.chartData && Array.isArray(this.chartData.datasets)) {
+                this.chartData.datasets = this.chartData.datasets.map((ds: any, idx: number) => {
+                    const itemColor = this.evolutionBreakdownItems[idx]?.customColor || ds.backgroundColor || '#ef4444';
+                    return {
+                        ...ds,
+                        type: 'bar',
+                        backgroundColor: this.hexToRgba(itemColor, 0.85),
+                        borderColor: itemColor,
+                        borderWidth: 1,
+                        borderRadius: 0,
+                        borderSkipped: false,
+                        maxBarThickness: 24
+                    };
+                });
+            }
+
+            if (this.evolutionTotal > 0 && maxScore > 0) {
+                const maxPossibleScore = this.evolutionTotal * maxScore;
+                const indiceSeveritePct = Math.round((scoreTotalPondere / maxPossibleScore) * 100);
+                this.evolutionPourcentage = `Sévérité : ${indiceSeveritePct}%`;
+            } else {
+                this.evolutionPourcentage = data.pourcentageEvolution || '0%';
+            }
+        } else {
+            this.evolutionBreakdownItems = [];
+            this.evolutionPourcentage = '0%';
+        }
     }
 
     onChartFilterChange(event: ChartFilterEvent): void {
@@ -567,6 +637,12 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         this.clotureMeterData = [
             { label: 'Clôturées', value: cloturees, color: '#22c55e' },
             { label: 'En cours',  value: enCours,   color: '#3b82f6' }
+        ].filter(item => item.value > 0);
+
+        // ─── Carte Bleue : En cours vs Clôturées ────────────────────────────
+        this.enCoursMeterData = [
+            { label: 'En cours',   value: enCours,   color: '#38bdf8' },
+            { label: 'Clôturées', value: cloturees, color: '#94a3b8' }
         ].filter(item => item.value > 0);
     }
 
@@ -766,13 +842,6 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         return 'RQ';
     }
 
-    private getFallbackNiveaux(): NiveauNonConformite[] {
-        return [
-            { id: '1', libelle: 'Mineure',  score: 1, couleur: '#22c55e', description: '' },
-            { id: '2', libelle: 'Majeure',  score: 2, couleur: '#f59e0b', description: '' },
-            { id: '3', libelle: 'Critique', score: 3, couleur: '#ef4444', description: '' }
-        ];
-    }
 
     private getDefaultColorForScore(score: number): string {
         switch (score) {
@@ -797,5 +866,22 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
             return `rgba(${r}, ${g}, ${b}, ${alpha})`;
         }
         return hex;
+    }
+
+    // =========================================================================
+    // GESTION DU DIALOGUE DU PLAN D'ACTION (Consultation & Décision directe)
+    // =========================================================================
+    ouvrirPlanAction(plan: any): void {
+        if (!plan) return;
+        this.selectedPlan = plan;
+        this.affichePlanDialog = true;
+    }
+
+    apresDecisionSurLePlan(plan: any): void {
+        this.affichePlanDialog = false;
+        this.loadPlansAction();
+        this.loadTraitements();
+        this.nonConformiteService.rafraichirNotifications();
+        this.loadDashboardData();
     }
 }
