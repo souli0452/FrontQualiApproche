@@ -4,20 +4,30 @@
 }
 
 :host ::ng-deep {
-    /* Harmonisation complète des 3 filtres (Services, Année, Mois) - Style Bleu Corporate Compact */
+    /* Harmonisation complète des filtres (Services, Sélecteur de période) - Style Bleu Corporate Compact */
     p-select.select-clean-filter,
     .p-select.select-clean-filter,
     p-datepicker.select-clean-filter,
-    .p-datepicker.select-clean-filter {
+    .p-datepicker.select-clean-filter,
+    .select-period-btn {
         display: inline-flex !important;
         align-items: center !important;
         height: 30px !important;
         min-height: 30px !important;
         border-radius: 5px !important;
         background: var(--info-color) !important;
+        color: #ffffff !important;
         border: none !important;
         box-shadow: none !important;
+        padding: 0 10px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        cursor: pointer;
         transition: all 0.2s ease-in-out !important;
+
+        &:hover {
+            opacity: 0.92;
+        }
     }
 
     /* Style du composant PrimeNG Select */
@@ -126,7 +136,8 @@
         p-select.select-clean-filter,
         .p-select.select-clean-filter,
         p-datepicker.select-clean-filter,
-        .p-datepicker.select-clean-filter {
+        .p-datepicker.select-clean-filter,
+        .select-period-btn {
             background: #1e3a5f !important;
             border-color: #1e3a5f !important;
         }

@@ -31,51 +31,66 @@
     </div>
 
     <!-- ====================================================================
-         2. CONTENU RÉEL (Style Proposition 1)
+         2. CONTENU RÉEL (Style SaaS Premium unifié)
          ==================================================================== -->
     <ng-container *ngIf="!loading">
 
-        <div class="flex flex-row items-center">
-            <!-- 1. Icône -->
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm"
-                [ngClass]="[theme.iconBg, theme.iconColor]">
-                <i [class]="icon || 'pi pi-chart-line'" class="text-lg"></i>
-            </div>
-            <!-- 2. Label -->
-            <div class="kpi-label" [ngClass]="theme.iconColor">
-                {{ label || title }}
-            </div>
+        <!-- Grande icône en filigrane XXL en arrière-plan à droite (meuble le vide avec élégance) -->
+        <div class="absolute icone-filigrane right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-[0.2] dark:opacity-[0.20] select-none z-0">
+            <i [class]="icon || 'pi pi-chart-line'" class="text-7xl" [ngClass]="theme.iconColor"></i>
         </div>
-        
-        
 
-        <!-- 2. Valeur -->
-        <div class="kpi-value flex">
-            <span>{{ value }}</span>
+        <div class="relative z-10 flex flex-col justify-between h-full gap-2">
+            <!-- Ligne 1 : En-tête (Icône + Label à gauche, Badge pourcentage pilule à droite) -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg icone-box flex items-center justify-center shadow-2xs shrink-0"
+                         [ngClass]="[theme.iconBg, theme.iconColor]">
+                        <i [class]="icon || 'pi pi-chart-line'" class="text-sm"></i>
+                    </div>
+                    <span class="text-xs font-bold label-card text-surface-800 dark:text-surface-100">
+                        {{ label || title }}
+                    </span>
+                </div>
 
-            <!-- Le Pourcentage Dynamique -->
-            <span *ngIf="percentage !== undefined" 
-                  class="text-xs font-bold px-2 py-0.5 rounded-md flex items-center gap-1"
-                  [ngClass]="{
-                      'text-emerald-600 dark:text-emerald-400': percentage >= 50,
-                      'text-rose-600 dark:text-rose-400': percentage < 50
-                  }">
-                
-                <!-- L'icône de flèche qui change toute seule -->
-                <i class="text-[9px]" [ngClass]="percentage >= 50 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"></i>
-                
-                <!-- Le chiffre avec le symbole % -->
-                {{ percentage }}%
-            </span>
+                <!-- Badge de pourcentage repositionné en haut à droite -->
+                <span *ngIf="percentage !== undefined" 
+                      class="text-[11px] font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1 shrink-0 shadow-2xs"
+                      [ngClass]="percentage >= 50 
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60' 
+                          : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60'">
+                    <i class="text-[8px]" [ngClass]="percentage >= 50 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"></i>
+                    {{ percentage }}%
+                </span>
+            </div>
+
+            <!-- Ligne 2 : Valeur imposante et Description alignée -->
+            <div class="my-0.5">
+                <div class="text-3xl value-card font-bold text-surface-900 dark:text-surface-50 tracking-tight leading-none">
+                    {{ value }}
+                </div>
+                <div *ngIf="description" class="text-[11px] description-card font-medium text-surface-500 dark:text-surface-400 mt-1">
+                    {{ description }}
+                </div>
+            </div>
+
+            <!-- Ligne 3 : Mini-jauge de répartition segmentée (si meterData présent) -->
+            <div *ngIf="meterData && meterData.length > 0" class="pt-2 border-t border-surface-200/60 dark:border-surface-700/60">
+                <div class="w-full h-1.5 bg-surface-200/60 dark:bg-surface-800 rounded-full overflow-hidden flex gap-0.5">
+                    <div *ngFor="let seg of meterData"
+                         [style.width.%]="(seg.value / (meterMax || 1)) * 100"
+                         [style.backgroundColor]="seg.color"
+                         [title]="seg.label + ': ' + seg.value"
+                         class="h-full rounded-full transition-all">
+                    </div>
+                </div>
+                <!-- Sous-texte de synthèse -->
+                <div *ngIf="subText" class="text-[10px] font-medium text-surface-400 dark:text-surface-500 mt-1 flex justify-between">
+                    <span class="subtext-card">{{ subText }}</span>
+                </div>
+            </div>
         </div>
-        <!-- 4. Pourcentage (metaBadge) et 5. Description -->
-        <div class="flex items-center gap-2 pl-12">
-            <!-- La Description -->
-            <span *ngIf="description" class="text-[11px] text-surface-400 font-medium">
-                {{ description }}
-            </span>
-        </div>
-        
+
     </ng-container>
 
 

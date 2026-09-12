@@ -6,10 +6,10 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
-import { AppCrudGenericComponent } from '@shared';
+import { AppCrudGenericComponent } from '../../../../shared/app-crud-generic/app-crud-generic.component';
 import { TableColumn } from '../../../../models/generique.model';
-import { hasAnyPermission } from '@core/auth';
-import { WorkflowError, WorkflowService } from '@features/workflow';
+import { hasAnyPermission } from '../../../../core/auth/auth-utils';
+import { WorkflowError, WorkflowService } from '../../services/workflow.service';
 import { WorkflowConfigurationGuideComponent } from '../editor/workflow-configuration-guide.component';
 import { WorkflowDto } from '../../../../models/workflow.model';
 import { BasePaginationComponent } from '../../../../shared/pagination/pagination';

@@ -4,22 +4,18 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { NgPrimeModule } from '@prime-ng';
-import { QmsDocumentService } from '../../services';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
-import { AuthService } from '@core/auth';
-import {
-  DomaineApplicationService,
-  NiveauConfidentialiteService,
-  PrioriteDocumentService
-} from '../../services';
-import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '../../models';
 
 import { Subject, takeUntil } from 'rxjs';
-import { ToggleSwitch } from 'primeng/toggleswitch';
-import { SelectInputComponent } from '@shared';
-import { FileUploadComponent } from '@features/non-conformite/components';
-import { LicenceOuverteDirective } from '@shared';
-import { Structure, StructureService } from '@features/organigramme';
+import { AuthService } from '@core/auth/auth.service';
+import { FileUploadComponent } from '@features/non-conformite/components/file-upload/file-upload.component';
+import { SelectInputComponent } from '@shared/ui/select-input/select-input.component';
+import { LicenceOuverteDirective } from '@shared/licence/licence-ouverte.directive';
+import { Structure } from '@features/organigramme/models/structure.model';
+import { StructureService } from '@features/organigramme/services/structure.service';
+import { QmsDocumentService } from '@features/gestion-documentaire/services/document.service';
+import { DomaineApplicationService, NiveauConfidentialiteService, PrioriteDocumentService } from '@features/gestion-documentaire/services/referentiel.service';
+import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '@features/gestion-documentaire/models/referentiel.model';
 
 @Component({
   selector: 'app-qms-document-create',

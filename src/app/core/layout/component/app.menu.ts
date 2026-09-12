@@ -3,10 +3,10 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { AppMenuitem } from './app.menuitem';
-import { AuthService, accesAutorise, hasAnyPermission, hasMenuProfile } from '../../auth';
 import { ChangeDetectorRef } from '@angular/core';
-import { ModuleAbonnement } from '../../enums';
 import { AppNotificationService } from '@core/notifications/app-notification.service';
+import { accesAutorise, hasAnyPermission, hasMenuProfile } from '@core/auth/auth-utils';
+import { ModuleAbonnement } from '@core/enums/module-abonnement.enum';
 
 @Component({
     selector: 'app-menu',

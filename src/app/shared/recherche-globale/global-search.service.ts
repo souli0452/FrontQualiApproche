@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
+import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
+import { StructureService } from '@features/organigramme/services/structure.service';
 import { forkJoin, Observable, of, BehaviorSubject } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { NonConformiteService } from '@features/non-conformite';
-import { StructureService } from '@features/organigramme';
 
 export interface SearchResult {
     title: string;

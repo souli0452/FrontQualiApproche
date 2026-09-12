@@ -2,10 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, of } from 'rxjs';
-
-import { ModuleAbonnement } from '@core/enums';
-import { accesAutorise } from '@core/auth';
-import { QmsDocumentService } from '@features/gestion-documentaire/services';
+import { accesAutorise } from '@core/auth/auth-utils';
+import { ModuleAbonnement } from '@core/enums/module-abonnement.enum';
+import { QmsDocumentService } from '@features/gestion-documentaire/services/document.service';
 
 /** Un indicateur affiché en tuile. */
 interface Indicateur {

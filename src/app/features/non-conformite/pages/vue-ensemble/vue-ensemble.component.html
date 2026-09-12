@@ -15,7 +15,7 @@
     <!-- SECTION GAUCHE : Les 4 blocs de statistiques compacts (2x2) -->
     <div class="col-span-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
         <app-kpi-card 
-            *ngFor="let card of managerCards; let i = index"
+            *ngFor="let card of managerCards; trackBy: trackByCard; let i = index"
             [label]="card.label"
             [title]="card.badge"
             [value]="getCardValue(card)"
@@ -24,21 +24,20 @@
             [description]="card.description"
             [loading]="loading"
             [percentage]="getCardPercentage(card)"
-            [subText]="i === 0 ? totalSubText : undefined"
-            [meterData]="i === 0 ? niveauxMeterData : (i === 2 ? retardMeterData : undefined)"
-            [meterMax]="i === 0 ? meterMax : (i === 2 ? 100 : undefined)">
+            [subText]="getCardSubText(i)"
+            [meterData]="getCardMeterData(i)"
+            [meterMax]="getCardMeterMax(i)">
         </app-kpi-card>
     </div>
 </div>
-<div class="col-span-full grid grid-cols-1 lg:grid-cols-12 gap-5 mt-4" *ngIf="roleService.isAdmin || roleService.isRQ || roleService.isChef">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-4" *ngIf="roleService.isAdmin || roleService.isRQ || roleService.isChef">
     <!-- Bloc 1 : Graphique d'Évolution (Fluide ~65% sur PC) -->
-    <div class="lg:col-span-7 xl:col-span-8 min-w-0 w-full">
+    <div class="lg:col-span-7 xl:col-span-7 min-w-0 w-full">
         <app-chart-evolution
-            [title]="'Évolution des NC'"
+            [title]="'Évolution des non-conformités'"
             [total]="evolutionTotal"
             [pourcentage]="evolutionPourcentage"
             [chartData]="chartData"
-            [chartOptions]="chartOptions"
             [structuresList]="structuresList"
             [showStructureFilter]="roleService.isAdmin || roleService.isRQ"
             [selectedYear]="selectedYear"
@@ -50,7 +49,7 @@
     </div>
 
     <!-- Bloc 2 : Performance des délais (Compact ~35% sur PC) -->
-    <div class="doughnut-droit lg:col-span-5 xl:col-span-4 min-w-0 w-full bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 sm:p-5 shadow-sm flex flex-col justify-between h-auto lg:h-full">
+    <div class="doughnut-droit lg:col-span-5 xl:col-span-5 min-w-0 w-full bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 sm:p-5 shadow-sm flex flex-col justify-between h-auto lg:h-full">
         <!-- En-tête -->
         <div>
             <h3 class="text-base font-bold text-surface-900 dark:text-surface-50 mb-1">Performance des délais</h3>
@@ -152,9 +151,9 @@
             [description]="card.description"
             [loading]="loading"
             [percentage]="getCardPercentage(card)"
-            [subText]="i === 0 ? totalSubText : undefined"
-            [meterData]="i === 0 ? niveauxMeterData : (i === 2 ? retardMeterData : undefined)"
-            [meterMax]="i === 0 ? meterMax : (i === 2 ? 100 : undefined)">
+            [subText]="getCardSubText(i)"
+            [meterData]="getCardMeterData(i)"
+            [meterMax]="getCardMeterMax(i)">
         </app-kpi-card>
     </div>
 </div>
@@ -165,7 +164,7 @@
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-6 items-stretch">
     
     <!-- BLOC GAUCHE : Traitements en attente (Hauteur fixée à 320px) -->
-    <div class="lg:col-span-6 min-w-0 flex flex-col h-[320px]">
+    <div class="lg:col-span-6 min-w-0 flex flex-col min-h-[320px] h-auto">
         <!-- 1. Si des données existent : afficher la table -->
         <app-traitement-table
             *ngIf="traitementsList.length > 0 || loadingTraitements"
@@ -174,14 +173,17 @@
             [subtitle]="'Non-conformités nécessitant une action ou décision'"
             [demandeList]="traitementsList"
             [cols]="colsTraitement"
-            [tableStyle]="{ 'min-width': '100%' }"
+            [tableStyle]="{ 'width': '100%' }"
             [btnActions]="BtnActions.TRAITEMENT"
             [loading]="loadingTraitements"
             [hasFilters]="false"
             [showSearch]="false"
-            [paginator]="false"
+            [paginator]="true"
             [pageSize]="5"
-            [totalElements]="totalTraitements">
+            [currentPage]="pageTraitement"
+            [totalElements]="totalTraitements"
+            [rowsPerPageOptions]="[5]"
+            (pageChangeEvent)="onPageChangeTraitement($event)">
         </app-traitement-table>
 
         <!-- 2. Si la liste est vide : carte centrée avec la même hauteur exacte -->
@@ -198,7 +200,7 @@
     </div>
 
     <!-- BLOC DROIT : Plans d'action à réaliser (Hauteur fixée à 320px) -->
-    <div class="lg:col-span-6 min-w-0 flex flex-col h-[320px]">
+    <div class="lg:col-span-6 min-w-0 flex flex-col min-h-[320px] h-auto">
         <!-- 1. Si des données existent : afficher la table -->
         <app-traitement-table
             *ngIf="plansActionList.length > 0 || loadingPlans"
@@ -207,13 +209,18 @@
             [subtitle]="'Actions correctives assignées en attente d\'exécution'"
             [demandeList]="plansActionList"
             [cols]="colsPlanAction"
-            [tableStyle]="{ 'min-width': '100%' }"
+            [tableStyle]="{ 'width': '100%' }"
             [loading]="loadingPlans"
             [hasFilters]="false"
             [showSearch]="false"
-            [paginator]="false"
+            [paginator]="true"
             [pageSize]="5"
-            [totalElements]="totalPlansAction">
+            [currentPage]="pagePlanAction"
+            [totalElements]="totalPlansAction"
+            [recordName]="'plans d\'action'"
+            [rowsPerPageOptions]="[5]"
+            (pageChangeEvent)="onPageChangePlanAction($event)"
+            (onDetails)="ouvrirPlanAction($event)">
         </app-traitement-table>
 
         <!-- 2. Si la liste est vide : carte centrée avec la même hauteur exacte -->
@@ -231,7 +238,11 @@
 
 </div>
 
-
-
+<!-- Dialogue réutilisable de consultation et de décision du plan d'action -->
+<app-plan-action-dialog
+    [(visible)]="affichePlanDialog"
+    [plan]="selectedPlan"
+    (executed)="apresDecisionSurLePlan($event)">
+</app-plan-action-dialog>
 
 </p-card>

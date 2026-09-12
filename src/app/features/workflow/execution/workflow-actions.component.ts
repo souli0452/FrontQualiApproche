@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { Observable } from 'rxjs';
-import { WorkflowService } from '../services';
-import { WorkflowActionDto, WorkflowStateDto } from '../models';
 import { DecisionConfirmee, WorkflowDecisionDialogComponent } from './workflow-decision-dialog.component';
+import { WorkflowActionDto, WorkflowStateDto } from 'src/app/models/workflow.model';
+import { WorkflowService } from '../services/workflow.service';
 
 /**
  * Barre d'actions du circuit de validation, pour n'importe quel dossier suivi par le moteur.
@@ -27,11 +27,11 @@ import { DecisionConfirmee, WorkflowDecisionDialogComponent } from './workflow-d
     selector: 'app-workflow-actions',
     standalone: true,
     imports: [CommonModule, ButtonModule, WorkflowDecisionDialogComponent],
-    template: `
+        template: `
         @if (actions.length) {
-            <div class="flex flex-wrap items-center gap-2">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
                 @if (state?.currentStateName) {
-                    <span class="text-xs text-slate-500 mr-1">
+                    <span class="text-xs text-slate-500 hidden sm:inline mr-1">
                         Étape : <span class="font-semibold text-slate-700">{{ state?.currentStateName }}</span>
                     </span>
                 }
@@ -41,6 +41,7 @@ import { DecisionConfirmee, WorkflowDecisionDialogComponent } from './workflow-d
                         [icon]="action.icon || 'pi pi-directions'"
                         [severity]="severiteDe(action)"
                         size="small"
+                        styleClass="w-full sm:w-auto justify-center font-semibold"
                         [disabled]="loading"
                         (onClick)="ouvrir(action)"></p-button>
                 }

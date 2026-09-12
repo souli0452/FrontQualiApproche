@@ -19,7 +19,6 @@ import { NgPrimeModule } from '@prime-ng';
 import { FormInputTemplateComponent } from '../form-input-template/form-input-template.component';
 import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
-import { GlobalSearchService } from '../recherche-globale';
 import { DropdownSelector, FormGroupColumn, MultiSelectSelector, TableColumn } from '../../models/generique.model';
 import { patternToDate, toFormatFromDate } from '../../utils/formatage/formatage-utils';
 import { TableauAffichageComponent } from '../tableau-affichage/tableau-affichage';
@@ -27,6 +26,7 @@ import { FormModal } from '../form-modal/form-modal';
 import { DetailModal } from '../detail-modal/detail-modal';
 import { DetailTemplateComponent } from '../detail-content/detail-content';
 import { RequestPasswordComponent } from '../request-password/request-password';
+import { GlobalSearchService } from '@shared/recherche-globale/global-search.service';
 
 @Component({
     selector: 'app-crud-generic',

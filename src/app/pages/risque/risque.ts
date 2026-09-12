@@ -4,11 +4,10 @@ import { Subject, takeUntil } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { showToast, StatusEnum } from '../../utils/global/global-utils';
-import { HttpResponse } from '@angular/common/http';
-import { AppCrudGenericComponent } from '@shared';
-import { RisqueService } from './risque.service';
 import { FormGroupColumn, TableColumn } from '../../models/generique.model';
 import { Risque } from '../../models/risque.model';
+import { RisqueService } from './risque.service';
+import { AppCrudGenericComponent } from '@shared/app-crud-generic/app-crud-generic.component';
 
 @Component({
     selector: 'app-risque',
@@ -46,7 +45,8 @@ export class RisqueComponent {
 
     constructor(protected fb: UntypedFormBuilder,
                 protected messageService: MessageService, 
-                protected risqueService: RisqueService) {
+                protected risqueService: RisqueService
+            ) {
         this.formCols = [ 
             {field: 'id', label: "", header: 'Id', type: 'number', visible: false, required: false},
             {field: 'libelle', label: "Libellé du risque", header: 'Libelle', type: 'string', visible: true, required: true},

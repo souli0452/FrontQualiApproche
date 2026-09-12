@@ -3,9 +3,9 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { NgPrimeModule } from '../../../prime-ng.module';
-
-import { EtatLicence, LicenceService } from '@core/licence';
-import { hasAnyPermission } from '@core/auth';
+import { hasAnyPermission } from '@core/auth/auth-utils';
+import { LicenceService } from '@core/licence/services/licence.service';
+import { EtatLicence } from '@core/licence/models/etat-licence.model';
 
 /**
  * L'invitation à installer une licence, à la première connexion et à l'échéance.

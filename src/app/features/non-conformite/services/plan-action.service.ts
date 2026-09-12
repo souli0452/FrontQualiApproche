@@ -2,8 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { QualiCrudService, QualiUrlConfig } from '@core';
+import { QualiUrlConfig, UrlConfig } from '@core/services/url-config';
 import { Formation } from '../../../models/formation.model';
+import { BaseCrudService, QualiCrudService } from '@core/services/base-crud.service';
 
 
 

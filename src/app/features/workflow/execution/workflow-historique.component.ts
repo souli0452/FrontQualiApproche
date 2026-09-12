@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '@prime-ng';
-import { WorkflowService } from '../services';
-import { ValidationHistoryDto, ValidationFieldValueDto, WorkflowStateDto } from '../models';
+import { ValidationFieldValueDto, ValidationHistoryDto, WorkflowStateDto } from 'src/app/models/workflow.model';
+import { WorkflowService } from '../services/workflow.service';
 
 /**
  * Traçabilité d'un circuit de validation : qui a décidé quoi, quand, sur quelles bases — et où le

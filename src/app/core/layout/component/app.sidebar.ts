@@ -4,10 +4,11 @@ import { LayoutService } from '../service/layout.service';
 import { CommonModule, NgClass } from '@angular/common';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { Router } from '@angular/router';
-import { AuthService, accesAutorise } from '../../auth';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
+import { AuthService } from '@core/auth/auth.service';
+import { accesAutorise } from '@core/auth/auth-utils';
 
 @Component({
     selector: 'app-sidebar',

@@ -1,13 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, catchError, forkJoin, map, Observable, of } from 'rxjs';
-import { QualiUrlConfig, BaseCrudService, AppNotificationService } from '@core';
-import { NonConformiteUrlConfig } from '../components';
-import { EtapeTraitement, NonConformStatus } from '../models';
+import { NonConformiteUrlConfig } from '../components/config/proc-non-conformite.urls.configs';
 import { ApiItemResponse, ApiResponse } from '../../../models/response.model';
 import { CriteriaDto } from '../../../models/criteria.model';
-import { NonConformite, NcStats } from '../models';
 import { NcNotificationsResumeDto, NotificationClocheDto } from '../models/nc-notifications';
+import { BaseCrudService } from '@core/services/base-crud.service';
+import { AppNotificationService } from '@core/notifications/app-notification.service';
+import { QualiUrlConfig } from '@core/services/url-config';
+import { NonConformite } from '../models/non-conformite.model';
+import { EtapeTraitement } from '../models/nc-status.model';
+import { NcStats } from '../models/nc-stats.model';
 
 /**
  * Service principal et canonique du module **Non-Conformité**.

@@ -1,17 +1,17 @@
 import { Component, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { HttpResponse } from '@angular/common/http';
-import { BasePaginationComponent, AlertService } from '@shared';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '@prime-ng';
-import { FeaturesService } from '@core';
-import { TraitementTableComponent, NcFilter, NcFilterBarComponent, LightboxComponent, DetailsDialogComponent } from '../../components';
-import { AuthService } from '@core/auth';
+
 import { forkJoin, of, Subject } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { NonConformiteService, PlanActionService, PieceJointeFichierService } from '../../services';
-import { WorkflowActionsComponent, WorkflowGuidanceComponent, WorkflowHistoriqueComponent } from '@features/workflow';
+import { FeaturesService } from '@core/services/feature-service';
+import { NcFilter, NcFilterBarComponent } from '@features/non-conformite/components/nc-filter-bar/nc-filter-bar';
+import { TraitementTableComponent } from '@features/non-conformite/components/table-traitement/traitement-table';
+import { PlanActionDialogComponent } from '@features/non-conformite/components/plan-action-dialog/plan-action-dialog.component';
+import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
+import { BasePaginationComponent } from '@shared/pagination/pagination';
 
 @Component({
     selector: 'app-plan-action',
@@ -23,11 +23,7 @@ import { WorkflowActionsComponent, WorkflowGuidanceComponent, WorkflowHistorique
         NgPrimeModule,
         NcFilterBarComponent,
         TraitementTableComponent,
-        WorkflowActionsComponent,
-        WorkflowGuidanceComponent,
-        WorkflowHistoriqueComponent,
-        LightboxComponent,
-        DetailsDialogComponent
+        PlanActionDialogComponent
     ]
 })
 export class PlanActionComponent extends BasePaginationComponent {
@@ -49,27 +45,16 @@ export class PlanActionComponent extends BasePaginationComponent {
     cols: any[] = [];
     private destroy$ = new Subject<void>();
 
-    // Gestion du dialogue Détails du plan d'action (Capture 1 directe)
+    // Gestion du dialogue Détails du plan d'action
     selectedPlan: any = null;
     afficheDialog: boolean = false;
-    @ViewChild('maLightbox') maLightbox!: LightboxComponent;
     @ViewChild(TraitementTableComponent) dmdTraitement!: TraitementTableComponent;
-
-    readonly deposerFichierDEtape = (fichier: File) =>
-        this.planActionService.deposerFichier(this.selectedPlan?.id, fichier).pipe(
-            map((reponse: any) => reponse?.url || reponse?.id || `${reponse}`)
-        );
 
     constructor(
         private featureService: FeaturesService,
         protected messageService: MessageService,
-        private service: NonConformiteService,
         private nonConformiteService: NonConformiteService,
-        private planActionService: PlanActionService,
-        private fichiersService: PieceJointeFichierService,
         private route: ActivatedRoute,
-        private alertService: AlertService,
-        private authService: AuthService
     ) {
         super();
         this.cols = [
@@ -250,85 +235,15 @@ export class PlanActionComponent extends BasePaginationComponent {
         this.getDemandeList();
     }
 
-    // =========================================================================
-    // GESTION DU DIALOGUE DE TRAITEMENT DIRECT DU PLAN D'ACTION (Capture 1)
-    // =========================================================================
-
     ouvrirPlan(plan: any) {
         if (!plan) return;
-        this.selectedPlan = { ...plan };
-        if (typeof this.selectedPlan?.dateEcheance === 'string') {
-            this.selectedPlan.dateEcheance = this.selectedPlan.dateEcheance.replace(/-/g, '/');
-        }
-
-        // S'assurer que le dossier parent NC est complètement chargé pour consultation
-        const parentId = this.selectedPlan.nonConformeId || this.selectedPlan.nonConformiteId || this.selectedPlan.nonConformite?.id;
-        if (parentId && (!this.selectedPlan.nonConformite || !this.selectedPlan.nonConformite.justification)) {
-            this.nonConformiteService.findNCById(parentId).subscribe({
-                next: (res: any) => {
-                    const nc = res?.data ?? res;
-                    if (nc) {
-                        this.selectedPlan.nonConformite = nc;
-                    }
-                },
-                error: (err) => console.error("Erreur chargement dossier parent NC", err)
-            });
-        }
-
+        this.selectedPlan = plan;
         this.afficheDialog = true;
     }
 
     apresDecisionSurLePlan(plan: any) {
         this.afficheDialog = false;
-        this.alertService.showSuccess("Opération effectuée avec succès");
         this.getDemandeList();
         this.nonConformiteService.rafraichirNotifications();
-    }
-
-    couleurEtapeDuPlan(plan: any): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
-        const code = plan?.workflowState?.currentStateCode || plan?.status;
-        if (code === 'REALISE' || code === 'EFFICACE' || code === 'TRAITER') return 'success';
-        if (code === 'A_REALISER' || code === 'NON_TRAITER') return 'warn';
-        return 'info';
-    }
-
-    etapeDuPlan(plan: any): string {
-        return plan?.workflowState?.currentStateName || plan?.status || 'À réaliser';
-    }
-
-    getResponsableName(plan: any): string {
-        if (!plan) return '—';
-        return plan.responsable?.nomComplet || plan.responsableNomComplet || plan.responsableEmail || '—';
-    }
-
-    downloadFile(fichier: any) {
-        this.fichiersService.telecharger(fichier);
-    }
-
-    openLightbox(file: any) {
-        this.maLightbox?.open(file);
-    }
-
-    isViewable(fichier: any): boolean {
-        const nom = fichier?.nom || fichier?.nomFichier;
-        if (!nom) return false;
-        const nomStr = nom.toLowerCase();
-        return nomStr.endsWith('.pdf') || nomStr.endsWith('.png') || nomStr.endsWith('.jpg') || nomStr.endsWith('.jpeg');
-    }
-
-    getFileIcon(filename: string): string {
-        if (!filename) return 'assets/images/unknown-file.png';
-        const ext = filename.split('.').pop()?.toLowerCase() || '';
-        const icons: Record<string, string> = {
-            pdf: 'assets/images/pdf-file.png',
-            doc: 'assets/images/doc-file.png',
-            docx: 'assets/images/doc-file.png',
-            xls: 'assets/images/xls-file.png',
-            xlsx: 'assets/images/xls-file.png',
-            jpg: 'assets/images/jpeg-file.png',
-            jpeg: 'assets/images/jpeg-file.png',
-            png: 'assets/images/jpeg-file.png'
-        };
-        return icons[ext] || 'assets/images/unknown-file.png';
     }
 }

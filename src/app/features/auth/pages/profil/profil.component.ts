@@ -5,10 +5,12 @@ import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '../../../../../prime-ng.module';
-import { AuthService, currentUserState, getCurrentUserStructure } from '@core/auth';
-import { UserResponse } from '../../models';
 import { HeaderPage } from '../../../../shared/header-page/header-page';
-import { Structure } from '@features/organigramme';
+import { AuthService } from '@core/auth/auth.service';
+import { currentUserState } from '@core/auth/auth.state';
+import { getCurrentUserStructure } from '@core/auth/auth-utils';
+import { UserResponse } from '@features/auth/models/auth.model';
+import { Structure } from '@features/organigramme/models/structure.model';
 
 /** Même forme que celle qu'accepte le back : indicatif, espaces et ponctuation usuelle. */
 const FORME_TELEPHONE = /^[+()./\-\s0-9]{6,25}$/;

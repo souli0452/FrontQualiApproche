@@ -9,12 +9,12 @@ import { StructureService } from '../../services/structure.service';
 import { CategorieProcessusService } from '../../services/categorie-processus.service';
 import { Structure, REGION_LIST } from '../../models/structure.model';
 import { CategorieProcessus } from '../../models/categorie-processus.model';
-import { TypeStructure } from '@core/enums';
 import { FormGroupColumn } from '../../../../models/generique.model';
 import { DropdownSelector } from '../../../../models/generique.model';
 import { FormPageComponent, QuickTip } from '../../../../shared/form-page/form-page.component';
 import { HeaderPage } from '../../../../shared/header-page/header-page';
 import { AlertService } from '../../../../shared/alert-message/alert-message.service';
+import { TypeStructure } from '@core/enums/type-structure.enum';
 
 @Component({
     selector: 'app-structure-form',

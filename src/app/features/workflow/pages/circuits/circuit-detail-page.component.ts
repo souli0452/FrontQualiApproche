@@ -5,10 +5,10 @@ import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
-import { hasAnyPermission } from '@core/auth';
-import { WorkflowError, WorkflowService } from '@features/workflow';
+import { WorkflowError, WorkflowService } from '../../services/workflow.service';
 import { WorkflowDetailComponent } from '../../components/workflow-detail.component';
 import { WorkflowDto } from '../../../../models/workflow.model';
+import { hasAnyPermission } from '@core/auth/auth-utils';
 
 /**
  * Consultation d'un circuit de validation, en pleine page.

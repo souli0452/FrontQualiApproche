@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NgPrimeModule } from '@prime-ng';
-import { PieceJointeFichierService } from '../../services';
+import { PieceJointeFichierService } from '@features/non-conformite/services/piece-jointe-fichier.service';
 
 @Component({
     selector: 'app-lightbox',

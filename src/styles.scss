@@ -850,8 +850,87 @@ app-traitement-table app-nc-filter-bar > div {
     height: 100%;
 }
 
+.icone-filigrane i {
+    font-size: 50px;
+    opacity: .3;
+}
+.first-card {
+    .icone-box {
+    background: #ffffff29;
+    }
+    .label-card {
+        color: white;
+    }
+    .value-card {
+        color: white;
+    }
+    .description-card {
+        color: white;
+    }
+    .subtext-card {
+        color: white;
+    }
+}
+
+
+
 @media(max-width: 600px) {
     .doughnut-droit {
         height: auto !important;
+    }
+}
+
+
+/* ==========================================================================
+   15. EXPÉRIENCE MOBILE PLEIN ÉCRAN POUR LES DIALOGUES (< 768px)
+   ========================================================================== */
+@media screen and (max-width: 768px) {
+    .p-dialog-mask {
+        padding: 0 !important;
+    }
+
+    .p-dialog {
+        width: 100vw !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        max-width: 100vw !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        top: 0 !important;
+        left: 0 !important;
+
+        /* En-tête fixe en haut */
+        .p-dialog-header {
+            flex-shrink: 0 !important;
+            padding: 0.75rem 1rem !important;
+            border-bottom: 1px solid var(--surface-border, #e2e8f0) !important;
+            margin-bottom: 0 !important;
+            background: var(--surface-card, #ffffff) !important;
+            z-index: 10 !important;
+        }
+
+        /* Corps défilable indépendant (ne se fait plus recouvrir par le footer) */
+        .p-dialog-content {
+            flex: 1 1 auto !important;
+            height: auto !important;
+            max-height: none !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+            padding: 1rem !important;
+            padding-bottom: 2rem !important;
+        }
+
+        /* Pied de page fixe en bas (Thumb Zone) */
+        .p-dialog-footer {
+            flex-shrink: 0 !important;
+            padding: 0.75rem 1rem !important;
+            border-top: 1px solid var(--surface-border, #e2e8f0) !important;
+            background: var(--surface-card, #ffffff) !important;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05) !important;
+            z-index: 10 !important;
+        }
     }
 }

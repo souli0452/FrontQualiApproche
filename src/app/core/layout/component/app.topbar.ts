@@ -2,7 +2,6 @@ import { Component, HostListener, OnInit, ViewChild, inject } from '@angular/cor
 import { Router, RouterModule, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { LayoutService } from '../service/layout.service';
-import { AuthService, hasAnyPermission, currentUserState } from '../../auth';
 import { MenuItem, MessageService } from 'primeng/api';
 import { Title } from '@angular/platform-browser';
 import { filter, map, takeUntil } from 'rxjs/operators';
@@ -10,11 +9,14 @@ import { FormsModule, ReactiveFormsModule, UntypedFormBuilder} from '@angular/fo
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { Popover } from 'primeng/popover';
 import { Subject } from 'rxjs';
-import { GlobalSearchService } from '@shared';
-import { NonConformiteService } from '@features/non-conformite';
-import { DocumentaireATraiterService } from '@features/gestion-documentaire';
-import { LicenceService } from '../../licence';
+import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
+import { DocumentaireATraiterService } from '@features/gestion-documentaire/services/documentaire-a-traiter.service';
 import { AuthData } from '../../../models/auth.model';
+import { hasAnyPermission } from '@core/auth/auth-utils';
+import { LicenceService } from '@core/licence/services/licence.service';
+import { AuthService } from '@core/auth/auth.service';
+import { currentUserState } from '@core/auth/auth.state';
+import { GlobalSearchService } from '@shared/recherche-globale/global-search.service';
 
 @Component({
     selector: 'app-topbar',

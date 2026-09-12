@@ -1,6 +1,6 @@
-import { UserInfos } from "@features/auth";
 import { PieceJointe } from "src/app/utils/fichier/fichier-utils";
 import { PlanAction } from "./plan-action.model";
+import { UserInfos } from "@features/gestion-utilisateurs/models/utilisateur.model";
 
 /**
  * Données strictes pour la Déclaration d'une Non-Conformité (Saisie Agent)

@@ -80,7 +80,9 @@ export function generateColor(index: number, total: number): string {
 }
 
 // ─── Ré-exports de compatibilité vers les modules dédiés ─────────────────────
-export { USER_STRUCTURE_KEY, USER_PROFILE_KEY, getCurrentUserStructure } from '@core/auth';
-export { REGION_LIST } from '@features/organigramme';
-export { TypeDemande, transformerEnStats, getStatusSeverity } from '@features/non-conformite';
-export { StatusEnum, StatusEnumShow, showToast } from '@shared';
+export { USER_STRUCTURE_KEY, USER_PROFILE_KEY, getCurrentUserStructure } from '@core/auth/auth-utils';
+export { REGION_LIST } from '@features/organigramme/models/structure.model';
+export { transformerEnStats, getStatusSeverity } from '@features/non-conformite/utils/nc-utils';
+export { TypeDemande } from '@features/non-conformite/models/nc-status.model';
+export { showToast } from '@shared/alert-message/alert-message.service';
+export { StatusEnum, StatusEnumShow } from '@shared/alert-message/alert-message.service';

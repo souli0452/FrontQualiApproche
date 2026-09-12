@@ -1,10 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
-import { QualiUrlConfig, BaseCrudService } from '@core';
-import { DocumentQms, QmsDocumentType, QmsDocumentVersion, QmsAuditLog, DocumentStatsDto, DocumentUserAccess, SharedDocumentDto } from '../models';
 import { ApiItemResponse, ApiResponse } from '../../../models/response.model';
 import { OptionsLoadEvent, OptionsLoader } from '../../../shared/ui/lazy-options.model';
+import { BaseCrudService } from '@core/services/base-crud.service';
+import { QualiUrlConfig } from '@core/services/url-config';
+import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentVersion, SharedDocumentDto } from '../models/document.model';
+import { QmsDocumentType } from '../models/referentiel.model';
+import { DocumentStatsDto } from '../models/stats.model';
 
 
 @Injectable({

@@ -1,18 +1,20 @@
 import { Component, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { EtapeTraitement } from '../../models';
 import { HttpResponse } from '@angular/common/http';
-import { showToast, StatusEnum, BasePaginationComponent } from '@shared';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '@prime-ng';
-import { FeaturesService } from '@core';
-import { TraitementTableComponent, NcFilter, NcFilterBarComponent } from '../../components';
-import { AuthService, currentUserState } from '@core/auth';
-import { forkJoin, of, Subject } from 'rxjs';
-import { catchError, map, debounceTime, takeUntil } from 'rxjs/operators';
-import { NonConformiteService } from '../../services';
-import { AlertService } from '@shared';
+import { Subject } from 'rxjs';
+import { debounceTime, takeUntil } from 'rxjs/operators';
+import { FeaturesService } from '@core/services/feature-service';
+import { AuthService } from '@core/auth/auth.service';
+import { currentUserState } from '@core/auth/auth.state';
+import { NcFilter, NcFilterBarComponent } from '@features/non-conformite/components/nc-filter-bar/nc-filter-bar';
+import { TraitementTableComponent } from '@features/non-conformite/components/table-traitement/traitement-table';
+import { EtapeTraitement } from '@features/non-conformite/models/nc-status.model';
+import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
+import { BasePaginationComponent } from '@shared/pagination/pagination';
+import { AlertService } from '@shared/alert-message/alert-message.service';
 
 @Component({
     selector: 'app-nc-traitement',

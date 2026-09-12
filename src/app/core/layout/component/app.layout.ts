@@ -6,8 +6,8 @@ import { AppTopbar } from './app.topbar';
 import { AppSidebar } from './app.sidebar';
 import { AppReglagesRequis } from './app.reglages-requis';
 import { LayoutService } from '../service/layout.service';
-import { AuthService } from '../../auth';
 import { LicenceDialogComponent } from '../../../shared/licence/licence-dialog.component';
+import { AuthService } from '@core/auth/auth.service';
 
 @Component({
     selector: 'app-layout',

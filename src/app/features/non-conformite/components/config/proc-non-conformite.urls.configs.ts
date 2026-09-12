@@ -1,4 +1,4 @@
-import { AMELIORATION_SERVICE } from '@core';
+import { AMELIORATION_SERVICE } from "@core/services/url-config";
 
 export class NonConformiteUrlConfig {
     static readonly GET_NON_CONFORMITE_BY_STATUS_ROOT_URL = `${AMELIORATION_SERVICE}/non-conformite/`;

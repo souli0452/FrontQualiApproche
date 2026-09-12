@@ -4,10 +4,10 @@ import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { NgPrimeModule } from '@prime-ng';
 import { MenuItem } from 'primeng/api';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { HeaderPage } from '@shared/header-page/header-page';
+import { HeaderPage } from '../../../shared/header-page/header-page';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { DocumentaireATraiterService, DocumentaireATraiter } from '../services';
+import { DocumentaireATraiterService, DocumentaireATraiter } from '../services/documentaire-a-traiter.service';
 
 
 /**

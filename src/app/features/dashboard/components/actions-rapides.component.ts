@@ -1,9 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
-
-import { ModuleAbonnement } from '@core/enums';
-import { accesAutorise } from '@core/auth';
+import { accesAutorise } from '@core/auth/auth-utils';
+import { ModuleAbonnement } from '@core/enums/module-abonnement.enum';
 
 /** Une action offerte depuis l'accueil, et ce qu'il faut détenir pour qu'elle apparaisse. */
 interface ActionRapide {

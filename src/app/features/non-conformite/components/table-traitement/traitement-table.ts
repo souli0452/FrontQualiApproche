@@ -3,16 +3,17 @@ import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Table } from 'primeng/table';
 import { Subject, takeUntil } from 'rxjs';
-import { FeaturesService } from '@core';
-import { StatusEnum } from "../../../../utils/global/global-utils";
-import { EtapeTraitement, TypeDemande } from '../../models';
 import { NgPrimeModule } from '@prime-ng';
-import { WorkflowActionsComponent, WorkflowDecisionDialogComponent, DecisionConfirmee } from '@shared';
-import { WorkflowService } from '@features/workflow';
-import { ResultatDecisionDto, StepDecision, WorkflowActionDto } from '@features/workflow/models';
-import { ProcNonConformiteService, NonConformiteService, NiveauNonConformiteService } from '../../services';
 import { Router } from '@angular/router';
-import { GlobalSearchService } from '@shared';
+import { FeaturesService } from '@core/services/feature-service';
+import { EtapeTraitement, TypeDemande } from '@features/non-conformite/models/nc-status.model';
+import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
+import { NiveauNonConformiteService } from '@features/non-conformite/services/niveau-non-conformite.service';
+import { WorkflowActionsComponent } from '@features/workflow/execution/workflow-actions.component';
+import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '@features/workflow/execution/workflow-decision-dialog.component';
+import { WorkflowService } from '@features/workflow/services/workflow.service';
+import { ResultatDecisionDto, StepDecision, WorkflowActionDto } from 'src/app/models/workflow.model';
+import { GlobalSearchService } from '@shared/recherche-globale/global-search.service';
 
 
 @Component({
@@ -94,7 +95,7 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
         private confirmationService: ConfirmationService,
         private featureService: FeaturesService,
         private datePipe: DatePipe,
-        private nonConformiteService: ProcNonConformiteService,
+        private nonConformiteService: NonConformiteService,
         private workflowService: WorkflowService,
         private router: Router,
         private globalNcService: NonConformiteService,

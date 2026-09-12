@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '@prime-ng';
-import { DocumentQms, QmsDocumentVersion } from '../../../models';
+import { DocumentQms, QmsDocumentVersion } from '@features/gestion-documentaire/models/document.model';
 
 /**
  * Historique des versions d'un document : chronologie des itérations et de leurs motifs.

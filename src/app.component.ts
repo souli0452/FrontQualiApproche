@@ -1,10 +1,12 @@
 import { AfterViewInit, Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { ShareConfirmToastComponent, LoaderComponent, USER_STRUCTURE_KEY } from '@core';
 import { MessageService } from 'primeng/api';
 import { Toast } from 'primeng/toast';
 import { AuthData } from './app/models/auth.model';
-import { StructureService } from '@features/organigramme';
+import { ShareConfirmToastComponent } from '@core/components/share-confirm-toast/share-confirm-toast.component';
+import { LoaderComponent } from '@core/components/loader/loader.component';
+import { USER_STRUCTURE_KEY } from './app/utils/global/global-utils';
+import { StructureService } from '@features/organigramme/services/structure.service';
 
 @Component({
     selector: 'app-root',

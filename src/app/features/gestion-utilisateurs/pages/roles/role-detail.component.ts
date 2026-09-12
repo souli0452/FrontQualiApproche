@@ -9,9 +9,9 @@ import { NgPrimeModule } from '@prime-ng';
 import { AppRoleService, RoleService } from '../../services/role.service';
 import { ApiResponse } from '../../../../models/response.model';
 import { AppRole, Permission } from '../../models/role.model';
-import { LicenceOuverteDirective } from '@shared';
 import { HeaderPage } from '../../../../shared/header-page/header-page';
 import { AlertService } from '../../../../shared/alert-message/alert-message.service';
+import { LicenceOuverteDirective } from '@shared/licence/licence-ouverte.directive';
 
 interface GroupedPermission {
     module: string;

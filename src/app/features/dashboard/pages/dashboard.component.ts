@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-
-import { currentUserState, getCurrentUserStructure } from '@core/auth';
-import { ActionsRapidesComponent, IndicateursComponent, EtatDeLaListe, MesDecisionsComponent } from '../components';
+import { currentUserState } from '@core/auth/auth.state';
+import { getCurrentUserStructure } from '@core/auth/auth-utils';
+import { EtatDeLaListe, MesDecisionsComponent } from '../components/mes-decisions.component';
+import { ActionsRapidesComponent } from '../components/actions-rapides.component';
+import { IndicateursComponent } from '../components/indicateurs.component';
 
 /**
  * Accueil : ce qu'on attend de vous, et ce que vous pouvez entreprendre.
