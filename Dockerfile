@@ -13,6 +13,15 @@ COPY . .
 # Build the application in production mode
 RUN npm run build
 
+# L'URL de l'API est figée dans le bundle (environment*.ts). API_URL permet de la
+# remplacer au build sans toucher les sources — utilisé par le docker-compose du backend
+# pour pointer vers la passerelle locale. Sans argument, le build reste inchangé.
+ARG API_URL=https://api-gateway.test.qualisira.com
+RUN if [ "$API_URL" != "https://api-gateway.test.qualisira.com" ]; then \
+      find /app/dist/qualisira/browser -name '*.js' -type f \
+        -exec sed -i "s#https://api-gateway\.test\.qualisira\.com#${API_URL}#g" {} + ; \
+    fi
+
 # Stage 2: Serve the application with Nginx
 FROM nginx:alpine
 
