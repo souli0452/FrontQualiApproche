@@ -151,11 +151,19 @@ export class TableauAffichageComponent implements AfterViewInit, OnDestroy {
     onActionClick(event: any, menu: any, rowData: any) {
         if (this.getActionMenuItems) {
             this.activeActionMenuItems = this.getActionMenuItems(rowData);
+            if (menu) {
+                menu.model = this.activeActionMenuItems;
+                menu.toggle(event);
+            }
+        } else if (this.actionClick.observed) {
+            this.actionClick.emit({ event, menu, rowData });
         } else {
             this.activeActionMenuItems = this.actionMenuItems;
+            if (menu) {
+                menu.model = this.activeActionMenuItems;
+                menu.toggle(event);
+            }
         }
-        this.actionClick.emit({ event, menu, rowData });
-        menu.toggle(event);
     }
 
     onRowClick(rowData: any) {

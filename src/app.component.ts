@@ -15,8 +15,7 @@ import { InsideLoaderComponent } from '@core/components/inside-loader/inside-loa
     providers: [],
     imports: [
         RouterModule, 
-        ShareConfirmToastComponent, 
-        LoaderComponent, 
+        ShareConfirmToastComponent,
         Toast,
         InsideLoaderComponent,
     ],

@@ -443,6 +443,9 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
             });
         }
 
-        menu.toggle(event);
+        if (menu) {
+            menu.model = this.actionMenuItems;
+            menu.toggle(event);
+        }
     }
 }
