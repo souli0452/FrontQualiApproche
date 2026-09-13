@@ -6,6 +6,8 @@ import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
+import { AiAssistButtonComponent } from '@shared/ia/ai-assist-button.component';
+import { LicenceOuverteDirective } from '@shared/licence/licence-ouverte.directive';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
 import { FileUploadComponent } from '@features/non-conformite/components/file-upload/file-upload.component';
 import { SelectInputComponent } from '@shared/ui/select-input/select-input.component';
@@ -26,7 +28,8 @@ import { QmsDocumentService } from '@features/gestion-documentaire/services/docu
 @Component({
     selector: 'app-qms-demande-create',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, FileUploadComponent, SelectInputComponent],
+    imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, FileUploadComponent, SelectInputComponent,
+        LicenceOuverteDirective, AiAssistButtonComponent],
     providers: [MessageService],
     templateUrl: './qms-demande-create.component.html'
 })
@@ -95,6 +98,48 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
             next: (document) => (this.documentChoisi = document),
             error: () => (this.documentChoisi = undefined)
         });
+    }
+
+    // =========================================================================
+    // ASSISTANCE IA (REFORMULATION DE LA DESCRIPTION)
+    // =========================================================================
+
+    /**
+     * Source de la reformulation : la description telle qu'elle est saisie, et rien d'autre.
+     *
+     * <p>Aucun repli sur les autres champs, contrairement à la déclaration d'une non-conformité :
+     * reformuler suppose un texte à reformuler. Sans lui il n'y a rien à faire, et le bouton le dit
+     * — partir de l'objectif et du document ferait écrire à l'assistant une description que le
+     * demandeur n'a pas pensée, là où la consigne du prompt est précisément de ne rien ajouter.</p>
+     */
+    readonly iaSourceDescription = (): string =>
+        (this.formulaire.get('description')?.value ?? '').trim();
+
+    /**
+     * Contexte joint à la demande de reformulation : de quoi donner le ton juste sans fournir de
+     * matière. Le prompt de reformulation ne peut rien inventer à partir de là — il conserve les
+     * faits du texte — mais il sait pour quel document et pour quelle démarche il écrit.
+     */
+    get iaContexteDemande(): Record<string, string> {
+        const contexte: Record<string, string> = {};
+        const nature = this.typesDemande.find((t) => t.value === this.formulaire.get('type')?.value);
+        if (nature) contexte['natureDeLaDemande'] = nature.label;
+        const objectif = (this.formulaire.get('objectif')?.value ?? '').trim();
+        if (objectif) contexte['objectif'] = objectif;
+        if (this.documentChoisi?.titre) contexte['document'] = this.documentChoisi.titre;
+        if (this.documentChoisi?.reference) contexte['referenceDocument'] = this.documentChoisi.reference;
+        return contexte;
+    }
+
+    /**
+     * Reprend dans le formulaire la reformulation retenue. Marquée « modifiée » : le texte vient de
+     * l'utilisateur, qui l'a relu et accepté, et un formulaire qui s'ignorerait sali laisserait
+     * repartir sans avertissement.
+     */
+    appliquerReformulation(texte: string): void {
+        const description = this.formulaire.get('description');
+        description?.setValue(texte);
+        description?.markAsDirty();
     }
 
     /** Vrai quand la demande vise une suppression : l'écran le dit alors franchement. */

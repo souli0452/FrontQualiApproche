@@ -1,0 +1,162 @@
+<div class="flex flex-col h-full min-h-0">
+
+    <!-- Les questions que l'assistant sait poser à l'API métier. En tête et hors de la zone
+         défilante : elles ne doivent pas remonter avec le fil, sans quoi elles disparaissent dès
+         le deuxième échange — au moment précis où l'on cherche quoi demander d'autre.
+         C'est l'application qui choisit l'appel derrière chacune, jamais le modèle. -->
+    <div *ngIf="questions.length"
+         class="shrink-0 pb-3 mb-3 border-b border-surface-200 dark:border-surface-700">
+        <div class="text-xs text-surface-400 mb-2">Puiser dans vos dossiers</div>
+        <div class="flex flex-wrap gap-2">
+            <button *ngFor="let question of questions" type="button"
+                    class="text-xs px-3 py-1.5 rounded-full border border-surface-200 dark:border-surface-700
+                           text-surface-700 dark:text-surface-0 hover:bg-primary-50 hover:border-primary-200
+                           transition-colors disabled:opacity-50"
+                    [disabled]="chargement"
+                    [title]="question.description"
+                    (click)="poser(question)">
+                {{ question.libelle }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Le fil. Vide, il dit ce qu'on peut lui demander : une zone de saisie muette
+         n'appelle aucune question, et c'est le premier message qui coûte le plus. -->
+    <!-- « min-h-0 » n'est pas décoratif : un élément de flex a min-height:auto par défaut, donc il
+         refuse de rétrécir sous la hauteur de son contenu. Sans lui, le fil pousse la zone de
+         saisie hors du tiroir au lieu de défiler, et les messages disparaissent par le bas. -->
+    <div #fil class="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-3">
+
+        <div *ngIf="messages.length === 0 && !chargement" class="text-surface-500 text-sm line-height-3 mt-2">
+            <p class="mt-0 mb-3">
+                Posez une question de méthode ou de vocabulaire qualité. Par exemple :
+            </p>
+            <ul class="pl-4 my-0 flex flex-col gap-2">
+                <li>Quelle différence entre une correction et une action corrective ?</li>
+                <li>Comment formuler un constat d'audit ?</li>
+                <li>Par où commencer une analyse de causes ?</li>
+            </ul>
+            <p class="mt-4 mb-0 text-surface-400">
+                L'assistant ne consulte pas vos dossiers : il aide à réfléchir et à rédiger.
+            </p>
+        </div>
+
+        <!-- Deux bulles, comme une messagerie : la sienne à droite, celle de l'assistant à gauche
+             sous son pictogramme. Les nuances sont numérotées (primary-500, surface-100) : le
+             projet n'emploie nulle part « bg-primary » nu, qui ne rend aucun fond ici — la bulle
+             était invisible, texte blanc sur fond blanc. -->
+        <div *ngFor="let message of messages" class="flex items-end gap-2"
+             [ngClass]="message.role === 'UTILISATEUR' ? 'justify-end' : 'justify-start'">
+
+            <div *ngIf="message.role === 'ASSISTANT'"
+                 class="shrink-0 w-7 h-7 rounded-full bg-primary-50 dark:bg-surface-700 flex items-center justify-center">
+                <i class="pi pi-sparkles text-primary-600 dark:text-surface-0" style="font-size: .8rem"></i>
+            </div>
+
+            <div class="max-w-[80%] flex flex-col gap-2">
+                <div class="px-3 py-2 whitespace-pre-wrap break-words text-sm line-height-3 shadow-sm"
+                     [ngClass]="message.role === 'UTILISATEUR'
+                         ? 'bg-primary-500 text-white rounded-2xl rounded-br-sm'
+                         : 'bg-surface-100 dark:bg-surface-800 text-surface-900 dark:text-surface-0 rounded-2xl rounded-bl-sm'">
+                    {{ message.contenu }}
+                </div>
+
+                <!-- Les chiffres du service métier, rendus sans retouche. Le modèle les commente
+                     à côté ; il ne les récrit jamais. -->
+                <div *ngIf="message.chiffres?.length" class="grid grid-cols-2 gap-2">
+                    <div *ngFor="let chiffre of message.chiffres"
+                         class="px-3 py-2 rounded-xl border border-surface-200 dark:border-surface-700">
+                        <div class="text-xs text-surface-500">{{ chiffre.libelle }}</div>
+                        <div class="text-lg font-semibold"
+                             [ngClass]="chiffre.alerte ? 'text-red-500' : 'text-surface-900 dark:text-surface-0'">
+                            {{ chiffre.valeur }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Les données du service métier, rendues sans retouche. Elles ne sont pas passées
+                     par le modèle : sa phrase les accompagne, elle ne les remplace pas. -->
+                <div *ngIf="message.donnees?.length"
+                     class="border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
+                    <div *ngFor="let element of message.donnees"
+                         class="px-3 py-2 border-b border-surface-200 dark:border-surface-700 last:border-b-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-semibold text-sm text-surface-900 dark:text-surface-0">{{ element.reference }}</span>
+                            <span *ngIf="element.niveau" class="text-xs px-2 py-0.5 rounded-full bg-primary-50 text-primary-600">{{ element.niveau }}</span>
+                            <span *ngIf="element.etat" class="text-xs text-surface-500">{{ element.etat }}</span>
+                        </div>
+                        <div *ngIf="element.libelle" class="text-xs text-surface-500 mt-1 line-height-3">{{ element.libelle }}</div>
+                    </div>
+                    <div *ngIf="message.total && message.total > (message.donnees?.length ?? 0)"
+                         class="px-3 py-2 text-xs text-surface-500 bg-surface-50 dark:bg-surface-900">
+                        {{ message.total }} au total — les {{ message.donnees?.length }} premiers sont affichés.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- L'attente prend la place et la forme de la réponse à venir : une bulle d'assistant
+             en cours d'écriture. Le voile global, lui, est écarté côté service — il couvrirait
+             l'application entière pour une attente qui ne concerne que ce fil. -->
+        <div *ngIf="chargement" class="flex items-end gap-2 justify-start">
+            <div class="shrink-0 w-7 h-7 rounded-full bg-primary-50 dark:bg-surface-700 flex items-center justify-center">
+                <i class="pi pi-sparkles text-primary-600 dark:text-surface-0" style="font-size: .8rem"></i>
+            </div>
+            <div class="px-3 py-2 rounded-2xl rounded-bl-sm bg-surface-100 dark:bg-surface-800 w-[70%] flex flex-col gap-2">
+                <p-skeleton height="0.7rem" width="92%"></p-skeleton>
+                <p-skeleton height="0.7rem" width="78%"></p-skeleton>
+                <p-skeleton height="0.7rem" width="46%"></p-skeleton>
+                <span class="text-surface-500 text-xs mt-1">L'assistant rédige…</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ce qui se dit sous le fil : la limite de l'assistant, puis les incidents. -->
+    <div class="flex flex-col gap-2 mt-3">
+
+        <p-message *ngIf="avertissement" severity="secondary" styleClass="w-full">
+            <span class="text-xs">{{ avertissement }}</span>
+        </p-message>
+
+        <p-message *ngIf="filPresqueComplet && !erreur" severity="warn" styleClass="w-full">
+            <span class="text-xs">
+                Cette conversation approche de sa longueur maximale ({{ messagesRestants }} message(s)
+                restant(s)). Ouvrez-en une nouvelle pour repartir d'un contexte propre.
+            </span>
+        </p-message>
+
+        <p-message *ngIf="erreur" severity="error" styleClass="w-full">
+            <span class="text-xs">{{ erreur }}</span>
+        </p-message>
+
+        <textarea
+            pTextarea
+            class="w-full"
+            rows="3"
+            placeholder="Votre question… (Entrée pour envoyer, Maj+Entrée pour aller à la ligne)"
+            [(ngModel)]="saisie"
+            [disabled]="chargement"
+            (keydown)="surTouche($event)">
+        </textarea>
+
+        <div class="flex justify-between items-center gap-2">
+            <p-button
+                label="Nouvelle conversation"
+                icon="pi pi-refresh"
+                size="small"
+                severity="secondary"
+                [text]="true"
+                [disabled]="chargement || messages.length === 0"
+                (onClick)="nouveauFil()">
+            </p-button>
+            <p-button
+                label="Envoyer"
+                icon="pi pi-send"
+                size="small"
+                [loading]="chargement"
+                [disabled]="chargement || !saisie.trim()"
+                (onClick)="envoyer()">
+            </p-button>
+        </div>
+    </div>
+</div>

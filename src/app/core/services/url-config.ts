@@ -8,6 +8,7 @@ export const USER_SERVICE = `${SERVICE_PREFIX}/user-service/api/v1`;
 export const EVALUATION_SERVICE = `${SERVICE_PREFIX}/evaluation-service/api/v1`;
 export const SUPPORT_SERVICE = `${SERVICE_PREFIX}/support-service/api/v1`;
 export const WORKFLOW_SERVICE = `${SERVICE_PREFIX}/workflow-service/api/v1`;
+export const IA_SERVICE = `${SERVICE_PREFIX}/ia-service/api/v1`;
 
 export class UrlConfig {
     // Amelioration Service
@@ -49,6 +50,21 @@ export class UrlConfig {
     static readonly QMS_DOCUMENT_TYPE_ROOT_URL = `${SUPPORT_SERVICE}/qms/document-types`;
     static readonly WORKFLOW_ROOT_URL = `${WORKFLOW_SERVICE}/workflows`;
     static readonly WORKFLOW_STEP_TEMPLATE_ROOT_URL = `${SUPPORT_SERVICE}/workflow-step-templates`;
+
+    // IA Service (Assistant rédactionnel)
+    static readonly IA_ASSISTANCE_URL = `${IA_SERVICE}/ia/assistance`;
+    static IA_SUGGESTION_VERDICT_URL(id: string): string {
+        return `${IA_SERVICE}/ia/suggestions/${id}/verdict`;
+    }
+    static readonly IA_CONVERSATION_URL = `${IA_SERVICE}/ia/conversation`;
+    static readonly IA_CONVERSATIONS_URL = `${IA_SERVICE}/ia/conversations`;
+    static IA_CONVERSATION_PAR_ID_URL(id: string): string {
+        return `${IA_SERVICE}/ia/conversations/${id}`;
+    }
+    static readonly IA_QUESTIONS_URL = `${IA_SERVICE}/ia/questions`;
+    static IA_QUESTION_URL(code: string): string {
+        return `${IA_SERVICE}/ia/questions/${code}`;
+    }
 
     // Workflow Service
     static readonly WORKFLOW_DEFINITION_URL = `${WORKFLOW_SERVICE}/workflows`;

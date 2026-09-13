@@ -26,6 +26,17 @@
                             <div class="flex items-center mb-2 gap-2">
                                 <label for="justification" class="font-semibold m-0">Description détaillée de la non-conformité <span class="text-red-500">*</span></label>
                                 <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoDesc.toggle($event)"></i>
+                                <span class="ml-auto">
+                                    <app-ai-assist-button
+                                        siLicenceOuverte
+                                        typeAssistance="DESCRIPTION_NON_CONFORMITE"
+                                        [source]="iaSourceDescription"
+                                        [contexte]="iaContexteDescription"
+                                        ressourceType="NON_CONFORMITE"
+                                        [ressourceId]="nonConformite.id"
+                                        (accepter)="nonConformite.justification = $event">
+                                    </app-ai-assist-button>
+                                </span>
                             </div>
                             <p-popover #infoDesc>
                                 <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">

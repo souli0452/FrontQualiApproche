@@ -1,0 +1,81 @@
+<!-- Rien n'est rendu à qui ne peut pas s'en servir : ni le bouton, ni la boîte de dialogue.
+     La condition — permission détenue, module souscrit — est établie par ngOnInit. -->
+<ng-container *ngIf="affiche">
+    <p-button
+        label="Assister avec l'IA"
+        icon="pi pi-sparkles"
+        size="small"
+        [text]="true"
+        severity="secondary"
+        [loading]="chargement"
+        [disabled]="disabled || chargement"
+        pTooltip="Proposer une rédaction assistée par IA"
+        tooltipPosition="top"
+        (onClick)="solliciter()">
+    </p-button>
+
+    <p-dialog
+        [(visible)]="dialogVisible"
+        [modal]="true"
+        [style]="{ width: '45rem' }"
+        [breakpoints]="{ '960px': '95vw' }"
+        [draggable]="false"
+        [resizable]="false"
+        [closable]="!chargement"
+        (onHide)="ignorer()">
+        <ng-template pTemplate="header">
+            <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center bg-blue-50 text-blue-500 rounded-full" style="width: 3rem; height: 3rem">
+                    <i class="pi pi-sparkles text-xl"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-bold text-xl text-900 mb-1">Suggestion de l'assistant IA</span>
+                    <span class="text-500 text-sm">Relisez et adaptez librement le texte avant de l'insérer.</span>
+                </div>
+            </div>
+        </ng-template>
+
+        <p-message *ngIf="avertissement" severity="warn" styleClass="w-full mb-3">
+            <span class="text-sm">{{ avertissement }}</span>
+        </p-message>
+
+        <textarea
+            class="w-full"
+            rows="10"
+            pTextarea
+            [autoResize]="true"
+            [(ngModel)]="texteEdite"
+            [disabled]="chargement">
+        </textarea>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-between items-center w-full gap-2">
+                <p-button
+                    label="Régénérer"
+                    icon="pi pi-refresh"
+                    severity="secondary"
+                    [outlined]="true"
+                    [loading]="chargement"
+                    [disabled]="chargement"
+                    (onClick)="solliciter()">
+                </p-button>
+                <div class="flex items-center gap-2">
+                    <p-button
+                        label="Ignorer"
+                        icon="pi pi-times"
+                        severity="secondary"
+                        [text]="true"
+                        [disabled]="chargement"
+                        (onClick)="ignorer()">
+                    </p-button>
+                    <p-button
+                        label="Insérer"
+                        icon="pi pi-check"
+                        [disabled]="chargement || !texteEdite.trim()"
+                        (onClick)="inserer()">
+                    </p-button>
+                </div>
+            </div>
+        </ng-template>
+    </p-dialog>
+</ng-container>

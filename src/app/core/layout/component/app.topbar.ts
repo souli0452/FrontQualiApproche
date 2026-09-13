@@ -12,16 +12,18 @@ import { Subject } from 'rxjs';
 import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
 import { DocumentaireATraiterService } from '@features/gestion-documentaire/services/documentaire-a-traiter.service';
 import { AuthData } from '../../../models/auth.model';
-import { hasAnyPermission } from '@core/auth/auth-utils';
+import { accesAutorise, hasAnyPermission } from '@core/auth/auth-utils';
 import { LicenceService } from '@core/licence/services/licence.service';
 import { AuthService } from '@core/auth/auth.service';
 import { currentUserState } from '@core/auth/auth.state';
+import { ModuleAbonnement } from '@core/enums/module-abonnement.enum';
+import { QualiAiChatComponent } from '@shared/ia/quali-ai-chat.component';
 import { GlobalSearchService } from '@shared/recherche-globale/global-search.service';
 
 @Component({
     selector: 'app-topbar',
     standalone: true,
-    imports: [RouterModule, NgPrimeModule, CommonModule, FormsModule, ReactiveFormsModule],
+    imports: [RouterModule, NgPrimeModule, CommonModule, FormsModule, ReactiveFormsModule, QualiAiChatComponent],
     template: ` 
     <div class="pre-layout-topbar">
         <div class="layout-topbar" [ngClass]="{'topbar-scrolled': isScrolled}">
@@ -59,6 +61,11 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
                         Essai gratuit — {{ jours.restants }} j
                     </span>
                 }
+
+                <!-- Assistant IA : caché à qui ne peut pas s'en servir — permission et module. -->
+                <button *ngIf="assistantIaDisponible" type="button" pTooltip="Assistant qualité IA" tooltipPosition="bottom" (click)="assistantIaVisible = true" class="px-3 py-2 p-button-secondary rounded-full transition-colors hover:bg-surface-100 dark:hover:bg-surface-800">
+                    <i class="pi pi-sparkles" style="font-size: 1.2rem"></i>
+                </button>
 
                 <!-- Bouton Centre d'Aide -->
                 <button type="button" pTooltip="Centre d'aide" tooltipPosition="bottom" (click)="helpVisible = true" class="px-3 py-2 p-button-secondary rounded-full transition-colors hover:bg-surface-100 dark:hover:bg-surface-800">
@@ -168,6 +175,19 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
                     </div>
                 </div>
         </p-popover>
+        <!-- Drawer de l'assistant qualité IA -->
+        <p-drawer [modal]="true" [(visible)]="assistantIaVisible" position="right" [style]="{width: '480px'}" styleClass="quali-ai-drawer">
+            <ng-template pTemplate="header">
+                <div class="inline-flex items-center gap-2">
+                    <i class="pi pi-sparkles text-primary"></i>
+                    <span class="layout-topbar-title"><span>Assistant qualité</span></span>
+                </div>
+            </ng-template>
+            <!-- Monté à l'ouverture seulement : le fil se relit auprès du serveur au ngOnInit,
+                 et le charger au démarrage de l'application le ferait pour rien. -->
+            <app-quali-ai-chat *ngIf="assistantIaVisible" class="block h-full"></app-quali-ai-chat>
+        </p-drawer>
+
         <!-- Drawer du Centre d'Aide -->
         <p-drawer [modal]="true" [(visible)]="helpVisible" position="right" [style]="{width: '500px'}">
             <ng-template pTemplate="header">
@@ -189,6 +209,16 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
     </div>
     `,
     styles: [`
+        /* Le tiroir de l'assistant : sa zone de contenu porte la hauteur sur laquelle le fil
+           s'appuie pour défiler. Sans elle, PrimeNG la laisse libre et le fil s'allonge
+           indéfiniment — la zone de saisie finit sous le bord de l'écran. */
+        ::ng-deep .quali-ai-drawer .p-drawer-content {
+            height: 100%;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
         ::ng-deep .custom-bottom-drawer {
             height: auto !important;
             max-width: 50rem !important;
@@ -274,6 +304,18 @@ export class AppTopbar implements OnInit {
     @ViewChild('notificationPopover') notificationPopover!: Popover; 
 
     helpVisible: boolean = false;
+
+    /** Le tiroir de l'assistant est-il ouvert ? */
+    assistantIaVisible: boolean = false;
+
+    /**
+     * L'assistant est-il offert à cette personne, sur cette installation ?
+     *
+     * <p>Même règle que partout — permission détenue et module souscrit — et la même fonction que
+     * le menu et le garde de routes. Un bouton qui ne rendrait qu'un refus après le clic ferait
+     * passer un droit manquant pour un bogue, et une option non souscrite pour une panne.</p>
+     */
+    assistantIaDisponible: boolean = false;
     notificationVisible: boolean = false;
 
     /**
@@ -315,6 +357,7 @@ export class AppTopbar implements OnInit {
 
 
     ngOnInit() {
+        this.assistantIaDisponible = accesAutorise(['assistant-ia-write'], ModuleAbonnement.ASSISTANT_IA);
         this.user = currentUserState.value as AuthData
         this.updateTitle();
 

@@ -507,6 +507,17 @@
             <div class="flex mb-2 gap-2">
                 <label for="causes" class="font-normal m-0 font-semibold">Causes identifiées</label>
                 <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCauses.toggle($event)"></i>
+                <span class="ml-auto">
+                    <app-ai-assist-button
+                        siLicenceOuverte
+                        typeAssistance="CAUSES_PLAN_ACTION"
+                        [source]="iaSourceCauses"
+                        [contexte]="iaContextePlanAction"
+                        ressourceType="PLAN_ACTION"
+                        [ressourceId]="planAction.id"
+                        (accepter)="planAction.causeIdentifiees = $event">
+                    </app-ai-assist-button>
+                </span>
             </div>
             <p-popover #infoCauses>
                 <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
@@ -531,6 +542,17 @@
             <div class="flex mb-2 gap-2">
                 <label for="solution" class="font-normal m-0 font-semibold">Solutions retenues</label>
                 <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCorrection.toggle($event)"></i>
+                <span class="ml-auto">
+                    <app-ai-assist-button
+                        siLicenceOuverte
+                        typeAssistance="SOLUTIONS_PLAN_ACTION"
+                        [source]="iaSourceSolutions"
+                        [contexte]="iaContextePlanAction"
+                        ressourceType="PLAN_ACTION"
+                        [ressourceId]="planAction.id"
+                        (accepter)="planAction.solutionRetenues = $event">
+                    </app-ai-assist-button>
+                </span>
             </div>
             <p-popover #infoCorrection>
                 <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
