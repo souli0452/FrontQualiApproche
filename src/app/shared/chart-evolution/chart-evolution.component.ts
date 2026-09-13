@@ -129,7 +129,7 @@ export class ChartEvolutionComponent implements OnChanges {
      * - Palier 76-100% : Risque Critique (Rouge) -> Mesures d'endiguement d'urgence & arbitrage requis
      */
     get severiteInfo(): { score: number; label: string; conseil: string; badgeClass: string; dotClass: string } | null {
-        if (!this.pourcentage && this.total === 0) {
+        if (!this.pourcentage) {
             return null;
         }
 

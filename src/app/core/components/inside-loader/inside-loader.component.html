@@ -1,0 +1,28 @@
+<div *ngIf="visible" class="inside-loader-wrapper">
+    <!-- 1. Fine barre de progression collée tout en haut de l'écran -->
+    <p-progressbar 
+        [value]="progress" 
+        [showValue]="false" 
+        styleClass="top-progressbar">
+    </p-progressbar>
+
+    <!-- 2. Badge flottant compact en haut à droite (Thumb / Glassmorphism) -->
+    <div class="top-right-badge flex items-center gap-2.5 px-3 py-1.5 rounded-full shadow-lg border border-slate-200/80 dark:border-surface-700 bg-white/90 dark:bg-surface-900/90 backdrop-blur-md">
+        <!-- Mini Logo SVG liquide (30px x 30px) -->
+        <div class="mini-logo-loader">
+            <!-- Vagues liquides réduites calculées selon le pourcentage -->
+            <div class="mini-wave" [style.top.px]="34 - (progress * 0.44)"></div>
+            <div class="mini-wave mini-wave-back" [style.top.px]="32 - (progress * 0.44)"></div>
+        </div>
+
+        <!-- Pourcentage dynamique discret -->
+        <div class="flex items-center gap-1">
+            <span class="text-xs font-bold text-primary-600 dark:text-primary-400 font-mono tracking-tight">
+                {{ progress }}%
+            </span>
+            <span class="text-[10px] text-slate-400 font-medium hidden sm:inline">
+                chargement...
+            </span>
+        </div>
+    </div>
+</div>

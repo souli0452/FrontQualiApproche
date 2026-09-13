@@ -1,0 +1,80 @@
+<div class="card-first overflow-hidden border-none premium-hub transition-colors duration-300">
+
+    <!-- En-tête stylisé : Salutation, statut contextuel, date et actualisation -->
+    <div class="pb-6 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-surface-200 dark:border-surface-800">
+        
+        <!-- Bloc Gauche : Salutation & Statut -->
+        <div class="flex items-start gap-3.5">
+            <div class="w-11 h-11 rounded-xl bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 flex items-center justify-center shrink-0 border border-primary-100 dark:border-primary-800/40 shadow-xs">
+                <i class="pi pi-user text-xl"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2.5 flex-wrap">
+                    <h1 class="text-2xl font-bold m-0 text-surface-900 dark:text-surface-50 tracking-tight">
+                        Bonjour {{ nom }}
+                    </h1>
+                    @if (structure) {
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 border border-surface-200 dark:border-surface-700">
+                            <i class="pi pi-building text-[10px] text-surface-400"></i>
+                            {{ structure }}
+                        </span>
+                    }
+                </div>
+                <div class="flex items-center gap-2 mt-1.5 text-sm">
+                    @if (etat?.chargement) {
+                        <span class="relative flex h-2.5 w-2.5">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary-500"></span>
+                        </span>
+                    } @else if ((etat?.total ?? 0) > 0) {
+                        <span class="inline-block h-2.5 w-2.5 rounded-full bg-amber-500 ring-4 ring-amber-100 dark:ring-amber-950/50"></span>
+                    } @else {
+                        <span class="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100 dark:ring-emerald-950/50"></span>
+                    }
+                    <span class="text-surface-600 dark:text-surface-400 font-medium">
+                        {{ synthese }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bloc Droit : Date du jour & Bouton Actualiser -->
+        <div class="flex items-center gap-3 self-end md:self-center">
+            <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-50 dark:bg-surface-800/80 text-surface-600 dark:text-surface-300 text-xs font-medium border border-surface-200/80 dark:border-surface-700/80 shadow-2xs">
+                <i class="pi pi-calendar text-surface-400 text-sm"></i>
+                <span>{{ dateDuJour }}</span>
+            </div>
+
+            <p-button
+                icon="pi pi-refresh"
+                [loading]="isRefreshing"
+                label="Actualiser"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                styleClass="rounded-xl border-surface-200 dark:border-surface-700 shadow-2xs hover:bg-surface-50 dark:hover:bg-surface-800 text-xs font-semibold px-3 py-2"
+                (onClick)="actualiser()"
+                pTooltip="Rafraîchir les données"
+                tooltipPosition="bottom">
+            </p-button>
+        </div>
+    </div>
+
+            <!-- Indicateurs : ce qui attend et ce qui est en retard, nourris par les listes que la
+                 section suivante charge — un seul appel par source, deux nombres qui ne peuvent
+                 donc pas différer. -->
+            <app-indicateurs
+                [enAttente]="connu ? etat!.total : null"
+                [plansEnRetard]="connu ? etat!.plansEnRetard : null"
+                [plansEcheanceProche]="connu ? etat!.plansEcheanceProche : null"
+                [suitDesActions]="!!etat?.suitDesActions"></app-indicateurs>
+
+            <!-- Ce qu'on attend de vous. Rien ne s'affiche si aucun module suivi par un circuit
+                 n'est accessible : l'accueil se réduit alors aux actions rapides. -->
+            <app-mes-decisions (etat)="etat = $event"></app-mes-decisions>
+
+            <div>
+                <h2 class="text-base font-semibold mb-3">Que souhaitez-vous faire ?</h2>
+                <app-actions-rapides></app-actions-rapides>
+            </div>
+        </div>

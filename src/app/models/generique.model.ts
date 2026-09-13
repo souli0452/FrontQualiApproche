@@ -25,9 +25,9 @@ export interface FormGroupColumn {
 
 export interface TableColumn {
     field: string;
-    type: string;
+    type?: string;
     header: string;
-    filter: boolean;
+    filter?: boolean;
     sort?: boolean;
     optionLabel?: string;
     labelTrue?: string;
@@ -40,13 +40,19 @@ export interface TableColumn {
     /**
      * Colonne de type `badge` : champ de la ligne portant la sévérité PrimeNG de la pastille
      * (`success`, `warn`, `danger`, `info`, `secondary`). À défaut, la pastille est `info`.
-     *
-     * <p>La sévérité est portée par la donnée, non déduite du libellé de la colonne : deux écrans
-     * peuvent nommer « État » des choses qui ne se colorent pas de la même façon.</p>
      */
     severityField?: string;
-    colorField?: string;  // <-- À ajouter
-    max?: number; 
+    colorField?: string;
+    max?: number;
+
+    /** Champ secondaire pour les colonnes de type 'file' (ex: numéro de référence en sous-titre) */
+    subField?: string;
+    /** Champ portant le nom de fichier pour déduire l'icône d'extension (si distinct de `field`) */
+    fileNameField?: string;
+    /** Format personnalisé pour les dates (par défaut: 'dd/MM/yyyy') */
+    dateFormat?: string;
+    /** Alignement du texte de la colonne */
+    align?: 'left' | 'center' | 'right';
 }
 
 export interface DropdownSelector {

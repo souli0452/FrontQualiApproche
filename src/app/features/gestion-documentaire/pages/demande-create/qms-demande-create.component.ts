@@ -70,6 +70,7 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
         const documentId = this.route.snapshot.queryParamMap.get('documentId');
         if (documentId) {
             this.formulaire.patchValue({ documentId });
+            this.onDocumentChoisi(documentId);
         }
     }
 

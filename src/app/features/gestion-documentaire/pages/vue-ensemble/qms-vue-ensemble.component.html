@@ -25,6 +25,9 @@
             [value]="documentsATraiter.length"
             [loading]="chargementATraiter"
             [description]="porteeGlobale ? 'Validations et approbations transversales' : 'Actions requises pour votre entité'"
+            [meterData]="documentsATraiterMeterData"
+            [meterMax]="documentsATraiterMeterMax"
+            [subText]="documentsATraiterSubText"
             routerLink="/gestion-documentaire/documents"
             [clickable]="true">
         </app-kpi-card>
@@ -36,6 +39,9 @@
             [value]="demandesATraiter.length"
             [loading]="chargementATraiter"
             [description]="porteeGlobale ? 'Demandes en attente d\'arbitrage qualité' : 'Demandes concernant vos documents'"
+            [meterData]="demandesATraiterMeterData"
+            [meterMax]="demandesATraiterMeterMax"
+            [subText]="demandesATraiterSubText"
             routerLink="/gestion-documentaire/demandes"
             [clickable]="true">
         </app-kpi-card>
@@ -43,10 +49,13 @@
         <app-kpi-card
             label="Total Documents"
             icon="pi pi-folder"
-            color="blue"
+            color="solid-blue"
             [value]="stats?.totalDocuments || 0"
             [loading]="loading"
             [description]="porteeGlobale ? 'Patrimoine documentaire de l\'organisme' : 'Documents rattachés à votre entité'"
+            [meterData]="totalDocumentsMeterData"
+            [meterMax]="totalDocumentsMeterMax"
+            [subText]="totalDocumentsSubText"
             routerLink="/gestion-documentaire/documents"
             [clickable]="true">
         </app-kpi-card>
@@ -60,75 +69,81 @@
             [description]="(stats?.documentsEnRetardRevision || 0) > 0 
                 ? (porteeGlobale ? 'Documents échus sur toutes les structures' : 'Documents échus dans votre structure')
                 : 'Tous les documents sont à jour'"
+            [meterData]="retardRevisionMeterData"
+            [meterMax]="retardRevisionMeterMax"
+            [subText]="retardRevisionSubText"
             routerLink="/gestion-documentaire/documents"
             [clickable]="true">
         </app-kpi-card>
     </div>
 
-<div class="">
+    <!-- 3. GRAPHIQUES DE PILOTAGE : ÉVOLUTION ET RÉPARTITION -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-6">
+        <!-- Bloc 1 : Graphique d'Évolution (Gauche ~60% sur Desktop) -->
+        <div class="lg:col-span-7 xl:col-span-7 min-w-0 w-full">
+            <app-chart-evolution
+                [title]="'Évolution de l\'activité documentaire'"
+                [total]="evolutionTotal"
+                [chartData]="evolutionChartData"
+                [showStructureFilter]="false"
+                [selectedYear]="selectedYear"
+                [selectedMonth]="selectedMonth"
+                [breakdownItems]="evolutionBreakdownItems"
+                (filterChange)="onChartFilterChange($event)">
+            </app-chart-evolution>
+        </div>
 
-    <!-- La portée est annoncée : un total dont on ignore l'étendue n'est pas un chiffre. -->
-    <!-- <div class="flex items-center gap-2 mb-4 text-sm text-surface-500">
-        <i class="pi pi-eye"></i>
-        <span *ngIf="porteeGlobale">Chiffres portant sur <strong>toutes les structures</strong>.</span>
-        <span *ngIf="!porteeGlobale">Chiffres portant sur <strong>votre structure</strong>.</span>
-    </div> -->
-
-    <!-- Les deux premiers compteurs portent sur ce qui attend une décision de l'utilisateur, non
-         sur un état de fait : ce sont eux qu'on regarde pour savoir quoi faire aujourd'hui. Ils
-         viennent du circuit, comme les listes ci-dessous, et non d'un filtre sur les statuts. -->
-    <!-- <div class="grid grid-cols-12 gap-4 mb-4">
-        <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-            <app-doc-stats-card
-                label="Documents à traiter"
-                icon="pi pi-inbox"
-                color="orange"
-                [value]="documentsATraiter.length"
-                [loading]="chargementATraiter">
-            </app-doc-stats-card>
+        <!-- Bloc 2 : Donut Répartition du Patrimoine (Droite ~40% sur Desktop) -->
+        <div class="lg:col-span-5 xl:col-span-5 min-w-0 w-full">
+            <app-chart-donut
+                [title]="donutMode === 'STATUT' ? 'Statut du Patrimoine' : 'Typologie documentaire'"
+                [subTitle]="'Répartition dynamique du fonds documentaire'"
+                [total]="stats?.totalDocuments || 0"
+                [totalLabel]="'DOCUMENTS'"
+                [series]="donutSeries"
+                [labels]="donutLabels"
+                [colors]="donutColors"
+                [customStats]="donutStats">
+                <div header-action class="flex items-center bg-slate-100 dark:bg-surface-800 p-1 rounded-xl border border-slate-200/90 dark:border-surface-700 shadow-2xs gap-1">
+                    <button type="button" 
+                            class="px-3 py-1.5 rounded-lg font-semibold text-xs border-none cursor-pointer transition-all duration-200 flex items-center gap-1.5 select-none"
+                            [ngClass]="donutMode === 'STATUT' ? 'bg-[#0084ca] text-white shadow-sm ring-1 ring-[#0084ca]/20 font-bold' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-surface-700 bg-transparent'"
+                            (click)="setDonutMode('STATUT')"
+                            pTooltip="Afficher la répartition par statut de validation"
+                            tooltipPosition="bottom">
+                        <i class="pi pi-check-circle text-[11px]" [ngClass]="donutMode === 'STATUT' ? 'text-white' : 'text-slate-400'"></i>
+                        <span>Statuts</span>
+                    </button>
+                    <button type="button" 
+                            class="px-3 py-1.5 rounded-lg font-semibold text-xs border-none cursor-pointer transition-all duration-200 flex items-center gap-1.5 select-none"
+                            [ngClass]="donutMode === 'TYPE' ? 'bg-[#0084ca] text-white shadow-sm ring-1 ring-[#0084ca]/20 font-bold' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-surface-700 bg-transparent'"
+                            (click)="setDonutMode('TYPE')"
+                            pTooltip="Afficher la typologie des documents (Procédure, Norme...)"
+                            tooltipPosition="bottom">
+                        <i class="pi pi-tags text-[11px]" [ngClass]="donutMode === 'TYPE' ? 'text-white' : 'text-slate-400'"></i>
+                        <span>Types</span>
+                    </button>
+                </div>
+            </app-chart-donut>
         </div>
-        <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-            <app-doc-stats-card
-                label="Demandes à instruire"
-                icon="pi pi-file-edit"
-                color="red"
-                [value]="demandesATraiter.length"
-                [loading]="chargementATraiter">
-            </app-doc-stats-card>
-        </div>
-        <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-            <app-doc-stats-card
-                label="Total Documents"
-                icon="pi pi-file"
-                color="blue"
-                [value]="stats?.totalDocuments || 0"
-                [loading]="loading">
-            </app-doc-stats-card>
-        </div>
-        <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-            <app-doc-stats-card
-                label="En retard de révision"
-                icon="pi pi-clock"
-                color="green"
-                [value]="stats?.documentsEnRetardRevision || 0"
-                [loading]="loading">
-            </app-doc-stats-card>
-        </div>
-    </div> -->
+    </div>
 
     <!-- ------------------------------------------------------------------ à traiter -->
     <!-- Ce qui attend un geste, avec de quoi le faire sur place : les boutons sont ceux que le
          circuit ouvre à l'appelant sur chaque dossier. Auparavant l'écran montrait des courbes de
          dépôts, et il fallait aller chercher ailleurs les dossiers qui attendaient. -->
-    <div class="flex flex-col gap-4 mb-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6 items-start">
         <app-qms-a-traiter
             titre="Documents attendant votre décision"
             icone="pi pi-inbox"
             [lignes]="documentsATraiter"
             [chargement]="chargementATraiter"
+            recordName="documents"
             messageVide="Aucun document n'attend votre décision."
             lienLibelle="Tous les documents"
             (traite)="apresDecision()"
+            (apercu)="ouvrirApercu($event)"
+            (modifier)="modifierDossier($event)"
             (voirDetail)="ouvrirLeDocument($event)"
             (voirTout)="voirLesDocuments()">
         </app-qms-a-traiter>
@@ -138,60 +153,17 @@
             icone="pi pi-file-edit"
             [lignes]="demandesATraiter"
             [chargement]="chargementATraiter"
+            recordName="demandes"
             messageVide="Aucune demande n'attend votre instruction."
             lienLibelle="Toutes les demandes"
             (traite)="apresDecision()"
+            (apercu)="ouvrirApercu($event)"
+            (modifier)="ouvrirLaDemande($event)"
             (voirDetail)="ouvrirLaDemande($event)"
             (voirTout)="voirLesDemandes()">
         </app-qms-a-traiter>
     </div>
 
-    <!-- ------------------------------------------------------------------ état du fonds -->
-    <!-- Les répartitions restent, en second rang : elles donnent les valeurs exactes de ce qui est
-         en stock, là où les compteurs du haut ne disent que ce qui attend un geste. -->
-    <div class="flex items-center gap-2 mb-2 text-sm text-surface-500">
-        <i class="pi pi-chart-bar"></i>
-        <span>
-            État du fonds — {{ demandesTotal }} demande(s) déposée(s) à ce jour,
-            dont {{ demandesEnAttente }} en attente d'un aboutissement.
-        </span>
-    </div>
-
-    <div class="grid grid-cols-12 gap-4">
-        <div class="col-span-12 lg:col-span-6">
-            <div class="card border border-surface-border p-4">
-                <h3 class="text-base font-bold m-0 mb-1">Répartition par statut</h3>
-                <p class="text-sm text-surface-500 m-0 mb-3">Où en sont les documents de votre périmètre.</p>
-                <p-table [value]="countByStatus" [showLoader]="false" [loading]="loading" styleClass="p-datatable-sm">
-                    <ng-template pTemplate="header">
-                        <tr><th scope="col">Statut</th><th scope="col" class="text-right">Nombre</th></tr>
-                    </ng-template>
-                    <ng-template pTemplate="body" let-row>
-                        <tr><td>{{ row.label }}</td><td class="text-right font-bold">{{ row.count }}</td></tr>
-                    </ng-template>
-                    <ng-template pTemplate="emptymessage">
-                        <tr><td colspan="2" class="text-center text-surface-400 py-4">Aucune donnée</td></tr>
-                    </ng-template>
-                </p-table>
-            </div>
-        </div>
-        <div class="col-span-12 lg:col-span-6">
-            <div class="card border border-surface-border p-4">
-                <h3 class="text-base font-bold m-0 mb-1">Répartition par type de document</h3>
-                <p class="text-sm text-surface-500 m-0 mb-3">Ce que contient le fonds, par nature de document.</p>
-                <p-table [value]="countByDocumentType" [showLoader]="false" [loading]="loading" styleClass="p-datatable-sm">
-                    <ng-template pTemplate="header">
-                        <tr><th scope="col">Type</th><th scope="col" class="text-right">Nombre</th></tr>
-                    </ng-template>
-                    <ng-template pTemplate="body" let-row>
-                        <tr><td>{{ row.label }}</td><td class="text-right font-bold">{{ row.count }}</td></tr>
-                    </ng-template>
-                    <ng-template pTemplate="emptymessage">
-                        <tr><td colspan="2" class="text-center text-surface-400 py-4">Aucune donnée</td></tr>
-                    </ng-template>
-                </p-table>
-            </div>
-        </div>
-    </div>
-</div>
+    <!-- Lightbox de visualisation des documents (PDF et images) -->
+    <app-lightbox #lightbox></app-lightbox>
 </p-card>

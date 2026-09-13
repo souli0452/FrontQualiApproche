@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { catchError, map, Observable, of } from 'rxjs';
 import { ApiItemResponse, ApiResponse } from '../../../models/response.model';
 import { OptionsLoadEvent, OptionsLoader } from '../../../shared/ui/lazy-options.model';
 import { BaseCrudService } from '@core/services/base-crud.service';
@@ -338,6 +338,20 @@ export class QmsDocumentService extends BaseCrudService<DocumentQms, string> {
                 }
                 return {};
             })
+        );
+    }
+
+    /**
+     * Dépôts de documents par mois (sur les 12 derniers mois par défaut).
+     */
+    getDocumentsParMois(mois = 12): Observable<Record<string, number>> {
+        return this.http.get<any>(
+            `${QualiUrlConfig.QMS_DOCUMENT_ROOT_URL}/stats/mensuel?mois=${mois}`).pipe(
+            map(res => {
+                const data = res?.data ?? res;
+                return (data && typeof data === 'object' && !Array.isArray(data)) ? data : {};
+            }),
+            catchError(() => of({}))
         );
     }
 

@@ -1,0 +1,60 @@
+<div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5 shadow-sm flex flex-col justify-between h-full">
+    <!-- En-tête -->
+    <div *ngIf="title || subTitle" class="flex justify-between items-start mb-1">
+        <div>
+            <h3 class="text-surface-900 dark:text-surface-50 text-base font-semibold m-0">{{ title }}</h3>
+            <p *ngIf="subTitle" class="text-xs text-surface-500 dark:text-surface-400 m-0 mt-0.5 leading-relaxed">{{ subTitle }}</p>
+        </div>
+        <ng-content select="[header-action]"></ng-content>
+    </div>
+
+    <!-- Contenu Central : Chart + Stats à droite -->
+    <div class="flex-grow flex flex-col md:flex-row items-center justify-between gap-3 my-auto w-full">
+        <!-- Conteneur Graphique ApexCharts -->
+        <div id="chart" class="flex-1 flex items-center justify-center min-h-[210px] w-full min-w-0">
+            <apx-chart
+                *ngIf="effectiveChartOptions && effectiveChartOptions.series && effectiveChartOptions.series.length > 0; else emptyState"
+                [series]="effectiveChartOptions.series!"
+                [chart]="effectiveChartOptions.chart!"
+                [labels]="effectiveChartOptions.labels!"
+                [colors]="effectiveChartOptions.colors!"
+                [plotOptions]="effectiveChartOptions.plotOptions!"
+                [stroke]="effectiveChartOptions.stroke!"
+                [legend]="effectiveChartOptions.legend!"
+                [title]="effectiveChartOptions.title!"
+                [dataLabels]="effectiveChartOptions.dataLabels!"
+                [tooltip]="effectiveChartOptions.tooltip!"
+                [responsive]="effectiveChartOptions.responsive!">
+            </apx-chart>
+            <ng-template #emptyState>
+                <div class="flex flex-col items-center justify-center h-[180px] text-surface-400 text-xs italic">
+                    <i class="pi pi-chart-pie text-2xl mb-1.5 opacity-40"></i>
+                    <span>Aucune donnée disponible</span>
+                </div>
+            </ng-template>
+        </div>
+
+        <!-- Bande Statistiques / Ratios à droite -->
+        <div *ngIf="statsPosition === 'right' && customStats && customStats.length > 0"
+             class="shrink-0 flex flex-row md:flex-col justify-around md:justify-center gap-3.5 md:pl-5 md:border-l border-t md:border-t-0 border-surface-100 dark:border-surface-800 w-full md:w-auto pt-3 md:pt-0">
+            <div *ngFor="let stat of customStats" class="flex flex-col min-w-[90px]">
+                <span class="text-[11px] font-medium text-surface-500 dark:text-surface-400 truncate">{{ stat.label }}</span>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                    <span *ngIf="stat.color" class="w-2 h-2 rounded-full shrink-0" [style.backgroundColor]="stat.color"></span>
+                    <span class="text-sm font-bold text-surface-900 dark:text-surface-50 leading-tight">{{ stat.value }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques / Ratios complémentaires en bas de bloc si statsPosition === 'bottom' -->
+    <div *ngIf="statsPosition === 'bottom' && customStats && customStats.length > 0" class="pt-3 border-t border-surface-100 dark:border-surface-800 grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1">
+        <div *ngFor="let stat of customStats" class="flex flex-col">
+            <span class="text-[11px] font-medium text-surface-500 dark:text-surface-400 truncate">{{ stat.label }}</span>
+            <div class="flex items-center gap-1.5 mt-0.5">
+                <span *ngIf="stat.color" class="w-2 h-2 rounded-full shrink-0" [style.backgroundColor]="stat.color"></span>
+                <span class="text-sm font-bold text-surface-900 dark:text-surface-50">{{ stat.value }}</span>
+            </div>
+        </div>
+    </div>
+</div>

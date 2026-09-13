@@ -1,4 +1,4 @@
-import { Component, forwardRef, input, OnDestroy, OnInit, output, signal } from '@angular/core';
+import { Component, effect, forwardRef, input, OnDestroy, OnInit, output, signal } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 import { Subject, Subscription } from 'rxjs';
@@ -169,6 +169,19 @@ export class SelectInputComponent implements OnInit, OnDestroy, ControlValueAcce
     desactiveParLeFormulaire = signal(false);
     onChange: (valeur: any) => void = () => {};
     onTouched: () => void = () => {};
+
+    constructor() {
+        effect(() => {
+            const selected = this.selectedOptions();
+            if (selected?.length && this.lazy()) {
+                const current = this.lazyOptions();
+                const updated = this.avecPreSelection([...current]);
+                if (updated.length !== current.length) {
+                    this.lazyOptions.set(updated);
+                }
+            }
+        });
+    }
 
     /**
      * Deux flux distincts, parce que les deux gestes ne se répondent pas de la même façon.

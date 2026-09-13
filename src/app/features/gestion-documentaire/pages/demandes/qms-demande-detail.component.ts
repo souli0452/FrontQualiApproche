@@ -39,6 +39,9 @@ export class QmsDemandeDetailComponent {
     /** Vrai quand l'état du circuit n'a pas pu être obtenu : rien ne peut alors être proposé. */
     @Input() etatIndisponible = false;
 
+    /** Section active dans la navigation latérale ('detail' ou 'historique') */
+    ongletActif: 'detail' | 'historique' = 'detail';
+
     @Output() close = new EventEmitter<void>();
     @Output() executeAction = new EventEmitter<WorkflowActionDto>();
     @Output() deposerRemplacant = new EventEmitter<DemandeDocumentDto>();
