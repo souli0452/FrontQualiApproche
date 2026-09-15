@@ -1,19 +1,37 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewChecked, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TextareaModule } from 'primeng/textarea';
 import { IaService } from './ia.service';
-import { MessageConversation, QuestionPredefinie } from './ia.models';
+import { ElementReponse, MessageConversation, QuestionPredefinie } from './ia.models';
 
 /** Clé du fil en cours, pour le retrouver après un rechargement de page. */
 const CLE_FIL = 'quali-ai-conversation';
 
 /** En deçà de ce nombre de messages restants, l'écran prévient que le fil touche à sa fin. */
 const SEUIL_ALERTE_LONGUEUR = 4;
+
+/**
+ * Où conduit chaque type de ressource, et sous quel paramètre.
+ *
+ * <p>Aucun dossier n'a de route de détail : la fiche est une boîte de dialogue ouverte depuis sa
+ * liste. Les écrans savent déjà le faire depuis l'adresse — c'est ainsi qu'un lien de courriel
+ * ouvre un dossier —, et on emprunte donc leur convention plutôt que d'en créer une seconde.</p>
+ *
+ * <p>Un identifiant qui ne rend rien laisse la liste en place : ces écrans le prévoient, et le
+ * dossier a pu sortir du périmètre entre le relevé et le clic.</p>
+ */
+const DESTINATIONS: Record<string, { route: string; parametre: string }> = {
+    NON_CONFORMITE: { route: '/non-conformite/traitement', parametre: 'ncId' },
+    PLAN_ACTION: { route: '/non-conformite/plan-action', parametre: 'ncId' },
+    DOCUMENT: { route: '/gestion-documentaire/documents', parametre: 'documentId' },
+    DEMANDE_DOCUMENT: { route: '/gestion-documentaire/demandes', parametre: 'demandeId' }
+};
 
 /**
  * Le fil de discussion avec l'assistant qualité, tel qu'il s'ouvre depuis la barre du haut.
@@ -45,6 +63,9 @@ export class QualiAiChatComponent implements OnInit, AfterViewChecked {
 
     @ViewChild('fil') private filElement?: ElementRef<HTMLElement>;
 
+    /** Émis quand on quitte le fil pour un dossier : le tiroir doit se refermer derrière. */
+    @Output() navigue = new EventEmitter<void>();
+
     messages: MessageConversation[] = [];
 
     /** Les questions que l'assistant sait poser à l'API — servies par le serveur. */
@@ -58,7 +79,10 @@ export class QualiAiChatComponent implements OnInit, AfterViewChecked {
     private conversationId: string | null = null;
     private doitDefiler = false;
 
-    constructor(private iaService: IaService) {}
+    constructor(
+        private iaService: IaService,
+        private router: Router
+    ) {}
 
     ngOnInit(): void {
         // Le catalogue échoue sans conséquence : le fil reste utilisable à la saisie libre, il
@@ -176,6 +200,27 @@ export class QualiAiChatComponent implements OnInit, AfterViewChecked {
         this.erreur = '';
         this.messagesRestants = Number.MAX_SAFE_INTEGER;
         this.oublierLeFil();
+    }
+
+    /** Une ligne conduit-elle quelque part ? Sinon elle ne se donne pas l'air d'être cliquable. */
+    estOuvrable(element: ElementReponse): boolean {
+        return !!element.ressourceId && !!element.ressourceType && !!DESTINATIONS[element.ressourceType];
+    }
+
+    /**
+     * Ouvre le dossier d'une ligne, et referme le tiroir derrière.
+     *
+     * <p>Le laisser ouvert couvrirait l'écran qu'on vient de demander — on a cliqué pour aller
+     * voir, pas pour continuer à discuter par-dessus.</p>
+     */
+    ouvrir(element: ElementReponse): void {
+        if (!this.estOuvrable(element)) {
+            return;
+        }
+        const destination = DESTINATIONS[element.ressourceType!];
+        this.router.navigate([destination.route],
+            { queryParams: { [destination.parametre]: element.ressourceId } });
+        this.navigue.emit();
     }
 
     /** Entrée envoie, Maj+Entrée passe à la ligne — l'usage d'une zone de discussion. */

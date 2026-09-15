@@ -78,15 +78,25 @@
                      par le modèle : sa phrase les accompagne, elle ne les remplace pas. -->
                 <div *ngIf="message.donnees?.length"
                      class="border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
-                    <div *ngFor="let element of message.donnees"
-                         class="px-3 py-2 border-b border-surface-200 dark:border-surface-700 last:border-b-0">
+                    <!-- Un vrai bouton, et non une div qui écoute le clic : le dossier s'atteint
+                         alors aussi au clavier, et le lecteur d'écran annonce une action. Une ligne
+                         qui ne conduit nulle part reste inerte et ne s'en donne pas l'air. -->
+                    <button *ngFor="let element of message.donnees" type="button"
+                            class="w-full text-left px-3 py-2 border-b border-surface-200 dark:border-surface-700 last:border-b-0"
+                            [ngClass]="estOuvrable(element)
+                                ? 'cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors'
+                                : 'cursor-default'"
+                            [disabled]="!estOuvrable(element)"
+                            [title]="estOuvrable(element) ? 'Ouvrir le dossier' : ''"
+                            (click)="ouvrir(element)">
                         <div class="flex items-center gap-2 flex-wrap">
                             <span class="font-semibold text-sm text-surface-900 dark:text-surface-0">{{ element.reference }}</span>
                             <span *ngIf="element.niveau" class="text-xs px-2 py-0.5 rounded-full bg-primary-50 text-primary-600">{{ element.niveau }}</span>
                             <span *ngIf="element.etat" class="text-xs text-surface-500">{{ element.etat }}</span>
+                            <i *ngIf="estOuvrable(element)" class="pi pi-arrow-up-right text-surface-400 ml-auto" style="font-size: .7rem"></i>
                         </div>
                         <div *ngIf="element.libelle" class="text-xs text-surface-500 mt-1 line-height-3">{{ element.libelle }}</div>
-                    </div>
+                    </button>
                     <div *ngIf="message.total && message.total > (message.donnees?.length ?? 0)"
                          class="px-3 py-2 text-xs text-surface-500 bg-surface-50 dark:bg-surface-900">
                         {{ message.total }} au total — les {{ message.donnees?.length }} premiers sont affichés.

@@ -185,7 +185,8 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
             </ng-template>
             <!-- Monté à l'ouverture seulement : le fil se relit auprès du serveur au ngOnInit,
                  et le charger au démarrage de l'application le ferait pour rien. -->
-            <app-quali-ai-chat *ngIf="assistantIaVisible" class="block h-full"></app-quali-ai-chat>
+            <app-quali-ai-chat *ngIf="assistantIaVisible" class="block h-full"
+                               (navigue)="assistantIaVisible = false"></app-quali-ai-chat>
         </p-drawer>
 
         <!-- Drawer du Centre d'Aide -->
