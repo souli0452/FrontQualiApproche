@@ -200,10 +200,17 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   /** Types documentaires connus, pour afficher en clair le type réservé par un circuit. */
   typesDocument: any[] = [];
 
+  /**
+   * Les quatre familles que le serveur accepte — `TypeRessource` côté workflow-service. Toute
+   * autre valeur est refusée en 400 à l'enregistrement, et une famille manquante ici rend ses
+   * circuits inconfigurables : le select tombait à vide en ouvrant un circuit de demande, et
+   * l'enregistrer le rebasculait sur le type choisi à la place.
+   */
   readonly typesRessource: Option[] = [
     { label: 'Documents', value: 'DOCUMENT' },
     { label: 'Non-conformités', value: 'NON_CONFORMITE' },
-    { label: "Plans d'action", value: 'PLAN_ACTION' }
+    { label: "Plans d'action", value: 'PLAN_ACTION' },
+    { label: 'Demandes sur documents', value: 'DEMANDE_DOCUMENT' }
   ];
 
   /**

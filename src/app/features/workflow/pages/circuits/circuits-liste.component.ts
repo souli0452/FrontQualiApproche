@@ -13,7 +13,6 @@ import { WorkflowError, WorkflowService } from '../../services/workflow.service'
 import { WorkflowConfigurationGuideComponent } from '../editor/workflow-configuration-guide.component';
 import { WorkflowDto } from '../../../../models/workflow.model';
 import { BasePaginationComponent } from '../../../../shared/pagination/pagination';
-import { AlertService } from '../../../../shared/alert-message/alert-message.service';
 
 /**
  * Ligne du tableau : le circuit, augmenté de ce que la colonne affiche telle quelle.
@@ -44,10 +43,8 @@ type LigneCircuit = WorkflowDto & { typeLibelle: string; nbEtapes: number };
 export class CircuitsListeComponent extends BasePaginationComponent implements OnInit, OnDestroy {
   private readonly workflowService = inject(WorkflowService);
   private readonly messageService = inject(MessageService);
-  private readonly confirmationService = inject(ConfirmationService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
-  private readonly alertService = inject(AlertService);
 
   private readonly destroy$ = new Subject<void>();
 
@@ -107,7 +104,8 @@ export class CircuitsListeComponent extends BasePaginationComponent implements O
   readonly formulaireTableau = this.fb.group({});
 
   /**
-   * Actions du menu de ligne. Modifier et supprimer sont retirés faute de `workflow-write`.
+   * Actions du menu de ligne. Modifier est retiré faute de `workflow-write`. La suppression n'y
+   * figure pas : un circuit se désactive, il ne s'efface pas — les dossiers clos y renvoient.
    */
   actionsLigne: { label: string; icon: string; action: string }[] = [];
 
@@ -124,10 +122,16 @@ export class CircuitsListeComponent extends BasePaginationComponent implements O
 
   guideOuvert = false;
 
+  /**
+   * Familles connues, pour le libellé de la colonne et le repérage des circuits concurrents.
+   * La même liste que le filtre au-dessus du tableau : une famille absente d'ici s'affichait
+   * en clair technique (`DEMANDE_DOCUMENT`) et échappait au bandeau des circuits concurrents.
+   */
   private readonly typesRessource = [
     { label: 'Documents', value: 'DOCUMENT' },
     { label: 'Non-conformités', value: 'NON_CONFORMITE' },
-    { label: "Plans d'action", value: 'PLAN_ACTION' }
+    { label: "Plans d'action", value: 'PLAN_ACTION' },
+    { label: 'Demandes sur documents', value: 'DEMANDE_DOCUMENT' }
   ];
 
   /**
@@ -146,10 +150,7 @@ export class CircuitsListeComponent extends BasePaginationComponent implements O
     this.actionsLigne = [
       { label: 'Consulter', icon: 'pi pi-eye', action: 'consulter' },
       ...(this.peutEcrire
-        ? [
-            { label: 'Modifier', icon: 'pi pi-pencil', action: 'modifier' },
-            // { label: 'Supprimer', icon: 'pi pi-trash', action: 'supprimer' }
-          ]
+        ? [{ label: 'Modifier', icon: 'pi pi-pencil', action: 'modifier' }]
         : [])
     ];
 
@@ -191,20 +192,6 @@ export class CircuitsListeComponent extends BasePaginationComponent implements O
       });
   }
 
-  supprimerCircuit(circuit: WorkflowDto): void {
-    this.workflowService
-        .deleteWorkflow(circuit.id!)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-            next: () => {
-                this.alertService.showSuccess("Supprimé", `Le circuit "${circuit.nom}" a été supprimé.`);
-                this.fetchObject();
-            },
-            error: (erreur: WorkflowError) => this.signalerErreur(erreur)
-        });
-}
-
-
   appliquerFiltres(): void {
     this.tousLesCircuitsFiltres = this.tousLesCircuits
       .filter((circuit) => !this.typeFiltre || circuit.resourceType === this.typeFiltre)
@@ -242,12 +229,7 @@ export class CircuitsListeComponent extends BasePaginationComponent implements O
     return this.typesRessource.find((option) => option.value === type)?.label ?? (type ?? '—');
   }
 
-  /**
-   * Aiguillage du menu d'actions du tableau générique, qui n'émet qu'un couple action/ligne.
-   *
-   * La suppression conserve sa propre confirmation (`supprimer`), qui énonce ce qui est en jeu —
-   * les dossiers en cours sur ce circuit — là où celle du tableau générique est générique.
-   */
+  /** Aiguillage du menu d'actions du tableau générique, qui n'émet qu'un couple action/ligne. */
   executerAction(evenement: { action: string; user: any }): void {
     const circuit = evenement.user as WorkflowDto;
     switch (evenement.action) {
@@ -257,9 +239,6 @@ export class CircuitsListeComponent extends BasePaginationComponent implements O
       case 'modifier':
         this.router.navigate(['/configurations/circuits/edition', circuit.id]);
         break;
-      case 'supprimer':
-        this.supprimer(circuit);
-        break;
     }
   }
 
@@ -267,35 +246,6 @@ export class CircuitsListeComponent extends BasePaginationComponent implements O
   creerCircuit(): void {
     this.router.navigate(['/configurations/circuits/edition', 'nouveau'],
       this.typeFiltre ? { queryParams: { type: this.typeFiltre } } : {});
-  }
-
-  supprimer(circuit: WorkflowDto): void {
-    this.confirmationService.confirm({
-      header: 'Supprimer ce circuit ?',
-      message:
-        `« ${circuit.nom} » sera définitivement supprimé. ` +
-        'La suppression est refusée si des dossiers y sont encore en cours.',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Supprimer',
-      rejectLabel: 'Annuler',
-      acceptButtonStyleClass: 'p-button-danger',
-      accept: () => {
-        this.workflowService
-          .deleteWorkflow(circuit.id!)
-          .pipe(takeUntil(this.destroy$))
-          .subscribe({
-            next: () => {
-              this.messageService.add({
-                severity: 'success',
-                summary: 'Circuit supprimé',
-                detail: `« ${circuit.nom} » a été supprimé.`
-              });
-              this.chargerCircuits();
-            },
-            error: (erreur: WorkflowError) => this.signalerErreur(erreur)
-          });
-      }
-    });
   }
 
   /**

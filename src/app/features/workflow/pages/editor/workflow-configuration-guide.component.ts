@@ -215,8 +215,9 @@ export class WorkflowConfigurationGuideComponent {
         {
           libelle: 'Type de ressource',
           role:
-            "La famille de dossiers qu'il pilote — documents, non-conformités, plans d'action. " +
-            "Elle détermine quel module métier recevra l'avancement du dossier."
+            "La famille de dossiers qu'il pilote — documents, non-conformités, plans d'action, " +
+            "demandes sur documents. Elle détermine quel module métier recevra l'avancement du " +
+            "dossier."
         },
         {
           libelle: 'Description',
@@ -448,8 +449,8 @@ export class WorkflowConfigurationGuideComponent {
     "Une étape déjà enregistrée refuse de changer de code : le serveur répond en erreur plutôt " +
       "que de laisser les dossiers en cours pointer vers une étape qui n'existe plus.",
     "Modifier un circuit sur lequel des dossiers stationnent est refusé pour les étapes " +
-      "concernées ; le message d'erreur nomme ce qui bloque. Supprimer un circuit l'est aussi " +
-      "tant qu'un dossier y est en cours.",
+      "concernées ; le message d'erreur nomme ce qui bloque. Un circuit ne se supprime pas " +
+      "depuis cet écran : il se désactive, et les dossiers déjà engagés le suivent jusqu'au bout.",
     "Deux actions de même nature sur une même étape empêchent la décision groupée, qui ne " +
       "désigne l'action que par sa nature : ces dossiers doivent être traités un par un."
   ];
