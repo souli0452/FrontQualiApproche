@@ -110,7 +110,8 @@
     </ng-template>
 
     <ng-template pTemplate="body" let-rowData let-columns="columns">
-        <tr *ngIf="!loading" class="body-row border-b border-slate-100 dark:border-surface-700 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40">
+        <tr *ngIf="!loading" (click)="ouvrirDepuisLaLigne($event, rowData)"
+            class="body-row cursor-pointer border-b border-slate-100 dark:border-surface-700 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40">
             <td pFrozenColumn alignFrozen="left" class="py-3 px-3 text-center bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-surface-700">
                 <p-tableCheckbox [value]="rowData"/>
             </td>
@@ -123,8 +124,7 @@
                     <!-- Contenu des cellules -->
                     <div *ngIf="col.type === 'string'" class="flex flex-col gap-0.5" [ngClass]="col.field === 'numeroReference' ? 'text-left' : 'text-center'">
                         <span *ngIf="col.field === 'numeroReference'"
-                        (click)="displayDetails(rowData)" 
-                        class="cursor-pointer inline-block transition-transform hover:scale-105"
+                        class="inline-block transition-transform hover:scale-105"
                         >
                             <p-tag severity="info" [value]="getCellValue(rowData, col)" styleClass="tag-pill" />
                         </span>
