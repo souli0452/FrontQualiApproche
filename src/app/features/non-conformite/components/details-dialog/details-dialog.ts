@@ -16,13 +16,14 @@ import { WorkflowGuidanceComponent } from '@features/workflow/execution/workflow
 import { WorkflowSaisiesComponent } from '@features/workflow/execution/workflow-saisies.component';
 import { WorkflowHistoriqueComponent } from '@features/workflow/execution/workflow-historique.component';
 import { LicenceOuverteDirective } from '@shared/licence/licence-ouverte.directive';
+import { AiAssistButtonComponent } from '@shared/ia/ai-assist-button.component';
 
 @Component({
     selector: 'app-details-dialog',
     templateUrl: './details-dialog.html',
     imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent, LightboxComponent,
         WorkflowGuidanceComponent, WorkflowSaisiesComponent, WorkflowHistoriqueComponent,
-        LicenceOuverteDirective],
+        LicenceOuverteDirective, AiAssistButtonComponent],
     standalone: true,
     styleUrl: './details-dialog.scss'
 })
@@ -234,6 +235,46 @@ export class DetailsDialogComponent {
         this.planAction = plan;
         this.displayDialog = true;
     }
+
+    // =========================================================================
+    // ASSISTANCE IA (CAUSES / SOLUTIONS DU PLAN D'ACTION)
+    // =========================================================================
+
+    /** Les éditeurs Quill portent du HTML : le texte source de la demande IA en est débarrassé. */
+    private static nettoyerHtml(html?: string): string {
+        return (html ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    /**
+     * Source IA des causes : le contenu déjà saisi, ou à défaut la description de la NC,
+     * matière première de l'analyse des causes.
+     */
+    readonly iaSourceCauses = (): string => {
+        const saisie = DetailsDialogComponent.nettoyerHtml(this.planAction.causeIdentifiees);
+        if (saisie) return saisie;
+        const description = DetailsDialogComponent.nettoyerHtml(this.demande?.justification);
+        return description ? `Analyse les causes probables de cette non-conformité :\n${description}` : '';
+    };
+
+    /** Source IA des solutions : le contenu déjà saisi, ou à défaut la description de la NC. */
+    readonly iaSourceSolutions = (): string => {
+        const saisie = DetailsDialogComponent.nettoyerHtml(this.planAction.solutionRetenues);
+        if (saisie) return saisie;
+        const description = DetailsDialogComponent.nettoyerHtml(this.demande?.justification);
+        return description ? `Propose des actions correctives pour cette non-conformité :\n${description}` : '';
+    };
+
+    /** Contexte métier joint aux demandes IA du plan d'action. */
+    get iaContextePlanAction(): Record<string, string> {
+        const contexte: Record<string, string> = {};
+        const description = DetailsDialogComponent.nettoyerHtml(this.demande?.justification);
+        if (description) contexte['descriptionNonConformite'] = description;
+        if (this.demande?.typeNonConformiteLibelle) contexte['origine'] = this.demande.typeNonConformiteLibelle;
+        if (this.demande?.niveauNonConformiteLibelle) contexte['niveau'] = this.demande.niveauNonConformiteLibelle;
+        if (this.demande?.actionLibelle) contexte['typeAction'] = this.demande.actionLibelle;
+        return contexte;
+    }
+
     async handleFileUpload(files: any[]) {
         this.uploadedFiles = files;
         const fichiers = await convertFilesToBase64(this.uploadedFiles);

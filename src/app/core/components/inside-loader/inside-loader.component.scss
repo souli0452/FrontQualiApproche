@@ -1,0 +1,82 @@
+.inside-loader-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 99999;
+    pointer-events: none; /* L'utilisateur peut continuer à cliquer sur l'application ! */
+}
+
+/* 1. Barre de progression ultra-fine */
+:host ::ng-deep .top-progressbar {
+    height: 3px !important;
+    border-radius: 0 !important;
+    background: rgba(0, 132, 202, 0.12) !important;
+
+    .p-progressbar-value {
+        background: linear-gradient(90deg, #045887 0%, #0084ca 50%, #38bdf8 100%) !important;
+        transition: width 0.1s ease-out !important;
+    }
+}
+
+/* 2. Badge flottant en haut à droite */
+.top-right-badge {
+    position: fixed;
+    top: 12px;
+    right: 18px;
+    z-index: 99999;
+    animation: fadeInSlide 0.3s ease-out;
+}
+
+/* 3. Découpe SVG du mini-logo (30px x 30px) */
+.mini-logo-loader {
+    width: 28px;
+    height: 28px;
+    background-color: rgba(4, 77, 138, 0.1);
+    -webkit-mask-image: url('/assets/logo-quali-sira.svg');
+    mask-image: url('/assets/logo-quali-sira.svg');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    position: relative;
+    overflow: hidden;
+    shrink: 0;
+}
+
+/* 4. Vague liquide miniature */
+.mini-wave {
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    background: linear-gradient(180deg, #0084ca 0%, #097480 50%, #045887 100%);
+    left: 50%;
+    margin-left: -45px;
+    transition: top 0.1s ease-out;
+    border-radius: 40%;
+    animation: spinMini 5s linear infinite;
+}
+
+.mini-wave-back {
+    background: rgba(0, 132, 202, 0.45);
+    border-radius: 45%;
+    animation: spinMini 6s linear infinite;
+}
+
+@keyframes spinMini {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

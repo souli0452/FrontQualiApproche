@@ -1,13 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '../../../workflow/execution/workflow-decision-dialog.component';
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Component, OnDestroy, OnInit, ViewChild, TemplateRef, AfterViewInit } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MessageService } from 'primeng/api';
+import { MessageService, MenuItem } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
-import { AppCrudGenericComponent } from '../../../../shared/app-crud-generic/app-crud-generic.component';
+import { TableauAffichageComponent } from '../../../../shared/tableau-affichage/tableau-affichage';
 import { TableColumn } from '../../../../models/generique.model';
 import { DemandeDocumentDto } from '../../models/demande.model';
 import { DemandeDocumentService } from '../../services/demande.service';
@@ -26,6 +26,7 @@ import { hasAnyPermission } from '../../../../core/auth/auth-utils';
 type LigneDemande = DemandeDocumentDto & {
     /** Numéro et titre du document, mis en forme pour la colonne. */
     documentLibelle: string;
+    nomFichier?: string;
     typeLibelle: string;
     etatLibelle: string;
     /** Sévérité de la pastille, portée par la ligne : le tableau générique la lit telle quelle. */
@@ -46,19 +47,27 @@ type LigneDemande = DemandeDocumentDto & {
     standalone: true,
     imports: [
         CommonModule, 
+        FormsModule,
         ReactiveFormsModule, 
         NgPrimeModule, 
-        AppCrudGenericComponent,
+        TableauAffichageComponent,
         QmsDemandeDetailComponent, 
         WorkflowDecisionDialogComponent
     ],
     providers: [MessageService],
     templateUrl: './qms-demandes.component.html'
 })
-export class QmsDemandesComponent implements OnInit, OnDestroy {
+export class QmsDemandesComponent implements OnInit, AfterViewInit, OnDestroy {
+    @ViewChild('documentTpl', { static: true }) documentTpl!: TemplateRef<any>;
+    @ViewChild('natureTpl', { static: true }) natureTpl!: TemplateRef<any>;
+    @ViewChild('etatTpl', { static: true }) etatTpl!: TemplateRef<any>;
 
-   loading: boolean = true;
+    loading: boolean = true;
     demandes: LigneDemande[] = [];
+    pageSize: number = 10;
+    currentPage: number = 0;
+    cellTemplates: { [field: string]: TemplateRef<any> } = {};
+    filterFields: string[] = ['documentTitre', 'documentNumber', 'objectif', 'typeLibelle', 'etatLibelle'];
 
     readonly titrePage = 'Demandes sur les documents';
 
@@ -92,35 +101,12 @@ export class QmsDemandesComponent implements OnInit, OnDestroy {
 
     private readonly destroy$ = new Subject<void>();
 
-    /**
-     * Menu de ligne, comme sur les autres tableaux.
-     *
-     * <p>Le dépôt du remplaçant n'y figure que sur les demandes qui l'attendent : proposer partout
-     * une action qui ne vaut que pour quelques lignes revient à ne rien indiquer du tout.</p>
-     */
-    readonly actionsLigne = [
-        { label: 'Détails', icon: 'pi pi-eye', action: 'detail' },
-        {
-            label: 'Déposer le remplaçant', icon: 'pi pi-upload', action: 'remplacant',
-            visible: (ligne: any) => this.peutDeposerRemplacant
-                && ligne?.type === 'MODIFICATION' && ligne?.etat === 'ACCEPTEE'
-        }
-    ];
-
     readonly colonnes: TableColumn[] = [
-        { field: 'documentLibelle', header: 'Document', type: 'string', filter: true, width: 'auto' },
-        // L'objectif prend la place restante : c'est lui qui dit de quoi il retourne, et le
-        // tronquer reviendrait à ne rien montrer.
-        { field: 'objectif', header: 'Objectif', type: 'string', filter: true, width: 'auto' },
-        {
-            field: 'typeLibelle', header: 'Nature', type: 'badge', filter: true,
-            severityField: 'typeSeverite', width: 'auto'
-        },
-        {
-            field: 'etatLibelle', header: 'État', type: 'badge', filter: true,
-            severityField: 'etatSeverite', width: 'auto'
-        },
-        { field: 'createdAt', header: 'Déposée le', type: 'date', filter: false, width: 'auto' }
+        { field: 'documentTitre', header: 'DOCUMENT', type: 'custom', sort: true, width: '25%' },
+        { field: 'objectif', header: 'OBJECTIF', type: 'string', sort: true, width: '32%' },
+        { field: 'typeLibelle', header: 'NATURE', type: 'custom', sort: true, align: 'center', width: '14%' },
+        { field: 'etatLibelle', header: 'ÉTAT', type: 'custom', sort: true, align: 'center', width: '16%' },
+        { field: 'createdAt', header: 'DÉPOSÉE LE', type: 'date', dateFormat: 'dd/MM/yyyy', sort: true, align: 'center', width: '13%' }
     ];
 
     constructor(
@@ -132,6 +118,50 @@ export class QmsDemandesComponent implements OnInit, OnDestroy {
         private readonly messageService: MessageService
     ) {
         this.formulaireTableau = this.fb.group({});
+    }
+
+    ngAfterViewInit(): void {
+        this.cellTemplates = {
+            documentTitre: this.documentTpl,
+            typeLibelle: this.natureTpl,
+            etatLibelle: this.etatTpl
+        };
+    }
+
+    getActionMenuItems = (demande: LigneDemande): MenuItem[] => {
+        const items: MenuItem[] = [
+            {
+                label: 'Détails',
+                icon: 'pi pi-eye',
+                command: () => this.ouvrirDetail(demande)
+            }
+        ];
+
+        if (this.attendUnRemplacant(demande) && this.peutDeposerRemplacant) {
+            items.push({
+                label: 'Déposer le remplaçant',
+                icon: 'pi pi-upload',
+                command: () => this.ouvrirDepotRemplacant(demande)
+            });
+        }
+
+        return items;
+    };
+
+    onPageChange(event: { page: number; size: number }): void {
+        this.currentPage = event.page;
+        this.pageSize = event.size;
+    }
+
+    getFileIcon(fileName?: string): string {
+        if (!fileName) return 'assets/images/doc-file.png';
+        const lower = fileName.toLowerCase().trim();
+        if (lower.endsWith('.pdf')) return 'assets/images/pdf-file.png';
+        if (lower.endsWith('.doc') || lower.endsWith('.docx')) return 'assets/images/doc-file.png';
+        if (lower.endsWith('.xls') || lower.endsWith('.xlsx')) return 'assets/images/xls-file.png';
+        if (lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png') || lower.endsWith('.webp')) return 'assets/images/jpeg-file.png';
+        if (lower.endsWith('.txt')) return 'assets/images/txt-file.png';
+        return 'assets/images/doc-file.png';
     }
 
     ngOnInit(): void {
@@ -178,14 +208,11 @@ export class QmsDemandesComponent implements OnInit, OnDestroy {
                 // calculés ici, pas dans le gabarit.
                 this.demandes = (demandes ?? []).map(demande => ({
                     ...demande,
-                    // Champ dédié à l'affichage : `documentNumber` est réutilisé tel quel par la
-                    // fiche et par le dialogue de décision, le réécrire y aurait fait apparaître du
-                    // balisage. Le numéro seul étant peu parlant dans une liste, le titre le suit
-                    // sur une seconde ligne.
                     documentLibelle: demande.documentTitre
                         ? `<span class="font-mono text-xs text-slate-500">${demande.documentNumber ?? ''}</span>`
                           + `<span class="block text-slate-800">${demande.documentTitre}</span>`
                         : (demande.documentNumber ?? ''),
+                    nomFichier: (demande as any).nomFichier || demande.pieceJointeNom || (demande.documentNumber ? `${demande.documentNumber}.docx` : ''),
                     typeLibelle: demande.type === 'SUPPRESSION' ? 'Suppression' : 'Modification',
                     // Une suppression se distingue d'une modification au premier coup d'œil :
                     // l'une retire un document, l'autre le remplace.

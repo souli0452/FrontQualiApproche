@@ -7,6 +7,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NgPrimeModule } from '@prime-ng';
 
 import { LicenceOuverteDirective } from '../../../../shared/licence/licence-ouverte.directive';
+import { AiAssistButtonComponent } from '../../../../shared/ia';
 import { ApiItemResponse, PaginatedData } from '../../../../models/response.model';
 import { convertFilesToBase64 } from '../../../../utils/fichier/fichier-utils';
 import { FeaturesService } from '@core/services/feature-service';
@@ -28,7 +29,7 @@ import { Structure } from '@features/organigramme/models/structure.model';
     templateUrl: './declaration.component.html',
     styleUrl: './declaration.component.scss',
     standalone: true,
-    imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent, LicenceOuverteDirective]
+    imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent, LicenceOuverteDirective, AiAssistButtonComponent]
 })
 export class NcComposeComponent implements OnInit {
     @Input() editId: any;
@@ -236,6 +237,38 @@ export class NcComposeComponent implements OnInit {
 
     handleFileUpload(files: any[]) {
         this.uploadedFiles = files;
+    }
+
+    /**
+     * Source de la demande d'assistance IA pour la description : le texte déjà saisi s'il existe,
+     * sinon un récapitulatif des champs connus (origine, niveau, structure, correction immédiate)
+     * à partir duquel l'assistant rédige une première proposition.
+     */
+    readonly iaSourceDescription = (): string => {
+        const description = (this.nonConformite.justification ?? '').trim();
+        if (description) return description;
+
+        const elements: string[] = [];
+        if (this.nc.typeNonformite?.libelle) elements.push(`Origine de la non-conformité : ${this.nc.typeNonformite.libelle}`);
+        if (this.nc.niveauNonConformite?.libelle) elements.push(`Niveau : ${this.nc.niveauNonConformite.libelle}`);
+        const structure = this.userStructure?.libelleLong || this.userStructure?.libelleCourt;
+        if (structure) elements.push(`Processus / structure : ${structure}`);
+        const correction = (this.nonConformite.actionDsc ?? '').trim();
+        if (correction) elements.push(`Correction déjà entreprise : ${correction}`);
+
+        return elements.length
+            ? `Rédige une description détaillée et factuelle de la non-conformité à partir de ces éléments :\n${elements.join('\n')}`
+            : '';
+    };
+
+    /** Contexte métier joint à la demande IA de description. */
+    get iaContexteDescription(): Record<string, string> {
+        const contexte: Record<string, string> = {};
+        if (this.nc.typeNonformite?.libelle) contexte['origine'] = this.nc.typeNonformite.libelle;
+        if (this.nc.niveauNonConformite?.libelle) contexte['niveau'] = this.nc.niveauNonConformite.libelle;
+        const structure = this.userStructure?.libelleLong || this.userStructure?.libelleCourt;
+        if (structure) contexte['processus'] = structure;
+        return contexte;
     }
 
     removeExistingFile(index: number) {

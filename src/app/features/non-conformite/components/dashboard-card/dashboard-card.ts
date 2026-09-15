@@ -1,4 +1,4 @@
-export type StatsCardColor = 'blue' | 'orange' | 'red' | 'green' | 'purple';
+export type StatsCardColor = 'blue' | 'orange' | 'red' | 'green' | 'purple' | 'solid-blue';
 
 export interface StatsCardConfig {
   label: string;
@@ -15,7 +15,7 @@ export const DASHBOARD_CARDS_AGENT: StatsCardConfig[] = [
   {
     label: 'Mes Non-Conformités',
     valueKey: 'total',
-    color: 'orange',
+    color: 'solid-blue',
     icon: 'pi pi-chart-line',
     badge: 'Totale',
     description: "Les Non-Conformités déclarées par vous ou qui vous sont imputées"
@@ -51,7 +51,7 @@ export const DASHBOARD_CARDS_CHEF: StatsCardConfig[] = [
   {
     label: 'Total Déclarées',
     valueKey: 'total',
-    color: 'orange',
+    color: 'solid-blue',
     icon: 'pi pi-chart-line',
     badge: 'Non-Conformités totales déclarées',
     description: "Toutes les anomalies relevées par l'ensemble des utilisateurs de votre service"
@@ -88,7 +88,7 @@ export const DASHBOARD_CARDS_RQ: StatsCardConfig[] = [
   {
     label: 'Total Déclarées',
     valueKey: 'total',
-    color: 'orange',
+    color: 'solid-blue',
     icon: 'pi pi-chart-line',
     badge: 'Non-Conformités totales déclarées',
     description: "Toutes les anomalies"

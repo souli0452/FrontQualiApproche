@@ -29,6 +29,8 @@ import { QmsDocumentService } from '@features/gestion-documentaire/services/docu
 import { DemandeDocumentService } from '@features/gestion-documentaire/services/demande.service';
 import { DomaineApplicationService, NiveauConfidentialiteService, PrioriteDocumentService } from '@features/gestion-documentaire/services/referentiel.service';
 import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentVersion } from '@features/gestion-documentaire/models/document.model';
+import { LightboxComponent } from '@features/non-conformite/components/lightbox/lightbox';
+import { ViewChild } from '@angular/core';
 
 /**
  * Les six regards portés sur un document, réunis en onglets d'une même fiche.
@@ -44,19 +46,20 @@ export type OngletDetail = 'detail' | 'historique' | 'partages' | 'audit' | 'dem
   selector: 'app-qms-document',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, WorkflowDecisionDialogComponent, WorkflowHistoriqueComponent, QmsDocumentDemandesComponent,
-    QmsReclassementDialogComponent, QmsDocumentAccessDialogComponent],
+    QmsReclassementDialogComponent, QmsDocumentAccessDialogComponent, LightboxComponent],
   templateUrl: './qms-document.component.html',
   styleUrls: ['./qms-document.component.scss'],
   providers: [MessageService, DatePipe]
 })
 export class QmsDocumentComponent implements OnInit, OnDestroy {
+  @ViewChild('lightbox') lightbox?: LightboxComponent;
   documents: DocumentQms[] = [];
   documentTypes: QmsDocumentType[] = [];
   /** Total du fonds visible, pour que le tableau sache combien de pages il reste. */
   totalDocuments = 0;
   /** Index de la première ligne affichée, dans le référentiel du tableau. */
   premiereLigne = 0;
-  taillePage = 15;
+  taillePage = 10;
   /** Une page a déjà été demandée : les bornes inchangées ne relancent plus rien. */
   private pageDejaChargee = false;
   structures: Structure[] = [];
@@ -471,6 +474,36 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
           });
         }
       });
+  }
+
+  ouvrirApercu(doc: DocumentQms): void {
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Visualisation',
+      detail: "Chargement de l'aperçu..."
+    });
+
+    this.qmsService.exportSecuredPdf(doc.id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (blob: Blob) => {
+          const nomFichier = doc.currentObjectName || (doc.documentNumber ? `${doc.documentNumber}.pdf` : 'document.pdf');
+          this.lightbox?.openBlob(blob, nomFichier, doc.titre || doc.documentNumber);
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Aperçu indisponible',
+            detail: 'Le fichier est introuvable ou inaccessible.'
+          });
+        }
+      });
+  }
+
+  modifierDocument(doc: DocumentQms): void {
+    this.router.navigate(['/gestion-documentaire/demandes/nouvelle'], {
+      queryParams: { documentId: doc.id }
+    });
   }
 
   /**

@@ -40,37 +40,7 @@ interface Indicateur {
     selector: 'app-indicateurs',
     standalone: true,
     imports: [CommonModule],
-    template: `
-        @if (indicateurs.length) {
-            <div class="grid grid-cols-12 gap-3">
-                @for (indicateur of indicateurs; track indicateur.cle) {
-                    <div class="col-span-12 sm:col-span-6 xl:col-span-3">
-                        <button type="button"
-                                class="w-full text-left rounded-xl border bg-surface-0 p-4
-                                       transition-colors hover:bg-surface-50"
-                                [class]="cadre(indicateur)"
-                                [disabled]="!indicateur.route"
-                                (click)="ouvrir(indicateur)">
-                            <div class="flex items-start justify-between gap-2">
-                                <span class="text-xs font-semibold uppercase tracking-wide text-surface-500">
-                                    {{ indicateur.libelle }}
-                                </span>
-                                <i [class]="indicateur.icone" [ngClass]="teinte(indicateur)"></i>
-                            </div>
-                            <div class="text-3xl font-bold mt-2" [ngClass]="teinte(indicateur)">
-                                @if (indicateur.valeur === null) {
-                                    <span class="text-surface-300">—</span>
-                                } @else {
-                                    {{ indicateur.valeur }}
-                                }
-                            </div>
-                            <div class="text-xs text-surface-500 mt-1">{{ indicateur.precision }}</div>
-                        </button>
-                    </div>
-                }
-            </div>
-        }
-    `
+    templateUrl: 'indicateurs.component.html'
 })
 export class IndicateursComponent implements OnInit {
 
@@ -102,6 +72,13 @@ export class IndicateursComponent implements OnInit {
     ngOnInit(): void {
         this.accesDocumentaire = accesAutorise(['document-read', 'document-write', 'DOC_READ'],
             ModuleAbonnement.DOCUMENTAIRE);
+        if (!this.accesDocumentaire) {
+            return;
+        }
+        this.charger();
+    }
+
+    charger(): void {
         if (!this.accesDocumentaire) {
             return;
         }

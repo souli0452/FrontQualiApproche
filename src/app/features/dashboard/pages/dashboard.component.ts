@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 import { currentUserState } from '@core/auth/auth.state';
 import { getCurrentUserStructure } from '@core/auth/auth-utils';
-import { EtatDeLaListe, MesDecisionsComponent } from '../components/mes-decisions.component';
-import { ActionsRapidesComponent } from '../components/actions-rapides.component';
-import { IndicateursComponent } from '../components/indicateurs.component';
+import { EtatDeLaListe, MesDecisionsComponent } from '../components/mes-decisions/mes-decisions.component';
+import { ActionsRapidesComponent } from '../components/actions-rapide/actions-rapides.component';
+import { IndicateursComponent } from '../components/indicateurs/indicateurs.component';
 
 /**
  * Accueil : ce qu'on attend de vous, et ce que vous pouvez entreprendre.
@@ -26,46 +28,24 @@ import { IndicateursComponent } from '../components/indicateurs.component';
 @Component({
     selector: 'app-dashboard',
     standalone: true,
-    imports: [CommonModule, MesDecisionsComponent, ActionsRapidesComponent, IndicateursComponent],
-    template: `
-        <div class="card-first overflow-hidden border-none premium-hub transition-colors duration-300">
-
-            <!-- Salutation et synthèse : la phrase dit tout de suite s'il y a lieu d'agir. -->
-            <div class="pb-5 flex justify-between items-center border-b border-surface-border">
-                <div class="flex items-center gap-4">
-                    <div>
-                        <h1 class="text-2xl font-bold m-0 text-surface-900 dark:text-surface-50 flex items-center gap-3">Bonjour {{ nom }}</h1>
-                        <p class="text-surface-500 dark:text-surface-400 mt-1 mb-0">
-                            {{ synthese }}
-                            @if (structure) {
-                                <span class="text-surface-400"> · {{ structure }}</span>
-                            }
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Indicateurs : ce qui attend et ce qui est en retard, nourris par les listes que la
-                 section suivante charge — un seul appel par source, deux nombres qui ne peuvent
-                 donc pas différer. -->
-            <app-indicateurs
-                [enAttente]="connu ? etat!.total : null"
-                [plansEnRetard]="connu ? etat!.plansEnRetard : null"
-                [plansEcheanceProche]="connu ? etat!.plansEcheanceProche : null"
-                [suitDesActions]="!!etat?.suitDesActions"></app-indicateurs>
-
-            <!-- Ce qu'on attend de vous. Rien ne s'affiche si aucun module suivi par un circuit
-                 n'est accessible : l'accueil se réduit alors aux actions rapides. -->
-            <app-mes-decisions (etat)="etat = $event"></app-mes-decisions>
-
-            <div>
-                <h2 class="text-base font-semibold mb-3">Que souhaitez-vous faire ?</h2>
-                <app-actions-rapides></app-actions-rapides>
-            </div>
-        </div>
-    `
+    imports: [CommonModule, ButtonModule, TooltipModule, MesDecisionsComponent, ActionsRapidesComponent, IndicateursComponent],
+    templateUrl: 'dashboard.component.html'
 })
 export class Dashboard {
+
+    @ViewChild(MesDecisionsComponent) private mesDecisions?: MesDecisionsComponent;
+    @ViewChild(IndicateursComponent) private indicateursComp?: IndicateursComponent;
+
+    /** État de rafraîchissement manuel */
+    isRefreshing = false;
+
+    /** Date du jour formatée en français */
+    readonly dateDuJour: string = (() => {
+        const d = new Date();
+        const options: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+        const texte = d.toLocaleDateString('fr-FR', options);
+        return texte.charAt(0).toUpperCase() + texte.slice(1);
+    })();
 
     /**
      * Ce que la liste de travail a trouvé.
@@ -118,6 +98,19 @@ export class Dashboard {
         return total === 1
             ? 'Un dossier attend votre décision.'
             : `${total} dossiers attendent votre décision.`;
+    }
+
+    /**
+     * Déclenche un rafraîchissement manuel de l'ensemble des données de l'accueil.
+     */
+    actualiser(): void {
+        this.isRefreshing = true;
+        this.mesDecisions?.charger();
+        this.indicateursComp?.charger();
+        // Délai minimum pour un retour tactile soigné de l'animation
+        setTimeout(() => {
+            this.isRefreshing = false;
+        }, 600);
     }
 }
 

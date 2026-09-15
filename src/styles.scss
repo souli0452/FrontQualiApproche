@@ -856,19 +856,19 @@ app-traitement-table app-nc-filter-bar > div {
 }
 .first-card {
     .icone-box {
-    background: #ffffff29;
+        background: #ffffff29;
     }
-    .label-card {
-        color: white;
-    }
-    .value-card {
-        color: white;
-    }
-    .description-card {
-        color: white;
-    }
+    .label-card,
+    .value-card,
+    .description-card,
     .subtext-card {
         color: white;
+    }
+    .border-t {
+        border-color: rgba(255, 255, 255, 0.25) !important;
+    }
+    .bg-surface-200\/60 {
+        background-color: rgba(255, 255, 255, 0.25) !important;
     }
 }
 

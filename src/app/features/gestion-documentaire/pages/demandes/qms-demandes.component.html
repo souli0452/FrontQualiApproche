@@ -1,20 +1,80 @@
 <p-toast></p-toast>
 
-<!-- Liste ou fiche, comme sur l'écran des documents. -->
-<div *ngIf="vue === 'liste'">
-<!-- Menu d'actions conforme aux autres tableaux : « Détails » y ouvre la fiche, d'où l'on
-     instruit et décide. -->
-<app-crud-generic [loading]="loading" [tableCols]="colonnes" [listeObject]="demandes"
-                  [pageLabel]="titrePage" [addButtonLabel]="'Nouvelle demande'"
-                  [ajoutExterne]="true" (ajoutDemande)="ouvrirCreation()"
-                  [formGroup]="formulaireTableau" [formCols]="[]" [notModif]="true" [notDelete]="true"
-                  [isAffich]="false" [asRoleEdit]="true" [customButtons]="actionsLigne"
-                  (customActionEvent)="executerAction($event)"
-                  [minWidth]="'78rem'"
-                  [isPagination]="demandes.length > 10">
-</app-crud-generic>
+<!-- Liste des demandes -->
+<div *ngIf="vue === 'liste'" class="p-4">
+    <app-tableau-affichage
+        [tableCols]="colonnes"
+        [listeObject]="demandes"
+        [loading]="loading"
+        [totalElements]="demandes.length"
+        [pageSize]="pageSize"
+        [currentPage]="currentPage"
+        [rowsPerPageOptions]="[5, 10, 20, 50]"
+        [isPagination]="true"
+        [clickableRows]="true"
+        [showSearch]="true"
+        searchPosition="left"
+        [placeholderRecherche]="'Rechercher...'"
+        [filterFields]="filterFields"
+        recordName="demandes"
+        [showAddButton]="true"
+        addButtonLabel="Nouvelle demande"
+        (addClick)="ouvrirCreation()"
+        [cellTemplates]="cellTemplates"
+        [getActionMenuItems]="getActionMenuItems"
+        (rowClick)="ouvrirDetail($event)"
+        (pageChangeEvent)="onPageChange($event)">
 
+        <!-- Header Actions (Actualiser) -->
+        <div header-actions class="flex items-center gap-1.5">
+            <button pButton pRipple 
+                    icon="pi pi-refresh" 
+                    class="p-button-text p-button-rounded p-button-secondary p-button-sm" 
+                    pTooltip="Actualiser" 
+                    tooltipPosition="bottom"
+                    (click)="charger()">
+            </button>
+        </div>
+    </app-tableau-affichage>
 </div>
+
+<!-- Cell Templates -->
+<ng-template #documentTpl let-row>
+    <div class="flex items-center gap-3">
+        <img [src]="getFileIcon(row.nomFichier || row.pieceJointeNom || row.documentNumber)"
+             alt="icon"
+             class="w-7 h-7 object-contain shrink-0" />
+        <div class="min-w-0 flex flex-col text-left">
+            <span *ngIf="row.documentNumber" class="text-xs text-slate-400 dark:text-slate-500 font-mono">
+                {{ row.documentNumber }}
+            </span>
+            <span class="font-semibold text-slate-800 dark:text-slate-100 truncate text-sm" [title]="row.documentTitre || row.documentNumber">
+                {{ row.documentTitre || row.documentNumber }}
+            </span>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #natureTpl let-row>
+    <span class="px-2.5 py-1 rounded-full text-xs font-semibold inline-block"
+          [ngClass]="row.type === 'SUPPRESSION' 
+              ? 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
+              : 'bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800'">
+        {{ row.typeLibelle }}
+    </span>
+</ng-template>
+
+<ng-template #etatTpl let-row>
+    <span class="px-2.5 py-1 rounded-full text-xs font-semibold inline-block"
+          [ngClass]="{
+              'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800': row.etat === 'EXECUTEE',
+              'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800': row.etat === 'ACCEPTEE',
+              'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800': row.etat === 'EN_COURS',
+              'bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700': row.etat === 'REFUSEE'
+          }">
+        {{ row.etatLibelle }}
+    </span>
+</ng-template>
 
 <!-- ------------------------------------------------------------------ fiche d'une demande -->
 <app-qms-demande-detail *ngIf="vue === 'detail' && demandeSelectionnee"

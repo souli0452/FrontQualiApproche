@@ -1,0 +1,17 @@
+:host {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#chart {
+    position: relative;
+    width: 100%;
+}
+
+:host ::ng-deep {
+    .apexcharts-legend-text {
+        font-family: inherit !important;
+        font-weight: 500 !important;
+    }
+}

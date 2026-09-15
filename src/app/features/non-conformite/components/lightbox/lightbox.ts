@@ -21,8 +21,8 @@ import { PieceJointeFichierService } from '@features/non-conformite/services/pie
                         <i class="pi pi-eye text-xl"></i>
                     </div>
                     <div class="flex flex-col">
-                        <span class="font-bold text-lg text-900 mb-0.5">Visualisation du document</span>
-                        <span class="text-500 text-xs">Visualisation de la pièce jointe</span>
+                        <span class="font-bold text-lg text-900 mb-0.5">{{ titre }}</span>
+                        <span class="text-500 text-xs">{{ sousTitre }}</span>
                     </div>
                 </div>
             </ng-template>
@@ -45,11 +45,30 @@ export class LightboxComponent {
     url: SafeResourceUrl | null = null;
     isImage: boolean = false;
     isPdf: boolean = false;
+    titre: string = 'Visualisation du document';
+    sousTitre: string = 'Visualisation de la pièce jointe';
 
     constructor(
         private sanitizer: DomSanitizer,
         private fichiers: PieceJointeFichierService
     ) {}
+
+    /**
+     * Ouvre l'aperçu direct à partir d'un Blob (PDF ou image).
+     */
+    public openBlob(blob: Blob, nomFichier: string = 'document.pdf', titreDoc?: string) {
+        if (!blob) return;
+        const nom = nomFichier.toLowerCase();
+        this.isImage = nom.endsWith('.png') || nom.endsWith('.jpg') || nom.endsWith('.jpeg');
+        this.isPdf = nom.endsWith('.pdf') || !this.isImage;
+
+        this.titre = titreDoc || 'Visualisation du document';
+        this.sousTitre = nomFichier;
+
+        const objectUrl = window.URL.createObjectURL(blob);
+        this.url = this.sanitizer.bypassSecurityTrustResourceUrl(objectUrl);
+        this.visible = true;
+    }
 
     /**
      * Ouvre l'aperçu d'une pièce jointe.

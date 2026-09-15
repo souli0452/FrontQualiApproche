@@ -341,6 +341,31 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
         this.detailContainer?.clear();
 
     }
+    /**
+     * Ce qui, dans une ligne, agit déjà par soi-même.
+     *
+     * <p>Case à cocher, boutons, menus, liens et champs : un clic dessus a son propre effet, et
+     * ouvrir la fiche par-dessus le contredirait — cocher une ligne pour un traitement en lot
+     * ferait s'ouvrir le dossier qu'on ne voulait pas lire.</p>
+     */
+    private static readonly ELEMENTS_QUI_AGISSENT =
+        'button, a, input, label, .p-checkbox, .p-menu, .p-overlaypanel, [role="menuitem"]';
+
+    /**
+     * Ouvre la fiche depuis n'importe où dans la ligne.
+     *
+     * <p>Seul le numéro l'ouvrait jusqu'ici — une cible de quelques millimètres, alors que toute
+     * la ligne désigne le même dossier. Le reste du tableau se lisait sans qu'on puisse y entrer,
+     * et rien ne disait où cliquer.</p>
+     */
+    ouvrirDepuisLaLigne(evenement: Event, rowData: any): void {
+        const cible = evenement.target as HTMLElement | null;
+        if (cible?.closest(TraitementTableComponent.ELEMENTS_QUI_AGISSENT)) {
+            return;
+        }
+        this.displayDetails(rowData);
+    }
+
     displayDetails(rowData?: any) {
         if (this.onDetails.observed && rowData) {
             this.onDetails.emit(rowData);

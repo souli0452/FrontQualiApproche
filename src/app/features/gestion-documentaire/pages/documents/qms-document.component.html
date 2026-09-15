@@ -1,6 +1,6 @@
 <p-toast></p-toast>
 
-<div class="qms-container p-4">
+<div class="qms-container py-4">
   <div *ngIf="currentView === 'list'">
     <app-qms-document-list
       [documents]="documents"
@@ -33,7 +33,10 @@
       [taillePage]="taillePage"
       (pageChange)="changerDePage($event)"
       (refresh)="refreshList(true)"
-      (open)="viewDetails($event)">
+      (open)="viewDetails($event)"
+      (apercu)="ouvrirApercu($event)"
+      (modifier)="modifierDocument($event)"
+      (telecharger)="downloadSecuredPdf($event)">
     </app-qms-document-list>
   </div>
 <!-- ========================================================================= -->
@@ -49,131 +52,226 @@
      `suiviInterneAutorise` est ce qu'il en dit, et l'onglet correspondant n'est alors pas offert —
      mieux vaut pas d'onglet qu'un onglet qui mène à un refus.
      ========================================================================= -->
-<div *ngIf="currentView === 'detail' && selectedDocument">
-  <p-tabs [value]="ongletDetail" (valueChange)="ouvrirOnglet($event)">
-    <p-tablist>
-      <p-tab value="detail"><i class="pi pi-file mr-2"></i>Détail du document</p-tab>
-      @if (peutVoirLesVersions) {
-        <p-tab value="historique"><i class="pi pi-history mr-2"></i>Historique du document</p-tab>
-      }
-      @if (peutGererLesPartages) {
-        <p-tab value="partages"><i class="pi pi-share-alt mr-2"></i>Partages</p-tab>
-      }
-      @if (peutVoirLaPisteAudit) {
-        <p-tab value="audit"><i class="pi pi-shield mr-2"></i>Piste d'audit</p-tab>
-      }
-      @if (peutVoirLesDemandes) {
-        <p-tab value="demandes"><i class="pi pi-inbox mr-2"></i>Demandes</p-tab>
-      }
-      @if (peutVoirLeCircuit) {
-        <p-tab value="circuit"><i class="pi pi-sitemap mr-2"></i>Circuit de validation</p-tab>
-      }
-    </p-tablist>
+<div *ngIf="currentView === 'detail' && selectedDocument" class="flex flex-col lg:flex-row gap-6 items-start mt-1">
 
-    <p-tabpanels>
-      <p-tabpanel value="detail">
-        <app-qms-document-detail
-          [document]="selectedDocument"
-          [workflowState]="workflowState"
-          [enOnglet]="true"
-          [canDownload]="hasPermission('document-download')"
-          [canViewHistory]="peutVoirLesVersions"
-          [canViewAudit]="peutVoirLaPisteAudit"
-          [canValidate]="hasPermission('document-validate') && selectedDocument.suiviInterneAutorise !== false"
-          [canShare]="peutGererLesPartages"
-          [canRequestChange]="selectedDocument.suiviInterneAutorise !== false"
-          [statusLabel]="statusLabelFn"
-          [statusSeverity]="statusSeverityFn"
-          [actionIcon]="actionIconFn"
-          [actionClass]="actionClassFn"
-          (close)="currentView = 'list'"
-          (openDocument)="openSecuredDocument($event)"
-          (downloadPdf)="downloadSecuredPdf($event)"
-          (viewHistory)="viewVersionHistory($event)"
-          (viewAudit)="viewAuditLogs($event)"
-          (viewValidationHistory)="viewValidationHistory($event)"
-          (viewDemandes)="viewDemandes($event)"
-          (requestChange)="demanderUneModification($event)"
-          (share)="openShareModal($event)"
-          (executeAction)="executeDynamicAction($event)">
-        </app-qms-document-detail>
-      </p-tabpanel>
+  <!-- ========================================================================= -->
+  <!-- VOLET LATÉRAL DE NAVIGATION (Modèle Capture 2)                           -->
+  <!-- ========================================================================= -->
+  <aside class="w-full lg:w-72 shrink-0">
+    <div class="bg-white border border-slate-200 rounded-xl shadow-xs p-3.5 sticky top-4">
+      
+      <!-- Bouton Retour à la liste -->
+      <button type="button" (click)="currentView = 'list'"
+        class="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors mb-3">
+        <i class="pi pi-arrow-left text-xs text-slate-500"></i>
+        <span>Retour aux documents</span>
+      </button>
 
-      <!-- Versions successives du fichier, et qui les a déposées. -->
-      @if (peutVoirLesVersions) {
-      <p-tabpanel value="historique">
-        <app-qms-document-history
-          [document]="selectedDocument"
-          [versionHistory]="versionHistory"
-          (close)="currentView = 'list'">
-        </app-qms-document-history>
-      </p-tabpanel>
-      }
+      <!-- Fiche synthétique du document -->
+      <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-lg mb-4">
+        <div class="flex items-center justify-between gap-1 mb-1">
+          <span class="font-mono text-xs font-bold text-slate-900 truncate" [title]="selectedDocument.documentNumber">
+            {{ selectedDocument.documentNumber }}
+          </span>
+          <span class="font-mono text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 px-1.5 py-0.5 rounded">
+            v{{ selectedDocument.numeroVersion ?? 0 }}
+          </span>
+        </div>
+        <p class="text-xs text-slate-600 font-medium line-clamp-2 m-0 mb-2" [title]="selectedDocument.titre">
+          {{ selectedDocument.titre || 'Document sans titre' }}
+        </p>
+        <div class="flex items-center justify-between gap-1 pt-1 border-t border-slate-200/60">
+          <p-tag [value]="statusLabelFn(selectedDocument)" [severity]="statusSeverityFn(selectedDocument)" styleClass="text-[11px]"></p-tag>
+          <span class="text-[11px] text-slate-500 font-medium truncate max-w-[110px]" *ngIf="selectedDocument.documentType" [title]="selectedDocument.documentType">
+            {{ selectedDocument.documentType }}
+          </span>
+        </div>
+      </div>
 
-      <!-- Qui accède au document : accès nominatifs et partages à des structures entières. Même
-           composant que le dialogue d'origine, rendu ici sans sa fenêtre. -->
-      @if (peutGererLesPartages) {
-      <p-tabpanel value="partages">
-        <app-qms-document-access-dialog
-          [enDialogue]="false"
-          [document]="selectedDocument"
-          [accessList]="accessList"
-          [structures]="structures"
-          [filteredUsers]="filteredUsers"
-          [roleOptions]="roleOptions"
-          [loading]="loading"
-          [loadingAccess]="loadingAccess"
-          [partagesStructure]="partagesStructure"
-          (structureFilterChange)="onStructureFilterChange($event)"
-          (grant)="submitPermissions($event)"
-          (revoke)="revokeAccess($event)"
-          (partagerAvecStructure)="partagerAvecStructure($event)"
-          (retirerPartageStructure)="retirerPartageStructure($event)">
-        </app-qms-document-access-dialog>
-      </p-tabpanel>
-      }
+      <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">
+        Sections du document
+      </div>
 
-      <!-- Journal des accès et des opérations. -->
-      @if (peutVoirLaPisteAudit) {
-      <p-tabpanel value="audit">
-        <app-qms-document-audit
-          [document]="selectedDocument"
-          [auditLogs]="auditLogs"
-          (close)="currentView = 'list'">
-        </app-qms-document-audit>
-      </p-tabpanel>
-      }
+      <!-- Navigation verticale -->
+      <nav class="flex flex-col gap-1">
+        
+        <!-- 1. Détail du document -->
+        <button type="button" (click)="ouvrirOnglet('detail')"
+          class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all text-left cursor-pointer"
+          [ngClass]="ongletDetail === 'detail' 
+            ? 'bg-sky-50/90 text-sky-700 font-semibold border-l-4 border-sky-600 shadow-2xs' 
+            : 'text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 font-medium border-l-4 border-transparent'">
+          <i class="pi pi-file text-base" [ngClass]="ongletDetail === 'detail' ? 'text-sky-600' : 'text-slate-400'"></i>
+          <span class="flex-1 truncate">Détail du document</span>
+        </button>
 
-      <!-- Ni les versions, ni les accès, ni les décisions du circuit ne disent ce qu'on a demandé
-           au sujet du document, ni ce qui en a été décidé. -->
-      @if (peutVoirLesDemandes) {
-      <p-tabpanel value="demandes">
-        <app-qms-document-demandes
-          [document]="selectedDocument"
-          [demandes]="demandesDuDocument"
-          [loading]="loading"
-          (close)="ongletDetail = 'detail'">
-        </app-qms-document-demandes>
-      </p-tabpanel>
-      }
+        <!-- 2. Historique des versions -->
+        @if (peutVoirLesVersions) {
+          <button type="button" (click)="ouvrirOnglet('historique')"
+            class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all text-left cursor-pointer"
+            [ngClass]="ongletDetail === 'historique' 
+              ? 'bg-sky-50/90 text-sky-700 font-semibold border-l-4 border-sky-600 shadow-2xs' 
+              : 'text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 font-medium border-l-4 border-transparent'">
+            <i class="pi pi-history text-base" [ngClass]="ongletDetail === 'historique' ? 'text-sky-600' : 'text-slate-400'"></i>
+            <span class="flex-1 truncate">Historique du document</span>
+            <span *ngIf="versionHistory?.length" class="text-[11px] font-bold px-1.5 py-0.2 rounded-full"
+              [ngClass]="ongletDetail === 'historique' ? 'bg-sky-200/80 text-sky-800' : 'bg-slate-100 text-slate-600'">
+              {{ versionHistory.length }}
+            </span>
+          </button>
+        }
 
-      <!-- Décisions du circuit : qui a validé, quand, avec quels motifs et quelles saisies.
-           Frise partagée avec les non-conformités et les demandes — elle se clôt sur l'étape
-           en cours, que le moteur connaît mieux que la colonne recopiée sur le document. -->
-      @if (peutVoirLeCircuit) {
-      <p-tabpanel value="circuit">
-        <app-workflow-historique
-          [historique]="validationHistory"
-          [loading]="loading"
-          [objet]="selectedDocument.documentNumber ? 'le document ' + selectedDocument.documentNumber : 'ce document'"
-          [etapeCourante]="etapeDeCircuit(selectedDocument)"
-          [termine]="circuitTermine(selectedDocument)"
-          (close)="currentView = 'list'">
-        </app-workflow-historique>
-      </p-tabpanel>
-      }
-    </p-tabpanels>
-  </p-tabs>
+        <!-- 3. Partages -->
+        @if (peutGererLesPartages) {
+          <button type="button" (click)="ouvrirOnglet('partages')"
+            class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all text-left cursor-pointer"
+            [ngClass]="ongletDetail === 'partages' 
+              ? 'bg-sky-50/90 text-sky-700 font-semibold border-l-4 border-sky-600 shadow-2xs' 
+              : 'text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 font-medium border-l-4 border-transparent'">
+            <i class="pi pi-share-alt text-base" [ngClass]="ongletDetail === 'partages' ? 'text-sky-600' : 'text-slate-400'"></i>
+            <span class="flex-1 truncate">Partages</span>
+          </button>
+        }
+
+        <!-- 4. Piste d'audit -->
+        @if (peutVoirLaPisteAudit) {
+          <button type="button" (click)="ouvrirOnglet('audit')"
+            class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all text-left cursor-pointer"
+            [ngClass]="ongletDetail === 'audit' 
+              ? 'bg-sky-50/90 text-sky-700 font-semibold border-l-4 border-sky-600 shadow-2xs' 
+              : 'text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 font-medium border-l-4 border-transparent'">
+            <i class="pi pi-shield text-base" [ngClass]="ongletDetail === 'audit' ? 'text-sky-600' : 'text-slate-400'"></i>
+            <span class="flex-1 truncate">Piste d'audit</span>
+          </button>
+        }
+
+        <!-- 5. Demandes -->
+        @if (peutVoirLesDemandes) {
+          <button type="button" (click)="ouvrirOnglet('demandes')"
+            class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all text-left cursor-pointer"
+            [ngClass]="ongletDetail === 'demandes' 
+              ? 'bg-sky-50/90 text-sky-700 font-semibold border-l-4 border-sky-600 shadow-2xs' 
+              : 'text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 font-medium border-l-4 border-transparent'">
+            <i class="pi pi-inbox text-base" [ngClass]="ongletDetail === 'demandes' ? 'text-sky-600' : 'text-slate-400'"></i>
+            <span class="flex-1 truncate">Demandes</span>
+            <span *ngIf="demandesDuDocument?.length" class="text-[11px] font-bold px-1.5 py-0.2 rounded-full"
+              [ngClass]="ongletDetail === 'demandes' ? 'bg-sky-200/80 text-sky-800' : 'bg-slate-100 text-slate-600'">
+              {{ demandesDuDocument.length }}
+            </span>
+          </button>
+        }
+
+        <!-- 6. Circuit de validation -->
+        @if (peutVoirLeCircuit) {
+          <button type="button" (click)="ouvrirOnglet('circuit')"
+            class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all text-left cursor-pointer"
+            [ngClass]="ongletDetail === 'circuit' 
+              ? 'bg-sky-50/90 text-sky-700 font-semibold border-l-4 border-sky-600 shadow-2xs' 
+              : 'text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 font-medium border-l-4 border-transparent'">
+            <i class="pi pi-sitemap text-base" [ngClass]="ongletDetail === 'circuit' ? 'text-sky-600' : 'text-slate-400'"></i>
+            <span class="flex-1 truncate">Circuit de validation</span>
+          </button>
+        }
+
+      </nav>
+    </div>
+  </aside>
+
+  <!-- ========================================================================= -->
+  <!-- ZONE DE CONTENU PRINCIPAL                                                -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 min-w-0 w-full">
+
+    <!-- 1. Détail du document -->
+    <div *ngIf="ongletDetail === 'detail'">
+      <app-qms-document-detail
+        [document]="selectedDocument"
+        [workflowState]="workflowState"
+        [enOnglet]="true"
+        [canDownload]="hasPermission('document-download')"
+        [canViewHistory]="peutVoirLesVersions"
+        [canViewAudit]="peutVoirLaPisteAudit"
+        [canValidate]="hasPermission('document-validate') && selectedDocument.suiviInterneAutorise !== false"
+        [canShare]="peutGererLesPartages"
+        [canRequestChange]="selectedDocument.suiviInterneAutorise !== false"
+        [statusLabel]="statusLabelFn"
+        [statusSeverity]="statusSeverityFn"
+        [actionIcon]="actionIconFn"
+        [actionClass]="actionClassFn"
+        (close)="currentView = 'list'"
+        (openDocument)="openSecuredDocument($event)"
+        (downloadPdf)="downloadSecuredPdf($event)"
+        (viewHistory)="viewVersionHistory($event)"
+        (viewAudit)="viewAuditLogs($event)"
+        (viewValidationHistory)="viewValidationHistory($event)"
+        (viewDemandes)="viewDemandes($event)"
+        (requestChange)="demanderUneModification($event)"
+        (share)="openShareModal($event)"
+        (executeAction)="executeDynamicAction($event)">
+      </app-qms-document-detail>
+    </div>
+
+    <!-- 2. Versions successives du fichier -->
+    <div *ngIf="ongletDetail === 'historique' && peutVoirLesVersions">
+      <app-qms-document-history
+        [document]="selectedDocument"
+        [versionHistory]="versionHistory"
+        (close)="currentView = 'list'">
+      </app-qms-document-history>
+    </div>
+
+    <!-- 3. Partages et accès -->
+    <div *ngIf="ongletDetail === 'partages' && peutGererLesPartages">
+      <app-qms-document-access-dialog
+        [enDialogue]="false"
+        [document]="selectedDocument"
+        [accessList]="accessList"
+        [structures]="structures"
+        [filteredUsers]="filteredUsers"
+        [roleOptions]="roleOptions"
+        [loading]="loading"
+        [loadingAccess]="loadingAccess"
+        [partagesStructure]="partagesStructure"
+        (structureFilterChange)="onStructureFilterChange($event)"
+        (grant)="submitPermissions($event)"
+        (revoke)="revokeAccess($event)"
+        (partagerAvecStructure)="partagerAvecStructure($event)"
+        (retirerPartageStructure)="retirerPartageStructure($event)">
+      </app-qms-document-access-dialog>
+    </div>
+
+    <!-- 4. Piste d'audit -->
+    <div *ngIf="ongletDetail === 'audit' && peutVoirLaPisteAudit">
+      <app-qms-document-audit
+        [document]="selectedDocument"
+        [auditLogs]="auditLogs"
+        (close)="currentView = 'list'">
+      </app-qms-document-audit>
+    </div>
+
+    <!-- 5. Demandes -->
+    <div *ngIf="ongletDetail === 'demandes' && peutVoirLesDemandes">
+      <app-qms-document-demandes
+        [document]="selectedDocument"
+        [demandes]="demandesDuDocument"
+        [loading]="loading"
+        (close)="ongletDetail = 'detail'">
+      </app-qms-document-demandes>
+    </div>
+
+    <!-- 6. Décisions du circuit -->
+    <div *ngIf="ongletDetail === 'circuit' && peutVoirLeCircuit">
+      <app-workflow-historique
+        [historique]="validationHistory"
+        [loading]="loading"
+        [objet]="selectedDocument.documentNumber ? 'le document ' + selectedDocument.documentNumber : 'ce document'"
+        [etapeCourante]="etapeDeCircuit(selectedDocument)"
+        [termine]="circuitTermine(selectedDocument)"
+        (close)="currentView = 'list'">
+      </app-workflow-historique>
+    </div>
+
+  </main>
 </div>
 
 </div>
@@ -208,4 +306,7 @@
   (visibleChange)="showWorkflowModal = $event"
   (confirm)="submitWorkflowDecision($event)">
 </app-workflow-decision-dialog>
+
+<!-- Lightbox pour prévisualisation sécurisée des documents (PDF et images) -->
+<app-lightbox #lightbox></app-lightbox>
 

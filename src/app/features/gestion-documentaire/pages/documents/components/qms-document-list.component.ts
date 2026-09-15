@@ -1,66 +1,39 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgPrimeModule } from '@prime-ng';
 import { SelectInputComponent } from '@shared/ui/select-input/select-input.component';
+import { TableauAffichageComponent } from '@shared/tableau-affichage/tableau-affichage';
+import { TableColumn } from '../../../../../models/generique.model';
 import { DocumentQms } from '@features/gestion-documentaire/models/document.model';
 import { OptionsLoader } from '@shared/ui/lazy-options.model';
 import { DomaineApplication, NiveauConfidentialite, PrioriteDocument, QmsDocumentType } from '@features/gestion-documentaire/models/referentiel.model';
+import { MenuItem } from 'primeng/api';
 
 /**
- * Liste des documents : recherche, filtres et tableau.
- *
- * <p>Composant de présentation — il ne détient aucun état métier et ne fait aucun appel : les
- * critères de recherche lui sont fournis et toute action est remontée au parent. Le menu d'actions
- * par ligne a été retiré : une ligne s'ouvre, et c'est la fiche du document qui expose les actions
- * possibles, en fonction des droits de l'utilisateur.</p>
+ * Liste des documents : recherche, filtres et tableau universel.
  */
 @Component({
     selector: 'app-qms-document-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, NgPrimeModule, SelectInputComponent],
+    imports: [CommonModule, FormsModule, NgPrimeModule, SelectInputComponent, TableauAffichageComponent],
     templateUrl: './qms-document-list.component.html'
 })
-export class QmsDocumentListComponent {
+export class QmsDocumentListComponent implements OnInit {
     @Input() documents: DocumentQms[] = [];
     @Input() loading = false;
 
-    /*
-     * Pagination portée par le serveur : le tableau n'affiche que la page reçue et s'en remet au
-     * total pour dimensionner sa barre. Il paginait auparavant les seuls documents qu'on lui
-     * avait donnés, en les présentant comme le fonds entier.
-     */
     @Input() totalDocuments = 0;
     @Input() premiereLigne = 0;
-    @Input() taillePage = 15;
+    @Input() taillePage = 10;
     @Output() pageChange = new EventEmitter<{ first: number; rows: number }>();
 
-    /*
-     * Les filtres reçoivent un chargeur, non une liste toute faite.
-     *
-     * Ces référentiels sont servis paginés : les charger d'avance revenait à n'en afficher que
-     * la première page, sans que rien ne signale les valeurs manquantes. Chaque liste déroulante
-     * charge donc la sienne — première page à l'ouverture, suivantes à la demande, recherche
-     * servie par le serveur.
-     */
     @Input() chargerTypes?: OptionsLoader<QmsDocumentType>;
     @Input() chargerStructures?: OptionsLoader<any>;
     @Input() chargerPriorites?: OptionsLoader<PrioriteDocument>;
-    /**
-     * Niveaux proposables : ceux que l'utilisateur a le droit de voir, résolus par le serveur.
-     * Un niveau qu'il n'a pas le droit de consulter ne rendrait aucun document, et le proposer
-     * révélerait un classement qui ne le regarde pas.
-     */
     @Input() chargerNiveauxConfidentialite?: OptionsLoader<NiveauConfidentialite>;
     @Input() chargerDomaines?: OptionsLoader<DomaineApplication>;
 
-    /**
-     * Le filtre par processus émetteur est-il offert ?
-     *
-     * <p>Faux pour la plupart : le serveur borne déjà leur fonds visible à leur propre structure, et
-     * choisir une autre structure ne rendait alors rien — un filtre qui ne peut que vider la liste
-     * n'en est pas un. Le parent tranche, il détient les rôles.</p>
-     */
     @Input() peutFiltrerParProcessusEmetteur = false;
 
     @Input() searchQuery = '';
@@ -77,23 +50,136 @@ export class QmsDocumentListComponent {
     @Output() selectedNiveauConfidentialiteChange = new EventEmitter<string>();
     @Output() selectedDomaineChange = new EventEmitter<string>();
 
-    /** Rechargement demandé : saisie validée, filtre modifié ou bouton Actualiser. */
     @Output() refresh = new EventEmitter<void>();
-    /** Ouverture de la fiche d'un document. */
     @Output() open = new EventEmitter<DocumentQms>();
+    @Output() apercu = new EventEmitter<DocumentQms>();
+    @Output() modifier = new EventEmitter<DocumentQms>();
+    @Output() telecharger = new EventEmitter<DocumentQms>();
 
-    /** Libellé et couleur de l'état, fournis par le parent qui détient la règle d'affichage. */
     @Input() statusLabel: (doc: DocumentQms) => string = () => '';
     @Input() statusSeverity: (doc: DocumentQms) => string = () => 'info';
 
-    /**
-     * État du circuit, résolu par le parent auprès de workflow-service.
-     *
-     * <p>Complète l'état du document sans le remplacer : celui-ci dit où en est le fichier
-     * (brouillon, obsolète, en retard de révision), celui-là où en est sa validation — et
-     * si l'utilisateur qui consulte a une décision à prendre.</p>
-     */
     @Input() etapeDeCircuit: (doc: DocumentQms) => string | undefined = () => undefined;
     @Input() aUneDecisionAttendue: (doc: DocumentQms) => boolean = () => false;
     @Input() circuitTermine: (doc: DocumentQms) => boolean = () => false;
+
+    @ViewChild('versionTpl', { static: true }) versionTpl!: TemplateRef<any>;
+    @ViewChild('statusTpl', { static: true }) statusTpl!: TemplateRef<any>;
+
+    cellTemplates: { [field: string]: TemplateRef<any> } = {};
+
+    tableCols: TableColumn[] = [
+        {
+            field: 'titre',
+            header: 'Document',
+            type: 'file',
+            fileNameField: 'currentObjectName',
+            subField: 'documentNumber',
+            width: '32%'
+        },
+        {
+            field: 'redacteur',
+            header: 'Rédacteur',
+            type: 'string',
+            width: '18%'
+        },
+        {
+            field: 'numeroVersion',
+            header: 'Version',
+            type: 'custom',
+            align: 'center',
+            width: '10%'
+        },
+        {
+            field: 'status',
+            header: 'État',
+            type: 'custom',
+            width: '24%'
+        },
+        {
+            field: 'createdAt',
+            header: 'Créé le',
+            type: 'date',
+            dateFormat: 'dd/MM/yyyy',
+            width: '16%'
+        }
+    ];
+
+    ngOnInit(): void {
+        this.cellTemplates = {
+            'numeroVersion': this.versionTpl,
+            'status': this.statusTpl
+        };
+    }
+
+    onPageChange(event: { page: number; size: number }): void {
+        this.pageChange.emit({
+            first: event.page * event.size,
+            rows: event.size
+        });
+    }
+
+    getActionMenuItems = (doc: DocumentQms): MenuItem[] => {
+        const items: MenuItem[] = [
+            {
+                label: 'Consulter la fiche',
+                icon: 'pi pi-eye',
+                command: () => this.open.emit(doc)
+            }
+        ];
+
+        if (this.isVisualisable(doc.currentObjectName || doc.titre)) {
+            items.push({
+                label: 'Aperçu du document',
+                icon: 'pi pi-search',
+                command: () => this.apercu.emit(doc)
+            });
+        }
+
+        items.push({
+            label: 'Demander une modification',
+            icon: 'pi pi-pencil',
+            command: () => this.modifier.emit(doc)
+        });
+
+        items.push({
+            label: 'Télécharger le document',
+            icon: 'pi pi-download',
+            command: () => this.telecharger.emit(doc)
+        });
+
+        return items;
+    };
+
+    isVisualisable(nomFichier?: string): boolean {
+        if (!nomFichier) return false;
+        const lower = nomFichier.toLowerCase().trim();
+        return lower.endsWith('.pdf') ||
+               lower.endsWith('.png') ||
+               lower.endsWith('.jpg') ||
+               lower.endsWith('.jpeg') ||
+               lower.endsWith('.webp') ||
+               lower.endsWith('.svg') ||
+               lower.endsWith('.gif');
+    }
+
+    hasActiveFilters(): boolean {
+        return !!(this.selectedType || this.selectedService || this.selectedPriorite || this.selectedNiveauConfidentialite || this.selectedDomaine);
+    }
+
+    reinitialiserFiltres(): void {
+        this.selectedType = '';
+        this.selectedTypeChange.emit('');
+        this.selectedService = '';
+        this.selectedServiceChange.emit('');
+        this.selectedPriorite = '';
+        this.selectedPrioriteChange.emit('');
+        this.selectedNiveauConfidentialite = '';
+        this.selectedNiveauConfidentialiteChange.emit('');
+        this.selectedDomaine = '';
+        this.selectedDomaineChange.emit('');
+        this.searchQuery = '';
+        this.searchQueryChange.emit('');
+        this.refresh.emit();
+    }
 }

@@ -132,7 +132,8 @@ export class LicenceComponent implements OnInit, OnDestroy {
         [ModuleAbonnement.FORMATION]: 'Ressources et formations',
         [ModuleAbonnement.REGLEMENTATION]: 'Réglementation',
         [ModuleAbonnement.EVALUATION]: "Critères d'évaluation",
-        [ModuleAbonnement.CONTEXTE]: 'Contexte'
+        [ModuleAbonnement.CONTEXTE]: 'Contexte',
+        [ModuleAbonnement.ASSISTANT_IA]: 'Assistant IA'
     };
 
     private readonly service = inject(LicenceService);
