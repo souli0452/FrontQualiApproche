@@ -1,4 +1,10 @@
 <p-card>
+<!-- ====================================================================
+    1. BANDEAU D'ALERTES
+    ==================================================================== -->
+<app-smart-alert-banner 
+    [alerts]="smartAlerts">
+</app-smart-alert-banner>
 <!-- 1. BADGE DE PORTÉE DYNAMIQUE (RQ vs PILOTE) -->
     <div class="flex items-center justify-between mb-4 pb-3 border-b border-surface-200 dark:border-surface-700">
         <div class="flex items-center gap-2.5">

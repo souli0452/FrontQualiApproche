@@ -21,6 +21,8 @@ import { ChartEvolutionComponent } from '@shared/chart-evolution/chart-evolution
 import { ChartFilterEvent, BreakdownItem } from '@shared/chart-evolution/chart-evolution.model';
 import { ChartDonutComponent, ChartDonutStatItem } from '@shared/chart-donut/chart-donut.component';
 import { LightboxComponent } from '@features/non-conformite/components/lightbox/lightbox';
+import { SmartAlertBannerComponent } from '@shared/smart-alert-banner/smart-alert-banner.component';
+import { SmartAlertItem } from '@shared/smart-alert-banner/smart-alert-banner.model';
 
 interface DimensionEntry {
     label: string;
@@ -34,7 +36,15 @@ interface DimensionEntry {
 @Component({
     selector: 'app-qms-vue-ensemble',
     standalone: true,
-    imports: [CommonModule, KpiCardComponent, NgPrimeModule, QmsATraiterComponent, ChartEvolutionComponent, ChartDonutComponent, LightboxComponent],
+    imports: [
+        CommonModule, 
+        KpiCardComponent, 
+        NgPrimeModule, 
+        QmsATraiterComponent, 
+        ChartEvolutionComponent, 
+        ChartDonutComponent, 
+        LightboxComponent, 
+        SmartAlertBannerComponent],
     // Le dialogue de décision des lignes rend compte par messages : sans fournisseur ni conteneur,
     // ni le succès ni le refus du serveur ne seraient dits.
     providers: [MessageService],
@@ -111,6 +121,62 @@ export class QmsVueEnsembleComponent implements OnInit, OnDestroy {
     porteeGlobale = false;
 
     private destroy$ = new Subject<void>();
+
+
+        // =========================================================================
+    // BANDEAU D'ALERTES INTELLIGENTES (Smart Alerts Documentaires)
+    // =========================================================================
+    get smartAlerts(): SmartAlertItem[] {
+        const list: SmartAlertItem[] = [];
+
+        // 1. Documents nécessitant une action (Vérification / Approbation)
+        const nbDocs = this.documentsATraiter.length;
+        if (nbDocs > 0) {
+            list.push({
+                id: 'docs-a-traiter',
+                count: nbDocs,
+                badgeText: 'Action requise',
+                message: `${nbDocs} document${nbDocs > 1 ? 's' : ''} en attente de vérification ou d'approbation`,
+                icon: 'pi pi-inbox',
+                color: 'amber',
+                routerLink: '/gestion-documentaire/documents',
+                actionLabel: 'Traiter'
+            });
+        }
+
+        // 2. Demandes de modification / suppression à instruire
+        const nbDemandes = this.demandesATraiter.length;
+        if (nbDemandes > 0) {
+            list.push({
+                id: 'demandes-a-instruire',
+                count: nbDemandes,
+                badgeText: 'Demande en attente',
+                message: `${nbDemandes} demande${nbDemandes > 1 ? 's' : ''} de changement à instruire`,
+                icon: 'pi pi-file-edit',
+                color: 'sky',
+                routerLink: '/gestion-documentaire/demandes',
+                actionLabel: 'Instruire'
+            });
+        }
+
+        // 3. Documents dont la révision est dépassée (Écart ISO 9001 §7.5)
+        const nbRetard = this.stats?.documentsEnRetardRevision || 0;
+        if (nbRetard > 0) {
+            list.push({
+                id: 'docs-retard-revision',
+                count: nbRetard,
+                badgeText: 'Révision expirée',
+                message: `${nbRetard} document${nbRetard > 1 ? 's' : ''} dont la date de révision périodique est dépassée`,
+                icon: 'pi pi-clock',
+                color: 'rose',
+                routerLink: '/gestion-documentaire/documents',
+                actionLabel: 'Consulter'
+            });
+        }
+
+        return list;
+    }
+
 
     ngOnInit(): void {
         // Même règle que le serveur : responsable qualité et administration générale voient

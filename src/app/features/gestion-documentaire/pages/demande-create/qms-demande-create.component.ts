@@ -15,6 +15,7 @@ import { DocumentQms } from '@features/gestion-documentaire/models/document.mode
 import { TypeDemande } from '@features/gestion-documentaire/models/demande.model';
 import { DemandeDocumentService } from '@features/gestion-documentaire/services/demande.service';
 import { QmsDocumentService } from '@features/gestion-documentaire/services/document.service';
+import { AlertService } from '@shared/alert-message/alert-message.service';
 
 /**
  * Dépôt d'une demande de modification ou de suppression de document.
@@ -56,7 +57,8 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
         private readonly route: ActivatedRoute,
         private readonly demandeService: DemandeDocumentService,
         protected readonly documentService: QmsDocumentService,
-        private readonly messageService: MessageService
+        private readonly messageService: MessageService,
+        private readonly alertService: AlertService
     ) {
         this.formulaire = this.fb.group({
             documentId: [null, Validators.required],
@@ -176,11 +178,7 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
         if (!enVigueur) {
             this.formulaire.patchValue({ documentId: null });
             this.documentChoisi = undefined;
-            this.messageService.add({
-                severity: 'info', summary: 'Document à choisir de nouveau',
-                detail: "Une modification ne se demande que sur un document en vigueur : choisissez-en un dans la liste.",
-                life: 5000
-            });
+            this.alertService.showInfo("Document à choisir de nouveau");
         }
     }
 
@@ -197,10 +195,7 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
     soumettre(): void {
         if (this.formulaire.invalid) {
             this.formulaire.markAllAsTouched();
-            this.messageService.add({
-                severity: 'warn', summary: 'Demande incomplète',
-                detail: 'Le document concerné et l’objectif sont nécessaires à son instruction.'
-            });
+            this.alertService.showWarning("Demande incomplète");
             return;
         }
 
@@ -212,15 +207,12 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: () => {
                     this.loading = false;
-                    this.messageService.add({
-                        severity: 'success', summary: 'Demande déposée',
-                        detail: 'Elle suit désormais son circuit d’instruction.'
-                    });
+                    this.alertService.showSuccess("Demande déposée");
                     setTimeout(() => this.retour(), 1200);
                 },
                 error: (err) => {
                     this.loading = false;
-                    showToast(StatusEnum.error, err.status, 'Dépôt impossible', this.messageService, err);
+                    this.alertService.showError(err.error.message);
                 }
             });
     }
