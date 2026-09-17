@@ -294,11 +294,18 @@
             <p-button label="Voir guide de saisie" severity="secondary" (click)="showGuideModal = true" />
             <div class="flex gap-2">
               <p-button label="Annuler" variant="outlined" severity="contrast" (click)="goBack()" />
-              <p-button siLicenceOuverte label="Enregistrer" [outlined]="true" severity="info" icon="pi pi-save"
+              <!-- Deux issues au dépôt, et le rédacteur choisit. Enregistrer laisse le document
+                   en brouillon, qu'il pourra reprendre et compléter ; soumettre l'engage dans le
+                   circuit de validation dans la foulée. Les deux boutons existaient déjà, mais le
+                   serveur inscrivait l'étape dès le dépôt : aucun document ne restait brouillon,
+                   et « Enregistrer » soumettait comme l'autre. -->
+              <p-button siLicenceOuverte label="Enregistrer le brouillon" [outlined]="true" severity="info" icon="pi pi-save"
                 [disabled]="documentForm.invalid || !selectedFile || loadingSave || loadingSubmit" [loading]="loadingSave"
+                pTooltip="Le document reste modifiable et n'est transmis à personne." tooltipPosition="top"
                 (click)="submitDocument(false)" />
-              <p-button siLicenceOuverte label="Soumettre" severity="info" icon="pi pi-send"
+              <p-button siLicenceOuverte label="Soumettre à la validation" severity="info" icon="pi pi-send"
                 [disabled]="documentForm.invalid || !selectedFile || loadingSave || loadingSubmit" [loading]="loadingSubmit"
+                pTooltip="Le document entre immédiatement dans le circuit de validation." tooltipPosition="top"
                 (click)="submitDocument(true)" />
             </div>
           </div>
