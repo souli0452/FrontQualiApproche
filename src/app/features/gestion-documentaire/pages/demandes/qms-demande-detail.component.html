@@ -135,20 +135,6 @@
                   <span class="block text-xs text-slate-400 mb-1">Déposée le</span>
                   <span class="text-sm text-slate-700">{{ demande.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
                 </div>
-                <!-- La pièce déposée avec la demande : son nom s'affichait sans qu'on puisse
-                     l'ouvrir, et la preuve jointe par le demandeur restait invisible pour qui
-                     devait instruire. -->
-                <div class="col-span-12 sm:col-span-6" *ngIf="demande.pieceJointeNom">
-                  <span class="block text-xs text-slate-400 mb-1">Pièce jointe</span>
-                  <button type="button"
-                    class="inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 hover:underline bg-transparent border-none p-0 cursor-pointer text-left"
-                    [disabled]="pieceEnCours"
-                    (click)="telechargerPieceJointe.emit(demande)">
-                    <i class="pi" [ngClass]="pieceEnCours ? 'pi-spin pi-spinner' : 'pi-paperclip'"></i>
-                    <span>{{ demande.pieceJointeNom }}</span>
-                    <i class="pi pi-download text-xs opacity-70" *ngIf="!pieceEnCours"></i>
-                  </button>
-                </div>
               </div>
             </div>
           </div>
@@ -185,6 +171,32 @@
                 <i class="pi pi-align-left text-indigo-500"></i> Description
               </h3>
               <p class="text-sm text-slate-700 m-0 whitespace-pre-line">{{ demande.description }}</p>
+            </div>
+          </div>
+
+          <!-- La pièce déposée avec la demande, sous la description qu'elle appuie. Elle tenait
+               la place d'une donnée d'identité dans la carte « Origine » ; c'est une preuve à
+               consulter, pas une ligne à lire. -->
+          <div class="col-span-12" *ngIf="demande.pieceJointeNom">
+            <div class="border border-slate-200 rounded-lg p-4">
+              <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-3 flex items-center gap-2">
+                <i class="pi pi-paperclip text-indigo-500"></i> Pièce jointe
+              </h3>
+              <button type="button"
+                class="w-full flex items-center gap-3 text-left bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-3 py-2.5 cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-progress"
+                [disabled]="pieceEnCours"
+                (click)="telechargerPieceJointe.emit(demande)">
+                <i class="pi text-lg text-indigo-500"
+                   [ngClass]="pieceEnCours ? 'pi-spin pi-spinner' : 'pi-file'"></i>
+                <span class="flex-1 min-w-0">
+                  <span class="block text-sm font-medium text-slate-800 truncate"
+                        [title]="demande.pieceJointeNom">{{ demande.pieceJointeNom }}</span>
+                  <span class="block text-xs text-slate-500">
+                    {{ pieceEnCours ? 'Téléchargement en cours…' : 'Déposée avec la demande — cliquez pour l\'ouvrir' }}
+                  </span>
+                </span>
+                <i class="pi pi-download text-slate-400" *ngIf="!pieceEnCours"></i>
+              </button>
             </div>
           </div>
 
