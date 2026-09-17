@@ -299,7 +299,7 @@
                    circuit de validation dans la foulée. Les deux boutons existaient déjà, mais le
                    serveur inscrivait l'étape dès le dépôt : aucun document ne restait brouillon,
                    et « Enregistrer » soumettait comme l'autre. -->
-              <p-button siLicenceOuverte label="Enregistrer le brouillon" [outlined]="true" severity="info" icon="pi pi-save"
+              <p-button siLicenceOuverte label="Enregistrer le brouillon" [outlined]="true" severity="warn" icon="pi pi-save"
                 [disabled]="documentForm.invalid || !selectedFile || loadingSave || loadingSubmit" [loading]="loadingSave"
                 pTooltip="Le document reste modifiable et n'est transmis à personne." tooltipPosition="top"
                 (click)="submitDocument(false)" />
