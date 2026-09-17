@@ -135,11 +135,19 @@
                   <span class="block text-xs text-slate-400 mb-1">Déposée le</span>
                   <span class="text-sm text-slate-700">{{ demande.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
                 </div>
+                <!-- La pièce déposée avec la demande : son nom s'affichait sans qu'on puisse
+                     l'ouvrir, et la preuve jointe par le demandeur restait invisible pour qui
+                     devait instruire. -->
                 <div class="col-span-12 sm:col-span-6" *ngIf="demande.pieceJointeNom">
                   <span class="block text-xs text-slate-400 mb-1">Pièce jointe</span>
-                  <span class="text-sm text-slate-700">
-                    <i class="pi pi-paperclip mr-1"></i>{{ demande.pieceJointeNom }}
-                  </span>
+                  <button type="button"
+                    class="inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 hover:underline bg-transparent border-none p-0 cursor-pointer text-left"
+                    [disabled]="pieceEnCours"
+                    (click)="telechargerPieceJointe.emit(demande)">
+                    <i class="pi" [ngClass]="pieceEnCours ? 'pi-spin pi-spinner' : 'pi-paperclip'"></i>
+                    <span>{{ demande.pieceJointeNom }}</span>
+                    <i class="pi pi-download text-xs opacity-70" *ngIf="!pieceEnCours"></i>
+                  </button>
                 </div>
               </div>
             </div>

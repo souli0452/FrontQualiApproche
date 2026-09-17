@@ -94,6 +94,9 @@ export class QmsDemandesComponent implements OnInit, AfterViewInit, OnDestroy {
     demandeEnCours?: DemandeDocumentDto;
     enregistrement = false;
 
+    /** Un téléchargement de pièce jointe est en cours : le lien de la fiche attend. */
+    pieceEnCours = false;
+
     fichierRemplacant?: File;
     commentaireRemplacant = '';
 
@@ -461,6 +464,57 @@ export class QmsDemandesComponent implements OnInit, AfterViewInit, OnDestroy {
 
     onFichierRemplacant(event: any): void {
         this.fichierRemplacant = event?.target?.files?.[0] ?? event?.files?.[0];
+    }
+
+    /**
+     * Enregistre la pièce jointe déposée avec la demande.
+     *
+     * <p>Le serveur rend le fichier sous son nom d'origine ; il est repris ici pour que le
+     * navigateur n'enregistre pas un identifiant technique.</p>
+     */
+    telechargerPieceJointe(demande: DemandeDocumentDto): void {
+        if (!demande?.id || this.pieceEnCours) {
+            return;
+        }
+        this.pieceEnCours = true;
+        this.demandeService.pieceJointe(demande.id)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (fichier) => {
+                    this.pieceEnCours = false;
+                    const url = window.URL.createObjectURL(fichier);
+                    const lien = document.createElement('a');
+                    lien.href = url;
+                    lien.download = demande.pieceJointeNom || 'piece-jointe';
+                    lien.click();
+                    setTimeout(() => window.URL.revokeObjectURL(url), 100);
+                },
+                error: async (erreur) => {
+                    this.pieceEnCours = false;
+                    this.messageService.add({
+                        severity: 'error', summary: 'Pièce jointe',
+                        detail: await this.messageDuRefus(erreur), life: 5000
+                    });
+                }
+            });
+    }
+
+    /**
+     * Le message que le serveur a réellement rendu.
+     *
+     * <p>Demandé en {@code blob}, un refus arrive lui aussi en binaire : sans cette relecture,
+     * l'écran n'aurait à afficher qu'un code de statut là où le serveur a rédigé une phrase.</p>
+     */
+    private async messageDuRefus(erreur: any): Promise<string> {
+        try {
+            if (erreur?.error instanceof Blob) {
+                const texte = await erreur.error.text();
+                return JSON.parse(texte)?.message || texte || 'Le fichier n\'a pas pu être obtenu.';
+            }
+        } catch {
+            // Un refus sans corps lisible : le message générique fera l'affaire.
+        }
+        return erreur?.error?.message || 'Le fichier n\'a pas pu être obtenu.';
     }
 
     deposerRemplacant(): void {

@@ -39,6 +39,18 @@ export class DemandeDocumentService {
         );
     }
 
+    /**
+     * La pièce jointe au dépôt, en binaire.
+     *
+     * <p>Elle est désignée par la demande et non par sa référence de stockage : c'est le serveur
+     * qui sait où elle est rangée, et une référence qui transiterait par l'écran ouvrirait le
+     * dépôt entier.</p>
+     */
+    pieceJointe(demandeId: string): Observable<Blob> {
+        return this.http.get(`${QualiUrlConfig.DEMANDE_DOCUMENT_ROOT_URL}/${demandeId}/piece-jointe`,
+            { responseType: 'blob' });
+    }
+
     /** Demandes visibles : celles de ma structure, toutes pour le responsable qualité. */
     mesDemandes(): Observable<DemandeDocumentDto[]> {
         return this.http.get<any>(QualiUrlConfig.DEMANDE_DOCUMENT_ROOT_URL).pipe(

@@ -15,12 +15,6 @@ import { DemandeDocumentDto } from '@features/gestion-documentaire/models/demand
  * principe que la fiche d'un document : l'écran ne propose jamais une décision qui serait
  * refusée.</p>
  */
-console.error('>>> [DEBUG QmsDemandeDetailComponent imports]:', {
-    CommonModule: typeof CommonModule,
-    NgPrimeModule: typeof NgPrimeModule,
-    WorkflowHistoriqueComponent: typeof WorkflowHistoriqueComponent
-});
-
 @Component({
     selector: 'app-qms-demande-detail',
     standalone: true,
@@ -39,12 +33,18 @@ export class QmsDemandeDetailComponent {
     /** Vrai quand l'état du circuit n'a pas pu être obtenu : rien ne peut alors être proposé. */
     @Input() etatIndisponible = false;
 
+    /** Le téléchargement de la pièce jointe est en cours : le lien attend plutôt que de doubler. */
+    @Input() pieceEnCours = false;
+
     /** Section active dans la navigation latérale ('detail' ou 'historique') */
     ongletActif: 'detail' | 'historique' = 'detail';
 
     @Output() close = new EventEmitter<void>();
     @Output() executeAction = new EventEmitter<WorkflowActionDto>();
     @Output() deposerRemplacant = new EventEmitter<DemandeDocumentDto>();
+
+    /** Demande de relecture de la pièce jointe : c'est l'écran porteur qui appelle le serveur. */
+    @Output() telechargerPieceJointe = new EventEmitter<DemandeDocumentDto>();
 
     /**
      * Décisions proposées : celles que le serveur déclare autorisées à l'étape courante.

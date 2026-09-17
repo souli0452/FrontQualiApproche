@@ -84,9 +84,11 @@
   [loading]="loading"
   [canDeposerRemplacant]="peutDeposerRemplacant"
   [etatIndisponible]="etatIndisponible"
+  [pieceEnCours]="pieceEnCours"
   (close)="fermerDetail()"
   (executeAction)="ouvrirDecision($event)"
-  (deposerRemplacant)="ouvrirDepotRemplacant($event)">
+  (deposerRemplacant)="ouvrirDepotRemplacant($event)"
+  (telechargerPieceJointe)="telechargerPieceJointe($event)">
 </app-qms-demande-detail>
 
 <!-- Décision de circuit : le même dialogue que pour un document, qui recueille l'observation
