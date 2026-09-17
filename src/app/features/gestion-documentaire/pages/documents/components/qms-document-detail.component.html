@@ -203,13 +203,13 @@
 
     <div class="flex flex-col items-end gap-1">
       <div class="flex flex-wrap gap-2 items-center">
-        <span class="text-xs text-slate-500" *ngIf="canValidate && circuitTermine">
+        <span class="text-xs text-slate-500" *ngIf="suiviInterneAutorise && circuitTermine">
           <i class="pi pi-check-circle text-emerald-600 mr-1"></i>Circuit terminé.
         </span>
-        <span class="text-xs text-slate-500" *ngIf="canValidate && !circuitTermine && allowedActions.length === 0">
+        <span class="text-xs text-slate-500" *ngIf="suiviInterneAutorise && !circuitTermine && allowedActions.length === 0">
           Aucune décision attendue de votre part à cette étape.
         </span>
-        <ng-container *ngIf="canValidate">
+        <ng-container *ngIf="suiviInterneAutorise">
           <button *ngFor="let action of allowedActions" pButton
             [label]="action.libelle" [icon]="actionIcon(action)" [class]="actionClass(action)"
             [pTooltip]="action.permission ? ('Rôle attendu : ' + action.permission) : ''"
@@ -219,7 +219,7 @@
 
       <!-- Annoncé avant d'ouvrir le dialogue : le serveur refuse la décision tant que ces
            champs ne sont pas renseignés, autant le dire à l'avance. -->
-      <span class="text-[11px] text-slate-400" *ngIf="canValidate && allowedActions.length && champsAttendus.length">
+      <span class="text-[11px] text-slate-400" *ngIf="suiviInterneAutorise && allowedActions.length && champsAttendus.length">
         <i class="pi pi-info-circle mr-1"></i>
         À renseigner pour décider : {{ champsAttendus.join(', ') }}
       </span>

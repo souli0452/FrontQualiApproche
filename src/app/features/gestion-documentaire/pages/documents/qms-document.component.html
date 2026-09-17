@@ -191,7 +191,7 @@
         [canDownload]="hasPermission('document-download')"
         [canViewHistory]="peutVoirLesVersions"
         [canViewAudit]="peutVoirLaPisteAudit"
-        [canValidate]="hasPermission('document-validate') && selectedDocument.suiviInterneAutorise !== false"
+        [suiviInterneAutorise]="selectedDocument.suiviInterneAutorise !== false"
         [canShare]="peutGererLesPartages"
         [canRequestChange]="selectedDocument.suiviInterneAutorise !== false"
         [statusLabel]="statusLabelFn"
