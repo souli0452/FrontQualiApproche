@@ -28,13 +28,18 @@
                 </div>
             </p-popover>
             <!-- Saisie libre en jetons : « p-chips » a disparu de PrimeNG 19, et l'autocomplétion
-                 multiple sans source de suggestions en tient lieu. -->
+                 multiple sans source de suggestions en tient lieu.
+
+                 L'enregistrement suit le modèle, et non « onSelect » : sans source de suggestions,
+                 la validation par Entrée passe par `updateModel` et n'émet AUCUN événement de
+                 sélection — `onSelect` ne part que d'une option choisie dans la liste déroulante,
+                 qui n'existe pas ici. Les noms tapés s'affichaient donc en jetons sans jamais
+                 partir au serveur, et seul le retrait d'un jeton — qui, lui, émet « onUnselect » —
+                 finissait par enregistrer les autres. -->
             <p-autocomplete inputId="participants" [(ngModel)]="participants"
                             [multiple]="true" [typeahead]="false" [fluid]="true"
                             placeholder="Nom, puis Entrée"
-                            (onKeyUp)="null"
-                            (onSelect)="enregistrerLesParticipants()"
-                            (onUnselect)="enregistrerLesParticipants()">
+                            (ngModelChange)="enregistrerLesParticipants($event)">
             </p-autocomplete>
         </div>
     </div>
