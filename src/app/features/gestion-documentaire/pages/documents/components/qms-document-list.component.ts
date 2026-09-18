@@ -128,13 +128,15 @@ export class QmsDocumentListComponent implements OnInit {
             }
         ];
 
-        if (this.isVisualisable(doc.currentObjectName || doc.titre)) {
-            items.push({
-                label: 'Aperçu du document',
-                icon: 'pi pi-search',
-                command: () => this.apercu.emit(doc)
-            });
-        }
+        // Proposé pour tout document : le volet d'aperçu peint ce qu'il sait peindre et, pour le
+        // reste, l'annonce et offre l'enregistrement. La condition portait sur le nom du fichier,
+        // à défaut sur le titre du document — qui n'a pas d'extension : l'aperçu disparaissait
+        // alors des lignes dont le nom de fichier n'était pas chargé.
+        items.push({
+            label: 'Aperçu du document',
+            icon: 'pi pi-eye',
+            command: () => this.apercu.emit(doc)
+        });
 
         items.push({
             label: 'Demander une modification',
@@ -151,17 +153,6 @@ export class QmsDocumentListComponent implements OnInit {
         return items;
     };
 
-    isVisualisable(nomFichier?: string): boolean {
-        if (!nomFichier) return false;
-        const lower = nomFichier.toLowerCase().trim();
-        return lower.endsWith('.pdf') ||
-               lower.endsWith('.png') ||
-               lower.endsWith('.jpg') ||
-               lower.endsWith('.jpeg') ||
-               lower.endsWith('.webp') ||
-               lower.endsWith('.svg') ||
-               lower.endsWith('.gif');
-    }
 
     hasActiveFilters(): boolean {
         return !!(this.selectedType || this.selectedService || this.selectedPriorite || this.selectedNiveauConfidentialite || this.selectedDomaine);

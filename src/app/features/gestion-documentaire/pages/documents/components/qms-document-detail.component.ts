@@ -66,7 +66,8 @@ export class QmsDocumentDetailComponent {
 
     @Output() close = new EventEmitter<void>();
     @Output() openDocument = new EventEmitter<DocumentQms>();
-    @Output() downloadPdf = new EventEmitter<DocumentQms>();
+    /** Aperçu du document dans le volet de visualisation, d'où il peut ensuite s'enregistrer. */
+    @Output() apercu = new EventEmitter<DocumentQms>();
     @Output() viewHistory = new EventEmitter<DocumentQms>();
     @Output() viewAudit = new EventEmitter<DocumentQms>();
     /** Décisions du circuit — distinctes des versions du fichier et de la piste d'accès. */

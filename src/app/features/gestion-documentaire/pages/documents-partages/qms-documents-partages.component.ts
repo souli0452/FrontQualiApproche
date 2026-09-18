@@ -101,17 +101,14 @@ export class QmsDocumentsPartagesComponent implements OnInit, AfterViewInit, OnD
             });
     }
 
-    isVisualisable(nomFichier?: string): boolean {
-        if (!nomFichier) return false;
-        const lower = nomFichier.toLowerCase().trim();
-        return lower.endsWith('.pdf') ||
-               lower.endsWith('.png') ||
-               lower.endsWith('.jpg') ||
-               lower.endsWith('.jpeg') ||
-               lower.endsWith('.webp');
-    }
-
-    ouvrirApercu(shared: SharedDocumentDto): void {
+    /**
+     * Ouvre le document partagé dans le volet d'aperçu.
+     *
+     * <p>Le nom réel du fichier est transmis quand la ligne le porte. Il était jusqu'ici forgé en
+     * « numéro.pdf » : un document partagé qui n'était pas un PDF s'annonçait comme tel au volet,
+     * qui tentait alors de le peindre et rendait un cadre vide.</p>
+     */
+    ouvrirApercu(shared: SharedDocumentDto & { nomFichier?: string }): void {
         this.messageService.add({
             severity: 'info',
             summary: 'Visualisation',
@@ -122,7 +119,7 @@ export class QmsDocumentsPartagesComponent implements OnInit, AfterViewInit, OnD
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (blob: Blob) => {
-                    const nomFichier = `${shared.documentNumber || 'document'}.pdf`;
+                    const nomFichier = shared.nomFichier || `${shared.documentNumber || 'document'}.pdf`;
                     this.lightbox?.openBlob(blob, nomFichier, shared.titre || shared.documentNumber);
                 },
                 error: (err: any) => {
@@ -154,14 +151,15 @@ export class QmsDocumentsPartagesComponent implements OnInit, AfterViewInit, OnD
     getActionMenuItems = (row: SharedDocumentDto & { nomFichier?: string }): MenuItem[] => {
         const items: MenuItem[] = [];
 
-        // L'aperçu ne s'affiche QUE pour les documents visualisables (PDF, images)
-        if (this.isVisualisable(row.nomFichier)) {
-            items.push({
-                label: 'Aperçu du document',
-                icon: 'pi pi-eye',
-                command: () => this.ouvrirApercu(row)
-            });
-        }
+        // L'aperçu est proposé quel que soit le format : le volet peint ce qu'il sait peindre
+        // et, pour le reste, le dit et offre l'enregistrement. Réservé aux seuls PDF et images,
+        // il disparaissait des lignes dont le nom de fichier n'était pas connu — c'est-à-dire de
+        // documents parfaitement affichables.
+        items.push({
+            label: 'Aperçu du document',
+            icon: 'pi pi-eye',
+            command: () => this.ouvrirApercu(row)
+        });
 
         items.push({
             label: 'Télécharger le document',
@@ -172,12 +170,16 @@ export class QmsDocumentsPartagesComponent implements OnInit, AfterViewInit, OnD
         return items;
     };
 
+    /**
+     * Un clic sur la ligne ouvre l'aperçu, et rien d'autre.
+     *
+     * <p>Il téléchargeait le document dès lors que son format n'était pas affichable : un simple
+     * clic dans une liste déposait un fichier sur le poste, sans que rien ne l'ait annoncé. Le
+     * volet montre ce qui peut l'être et, pour le reste, propose l'enregistrement — qui redevient
+     * une décision.</p>
+     */
     onRowClick(row: SharedDocumentDto & { nomFichier?: string }): void {
-        if (this.isVisualisable(row.nomFichier)) {
-            this.ouvrirApercu(row);
-        } else {
-            this.telecharger(row);
-        }
+        this.ouvrirApercu(row);
     }
 
     onPageChange(event: { page: number; size: number }): void {

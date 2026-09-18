@@ -460,7 +460,6 @@ export class QmsVueEnsembleComponent implements OnInit, OnDestroy {
             iconeEtape: this.getIconeEtape(etapeNom),
             delaiRelatif: this.getDelaiRelatif(doc.createdAt),
             statutDelai: 'À soumettre',
-            peutApercu: this.isFormatVisualisable(nomFichier),
             deposerFichier: (fichier: File) =>
                 this.qmsService.deposerFichierDEtape(doc.id ?? '', fichier),
             workflowState: doc.workflowState
@@ -487,7 +486,6 @@ export class QmsVueEnsembleComponent implements OnInit, OnDestroy {
             iconeEtape: this.getIconeEtape(etapeNom),
             delaiRelatif: this.getDelaiRelatif(demande.createdAt),
             statutDelai: 'À instruire',
-            peutApercu: this.isFormatVisualisable(nomFichier),
             deposerFichier: (fichier: File) =>
                 this.demandeService.deposerFichierDEtape(demande.id, fichier),
             workflowState: demande.workflowState
@@ -778,19 +776,6 @@ export class QmsVueEnsembleComponent implements OnInit, OnDestroy {
         if (lower.endsWith('.txt')) return 'assets/images/txt-file.png';
         if (lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png')) return 'assets/images/jpeg-file.png';
         return 'assets/images/doc-file.png';
-    }
-
-    /** Indique si le document peut être visualisé directement dans la Lightbox (PDF et images) */
-    private isFormatVisualisable(nomFichier?: string): boolean {
-        if (!nomFichier) return false;
-        const lower = nomFichier.toLowerCase().trim();
-        return lower.endsWith('.pdf') ||
-               lower.endsWith('.png') ||
-               lower.endsWith('.jpg') ||
-               lower.endsWith('.jpeg') ||
-               lower.endsWith('.webp') ||
-               lower.endsWith('.svg') ||
-               lower.endsWith('.gif');
     }
 
     /** Calcule le temps écoulé de manière lisible (ex: "Il y a 17 jours") */

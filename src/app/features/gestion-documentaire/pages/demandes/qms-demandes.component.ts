@@ -21,6 +21,7 @@ import {
     WorkflowValidationRequestDto
 } from '../../../../models/workflow.model';
 import { hasAnyPermission } from '../../../../core/auth/auth-utils';
+import { LightboxComponent } from '@features/non-conformite/components/lightbox/lightbox';
 
 /** Ligne du tableau : la demande, augmentée de ce que la colonne affiche telle quelle. */
 type LigneDemande = DemandeDocumentDto & {
@@ -52,12 +53,14 @@ type LigneDemande = DemandeDocumentDto & {
         NgPrimeModule, 
         TableauAffichageComponent,
         QmsDemandeDetailComponent, 
-        WorkflowDecisionDialogComponent
+        WorkflowDecisionDialogComponent,
+        LightboxComponent
     ],
     providers: [MessageService],
     templateUrl: './qms-demandes.component.html'
 })
 export class QmsDemandesComponent implements OnInit, AfterViewInit, OnDestroy {
+    @ViewChild('lightbox') lightbox?: LightboxComponent;
     @ViewChild('documentTpl', { static: true }) documentTpl!: TemplateRef<any>;
     @ViewChild('natureTpl', { static: true }) natureTpl!: TemplateRef<any>;
     @ViewChild('etatTpl', { static: true }) etatTpl!: TemplateRef<any>;
@@ -94,7 +97,7 @@ export class QmsDemandesComponent implements OnInit, AfterViewInit, OnDestroy {
     demandeEnCours?: DemandeDocumentDto;
     enregistrement = false;
 
-    /** Un téléchargement de pièce jointe est en cours : le lien de la fiche attend. */
+    /** La pièce jointe est en cours de récupération : le lien de la fiche attend. */
     pieceEnCours = false;
 
     fichierRemplacant?: File;
@@ -467,12 +470,18 @@ export class QmsDemandesComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     /**
-     * Enregistre la pièce jointe déposée avec la demande.
+     * Ouvre la pièce jointe déposée avec la demande, dans le volet d'aperçu.
      *
-     * <p>Le serveur rend le fichier sous son nom d'origine ; il est repris ici pour que le
-     * navigateur n'enregistre pas un identifiant technique.</p>
+     * <p>Elle s'affiche avant de s'enregistrer. Le clic déclenchait auparavant le téléchargement :
+     * pour savoir si la pièce appuyait vraiment la demande qu'on instruit, il fallait d'abord
+     * accepter un fichier dans ses téléchargements, puis l'ouvrir hors de l'application, puis
+     * revenir. Le volet rend la pièce sur place, et l'enregistrement y reste offert pour qui en
+     * veut une copie.</p>
+     *
+     * <p>Le nom d'origine accompagne le contenu : c'est lui qui dit au volet ce qu'il sait
+     * afficher, et c'est sous lui que le fichier s'enregistre si on le demande.</p>
      */
-    telechargerPieceJointe(demande: DemandeDocumentDto): void {
+    consulterPieceJointe(demande: DemandeDocumentDto): void {
         if (!demande?.id || this.pieceEnCours) {
             return;
         }
@@ -482,12 +491,10 @@ export class QmsDemandesComponent implements OnInit, AfterViewInit, OnDestroy {
             .subscribe({
                 next: (fichier) => {
                     this.pieceEnCours = false;
-                    const url = window.URL.createObjectURL(fichier);
-                    const lien = document.createElement('a');
-                    lien.href = url;
-                    lien.download = demande.pieceJointeNom || 'piece-jointe';
-                    lien.click();
-                    setTimeout(() => window.URL.revokeObjectURL(url), 100);
+                    this.lightbox?.openBlob(
+                        fichier,
+                        demande.pieceJointeNom || 'piece-jointe',
+                        'Pièce jointe de la demande');
                 },
                 error: async (erreur) => {
                     this.pieceEnCours = false;
