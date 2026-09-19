@@ -67,7 +67,8 @@
                 [enAttente]="connu ? etat!.total : null"
                 [plansEnRetard]="connu ? etat!.plansEnRetard : null"
                 [plansEcheanceProche]="connu ? etat!.plansEcheanceProche : null"
-                [suitDesActions]="!!etat?.suitDesActions"></app-indicateurs>
+                [suitDesActions]="!!etat?.suitDesActions"
+                [repartition]="etat?.repartition || []"></app-indicateurs>
 
             <!-- Ce qu'on attend de vous. Rien ne s'affiche si aucun module suivi par un circuit
                  n'est accessible : l'accueil se réduit alors aux actions rapides. -->

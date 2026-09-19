@@ -114,8 +114,9 @@
                         tooltipPosition="top"
                         (click)="onSave(false)">
                 </button>
-                <button siLicenceOuverte pButton pRipple class="p-button-primary font-bold"
-                        label="Soumettre au pilote" icon="pi pi-send"
+                <button siLicenceOuverte pButton pRipple class="p-button-info font-bold"
+                        label="Soumettre au pilote"
+                        
                         *ngIf="!nonConformite.id || nonConformite.status === 'DRAFT'"
                         [disabled]="!nc.typeNonformite||!nc.niveauNonConformite"
                         pTooltip="La déclaration part immédiatement au pilote de votre processus."

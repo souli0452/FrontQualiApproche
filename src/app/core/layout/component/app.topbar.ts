@@ -67,11 +67,6 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
                     <i class="pi pi-sparkles" style="font-size: 1.2rem"></i>
                 </button>
 
-                <!-- Bouton Centre d'Aide -->
-                <button type="button" pTooltip="Centre d'aide" tooltipPosition="bottom" (click)="helpVisible = true" class="px-3 py-2 p-button-secondary rounded-full transition-colors hover:bg-surface-100 dark:hover:bg-surface-800">
-                    <i class="pi pi-question-circle" style="font-size: 1.2rem"></i>
-                </button>
-
                 <!-- Bouton de Notifications -->
                 <button type="button" pTooltip="Notifications" tooltipPosition="bottom" (click)="notificationPopover.toggle($event)" class="relative px-3 py-2 p-button-secondary rounded-full transition-colors hover:bg-surface-100 dark:hover:bg-surface-800">
                     <i class="pi pi-bell" style="font-size: 1.2rem"></i>
@@ -81,7 +76,7 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
                         <!-- L'effet radar (ping) derrière le badge -->
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                         <!-- Le badge rouge au premier plan -->
-                        <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-white text-[10px] items-center justify-center border border-white dark:border-surface-900 font-bold">
+                        <span class="relative inline-flex rounded-full p-2 h-5 w-5 bg-red-500 font-medium text-white text-[10px] items-center justify-center border border-white dark:border-surface-900">
                             {{ notificationCount }}
                         </span>
                     </span>
@@ -187,23 +182,6 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
                  et le charger au démarrage de l'application le ferait pour rien. -->
             <app-quali-ai-chat *ngIf="assistantIaVisible" class="block h-full"
                                (navigue)="assistantIaVisible = false"></app-quali-ai-chat>
-        </p-drawer>
-
-        <!-- Drawer du Centre d'Aide -->
-        <p-drawer [modal]="true" [(visible)]="helpVisible" position="right" [style]="{width: '500px'}">
-            <ng-template pTemplate="header">
-                <div class="inline-flex align-items-center justify-content-center gap-2">
-                    <span class="layout-topbar-title">
-                        <span>Centre d'aide</span>
-                    </span>                      
-                </div>
-            </ng-template>    
-            
-            <div class="flex flex-col gap-3 mt-4">
-                <div class="p-4 border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-xl flex items-center justify-center text-surface-500">
-                    Le contenu du centre d'aide (FAQ, guides, support) sera ajouté ici plus tard...
-                </div>
-            </div>
         </p-drawer>
 
 

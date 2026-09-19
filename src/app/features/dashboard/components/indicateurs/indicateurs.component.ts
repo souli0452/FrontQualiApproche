@@ -1,10 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { PopoverModule } from 'primeng/popover';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
 import { catchError, of } from 'rxjs';
 import { accesAutorise } from '@core/auth/auth-utils';
 import { ModuleAbonnement } from '@core/enums/module-abonnement.enum';
 import { QmsDocumentService } from '@features/gestion-documentaire/services/document.service';
+import { ElementVentilation } from '../mes-decisions/mes-decisions.component';
 
 /** Un indicateur affiché en tuile. */
 interface Indicateur {
@@ -15,7 +20,7 @@ interface Indicateur {
     valeur: number | null;
     icone: string;
     /** Couleur : elle ne décore pas, elle dit s'il y a lieu d'agir. */
-    ton: 'neutre' | 'attention' | 'alerte';
+    ton: 'neutre' | 'attention' | 'alerte' | 'primaire';
     /** Écran où l'on va voir ce que le nombre recouvre. */
     route?: string;
 }
@@ -39,7 +44,7 @@ interface Indicateur {
 @Component({
     selector: 'app-indicateurs',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, PopoverModule, ButtonModule, TagModule, TooltipModule],
     templateUrl: 'indicateurs.component.html'
 })
 export class IndicateursComponent implements OnInit {
@@ -60,6 +65,9 @@ export class IndicateursComponent implements OnInit {
 
     /** Vrai si l'utilisateur voit des actions correctives : sinon leurs deux tuiles n'ont pas lieu. */
     @Input() suitDesActions = false;
+
+    /** Répartition détaillée des dossiers en attente par module pour le popover interactif. */
+    @Input() repartition: ElementVentilation[] = [];
 
     private readonly documentService = inject(QmsDocumentService);
     private readonly router = inject(Router);
@@ -93,46 +101,77 @@ export class IndicateursComponent implements OnInit {
             });
     }
 
+    /** Total consolidé des dépassements d'échéances (actions correctives + révisions documentaires). */
+    get totalRetards(): number | null {
+        if (this.plansEnRetard === null && this.revisionEnRetard === null) {
+            return null;
+        }
+        return (this.plansEnRetard ?? 0) + (this.revisionEnRetard ?? 0);
+    }
+
+    /** Détail ventilé des retards pour le popover de la 2ème carte. */
+    get repartitionRetards(): { titre: string; count: number; route: string; icone: string; aide: string }[] {
+        const items: { titre: string; count: number; route: string; icone: string; aide: string }[] = [];
+        if (this.suitDesActions) {
+            items.push({
+                titre: 'Actions correctives',
+                count: this.plansEnRetard ?? 0,
+                route: '/non-conformite/plan-action',
+                icone: 'pi pi-clock',
+                aide: 'Échéance dépassée, action non soldée'
+            });
+        }
+        if (this.accesDocumentaire) {
+            items.push({
+                titre: 'Documents à réviser',
+                count: this.revisionEnRetard ?? 0,
+                route: '/gestion-documentaire/documents',
+                icone: 'pi pi-history',
+                aide: 'Date de révision périodique dépassée'
+            });
+        }
+        return items;
+    }
+
     get indicateurs(): Indicateur[] {
         const tuiles: Indicateur[] = [];
 
+        // 1. À traiter par vous (Action immédiate requise)
         if (this.enAttente !== null || this.suitDesActions || this.accesDocumentaire) {
             tuiles.push({
-                cle: 'enAttente', libelle: 'En attente de vous',
-                precision: 'Dossiers dont une étape vous est confiée',
+                cle: 'enAttente', libelle: 'À traiter par vous',
+                precision: 'Dossiers attendant votre décision',
                 valeur: this.enAttente, icone: 'pi pi-inbox',
-                ton: (this.enAttente ?? 0) > 0 ? 'attention' : 'neutre'
+                ton: 'primaire'
             });
         }
 
+        // 2. Retards critiques (Consolidation transversale des échéances dépassées)
+        if (this.suitDesActions || this.accesDocumentaire) {
+            tuiles.push({
+                cle: 'retards', libelle: 'Retards critiques',
+                precision: 'Échéances et révisions dépassées',
+                valeur: this.totalRetards, icone: 'pi pi-exclamation-triangle',
+                ton: (this.totalRetards ?? 0) > 0 ? 'alerte' : 'neutre'
+            });
+        }
+
+        // 3. Anticipation sous 7 jours
         if (this.suitDesActions) {
             tuiles.push({
-                cle: 'retard', libelle: 'Actions en retard',
-                precision: 'Échéance dépassée, action non soldée',
-                valeur: this.plansEnRetard, icone: 'pi pi-clock',
-                ton: (this.plansEnRetard ?? 0) > 0 ? 'alerte' : 'neutre',
-                route: '/non-conformite/actions'
-            });
-            tuiles.push({
                 cle: 'proche', libelle: 'Échéance sous 7 jours',
-                precision: 'Actions encore tenables si elles sont menées maintenant',
+                precision: 'Actions à solder cette semaine',
                 valeur: this.plansEcheanceProche, icone: 'pi pi-calendar',
                 ton: (this.plansEcheanceProche ?? 0) > 0 ? 'attention' : 'neutre',
-                route: '/non-conformite/actions'
+                route: '/non-conformite/plan-action'
             });
         }
 
+        // 4. Fonds actif / Maîtrise du référentiel
         if (this.accesDocumentaire) {
             tuiles.push({
-                cle: 'revision', libelle: 'Révisions en retard',
-                precision: 'Documents dont la date de révision est passée',
-                valeur: this.revisionEnRetard, icone: 'pi pi-history',
-                ton: (this.revisionEnRetard ?? 0) > 0 ? 'alerte' : 'neutre',
-                route: '/gestion-documentaire/documents'
-            });
-            tuiles.push({
-                cle: 'fonds', libelle: 'Documents référencés',
-                precision: 'Ceux auxquels vous avez accès',
+                cle: 'fonds', libelle: 'Référentiel en vigueur',
+                precision: 'Documents actifs et applicables',
                 valeur: this.fondsDocumentaire, icone: 'pi pi-folder',
                 ton: 'neutre',
                 route: '/gestion-documentaire/documents'
@@ -143,22 +182,37 @@ export class IndicateursComponent implements OnInit {
     }
 
     cadre(indicateur: Indicateur): string {
-        if (indicateur.ton === 'alerte') {
-            return 'border-red-200';
+        if (indicateur.ton === 'primaire') {
+            return 'border-primary-200/80 dark:border-primary-800/50 hover:border-primary-400 dark:hover:border-primary-600 shadow-xs hover:shadow-sm';
         }
-        return indicateur.ton === 'attention' ? 'border-amber-200' : 'border-surface-200';
+        if (indicateur.ton === 'alerte') {
+            return 'border-red-200 dark:border-red-800/40 hover:border-red-300';
+        }
+        return indicateur.ton === 'attention' ? 'border-amber-200 dark:border-amber-800/40 hover:border-amber-300' : 'border-surface-200 dark:border-surface-700 hover:border-surface-300';
     }
 
     teinte(indicateur: Indicateur): string {
-        if (indicateur.ton === 'alerte') {
-            return 'text-red-600';
+        if (indicateur.ton === 'primaire') {
+            return 'text-primary-600 dark:text-primary-400';
         }
-        return indicateur.ton === 'attention' ? 'text-amber-600' : 'text-surface-700';
+        if (indicateur.ton === 'alerte') {
+            return 'text-red-600 dark:text-red-400';
+        }
+        return indicateur.ton === 'attention' ? 'text-amber-600 dark:text-amber-400' : 'text-surface-700 dark:text-surface-300';
     }
 
     ouvrir(indicateur: Indicateur): void {
         if (indicateur.route) {
             this.router.navigate([indicateur.route]);
+        }
+    }
+
+    ouvrirRoute(route?: string, op?: any): void {
+        if (op) {
+            op.hide();
+        }
+        if (route) {
+            this.router.navigate([route]);
         }
     }
 }

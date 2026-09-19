@@ -6,4 +6,5 @@ export const environment = {
     // Mettre ici une adresse absolue — celle du serveur de test, par exemple — court-circuite
     // le proxy : le navigateur parle alors au serveur distant, et la pile locale ne voit rien.
     apiUrl: "",
+    // apiUrl: "https://api-gateway.test.qualisira.com",
 };

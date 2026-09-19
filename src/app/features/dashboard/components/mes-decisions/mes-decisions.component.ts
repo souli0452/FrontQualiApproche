@@ -42,10 +42,21 @@ interface DecisionAttendue {
     deposerFichier?: (fichier: File) => Observable<string>;
 }
 
+/** Un élément de ventilation modulaire pour les popovers d'indicateurs. */
+export interface ElementVentilation {
+    cle: string;
+    titre: string;
+    libelleCourt: string;
+    icone: string;
+    route: string;
+    count: number;
+}
+
 /** Une famille de dossiers, avec ce qu'il faut pour décider d'en parler ou non. */
 interface Famille {
     cle: 'documents' | 'demandes' | 'nonConformites' | 'plansAction';
     titre: string;
+    libelleCourt: string;
     icone: string;
     /** Écran complet de la famille, quand il y a plus de lignes que la place n'en montre. */
     route: string;
@@ -70,6 +81,8 @@ export interface EtatDeLaListe {
     suitDesActions: boolean;
     plansEnRetard: number;
     plansEcheanceProche: number;
+    /** Répartition par module pour la ventilation interactive des indicateurs. */
+    repartition: ElementVentilation[];
 }
 
 /** Nombre de lignes montrées par famille : au-delà, l'écran du module est plus indiqué. */
@@ -238,11 +251,13 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
         if (this.accesDocumentaire) {
             familles.push({
                 cle: 'documents', titre: 'Documents attendant votre décision',
+                libelleCourt: 'Documents qualité',
                 icone: 'pi pi-file', route: '/gestion-documentaire/documents',
                 lignes: [], chargement: true
             });
             familles.push({
                 cle: 'demandes', titre: 'Demandes à instruire',
+                libelleCourt: 'Demandes de documents',
                 icone: 'pi pi-inbox', route: '/gestion-documentaire/demandes',
                 lignes: [], chargement: true
             });
@@ -250,6 +265,7 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
         if (this.accesNonConformites) {
             familles.push({
                 cle: 'nonConformites', titre: 'Non-conformités attendant votre décision',
+                libelleCourt: 'Non-conformités',
                 icone: 'pi pi-exclamation-triangle', route: '/non-conformite/vue-ensemble',
                 lignes: [], chargement: true
             });
@@ -257,6 +273,7 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
         if (this.accesPlansAction) {
             familles.push({
                 cle: 'plansAction', titre: 'Actions correctives à mener',
+                libelleCourt: 'Plans d\'actions',
                 icone: 'pi pi-check-square', route: '/non-conformite/actions',
                 lignes: [], chargement: true
             });
@@ -364,12 +381,22 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
         // L'état est saisi maintenant et remis ensuite : le prendre dans la micro-tâche perdrait le
         // moment du chargement, et l'accueil passerait du silence au résultat sans jamais dire
         // qu'il cherche.
+        const repartition: ElementVentilation[] = this.famillesVisibles.map((f) => ({
+            cle: f.cle,
+            titre: f.titre,
+            libelleCourt: f.libelleCourt || f.titre,
+            icone: f.icone,
+            route: f.route,
+            count: f.lignes.length
+        }));
+
         const etat: EtatDeLaListe = {
             chargement: this.chargement,
             total: this.total,
             suitDesActions: this.suitDesActions,
             plansEnRetard: this.plansEnRetard,
-            plansEcheanceProche: this.plansEcheanceProche
+            plansEcheanceProche: this.plansEcheanceProche,
+            repartition
         };
         void Promise.resolve().then(() => this.etat.emit(etat));
     }

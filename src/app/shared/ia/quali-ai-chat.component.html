@@ -6,7 +6,7 @@
          C'est l'application qui choisit l'appel derrière chacune, jamais le modèle. -->
     <div *ngIf="questions.length"
          class="shrink-0 pb-3 mb-3 border-b border-surface-200 dark:border-surface-700">
-        <div class="text-xs text-surface-400 mb-2">Puiser dans vos dossiers</div>
+        <div class="text-xs text-surface-400 mb-2">Puisez dans vos dossiers</div>
         <div class="flex flex-wrap gap-2">
             <button *ngFor="let question of questions" type="button"
                     class="text-xs px-3 py-1.5 rounded-full border border-surface-200 dark:border-surface-700
@@ -56,7 +56,7 @@
             <div class="max-w-[80%] flex flex-col gap-2">
                 <div class="px-3 py-2 whitespace-pre-wrap break-words text-sm line-height-3 shadow-sm"
                      [ngClass]="message.role === 'UTILISATEUR'
-                         ? 'bg-primary-500 text-white rounded-2xl rounded-br-sm'
+                         ? 'bg-sky-500 text-white rounded-2xl rounded-br-sm'
                          : 'bg-surface-100 dark:bg-surface-800 text-surface-900 dark:text-surface-0 rounded-2xl rounded-bl-sm'">
                     {{ message.contenu }}
                 </div>
@@ -139,34 +139,46 @@
             <span class="text-xs">{{ erreur }}</span>
         </p-message>
 
-        <textarea
-            pTextarea
-            class="w-full"
-            rows="3"
-            placeholder="Votre question… (Entrée pour envoyer, Maj+Entrée pour aller à la ligne)"
-            [(ngModel)]="saisie"
-            [disabled]="chargement"
-            (keydown)="surTouche($event)">
-        </textarea>
+        <div class="flex flex-col gap-2 chat-bar">
+            <textarea
+                pTextarea
+                class="w-full chat-textarea"
+                rows="1"
+                [autoResize]="true"
+                placeholder="(Entrée (↵) pour envoyer, Maj+Entrée pour aller à la ligne)"
+                [(ngModel)]="saisie"
+                [disabled]="chargement"
+                (keydown)="surTouche($event)">
+            </textarea>
 
-        <div class="flex justify-between items-center gap-2">
-            <p-button
-                label="Nouvelle conversation"
-                icon="pi pi-refresh"
-                size="small"
-                severity="secondary"
-                [text]="true"
-                [disabled]="chargement || messages.length === 0"
-                (onClick)="nouveauFil()">
-            </p-button>
-            <p-button
-                label="Envoyer"
-                icon="pi pi-send"
-                size="small"
-                [loading]="chargement"
-                [disabled]="chargement || !saisie.trim()"
-                (onClick)="envoyer()">
-            </p-button>
+            <div class="flex justify-between items-center gap-2">
+                <div class="flex flex-row items-center">
+                    <p-button
+                        pTooltip="Nouvelle conversation"
+                        icon="pi pi-refresh"
+                        [rounded]="true"
+                        size="small"
+                        severity="secondary"
+                        [text]="true"
+                        [disabled]="chargement || messages.length === 0"
+                        (onClick)="nouveauFil()">
+                    </p-button>
+                    <label class="text-xs" for="">Nouvelle conversation</label>
+                </div>
+                
+                <p-button
+                    icon="pi pi-arrow-right"
+                    size="small"
+                    [severity]="saisie.trim() ? undefined : 'secondary'"
+                    [rounded]="true"
+                    [text]="!saisie.trim()"
+                    [styleClass]="saisie.trim() ? 'btn-send-active transition-all duration-200' : 'transition-all duration-200'"
+                    [loading]="chargement"
+                    [disabled]="chargement || !saisie.trim()"
+                    (onClick)="envoyer()">
+                </p-button>
+            </div>
         </div>
+        
     </div>
 </div>
