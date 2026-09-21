@@ -85,9 +85,36 @@
                         </span>
                     </div>
 
+                    <!-- La recherche : cent dix-neuf permissions sur quinze modules, et il
+                         fallait parcourir la page entière pour retrouver un droit dont on
+                         connaissait pourtant le nom. -->
+                    <div class="mb-5">
+                        <p-iconfield iconPosition="left" class="w-full">
+                            <p-inputicon styleClass="pi pi-search"></p-inputicon>
+                            <input pInputText type="text" class="w-full"
+                                   [(ngModel)]="recherchePermission"
+                                   [ngModelOptions]="{standalone: true}"
+                                   (ngModelChange)="filtrerLesPermissions()"
+                                   placeholder="Chercher une permission, un code ou un module…" />
+                        </p-iconfield>
+                        <small *ngIf="recherchePermission" class="text-slate-500 mt-1 block">
+                            {{ nombreVisible }} permission(s) correspondent. Les autres restent
+                            cochées telles quelles.
+                        </small>
+                    </div>
+
+                    <!-- Aucune correspondance -->
+                    <div *ngIf="recherchePermission && groupesVisibles.length === 0"
+                         class="text-center py-8">
+                        <i class="pi pi-search text-3xl text-slate-300"></i>
+                        <p class="text-sm text-slate-600 mt-3 m-0">
+                            Aucune permission ne correspond à « {{ recherchePermission }} ».
+                        </p>
+                    </div>
+
                     <!-- Grille de cartes pour chaque module -->
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
-                        <div *ngFor="let group of groupedPermissions" 
+                        <div *ngFor="let group of groupesVisibles" 
                              class="border border-slate-200 dark:border-surface-700 rounded-xl p-4 bg-slate-50/50 dark:bg-surface-800/30 hover:border-sky-300 dark:hover:border-sky-600 transition-all flex flex-col justify-between">
                             
                             <!-- Header du Module avec Switch Tout Cocher -->
