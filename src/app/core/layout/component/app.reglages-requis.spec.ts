@@ -2,9 +2,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { QualiUrlConfig } from '../../services';
-import { LicenceService } from '../../licence';
-import { currentUserState } from '../../auth';
+import { QualiUrlConfig } from '@core/services/url-config';
+import { LicenceService } from '@core/licence/services/licence.service';
+import { currentUserState } from '@core/auth/auth.state';
 import { AppReglagesRequis } from './app.reglages-requis';
 
 /**

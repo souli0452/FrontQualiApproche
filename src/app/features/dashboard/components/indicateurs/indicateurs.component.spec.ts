@@ -3,8 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
-import { ModuleAbonnement } from '../../../enums/enums';
-import { currentUserState } from '@core/auth';
+import { ModuleAbonnement } from '@core/enums/module-abonnement.enum';
+import { currentUserState } from '@core/auth/auth.state';
 import { IndicateursComponent } from './indicateurs.component';
 
 /**

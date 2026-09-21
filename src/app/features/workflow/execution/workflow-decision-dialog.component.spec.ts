@@ -5,8 +5,9 @@ import { provideRouter } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgxPermissionsModule } from 'ngx-permissions';
 
-import { WorkflowStepFieldDto } from '../models';
+import { WorkflowStepFieldDto } from 'src/app/models/workflow.model';
 import { WorkflowDecisionDialogComponent } from './workflow-decision-dialog.component';
+import { MessageService } from 'primeng/api';
 
 /**
  * Dialogue de décision : les champs que l'étape réclame avant de trancher.
@@ -38,7 +39,9 @@ describe('WorkflowDecisionDialogComponent', () => {
             // sait pas jouer.
             imports: [WorkflowDecisionDialogComponent, NgxPermissionsModule.forRoot(),
                 NoopAnimationsModule],
-            providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])]
+            // MessageService : le dialogue signale ses erreurs par toast depuis le refactor 4181297 ;
+            // sans lui, l'injecteur refuse de construire le composant avant tout cas de test.
+            providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), MessageService]
         }).compileComponents();
 
         fixture = TestBed.createComponent(WorkflowDecisionDialogComponent);

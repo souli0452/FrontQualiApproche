@@ -6,7 +6,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { NgxPermissionsModule } from 'ngx-permissions';
 
 import { WorkflowEditorComponent } from './workflow-editor.component';
-import { WorkflowDto } from '../../models';
+import { WorkflowDto } from 'src/app/models/workflow.model';
 
 /**
  * Le code d'étape est l'identité fonctionnelle de l'étape : les transitions le désignent, les

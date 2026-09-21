@@ -330,8 +330,11 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
                 .subscribe((nonConformites: any[]) => this.poser('nonConformites',
                     (nonConformites ?? []).map((nc) => ({
                         id: nc.id,
-                        reference: nc.numeroDeReference,
-                        titre: nc.sourceDeNonConformiteLibelle || nc.originNonConformiteLibelle
+                        // Les noms sont ceux de NonConformiteDto, tel que le serveur le rend : la ligne
+                        // lisait numeroDeReference et sourceDeNonConformiteLibelle, que rien n'envoie —
+                        // chaque dossier paraissait sans référence, sous un titre générique.
+                        reference: nc.numeroReference,
+                        titre: nc.typeNonConformiteLibelle || nc.originNonConformiteLibelle
                             || 'Non-conformité',
                         detail: nc.nomProcessus || nc.structureDeSoumissionLibelle,
                         state: nc.workflowState,
