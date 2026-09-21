@@ -149,10 +149,14 @@
   <div class="px-5 py-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
     <div class="flex flex-wrap items-center gap-3">
       <div class="flex flex-wrap gap-2">
-        <p-button label="Ouvrir" icon="pi pi-external-link" [outlined]="true" size="small"
+        <!-- Consulter avant d'emporter : l'aperçu rend le document dans l'application, et
+             l'enregistrement se demande depuis son en-tête. Un bouton « PDF » déclenchait ici le
+             téléchargement sans rien montrer — il fallait quitter l'écran pour savoir si le
+             document était le bon. -->
+        <p-button label="Aperçu" icon="pi pi-eye" [outlined]="true" size="small"
+          *ngIf="canDownload" (onClick)="apercu.emit(document)"></p-button>
+        <p-button label="Ouvrir dans un onglet" icon="pi pi-external-link" [outlined]="true" size="small"
           *ngIf="canDownload" (onClick)="openDocument.emit(document)"></p-button>
-        <p-button label="PDF" icon="pi pi-file-pdf" severity="danger" [outlined]="true" size="small"
-          *ngIf="canDownload" (onClick)="downloadPdf.emit(document)"></p-button>
       </div>
 
       <!-- Consultation. Quatre vues aux noms voisins — historique, piste d'audit, traçabilité —
@@ -203,13 +207,13 @@
 
     <div class="flex flex-col items-end gap-1">
       <div class="flex flex-wrap gap-2 items-center">
-        <span class="text-xs text-slate-500" *ngIf="canValidate && circuitTermine">
+        <span class="text-xs text-slate-500" *ngIf="suiviInterneAutorise && circuitTermine">
           <i class="pi pi-check-circle text-emerald-600 mr-1"></i>Circuit terminé.
         </span>
-        <span class="text-xs text-slate-500" *ngIf="canValidate && !circuitTermine && allowedActions.length === 0">
+        <span class="text-xs text-slate-500" *ngIf="suiviInterneAutorise && !circuitTermine && allowedActions.length === 0">
           Aucune décision attendue de votre part à cette étape.
         </span>
-        <ng-container *ngIf="canValidate">
+        <ng-container *ngIf="suiviInterneAutorise">
           <button *ngFor="let action of allowedActions" pButton
             [label]="action.libelle" [icon]="actionIcon(action)" [class]="actionClass(action)"
             [pTooltip]="action.permission ? ('Rôle attendu : ' + action.permission) : ''"
@@ -219,7 +223,7 @@
 
       <!-- Annoncé avant d'ouvrir le dialogue : le serveur refuse la décision tant que ces
            champs ne sont pas renseignés, autant le dire à l'avance. -->
-      <span class="text-[11px] text-slate-400" *ngIf="canValidate && allowedActions.length && champsAttendus.length">
+      <span class="text-[11px] text-slate-400" *ngIf="suiviInterneAutorise && allowedActions.length && champsAttendus.length">
         <i class="pi pi-info-circle mr-1"></i>
         À renseigner pour décider : {{ champsAttendus.join(', ') }}
       </span>

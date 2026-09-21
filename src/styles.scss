@@ -873,6 +873,69 @@ app-traitement-table app-nc-filter-bar > div {
 }
 
 
+.chat-textarea {
+    border-radius: 20px 20px 0 0 !important;
+    padding: 10px !important;
+    background: transparent !important;
+    border: none !important;
+
+    &::placeholder {
+        font-size: 12px !important;
+        // color: black !important;
+    }
+}
+
+.chat-bar{
+    background: rgb(0 0 0 / 3%) !important;
+    border-radius: 20px !important;
+    padding: 5px;
+    border: 1px solid rgb(0 0 0 / 4%);
+
+        .p-button{
+            height: 30px !important;
+            width: 30px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 50px !important;
+        }
+}
+.app-dark .chat-textarea {
+
+    &::placeholder {
+        font-size: 12px !important;
+        color: white !important;
+    }
+}
+.app-dark .chat-bar {
+    background: #ffffff0a !important;
+
+    &::placeholder {
+        font-size: 11px !important;
+        color: rgba(255, 255, 255, 0.45) !important;
+    }
+}
+
+.chat-textarea.p-textarea{
+    font-size: 14px !important;
+    // border-bottom: 1px solid #0000000f !important;
+}
+
+.btn-send-active {
+    background-color: #0ea5e9 !important; /* bg-sky-500 */
+    color: #ffffff !important;
+    border-color: #0ea5e9 !important;
+
+    .p-button-icon {
+        color: #ffffff !important;
+    }
+
+    &:hover {
+        background-color: #0284c7 !important; /* bg-sky-600 */
+        border-color: #0284c7 !important;
+    }
+}
+
 
 @media(max-width: 600px) {
     .doughnut-droit {

@@ -26,15 +26,15 @@ export class AlertService {
     }
 
     showError(message: string, summary: string = 'Erreur') {
-        this.messageService.add({ severity: 'error', summary, detail: message });
+        this.messageService.add({ severity: 'error', summary, detail: message, life:10000 });
     }
 
     showWarning(message: string, summary: string = 'Attention') {
-        this.messageService.add({ severity: 'warn', summary, detail: message });
+        this.messageService.add({ severity: 'warn', summary, detail: message, life:10000 });
     }
 
     showInfo(message: string, summary: string = 'Information') {
-        this.messageService.add({ severity: 'info', summary, detail: message });
+        this.messageService.add({ severity: 'info', summary, detail: message, life:10000 });
     }
 
     /**

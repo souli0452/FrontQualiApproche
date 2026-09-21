@@ -27,12 +27,6 @@ export interface DecisionConfirmee {
  * champs, et une manière de déposer un fichier. C'est ce qui lui permet de servir n'importe quel
  * dossier suivi par le moteur.</p>
  */
-console.error('>>> [DEBUG WorkflowDecisionDialogComponent imports]:', {
-  CommonModule: typeof CommonModule,
-  ReactiveFormsModule: typeof ReactiveFormsModule,
-  NgPrimeModule: typeof NgPrimeModule,
-  SelectInputComponent: typeof SelectInputComponent
-});
 
 @Component({
   selector: 'app-workflow-decision-dialog',

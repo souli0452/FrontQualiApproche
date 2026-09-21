@@ -21,6 +21,7 @@ import {
     WorkflowValidationRequestDto
 } from '../../../../models/workflow.model';
 import { hasAnyPermission } from '../../../../core/auth/auth-utils';
+import { LightboxComponent } from '@features/non-conformite/components/lightbox/lightbox';
 
 /** Ligne du tableau : la demande, augmentée de ce que la colonne affiche telle quelle. */
 type LigneDemande = DemandeDocumentDto & {
@@ -52,12 +53,14 @@ type LigneDemande = DemandeDocumentDto & {
         NgPrimeModule, 
         TableauAffichageComponent,
         QmsDemandeDetailComponent, 
-        WorkflowDecisionDialogComponent
+        WorkflowDecisionDialogComponent,
+        LightboxComponent
     ],
     providers: [MessageService],
     templateUrl: './qms-demandes.component.html'
 })
 export class QmsDemandesComponent implements OnInit, AfterViewInit, OnDestroy {
+    @ViewChild('lightbox') lightbox?: LightboxComponent;
     @ViewChild('documentTpl', { static: true }) documentTpl!: TemplateRef<any>;
     @ViewChild('natureTpl', { static: true }) natureTpl!: TemplateRef<any>;
     @ViewChild('etatTpl', { static: true }) etatTpl!: TemplateRef<any>;
@@ -93,6 +96,9 @@ export class QmsDemandesComponent implements OnInit, AfterViewInit, OnDestroy {
     dialogueRemplacantOuvert = false;
     demandeEnCours?: DemandeDocumentDto;
     enregistrement = false;
+
+    /** La pièce jointe est en cours de récupération : le lien de la fiche attend. */
+    pieceEnCours = false;
 
     fichierRemplacant?: File;
     commentaireRemplacant = '';
@@ -461,6 +467,61 @@ export class QmsDemandesComponent implements OnInit, AfterViewInit, OnDestroy {
 
     onFichierRemplacant(event: any): void {
         this.fichierRemplacant = event?.target?.files?.[0] ?? event?.files?.[0];
+    }
+
+    /**
+     * Ouvre la pièce jointe déposée avec la demande, dans le volet d'aperçu.
+     *
+     * <p>Elle s'affiche avant de s'enregistrer. Le clic déclenchait auparavant le téléchargement :
+     * pour savoir si la pièce appuyait vraiment la demande qu'on instruit, il fallait d'abord
+     * accepter un fichier dans ses téléchargements, puis l'ouvrir hors de l'application, puis
+     * revenir. Le volet rend la pièce sur place, et l'enregistrement y reste offert pour qui en
+     * veut une copie.</p>
+     *
+     * <p>Le nom d'origine accompagne le contenu : c'est lui qui dit au volet ce qu'il sait
+     * afficher, et c'est sous lui que le fichier s'enregistre si on le demande.</p>
+     */
+    consulterPieceJointe(demande: DemandeDocumentDto): void {
+        if (!demande?.id || this.pieceEnCours) {
+            return;
+        }
+        this.pieceEnCours = true;
+        this.demandeService.pieceJointe(demande.id)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (fichier) => {
+                    this.pieceEnCours = false;
+                    this.lightbox?.openBlob(
+                        fichier,
+                        demande.pieceJointeNom || 'piece-jointe',
+                        'Pièce jointe de la demande');
+                },
+                error: async (erreur) => {
+                    this.pieceEnCours = false;
+                    this.messageService.add({
+                        severity: 'error', summary: 'Pièce jointe',
+                        detail: await this.messageDuRefus(erreur), life: 5000
+                    });
+                }
+            });
+    }
+
+    /**
+     * Le message que le serveur a réellement rendu.
+     *
+     * <p>Demandé en {@code blob}, un refus arrive lui aussi en binaire : sans cette relecture,
+     * l'écran n'aurait à afficher qu'un code de statut là où le serveur a rédigé une phrase.</p>
+     */
+    private async messageDuRefus(erreur: any): Promise<string> {
+        try {
+            if (erreur?.error instanceof Blob) {
+                const texte = await erreur.error.text();
+                return JSON.parse(texte)?.message || texte || 'Le fichier n\'a pas pu être obtenu.';
+            }
+        } catch {
+            // Un refus sans corps lisible : le message générique fera l'affaire.
+        }
+        return erreur?.error?.message || 'Le fichier n\'a pas pu être obtenu.';
     }
 
     deposerRemplacant(): void {

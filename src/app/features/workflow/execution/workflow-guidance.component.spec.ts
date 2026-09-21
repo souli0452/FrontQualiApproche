@@ -1,5 +1,5 @@
 import { WorkflowGuidanceComponent } from './workflow-guidance.component';
-import { WorkflowStateDto } from '../models';
+import { WorkflowStateDto } from 'src/app/models/workflow.model';
 
 /**
  * Ce que l'écran répond à qui n'a rien à décider.

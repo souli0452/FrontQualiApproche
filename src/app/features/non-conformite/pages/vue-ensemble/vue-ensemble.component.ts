@@ -218,7 +218,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
     slaRespecte: number = 0;
     slaRetard: number = 0;
     slaRetardPct: number = 0;
-    moyResolution: string = '12';
+    moyResolution: string = '0';
 
     get tauxResolution(): number {
         const total = this.stats?.total || 0;
@@ -813,7 +813,7 @@ export class NcVueEnsembleComponent implements OnInit, OnDestroy {
         if (total === 0 && card.valueKey !== 'total') return 0;
 
         switch (card.valueKey) {
-            case 'total':     return 15;
+            case 'total':     return undefined;
             case 'enCours':   return Math.round(((this.stats?.enCours || 0) / total) * 100);
             case 'cloturees': return Math.round(((this.stats?.cloturees || 0) / total) * 100);
             case 'retard':    return Math.round(((this.stats?.retard || 0) / total) * 100);

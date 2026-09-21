@@ -17,6 +17,7 @@
     <p-dialog
         [(visible)]="dialogVisible"
         [modal]="true"
+        maskStyleClass="backdrop-blur-sm"
         [style]="{ width: '45rem' }"
         [breakpoints]="{ '960px': '95vw' }"
         [draggable]="false"
@@ -69,8 +70,9 @@
                         (onClick)="ignorer()">
                     </p-button>
                     <p-button
+                        severity="info"
+                        [text]="false"
                         label="Insérer"
-                        icon="pi pi-check"
                         [disabled]="chargement || !texteEdite.trim()"
                         (onClick)="inserer()">
                     </p-button>

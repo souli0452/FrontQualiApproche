@@ -124,10 +124,16 @@ export class CircuitsListeComponent extends BasePaginationComponent implements O
 
   guideOuvert = false;
 
+  /**
+   * Familles connues, pour le libellé de la colonne et le repérage des circuits concurrents.
+   * La même liste que le filtre au-dessus du tableau : une famille absente d'ici s'affichait
+   * en clair technique (`DEMANDE_DOCUMENT`) et échappait au bandeau des circuits concurrents.
+   */
   private readonly typesRessource = [
     { label: 'Documents', value: 'DOCUMENT' },
     { label: 'Non-conformités', value: 'NON_CONFORMITE' },
-    { label: "Plans d'action", value: 'PLAN_ACTION' }
+    { label: "Plans d'action", value: 'PLAN_ACTION' },
+    { label: 'Demandes sur documents', value: 'DEMANDE_DOCUMENT' }
   ];
 
   /**

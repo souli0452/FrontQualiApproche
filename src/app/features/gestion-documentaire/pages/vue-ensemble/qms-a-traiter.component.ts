@@ -41,7 +41,6 @@ export interface LigneATraiter {
     iconeEtape?: string;
     delaiRelatif?: string;
     statutDelai?: string;
-    peutApercu?: boolean;
     /** État du circuit : ce sont ses actions ouvertes qui deviennent les boutons de la ligne. */
     workflowState?: WorkflowStateDto;
     deposerFichier?: (fichier: File) => Observable<string>;
@@ -301,17 +300,6 @@ export class QmsATraiterComponent {
         this.rows = event.rows;
     }
 
-    /** Indique si le fichier est un PDF ou une image visualisable en direct */
-    isVisualisable(ligne: LigneATraiter): boolean {
-        if (ligne.peutApercu !== undefined) return ligne.peutApercu;
-        const nom = (ligne.nomFichier || '').toLowerCase();
-        if (nom.endsWith('.pdf') || nom.endsWith('.png') || nom.endsWith('.jpg') || nom.endsWith('.jpeg') || nom.endsWith('.webp') || nom.endsWith('.svg')) {
-            return true;
-        }
-        const icone = (ligne.iconeFichier || '').toLowerCase();
-        return icone.includes('pdf') || icone.includes('jpeg') || icone.includes('png');
-    }
-
     /**
      * Construit le menu d'actions contextuel lors du clic sur les 3 points verticaux.
      */
@@ -319,14 +307,14 @@ export class QmsATraiterComponent {
         this.selectedLigne = ligne;
         const items: MenuItem[] = [];
 
-        // 1. Action Aperçu (uniquement pour les formats visualisables : PDF et images)
-        if (this.isVisualisable(ligne)) {
-            items.push({
-                label: 'Aperçu du document',
-                icon: 'pi pi-eye',
-                command: () => this.apercu.emit(ligne)
-            });
-        }
+        // 1. Action Aperçu, proposée pour tout document : le volet peint ce qu'il sait peindre
+        //    et, pour le reste, l'annonce et offre l'enregistrement. La condition de format
+        //    retirait l'entrée des lignes dont le nom de fichier n'était pas connu.
+        items.push({
+            label: 'Aperçu du document',
+            icon: 'pi pi-eye',
+            command: () => this.apercu.emit(ligne)
+        });
 
         // 2. Action Modifier (Prioritaire et très vite visible)
         items.push({

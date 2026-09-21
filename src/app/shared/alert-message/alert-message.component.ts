@@ -11,6 +11,5 @@ import { Toast } from 'primeng/toast';
 })
 export class AlertMessageComponent {
   constructor(public messageService: MessageService) {
-        console.log('[AlertMessageComponent] Monté avec MessageService ID :', (this.messageService as any));
     }
 }

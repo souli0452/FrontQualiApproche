@@ -599,15 +599,20 @@ loadStuctures() {
      * par le dialogue de décision ; les participants, eux, appartiennent au dossier et se
      * complètent au fil de l'analyse, avant même qu'aucune décision ne soit prise.</p>
      */
-    enregistrerLesParticipants() {
+    enregistrerLesParticipants(liste: string[] = this.participants) {
         if (!this.demande?.id) {
             return;
         }
+        const participants = liste ?? [];
+        // La liste vient de l'événement plutôt que du champ : le rattachement à deux sens et cet
+        // écouteur sont deux abonnés au même changement, et rien ne garantit lequel court en
+        // premier. Lire le champ ferait enregistrer l'état d'avant une fois sur deux.
+        this.participants = participants;
         // Seuls les participants : la fiche entière porterait avec elle des champs que d'autres
         // écrans saisissent, et les écraserait au passage.
         this.service.updateNomConformite(
-            { id: this.demande.id, participants: this.participants ?? [] }, this.demande.id).subscribe({
-            next: () => this.demande.participants = this.participants ?? [],
+            { id: this.demande.id, participants }, this.demande.id).subscribe({
+            next: () => this.demande.participants = participants,
             error: () => this.messageService.add({
                 severity: 'error', summary: 'Enregistrement impossible',
                 detail: "Les participants n'ont pas pu être enregistrés.", life: 5000

@@ -26,7 +26,20 @@ export class QmsDocumentDetailComponent {
     @Input() canDownload = false;
     @Input() canViewHistory = false;
     @Input() canViewAudit = false;
-    @Input() canValidate = false;
+    /**
+     * Le suivi interne du document est-il ouvert à l'appelant ?
+     *
+     * <p>Faux pour un document vu par partage : les décisions de son circuit appartiennent à sa
+     * structure d'origine. Cette garde-là est de portée, pas d'habilitation.</p>
+     *
+     * <p>Aucune permission d'écran ne s'y ajoute, et c'est délibéré — même arbitrage que sur la
+     * fiche d'une demande. Le circuit vérifie déjà le rôle exigé par l'étape ; doubler ce contrôle
+     * d'un {@code document-validate} masquait toute décision à qui détenait pourtant le rôle
+     * attendu, et l'écran restait muet sur la raison. Les mêmes décisions s'offraient au même
+     * utilisateur depuis le tableau de bord, qui ne double rien : la fiche du document était le
+     * seul écran à les taire.</p>
+     */
+    @Input() suiviInterneAutorise = true;
     @Input() canShare = false;
     /**
      * Peut déposer une demande de modification ou de suppression.
@@ -53,7 +66,8 @@ export class QmsDocumentDetailComponent {
 
     @Output() close = new EventEmitter<void>();
     @Output() openDocument = new EventEmitter<DocumentQms>();
-    @Output() downloadPdf = new EventEmitter<DocumentQms>();
+    /** Aperçu du document dans le volet de visualisation, d'où il peut ensuite s'enregistrer. */
+    @Output() apercu = new EventEmitter<DocumentQms>();
     @Output() viewHistory = new EventEmitter<DocumentQms>();
     @Output() viewAudit = new EventEmitter<DocumentQms>();
     /** Décisions du circuit — distinctes des versions du fichier et de la piste d'accès. */

@@ -84,9 +84,11 @@
   [loading]="loading"
   [canDeposerRemplacant]="peutDeposerRemplacant"
   [etatIndisponible]="etatIndisponible"
+  [pieceEnCours]="pieceEnCours"
   (close)="fermerDetail()"
   (executeAction)="ouvrirDecision($event)"
-  (deposerRemplacant)="ouvrirDepotRemplacant($event)">
+  (deposerRemplacant)="ouvrirDepotRemplacant($event)"
+  (consulterPieceJointe)="consulterPieceJointe($event)">
 </app-qms-demande-detail>
 
 <!-- Décision de circuit : le même dialogue que pour un document, qui recueille l'observation
@@ -140,3 +142,7 @@
                   [loading]="enregistrement" (onClick)="deposerRemplacant()"></p-button>
     </ng-template>
 </p-dialog>
+
+<!-- Volet d'aperçu de la pièce jointe : elle se lit ici, et ne s'enregistre que si on le
+     demande depuis son en-tête. -->
+<app-lightbox #lightbox></app-lightbox>

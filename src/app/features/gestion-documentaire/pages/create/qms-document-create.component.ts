@@ -283,8 +283,9 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
             this.loadingSave = false;
             this.messageService.add({
               severity: 'success',
-              summary: 'Document enregistré',
-              detail: `Le document ${doc.documentNumber || ''} a été enregistré avec succès.`
+              summary: 'Brouillon enregistré',
+              detail: `Le document ${doc.documentNumber || ''} reste modifiable ; `
+                + 'vous pourrez le soumettre depuis sa fiche.'
             });
             this.handlePostSaveNavigation(doc);
           } else {

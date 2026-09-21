@@ -215,8 +215,9 @@ export class WorkflowConfigurationGuideComponent {
         {
           libelle: 'Type de ressource',
           role:
-            "La famille de dossiers qu'il pilote — documents, non-conformités, plans d'action. " +
-            "Elle détermine quel module métier recevra l'avancement du dossier."
+            "La famille de dossiers qu'il pilote — documents, non-conformités, plans d'action, " +
+            "demandes sur documents. Elle détermine quel module métier recevra l'avancement du " +
+            "dossier."
         },
         {
           libelle: 'Description',
