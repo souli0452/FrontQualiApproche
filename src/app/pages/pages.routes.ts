@@ -333,6 +333,19 @@ export default [
         }
     },
     {
+        // La FAQ est un référentiel de l'application : elle s'affiche dans l'aide et vaut pour
+        // une installation qui ne souscrit pas au module IA. Aucun `module` n'est donc exigé —
+        // l'assistant n'en est qu'un lecteur supplémentaire.
+        path: 'faq',
+        loadComponent: () => import('@features/faq/faq.component').then(m => m.FaqComponent),
+        title: 'Foire aux questions',
+        canActivate: [permissionGuard],
+        data: {
+            breadcrumb: 'Foire aux questions',
+            permissions: ['faq-read', 'faq-write', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE']
+        }
+    },
+    {
         path: 'parametrage-document/priorites',
         component: PrioriteDocumentComponent,
         title: 'Priorités de document',
