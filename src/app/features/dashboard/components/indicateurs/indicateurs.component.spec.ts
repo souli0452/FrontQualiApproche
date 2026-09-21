@@ -58,7 +58,7 @@ describe('IndicateursComponent', () => {
 
         component.ngOnInit();
 
-        expect(cles()).toEqual(['enAttente', 'retard', 'proche']);
+        expect(cles()).toEqual(['enAttente', 'retards', 'proche']);
         http.expectNone((requete) => requete.url.includes('statistics'));
     });
 
@@ -69,7 +69,9 @@ describe('IndicateursComponent', () => {
         component.ngOnInit();
         http.match(() => true).forEach((requete) => requete.flush({ data: {} }));
 
-        expect(cles()).toEqual(['enAttente', 'revision', 'fonds']);
+        // « retards » subsiste sans suivi d'actions : le module documentaire y verse à lui seul
+        // ses documents à réviser.
+        expect(cles()).toEqual(['enAttente', 'retards', 'fonds']);
     });
 
     it('reprend le retard de révision que le module documentaire déclare', () => {
@@ -80,10 +82,12 @@ describe('IndicateursComponent', () => {
             data: { totalDocuments: 128, documentsEnRetardRevision: 3 }
         });
 
-        const revision = component.indicateurs.find((i) => i.cle === 'revision');
-        expect(revision?.valeur).toBe(3);
+        // Le retard de révision ne porte plus sa propre tuile : il est versé au total consolidé
+        // des dépassements, et se retrouve ventilé dans le détail de celui-ci.
+        const retards = component.indicateurs.find((i) => i.cle === 'retards');
+        expect(retards?.valeur).toBe(3);
         // Un retard de révision est un constat d'audit : il se voit.
-        expect(revision?.ton).toBe('alerte');
+        expect(retards?.ton).toBe('alerte');
         expect(component.indicateurs.find((i) => i.cle === 'fonds')?.valeur).toBe(128);
     });
 
@@ -93,8 +97,9 @@ describe('IndicateursComponent', () => {
 
         http.expectOne(() => true).flush('erreur', { status: 500, statusText: 'Server Error' });
 
-        // Un zéro affirmerait qu'aucun document n'est en retard de révision.
-        expect(component.indicateurs.find((i) => i.cle === 'revision')?.valeur).toBeNull();
+        // Un zéro affirmerait qu'aucun document n'est en retard de révision. Le total consolidé
+        // reste donc vide tant qu'aucune de ses deux sources n'a répondu.
+        expect(component.indicateurs.find((i) => i.cle === 'retards')?.valeur).toBeNull();
     });
 
     it('aucun retard : le ton reste neutre', () => {
@@ -104,7 +109,7 @@ describe('IndicateursComponent', () => {
         component.plansEcheanceProche = 0;
         component.ngOnInit();
 
-        expect(component.indicateurs.find((i) => i.cle === 'retard')?.ton).toBe('neutre');
+        expect(component.indicateurs.find((i) => i.cle === 'retards')?.ton).toBe('neutre');
     });
 
     it('un retard d\'action est en alerte, une échéance proche en attention', () => {
@@ -114,7 +119,7 @@ describe('IndicateursComponent', () => {
         component.plansEcheanceProche = 4;
         component.ngOnInit();
 
-        expect(component.indicateurs.find((i) => i.cle === 'retard')?.ton).toBe('alerte');
+        expect(component.indicateurs.find((i) => i.cle === 'retards')?.ton).toBe('alerte');
         expect(component.indicateurs.find((i) => i.cle === 'proche')?.ton).toBe('attention');
     });
 });
