@@ -346,6 +346,26 @@ export default [
         }
     },
     {
+        path: 'faq/nouvelle',
+        loadComponent: () => import('@features/faq/faq-form.component').then(m => m.FaqFormComponent),
+        title: 'Nouvelle question',
+        canActivate: [permissionGuard],
+        data: {
+            breadcrumb: 'Nouvelle question',
+            permissions: ['faq-write', 'CONFIG_GLOBAL_MANAGE']
+        }
+    },
+    {
+        path: 'faq/modifier/:id',
+        loadComponent: () => import('@features/faq/faq-form.component').then(m => m.FaqFormComponent),
+        title: 'Modifier une question',
+        canActivate: [permissionGuard],
+        data: {
+            breadcrumb: 'Modifier une question',
+            permissions: ['faq-read', 'faq-write', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE']
+        }
+    },
+    {
         path: 'parametrage-document/priorites',
         component: PrioriteDocumentComponent,
         title: 'Priorités de document',

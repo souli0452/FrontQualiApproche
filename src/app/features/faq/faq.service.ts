@@ -33,6 +33,18 @@ export class FaqService extends BaseCrudService<EntreeFaq, string> {
     }
 
     /**
+     * Une entrée par son identifiant.
+     *
+     * <p>Sous {@code /get/} : c'est la convention des référentiels du dépôt, et
+     * {@code BaseCrudService.findById} ne la connaît pas — il compose {@code /{id}}, que le
+     * serveur n'expose plus depuis qu'un identifiant nu happait {@code /all}.</p>
+     */
+    getById(id: string): Observable<EntreeFaq> {
+        return this.http.get<any>(`${QualiUrlConfig.FAQ_ROOT_URL}/get/${id}`)
+            .pipe(map((reponse) => reponse?.data ?? reponse));
+    }
+
+    /**
      * Joint des pièces à une entrée.
      *
      * <p>Rend 503 si l'installation n'a pas de serveur de fichiers — la FAQ reste utilisable
