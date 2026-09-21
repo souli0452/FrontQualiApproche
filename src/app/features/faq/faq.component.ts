@@ -45,8 +45,8 @@ import { FaqService } from './faq.service';
                 #crudGeneric
                 [deleteConfirmField]="'question'"
                 [showAddButton]="false"
-                detailLongDescription="La foire aux questions rassemble les réponses propres à votre organisation : procédures internes, usages maison, questions récurrentes. Elle s'affiche dans l'aide de l'application. L'assistant IA la reçoit également : interrogé sur un sujet qu'elle couvre, il répond avec vos mots plutôt que d'inventer."
-                formLongDescription="Rédigez une réponse qui se suffit à elle-même : l'assistant la reprendra telle quelle. Gardez-la brève — un texte long part au modèle à chaque question posée. Le rang décide de l'ordre d'affichage, et de ce qui est transmis en premier à l'assistant. Une entrée non publiée reste en base sans être ni affichée ni récitée."
+                detailLongDescription="Les réponses de votre organisation, affichées dans l'aide et reprises par l'assistant IA."
+                formLongDescription="L'assistant reprendra cette réponse telle quelle : gardez-la brève."
                 [dialogWidth]="'46rem'"
                 [loading]="loading"
                 [pageLabel]="pageLabel"
@@ -102,40 +102,29 @@ export class FaqComponent extends BasePaginationComponent implements OnInit, OnD
         this.formCols = [
             { field: 'id', label: '', header: 'Id', type: 'string', visible: false, required: false },
             {
-                field: 'question', label: 'La question, dans les mots de celui qui la pose',
-                helpText: "Formulez-la comme un utilisateur la poserait. C'est sur ces mots que l'assistant reconnaîtra qu'une question s'en approche.",
-                placeholder: 'Exemple : Qui doit viser une procédure avant sa diffusion ?',
-                header: 'Question', type: 'string', visible: true, required: true
+                field: 'question', header: 'Question', label: 'Question',
+                placeholder: 'Qui doit viser une procédure avant sa diffusion ?',
+                type: 'string', visible: true, required: true
             },
             {
-                field: 'reponse', label: 'La réponse, telle qu\'elle doit être donnée',
-                helpText: "L'assistant la reprendra sans la reformuler. Gardez-la brève : ce texte part au modèle à chaque question posée. Au-delà de quelques phrases, joignez plutôt le document.",
-                placeholder: 'Exemple : Le pilote du processus vise en premier, puis le responsable qualité.',
-                header: 'Réponse', type: 'text', visible: true, required: true
+                field: 'reponse', header: 'Réponse', label: 'Réponse',
+                placeholder: 'Le pilote du processus vise en premier, puis le responsable qualité.',
+                type: 'text', visible: true, required: true
             },
             {
-                field: 'categorie', label: 'Rubrique de l\'aide',
-                helpText: "Le regroupement sous lequel la question apparaît dans l'aide. Laissez vide si aucune rubrique ne s'impose.",
-                placeholder: 'Exemple : Documents', header: 'Rubrique',
-                type: 'string', visible: true, required: false, class: 'md:col-6'
+                field: 'fichiers', header: 'Pièces jointes', label: 'Pièces jointes',
+                helpText: "Facultatif. L'assistant les signale sans les lire ; on les ouvre depuis l'aide.",
+                type: 'file', visible: true, required: false
             },
             {
-                field: 'rang', label: 'Ordre d\'affichage',
-                helpText: "Les plus petits rangs s'affichent en premier, et sont transmis en premier à l'assistant. Ce qui compte le plus se place en tête.",
-                placeholder: '0', header: 'Rang',
-                type: 'number', min: 0, visible: true, required: false, class: 'md:col-6'
-            },
-            {
-                field: 'publiee', label: 'Publiée',
-                helpText: "Une entrée publiée s'affiche dans l'aide et est récitée par l'assistant. Décochez pour la retirer sans la perdre, le temps d'une révision.",
-                header: 'Publiée', type: 'boolean', visible: true, required: false, class: 'md:col-6'
+                field: 'publiee', header: 'Publiée', label: 'Publiée',
+                helpText: "Décochez pour la retirer de l'aide et de l'assistant sans la perdre.",
+                type: 'boolean', visible: true, required: false
             }
         ];
 
         this.tableCols = [
-            { field: 'rang', header: 'Rang', type: 'number', filter: false, width: '5rem' },
             { field: 'question', header: 'Question', type: 'string', filter: true },
-            { field: 'categorie', header: 'Rubrique', type: 'string', filter: true, width: '12rem' },
             { field: 'publiee', header: 'Publiée', type: 'boolean', filter: false, width: '7rem' }
         ];
 
@@ -143,8 +132,9 @@ export class FaqComponent extends BasePaginationComponent implements OnInit, OnD
             id: [null],
             question: [null, Validators.required],
             reponse: [null, Validators.required],
-            categorie: [null],
-            rang: [0],
+            // Les fichiers choisis attendent ici jusqu'à l'enregistrement : une pièce ne
+            // s'attache qu'à une entrée qui existe déjà.
+            fichiers: [[]],
             publiee: [true]
         });
     }
@@ -172,13 +162,47 @@ export class FaqComponent extends BasePaginationComponent implements OnInit, OnD
             });
     }
 
-    onSave(entree: EntreeFaq): void {
-        const requete = entree.id
-            ? this.service.updateObject(entree.id, entree)
-            : this.service.create(entree);
+    /**
+     * Enregistre l'entrée, puis dépose ses pièces jointes.
+     *
+     * <p>Deux appels, et dans cet ordre : une pièce s'attache à une entrée qui existe, et le
+     * serveur veut du multipart là où la fiche voyage en JSON. Les fichiers choisis sont donc
+     * retirés de l'objet avant son envoi — ils ne font pas partie du contrat de la fiche.</p>
+     *
+     * <p>Un dépôt qui échoue ne perd pas la réponse : elle est déjà enregistrée, et le message
+     * le dit plutôt que de laisser croire à un échec complet. C'est aussi le cas quand
+     * l'installation n'a pas de serveur de fichiers — le serveur répond alors qu'il en manque
+     * un, et la FAQ reste utilisable sans.</p>
+     */
+    onSave(entree: EntreeFaq & { fichiers?: any }): void {
+        const aDeposer: File[] = Array.isArray(entree.fichiers) ? entree.fichiers : [];
+        const fiche: EntreeFaq = { ...entree };
+        delete (fiche as any).fichiers;
+
+        const requete = fiche.id
+            ? this.service.updateObject(fiche.id, fiche)
+            : this.service.create(fiche);
 
         requete.pipe(takeUntil(this.destroy$)).subscribe({
-            next: () => this.onSuccess(),
+            next: (enregistree: any) => {
+                const id = enregistree?.data?.id ?? enregistree?.id ?? fiche.id;
+                if (aDeposer.length === 0 || !id) {
+                    this.onSuccess();
+                    return;
+                }
+                this.service.joindre(id, aDeposer)
+                    .pipe(takeUntil(this.destroy$))
+                    .subscribe({
+                        next: () => this.onSuccess(),
+                        error: (erreur) => {
+                            this.closeDialog = true;
+                            this.fetchObject();
+                            this.alertService.showError(erreur?.status === 503
+                                ? 'Réponse enregistrée. Les pièces jointes demandent un serveur de fichiers, que cette installation n\'a pas configuré.'
+                                : 'Réponse enregistrée, mais le dépôt des pièces jointes a échoué.');
+                        }
+                    });
+            },
             error: () => this.alertService.showError('Enregistrement impossible')
         });
     }

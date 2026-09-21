@@ -18,12 +18,8 @@ export interface EntreeFaq {
     id?: string;
     question?: string;
     reponse?: string;
-    /** Regroupement libre : « Documents », « Non-conformités », « Compte »... */
-    categorie?: string;
     /** Visible dans l'aide et récitée par l'assistant. */
     publiee?: boolean;
-    /** Ordre d'affichage ; l'assistant récite dans le même ordre. */
-    rang?: number;
     fichiers?: FichierFaq[];
     updateAt?: string;
 }

@@ -19,8 +19,8 @@ describe('AideFaqComponent', () => {
     let component: AideFaqComponent;
     let http: HttpTestingController;
 
-    const entree = (question: string, reponse: string, categorie?: string): EntreeFaq =>
-        ({ id: question, question, reponse, categorie, publiee: true });
+    const entree = (question: string, reponse: string): EntreeFaq =>
+        ({ id: question, question, reponse, publiee: true });
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -41,57 +41,39 @@ describe('AideFaqComponent', () => {
         http.expectOne((requete) => requete.url.includes('faq/publiees')).flush(entrees);
     };
 
-    const titres = () => component.rubriques.map((r) => r.titre);
-
-    it('regroupe les réponses par rubrique', () => {
+    it("l'ordre est celui du serveur, qui est celui de l'écriture", () => {
+        // Le serveur rend les entrées dans leur ordre de création ; les trier ici le défairait
+        // sans que personne ne l'ait demandé.
         charger([
-            entree('Qui vise ?', 'Le pilote.', 'Documents'),
-            entree('Quel délai ?', 'Huit jours.', 'Documents'),
-            entree('Comment déclarer ?', 'Par la fiche.', 'Non-conformités')
+            entree('Comment déclarer ?', 'Par la fiche.'),
+            entree('Qui vise ?', 'Le pilote.')
         ]);
 
-        expect(titres()).toEqual(['Documents', 'Non-conformités']);
-        expect(component.rubriques[0].entrees.length).toBe(2);
-    });
-
-    it("l'ordre des rubriques suit celui du serveur, et non l'alphabet", () => {
-        // Le rang est décidé par l'administrateur et le serveur rend les entrées dans cet ordre :
-        // un tri alphabétique à l'écran le défairait en silence.
-        charger([
-            entree('Comment déclarer ?', 'Par la fiche.', 'Non-conformités'),
-            entree('Qui vise ?', 'Le pilote.', 'Documents')
-        ]);
-
-        expect(titres()).toEqual(['Non-conformités', 'Documents']);
-    });
-
-    it('une question sans rubrique reste lisible sous un intitulé de repli', () => {
-        charger([entree('Qui contacter ?', 'Votre responsable qualité.')]);
-
-        expect(titres()).toEqual(['Questions générales']);
+        expect(component.visibles.map((e) => e.question))
+            .toEqual(['Comment déclarer ?', 'Qui vise ?']);
     });
 
     it('la recherche porte aussi sur la réponse, pas seulement sur la question', () => {
         charger([
-            entree('Qui vise une procédure ?', 'Le pilote, puis la qualité.', 'Documents'),
-            entree('Comment déclarer ?', 'Par la fiche de constat.', 'Non-conformités')
+            entree('Qui vise une procédure ?', 'Le pilote, puis la qualité.'),
+            entree('Comment déclarer ?', 'Par la fiche de constat.')
         ]);
 
         // « pilote » n'apparaît que dans une réponse : on cherche souvent avec un mot du contenu.
         component.recherche = 'pilote';
         component.filtrer();
 
-        expect(component.rubriques.length).toBe(1);
-        expect(component.rubriques[0].entrees[0].question).toBe('Qui vise une procédure ?');
+        expect(component.visibles.length).toBe(1);
+        expect(component.visibles[0].question).toBe('Qui vise une procédure ?');
     });
 
     it('une recherche sans résultat vide les rubriques sans perdre les entrées', () => {
-        charger([entree('Qui vise ?', 'Le pilote.', 'Documents')]);
+        charger([entree('Qui vise ?', 'Le pilote.')]);
 
         component.recherche = 'absent';
         component.filtrer();
 
-        expect(component.rubriques).toEqual([]);
+        expect(component.visibles).toEqual([]);
         // Les entrées restent en mémoire : effacer la recherche les fait revenir sans rappeler
         // le serveur.
         expect(component.toutes.length).toBe(1);
@@ -103,6 +85,6 @@ describe('AideFaqComponent', () => {
 
         expect(component.chargement).toBeFalse();
         expect(component.toutes).toEqual([]);
-        expect(component.rubriques).toEqual([]);
+        expect(component.visibles).toEqual([]);
     });
 });

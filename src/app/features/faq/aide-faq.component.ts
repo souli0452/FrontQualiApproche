@@ -7,12 +7,6 @@ import { NgPrimeModule } from '@prime-ng';
 import { EntreeFaq, FichierFaq } from './faq.model';
 import { FaqService } from './faq.service';
 
-/** Une rubrique de l'aide et les questions qu'elle regroupe. */
-interface Rubrique {
-    titre: string;
-    entrees: EntreeFaq[];
-}
-
 /**
  * L'aide : les réponses que l'organisation a écrites, en lecture seule.
  *
@@ -58,7 +52,7 @@ interface Rubrique {
                 </div>
 
                 <!-- La recherche ne rend rien -->
-                <div *ngIf="!chargement && toutes.length > 0 && rubriques.length === 0"
+                <div *ngIf="!chargement && toutes.length > 0 && visibles.length === 0"
                      class="text-center py-8 px-4">
                     <i class="pi pi-search text-3xl text-slate-300"></i>
                     <p class="text-sm text-slate-600 mt-3 m-0">
@@ -66,13 +60,10 @@ interface Rubrique {
                     </p>
                 </div>
 
-                <!-- Les réponses, groupées par rubrique -->
-                <div *ngFor="let rubrique of rubriques" class="mb-4">
-                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-2 px-1">
-                        {{ rubrique.titre }}
-                    </h3>
+                <!-- Les réponses, dans l'ordre où elles ont été écrites -->
+                <div class="mb-4">
                     <p-accordion [multiple]="true">
-                        <p-accordion-panel *ngFor="let entree of rubrique.entrees" [value]="entree.id ?? ''">
+                        <p-accordion-panel *ngFor="let entree of visibles" [value]="entree.id ?? ''">
                             <p-accordion-header>
                                 <span class="text-sm font-medium text-slate-800">{{ entree.question }}</span>
                             </p-accordion-header>
@@ -104,11 +95,9 @@ interface Rubrique {
 })
 export class AideFaqComponent implements OnInit, OnDestroy {
 
-    /** Rubrique de repli : une question sans rubrique reste lisible, elle ne disparaît pas. */
-    private static readonly SANS_RUBRIQUE = 'Questions générales';
-
     toutes: EntreeFaq[] = [];
-    rubriques: Rubrique[] = [];
+    /** Ce que la recherche laisse voir. Vide au départ tant que rien n'est chargé. */
+    visibles: EntreeFaq[] = [];
     recherche = '';
     chargement = true;
     /** Identifiant de la pièce en cours de téléchargement : son bouton attend plutôt que doubler. */
@@ -143,32 +132,21 @@ export class AideFaqComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Regroupe les réponses par rubrique, en ne gardant que celles qui répondent à la recherche.
+     * Ne garde que les réponses qui répondent à la recherche.
      *
-     * <p>La recherche porte sur la question <b>et</b> sur la réponse : on cherche souvent avec un
-     * mot du contenu — « visa », « délai » — plutôt qu'avec la formulation exacte du titre.</p>
+     * <p>Elle porte sur la question <b>et</b> sur la réponse : on cherche souvent avec un mot du
+     * contenu — « visa », « délai » — plutôt qu'avec la formulation exacte du titre.</p>
+     *
+     * <p>L'ordre reste celui du serveur, qui est celui de l'écriture : le trier ici le défairait
+     * sans que personne ne l'ait demandé.</p>
      */
     filtrer(): void {
         const terme = this.recherche.trim().toLowerCase();
-        const retenues = terme
+        this.visibles = terme
             ? this.toutes.filter((entree) =>
                 (entree.question ?? '').toLowerCase().includes(terme)
                 || (entree.reponse ?? '').toLowerCase().includes(terme))
             : this.toutes;
-
-        const parRubrique = new Map<string, EntreeFaq[]>();
-        retenues.forEach((entree) => {
-            const titre = entree.categorie?.trim() || AideFaqComponent.SANS_RUBRIQUE;
-            const groupe = parRubrique.get(titre) ?? [];
-            groupe.push(entree);
-            parRubrique.set(titre, groupe);
-        });
-
-        // L'ordre des rubriques suit celui des entrées, qui vient du serveur : le rang décidé par
-        // l'administrateur se retrouve donc à l'écran, et ce n'est pas un tri alphabétique qui le
-        // défait.
-        this.rubriques = Array.from(parRubrique.entries())
-            .map(([titre, entrees]) => ({ titre, entrees }));
     }
 
     /**
