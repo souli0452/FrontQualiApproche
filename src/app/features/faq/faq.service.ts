@@ -33,6 +33,24 @@ export class FaqService extends BaseCrudService<EntreeFaq, string> {
     }
 
     /**
+     * Une page du référentiel, d'un côté ou de l'autre de la publication.
+     *
+     * <p>Le filtre est servi par le serveur et non appliqué ici : une page de dix lignes filtrée
+     * après coup en laisserait trois, et la pagination mentirait.</p>
+     */
+    page(publiee: boolean, page: number, size: number): Observable<any> {
+        return this.http.get<any>(QualiUrlConfig.FAQ_ROOT_URL, {
+            params: { publiee, page, size }
+        });
+    }
+
+    /** Les comptes de part et d'autre, que les onglets affichent. */
+    comptes(): Observable<{ publiees: number; nonPubliees: number }> {
+        return this.http.get<any>(`${QualiUrlConfig.FAQ_ROOT_URL}/comptes`)
+            .pipe(map((reponse) => reponse?.data ?? reponse ?? { publiees: 0, nonPubliees: 0 }));
+    }
+
+    /**
      * Une entrée par son identifiant.
      *
      * <p>Sous {@code /get/} : c'est la convention des référentiels du dépôt, et

@@ -36,6 +36,22 @@ import { FaqService } from './faq.service';
             (actionClick)="nouvelle()"
         />
         <div class="page-layout">
+            <!-- Deux onglets plutôt qu'une colonne « Publiée » à trier : on vient voir l'un ou
+                 l'autre, pas les deux mêlés. Les brouillons attendent une relecture, les publiées
+                 sont en service — ce sont deux travaux distincts. -->
+            <p-tabs [value]="onglet" (valueChange)="changerDOnglet($event)">
+                <p-tablist>
+                    <p-tab value="publiees">
+                        <i class="pi pi-eye mr-2"></i>Publiées
+                        <p-badge *ngIf="comptePubliees > 0" [value]="comptePubliees" severity="success" styleClass="ml-2"></p-badge>
+                    </p-tab>
+                    <p-tab value="nonPubliees">
+                        <i class="pi pi-eye-slash mr-2"></i>Non publiées
+                        <p-badge *ngIf="compteNonPubliees > 0" [value]="compteNonPubliees" severity="warn" styleClass="ml-2"></p-badge>
+                    </p-tab>
+                </p-tablist>
+            </p-tabs>
+
             <app-tableau-affichage
                 [tableCols]="tableCols"
                 [listeObject]="dataList"
@@ -58,11 +74,17 @@ export class FaqComponent extends BasePaginationComponent implements OnInit, OnD
 
     peutEcrire = false;
 
+    /** L'onglet actif. On arrive sur les publiées : c'est ce qu'on vient voir. */
+    onglet: 'publiees' | 'nonPubliees' = 'publiees';
+    comptePubliees = 0;
+    compteNonPubliees = 0;
+
     readonly pageLabel = 'Foire aux questions';
 
+    // Pas de colonne « Publiée » : l'onglet actif le dit déjà, et la répéter à chaque ligne
+    // n'apprendrait rien.
     tableCols: TableColumn[] = [
-        { field: 'question', header: 'Question', type: 'string', filter: true },
-        { field: 'publiee', header: 'Publiée', type: 'boolean', filter: false, width: '8rem' }
+        { field: 'question', header: 'Question', type: 'string', filter: true }
     ];
 
     breadcrumbs = [
@@ -85,6 +107,37 @@ export class FaqComponent extends BasePaginationComponent implements OnInit, OnD
     ngOnInit(): void {
         this.peutEcrire = hasAnyPermission(['faq-write', 'CONFIG_GLOBAL_MANAGE']);
         this.fetchObject();
+        this.rafraichirLesComptes();
+    }
+
+    /**
+     * Change d'onglet et repart de la première page.
+     *
+     * <p>Rester à la page courante montrerait une liste vide dès que l'autre onglet en compte
+     * moins — on chercherait alors ce qui n'a jamais manqué.</p>
+     */
+    changerDOnglet(valeur: any): void {
+        const onglet = valeur === 'nonPubliees' ? 'nonPubliees' : 'publiees';
+        if (onglet === this.onglet) {
+            return;
+        }
+        this.onglet = onglet;
+        this.currentPage = 0;
+        this.fetchObject();
+    }
+
+    private rafraichirLesComptes(): void {
+        this.service.comptes()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (comptes) => {
+                    this.comptePubliees = comptes.publiees ?? 0;
+                    this.compteNonPubliees = comptes.nonPubliees ?? 0;
+                },
+                // Un compte indisponible n'empêche pas de travailler : les onglets restent, sans
+                // leur pastille.
+                error: () => undefined
+            });
     }
 
     ngOnDestroy(): void {
@@ -94,7 +147,7 @@ export class FaqComponent extends BasePaginationComponent implements OnInit, OnD
 
     fetchObject(): void {
         this.loading = true;
-        this.service.findAll(this.currentPage, this.pageSize)
+        this.service.page(this.onglet === 'publiees', this.currentPage, this.pageSize)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (entrees) => this.applyPagination(entrees),
@@ -157,6 +210,7 @@ export class FaqComponent extends BasePaginationComponent implements OnInit, OnD
                 next: () => {
                     this.alertService.showSuccess('Question supprimée.');
                     this.fetchObject();
+                    this.rafraichirLesComptes();
                 },
                 error: () => this.alertService.showError('Suppression impossible')
             });
