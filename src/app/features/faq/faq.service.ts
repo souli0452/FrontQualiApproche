@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 import { BaseCrudService } from '@core/services/base-crud.service';
 import { QualiUrlConfig } from '@core/services/url-config';
@@ -20,9 +20,16 @@ export class FaqService extends BaseCrudService<EntreeFaq, string> {
         super(http, QualiUrlConfig.FAQ_ROOT_URL);
     }
 
-    /** Les entrées publiées, pour l'écran d'aide. Sans pagination : elles s'affichent en entier. */
+    /**
+     * Les entrées publiées, pour l'écran d'aide. Sans pagination : elles s'affichent en entier.
+     *
+     * <p>Le serveur enveloppe sa réponse dans un {@code ApiResponse} — c'est la seule forme que
+     * son intercepteur laisse passer sans la paginer d'office à dix éléments. D'où le
+     * déballage.</p>
+     */
     publiees(): Observable<EntreeFaq[]> {
-        return this.http.get<EntreeFaq[]>(`${QualiUrlConfig.FAQ_ROOT_URL}/publiees`);
+        return this.http.get<any>(`${QualiUrlConfig.FAQ_ROOT_URL}/publiees`)
+            .pipe(map((reponse) => reponse?.data ?? reponse ?? []));
     }
 
     /**
