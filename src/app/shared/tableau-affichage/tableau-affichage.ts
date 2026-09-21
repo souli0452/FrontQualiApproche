@@ -67,6 +67,18 @@ export class TableauAffichageComponent implements AfterViewInit, OnDestroy {
     @Output() lazyLoad = new EventEmitter<any>();
     @Output() actionClick = new EventEmitter<{ event: any; menu: any; rowData: any }>();
     @Output() addClick = new EventEmitter<void>();
+    /**
+     * Des cases à cocher pour agir sur plusieurs lignes à la fois.
+     *
+     * <p>Fermée par défaut : les écrans qui ne la réclament pas gardent exactement la table
+     * qu'ils avaient, sans colonne supplémentaire ni changement de comportement.</p>
+     */
+    @Input() selectionMultiple: boolean = false;
+
+    /** Les lignes cochées. Vidées par l'écran porteur après chaque action de lot. */
+    @Input() lignesSelectionnees: any[] = [];
+    @Output() selectionChange = new EventEmitter<any[]>();
+
     @Output() rowClick = new EventEmitter<any>();
     @Output() searchValueChange = new EventEmitter<string>();
 

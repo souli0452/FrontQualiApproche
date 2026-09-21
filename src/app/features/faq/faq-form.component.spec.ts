@@ -35,8 +35,11 @@ describe('FaqFormComponent', () => {
 
     afterEach(() => http.verify());
 
-    it('une question publiée par défaut : le cas courant ne demande rien', () => {
-        expect(component.entree.publiee).toBeTrue();
+    it("l'état de publication par défaut suit le droit de publier", () => {
+        // Le banc d'essai n'accorde aucune permission : sans le droit, ce qu'on écrit part en
+        // brouillon, et l'interrupteur n'est même pas présenté.
+        expect(component.peutPublier).toBeFalse();
+        expect(component.entree.publiee).toBeFalse();
         expect(component.modification).toBeFalse();
     });
 

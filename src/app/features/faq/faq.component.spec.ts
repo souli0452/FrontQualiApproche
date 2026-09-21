@@ -90,6 +90,69 @@ describe('FaqComponent', () => {
         http.expectNone(() => true);
     });
 
+    it('le sens de la publication suit l\'onglet : on ne publie pas depuis les publiées', () => {
+        demarrer();
+        component.peutPublier = true;
+        component.selection = [{ id: 'a', publiee: true }];
+
+        component.publierLaSelection();
+
+        // Depuis les publiées, l'action retire. Un troisième bouton aurait laissé croire qu'on
+        // peut publier ce qui l'est déjà.
+        const requete = http.expectOne((r) => r.url.includes('/faq/publication'));
+        expect(requete.request.body).toEqual({ ids: ['a'], publiee: false });
+        requete.flush({ data: 1 });
+        http.expectOne((r) => r.url.endsWith('/faq')).flush({ content: [], totalElements: 0 });
+        http.expectOne((r) => r.url.includes('/comptes')).flush({ data: {} });
+    });
+
+    it('depuis les non publiées, le lot publie', () => {
+        demarrer();
+        component.changerDOnglet('nonPubliees');
+        http.expectOne((r) => r.url.endsWith('/faq')).flush({ content: [], totalElements: 0 });
+        component.selection = [{ id: 'a' }, { id: 'b' }];
+
+        component.publierLaSelection();
+
+        const requete = http.expectOne((r) => r.url.includes('/faq/publication'));
+        expect(requete.request.body).toEqual({ ids: ['a', 'b'], publiee: true });
+        requete.flush({ data: 2 });
+        http.expectOne((r) => r.url.endsWith('/faq')).flush({ content: [], totalElements: 0 });
+        http.expectOne((r) => r.url.includes('/comptes')).flush({ data: {} });
+    });
+
+    it("changer d'onglet vide la sélection", () => {
+        demarrer();
+        component.selection = [{ id: 'a' }];
+
+        component.changerDOnglet('nonPubliees');
+        http.expectOne((r) => r.url.endsWith('/faq')).flush({ content: [], totalElements: 0 });
+
+        // Les lignes cochées appartenaient à l'autre onglet : agir dessus porterait sur ce qu'on
+        // ne voit plus.
+        expect(component.selection).toEqual([]);
+    });
+
+    it('une sélection vide ne déclenche aucun appel', () => {
+        demarrer();
+        component.selection = [];
+
+        component.publierLaSelection();
+
+        http.expectNone(() => true);
+    });
+
+    it('le détail est demandé au serveur : la liste ne porte pas les pièces jointes', () => {
+        demarrer();
+
+        component.voirLeDetail({ id: 'a', question: 'Qui vise ?' });
+
+        expect(component.detailVisible).toBeTrue();
+        http.expectOne((r) => r.url.includes('/faq/get/a'))
+            .flush({ data: { id: 'a', question: 'Qui vise ?', fichiers: [{ nom: 'p.pdf' }] } });
+        expect(component.detail?.fichiers?.length).toBe(1);
+    });
+
     it('un compte indisponible laisse la liste utilisable', () => {
         component.ngOnInit();
         http.expectOne((r) => r.url.endsWith('/faq')).flush({ content: [], totalElements: 0 });

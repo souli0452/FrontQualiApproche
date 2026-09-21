@@ -67,8 +67,10 @@
                         <small class="text-500">{{ (entree.reponse || '').length }} / 1500 caractères</small>
                     </div>
 
-                    <!-- La publication -->
-                    <div class="field">
+                    <!-- La publication. Masquée à qui n'en a pas le droit : décider de ce qui
+                         paraît est une responsabilité distincte de celle d'écrire, et le serveur
+                         refuse de toute façon le changement. -->
+                    <div class="field" *ngIf="peutPublier">
                         <div class="flex items-center gap-3">
                             <p-toggleswitch inputId="publiee" [(ngModel)]="entree.publiee"></p-toggleswitch>
                             <div class="flex flex-col">
@@ -85,12 +87,21 @@
             </div>
         </div>
 
+        <!-- Ce que devient la réponse quand on ne peut pas la publier soi-même. -->
+        <div *ngIf="!peutPublier" class="flex items-center gap-3 mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+            <i class="pi pi-info-circle text-blue-500"></i>
+            <span class="text-sm text-slate-700">
+                Votre réponse sera enregistrée comme brouillon. Une personne habilitée la publiera
+                après relecture.
+            </span>
+        </div>
+
         <div class="flex justify-between gap-2 mt-8">
             <button pButton pRipple class="p-button-secondary font-bold" label="Annuler"
                     (click)="retour()"></button>
 
             <button pButton pRipple class="font-bold" icon="pi pi-check"
-                    [label]="modification ? 'Enregistrer' : 'Publier la réponse'"
+                    [label]="modification ? 'Enregistrer' : (peutPublier ? 'Publier la réponse' : 'Enregistrer le brouillon')"
                     [disabled]="!estValide() || enregistrement"
                     [loading]="enregistrement"
                     (click)="enregistrer()"></button>

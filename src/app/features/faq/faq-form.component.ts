@@ -7,6 +7,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { NgPrimeModule } from '@prime-ng';
 import { AlertService } from '@shared/alert-message/alert-message.service';
 import { FileUploadComponent } from '@features/non-conformite/components/file-upload/file-upload.component';
+import { hasAnyPermission } from '@core/auth/auth-utils';
 import { EntreeFaq, FichierFaq } from './faq.model';
 import { FaqService } from './faq.service';
 
@@ -37,6 +38,8 @@ export class FaqFormComponent implements OnInit, OnDestroy {
 
     entree: EntreeFaq = { publiee: true };
     modification = false;
+    /** Décider de ce qui paraît est un droit distinct de celui d'écrire. */
+    peutPublier = false;
     enregistrement = false;
 
     /** Les fichiers choisis, en attente : une pièce ne s'attache qu'à une entrée qui existe. */
@@ -52,6 +55,11 @@ export class FaqFormComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit(): void {
+        this.peutPublier = hasAnyPermission(['faq-publish', 'CONFIG_GLOBAL_MANAGE']);
+        // Sans ce droit, ce qu'on écrit part en brouillon : l'interrupteur est masqué, et le
+        // serveur refuserait de toute façon de le suivre.
+        this.entree.publiee = this.peutPublier;
+
         const id = this.route.snapshot.paramMap.get('id');
         if (!id) {
             return;

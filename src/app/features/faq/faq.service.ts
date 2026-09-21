@@ -44,6 +44,17 @@ export class FaqService extends BaseCrudService<EntreeFaq, string> {
         });
     }
 
+    /**
+     * Publie ou retire de la publication un lot de réponses.
+     *
+     * <p>Sa propre permission côté serveur : écrire et publier sont deux droits distincts, et
+     * masquer le bouton ne suffirait pas à retenir un appel direct.</p>
+     */
+    publier(ids: string[], publiee: boolean): Observable<number> {
+        return this.http.put<any>(`${QualiUrlConfig.FAQ_ROOT_URL}/publication`, { ids, publiee })
+            .pipe(map((reponse) => reponse?.data ?? 0));
+    }
+
     /** Les comptes de part et d'autre, que les onglets affichent. */
     comptes(): Observable<{ publiees: number; nonPubliees: number }> {
         return this.http.get<any>(`${QualiUrlConfig.FAQ_ROOT_URL}/comptes`)
