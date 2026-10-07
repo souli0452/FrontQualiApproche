@@ -51,6 +51,12 @@ export class UrlConfig {
     static readonly WORKFLOW_ROOT_URL = `${WORKFLOW_SERVICE}/workflows`;
     static readonly WORKFLOW_STEP_TEMPLATE_ROOT_URL = `${SUPPORT_SERVICE}/workflow-step-templates`;
 
+    /**
+     * Foire aux questions — un référentiel de l'application, servi par referentiel-service.
+     * L'assistant IA en est un lecteur parmi d'autres, il ne la détient pas.
+     */
+    static readonly FAQ_ROOT_URL = `${REFERENTIEL_SERVICE}/faq`;
+
     // IA Service (Assistant rédactionnel)
     static readonly IA_ASSISTANCE_URL = `${IA_SERVICE}/ia/assistance`;
     static IA_SUGGESTION_VERDICT_URL(id: string): string {

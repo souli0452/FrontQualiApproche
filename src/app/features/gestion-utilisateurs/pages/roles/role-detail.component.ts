@@ -35,7 +35,20 @@ interface GroupedPermission {
 })
 export class RoleDetailComponent implements OnInit, OnDestroy {
     roleForm: UntypedFormGroup;
+    /** Tous les groupes, tels que le dictionnaire les rend. */
     groupedPermissions: GroupedPermission[] = [];
+
+    /**
+     * Ce que la recherche laisse voir.
+     *
+     * <p>Distincte de la liste complète, et jamais substituée à elle : cocher reste une
+     * opération sur le rôle entier, et un filtre ne doit pas décider à la place de
+     * l'utilisateur de ce qui est retiré.</p>
+     */
+    groupesVisibles: GroupedPermission[] = [];
+
+    /** Le terme cherché, sur le libellé comme sur le code de la permission. */
+    recherchePermission = '';
     loading: boolean = false;
     isEdit: boolean = false;
     destroy$: Subject<boolean> = new Subject<boolean>();
@@ -117,6 +130,42 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
             permissions: groups[module],
             allSelected: false
         }));
+        this.filtrerLesPermissions();
+    }
+
+    /**
+     * Ne garde que les permissions qui répondent à la recherche.
+     *
+     * <p>Cent dix-neuf permissions sur quinze modules : sans filtre, il fallait parcourir la
+     * page entière pour retrouver un droit dont on connaissait pourtant le nom.</p>
+     *
+     * <p>La recherche porte sur le libellé <b>et</b> sur le code technique : l'écran montre le
+     * libellé, mais un message d'erreur ou une consigne d'administration nomme le code
+     * ({@code faq-publish}), et c'est souvent avec lui qu'on arrive ici.</p>
+     *
+     * <p>Un module dont aucune permission ne correspond disparaît : le laisser vide donnerait à
+     * chercher dans des cartes creuses.</p>
+     */
+    filtrerLesPermissions(): void {
+        const terme = this.recherchePermission.trim().toLowerCase();
+        if (!terme) {
+            this.groupesVisibles = this.groupedPermissions;
+            return;
+        }
+        this.groupesVisibles = this.groupedPermissions
+            .map((groupe) => ({
+                ...groupe,
+                permissions: groupe.permissions.filter((permission) =>
+                    (permission.label ?? '').toLowerCase().includes(terme)
+                    || (permission.value ?? '').toLowerCase().includes(terme)
+                    || (groupe.module ?? '').toLowerCase().includes(terme))
+            }))
+            .filter((groupe) => groupe.permissions.length > 0);
+    }
+
+    /** Combien de permissions la recherche laisse voir, tous modules confondus. */
+    get nombreVisible(): number {
+        return this.groupesVisibles.reduce((total, groupe) => total + groupe.permissions.length, 0);
     }
 
     loadRole(id: string) {
@@ -151,6 +200,8 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
     toggleModule(group: GroupedPermission, event: any) {
         const isChecked = event.checked;
         let selected = [...this.roleForm.value.permissions];
+        // Sur ce qui est montré, et rien d'autre : sous filtre, cocher « Tout » ne doit pas
+        // emporter des permissions que l'utilisateur ne voit pas à cet instant.
         const moduleValues = group.permissions.map((p) => p.value);
 
         if (!isChecked) {

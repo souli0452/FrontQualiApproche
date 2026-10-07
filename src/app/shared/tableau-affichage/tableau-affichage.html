@@ -79,7 +79,9 @@
         [size]="'small'"
         [columns]="tableCols"
         [value]="displayedObjects"
-        selectionMode="single"
+        [selectionMode]="selectionMultiple ? 'multiple' : 'single'"
+        [(selection)]="lignesSelectionnees"
+        (selectionChange)="selectionChange.emit($event)"
         dataKey="id"
         [paginator]="false"
         [loading]="loading"
@@ -97,6 +99,12 @@
         <!-- Table Header -->
         <ng-template pTemplate="header" let-columns>
             <tr class="header-row border-b-1 border-slate-100">
+                <!-- Sélection multiple, sur demande seulement : les écrans qui ne la réclament
+                     pas gardent exactement la table qu'ils avaient. -->
+                <th scope="col" *ngIf="selectionMultiple" style="width: 3rem"
+                    class="py-3 px-4 bg-white dark:bg-slate-900">
+                    <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                </th>
                 <th scope="col" *ngFor="let col of columns; let first = first" 
                     [pSortableColumn]="col.field" 
                     [style.width]="col.width" 
@@ -120,7 +128,13 @@
                 [ngClass]="customRowClass ? customRowClass(rowData) : ''"
                 (click)="onRowClick(rowData)"
                 class="body-row border-b-1 border-slate-100 transition-colors hover:bg-slate-50 dark:hover:bg-surface-800">
-                
+
+                <!-- Le clic sur la case ne doit pas ouvrir la ligne : cocher pour agir en lot et
+                     ouvrir pour lire sont deux intentions différentes. -->
+                <td *ngIf="selectionMultiple" style="width: 3rem" (click)="$event.stopPropagation()">
+                    <p-tableCheckbox [value]="rowData"></p-tableCheckbox>
+                </td>
+
                 <td *ngFor="let col of columns; let first = first" 
                     [style.width]="col.width" 
                     [ngClass]="col.align === 'center' ? 'text-center' : (col.align === 'right' ? 'text-right' : '')"

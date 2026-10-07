@@ -252,7 +252,16 @@ export class AppMenu {
                         ['niveau-confidentialite-read', 'niveau-confidentialite-write', 'CONFIG_READ'],
                         ModuleAbonnement.DOCUMENTAIRE)
                 }
-            ])
+            ]),
+            // En dernier, et hors des sous-groupes à dessein : la foire aux questions ne relève
+            // d'aucun module en particulier — elle répond sur l'application entière. Aucun
+            // ModuleAbonnement n'est donc exigé, contrairement aux référentiels voisins : une
+            // organisation qui ne souscrit ni au documentaire ni aux non-conformités doit
+            // pouvoir écrire son aide. L'assistant IA la lit, mais ne la détient pas.
+            {
+                label: 'Foire aux questions', icon: 'pi pi-fw pi-question-circle', routerLink: ['/faq'],
+                visible: this.peutVoir(['faq-read', 'faq-write', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'])
+            }
         ];
 
         this.model = [
