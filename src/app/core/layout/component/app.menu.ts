@@ -127,8 +127,8 @@ export class AppMenu {
 
         const qualite = [
             {
-                label: 'Audite', icon: 'pi pi-fw pi-eye', routerLink: ['/audite'],
-                visible: this.peutVoir(['AUDITE_READ'], ModuleAbonnement.AUDIT)
+                label: 'Gestion des Audits', icon: 'pi pi-fw pi-clipboard', routerLink: ['/gestion-audit'],
+                visible: this.peutVoir(['audit-read', 'audit-write', 'AUDITE_READ'], ModuleAbonnement.AUDIT)
             },
             {
                 label: 'Non-Conformités', icon: 'pi pi-fw pi-briefcase', routerLink: ['/non-conformite'],

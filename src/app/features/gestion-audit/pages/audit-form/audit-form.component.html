@@ -1,0 +1,184 @@
+<div class="p-6 max-w-4xl mx-auto">
+    <p-toast></p-toast>
+
+    <!-- En-tête -->
+    <div class="flex items-center gap-3 mb-6">
+        <p-button
+            icon="pi pi-arrow-left"
+            [rounded]="true"
+            [text]="true"
+            severity="secondary"
+            (onClick)="annuler()"
+            pTooltip="Retour au programme">
+        </p-button>
+        <div>
+            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">
+                {{ modeEdition ? 'Modifier l\'audit' : 'Planifier un audit' }}
+            </h2>
+            <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">
+                {{ modeEdition ? 'Mise à jour des informations de l\'audit' : 'Création d\'un nouvel audit dans le programme' }}
+            </p>
+        </div>
+    </div>
+
+    <p-skeleton *ngIf="loading" height="600px" borderRadius="12px"></p-skeleton>
+
+    <form *ngIf="!loading" [formGroup]="formulaire" (ngSubmit)="sauvegarder()">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+            <!-- Colonne gauche -->
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5 space-y-4">
+                <h3 class="text-sm font-bold text-surface-700 dark:text-surface-300 uppercase tracking-wide m-0 pb-2 border-b border-surface-100 dark:border-surface-800">
+                    Identification
+                </h3>
+
+                <!-- Référence -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Référence</label>
+                    <input pInputText formControlName="reference" placeholder="Ex: AUD-2026-013 (générée automatiquement)" />
+                </div>
+
+                <!-- Processus -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Processus audité <span class="text-red-500">*</span></label>
+                    <input pInputText formControlName="libelleProcessus" placeholder="Ex: Gestion documentaire, Achats et prestataires…" />
+                    <small *ngIf="formulaire.get('libelleProcessus')?.invalid && formulaire.get('libelleProcessus')?.touched"
+                           class="text-red-500 text-xs">Le processus est requis.</small>
+                </div>
+
+                <!-- Type d'audit -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Type d'audit <span class="text-red-500">*</span></label>
+                    <p-select
+                        formControlName="typeAudit"
+                        [options]="typeAuditOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        class="w-full">
+                    </p-select>
+                </div>
+
+                <!-- Date -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Date de l'audit <span class="text-red-500">*</span></label>
+                    <input pInputText type="date" formControlName="dateAudit" />
+                    <small *ngIf="formulaire.get('dateAudit')?.invalid && formulaire.get('dateAudit')?.touched"
+                           class="text-red-500 text-xs">La date est requise.</small>
+                </div>
+
+                <!-- Sites -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Sites / Périmètres</label>
+                    <input pInputText formControlName="sites" placeholder="Siège, Antenne régionale… (séparés par des virgules)" />
+                </div>
+
+                <!-- Statut -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Statut</label>
+                    <p-select
+                        formControlName="statut"
+                        [options]="statutOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        class="w-full">
+                    </p-select>
+                </div>
+            </div>
+
+            <!-- Colonne droite -->
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5 space-y-4">
+                <h3 class="text-sm font-bold text-surface-700 dark:text-surface-300 uppercase tracking-wide m-0 pb-2 border-b border-surface-100 dark:border-surface-800">
+                    Équipe & Risque
+                </h3>
+
+                <!-- Responsable -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Responsable d'équipe <span class="text-red-500">*</span></label>
+                    <input pInputText formControlName="responsableEquipe" placeholder="Nom, prénom et rôle" />
+                    <small *ngIf="formulaire.get('responsableEquipe')?.invalid && formulaire.get('responsableEquipe')?.touched"
+                           class="text-red-500 text-xs">Le responsable est requis.</small>
+                </div>
+
+                <!-- Auditeurs -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Auditeurs</label>
+                    <input pInputText formControlName="auditeurs" placeholder="Noms des auditeurs (séparés par des virgules)" />
+                </div>
+
+                <!-- Niveau de risque -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Niveau de risque</label>
+                    <p-select
+                        formControlName="niveauRisque"
+                        [options]="niveauRisqueOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        class="w-full">
+                    </p-select>
+                </div>
+
+                <!-- Description risque -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Description du risque</label>
+                    <textarea
+                        pInputTextarea
+                        formControlName="descriptionRisque"
+                        rows="3"
+                        placeholder="Contexte et justification du niveau de risque attribué…"
+                        class="w-full resize-none">
+                    </textarea>
+                </div>
+            </div>
+
+            <!-- Objectif et critères — pleine largeur -->
+            <div class="lg:col-span-2 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5 space-y-4">
+                <h3 class="text-sm font-bold text-surface-700 dark:text-surface-300 uppercase tracking-wide m-0 pb-2 border-b border-surface-100 dark:border-surface-800">
+                    Objectif & Critères
+                </h3>
+
+                <!-- Objectif -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Objectif de l'audit <span class="text-red-500">*</span></label>
+                    <textarea
+                        pInputTextarea
+                        formControlName="objectif"
+                        rows="3"
+                        placeholder="Décrire précisément ce que l'audit vise à vérifier ou évaluer…"
+                        class="w-full resize-y">
+                    </textarea>
+                    <small *ngIf="formulaire.get('objectif')?.invalid && formulaire.get('objectif')?.touched"
+                           class="text-red-500 text-xs">L'objectif est requis.</small>
+                </div>
+
+                <!-- Critères -->
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Critères d'audit</label>
+                    <textarea
+                        pInputTextarea
+                        formControlName="criteres"
+                        rows="2"
+                        placeholder="Référentiels applicables : ISO 9001:2015 §8.4 · RQAP-BF Domaine 4…"
+                        class="w-full resize-y">
+                    </textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3 mt-6">
+            <p-button
+                label="Annuler"
+                [outlined]="true"
+                severity="secondary"
+                type="button"
+                (onClick)="annuler()">
+            </p-button>
+            <p-button
+                [label]="modeEdition ? 'Enregistrer les modifications' : 'Planifier l\'audit'"
+                icon="pi pi-save"
+                type="submit"
+                [loading]="saving">
+            </p-button>
+        </div>
+    </form>
+</div>

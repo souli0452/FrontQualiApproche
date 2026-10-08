@@ -1,0 +1,184 @@
+<p-card>
+
+    <!-- Barre de filtres -->
+    <div class="flex flex-wrap items-center gap-3 mb-5">
+
+        <!-- Recherche -->
+        <span class="p-input-icon-left flex-1 min-w-[200px]">
+            <i class="pi pi-search"></i>
+            <input
+                pInputText
+                type="text"
+                placeholder="Rechercher par référence, processus, responsable…"
+                class="w-full"
+                [(ngModel)]="searchText"
+                (ngModelChange)="onSearch($event)" />
+        </span>
+
+        <!-- Filtre statut -->
+        <p-select
+            [options]="statutOptions"
+            [(ngModel)]="filtres.statut"
+            placeholder="Tous les statuts"
+            optionLabel="label"
+            optionValue="value"
+            showClear="true"
+            (onChange)="onFiltreStatut($event.value)"
+            class="min-w-[180px]">
+        </p-select>
+
+        <!-- Filtre type d'audit -->
+        <p-select
+            [options]="typeAuditOptions"
+            [(ngModel)]="filtres.typeAudit"
+            placeholder="Tous les types"
+            optionLabel="label"
+            optionValue="value"
+            showClear="true"
+            (onChange)="onFiltreType($event.value)"
+            class="min-w-[220px]">
+        </p-select>
+
+        <!-- Réinitialiser -->
+        <p-button
+            icon="pi pi-filter-slash"
+            label="Réinitialiser"
+            [outlined]="true"
+            severity="secondary"
+            size="small"
+            (onClick)="reinitialiserFiltres()">
+        </p-button>
+
+        <!-- Nouveau -->
+        <p-button
+            icon="pi pi-plus"
+            label="Planifier un audit"
+            (onClick)="creerAudit()">
+        </p-button>
+    </div>
+
+    <!-- Tableau -->
+    <div class="overflow-hidden rounded-xl border border-surface-200 dark:border-surface-700">
+        <table class="w-full border-collapse text-sm">
+            <thead>
+                <tr class="bg-surface-50 dark:bg-surface-800 border-b border-surface-200 dark:border-surface-700">
+                    <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Référence</th>
+                    <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Processus audité</th>
+                    <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Type</th>
+                    <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Responsable</th>
+                    <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Date</th>
+                    <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Score</th>
+                    <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Statut</th>
+                    <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <!-- Skeleton -->
+                <ng-container *ngIf="loading">
+                    <tr *ngFor="let i of [1,2,3,4,5]">
+                        <td class="px-4 py-3" colspan="8">
+                            <p-skeleton height="1.5rem"></p-skeleton>
+                        </td>
+                    </tr>
+                </ng-container>
+
+                <!-- Empty state -->
+                <tr *ngIf="!loading && audits.length === 0">
+                    <td colspan="8" class="py-16 text-center">
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center text-blue-500">
+                                <i class="pi pi-clipboard text-3xl"></i>
+                            </div>
+                            <p class="text-sm font-medium text-surface-700 dark:text-surface-300">Aucun audit trouvé</p>
+                            <p class="text-xs text-surface-500 dark:text-surface-400">Modifiez vos filtres ou planifiez un premier audit.</p>
+                            <p-button label="Planifier un audit" icon="pi pi-plus" size="small" (onClick)="creerAudit()"></p-button>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Données -->
+                <tr *ngFor="let audit of audits; trackBy: trackByAuditId"
+                    class="border-b border-surface-100 dark:border-surface-800 hover:bg-surface-50 dark:hover:bg-surface-800/40 cursor-pointer transition-colors"
+                    (click)="ouvrirDetail(audit)">
+
+                    <td class="px-4 py-3 font-mono text-xs font-semibold text-primary whitespace-nowrap">
+                        {{ audit.reference ?? '—' }}
+                    </td>
+
+                    <td class="px-4 py-3">
+                        <span class="text-sm font-medium text-surface-900 dark:text-surface-100 line-clamp-2 max-w-[200px] block">
+                            {{ audit.libelleProcessus ?? '—' }}
+                        </span>
+                    </td>
+
+                    <td class="px-4 py-3 text-xs text-surface-600 dark:text-surface-400 whitespace-nowrap">
+                        {{ getTypeLabel(audit.typeAudit ?? '') }}
+                    </td>
+
+                    <td class="px-4 py-3 text-xs text-surface-700 dark:text-surface-300 whitespace-nowrap">
+                        {{ audit.responsableEquipe ?? '—' }}
+                    </td>
+
+                    <td class="px-4 py-3 text-xs text-surface-600 dark:text-surface-400 whitespace-nowrap">
+                        {{ audit.dateAudit ?? '—' }}
+                    </td>
+
+                    <td class="px-4 py-3">
+                        <span *ngIf="audit.score !== undefined && audit.score !== null"
+                              class="text-sm font-bold"
+                              [class]="audit.score >= 70 ? 'text-emerald-600 dark:text-emerald-400' : audit.score >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'">
+                            {{ audit.score }}%
+                        </span>
+                        <span *ngIf="audit.score === undefined || audit.score === null"
+                              class="text-xs text-surface-400 dark:text-surface-600">—</span>
+                    </td>
+
+                    <td class="px-4 py-3">
+                        <p-tag
+                            *ngIf="audit.statut"
+                            [value]="getStatutLabel(audit.statut)"
+                            [severity]="getStatutSeverity(audit.statut)"
+                            [rounded]="true">
+                        </p-tag>
+                    </td>
+
+                    <td class="px-4 py-3" (click)="$event.stopPropagation()">
+                        <div class="flex items-center gap-1">
+                            <p-button
+                                icon="pi pi-eye"
+                                [rounded]="true"
+                                [text]="true"
+                                severity="secondary"
+                                size="small"
+                                pTooltip="Consulter"
+                                tooltipPosition="top"
+                                (onClick)="ouvrirDetail(audit)">
+                            </p-button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-end mt-4" *ngIf="totalElements > pageSize">
+        <p-paginator
+            [rows]="pageSize"
+            [totalRecords]="totalElements"
+            [first]="currentPage * pageSize"
+            [rowsPerPageOptions]="[10, 25, 50]"
+            (onPageChange)="onPageChange($event)">
+        </p-paginator>
+    </div>
+
+    <!-- Compteur résultats -->
+    <div class="flex items-center justify-between mt-3 text-xs text-surface-500 dark:text-surface-400" *ngIf="!loading">
+        <span>{{ totalElements }} audit{{ totalElements > 1 ? 's' : '' }} au total</span>
+        <span *ngIf="totalElements > 0">
+            Page {{ currentPage + 1 }} sur {{ Math.ceil(totalElements / pageSize) || 1 }}
+        </span>
+    </div>
+
+</p-card>

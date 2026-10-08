@@ -415,6 +415,17 @@ export default [
     { path: 'configuration-workflow/document/detail/:id', redirectTo: '/configurations/circuits', pathMatch: 'full' },
 
     {
+        path: 'gestion-audit',
+        loadChildren: () => import('../features/gestion-audit/audit.routes').then(m => m.AUDIT_ROUTES),
+        canActivate: [permissionGuard],
+        data: {
+            breadcrumb: 'Gestion des Audits',
+            permissions: ['audit-read', 'audit-write', 'AUDITE_READ'],
+            module: ModuleAbonnement.AUDIT
+        }
+    },
+
+    {
         path: 'non-conformite',
         component: NonConformiteLayoutComponent,
         canActivate: [permissionGuard],
