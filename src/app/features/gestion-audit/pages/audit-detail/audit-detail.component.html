@@ -1,5 +1,6 @@
 <div class="p-6 max-w-5xl mx-auto">
     <p-toast></p-toast>
+    <p-confirmDialog></p-confirmDialog>
 
     <!-- Skeleton -->
     <div *ngIf="loading" class="space-y-4">
@@ -40,21 +41,79 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Lifecycle transitions -->
                 <p-button
-                    icon="pi pi-file-pdf"
-                    label="Rapport PDF"
+                    *ngIf="peutValider"
+                    icon="pi pi-check-circle"
+                    label="Valider"
+                    size="small"
+                    severity="info"
+                    [loading]="actionEnCours"
+                    (onClick)="valider()">
+                </p-button>
+                <p-button
+                    *ngIf="peutDemarrer"
+                    icon="pi pi-play"
+                    label="Démarrer"
+                    size="small"
+                    severity="success"
+                    [loading]="actionEnCours"
+                    (onClick)="demarrer()">
+                </p-button>
+                <p-button
+                    *ngIf="peutCloturer"
+                    icon="pi pi-lock"
+                    label="Clôturer"
+                    size="small"
+                    severity="warn"
+                    [loading]="actionEnCours"
+                    (onClick)="cloturer()">
+                </p-button>
+                <p-button
+                    *ngIf="peutAnnuler"
+                    icon="pi pi-times-circle"
+                    label="Annuler"
+                    size="small"
+                    [outlined]="true"
+                    severity="danger"
+                    [loading]="actionEnCours"
+                    (onClick)="ouvrirDialogueAnnulation()">
+                </p-button>
+                <p-button
+                    *ngIf="peutTransmettreEcarts"
+                    icon="pi pi-share-alt"
+                    label="Transmettre écarts"
+                    size="small"
+                    severity="secondary"
+                    [outlined]="true"
+                    [loading]="actionEnCours"
+                    (onClick)="transmettreEcarts()">
+                </p-button>
+
+                <!-- Export rapport -->
+                <p-button
+                    icon="pi pi-file-export"
+                    label="Exporter"
                     [outlined]="true"
                     severity="secondary"
                     size="small"
-                    [disabled]="audit.statut !== StatutAudit.CLOTURE"
-                    pTooltip="Disponible une fois l'audit clôturé"
-                    (onClick)="telechargerRapport()">
+                    [disabled]="audit.statut !== StatutAudit.CLOTURE">
+                    <ng-template pTemplate="content">
+                        <span class="pi pi-file-export mr-2"></span>
+                        Exporter
+                        <p-menu #menuExport [model]="[
+                            { label: 'PDF', icon: 'pi pi-file-pdf', command: exporterPdf.bind(this) },
+                            { label: 'Word', icon: 'pi pi-file-word', command: exporterWord.bind(this) }
+                        ]" [popup]="true"></p-menu>
+                    </ng-template>
                 </p-button>
+
                 <p-button
                     icon="pi pi-pencil"
                     label="Modifier"
                     size="small"
+                    [outlined]="true"
                     (onClick)="modifierAudit()">
                 </p-button>
             </div>
@@ -237,5 +296,43 @@
         <p class="text-sm text-surface-500 dark:text-surface-400 mb-4">L'audit demandé n'existe pas ou n'est plus accessible.</p>
         <p-button label="Retour au programme" icon="pi pi-arrow-left" (onClick)="retourListe()"></p-button>
     </div>
+
+    <!-- Dialogue annulation -->
+    <p-dialog
+        header="Motif d'annulation"
+        [(visible)]="afficherDialogueAnnulation"
+        [modal]="true"
+        [style]="{ width: '420px' }"
+        [closable]="true">
+        <div class="space-y-3">
+            <p class="text-sm text-surface-600 dark:text-surface-400 m-0">
+                Indiquez pourquoi cet audit est annulé. Ce motif sera conservé dans l'historique.
+            </p>
+            <textarea
+                pInputTextarea
+                [(ngModel)]="motifAnnulation"
+                rows="3"
+                class="w-full"
+                placeholder="Motif de l'annulation…"
+                [autoResize]="true">
+            </textarea>
+        </div>
+        <ng-template pTemplate="footer">
+            <p-button
+                label="Annuler l'opération"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="afficherDialogueAnnulation = false">
+            </p-button>
+            <p-button
+                label="Confirmer l'annulation"
+                severity="danger"
+                size="small"
+                [disabled]="!motifAnnulation.trim()"
+                (onClick)="confirmerAnnulation()">
+            </p-button>
+        </ng-template>
+    </p-dialog>
 
 </div>

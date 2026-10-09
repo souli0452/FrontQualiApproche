@@ -1,0 +1,72 @@
+<div class="p-6 max-w-3xl mx-auto">
+    <p-toast></p-toast>
+
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Signatures</h2>
+            <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">Validation électronique du rapport d'audit</p>
+        </div>
+        <div class="flex gap-2">
+            <p-button
+                icon="pi pi-times-circle"
+                label="Refuser"
+                severity="danger"
+                [outlined]="true"
+                size="small"
+                [loading]="actionEnCours"
+                (onClick)="ouvrirDialogueRefus()">
+            </p-button>
+            <p-button
+                icon="pi pi-check"
+                label="Signer"
+                size="small"
+                [loading]="actionEnCours"
+                (onClick)="signer()">
+            </p-button>
+        </div>
+    </div>
+
+    <div *ngIf="loading" class="space-y-3">
+        <p-skeleton *ngFor="let i of [1,2,3]" height="4rem" borderRadius="8px"></p-skeleton>
+    </div>
+
+    <div *ngIf="!loading && signatures.length === 0" class="flex flex-col items-center justify-center py-20">
+        <i class="pi pi-pencil text-5xl text-surface-300 dark:text-surface-600 mb-4"></i>
+        <p class="text-sm text-surface-500 dark:text-surface-400 m-0">Aucune signature enregistrée pour cet audit.</p>
+    </div>
+
+    <div *ngIf="!loading && signatures.length > 0"
+         class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
+        <div *ngFor="let s of signatures; trackBy: trackById"
+             class="flex items-center gap-4 p-4 border-b border-surface-100 dark:border-surface-800 last:border-0">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                 [class]="s.statut === 'SIGNE' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400' : s.statut === 'REFUSE' ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400' : 'bg-surface-100 dark:bg-surface-800 text-surface-500'">
+                <i [class]="s.statut === 'SIGNE' ? 'pi pi-check' : s.statut === 'REFUSE' ? 'pi pi-times' : 'pi pi-clock'"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="font-semibold text-surface-900 dark:text-surface-100 text-sm m-0">{{ s.signataire ?? 'Signataire' }}</p>
+                <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mt-0.5">
+                    <span *ngIf="s.dateSignature">Signé le {{ s.dateSignature | date:'dd/MM/yyyy HH:mm' }}</span>
+                    <span *ngIf="s.motifRefus"> · Motif : {{ s.motifRefus }}</span>
+                </p>
+            </div>
+            <p-tag
+                [value]="s.statut === 'SIGNE' ? 'Signé' : s.statut === 'REFUSE' ? 'Refusé' : 'En attente'"
+                [severity]="s.statut === 'SIGNE' ? 'success' : s.statut === 'REFUSE' ? 'danger' : 'secondary'"
+                [rounded]="true">
+            </p-tag>
+        </div>
+    </div>
+
+    <!-- Dialogue refus -->
+    <p-dialog header="Motif du refus" [(visible)]="afficherDialogueRefus" [modal]="true" [style]="{ width: '420px' }">
+        <div class="space-y-3">
+            <p class="text-sm text-surface-600 dark:text-surface-400 m-0">Indiquez la raison de votre refus de signature.</p>
+            <textarea pInputTextarea [(ngModel)]="motifRefus" rows="3" class="w-full" placeholder="Motif du refus…" [autoResize]="true"></textarea>
+        </div>
+        <ng-template pTemplate="footer">
+            <p-button label="Annuler" severity="secondary" [outlined]="true" size="small" (onClick)="afficherDialogueRefus = false"></p-button>
+            <p-button label="Confirmer le refus" severity="danger" size="small" [disabled]="!motifRefus.trim()" (onClick)="confirmerRefus()"></p-button>
+        </ng-template>
+    </p-dialog>
+</div>

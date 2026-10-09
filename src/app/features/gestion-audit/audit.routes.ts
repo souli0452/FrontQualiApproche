@@ -33,9 +33,39 @@ export const AUDIT_ROUTES: Routes = [
                 title: "Détail de l'audit"
             },
             {
+                path: 'programme/:id/plan',
+                loadComponent: () => import('./pages/plan-audit/plan-audit.component').then(m => m.PlanAuditComponent),
+                title: "Plan d'audit"
+            },
+            {
+                path: 'programme/:id/signatures',
+                loadComponent: () => import('./pages/signatures/signatures.component').then(m => m.AuditSignaturesComponent),
+                title: 'Signatures'
+            },
+            {
+                path: 'programme/:id/evaluation-rqapbf',
+                loadComponent: () => import('./pages/evaluation-rqapbf/evaluation-rqapbf.component').then(m => m.EvaluationRQAPBFComponent),
+                title: 'Évaluation RQAP-BF'
+            },
+            {
                 path: 'constatations',
                 loadComponent: () => import('./pages/constatations/constatations.component').then(m => m.AuditConstatationsComponent),
                 title: 'Constatations'
+            },
+            {
+                path: 'checklists',
+                loadComponent: () => import('./pages/checklists/checklists.component').then(m => m.AuditChecklistsComponent),
+                title: 'Checklists'
+            },
+            {
+                path: 'auditeurs',
+                loadComponent: () => import('./pages/auditeurs/auditeurs.component').then(m => m.AuditAuditeursComponent),
+                title: 'Auditeurs'
+            },
+            {
+                path: 'referentiel-rqapbf',
+                loadComponent: () => import('./pages/referentiel-rqapbf/referentiel-rqapbf.component').then(m => m.ReferentielRQAPBFComponent),
+                title: 'Référentiel RQAP-BF'
             }
         ]
     }

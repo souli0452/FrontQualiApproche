@@ -97,6 +97,22 @@ export const NIVEAU_EFFICACITE_LABELS: Record<NiveauEfficacite, string> = {
     [NiveauEfficacite.NON_EFFICACE]: 'Non efficace'
 };
 
+export const NIVEAU_NOTATION_RQAPBF_LABELS: Record<NiveauNotationRQAPBF, string> = {
+    [NiveauNotationRQAPBF.NON_CONFORME]: 'Non conforme',
+    [NiveauNotationRQAPBF.A_AMELIORER]: 'À améliorer',
+    [NiveauNotationRQAPBF.ACCEPTABLE]: 'Acceptable',
+    [NiveauNotationRQAPBF.CONFORME]: 'Conforme',
+    [NiveauNotationRQAPBF.NON_APPLICABLE]: 'Non applicable'
+};
+
+export const NIVEAU_NOTATION_RQAPBF_SEVERITY: Record<NiveauNotationRQAPBF, string> = {
+    [NiveauNotationRQAPBF.NON_CONFORME]: 'danger',
+    [NiveauNotationRQAPBF.A_AMELIORER]: 'warn',
+    [NiveauNotationRQAPBF.ACCEPTABLE]: 'info',
+    [NiveauNotationRQAPBF.CONFORME]: 'success',
+    [NiveauNotationRQAPBF.NON_APPLICABLE]: 'secondary'
+};
+
 export const NIVEAU_EFFICACITE_SEVERITY: Record<NiveauEfficacite, string> = {
     [NiveauEfficacite.NON_EVALUEE]: 'secondary',
     [NiveauEfficacite.EFFICACE]: 'success',

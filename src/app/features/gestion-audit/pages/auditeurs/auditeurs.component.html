@@ -1,0 +1,80 @@
+<div class="p-6">
+    <p-toast></p-toast>
+    <p-confirmDialog></p-confirmDialog>
+
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Auditeurs</h2>
+            <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">Gestion des fiches auditeurs qualifiés</p>
+        </div>
+        <p-button icon="pi pi-plus" label="Nouvel auditeur" (onClick)="ouvrirCreation()"></p-button>
+    </div>
+
+    <div *ngIf="loading" class="space-y-3">
+        <p-skeleton *ngFor="let i of [1,2,3,4]" height="5rem" borderRadius="8px"></p-skeleton>
+    </div>
+
+    <div *ngIf="!loading && auditeurs.length === 0" class="flex flex-col items-center justify-center py-20">
+        <i class="pi pi-users text-5xl text-surface-300 dark:text-surface-600 mb-4"></i>
+        <p class="text-sm text-surface-500 dark:text-surface-400 m-0">Aucun auditeur enregistré.</p>
+    </div>
+
+    <div *ngIf="!loading && auditeurs.length > 0">
+        <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
+            <div *ngFor="let a of auditeurs; trackBy: trackById"
+                 class="flex items-center gap-4 p-4 border-b border-surface-100 dark:border-surface-800 last:border-0 hover:bg-surface-50 dark:hover:bg-surface-800/40 transition-colors">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
+                    {{ (a.prenom?.[0] ?? '') + (a.nom?.[0] ?? '') | uppercase }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-surface-900 dark:text-surface-100 text-sm m-0">{{ a.nom }} {{ a.prenom }}</p>
+                    <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mt-0.5">
+                        <span *ngIf="a.qualification">{{ a.qualification }}</span>
+                        <span *ngIf="a.email" class="ml-2">· {{ a.email }}</span>
+                    </p>
+                </div>
+                <div class="flex gap-1 shrink-0">
+                    <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="secondary" size="small" pTooltip="Modifier" (onClick)="ouvrirEdition(a)"></p-button>
+                    <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" size="small" pTooltip="Supprimer" (onClick)="supprimer(a)"></p-button>
+                </div>
+            </div>
+        </div>
+
+        <p-paginator
+            *ngIf="totalElements > pageSize"
+            [rows]="pageSize"
+            [totalRecords]="totalElements"
+            [first]="currentPage * pageSize"
+            (onPageChange)="onPageChange($event)"
+            styleClass="mt-4">
+        </p-paginator>
+    </div>
+
+    <p-dialog [header]="auditeurEnEdition ? 'Modifier l\'auditeur' : 'Nouvel auditeur'"
+              [(visible)]="afficherDialogue" [modal]="true" [style]="{ width: '500px' }" [closable]="true">
+        <form [formGroup]="formulaire" class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-medium text-surface-700 dark:text-surface-300 block mb-1">Nom <span class="text-red-500">*</span></label>
+                    <input pInputText formControlName="nom" class="w-full" placeholder="Nom" />
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-surface-700 dark:text-surface-300 block mb-1">Prénom</label>
+                    <input pInputText formControlName="prenom" class="w-full" placeholder="Prénom" />
+                </div>
+            </div>
+            <div>
+                <label class="text-xs font-medium text-surface-700 dark:text-surface-300 block mb-1">Qualification</label>
+                <input pInputText formControlName="qualification" class="w-full" placeholder="Ex : Auditeur interne ISO 19011" />
+            </div>
+            <div>
+                <label class="text-xs font-medium text-surface-700 dark:text-surface-300 block mb-1">Email</label>
+                <input pInputText formControlName="email" type="email" class="w-full" placeholder="email@exemple.com" />
+            </div>
+        </form>
+        <ng-template pTemplate="footer">
+            <p-button label="Annuler" severity="secondary" [outlined]="true" size="small" (onClick)="afficherDialogue = false"></p-button>
+            <p-button label="Sauvegarder" size="small" [loading]="saving" (onClick)="sauvegarder()"></p-button>
+        </ng-template>
+    </p-dialog>
+</div>

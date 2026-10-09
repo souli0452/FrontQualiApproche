@@ -83,6 +83,8 @@ export interface PlanAudit {
     methodesAudit?: string[];
     lieu?: string;
     langue?: string;
+    dateDebut?: string;
+    dateFin?: string;
     moyensNecessaires?: string;
     origine?: string;
     fichierCharge?: boolean;
@@ -169,6 +171,7 @@ export interface SignatureAudit {
     id?: string;
     auditId?: string;
     signataireId?: string;
+    signataire?: string;
     fonctionSignataire?: string;
     ordre?: number;
     statut?: string;
@@ -235,6 +238,11 @@ export interface EvaluationRQAPBF {
 export interface AuditeurFiche {
     id?: string;
     utilisateurId?: string;
+    nom?: string;
+    prenom?: string;
+    email?: string;
+    telephone?: string;
+    qualification?: string;
     domainesHabilites?: string[];
     certifications?: string[];
     disponibilite?: string;

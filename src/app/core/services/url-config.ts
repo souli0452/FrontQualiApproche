@@ -55,8 +55,6 @@ export class UrlConfig {
     static readonly AUDIT_EVALUATIONS_RQAPBF_URL = `${EVALUATION_SERVICE}/evaluations-rqapbf`;
     static readonly AUDIT_EVALUATIONS_AUDITEUR_URL = `${EVALUATION_SERVICE}/evaluations-auditeur`;
     static readonly AUDIT_REFERENTIEL_RQAPBF_URL = `${EVALUATION_SERVICE}/referentiel-rqapbf`;
-    static readonly AUDIT_PLANS_URL = `${EVALUATION_SERVICE}/plans-audit`;
-    static readonly AUDIT_SIGNATURES_URL = `${EVALUATION_SERVICE}/signatures-audit`;
 
     // Support Service (Gestion Documentaire QMS)
     static readonly QMS_DOCUMENT_ROOT_URL = `${SUPPORT_SERVICE}/qms/documents`;

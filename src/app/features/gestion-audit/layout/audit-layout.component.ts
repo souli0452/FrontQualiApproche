@@ -55,6 +55,21 @@ export class AuditLayoutComponent implements OnInit, OnDestroy {
                 label: 'Constatations',
                 icon: 'pi pi-file-check',
                 routerLink: '/gestion-audit/constatations'
+            },
+            {
+                label: 'Checklists',
+                icon: 'pi pi-list-check',
+                routerLink: '/gestion-audit/checklists'
+            },
+            {
+                label: 'Auditeurs',
+                icon: 'pi pi-users',
+                routerLink: '/gestion-audit/auditeurs'
+            },
+            {
+                label: 'Référentiel RQAP-BF',
+                icon: 'pi pi-sitemap',
+                routerLink: '/gestion-audit/referentiel-rqapbf'
             }
         ];
     }

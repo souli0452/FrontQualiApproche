@@ -14,11 +14,22 @@ import {
 import { ApiItemResponse, ApiResponse } from '../../../models/response.model';
 import { NiveauEfficacite } from '../models/audit-enums';
 
+const AUDITS = UrlConfig.AUDIT_ROOT_URL;
+const CONSTATS = UrlConfig.AUDIT_CONSTATS_URL;
+const CHECKLISTS = UrlConfig.AUDIT_CHECKLISTS_URL;
+const AUDITEURS = UrlConfig.AUDIT_AUDITEURS_URL;
+const EVALS_AUDITEUR = UrlConfig.AUDIT_EVALUATIONS_AUDITEUR_URL;
+const EVALS_RQAPBF = UrlConfig.AUDIT_EVALUATIONS_RQAPBF_URL;
+const REF_RQAPBF = UrlConfig.AUDIT_REFERENTIEL_RQAPBF_URL;
+const TYPES_AUDIT = UrlConfig.AUDIT_TYPES_AUDIT_URL;
+const TYPES_CONSTAT = UrlConfig.AUDIT_TYPES_CONSTAT_URL;
+const SITES = UrlConfig.AUDIT_SITES_URL;
+
 @Injectable({ providedIn: 'root' })
 export class AuditGestionService extends BaseCrudService<Audit, string> {
 
     constructor(public override http: HttpClient) {
-        super(http, UrlConfig.AUDIT_ROOT_URL);
+        super(http, AUDITS);
     }
 
     // ---- Tableau de bord ----
@@ -26,7 +37,7 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
     getTableauDeBord(annee?: number): Observable<ApiItemResponse<TableauDeBord>> {
         const params = annee ? this.buildParams({ annee }) : undefined;
         return this.http.get<ApiItemResponse<TableauDeBord>>(
-            `${UrlConfig.AUDIT_ROOT_URL}/tableau-de-bord`,
+            `${AUDITS}/tableau-de-bord`,
             params ? { params } : {}
         );
     }
@@ -35,34 +46,42 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
 
     getAvancement(auditId: string): Observable<ApiItemResponse<AvancementAudit>> {
         return this.http.get<ApiItemResponse<AvancementAudit>>(
-            `${UrlConfig.AUDIT_ROOT_URL}/${auditId}/avancement`
+            `${AUDITS}/${auditId}/avancement`
         );
     }
 
-    // ---- Cycle de vie ----
+    // ---- Cycle de vie (PUT — transitions d'état backend) ----
 
     validerAudit(auditId: string): Observable<ApiItemResponse<Audit>> {
-        return this.http.post<ApiItemResponse<Audit>>(
-            `${UrlConfig.AUDIT_ROOT_URL}/${auditId}/valider`, null
+        return this.http.put<ApiItemResponse<Audit>>(
+            `${AUDITS}/${auditId}/valider`, null
         );
     }
 
     demarrerAudit(auditId: string): Observable<ApiItemResponse<Audit>> {
-        return this.http.post<ApiItemResponse<Audit>>(
-            `${UrlConfig.AUDIT_ROOT_URL}/${auditId}/demarrer`, null
+        return this.http.put<ApiItemResponse<Audit>>(
+            `${AUDITS}/${auditId}/demarrer`, null
         );
     }
 
     annulerAudit(auditId: string, motif?: string): Observable<ApiItemResponse<Audit>> {
-        return this.http.post<ApiItemResponse<Audit>>(
-            `${UrlConfig.AUDIT_ROOT_URL}/${auditId}/annuler`,
+        return this.http.put<ApiItemResponse<Audit>>(
+            `${AUDITS}/${auditId}/annuler`,
             motif ? { motif } : null
         );
     }
 
     cloturerAudit(auditId: string): Observable<ApiItemResponse<Audit>> {
-        return this.http.post<ApiItemResponse<Audit>>(
-            `${UrlConfig.AUDIT_ROOT_URL}/${auditId}/cloturer`, null
+        return this.http.put<ApiItemResponse<Audit>>(
+            `${AUDITS}/${auditId}/cloturer`, null
+        );
+    }
+
+    validerProgramme(annee: number): Observable<ApiItemResponse<any>> {
+        return this.http.put<ApiItemResponse<any>>(
+            `${AUDITS}/valider-programme`,
+            null,
+            { params: this.buildParams({ annee }) }
         );
     }
 
@@ -70,7 +89,7 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
 
     getRapport(auditId: string): Observable<ApiItemResponse<RapportAudit>> {
         return this.http.get<ApiItemResponse<RapportAudit>>(
-            `${UrlConfig.AUDIT_ROOT_URL}/${auditId}/rapport`
+            `${AUDITS}/${auditId}/rapport`
         );
     }
 
@@ -78,7 +97,7 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
         const formData = new FormData();
         formData.append('fichier', fichier);
         return this.http.post<ApiItemResponse<Audit>>(
-            `${UrlConfig.AUDIT_ROOT_URL}/${auditId}/rapport`, formData
+            `${AUDITS}/${auditId}/rapport/fichier`, formData
         );
     }
 
@@ -87,42 +106,35 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
         payload: { conclusionsRapport?: string; recommandationsRapport?: string }
     ): Observable<ApiItemResponse<Audit>> {
         return this.http.put<ApiItemResponse<Audit>>(
-            `${UrlConfig.AUDIT_ROOT_URL}/${auditId}/rapport/redaction`, payload
+            `${AUDITS}/${auditId}/rapport/redaction`, payload
         );
     }
 
     telechargerRapportFichier(auditId: string): Observable<Blob> {
         return this.http.get(
-            `${UrlConfig.AUDIT_ROOT_URL}/${auditId}/rapport/fichier`,
+            `${AUDITS}/${auditId}/rapport/fichier`,
             { responseType: 'blob' }
         );
     }
 
-    exporterRapportPdf(auditId: string): Observable<Blob> {
+    exporterRapport(auditId: string, format: 'PDF' | 'WORD'): Observable<Blob> {
         return this.http.get(
-            `${UrlConfig.AUDIT_ROOT_URL}/${auditId}/rapport/export/pdf`,
-            { responseType: 'blob' }
-        );
-    }
-
-    exporterRapportWord(auditId: string): Observable<Blob> {
-        return this.http.get(
-            `${UrlConfig.AUDIT_ROOT_URL}/${auditId}/rapport/export/word`,
-            { responseType: 'blob' }
+            `${AUDITS}/${auditId}/rapport/export`,
+            { responseType: 'blob', params: this.buildParams({ format }) }
         );
     }
 
     // ---- Écarts & actions de maîtrise des risques ----
 
     transmettreEcarts(auditId: string): Observable<ApiItemResponse<any>> {
-        return this.http.post<ApiItemResponse<any>>(
-            `${UrlConfig.AUDIT_ROOT_URL}/${auditId}/transmettre-ecarts`, null
+        return this.http.put<ApiItemResponse<any>>(
+            `${AUDITS}/${auditId}/transmettre-ecarts`, null
         );
     }
 
     getActionsMaitriseRisques(auditId: string): Observable<ApiItemResponse<ActionMaitriseRisque[]>> {
         return this.http.get<ApiItemResponse<ActionMaitriseRisque[]>>(
-            `${UrlConfig.AUDIT_ROOT_URL}/${auditId}/actions-risque`
+            `${AUDITS}/${auditId}/actions-risque`
         );
     }
 
@@ -131,7 +143,7 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
         actions: ActionMaitriseRisque[]
     ): Observable<ApiItemResponse<ActionMaitriseRisque[]>> {
         return this.http.put<ApiItemResponse<ActionMaitriseRisque[]>>(
-            `${UrlConfig.AUDIT_ROOT_URL}/${auditId}/actions-risque`, actions
+            `${AUDITS}/${auditId}/actions-risque`, actions
         );
     }
 
@@ -140,8 +152,8 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
         actionId: string,
         efficacite: NiveauEfficacite
     ): Observable<ApiItemResponse<ActionMaitriseRisque>> {
-        return this.http.patch<ApiItemResponse<ActionMaitriseRisque>>(
-            `${UrlConfig.AUDIT_ROOT_URL}/${auditId}/actions-risque/${actionId}/efficacite`,
+        return this.http.put<ApiItemResponse<ActionMaitriseRisque>>(
+            `${AUDITS}/${auditId}/actions-risque/${actionId}/efficacite`,
             null,
             { params: this.buildParams({ efficacite }) }
         );
@@ -158,56 +170,58 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
         const p: Record<string, any> = { auditId, page, size };
         if (statut) p['statut'] = statut;
         return this.http.get<ApiResponse<ConstatAudit>>(
-            UrlConfig.AUDIT_CONSTATS_URL,
+            `${CONSTATS}/all`,
             { params: this.buildParams(p) }
         );
     }
 
     getConstatById(id: string): Observable<ApiItemResponse<ConstatAudit>> {
         return this.http.get<ApiItemResponse<ConstatAudit>>(
-            `${UrlConfig.AUDIT_CONSTATS_URL}/${id}`
+            `${CONSTATS}/get/${id}`
         );
     }
 
     creerConstat(payload: Partial<ConstatAudit>): Observable<ApiItemResponse<ConstatAudit>> {
         return this.http.post<ApiItemResponse<ConstatAudit>>(
-            UrlConfig.AUDIT_CONSTATS_URL, payload
+            `${CONSTATS}/create`, payload
         );
     }
 
     mettreAJourConstat(id: string, payload: Partial<ConstatAudit>): Observable<ApiItemResponse<ConstatAudit>> {
         return this.http.put<ApiItemResponse<ConstatAudit>>(
-            `${UrlConfig.AUDIT_CONSTATS_URL}/${id}`, payload
+            `${CONSTATS}/update/${id}`, payload
         );
     }
 
     supprimerConstat(id: string): Observable<ApiItemResponse<any>> {
         return this.http.delete<ApiItemResponse<any>>(
-            `${UrlConfig.AUDIT_CONSTATS_URL}/${id}`
+            `${CONSTATS}/delete/${id}`
         );
     }
 
+    // Transitions 3-états (PUT — BROUILLON → COMPILE → PUBLIE)
+
     validerConstat(id: string): Observable<ApiItemResponse<ConstatAudit>> {
-        return this.http.post<ApiItemResponse<ConstatAudit>>(
-            `${UrlConfig.AUDIT_CONSTATS_URL}/${id}/valider`, null
+        return this.http.put<ApiItemResponse<ConstatAudit>>(
+            `${CONSTATS}/${id}/valider`, null
         );
     }
 
     retirerConstat(id: string): Observable<ApiItemResponse<ConstatAudit>> {
-        return this.http.post<ApiItemResponse<ConstatAudit>>(
-            `${UrlConfig.AUDIT_CONSTATS_URL}/${id}/retirer`, null
+        return this.http.put<ApiItemResponse<ConstatAudit>>(
+            `${CONSTATS}/${id}/retirer`, null
         );
     }
 
     publierConstat(id: string): Observable<ApiItemResponse<ConstatAudit>> {
-        return this.http.post<ApiItemResponse<ConstatAudit>>(
-            `${UrlConfig.AUDIT_CONSTATS_URL}/${id}/publier`, null
+        return this.http.put<ApiItemResponse<ConstatAudit>>(
+            `${CONSTATS}/${id}/publier`, null
         );
     }
 
     publierMesConstats(auditId: string): Observable<ApiItemResponse<any>> {
-        return this.http.post<ApiItemResponse<any>>(
-            `${UrlConfig.AUDIT_CONSTATS_URL}/publier-mes-constats`,
+        return this.http.put<ApiItemResponse<any>>(
+            `${CONSTATS}/publier-mes-constats`,
             null,
             { params: this.buildParams({ auditId }) }
         );
@@ -215,28 +229,30 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
 
     getMesBrouillons(auditId: string): Observable<ApiResponse<ConstatAudit>> {
         return this.http.get<ApiResponse<ConstatAudit>>(
-            `${UrlConfig.AUDIT_CONSTATS_URL}/mes-brouillons`,
+            `${CONSTATS}/mes-brouillons`,
             { params: this.buildParams({ auditId }) }
         );
     }
 
     getMesPoints(auditId: string): Observable<ApiResponse<ConstatAudit>> {
         return this.http.get<ApiResponse<ConstatAudit>>(
-            `${UrlConfig.AUDIT_CONSTATS_URL}/mes-points`,
+            `${CONSTATS}/mes-points`,
             { params: this.buildParams({ auditId }) }
         );
     }
 
     getSyntheseConstats(auditId: string): Observable<ApiItemResponse<CompilationConstats>> {
         return this.http.get<ApiItemResponse<CompilationConstats>>(
-            `${UrlConfig.AUDIT_CONSTATS_URL}/synthese`,
+            `${CONSTATS}/synthese`,
             { params: this.buildParams({ auditId }) }
         );
     }
 
+    // ---- Preuves ----
+
     getPreuves(constatId: string): Observable<ApiResponse<PreuveConstat>> {
         return this.http.get<ApiResponse<PreuveConstat>>(
-            `${UrlConfig.AUDIT_CONSTATS_URL}/${constatId}/preuves`
+            `${CONSTATS}/${constatId}/preuves`
         );
     }
 
@@ -244,74 +260,67 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
         const formData = new FormData();
         formData.append('fichier', fichier);
         return this.http.post<ApiItemResponse<PreuveConstat>>(
-            `${UrlConfig.AUDIT_CONSTATS_URL}/${constatId}/preuves`, formData
+            `${CONSTATS}/${constatId}/preuves`, formData
         );
     }
 
-    supprimerPreuve(constatId: string, preuveId: string): Observable<ApiItemResponse<any>> {
+    supprimerPreuve(preuveId: string): Observable<ApiItemResponse<any>> {
         return this.http.delete<ApiItemResponse<any>>(
-            `${UrlConfig.AUDIT_CONSTATS_URL}/${constatId}/preuves/${preuveId}`
+            `${CONSTATS}/preuves/${preuveId}`
         );
     }
 
-    telechargerPreuve(constatId: string, preuveId: string): Observable<Blob> {
+    telechargerPreuve(preuveId: string): Observable<Blob> {
         return this.http.get(
-            `${UrlConfig.AUDIT_CONSTATS_URL}/${constatId}/preuves/${preuveId}/fichier`,
+            `${CONSTATS}/preuves/${preuveId}/fichier`,
             { responseType: 'blob' }
         );
     }
 
-    // ---- Plan d'audit ----
+    // ---- Plan d'audit (nested /audits/{auditId}/plan/) ----
 
     getPlanAudit(auditId: string): Observable<ApiItemResponse<PlanAudit>> {
         return this.http.get<ApiItemResponse<PlanAudit>>(
-            UrlConfig.AUDIT_PLANS_URL,
-            { params: this.buildParams({ auditId }) }
+            `${AUDITS}/${auditId}/plan/`
         );
     }
 
-    sauvegarderPlanAudit(payload: Partial<PlanAudit>): Observable<ApiItemResponse<PlanAudit>> {
-        return payload.id
-            ? this.http.put<ApiItemResponse<PlanAudit>>(
-                `${UrlConfig.AUDIT_PLANS_URL}/${payload.id}`, payload
-              )
-            : this.http.post<ApiItemResponse<PlanAudit>>(
-                UrlConfig.AUDIT_PLANS_URL, payload
-              );
-    }
-
-    partagerPlan(planId: string): Observable<ApiItemResponse<PlanAudit>> {
-        return this.http.post<ApiItemResponse<PlanAudit>>(
-            `${UrlConfig.AUDIT_PLANS_URL}/${planId}/partager`, null
+    sauvegarderPlanAudit(auditId: string, payload: Partial<PlanAudit>): Observable<ApiItemResponse<PlanAudit>> {
+        return this.http.put<ApiItemResponse<PlanAudit>>(
+            `${AUDITS}/${auditId}/plan/`, payload
         );
     }
 
-    telechargerPlan(planId: string): Observable<Blob> {
+    partagerPlan(auditId: string): Observable<ApiItemResponse<PlanAudit>> {
+        return this.http.put<ApiItemResponse<PlanAudit>>(
+            `${AUDITS}/${auditId}/plan/partager`, null
+        );
+    }
+
+    telechargerPlan(auditId: string): Observable<Blob> {
         return this.http.get(
-            `${UrlConfig.AUDIT_PLANS_URL}/${planId}/fichier`,
+            `${AUDITS}/${auditId}/plan/fichier`,
             { responseType: 'blob' }
         );
     }
 
-    // ---- Signatures ----
+    // ---- Signatures (nested /audits/{auditId}/signatures) ----
 
     getSignatures(auditId: string): Observable<ApiResponse<SignatureAudit>> {
         return this.http.get<ApiResponse<SignatureAudit>>(
-            UrlConfig.AUDIT_SIGNATURES_URL,
-            { params: this.buildParams({ auditId }) }
+            `${AUDITS}/${auditId}/signatures`
         );
     }
 
-    signer(signatureId: string): Observable<ApiItemResponse<SignatureAudit>> {
-        return this.http.post<ApiItemResponse<SignatureAudit>>(
-            `${UrlConfig.AUDIT_SIGNATURES_URL}/${signatureId}/signer`, null
+    signerAudit(auditId: string): Observable<ApiItemResponse<SignatureAudit>> {
+        return this.http.put<ApiItemResponse<SignatureAudit>>(
+            `${AUDITS}/${auditId}/signatures/signer`, null
         );
     }
 
-    refuserSignature(signatureId: string, motif: string): Observable<ApiItemResponse<SignatureAudit>> {
-        return this.http.post<ApiItemResponse<SignatureAudit>>(
-            `${UrlConfig.AUDIT_SIGNATURES_URL}/${signatureId}/refuser`,
-            { motif }
+    refuserSignature(auditId: string, motif: string): Observable<ApiItemResponse<SignatureAudit>> {
+        return this.http.put<ApiItemResponse<SignatureAudit>>(
+            `${AUDITS}/${auditId}/signatures/refuser`, { motif }
         );
     }
 
@@ -319,30 +328,48 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
 
     getChecklists(page = 0, size = 50): Observable<ApiResponse<any>> {
         return this.http.get<ApiResponse<any>>(
-            UrlConfig.AUDIT_CHECKLISTS_URL,
+            `${CHECKLISTS}/all`,
             { params: this.buildParams({ page, size }) }
         );
     }
 
     getChecklistById(id: string): Observable<ApiItemResponse<any>> {
         return this.http.get<ApiItemResponse<any>>(
-            `${UrlConfig.AUDIT_CHECKLISTS_URL}/${id}`
+            `${CHECKLISTS}/get/${id}`
         );
     }
 
     creerChecklist(payload: any): Observable<ApiItemResponse<any>> {
-        return this.http.post<ApiItemResponse<any>>(UrlConfig.AUDIT_CHECKLISTS_URL, payload);
+        return this.http.post<ApiItemResponse<any>>(`${CHECKLISTS}/create`, payload);
     }
 
     mettreAJourChecklist(id: string, payload: any): Observable<ApiItemResponse<any>> {
         return this.http.put<ApiItemResponse<any>>(
-            `${UrlConfig.AUDIT_CHECKLISTS_URL}/${id}`, payload
+            `${CHECKLISTS}/update/${id}`, payload
         );
     }
 
     supprimerChecklist(id: string): Observable<ApiItemResponse<any>> {
         return this.http.delete<ApiItemResponse<any>>(
-            `${UrlConfig.AUDIT_CHECKLISTS_URL}/${id}`
+            `${CHECKLISTS}/delete/${id}`
+        );
+    }
+
+    publierChecklist(id: string): Observable<ApiItemResponse<any>> {
+        return this.http.put<ApiItemResponse<any>>(
+            `${CHECKLISTS}/${id}/publier`, null
+        );
+    }
+
+    archiverChecklist(id: string): Observable<ApiItemResponse<any>> {
+        return this.http.put<ApiItemResponse<any>>(
+            `${CHECKLISTS}/${id}/archiver`, null
+        );
+    }
+
+    dupliquerChecklist(id: string): Observable<ApiItemResponse<any>> {
+        return this.http.post<ApiItemResponse<any>>(
+            `${CHECKLISTS}/${id}/dupliquer`, null
         );
     }
 
@@ -350,26 +377,46 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
 
     getAuditeurs(page = 0, size = 50): Observable<ApiResponse<AuditeurFiche>> {
         return this.http.get<ApiResponse<AuditeurFiche>>(
-            UrlConfig.AUDIT_AUDITEURS_URL,
+            `${AUDITEURS}/all`,
             { params: this.buildParams({ page, size }) }
         );
     }
 
     getAuditeurById(id: string): Observable<ApiItemResponse<AuditeurFiche>> {
         return this.http.get<ApiItemResponse<AuditeurFiche>>(
-            `${UrlConfig.AUDIT_AUDITEURS_URL}/${id}`
+            `${AUDITEURS}/get/${id}`
         );
     }
 
     creerAuditeur(payload: Partial<AuditeurFiche>): Observable<ApiItemResponse<AuditeurFiche>> {
         return this.http.post<ApiItemResponse<AuditeurFiche>>(
-            UrlConfig.AUDIT_AUDITEURS_URL, payload
+            `${AUDITEURS}/create`, payload
         );
     }
 
     mettreAJourAuditeur(id: string, payload: Partial<AuditeurFiche>): Observable<ApiItemResponse<AuditeurFiche>> {
         return this.http.put<ApiItemResponse<AuditeurFiche>>(
-            `${UrlConfig.AUDIT_AUDITEURS_URL}/${id}`, payload
+            `${AUDITEURS}/update/${id}`, payload
+        );
+    }
+
+    supprimerAuditeur(id: string): Observable<ApiItemResponse<any>> {
+        return this.http.delete<ApiItemResponse<any>>(
+            `${AUDITEURS}/delete/${id}`
+        );
+    }
+
+    verifierDisponibilite(auditeurId: string, dateDebut: string, dateFin: string): Observable<ApiItemResponse<any>> {
+        return this.http.get<ApiItemResponse<any>>(
+            `${AUDITEURS}/${auditeurId}/disponibilite`,
+            { params: this.buildParams({ dateDebut, dateFin }) }
+        );
+    }
+
+    verifierConflitInteret(auditeurId: string, auditId: string): Observable<ApiItemResponse<any>> {
+        return this.http.get<ApiItemResponse<any>>(
+            `${AUDITEURS}/${auditeurId}/conflit-interet`,
+            { params: this.buildParams({ auditId }) }
         );
     }
 
@@ -377,14 +424,14 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
 
     getEvaluationsAuditeur(auditId: string): Observable<ApiResponse<EvaluationAuditeur>> {
         return this.http.get<ApiResponse<EvaluationAuditeur>>(
-            UrlConfig.AUDIT_EVALUATIONS_AUDITEUR_URL,
+            `${EVALS_AUDITEUR}/all`,
             { params: this.buildParams({ auditId }) }
         );
     }
 
     creerEvaluationAuditeur(payload: Partial<EvaluationAuditeur>): Observable<ApiItemResponse<EvaluationAuditeur>> {
         return this.http.post<ApiItemResponse<EvaluationAuditeur>>(
-            UrlConfig.AUDIT_EVALUATIONS_AUDITEUR_URL, payload
+            `${EVALS_AUDITEUR}/create`, payload
         );
     }
 
@@ -393,7 +440,13 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
         payload: Partial<EvaluationAuditeur>
     ): Observable<ApiItemResponse<EvaluationAuditeur>> {
         return this.http.put<ApiItemResponse<EvaluationAuditeur>>(
-            `${UrlConfig.AUDIT_EVALUATIONS_AUDITEUR_URL}/${id}`, payload
+            `${EVALS_AUDITEUR}/update/${id}`, payload
+        );
+    }
+
+    validerEvaluationAuditeur(id: string): Observable<ApiItemResponse<EvaluationAuditeur>> {
+        return this.http.put<ApiItemResponse<EvaluationAuditeur>>(
+            `${EVALS_AUDITEUR}/${id}/valider`, null
         );
     }
 
@@ -401,44 +454,42 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
 
     getEvaluationRQAPBF(auditId: string): Observable<ApiItemResponse<EvaluationRQAPBF>> {
         return this.http.get<ApiItemResponse<EvaluationRQAPBF>>(
-            `${UrlConfig.AUDIT_EVALUATIONS_RQAPBF_URL}/${auditId}`
+            `${EVALS_RQAPBF}/by-audit/${auditId}`
         );
     }
 
     sauvegarderNotations(
-        auditId: string,
+        evalId: string,
         notations: Partial<NotationCritere>[]
     ): Observable<ApiItemResponse<EvaluationRQAPBF>> {
-        return this.http.post<ApiItemResponse<EvaluationRQAPBF>>(
-            `${UrlConfig.AUDIT_EVALUATIONS_RQAPBF_URL}/${auditId}/notations`, notations
+        return this.http.put<ApiItemResponse<EvaluationRQAPBF>>(
+            `${EVALS_RQAPBF}/update/${evalId}/notations`, notations
         );
     }
 
-    publierEvaluationRQAPBF(auditId: string): Observable<ApiItemResponse<EvaluationRQAPBF>> {
-        return this.http.post<ApiItemResponse<EvaluationRQAPBF>>(
-            `${UrlConfig.AUDIT_EVALUATIONS_RQAPBF_URL}/${auditId}/publier`, null
+    publierEvaluationRQAPBF(evalId: string): Observable<ApiItemResponse<EvaluationRQAPBF>> {
+        return this.http.put<ApiItemResponse<EvaluationRQAPBF>>(
+            `${EVALS_RQAPBF}/${evalId}/publier`, null
         );
     }
 
     // ---- Référentiel RQAPBF ----
 
     getReferentielRQAPBF(): Observable<ApiItemResponse<NoeudReferentiel[]>> {
-        return this.http.get<ApiItemResponse<NoeudReferentiel[]>>(
-            UrlConfig.AUDIT_REFERENTIEL_RQAPBF_URL
-        );
+        return this.http.get<ApiItemResponse<NoeudReferentiel[]>>(REF_RQAPBF);
     }
 
     // ---- Données de référence ----
 
     getTypesAudit(): Observable<ApiResponse<TypeAuditRef>> {
-        return this.http.get<ApiResponse<TypeAuditRef>>(UrlConfig.AUDIT_TYPES_AUDIT_URL);
+        return this.http.get<ApiResponse<TypeAuditRef>>(`${TYPES_AUDIT}/all`);
     }
 
     getTypesConstat(): Observable<ApiResponse<TypeConstatRef>> {
-        return this.http.get<ApiResponse<TypeConstatRef>>(UrlConfig.AUDIT_TYPES_CONSTAT_URL);
+        return this.http.get<ApiResponse<TypeConstatRef>>(`${TYPES_CONSTAT}/all`);
     }
 
     getSitesAudit(): Observable<ApiResponse<SiteAudit>> {
-        return this.http.get<ApiResponse<SiteAudit>>(UrlConfig.AUDIT_SITES_URL);
+        return this.http.get<ApiResponse<SiteAudit>>(`${SITES}/all`);
     }
 }

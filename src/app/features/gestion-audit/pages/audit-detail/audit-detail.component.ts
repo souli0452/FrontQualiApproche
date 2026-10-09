@@ -1,10 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { NgPrimeModule } from '@prime-ng';
 import { Subject } from 'rxjs';
 import { takeUntil, catchError, of } from 'rxjs';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { AuditGestionService } from '../../services/audit.service';
 import { Audit, ConstatAudit } from '../../models/audit.model';
 import {
@@ -22,8 +23,8 @@ import {
 @Component({
     selector: 'app-audit-detail',
     standalone: true,
-    imports: [CommonModule, RouterModule, NgPrimeModule],
-    providers: [MessageService],
+    imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule],
+    providers: [MessageService, ConfirmationService],
     templateUrl: './audit-detail.component.html'
 })
 export class AuditDetailComponent implements OnInit, OnDestroy {
@@ -32,7 +33,12 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
     constats: ConstatAudit[] = [];
     loading = true;
     loadingConstats = true;
+    actionEnCours = false;
     auditId: string | null = null;
+
+    // Dialogue annulation
+    afficherDialogueAnnulation = false;
+    motifAnnulation = '';
 
     readonly StatutAudit = StatutAudit;
     readonly TypeAudit = TypeAudit;
@@ -50,7 +56,8 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
         private auditService: AuditGestionService,
         private route: ActivatedRoute,
         private router: Router,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private confirmationService: ConfirmationService
     ) {}
 
     ngOnInit(): void {
@@ -90,24 +97,136 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
             });
     }
 
+    // ---- Cycle de vie ----
+
+    valider(): void {
+        if (!this.auditId) return;
+        this.confirmationService.confirm({
+            message: "Valider cet audit et le passer en préparation ?",
+            header: 'Confirmation',
+            icon: 'pi pi-check-circle',
+            accept: () => this.executerTransition(() =>
+                this.auditService.validerAudit(this.auditId!),
+                'Audit validé — préparation en cours.'
+            )
+        });
+    }
+
+    demarrer(): void {
+        if (!this.auditId) return;
+        this.confirmationService.confirm({
+            message: "Démarrer l'exécution de cet audit ?",
+            header: 'Confirmation',
+            icon: 'pi pi-play',
+            accept: () => this.executerTransition(() =>
+                this.auditService.demarrerAudit(this.auditId!),
+                "L'audit est en cours."
+            )
+        });
+    }
+
+    ouvrirDialogueAnnulation(): void {
+        this.motifAnnulation = '';
+        this.afficherDialogueAnnulation = true;
+    }
+
+    confirmerAnnulation(): void {
+        if (!this.auditId || !this.motifAnnulation.trim()) return;
+        this.afficherDialogueAnnulation = false;
+        this.executerTransition(
+            () => this.auditService.annulerAudit(this.auditId!, this.motifAnnulation),
+            "L'audit a été annulé."
+        );
+    }
+
+    cloturer(): void {
+        if (!this.auditId) return;
+        this.confirmationService.confirm({
+            message: "Clôturer définitivement cet audit ?",
+            header: 'Clôture',
+            icon: 'pi pi-lock',
+            accept: () => this.executerTransition(() =>
+                this.auditService.cloturerAudit(this.auditId!),
+                "L'audit est clôturé."
+            )
+        });
+    }
+
+    transmettreEcarts(): void {
+        if (!this.auditId) return;
+        this.actionEnCours = true;
+        this.auditService.transmettreEcarts(this.auditId)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: () => {
+                    this.messageService.add({ severity: 'success', summary: 'Écarts transmis', detail: 'Les non-conformités ont été envoyées au module amélioration.' });
+                    this.actionEnCours = false;
+                },
+                error: () => {
+                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'La transmission des écarts a échoué.' });
+                    this.actionEnCours = false;
+                }
+            });
+    }
+
+    private executerTransition(fn: () => any, successMsg: string): void {
+        this.actionEnCours = true;
+        fn().pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (res: any) => {
+                    this.audit = res?.data ?? this.audit;
+                    this.messageService.add({ severity: 'success', summary: 'Succès', detail: successMsg });
+                    this.actionEnCours = false;
+                },
+                error: () => {
+                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "L'opération a échoué." });
+                    this.actionEnCours = false;
+                }
+            });
+    }
+
+    // ---- Rapport ----
+
     telechargerRapport(): void {
         if (!this.auditId) return;
         this.auditService.telechargerRapportFichier(this.auditId)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-                next: (blob) => {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `rapport-audit-${this.audit?.reference ?? this.auditId}.pdf`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                },
-                error: () => {
-                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de générer le rapport.' });
-                }
+                next: (blob) => this.sauvegarderBlob(blob, `rapport-audit-${this.audit?.reference ?? this.auditId}.pdf`),
+                error: () => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de télécharger le rapport.' })
             });
     }
+
+    exporterPdf(): void {
+        if (!this.auditId) return;
+        this.auditService.exporterRapport(this.auditId, 'PDF')
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (blob) => this.sauvegarderBlob(blob, `rapport-audit-${this.audit?.reference ?? this.auditId}.pdf`),
+                error: () => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "L'export PDF a échoué." })
+            });
+    }
+
+    exporterWord(): void {
+        if (!this.auditId) return;
+        this.auditService.exporterRapport(this.auditId, 'WORD')
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (blob) => this.sauvegarderBlob(blob, `rapport-audit-${this.audit?.reference ?? this.auditId}.docx`),
+                error: () => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "L'export Word a échoué." })
+            });
+    }
+
+    private sauvegarderBlob(blob: Blob, nom: string): void {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nom;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // ---- Navigation ----
 
     modifierAudit(): void {
         if (this.auditId) {
@@ -117,6 +236,28 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
 
     retourListe(): void {
         this.router.navigate(['/gestion-audit/programme']);
+    }
+
+    // ---- Helpers ----
+
+    get peutValider(): boolean {
+        return this.audit?.statut === StatutAudit.PLANIFIE;
+    }
+
+    get peutDemarrer(): boolean {
+        return this.audit?.statut === StatutAudit.EN_PREPARATION;
+    }
+
+    get peutCloturer(): boolean {
+        return this.audit?.statut === StatutAudit.EN_COURS || this.audit?.statut === StatutAudit.EN_RETARD;
+    }
+
+    get peutAnnuler(): boolean {
+        return this.audit?.statut !== StatutAudit.CLOTURE && this.audit?.statut !== StatutAudit.ANNULE;
+    }
+
+    get peutTransmettreEcarts(): boolean {
+        return (this.audit?.statut === StatutAudit.CLOTURE) && this.constatsPublies.length > 0;
     }
 
     getStatutSeverity(statut: string): string {
