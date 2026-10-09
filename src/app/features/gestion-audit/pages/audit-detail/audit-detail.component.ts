@@ -16,9 +16,7 @@ import {
     STATUT_AUDIT_SEVERITY,
     TYPE_AUDIT_LABELS,
     NIVEAU_RISQUE_LABELS,
-    NIVEAU_RISQUE_SEVERITY,
-    TYPES_CONSTAT_DEFAUT,
-    TypeConstat
+    NIVEAU_RISQUE_SEVERITY
 } from '../../models/audit-enums';
 
 @Component({
@@ -45,7 +43,6 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
     readonly TYPE_AUDIT_LABELS = TYPE_AUDIT_LABELS;
     readonly NIVEAU_RISQUE_LABELS = NIVEAU_RISQUE_LABELS;
     readonly NIVEAU_RISQUE_SEVERITY = NIVEAU_RISQUE_SEVERITY;
-    readonly typesConstat: TypeConstat[] = TYPES_CONSTAT_DEFAUT;
 
     private destroy$ = new Subject<void>();
 
@@ -70,7 +67,7 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
             .pipe(
                 takeUntil(this.destroy$),
                 catchError(() => {
-                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger l\'audit.' });
+                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Impossible de charger l'audit." });
                     return of(null);
                 })
             )
@@ -82,7 +79,7 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
 
     chargerConstats(auditId: string): void {
         this.loadingConstats = true;
-        this.auditService.getConstats(auditId, 0, 100)
+        this.auditService.getConstats(auditId, undefined, 0, 100)
             .pipe(
                 takeUntil(this.destroy$),
                 catchError(() => of({ data: { content: [] } }))
@@ -95,7 +92,7 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
 
     telechargerRapport(): void {
         if (!this.auditId) return;
-        this.auditService.telechargerRapport(this.auditId)
+        this.auditService.telechargerRapportFichier(this.auditId)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (blob) => {
@@ -142,12 +139,12 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
         return NIVEAU_RISQUE_SEVERITY[niveau as NiveauRisqueAudit] ?? 'secondary';
     }
 
-    getTypeConstatInfo(code: string): TypeConstat | undefined {
-        return this.typesConstat.find(t => t.code === code);
-    }
-
     get constatsPublies(): ConstatAudit[] {
         return this.constats.filter(c => c.statut === StatutConstat.PUBLIE);
+    }
+
+    get constatsCompiles(): ConstatAudit[] {
+        return this.constats.filter(c => c.statut === StatutConstat.COMPILE);
     }
 
     get constatsBrouillon(): ConstatAudit[] {
@@ -155,10 +152,7 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
     }
 
     get constatsNc(): ConstatAudit[] {
-        return this.constats.filter(c => {
-            const info = this.getTypeConstatInfo(c.codeTypeConstat ?? '');
-            return info?.genereNonConformite && c.statut === StatutConstat.PUBLIE;
-        });
+        return this.constats.filter(c => c.nonConformite && c.statut === StatutConstat.PUBLIE);
     }
 
     trackByConstatId(_index: number, c: ConstatAudit): string {

@@ -9,6 +9,8 @@ import { AuditGestionService } from '../../services/audit.service';
 import { ConstatAudit, Audit } from '../../models/audit.model';
 import {
     StatutConstat,
+    STATUT_CONSTAT_LABELS,
+    STATUT_CONSTAT_SEVERITY,
     TYPES_CONSTAT_DEFAUT,
     TypeConstat
 } from '../../models/audit-enums';
@@ -39,20 +41,21 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
     auditsDisponibles: Audit[] = [];
     loadingAudits = false;
 
-    // Types de constats paramétrables
-    typesConstat: TypeConstat[] = TYPES_CONSTAT_DEFAUT;
-
     // Pagination
     totalElements = 0;
     currentPage = 0;
     pageSize = 20;
 
     readonly StatutConstat = StatutConstat;
-    readonly TYPES_CONSTAT_DEFAUT = TYPES_CONSTAT_DEFAUT;
+    readonly STATUT_CONSTAT_LABELS = STATUT_CONSTAT_LABELS;
+    readonly STATUT_CONSTAT_SEVERITY = STATUT_CONSTAT_SEVERITY;
+    // Phase 6 remplacera cette liste statique par un appel API /types-constat
+    readonly typesConstat: TypeConstat[] = TYPES_CONSTAT_DEFAUT;
 
     statutOptions = [
-        { label: 'Brouillon', value: StatutConstat.BROUILLON },
-        { label: 'Publié', value: StatutConstat.PUBLIE }
+        { label: STATUT_CONSTAT_LABELS[StatutConstat.BROUILLON], value: StatutConstat.BROUILLON },
+        { label: STATUT_CONSTAT_LABELS[StatutConstat.COMPILE], value: StatutConstat.COMPILE },
+        { label: STATUT_CONSTAT_LABELS[StatutConstat.PUBLIE], value: StatutConstat.PUBLIE }
     ];
 
     private destroy$ = new Subject<void>();
@@ -72,14 +75,12 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
     construireFormulaire(): void {
         this.formulaire = this.fb.group({
             auditId: [null, Validators.required],
-            chapitre: [null],
-            label: [null, [Validators.required, Validators.maxLength(200)]],
-            question: [null],
-            critere: [null],
-            preuveAttendue: [null],
-            auditeur: [null],
-            codeTypeConstat: [null, Validators.required],
-            observation: [null]
+            critereAudit: [null],
+            observation: [null, [Validators.required, Validators.maxLength(2000)]],
+            natureId: [null, Validators.required],
+            checklistId: [null],
+            pointControleId: [null],
+            commentaireEquipe: [null]
         });
     }
 
@@ -107,7 +108,12 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
     chargerConstats(): void {
         if (!this.filtreAuditId) return;
         this.loading = true;
-        this.auditService.getConstats(this.filtreAuditId, this.currentPage, this.pageSize)
+        this.auditService.getConstats(
+            this.filtreAuditId,
+            this.filtreStatut ?? undefined,
+            this.currentPage,
+            this.pageSize
+        )
             .pipe(
                 takeUntil(this.destroy$),
                 catchError(() => {
@@ -116,11 +122,8 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
                 })
             )
             .subscribe((res: any) => {
-                const tousConstats: ConstatAudit[] = res?.data?.content ?? [];
-                this.totalElements = res?.data?.totalElements ?? tousConstats.length;
-                this.constats = this.filtreStatut
-                    ? tousConstats.filter(c => c.statut === this.filtreStatut)
-                    : tousConstats;
+                this.constats = res?.data?.content ?? [];
+                this.totalElements = res?.data?.totalElements ?? this.constats.length;
                 this.loading = false;
             });
     }
@@ -133,6 +136,7 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
 
     onFiltreStatut(statut: StatutConstat | null): void {
         this.filtreStatut = statut;
+        this.currentPage = 0;
         this.chargerConstats();
     }
 
@@ -149,14 +153,12 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
         this.constatEnEdition = constat;
         this.formulaire.patchValue({
             auditId: constat.auditId,
-            chapitre: constat.chapitre,
-            label: constat.label,
-            question: constat.question,
-            critere: constat.critere,
-            preuveAttendue: constat.preuveAttendue,
-            auditeur: constat.auditeur,
-            codeTypeConstat: constat.codeTypeConstat,
-            observation: constat.observation
+            critereAudit: constat.critereAudit,
+            observation: constat.observation,
+            natureId: constat.natureId,
+            checklistId: constat.checklistId,
+            pointControleId: constat.pointControleId,
+            commentaireEquipe: constat.commentaireEquipe
         });
         this.afficherDialogue = true;
     }
@@ -168,11 +170,10 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
         }
         this.saving = true;
         const payload: Partial<ConstatAudit> = this.formulaire.getRawValue();
-        const auditId = payload.auditId!;
 
         const requete$ = this.constatEnEdition?.id
-            ? this.auditService.mettreAJourConstat(auditId, this.constatEnEdition.id, payload)
-            : this.auditService.creerConstat(auditId, payload);
+            ? this.auditService.mettreAJourConstat(this.constatEnEdition.id, payload)
+            : this.auditService.creerConstat(payload);
 
         requete$
             .pipe(takeUntil(this.destroy$))
@@ -194,9 +195,39 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
             });
     }
 
+    validerConstat(constat: ConstatAudit): void {
+        if (!constat.id) return;
+        this.auditService.validerConstat(constat.id)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: () => {
+                    this.messageService.add({ severity: 'success', summary: 'Compilé', detail: 'Le constat a été soumis à l\'équipe.' });
+                    this.chargerConstats();
+                },
+                error: () => {
+                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'L\'opération a échoué.' });
+                }
+            });
+    }
+
+    retirerConstat(constat: ConstatAudit): void {
+        if (!constat.id) return;
+        this.auditService.retirerConstat(constat.id)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: () => {
+                    this.messageService.add({ severity: 'info', summary: 'Retiré', detail: 'Le constat est repassé en brouillon.' });
+                    this.chargerConstats();
+                },
+                error: () => {
+                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'L\'opération a échoué.' });
+                }
+            });
+    }
+
     publierConstat(constat: ConstatAudit): void {
-        if (!constat.id || !constat.auditId) return;
-        this.auditService.changerStatutConstat(constat.auditId, constat.id, StatutConstat.PUBLIE)
+        if (!constat.id) return;
+        this.auditService.publierConstat(constat.id)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: () => {
@@ -210,8 +241,8 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
     }
 
     supprimerConstat(constat: ConstatAudit): void {
-        if (!constat.id || !constat.auditId) return;
-        this.auditService.supprimerConstat(constat.auditId, constat.id)
+        if (!constat.id) return;
+        this.auditService.supprimerConstat(constat.id)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: () => {
@@ -224,13 +255,17 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
             });
     }
 
-    getTypeConstatInfo(code: string): TypeConstat | undefined {
-        return this.typesConstat.find(t => t.code === code);
+    getConstatSeverity(statut: string): string {
+        return STATUT_CONSTAT_SEVERITY[statut as StatutConstat] ?? 'secondary';
+    }
+
+    getConstatLabel(statut: string): string {
+        return STATUT_CONSTAT_LABELS[statut as StatutConstat] ?? statut;
     }
 
     getAuditLabel(auditId: string): string {
         const audit = this.auditsDisponibles.find(a => a.id === auditId);
-        return audit ? (audit.reference ?? audit.libelleProcessus ?? auditId) : auditId;
+        return audit ? (audit.reference ?? audit.typeAuditLibelle ?? auditId) : auditId;
     }
 
     trackByConstatId(_index: number, constat: ConstatAudit): string {

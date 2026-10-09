@@ -15,19 +15,19 @@
             (onChange)="onChangeAudit($event.value)"
             class="min-w-[240px]">
             <ng-template pTemplate="selectedItem" let-item>
-                <span *ngIf="item">{{ item.reference ?? item.libelleProcessus }}</span>
+                <span *ngIf="item">{{ item.reference ?? item.typeAuditLibelle }}</span>
             </ng-template>
             <ng-template pTemplate="item" let-item>
                 <div class="flex flex-col">
                     <span class="font-semibold text-xs">{{ item.reference }}</span>
-                    <span class="text-xs text-surface-500">{{ item.libelleProcessus }}</span>
+                    <span class="text-xs text-surface-500">{{ item.typeAuditLibelle }}</span>
                 </div>
             </ng-template>
         </p-select>
 
         <!-- Filtre statut -->
         <p-selectbutton
-            [options]="[{label:'Tous', value: null}, {label:'Brouillons', value: StatutConstat.BROUILLON}, {label:'Publiés', value: StatutConstat.PUBLIE}]"
+            [options]="[{label:'Tous', value: null}, {label:'Brouillons', value: StatutConstat.BROUILLON}, {label:'Compilés', value: StatutConstat.COMPILE}, {label:'Publiés', value: StatutConstat.PUBLIE}]"
             [(ngModel)]="filtreStatut"
             optionLabel="label"
             optionValue="value"
@@ -73,18 +73,13 @@
 
             <div class="flex items-start gap-4 p-4">
 
-                <!-- Indicateur type -->
+                <!-- Indicateur nature -->
                 <div class="shrink-0 mt-0.5">
-                    <ng-container *ngIf="getTypeConstatInfo(constat.codeTypeConstat ?? '') as typeInfo; else defaultType">
-                        <p-tag
-                            [value]="typeInfo.label"
-                            [severity]="typeInfo.severity"
-                            [rounded]="true">
-                        </p-tag>
-                    </ng-container>
-                    <ng-template #defaultType>
-                        <p-tag value="—" severity="secondary" [rounded]="true"></p-tag>
-                    </ng-template>
+                    <p-tag
+                        [value]="constat.natureLibelle ?? '—'"
+                        severity="secondary"
+                        [rounded]="true">
+                    </p-tag>
                 </div>
 
                 <!-- Contenu -->
@@ -92,35 +87,30 @@
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <p class="text-sm font-semibold text-surface-900 dark:text-surface-100 m-0 mb-1">
-                                <span *ngIf="constat.chapitre" class="font-mono text-xs text-primary mr-2">{{ constat.chapitre }}</span>
-                                {{ constat.label }}
+                                <span *ngIf="constat.critereAudit" class="font-mono text-xs text-primary mr-2">{{ constat.critereAudit }}</span>
+                                {{ constat.observation }}
                             </p>
-                            <p *ngIf="constat.question" class="text-xs text-surface-600 dark:text-surface-400 m-0 mb-2">
-                                <i class="pi pi-question-circle mr-1"></i>{{ constat.question }}
+                            <p *ngIf="constat.commentaireEquipe" class="text-xs text-surface-600 dark:text-surface-400 m-0 mb-2">
+                                <i class="pi pi-comment mr-1"></i>{{ constat.commentaireEquipe }}
                             </p>
                         </div>
 
                         <!-- Statut -->
                         <div class="shrink-0">
                             <p-tag
-                                [value]="constat.statut === StatutConstat.PUBLIE ? 'Publié' : 'Brouillon'"
-                                [severity]="constat.statut === StatutConstat.PUBLIE ? 'success' : 'warn'"
+                                *ngIf="constat.statut"
+                                [value]="constat.statut === StatutConstat.PUBLIE ? 'Publié' : constat.statut === StatutConstat.COMPILE ? 'Compilé' : 'Brouillon'"
+                                [severity]="constat.statut === StatutConstat.PUBLIE ? 'success' : constat.statut === StatutConstat.COMPILE ? 'warn' : 'secondary'"
                                 [rounded]="true">
                             </p-tag>
                         </div>
                     </div>
 
-                    <!-- Observation -->
-                    <p *ngIf="constat.observation"
-                       class="text-xs text-surface-700 dark:text-surface-300 m-0 mt-2 p-2.5 bg-surface-50 dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700">
-                        <i class="pi pi-comment mr-1 text-surface-400"></i>{{ constat.observation }}
-                    </p>
-
                     <!-- Lien NC si applicable -->
-                    <div *ngIf="constat.nonConformiteRef"
+                    <div *ngIf="constat.nonConformiteId"
                          class="mt-2 p-2 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-lg flex items-center justify-between gap-2">
                         <span class="text-xs text-red-700 dark:text-red-400">
-                            <i class="pi pi-link mr-1"></i>Non-conformité transmise : <strong>{{ constat.nonConformiteRef }}</strong>
+                            <i class="pi pi-link mr-1"></i>Non-conformité transmise
                         </span>
                         <a routerLink="/non-conformite" class="text-xs font-semibold text-red-700 dark:text-red-400 hover:underline">
                             Voir dans M05 ↗
@@ -129,14 +119,12 @@
 
                     <!-- Méta-informations -->
                     <div class="flex items-center gap-4 mt-3 text-xs text-surface-500 dark:text-surface-400">
-                        <span *ngIf="constat.auditeur">
-                            <i class="pi pi-user mr-1"></i>{{ constat.auditeur }}
+                        <span *ngIf="constat.dateSaisie">
+                            <i class="pi pi-clock mr-1"></i>{{ constat.dateSaisie | date:'dd/MM/yyyy' }}
                         </span>
-                        <span *ngIf="constat.preuveAttendue">
-                            <i class="pi pi-paperclip mr-1"></i>{{ constat.preuveAttendue }}
-                        </span>
-                        <span *ngIf="constat.createdAt">
-                            <i class="pi pi-clock mr-1"></i>{{ constat.createdAt | date:'dd/MM/yyyy' }}
+                        <span *ngIf="constat.transmissionEnAttente"
+                              class="text-amber-600 dark:text-amber-400">
+                            <i class="pi pi-send mr-1"></i>Transmission en attente
                         </span>
                     </div>
                 </div>
@@ -144,6 +132,7 @@
                 <!-- Actions -->
                 <div class="shrink-0 flex items-center gap-1">
                     <p-button
+                        *ngIf="constat.statut === StatutConstat.BROUILLON"
                         icon="pi pi-pencil"
                         [rounded]="true"
                         [text]="true"
@@ -155,6 +144,28 @@
                     </p-button>
                     <p-button
                         *ngIf="constat.statut === StatutConstat.BROUILLON"
+                        icon="pi pi-check"
+                        [rounded]="true"
+                        [text]="true"
+                        severity="warn"
+                        size="small"
+                        pTooltip="Soumettre à l'équipe"
+                        tooltipPosition="top"
+                        (onClick)="validerConstat(constat)">
+                    </p-button>
+                    <p-button
+                        *ngIf="constat.statut === StatutConstat.COMPILE"
+                        icon="pi pi-undo"
+                        [rounded]="true"
+                        [text]="true"
+                        severity="secondary"
+                        size="small"
+                        pTooltip="Retirer en brouillon"
+                        tooltipPosition="top"
+                        (onClick)="retirerConstat(constat)">
+                    </p-button>
+                    <p-button
+                        *ngIf="constat.statut === StatutConstat.COMPILE"
                         icon="pi pi-send"
                         [rounded]="true"
                         [text]="true"
@@ -209,63 +220,31 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <!-- Chapitre -->
+            <!-- Critère -->
             <div class="flex flex-col gap-1">
-                <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Chapitre / référence</label>
-                <input pInputText formControlName="chapitre" placeholder="Ex: 8.5, E1.1-C2…" />
+                <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Critère de référence</label>
+                <input pInputText formControlName="critereAudit" placeholder="Ex: ISO 9001:2015 §8.5, RQAP-BF D3-C2…" />
             </div>
 
-            <!-- Type de constat -->
+            <!-- Nature du constat -->
             <div class="flex flex-col gap-1">
-                <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Type de constat <span class="text-red-500">*</span></label>
+                <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Nature du constat <span class="text-red-500">*</span></label>
                 <p-select
-                    formControlName="codeTypeConstat"
+                    formControlName="natureId"
                     [options]="typesConstat"
                     optionLabel="label"
                     optionValue="code"
-                    placeholder="Sélectionner un type"
+                    placeholder="Sélectionner une nature"
                     class="w-full">
                 </p-select>
-                <small *ngIf="formulaire.get('codeTypeConstat')?.invalid && formulaire.get('codeTypeConstat')?.touched"
-                       class="text-red-500 text-xs">Le type est requis.</small>
+                <small *ngIf="formulaire.get('natureId')?.invalid && formulaire.get('natureId')?.touched"
+                       class="text-red-500 text-xs">La nature est requise.</small>
             </div>
-        </div>
-
-        <!-- Libellé -->
-        <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Libellé du constat <span class="text-red-500">*</span></label>
-            <input pInputText formControlName="label" placeholder="Libellé court et descriptif" />
-            <small *ngIf="formulaire.get('label')?.invalid && formulaire.get('label')?.touched"
-                   class="text-red-500 text-xs">Le libellé est requis (200 caractères max.).</small>
-        </div>
-
-        <!-- Question -->
-        <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Question d'audit</label>
-            <input pInputText formControlName="question" placeholder="Question posée lors de l'audit" />
-        </div>
-
-        <!-- Critère -->
-        <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Critère de référence</label>
-            <input pInputText formControlName="critere" placeholder="Ex: ISO 9001:2015 §8.5…" />
-        </div>
-
-        <!-- Preuve attendue -->
-        <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Preuve attendue</label>
-            <input pInputText formControlName="preuveAttendue" placeholder="Documents, registres, enregistrements…" />
-        </div>
-
-        <!-- Auditeur -->
-        <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Auditeur</label>
-            <input pInputText formControlName="auditeur" placeholder="Nom de l'auditeur" />
         </div>
 
         <!-- Observation -->
         <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Observation / commentaire</label>
+            <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Observation <span class="text-red-500">*</span></label>
             <textarea
                 pInputTextarea
                 formControlName="observation"
@@ -273,6 +252,14 @@
                 placeholder="Observations détaillées, preuves recueillies, contexte…"
                 class="w-full resize-y">
             </textarea>
+            <small *ngIf="formulaire.get('observation')?.invalid && formulaire.get('observation')?.touched"
+                   class="text-red-500 text-xs">L'observation est requise (2000 caractères max.).</small>
+        </div>
+
+        <!-- Commentaire équipe -->
+        <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Commentaire de l'équipe</label>
+            <input pInputText formControlName="commentaireEquipe" placeholder="Commentaire interne à l'équipe d'audit" />
         </div>
 
     </form>

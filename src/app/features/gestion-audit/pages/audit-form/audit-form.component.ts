@@ -32,9 +32,10 @@ export class AuditFormComponent implements OnInit, OnDestroy {
     saving = false;
     loading = false;
 
+    // Phase 6 remplacera ces valeurs statiques par un appel API /types-audit
     typeAuditOptions = Object.values(TypeAudit).map(t => ({
         label: TYPE_AUDIT_LABELS[t],
-        value: t
+        value: t as string
     }));
 
     niveauRisqueOptions = Object.values(NiveauRisqueAudit).map(n => ({
@@ -70,16 +71,18 @@ export class AuditFormComponent implements OnInit, OnDestroy {
     construireFormulaire(): void {
         this.formulaire = this.fb.group({
             reference: [null],
-            libelleProcessus: [null, [Validators.required, Validators.maxLength(300)]],
-            typeAudit: [TypeAudit.INTERNE, Validators.required],
-            sites: [null],
-            objectif: [null, Validators.required],
-            criteres: [null],
-            responsableEquipe: [null, Validators.required],
-            auditeurs: [null],
+            typeAuditId: [null, Validators.required],
+            processusId: [null],
+            siteIds: [null],
+            objectifsAudit: [null, Validators.required],
+            criteresAudit: [null],
+            porteeAudit: [null],
+            responsableEquipeId: [null, Validators.required],
+            membreEquipeIds: [null],
             niveauRisque: [NiveauRisqueAudit.FAIBLE],
             descriptionRisque: [null],
-            dateAudit: [null, Validators.required],
+            dateDebutPrevue: [null, Validators.required],
+            dateFinPrevue: [null],
             statut: [StatutAudit.PLANIFIE]
         });
     }
@@ -90,7 +93,7 @@ export class AuditFormComponent implements OnInit, OnDestroy {
             .pipe(
                 takeUntil(this.destroy$),
                 catchError(() => {
-                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger l\'audit.' });
+                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Impossible de charger l'audit." });
                     return of(null);
                 })
             )
@@ -99,16 +102,18 @@ export class AuditFormComponent implements OnInit, OnDestroy {
                 if (audit) {
                     this.formulaire.patchValue({
                         reference: audit.reference,
-                        libelleProcessus: audit.libelleProcessus,
-                        typeAudit: audit.typeAudit,
-                        sites: audit.sites?.join(', '),
-                        objectif: audit.objectif,
-                        criteres: audit.criteres,
-                        responsableEquipe: audit.responsableEquipe,
-                        auditeurs: audit.auditeurs?.join(', '),
+                        typeAuditId: audit.typeAuditId,
+                        processusId: audit.processusId,
+                        siteIds: audit.siteIds,
+                        objectifsAudit: audit.objectifsAudit,
+                        criteresAudit: audit.criteresAudit,
+                        porteeAudit: audit.porteeAudit,
+                        responsableEquipeId: audit.responsableEquipeId,
+                        membreEquipeIds: audit.membreEquipeIds,
                         niveauRisque: audit.niveauRisque,
                         descriptionRisque: audit.descriptionRisque,
-                        dateAudit: audit.dateAudit,
+                        dateDebutPrevue: audit.dateDebutPrevue,
+                        dateFinPrevue: audit.dateFinPrevue,
                         statut: audit.statut
                     });
                 }
@@ -122,17 +127,7 @@ export class AuditFormComponent implements OnInit, OnDestroy {
             return;
         }
         this.saving = true;
-
-        const valeurs = this.formulaire.getRawValue();
-        const payload: Partial<Audit> = {
-            ...valeurs,
-            sites: valeurs.sites
-                ? valeurs.sites.split(',').map((s: string) => s.trim()).filter(Boolean)
-                : [],
-            auditeurs: valeurs.auditeurs
-                ? valeurs.auditeurs.split(',').map((s: string) => s.trim()).filter(Boolean)
-                : []
-        };
+        const payload: Partial<Audit> = this.formulaire.getRawValue();
 
         const requete$ = this.modeEdition && this.auditId
             ? this.auditService.updateObject(this.auditId, payload)

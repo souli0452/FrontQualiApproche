@@ -57,9 +57,9 @@
                         class="border-b border-surface-100 dark:border-surface-800 hover:bg-surface-50 dark:hover:bg-surface-800/50 cursor-pointer"
                         [routerLink]="['/gestion-audit/programme', audit.id]">
                         <td class="px-4 py-3 font-mono text-xs font-semibold text-primary">{{ audit.reference ?? '—' }}</td>
-                        <td class="px-4 py-3 text-surface-800 dark:text-surface-200 max-w-[180px] truncate">{{ audit.libelleProcessus ?? '—' }}</td>
-                        <td class="px-4 py-3 text-surface-600 dark:text-surface-400 text-xs">{{ getTypeLabel(audit.typeAudit ?? '') }}</td>
-                        <td class="px-4 py-3 text-surface-600 dark:text-surface-400 text-xs whitespace-nowrap">{{ audit.dateAudit ?? '—' }}</td>
+                        <td class="px-4 py-3 text-surface-800 dark:text-surface-200 max-w-[180px] truncate">{{ audit.typeAuditLibelle ?? '—' }}</td>
+                        <td class="px-4 py-3 text-surface-600 dark:text-surface-400 text-xs">{{ audit.typeAuditLibelle ?? '—' }}</td>
+                        <td class="px-4 py-3 text-surface-600 dark:text-surface-400 text-xs whitespace-nowrap">{{ audit.dateDebutPrevue ?? '—' }}</td>
                         <td class="px-4 py-3">
                             <p-tag
                                 *ngIf="audit.statut"

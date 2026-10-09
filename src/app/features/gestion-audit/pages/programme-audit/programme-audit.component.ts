@@ -10,10 +10,13 @@ import { AuditGestionService } from '../../services/audit.service';
 import { Audit, AuditFiltres } from '../../models/audit.model';
 import {
     StatutAudit,
-    TypeAudit,
     STATUT_AUDIT_LABELS,
     STATUT_AUDIT_SEVERITY,
-    TYPE_AUDIT_LABELS
+    TYPE_AUDIT_LABELS,
+    TypeAudit,
+    NiveauRisqueAudit,
+    NIVEAU_RISQUE_LABELS,
+    NIVEAU_RISQUE_SEVERITY
 } from '../../models/audit-enums';
 
 @Component({
@@ -35,6 +38,8 @@ export class ProgrammeAuditComponent implements OnInit, OnDestroy {
 
     // Filtres
     filtres: AuditFiltres = {};
+    filtreStatutSelectionne: StatutAudit | null = null;
+    filtreTypeSelectionne: string | null = null;
     searchText = '';
     private searchSubject = new Subject<string>();
 
@@ -44,16 +49,17 @@ export class ProgrammeAuditComponent implements OnInit, OnDestroy {
         value: s
     }));
 
+    // Phase 6 remplacera ces valeurs statiques par un appel API /types-audit
     typeAuditOptions = Object.values(TypeAudit).map(t => ({
         label: TYPE_AUDIT_LABELS[t],
-        value: t
+        value: t as string
     }));
 
     readonly STATUT_AUDIT_LABELS = STATUT_AUDIT_LABELS;
     readonly STATUT_AUDIT_SEVERITY = STATUT_AUDIT_SEVERITY;
-    readonly TYPE_AUDIT_LABELS = TYPE_AUDIT_LABELS;
+    readonly NIVEAU_RISQUE_LABELS = NIVEAU_RISQUE_LABELS;
+    readonly NIVEAU_RISQUE_SEVERITY = NIVEAU_RISQUE_SEVERITY;
     readonly StatutAudit = StatutAudit;
-    readonly TypeAudit = TypeAudit;
     readonly Math = Math;
 
     private destroy$ = new Subject<void>();
@@ -81,10 +87,12 @@ export class ProgrammeAuditComponent implements OnInit, OnDestroy {
         this.loading = true;
         const params: Record<string, any> = {};
         if (this.filtres.search) params['search'] = this.filtres.search;
-        if (this.filtres.statut) params['statut'] = this.filtres.statut;
-        if (this.filtres.typeAudit) params['typeAudit'] = this.filtres.typeAudit;
-        if (this.filtres.dateDebut) params['dateDebut'] = this.filtres.dateDebut;
-        if (this.filtres.dateFin) params['dateFin'] = this.filtres.dateFin;
+        if (this.filtres.statuts?.length) params['statuts'] = this.filtres.statuts.join(',');
+        if (this.filtres.typeAuditId) params['typeAuditId'] = this.filtres.typeAuditId;
+        if (this.filtres.niveauRisque) params['niveauRisque'] = this.filtres.niveauRisque;
+        if (this.filtres.responsableId) params['responsableId'] = this.filtres.responsableId;
+        if (this.filtres.enRetard !== undefined) params['enRetard'] = this.filtres.enRetard;
+        if (this.filtres.annee) params['annee'] = this.filtres.annee;
 
         this.auditService.findAll(this.currentPage, this.pageSize, params)
             .pipe(
@@ -106,19 +114,21 @@ export class ProgrammeAuditComponent implements OnInit, OnDestroy {
     }
 
     onFiltreStatut(statut: StatutAudit | null): void {
-        this.filtres.statut = statut ?? undefined;
+        this.filtres.statuts = statut ? [statut] : undefined;
         this.currentPage = 0;
         this.charger();
     }
 
-    onFiltreType(type: TypeAudit | null): void {
-        this.filtres.typeAudit = type ?? undefined;
+    onFiltreType(typeId: string | null): void {
+        this.filtres.typeAuditId = typeId ?? undefined;
         this.currentPage = 0;
         this.charger();
     }
 
     reinitialiserFiltres(): void {
         this.filtres = {};
+        this.filtreStatutSelectionne = null;
+        this.filtreTypeSelectionne = null;
         this.searchText = '';
         this.currentPage = 0;
         this.charger();
@@ -150,6 +160,10 @@ export class ProgrammeAuditComponent implements OnInit, OnDestroy {
 
     getTypeLabel(type: string): string {
         return TYPE_AUDIT_LABELS[type as TypeAudit] ?? type;
+    }
+
+    getNiveauRisqueSeverity(niveau: string): string {
+        return NIVEAU_RISQUE_SEVERITY[niveau as NiveauRisqueAudit] ?? 'secondary';
     }
 
     trackByAuditId(_index: number, audit: Audit): string {
