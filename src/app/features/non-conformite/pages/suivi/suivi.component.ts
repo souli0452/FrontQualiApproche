@@ -1,21 +1,23 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { MessageService } from 'primeng/api';
-import { FeaturesService } from '@core';
-import { BasePaginationComponent } from '@shared';
 import { Location } from '@angular/common';
-import { NonConformStatus } from '../../models';
-import { AuthService, currentUserState, getCurrentUserStructure } from '@core/auth';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '@prime-ng';
-
-import { NonConformiteService, RoleService } from '../../services';
 import { AuthData } from '../../../../models/auth.model';
 import { ApiResponse } from '../../../../models/response.model';
-import { NonConformite } from '../../models';
-import { TraitementTableComponent, NcFilter, NcFilterBarComponent } from '../../components';
-import { criteresDeRecherche } from '../../utils';
-import { Structure } from '@features/organigramme/models';
+import { FeaturesService } from '@core/services/feature-service';
+import { getCurrentUserStructure } from '@core/auth/auth-utils';
+import { currentUserState } from '@core/auth/auth.state';
+import { NcFilter, NcFilterBarComponent } from '@features/non-conformite/components/nc-filter-bar/nc-filter-bar';
+import { NonConformite } from '@features/non-conformite/models/non-conformite.model';
+import { NonConformStatus } from '@features/non-conformite/models/nc-status.model';
+import { TraitementTableComponent } from '@features/non-conformite/components/table-traitement/traitement-table';
+import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
+import { RoleService } from '@features/non-conformite/services/role.service';
+import { criteresDeRecherche } from '@features/non-conformite/utils/nc-criteres';
+import { Structure } from '@features/organigramme/models/structure.model';
+import { BasePaginationComponent } from '@shared/pagination/pagination';
 
 @Component({
     selector: 'app-suivi',
@@ -62,7 +64,6 @@ export class NcSuiviComponent extends BasePaginationComponent implements OnInit,
         private nonConformiteService: NonConformiteService,
         private location: Location,
         protected messageService: MessageService,
-        private authService: AuthService,
         public roleService: RoleService
     ) {
         super();

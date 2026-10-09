@@ -2,14 +2,17 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgPrimeModule } from '@prime-ng';
-import { NiveauNonConformiteService, OrigineNonConformiteService } from '../../services';
-import { CategorieProcessus } from '../../../../models/categore-processus.model';
-import { NiveauNonConformite, OrigineNonConformite } from '../../models';
-import { CategorieProcessusService } from '@features/organigramme';
-import { TypeStructure } from '@core/enums';
-import { MultiselectInputComponent } from '@shared';
-import { Structure, StructureService } from '@features/organigramme';
-import { NcFilter } from '../../models';
+import { TypeStructure } from '@core/enums/type-structure.enum';
+import { NcFilter } from '@features/non-conformite/models/nc-filter.model';
+import { NiveauNonConformite, OrigineNonConformite } from '@features/non-conformite/models/referentiel.model';
+import { NiveauNonConformiteService } from '@features/non-conformite/services/niveau-non-conformite.service';
+import { OrigineNonConformiteService } from '@features/non-conformite/services/type-non-conformite.service';
+import { RoleService } from '@features/non-conformite/services/role.service';
+import { MultiselectInputComponent } from '@shared/ui/multiselect-input/multiselect-input.component';
+import { Structure } from '@features/organigramme/models/structure.model';
+import { CategorieProcessusService } from '@features/organigramme/services/categorie-processus.service';
+import { StructureService } from '@features/organigramme/services/structure.service';
+
 export type { NcFilter };
 
 @Component({
@@ -23,7 +26,7 @@ export class NcFilterBarComponent implements OnInit {
     
     @Output() onFilterChange = new EventEmitter<NcFilter>();
 
-    @Input() showProcessus: boolean = true; 
+    @Input() showProcessus: boolean | undefined = undefined; 
     @Input() showGravite: boolean = true; 
     @Input() showOrigine: boolean = true; 
     
@@ -53,24 +56,22 @@ export class NcFilterBarComponent implements OnInit {
         protected typeProcessusService: CategorieProcessusService,
         private structureService: StructureService,
         protected niveauNonConformiteService: NiveauNonConformiteService,
-        protected typeNonConformiteService: OrigineNonConformiteService
+        protected typeNonConformiteService: OrigineNonConformiteService,
+        public roleService: RoleService
     ) {}
 
     ngOnInit() {
+        if (this.showProcessus === undefined) {
+            this.showProcessus = this.roleService.isAdmin || this.roleService.isRQ;
+        }
         this.loadRealData();
         this.setDefaultDates();
         setTimeout(() => this.applyFilters(), 200);
     }
 
     private loadRealData() {
-        // this.typeProcessusService.findAll().subscribe({
-        //     next: (res) => this.processusList = res.data.content || [],
-        //     error: (err) => console.error('Erreur chargement processus', err)
-        // });
-
         this.structureService.getAllStructure(TypeStructure.SERVICE).subscribe({
             next: (res) => {
-                console.log("Les structures : ", res.content);
                 this.processusList = res.content;
             },
             error: (err) => console.error('Erreur chargement processus', err)

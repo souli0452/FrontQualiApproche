@@ -5,15 +5,14 @@ import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
-import { AppCrudGenericComponent } from '@shared';
 import { FormGroupColumn, TableColumn } from '../../../../models/generique.model';
-import { PrioriteDocument } from '../../models';
-import { PrioriteDocumentService } from '../../services';
-import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
-import { hasAnyPermission } from '@core/auth';
 import { HeaderPage } from '@shared/header-page/header-page';
 import { AlertService } from '@shared/alert-message/alert-message.service';
 import { BasePaginationComponent } from '../../../../shared/pagination/pagination';
+import { hasAnyPermission } from '@core/auth/auth-utils';
+import { PrioriteDocument } from '@features/gestion-documentaire/models/referentiel.model';
+import { AppCrudGenericComponent } from '@shared/app-crud-generic/app-crud-generic.component';
+import { PrioriteDocumentService } from '@features/gestion-documentaire/services/referentiel.service';
 
 /**
  * Référentiel des priorités de document (Urgent, Normal, Faible...).

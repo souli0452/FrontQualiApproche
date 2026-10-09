@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MessageModule } from 'primeng/message';
 import { TagModule } from 'primeng/tag';
-import { WorkflowStateDto, WorkflowActionDto, WorkflowStepFieldDto } from '../models';
+import { WorkflowActionDto, WorkflowStateDto, WorkflowStepFieldDto } from 'src/app/models/workflow.model';
 
 /**
  * Dit à l'utilisateur où en est un dossier et ce qu'on attend de lui.

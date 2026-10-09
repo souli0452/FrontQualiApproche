@@ -1,31 +1,33 @@
 import { CommonModule } from '@angular/common';
-import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '@shared';
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '../../../workflow/execution/workflow-decision-dialog.component';
+import { Component, OnDestroy, OnInit, ViewChild, TemplateRef, AfterViewInit } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MessageService } from 'primeng/api';
+import { MessageService, MenuItem } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
-import { AppCrudGenericComponent } from '@shared';
+import { TableauAffichageComponent } from '../../../../shared/tableau-affichage/tableau-affichage';
 import { TableColumn } from '../../../../models/generique.model';
-import { DemandeDocumentDto } from '../../models';
-import { DemandeDocumentService } from '../../services';
+import { DemandeDocumentDto } from '../../models/demande.model';
+import { DemandeDocumentService } from '../../services/demande.service';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
 import { QmsDemandeDetailComponent } from './qms-demande-detail.component';
-import { WorkflowService } from '@features/workflow';
+import { WorkflowService } from '../../../workflow/services/workflow.service';
 import {
     ValidationHistoryDto,
     WorkflowActionDto,
     WorkflowStateDto,
     WorkflowValidationRequestDto
 } from '../../../../models/workflow.model';
-import { hasAnyPermission } from '@core/auth';
+import { hasAnyPermission } from '../../../../core/auth/auth-utils';
+import { LightboxComponent } from '@features/non-conformite/components/lightbox/lightbox';
 
 /** Ligne du tableau : la demande, augmentée de ce que la colonne affiche telle quelle. */
 type LigneDemande = DemandeDocumentDto & {
     /** Numéro et titre du document, mis en forme pour la colonne. */
     documentLibelle: string;
+    nomFichier?: string;
     typeLibelle: string;
     etatLibelle: string;
     /** Sévérité de la pastille, portée par la ligne : le tableau générique la lit telle quelle. */
@@ -44,15 +46,31 @@ type LigneDemande = DemandeDocumentDto & {
 @Component({
     selector: 'app-qms-demandes',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, AppCrudGenericComponent,
-        QmsDemandeDetailComponent, WorkflowDecisionDialogComponent],
+    imports: [
+        CommonModule, 
+        FormsModule,
+        ReactiveFormsModule, 
+        NgPrimeModule, 
+        TableauAffichageComponent,
+        QmsDemandeDetailComponent, 
+        WorkflowDecisionDialogComponent,
+        LightboxComponent
+    ],
     providers: [MessageService],
     templateUrl: './qms-demandes.component.html'
 })
-export class QmsDemandesComponent implements OnInit, OnDestroy {
+export class QmsDemandesComponent implements OnInit, AfterViewInit, OnDestroy {
+    @ViewChild('lightbox') lightbox?: LightboxComponent;
+    @ViewChild('documentTpl', { static: true }) documentTpl!: TemplateRef<any>;
+    @ViewChild('natureTpl', { static: true }) natureTpl!: TemplateRef<any>;
+    @ViewChild('etatTpl', { static: true }) etatTpl!: TemplateRef<any>;
 
-    loading = true;
+    loading: boolean = true;
     demandes: LigneDemande[] = [];
+    pageSize: number = 10;
+    currentPage: number = 0;
+    cellTemplates: { [field: string]: TemplateRef<any> } = {};
+    filterFields: string[] = ['documentTitre', 'documentNumber', 'objectif', 'typeLibelle', 'etatLibelle'];
 
     readonly titrePage = 'Demandes sur les documents';
 
@@ -79,6 +97,9 @@ export class QmsDemandesComponent implements OnInit, OnDestroy {
     demandeEnCours?: DemandeDocumentDto;
     enregistrement = false;
 
+    /** La pièce jointe est en cours de récupération : le lien de la fiche attend. */
+    pieceEnCours = false;
+
     fichierRemplacant?: File;
     commentaireRemplacant = '';
 
@@ -86,35 +107,12 @@ export class QmsDemandesComponent implements OnInit, OnDestroy {
 
     private readonly destroy$ = new Subject<void>();
 
-    /**
-     * Menu de ligne, comme sur les autres tableaux.
-     *
-     * <p>Le dépôt du remplaçant n'y figure que sur les demandes qui l'attendent : proposer partout
-     * une action qui ne vaut que pour quelques lignes revient à ne rien indiquer du tout.</p>
-     */
-    readonly actionsLigne = [
-        { label: 'Détails', icon: 'pi pi-eye', action: 'detail' },
-        {
-            label: 'Déposer le remplaçant', icon: 'pi pi-upload', action: 'remplacant',
-            visible: (ligne: any) => this.peutDeposerRemplacant
-                && ligne?.type === 'MODIFICATION' && ligne?.etat === 'ACCEPTEE'
-        }
-    ];
-
     readonly colonnes: TableColumn[] = [
-        { field: 'documentLibelle', header: 'Document', type: 'string', filter: true, width: 'auto' },
-        // L'objectif prend la place restante : c'est lui qui dit de quoi il retourne, et le
-        // tronquer reviendrait à ne rien montrer.
-        { field: 'objectif', header: 'Objectif', type: 'string', filter: true, width: 'auto' },
-        {
-            field: 'typeLibelle', header: 'Nature', type: 'badge', filter: true,
-            severityField: 'typeSeverite', width: 'auto'
-        },
-        {
-            field: 'etatLibelle', header: 'État', type: 'badge', filter: true,
-            severityField: 'etatSeverite', width: 'auto'
-        },
-        { field: 'createdAt', header: 'Déposée le', type: 'date', filter: false, width: 'auto' }
+        { field: 'documentTitre', header: 'DOCUMENT', type: 'custom', sort: true, width: '25%' },
+        { field: 'objectif', header: 'OBJECTIF', type: 'string', sort: true, width: '32%' },
+        { field: 'typeLibelle', header: 'NATURE', type: 'custom', sort: true, align: 'center', width: '14%' },
+        { field: 'etatLibelle', header: 'ÉTAT', type: 'custom', sort: true, align: 'center', width: '16%' },
+        { field: 'createdAt', header: 'DÉPOSÉE LE', type: 'date', dateFormat: 'dd/MM/yyyy', sort: true, align: 'center', width: '13%' }
     ];
 
     constructor(
@@ -126,6 +124,50 @@ export class QmsDemandesComponent implements OnInit, OnDestroy {
         private readonly messageService: MessageService
     ) {
         this.formulaireTableau = this.fb.group({});
+    }
+
+    ngAfterViewInit(): void {
+        this.cellTemplates = {
+            documentTitre: this.documentTpl,
+            typeLibelle: this.natureTpl,
+            etatLibelle: this.etatTpl
+        };
+    }
+
+    getActionMenuItems = (demande: LigneDemande): MenuItem[] => {
+        const items: MenuItem[] = [
+            {
+                label: 'Détails',
+                icon: 'pi pi-eye',
+                command: () => this.ouvrirDetail(demande)
+            }
+        ];
+
+        if (this.attendUnRemplacant(demande) && this.peutDeposerRemplacant) {
+            items.push({
+                label: 'Déposer le remplaçant',
+                icon: 'pi pi-upload',
+                command: () => this.ouvrirDepotRemplacant(demande)
+            });
+        }
+
+        return items;
+    };
+
+    onPageChange(event: { page: number; size: number }): void {
+        this.currentPage = event.page;
+        this.pageSize = event.size;
+    }
+
+    getFileIcon(fileName?: string): string {
+        if (!fileName) return 'assets/images/doc-file.png';
+        const lower = fileName.toLowerCase().trim();
+        if (lower.endsWith('.pdf')) return 'assets/images/pdf-file.png';
+        if (lower.endsWith('.doc') || lower.endsWith('.docx')) return 'assets/images/doc-file.png';
+        if (lower.endsWith('.xls') || lower.endsWith('.xlsx')) return 'assets/images/xls-file.png';
+        if (lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png') || lower.endsWith('.webp')) return 'assets/images/jpeg-file.png';
+        if (lower.endsWith('.txt')) return 'assets/images/txt-file.png';
+        return 'assets/images/doc-file.png';
     }
 
     ngOnInit(): void {
@@ -172,14 +214,11 @@ export class QmsDemandesComponent implements OnInit, OnDestroy {
                 // calculés ici, pas dans le gabarit.
                 this.demandes = (demandes ?? []).map(demande => ({
                     ...demande,
-                    // Champ dédié à l'affichage : `documentNumber` est réutilisé tel quel par la
-                    // fiche et par le dialogue de décision, le réécrire y aurait fait apparaître du
-                    // balisage. Le numéro seul étant peu parlant dans une liste, le titre le suit
-                    // sur une seconde ligne.
                     documentLibelle: demande.documentTitre
                         ? `<span class="font-mono text-xs text-slate-500">${demande.documentNumber ?? ''}</span>`
                           + `<span class="block text-slate-800">${demande.documentTitre}</span>`
                         : (demande.documentNumber ?? ''),
+                    nomFichier: (demande as any).nomFichier || demande.pieceJointeNom || (demande.documentNumber ? `${demande.documentNumber}.docx` : ''),
                     typeLibelle: demande.type === 'SUPPRESSION' ? 'Suppression' : 'Modification',
                     // Une suppression se distingue d'une modification au premier coup d'œil :
                     // l'une retire un document, l'autre le remplace.
@@ -428,6 +467,61 @@ export class QmsDemandesComponent implements OnInit, OnDestroy {
 
     onFichierRemplacant(event: any): void {
         this.fichierRemplacant = event?.target?.files?.[0] ?? event?.files?.[0];
+    }
+
+    /**
+     * Ouvre la pièce jointe déposée avec la demande, dans le volet d'aperçu.
+     *
+     * <p>Elle s'affiche avant de s'enregistrer. Le clic déclenchait auparavant le téléchargement :
+     * pour savoir si la pièce appuyait vraiment la demande qu'on instruit, il fallait d'abord
+     * accepter un fichier dans ses téléchargements, puis l'ouvrir hors de l'application, puis
+     * revenir. Le volet rend la pièce sur place, et l'enregistrement y reste offert pour qui en
+     * veut une copie.</p>
+     *
+     * <p>Le nom d'origine accompagne le contenu : c'est lui qui dit au volet ce qu'il sait
+     * afficher, et c'est sous lui que le fichier s'enregistre si on le demande.</p>
+     */
+    consulterPieceJointe(demande: DemandeDocumentDto): void {
+        if (!demande?.id || this.pieceEnCours) {
+            return;
+        }
+        this.pieceEnCours = true;
+        this.demandeService.pieceJointe(demande.id)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (fichier) => {
+                    this.pieceEnCours = false;
+                    this.lightbox?.openBlob(
+                        fichier,
+                        demande.pieceJointeNom || 'piece-jointe',
+                        'Pièce jointe de la demande');
+                },
+                error: async (erreur) => {
+                    this.pieceEnCours = false;
+                    this.messageService.add({
+                        severity: 'error', summary: 'Pièce jointe',
+                        detail: await this.messageDuRefus(erreur), life: 5000
+                    });
+                }
+            });
+    }
+
+    /**
+     * Le message que le serveur a réellement rendu.
+     *
+     * <p>Demandé en {@code blob}, un refus arrive lui aussi en binaire : sans cette relecture,
+     * l'écran n'aurait à afficher qu'un code de statut là où le serveur a rédigé une phrase.</p>
+     */
+    private async messageDuRefus(erreur: any): Promise<string> {
+        try {
+            if (erreur?.error instanceof Blob) {
+                const texte = await erreur.error.text();
+                return JSON.parse(texte)?.message || texte || 'Le fichier n\'a pas pu être obtenu.';
+            }
+        } catch {
+            // Un refus sans corps lisible : le message générique fera l'affaire.
+        }
+        return erreur?.error?.message || 'Le fichier n\'a pas pu être obtenu.';
     }
 
     deposerRemplacant(): void {

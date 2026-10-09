@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { NgPrimeModule } from '@prime-ng';
-import { AuthService } from '@core/auth';
 import { Structure } from '@features/organigramme';
 import { AuthData } from '../../../../models/auth.model';
+import { AuthService } from '@core/auth/auth.service';
 
 
 @Component({

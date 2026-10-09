@@ -3,10 +3,9 @@
         title="Gestion Documentaire" 
         subtitle="Cycle de vie, workflows de validation et conformité des documents qualité"
         [breadcrumbs]="breadcrumbs"
-        buttonText="Nouveau Document" 
+        [buttonText]="'Nouveau Document'" 
         buttonIcon="pi pi-plus" 
-        buttonLink="/gestion-documentaire/create"
-        [withLicence]="true"
+        (actionClick)="creerDocument()"
     />
 
     <!-- Navigation Hub (Tabs) -->
@@ -25,8 +24,8 @@
     </div>
 
     <!-- Zone de Contenu Dynamique -->
-    <div class="min-h-[600px]">
-        <div class="rounded-xl overflow-hidden py-4">
+    <div class="dark:bg-surface-950/40">
+        <div class="dark:bg-surface-900 rounded-xl !overflow-visible">
             <router-outlet></router-outlet>
         </div>
     </div>

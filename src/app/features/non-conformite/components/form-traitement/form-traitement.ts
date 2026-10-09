@@ -2,28 +2,26 @@ import { Component, Input, ViewChild } from '@angular/core';
 import { FormBuilder, UntypedFormGroup } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { NgPrimeModule } from '@prime-ng';
-import { EtapeTraitement, ActionNonConformite } from '../../models';
-import { AuthService } from '@core/auth';
-import { 
-    ActionNonConformiteService, 
-    ProcNonConformiteService, 
-    PieceJointeFichierService, 
-    PlanActionService 
-} from '../../services';
-import { getStatusSeverity } from '../../utils';
 import { DetailsDialogComponent } from '../details-dialog/details-dialog';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { LightboxComponent } from '../lightbox/lightbox';
 import { nonConformiteForm } from '../config/proc-non-conformite.data';
 import { ApiResponse } from '../../../../models/response.model';
-import { 
-    WorkflowActionsComponent, 
-    WorkflowGuidanceComponent, 
-    WorkflowHistoriqueComponent 
-} from '@features/workflow';
 import { formatDateToDDMMYYYY } from '../../../../utils/formatage/formatage-utils';
 import { map } from 'rxjs';
-import { Structure, StructureService } from '@features/organigramme';
+import { AuthService } from '@core/auth/auth.service';
+import { EtapeTraitement } from '@features/non-conformite/models/nc-status.model';
+import { ActionNonConformite } from '@features/non-conformite/models/plan-action.model';
+import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
+import { ActionNonConformiteService } from '@features/non-conformite/services/action-non-conformite.service';
+import { PieceJointeFichierService } from '@features/non-conformite/services/piece-jointe-fichier.service';
+import { PlanActionService } from '@features/non-conformite/services/plan-action.service';
+import { getStatusSeverity } from '@features/non-conformite/utils/nc-utils';
+import { WorkflowActionsComponent } from '@features/workflow/execution/workflow-actions.component';
+import { WorkflowGuidanceComponent } from '@features/workflow/execution/workflow-guidance.component';
+import { WorkflowHistoriqueComponent } from '@features/workflow/execution/workflow-historique.component';
+import { Structure } from '@features/organigramme/models/structure.model';
+import { StructureService } from '@features/organigramme/services/structure.service';
 
 @Component({
     selector: 'app-form-traitement',
@@ -89,7 +87,7 @@ export class FormTraitementComponent {
     constructor(
         private fb: FormBuilder,
         private authService: AuthService,
-        private service: ProcNonConformiteService,
+        private service: NonConformiteService,
         private messageService: MessageService,
         private structureService: StructureService,
         private actionNonConformiteService: ActionNonConformiteService,
@@ -601,15 +599,20 @@ loadStuctures() {
      * par le dialogue de décision ; les participants, eux, appartiennent au dossier et se
      * complètent au fil de l'analyse, avant même qu'aucune décision ne soit prise.</p>
      */
-    enregistrerLesParticipants() {
+    enregistrerLesParticipants(liste: string[] = this.participants) {
         if (!this.demande?.id) {
             return;
         }
+        const participants = liste ?? [];
+        // La liste vient de l'événement plutôt que du champ : le rattachement à deux sens et cet
+        // écouteur sont deux abonnés au même changement, et rien ne garantit lequel court en
+        // premier. Lire le champ ferait enregistrer l'état d'avant une fois sur deux.
+        this.participants = participants;
         // Seuls les participants : la fiche entière porterait avec elle des champs que d'autres
         // écrans saisissent, et les écraserait au passage.
         this.service.updateNomConformite(
-            { id: this.demande.id, participants: this.participants ?? [] }, this.demande.id).subscribe({
-            next: () => this.demande.participants = this.participants ?? [],
+            { id: this.demande.id, participants }, this.demande.id).subscribe({
+            next: () => this.demande.participants = participants,
             error: () => this.messageService.add({
                 severity: 'error', summary: 'Enregistrement impossible',
                 detail: "Les participants n'ont pas pu être enregistrés.", life: 5000

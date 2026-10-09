@@ -2,19 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-
-import { QualiUrlConfig } from '@core';
-import {
-  EmailTemplateDto,
-  ResourceType,
-  StepDecision,
-  ValidationHistoryDto,
-  WorkflowDto,
-  WorkflowInstanceDto,
-  WorkflowStateDto,
-  WorkflowValidationRequestDto,
-  ResultatDecisionDto
-} from '../models';
+import { QualiUrlConfig } from '@core/services/url-config';
+import { EmailTemplateDto, ResourceType, ResultatDecisionDto, StepDecision, ValidationHistoryDto, WorkflowDto, WorkflowInstanceDto, WorkflowStateDto, WorkflowValidationRequestDto } from 'src/app/models/workflow.model';
 
 /**
  * Erreur métier renvoyée par workflow-service, telle qu'un écran peut la présenter.

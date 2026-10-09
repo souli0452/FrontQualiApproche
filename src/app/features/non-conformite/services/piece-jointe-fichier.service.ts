@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { AMELIORATION_SERVICE } from '@core';
+import { AMELIORATION_SERVICE } from '@core/services/url-config';
 
 /**
  * Contenu des pièces jointes des non-conformités et des plans d'action.

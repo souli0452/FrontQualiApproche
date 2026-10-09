@@ -8,6 +8,7 @@ export const USER_SERVICE = `${SERVICE_PREFIX}/user-service/api/v1`;
 export const EVALUATION_SERVICE = `${SERVICE_PREFIX}/evaluation-service/api/v1`;
 export const SUPPORT_SERVICE = `${SERVICE_PREFIX}/support-service/api/v1`;
 export const WORKFLOW_SERVICE = `${SERVICE_PREFIX}/workflow-service/api/v1`;
+export const IA_SERVICE = `${SERVICE_PREFIX}/ia-service/api/v1`;
 
 export class UrlConfig {
     // Amelioration Service
@@ -42,13 +43,47 @@ export class UrlConfig {
 
     // Evaluation Service
     static readonly CRITERE_EVALUATION_ROOT_URL = `${EVALUATION_SERVICE}/critere-evaluation`;
-    static readonly AUDIT_ROOT_URL = `${EVALUATION_SERVICE}/audite`;
+    static readonly AUDIT_ROOT_URL = `${EVALUATION_SERVICE}/audits`;
+    static readonly AUDIT_AUDITEURS_URL = `${EVALUATION_SERVICE}/auditeurs`;
+    static readonly AUDIT_CONSTATS_URL = `${EVALUATION_SERVICE}/constats`;
+    static readonly AUDIT_CHECKLISTS_URL = `${EVALUATION_SERVICE}/checklists-audit`;
+    static readonly AUDIT_TYPES_AUDIT_URL = `${EVALUATION_SERVICE}/types-audit`;
+    static readonly AUDIT_TYPES_CONSTAT_URL = `${EVALUATION_SERVICE}/types-constat`;
+    static readonly AUDIT_SITES_URL = `${EVALUATION_SERVICE}/sites-audit`;
+    static readonly AUDIT_REGLES_NOTIF_URL = `${EVALUATION_SERVICE}/regles-notification-audit`;
+    static readonly AUDIT_CODIFICATIONS_URL = `${EVALUATION_SERVICE}/codifications-document`;
+    static readonly AUDIT_EVALUATIONS_RQAPBF_URL = `${EVALUATION_SERVICE}/evaluations-rqapbf`;
+    static readonly AUDIT_EVALUATIONS_AUDITEUR_URL = `${EVALUATION_SERVICE}/evaluations-auditeur`;
+    static readonly AUDIT_REFERENTIEL_RQAPBF_URL = `${EVALUATION_SERVICE}/referentiel-rqapbf`;
+    static readonly AUDIT_PLANS_URL = `${EVALUATION_SERVICE}/plans-audit`;
+    static readonly AUDIT_SIGNATURES_URL = `${EVALUATION_SERVICE}/signatures-audit`;
 
     // Support Service (Gestion Documentaire QMS)
     static readonly QMS_DOCUMENT_ROOT_URL = `${SUPPORT_SERVICE}/qms/documents`;
     static readonly QMS_DOCUMENT_TYPE_ROOT_URL = `${SUPPORT_SERVICE}/qms/document-types`;
     static readonly WORKFLOW_ROOT_URL = `${WORKFLOW_SERVICE}/workflows`;
     static readonly WORKFLOW_STEP_TEMPLATE_ROOT_URL = `${SUPPORT_SERVICE}/workflow-step-templates`;
+
+    /**
+     * Foire aux questions — un référentiel de l'application, servi par referentiel-service.
+     * L'assistant IA en est un lecteur parmi d'autres, il ne la détient pas.
+     */
+    static readonly FAQ_ROOT_URL = `${REFERENTIEL_SERVICE}/faq`;
+
+    // IA Service (Assistant rédactionnel)
+    static readonly IA_ASSISTANCE_URL = `${IA_SERVICE}/ia/assistance`;
+    static IA_SUGGESTION_VERDICT_URL(id: string): string {
+        return `${IA_SERVICE}/ia/suggestions/${id}/verdict`;
+    }
+    static readonly IA_CONVERSATION_URL = `${IA_SERVICE}/ia/conversation`;
+    static readonly IA_CONVERSATIONS_URL = `${IA_SERVICE}/ia/conversations`;
+    static IA_CONVERSATION_PAR_ID_URL(id: string): string {
+        return `${IA_SERVICE}/ia/conversations/${id}`;
+    }
+    static readonly IA_QUESTIONS_URL = `${IA_SERVICE}/ia/questions`;
+    static IA_QUESTION_URL(code: string): string {
+        return `${IA_SERVICE}/ia/questions/${code}`;
+    }
 
     // Workflow Service
     static readonly WORKFLOW_DEFINITION_URL = `${WORKFLOW_SERVICE}/workflows`;

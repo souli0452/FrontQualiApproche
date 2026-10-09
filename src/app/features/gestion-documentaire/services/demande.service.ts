@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { QualiUrlConfig } from '@core';
-import { DemandeDocumentDto, TypeDemande } from '../models';
+import { QualiUrlConfig } from '@core/services/url-config';
+import { TypeDemande } from '@features/non-conformite/models/nc-status.model';
+import { DemandeDocumentDto } from '../models/demande.model';
 
 /**
  * Demandes de modification et de suppression de document.
@@ -36,6 +37,18 @@ export class DemandeDocumentService {
         return this.http.post<any>(QualiUrlConfig.DEMANDE_DOCUMENT_ROOT_URL, formData).pipe(
             map(res => res?.data ?? res)
         );
+    }
+
+    /**
+     * La pièce jointe au dépôt, en binaire.
+     *
+     * <p>Elle est désignée par la demande et non par sa référence de stockage : c'est le serveur
+     * qui sait où elle est rangée, et une référence qui transiterait par l'écran ouvrirait le
+     * dépôt entier.</p>
+     */
+    pieceJointe(demandeId: string): Observable<Blob> {
+        return this.http.get(`${QualiUrlConfig.DEMANDE_DOCUMENT_ROOT_URL}/${demandeId}/piece-jointe`,
+            { responseType: 'blob' });
     }
 
     /** Demandes visibles : celles de ma structure, toutes pour le responsable qualité. */

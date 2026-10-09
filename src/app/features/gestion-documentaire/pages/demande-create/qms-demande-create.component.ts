@@ -6,13 +6,16 @@ import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
-import { SelectInputComponent } from '@shared';
-import { FileUploadComponent } from '@features/non-conformite';
-import { DocumentQms } from '../../models';
-import { TypeDemande } from '../../models';
-import { DemandeDocumentService } from '../../services';
-import { QmsDocumentService } from '../../services';
+import { AiAssistButtonComponent } from '@shared/ia/ai-assist-button.component';
+import { LicenceOuverteDirective } from '@shared/licence/licence-ouverte.directive';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
+import { FileUploadComponent } from '@features/non-conformite/components/file-upload/file-upload.component';
+import { SelectInputComponent } from '@shared/ui/select-input/select-input.component';
+import { DocumentQms } from '@features/gestion-documentaire/models/document.model';
+import { TypeDemande } from '@features/gestion-documentaire/models/demande.model';
+import { DemandeDocumentService } from '@features/gestion-documentaire/services/demande.service';
+import { QmsDocumentService } from '@features/gestion-documentaire/services/document.service';
+import { AlertService } from '@shared/alert-message/alert-message.service';
 
 /**
  * Dépôt d'une demande de modification ou de suppression de document.
@@ -26,7 +29,8 @@ import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
 @Component({
     selector: 'app-qms-demande-create',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, FileUploadComponent, SelectInputComponent],
+    imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, FileUploadComponent, SelectInputComponent,
+        LicenceOuverteDirective, AiAssistButtonComponent],
     providers: [MessageService],
     templateUrl: './qms-demande-create.component.html'
 })
@@ -53,7 +57,8 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
         private readonly route: ActivatedRoute,
         private readonly demandeService: DemandeDocumentService,
         protected readonly documentService: QmsDocumentService,
-        private readonly messageService: MessageService
+        private readonly messageService: MessageService,
+        private readonly alertService: AlertService
     ) {
         this.formulaire = this.fb.group({
             documentId: [null, Validators.required],
@@ -70,6 +75,7 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
         const documentId = this.route.snapshot.queryParamMap.get('documentId');
         if (documentId) {
             this.formulaire.patchValue({ documentId });
+            this.onDocumentChoisi(documentId);
         }
     }
 
@@ -94,6 +100,48 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
             next: (document) => (this.documentChoisi = document),
             error: () => (this.documentChoisi = undefined)
         });
+    }
+
+    // =========================================================================
+    // ASSISTANCE IA (REFORMULATION DE LA DESCRIPTION)
+    // =========================================================================
+
+    /**
+     * Source de la reformulation : la description telle qu'elle est saisie, et rien d'autre.
+     *
+     * <p>Aucun repli sur les autres champs, contrairement à la déclaration d'une non-conformité :
+     * reformuler suppose un texte à reformuler. Sans lui il n'y a rien à faire, et le bouton le dit
+     * — partir de l'objectif et du document ferait écrire à l'assistant une description que le
+     * demandeur n'a pas pensée, là où la consigne du prompt est précisément de ne rien ajouter.</p>
+     */
+    readonly iaSourceDescription = (): string =>
+        (this.formulaire.get('description')?.value ?? '').trim();
+
+    /**
+     * Contexte joint à la demande de reformulation : de quoi donner le ton juste sans fournir de
+     * matière. Le prompt de reformulation ne peut rien inventer à partir de là — il conserve les
+     * faits du texte — mais il sait pour quel document et pour quelle démarche il écrit.
+     */
+    get iaContexteDemande(): Record<string, string> {
+        const contexte: Record<string, string> = {};
+        const nature = this.typesDemande.find((t) => t.value === this.formulaire.get('type')?.value);
+        if (nature) contexte['natureDeLaDemande'] = nature.label;
+        const objectif = (this.formulaire.get('objectif')?.value ?? '').trim();
+        if (objectif) contexte['objectif'] = objectif;
+        if (this.documentChoisi?.titre) contexte['document'] = this.documentChoisi.titre;
+        if (this.documentChoisi?.reference) contexte['referenceDocument'] = this.documentChoisi.reference;
+        return contexte;
+    }
+
+    /**
+     * Reprend dans le formulaire la reformulation retenue. Marquée « modifiée » : le texte vient de
+     * l'utilisateur, qui l'a relu et accepté, et un formulaire qui s'ignorerait sali laisserait
+     * repartir sans avertissement.
+     */
+    appliquerReformulation(texte: string): void {
+        const description = this.formulaire.get('description');
+        description?.setValue(texte);
+        description?.markAsDirty();
     }
 
     /** Vrai quand la demande vise une suppression : l'écran le dit alors franchement. */
@@ -130,11 +178,7 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
         if (!enVigueur) {
             this.formulaire.patchValue({ documentId: null });
             this.documentChoisi = undefined;
-            this.messageService.add({
-                severity: 'info', summary: 'Document à choisir de nouveau',
-                detail: "Une modification ne se demande que sur un document en vigueur : choisissez-en un dans la liste.",
-                life: 5000
-            });
+            this.alertService.showInfo("Document à choisir de nouveau");
         }
     }
 
@@ -151,10 +195,7 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
     soumettre(): void {
         if (this.formulaire.invalid) {
             this.formulaire.markAllAsTouched();
-            this.messageService.add({
-                severity: 'warn', summary: 'Demande incomplète',
-                detail: 'Le document concerné et l’objectif sont nécessaires à son instruction.'
-            });
+            this.alertService.showWarning("Demande incomplète");
             return;
         }
 
@@ -166,15 +207,12 @@ export class QmsDemandeCreateComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: () => {
                     this.loading = false;
-                    this.messageService.add({
-                        severity: 'success', summary: 'Demande déposée',
-                        detail: 'Elle suit désormais son circuit d’instruction.'
-                    });
+                    this.alertService.showSuccess("Demande déposée");
                     setTimeout(() => this.retour(), 1200);
                 },
                 error: (err) => {
                     this.loading = false;
-                    showToast(StatusEnum.error, err.status, 'Dépôt impossible', this.messageService, err);
+                    this.alertService.showError(err.error.message);
                 }
             });
     }

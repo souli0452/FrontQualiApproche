@@ -1,9 +1,9 @@
 import { UserInfos } from "./auth.model";
 import { Departement } from "./departement.model";
-import { NonConformite } from "./non-conformite.model";
 import { Produit } from "./produit.model";
 import { Risque } from "./risque.model";
 import { Exigence } from "./exigence.model";
+import { NonConformite } from "@features/non-conformite/models/non-conformite.model";
 
 export interface Audite extends UserInfos {
     id: string;

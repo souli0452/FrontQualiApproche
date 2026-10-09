@@ -4,22 +4,20 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { NgPrimeModule } from '@prime-ng';
-import { QmsDocumentService } from '../../services';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
-import { AuthService } from '@core/auth';
-import {
-  DomaineApplicationService,
-  NiveauConfidentialiteService,
-  PrioriteDocumentService
-} from '../../services';
-import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '../../models';
 
 import { Subject, takeUntil } from 'rxjs';
-import { ToggleSwitch } from 'primeng/toggleswitch';
-import { SelectInputComponent } from '@shared';
-import { FileUploadComponent } from '@features/non-conformite';
-import { LicenceOuverteDirective } from '@shared';
-import { Structure, StructureService } from '@features/organigramme';
+import { AuthService } from '@core/auth/auth.service';
+import { FileUploadComponent } from '@features/non-conformite/components/file-upload/file-upload.component';
+import { SelectInputComponent } from '@shared/ui/select-input/select-input.component';
+import { LicenceOuverteDirective } from '@shared/licence/licence-ouverte.directive';
+import { Structure } from '@features/organigramme/models/structure.model';
+import { StructureService } from '@features/organigramme/services/structure.service';
+import { QmsDocumentService } from '@features/gestion-documentaire/services/document.service';
+import { DomaineApplicationService, NiveauConfidentialiteService, PrioriteDocumentService } from '@features/gestion-documentaire/services/referentiel.service';
+import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '@features/gestion-documentaire/models/referentiel.model';
+import { WorkflowService, WorkflowError } from '@features/workflow/services/workflow.service';
+import { WorkflowActionDto, WorkflowStateDto } from 'src/app/models/workflow.model';
 
 @Component({
   selector: 'app-qms-document-create',
@@ -51,6 +49,8 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
   domaines: DomaineApplication[] = [];
 
   loading = false;
+  loadingSave = false;
+  loadingSubmit = false;
   selectedFile?: File;
   showGuideModal = false;
   currentUserStructureId?: string;
@@ -93,6 +93,7 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
     protected prioriteService: PrioriteDocumentService,
     protected niveauConfidentialiteService: NiveauConfidentialiteService,
     protected domaineService: DomaineApplicationService,
+    private workflowService: WorkflowService,
     private authService: AuthService,
     private messageService: MessageService
   ) {
@@ -230,7 +231,7 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
     this.router.navigate(['/gestion-documentaire/documents']);
   }
 
-  submitDocument(): void {
+  submitDocument(soumettre: boolean = false): void {
     if (this.documentForm.invalid) {
       this.messageService.add({ severity: 'warn', summary: 'Formulaire incomplet', detail: 'Veuillez renseigner tous les champs obligatoires.' });
       return;
@@ -241,9 +242,6 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
     }
 
     const formVal = this.documentForm.value;
-
-
-    this.loading = true;
     const serviceObj = formVal.service;
 
     const payload = {
@@ -271,29 +269,126 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       ...(formVal.statutLegal && { statutLegal: formVal.statutLegal })
     };
 
-    console.log("====> TEST DE SOUMISSION (Pas d'envoi en BD) <====");
-    console.log("Fichier prêt à être envoyé :", this.selectedFile ? this.selectedFile.name : "Aucun fichier");
-    console.log("Données du formulaire (Payload) :", payload);
+    if (soumettre) {
+      this.loadingSubmit = true;
+    } else {
+      this.loadingSave = true;
+    }
 
-    this.qmsService.createDocument(this.selectedFile, payload).subscribe({
-      next: (doc) => {
-        this.loading = false;
-        this.messageService.add({ severity: 'success', summary: 'Document créé', detail: `Le document ${doc.documentNumber} a été enregistré avec succès.` });
-        if (doc.avertissementConfidentialite) {
-          this.messageService.add({
-            severity: 'warn', summary: 'Classement à revoir',
-            detail: doc.avertissementConfidentialite, life: 15000, sticky: true
-          });
-          setTimeout(() => this.router.navigate(['/gestion-documentaire/documents']), 6000);
-          return;
+    this.qmsService.createDocument(this.selectedFile, payload)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (doc) => {
+          if (!soumettre) {
+            this.loadingSave = false;
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Brouillon enregistré',
+              detail: `Le document ${doc.documentNumber || ''} reste modifiable ; `
+                + 'vous pourrez le soumettre depuis sa fiche.'
+            });
+            this.handlePostSaveNavigation(doc);
+          } else {
+            // Soumission directe dans le circuit de validation
+            this.soumettreDocumentCree(doc);
+          }
+        },
+        error: (err: any) => {
+          this.loadingSave = false;
+          this.loadingSubmit = false;
+          const backendMessage = err.error?.message || "Échec de l'enregistrement";
+          showToast(StatusEnum.error, err.status, backendMessage, this.messageService, err);
         }
-        setTimeout(() => this.router.navigate(['/gestion-documentaire/documents']), 1500);
-      },
-      error: (err: any) => {
-        this.loading = false;
-        const backendMessage = err.error?.message || "Échec de l'enregistrement";
-        showToast(StatusEnum.error, err.status, backendMessage, this.messageService, err);
-      }
-    });
+      });
+  }
+
+  private handlePostSaveNavigation(doc: any): void {
+    if (doc.avertissementConfidentialite) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Classement à revoir',
+        detail: doc.avertissementConfidentialite,
+        life: 15000,
+        sticky: true
+      });
+      setTimeout(() => this.router.navigate(['/gestion-documentaire/documents']), 6000);
+      return;
+    }
+    setTimeout(() => this.router.navigate(['/gestion-documentaire/documents']), 1500);
+  }
+
+  private soumettreDocumentCree(doc: any): void {
+    if (!doc?.id) {
+      this.loadingSubmit = false;
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Document enregistré',
+        detail: `Le document ${doc.documentNumber || ''} a été enregistré.`
+      });
+      this.handlePostSaveNavigation(doc);
+      return;
+    }
+
+    this.workflowService.getWorkflowStateForResource(doc.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (state: WorkflowStateDto) => {
+          const allowed = state?.allowedActions || [];
+          // Rechercher l'action de progression / soumission
+          const submitAction = allowed.find(a =>
+            (a.libelle || '').toLowerCase().includes('soumett') ||
+            a.decision === 'APPROUVE' ||
+            a.actionCode === 'APPROUVE'
+          ) || allowed[0];
+
+          if (!submitAction) {
+            this.loadingSubmit = false;
+            this.messageService.add({
+              severity: 'info',
+              summary: 'Document enregistré',
+              detail: `Le document ${doc.documentNumber || ''} a été enregistré (aucun circuit de validation actif détecté).`
+            });
+            this.handlePostSaveNavigation(doc);
+            return;
+          }
+
+          this.workflowService.executeTransition(doc.id, submitAction.code, {
+            comments: 'Soumission initiale du document pour validation',
+            expectedStateCode: state.currentStateCode
+          })
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.loadingSubmit = false;
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Document soumis',
+                detail: `Le document ${doc.documentNumber || ''} a été créé et soumis avec succès.`
+              });
+              this.handlePostSaveNavigation(doc);
+            },
+            error: (err: WorkflowError | any) => {
+              this.loadingSubmit = false;
+              const msg = err?.message || err?.error?.message || 'Erreur lors du passage au circuit de validation';
+              this.messageService.add({
+                severity: 'warn',
+                summary: 'Document enregistré mais non soumis',
+                detail: `Le document ${doc.documentNumber || ''} a été enregistré, mais la soumission a échoué : ${msg}`,
+                life: 6000
+              });
+              this.handlePostSaveNavigation(doc);
+            }
+          });
+        },
+        error: (err: any) => {
+          this.loadingSubmit = false;
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Document enregistré',
+            detail: `Le document ${doc.documentNumber || ''} a été enregistré, mais l'état du circuit n'a pas pu être récupéré.`
+          });
+          this.handlePostSaveNavigation(doc);
+        }
+      });
   }
 }

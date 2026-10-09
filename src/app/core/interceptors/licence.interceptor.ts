@@ -6,9 +6,9 @@ import {
     HttpRequest
 } from '@angular/common/http';
 import { Injectable, Injector, inject } from '@angular/core';
+import { LicenceService } from '@core/licence/services/licence.service';
 import { MessageService } from 'primeng/api';
 import { Observable, catchError, throwError } from 'rxjs';
-import { LicenceService } from '../licence';
 
 /**
  * Le refus de la passerelle, dit à l'utilisateur.

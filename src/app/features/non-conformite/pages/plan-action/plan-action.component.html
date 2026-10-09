@@ -5,33 +5,39 @@
         [cols]="cols"
         [hasFilters]="true"
         [loading]="loading"
-        [paginator]="false"
+        [paginator]="true"
         [showGridlines]="false"
         [totalElements]="currentTotalElements"
         [currentPage]="currentPage"
         [pageSize]="pageSize"
+        [recordName]="'plans d\'action'"
         (pageChangeEvent)="onPageChange($event)"
+        (onDetails)="ouvrirPlan($event)"
         >
         <app-nc-filter-bar filters (onFilterChange)="handleFilter($event)"></app-nc-filter-bar>
     </app-traitement-table>
 
-<div *ngIf="demandeList.length === 0 && !loading" 
-      class="flex flex-col items-center justify-center p-4 text-center">
-    
-    <img src="assets/images/empty.svg" 
-          alt="Aucun Plan d'action" 
-          class="w-[200px] h-auto mb-6 opacity-60 transition-all duration-300 hover:opacity-80 hover:grayscale-0" 
-          style="filter: grayscale(100%);">
-    
-    <!-- Titre accrocheur -->
-    <h3 class="text-2xl font-bold text-surface-900 dark:text-surface-50 mb-3">
-        Aucun Plan d'action disponible
-    </h3>
-    
-    <p class="text-surface-500 dark:text-surface-400 max-w-2xl leading-relaxed text-lg mb-0 mx-auto">
-        Aucun Plan d'action disponible à ce jour.
-    </p>
-
+    <div *ngIf="demandeList.length === 0 && !loading" 
+          class="flex flex-col items-center justify-center p-4 text-center">
+        
+        <img src="assets/images/empty.svg" 
+              alt="Aucun Plan d'action" 
+              class="w-[200px] h-auto mb-6 opacity-60 transition-all duration-300 hover:opacity-80 hover:grayscale-0" 
+              style="filter: grayscale(100%);">
+        
+        <h3 class="text-2xl font-bold text-surface-900 dark:text-surface-50 mb-3">
+            Aucun Plan d'action disponible
+        </h3>
+        
+        <p class="text-surface-500 dark:text-surface-400 max-w-2xl leading-relaxed text-lg mb-0 mx-auto">
+            Aucun Plan d'action à traiter à ce jour.
+        </p>
+    </div>
 </div>
 
-</div>
+<!-- Dialogue réutilisable de consultation et de traitement direct du plan d'action -->
+<app-plan-action-dialog
+    [(visible)]="afficheDialog"
+    [plan]="selectedPlan"
+    (executed)="apresDecisionSurLePlan($event)">
+</app-plan-action-dialog>

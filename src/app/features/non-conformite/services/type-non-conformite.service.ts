@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { QualiUrlConfig, BaseCrudService } from '@core';
-import { OrigineNonConformite } from '../models';
-
+import { BaseCrudService } from '@core/services/base-crud.service';
+import { QualiUrlConfig, UrlConfig } from '@core/services/url-config';
+import { OrigineNonConformite } from '../models/referentiel.model';
 
 
 @Injectable({providedIn: 'root'})

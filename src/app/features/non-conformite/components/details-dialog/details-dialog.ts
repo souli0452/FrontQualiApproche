@@ -1,30 +1,29 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { CommonModule, DatePipe, formatDate } from '@angular/common';
+import { Component, Input, ViewChild } from '@angular/core';
+import { CommonModule} from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Tag } from 'primeng/tag';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { MessageService } from 'primeng/api';
 import { NgPrimeModule } from '@prime-ng';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
-import { FeaturesService } from '@core';
-import { AuthService, hasAnyPermission } from '@core/auth';
-import { EtapeTraitement } from '../../models';
 import { LightboxComponent } from '../lightbox/lightbox';
-import { 
-    WorkflowGuidanceComponent, 
-    WorkflowSaisiesComponent, 
-    WorkflowHistoriqueComponent 
-} from '@features/workflow';
-import { ProcNonConformiteService, PieceJointeFichierService } from '../../services';
 import { convertFilesToBase64 } from '../../../../utils/fichier/fichier-utils';
 import { formatDateToDDMMYYYY } from '../../../../utils/formatage/formatage-utils';
-import { LicenceOuverteDirective } from '@shared';
+import { hasAnyPermission } from '@core/auth/auth-utils';
+import { AuthService } from '@core/auth/auth.service';
+import { EtapeTraitement } from '@features/non-conformite/models/nc-status.model';
+import { ProcNonConformiteService } from '@features/non-conformite/services/proc-non-conformite.service';
+import { PieceJointeFichierService } from '@features/non-conformite/services/piece-jointe-fichier.service';
+import { WorkflowGuidanceComponent } from '@features/workflow/execution/workflow-guidance.component';
+import { WorkflowSaisiesComponent } from '@features/workflow/execution/workflow-saisies.component';
+import { WorkflowHistoriqueComponent } from '@features/workflow/execution/workflow-historique.component';
+import { LicenceOuverteDirective } from '@shared/licence/licence-ouverte.directive';
+import { AiAssistButtonComponent } from '@shared/ia/ai-assist-button.component';
 
 @Component({
     selector: 'app-details-dialog',
     templateUrl: './details-dialog.html',
     imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent, LightboxComponent,
         WorkflowGuidanceComponent, WorkflowSaisiesComponent, WorkflowHistoriqueComponent,
-        LicenceOuverteDirective],
+        LicenceOuverteDirective, AiAssistButtonComponent],
     standalone: true,
     styleUrl: './details-dialog.scss'
 })
@@ -69,8 +68,6 @@ export class DetailsDialogComponent {
     confirmKey = 'confirmKey';
 
     constructor(
-        private featureService: FeaturesService,
-        private confirmationService: ConfirmationService,
         private service: ProcNonConformiteService,
         private messageService: MessageService,
         private authService: AuthService,
@@ -192,6 +189,29 @@ export class DetailsDialogComponent {
 
     protected readonly EtapeTraitement = EtapeTraitement;
 
+
+    getGravityColor(gravity: string): string {
+        const val = (gravity || '').toLowerCase();
+        if (this.demande?.couleur) return this.demande.couleur;
+        if (val.includes('critique') || val.includes('danger')) return '#ef4444';
+        if (val.includes('majeur')) return '#f97316';
+        if (val.includes('mineur')) return '#0284c7';
+        return '#64748b';
+    }
+
+    getGravityBadgeStyle(gravity: string): { [key: string]: string } {
+        const c = this.getGravityColor(gravity);
+        return {
+            'background-color': `${c}1f`,
+            'color': c,
+            'border': `1px solid ${c}47`,
+            'font-weight': '600'
+        };
+    }
+
+
+
+
     getStatusSeverity(gravity: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
         if (!gravity) return 'secondary';
         
@@ -215,6 +235,46 @@ export class DetailsDialogComponent {
         this.planAction = plan;
         this.displayDialog = true;
     }
+
+    // =========================================================================
+    // ASSISTANCE IA (CAUSES / SOLUTIONS DU PLAN D'ACTION)
+    // =========================================================================
+
+    /** Les éditeurs Quill portent du HTML : le texte source de la demande IA en est débarrassé. */
+    private static nettoyerHtml(html?: string): string {
+        return (html ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    /**
+     * Source IA des causes : le contenu déjà saisi, ou à défaut la description de la NC,
+     * matière première de l'analyse des causes.
+     */
+    readonly iaSourceCauses = (): string => {
+        const saisie = DetailsDialogComponent.nettoyerHtml(this.planAction.causeIdentifiees);
+        if (saisie) return saisie;
+        const description = DetailsDialogComponent.nettoyerHtml(this.demande?.justification);
+        return description ? `Analyse les causes probables de cette non-conformité :\n${description}` : '';
+    };
+
+    /** Source IA des solutions : le contenu déjà saisi, ou à défaut la description de la NC. */
+    readonly iaSourceSolutions = (): string => {
+        const saisie = DetailsDialogComponent.nettoyerHtml(this.planAction.solutionRetenues);
+        if (saisie) return saisie;
+        const description = DetailsDialogComponent.nettoyerHtml(this.demande?.justification);
+        return description ? `Propose des actions correctives pour cette non-conformité :\n${description}` : '';
+    };
+
+    /** Contexte métier joint aux demandes IA du plan d'action. */
+    get iaContextePlanAction(): Record<string, string> {
+        const contexte: Record<string, string> = {};
+        const description = DetailsDialogComponent.nettoyerHtml(this.demande?.justification);
+        if (description) contexte['descriptionNonConformite'] = description;
+        if (this.demande?.typeNonConformiteLibelle) contexte['origine'] = this.demande.typeNonConformiteLibelle;
+        if (this.demande?.niveauNonConformiteLibelle) contexte['niveau'] = this.demande.niveauNonConformiteLibelle;
+        if (this.demande?.actionLibelle) contexte['typeAction'] = this.demande.actionLibelle;
+        return contexte;
+    }
+
     async handleFileUpload(files: any[]) {
         this.uploadedFiles = files;
         const fichiers = await convertFilesToBase64(this.uploadedFiles);

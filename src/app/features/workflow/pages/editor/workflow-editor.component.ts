@@ -6,13 +6,10 @@ import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
-import { AppRoleService } from '@features/gestion-utilisateurs/services';
 import { WorkflowStepTemplateService } from '../../services/workflow-step-template.service';
-import { DocumentService as QmsDocumentService } from '@features/gestion-documentaire/services';
-import { SelectInputComponent } from '@shared';
+import { SelectInputComponent } from '../../../../shared/ui/select-input/select-input.component';
 import { ChoixDeChampService } from '../../services/choix-de-champ.service';
-import { WorkflowError, WorkflowService } from '@features/workflow';
-import { WorkflowStepTemplate } from '../../../../models/gestion-documentaire.model';
+import { WorkflowError, WorkflowService } from '../../services/workflow.service';
 import { WorkflowConfigurationGuideComponent } from './workflow-configuration-guide.component';
 import {
   EmailTemplateDto,
@@ -21,8 +18,11 @@ import {
   WorkflowStepDto,
   WorkflowTransitionDto
 } from '../../../../models/workflow.model';
-import { LicenceOuverteDirective } from '@shared';
+import { LicenceOuverteDirective } from '../../../../shared/licence/licence-ouverte.directive';
 import { AlertService } from '../../../../shared/alert-message/alert-message.service';
+import { WorkflowStepTemplate } from '@features/gestion-documentaire/models/document.model';
+import { AppRoleService } from '@features/gestion-utilisateurs/services/role.service';
+import { QmsDocumentService } from '@features/gestion-documentaire/services/document.service';
 
 /** Option de liste déroulante. */
 interface Option<T = string> {
@@ -200,10 +200,17 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   /** Types documentaires connus, pour afficher en clair le type réservé par un circuit. */
   typesDocument: any[] = [];
 
+  /**
+   * Les quatre familles que le serveur accepte — `TypeRessource` côté workflow-service. Toute
+   * autre valeur est refusée en 400 à l'enregistrement, et une famille manquante ici rend ses
+   * circuits inconfigurables : le select tombait à vide en ouvrant un circuit de demande, et
+   * l'enregistrer le rebasculait sur le type choisi à la place.
+   */
   readonly typesRessource: Option[] = [
     { label: 'Documents', value: 'DOCUMENT' },
     { label: 'Non-conformités', value: 'NON_CONFORMITE' },
-    { label: "Plans d'action", value: 'PLAN_ACTION' }
+    { label: "Plans d'action", value: 'PLAN_ACTION' },
+    { label: 'Demandes sur documents', value: 'DEMANDE_DOCUMENT' }
   ];
 
   /**

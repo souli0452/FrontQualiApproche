@@ -3,10 +3,10 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { AppMenuitem } from './app.menuitem';
-import { AuthService, accesAutorise, hasAnyPermission, hasMenuProfile } from '../../auth';
 import { ChangeDetectorRef } from '@angular/core';
-import { ModuleAbonnement } from '../../enums';
 import { AppNotificationService } from '@core/notifications/app-notification.service';
+import { accesAutorise, hasAnyPermission, hasMenuProfile } from '@core/auth/auth-utils';
+import { ModuleAbonnement } from '@core/enums/module-abonnement.enum';
 
 @Component({
     selector: 'app-menu',
@@ -127,8 +127,8 @@ export class AppMenu {
 
         const qualite = [
             {
-                label: 'Audite', icon: 'pi pi-fw pi-eye', routerLink: ['/audite'],
-                visible: this.peutVoir(['AUDITE_READ'], ModuleAbonnement.AUDIT)
+                label: 'Gestion des Audits', icon: 'pi pi-fw pi-clipboard', routerLink: ['/gestion-audit'],
+                visible: this.peutVoir(['audit-read', 'audit-write', 'AUDITE_READ'], ModuleAbonnement.AUDIT)
             },
             {
                 label: 'Non-Conformités', icon: 'pi pi-fw pi-briefcase', routerLink: ['/non-conformite'],
@@ -252,7 +252,16 @@ export class AppMenu {
                         ['niveau-confidentialite-read', 'niveau-confidentialite-write', 'CONFIG_READ'],
                         ModuleAbonnement.DOCUMENTAIRE)
                 }
-            ])
+            ]),
+            // En dernier, et hors des sous-groupes à dessein : la foire aux questions ne relève
+            // d'aucun module en particulier — elle répond sur l'application entière. Aucun
+            // ModuleAbonnement n'est donc exigé, contrairement aux référentiels voisins : une
+            // organisation qui ne souscrit ni au documentaire ni aux non-conformités doit
+            // pouvoir écrire son aide. L'assistant IA la lit, mais ne la détient pas.
+            {
+                label: 'Foire aux questions', icon: 'pi pi-fw pi-question-circle', routerLink: ['/faq'],
+                visible: this.peutVoir(['faq-read', 'faq-write', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'])
+            }
         ];
 
         this.model = [

@@ -7,12 +7,12 @@ import { Router } from '@angular/router';
 
 import { TableColumn, FormGroupColumn, MultiSelectSelector } from '../../../../models/generique.model';
 import { NgPrimeModule } from '@prime-ng';
-import { AppCrudGenericComponent } from '@shared';
 import { AppRoleService, RoleService } from '../../services/role.service';
 import { AppRole, Permission } from '../../models/role.model';
 import { HeaderPage } from '../../../../shared/header-page/header-page';
 import { BasePaginationComponent } from '../../../../shared/pagination/pagination';
 import { AlertService } from '../../../../shared/alert-message/alert-message.service';
+import { AppCrudGenericComponent } from '@shared/app-crud-generic/app-crud-generic.component';
 
 @Component({
   selector: 'app-roles-liste',
@@ -106,14 +106,24 @@ export class RolesListeComponent extends BasePaginationComponent implements OnIn
         }
     }
 
+    /**
+     * Supprime un rôle, et rend au serveur la parole quand il refuse.
+     *
+     * <p>« Échec de la suppression » ne disait rien de ce qu'il fallait faire. Le serveur, lui,
+     * nomme la cause : un rôle encore attribué rend 409 en comptant ses porteurs, et il suffit
+     * de le leur retirer. Recouvrir ce message d'un libellé générique obligeait à ouvrir la
+     * console pour comprendre — quand on pensait à le faire.</p>
+     */
     onDelete(role: AppRole) {
         this.roleService.deleteRole(role.id!).subscribe({
             next: () => {
                 this.alertService.showSuccess('Rôle supprimé');
                 this.fetchObject();
             },
-            error: (error) => {
-                this.alertService.showError('Échec de la suppression');
+            error: (erreur) => {
+                const message = erreur?.error?.message;
+                this.alertService.showError(
+                    message && typeof message === 'string' ? message : 'Échec de la suppression');
             }
         });
     }

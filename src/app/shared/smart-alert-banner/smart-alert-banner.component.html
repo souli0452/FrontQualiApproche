@@ -1,0 +1,61 @@
+<div *ngIf="activeAlerts.length > 0" 
+     class="grid grid-cols-1 gap-3 mb-4"
+     [ngClass]="{
+        'md:grid-cols-2': activeAlerts.length === 2,
+        'md:grid-cols-2 lg:grid-cols-3': activeAlerts.length >= 3
+     }">
+    <div *ngFor="let item of activeAlerts; let i = index; trackBy: trackByKey"
+         [ngClass]="[
+            'relative flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border backdrop-blur-sm shadow-xs transition-all duration-300',
+            getColorConfig(item.color).border,
+            getColorConfig(item.color).bg
+         ]">
+        
+        <div class="flex items-center gap-3 min-w-0">
+            <!-- Icône avec fond teinté -->
+            <div [ngClass]="[
+                    'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 font-bold',
+                    getColorConfig(item.color).iconBg,
+                    getColorConfig(item.color).iconText
+                 ]">
+                <i [class]="item.icon || 'pi pi-bell'" class="text-base"></i>
+            </div>
+
+            <!-- Détails de l'alerte -->
+            <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                    <span *ngIf="item.badgeText" 
+                          [ngClass]="['text-xs font-semibold uppercase tracking-wider', getColorConfig(item.color).badgeText]">
+                        {{ item.badgeText }}
+                    </span>
+                    <span [ngClass]="['inline-flex items-center px-1.5 py-0.2 rounded-full text-[11px] font-bold leading-none', getColorConfig(item.color).badgeBg]">
+                        {{ item.count }}
+                    </span>
+                </div>
+                <p class="text-xs text-surface-600 dark:text-surface-300 truncate mt-0.5">
+                    {{ item.message }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2 shrink-0">
+            <a *ngIf="item.routerLink" 
+               [routerLink]="item.routerLink" 
+               [ngClass]="[
+                    'inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors no-underline',
+                    getColorConfig(item.color).btn
+               ]">
+                <span>{{ item.actionLabel || 'Consulter' }}</span>
+                <i class="pi pi-arrow-right text-[10px]"></i>
+            </a>
+            
+            <button (click)="dismiss(item, i)" 
+                    type="button" 
+                    class="w-6 h-6 rounded-md flex items-center justify-center text-surface-400 hover:text-surface-600 dark:hover:text-surface-200 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer border-none bg-transparent"
+                    title="Fermer">
+                <i class="pi pi-times text-[10px]"></i>
+            </button>
+        </div>
+    </div>
+</div>

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { FeaturesService } from '../services';
+import { FeaturesService } from '@core/services/feature-service';
 
 @Injectable()
 export class LoaderInterceptor implements HttpInterceptor {
@@ -11,7 +11,12 @@ export class LoaderInterceptor implements HttpInterceptor {
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         // On ne déclenche pas le loader global pour les GET (on préfère les skeletons)
         // ou si le header X-Skip-Loader est explicitement présent
-        if (req.method === 'GET' || req.url.includes('/search') || req.headers.has('X-Skip-Loader')) {
+        if (
+            req.method === 'GET' || 
+            req.url.includes('/search') || 
+            req.url.includes('/instances/states') || 
+            req.headers.has('X-Skip-Loader')
+        ) {
             return next.handle(req);
         }
 

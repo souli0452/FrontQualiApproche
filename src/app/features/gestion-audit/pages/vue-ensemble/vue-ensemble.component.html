@@ -1,0 +1,148 @@
+<p-card>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-6">
+        <app-kpi-card
+            *ngFor="let card of kpiCards; trackBy: trackByKpi"
+            [label]="card.label"
+            [value]="card.value"
+            [icon]="card.icon"
+            [color]="card.color"
+            [description]="card.description"
+            [loading]="loading">
+        </app-kpi-card>
+    </div>
+
+    <!-- Tableau des audits récents -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-4">
+
+        <!-- Audits récents -->
+        <div class="lg:col-span-8 min-w-0 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden shadow-sm">
+            <div class="flex items-center justify-between p-4 border-b border-surface-100 dark:border-surface-800">
+                <div>
+                    <h3 class="text-base font-bold text-surface-900 dark:text-surface-50 m-0">Audits récents</h3>
+                    <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mt-1">Derniers audits enregistrés dans le système</p>
+                </div>
+                <a routerLink="/gestion-audit/programme"
+                   class="text-xs font-semibold text-primary hover:underline cursor-pointer">
+                    Voir tout
+                </a>
+            </div>
+
+            <div *ngIf="loadingAudits" class="p-4">
+                <p-skeleton height="3rem" styleClass="mb-2" *ngFor="let i of [1,2,3,4,5]"></p-skeleton>
+            </div>
+
+            <div *ngIf="!loadingAudits && auditsRecents.length === 0"
+                 class="flex flex-col items-center justify-center py-12 text-center">
+                <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center mb-3 text-blue-500">
+                    <i class="pi pi-clipboard text-2xl"></i>
+                </div>
+                <p class="text-sm text-surface-500 dark:text-surface-400 m-0">Aucun audit enregistré</p>
+            </div>
+
+            <table *ngIf="!loadingAudits && auditsRecents.length > 0"
+                   class="w-full border-collapse text-sm">
+                <thead>
+                    <tr class="bg-surface-50 dark:bg-surface-800">
+                        <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Référence</th>
+                        <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Processus</th>
+                        <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Type</th>
+                        <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Date</th>
+                        <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let audit of auditsRecents; trackBy: trackByAuditId"
+                        class="border-b border-surface-100 dark:border-surface-800 hover:bg-surface-50 dark:hover:bg-surface-800/50 cursor-pointer"
+                        [routerLink]="['/gestion-audit/programme', audit.id]">
+                        <td class="px-4 py-3 font-mono text-xs font-semibold text-primary">{{ audit.reference ?? '—' }}</td>
+                        <td class="px-4 py-3 text-surface-800 dark:text-surface-200 max-w-[180px] truncate">{{ audit.typeAuditLibelle ?? '—' }}</td>
+                        <td class="px-4 py-3 text-surface-600 dark:text-surface-400 text-xs">{{ audit.typeAuditLibelle ?? '—' }}</td>
+                        <td class="px-4 py-3 text-surface-600 dark:text-surface-400 text-xs whitespace-nowrap">{{ audit.dateDebutPrevue ?? '—' }}</td>
+                        <td class="px-4 py-3">
+                            <p-tag
+                                *ngIf="audit.statut"
+                                [value]="getStatutLabel(audit.statut)"
+                                [severity]="getStatutSeverity(audit.statut)"
+                                [rounded]="true">
+                            </p-tag>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Répartition par statut -->
+        <div class="lg:col-span-4 min-w-0 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5 shadow-sm">
+            <h3 class="text-base font-bold text-surface-900 dark:text-surface-50 mb-1">Répartition par statut</h3>
+            <p class="text-xs text-surface-500 dark:text-surface-400 mb-4 leading-relaxed">
+                Distribution des audits selon leur état d'avancement.
+            </p>
+
+            <div class="space-y-3" *ngIf="!loading">
+                <!-- Planifiés -->
+                <div class="flex items-center justify-between p-2.5 rounded-lg bg-sky-50/60 dark:bg-sky-950/20 border border-sky-100 dark:border-sky-900/30">
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-calendar text-sky-600 dark:text-sky-400 text-sm"></i>
+                        <span class="text-xs font-medium text-surface-700 dark:text-surface-300">Planifiés</span>
+                    </div>
+                    <span class="text-sm font-bold text-surface-900 dark:text-surface-100">{{ stats.planifies ?? 0 }}</span>
+                </div>
+
+                <!-- En préparation -->
+                <div class="flex items-center justify-between p-2.5 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30">
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-cog text-amber-600 dark:text-amber-400 text-sm"></i>
+                        <span class="text-xs font-medium text-surface-700 dark:text-surface-300">En préparation</span>
+                    </div>
+                    <span class="text-sm font-bold text-surface-900 dark:text-surface-100">{{ stats.enPreparation ?? 0 }}</span>
+                </div>
+
+                <!-- En cours -->
+                <div class="flex items-center justify-between p-2.5 rounded-lg bg-surface-100/60 dark:bg-surface-800/60 border border-surface-200 dark:border-surface-700">
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-spinner text-surface-600 dark:text-surface-400 text-sm"></i>
+                        <span class="text-xs font-medium text-surface-700 dark:text-surface-300">En cours</span>
+                    </div>
+                    <span class="text-sm font-bold text-surface-900 dark:text-surface-100">{{ stats.enCours ?? 0 }}</span>
+                </div>
+
+                <!-- En retard -->
+                <div class="flex items-center justify-between p-2.5 rounded-lg bg-red-50/60 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30">
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-exclamation-circle text-red-600 dark:text-red-400 text-sm"></i>
+                        <span class="text-xs font-medium text-surface-700 dark:text-surface-300">En retard</span>
+                    </div>
+                    <span class="text-sm font-bold text-surface-900 dark:text-surface-100">{{ stats.enRetard ?? 0 }}</span>
+                </div>
+
+                <!-- Clôturés -->
+                <div class="flex items-center justify-between p-2.5 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30">
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-check-circle text-emerald-600 dark:text-emerald-400 text-sm"></i>
+                        <span class="text-xs font-medium text-surface-700 dark:text-surface-300">Clôturés</span>
+                    </div>
+                    <span class="text-sm font-bold text-surface-900 dark:text-surface-100">{{ stats.clotures ?? 0 }}</span>
+                </div>
+            </div>
+
+            <!-- Taux de clôture -->
+            <div class="mt-4 pt-3 border-t border-surface-100 dark:border-surface-800">
+                <div class="flex items-center justify-between text-xs text-surface-500 dark:text-surface-400 mb-1.5">
+                    <span>Taux de clôture</span>
+                    <span class="font-semibold" [class]="(stats.tauxCloture ?? 0) >= 70 ? 'text-emerald-600' : 'text-amber-600'">
+                        {{ stats.tauxCloture ?? 0 }}%
+                    </span>
+                </div>
+                <div class="h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-500"
+                         [class]="(stats.tauxCloture ?? 0) >= 70 ? 'bg-emerald-500' : 'bg-amber-500'"
+                         [style.width.%]="stats.tauxCloture ?? 0">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</p-card>

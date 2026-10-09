@@ -81,7 +81,9 @@
                 <div class="nc-details-grid">
                     <div class="nc-detail-item">
                         <span class="nc-detail-label">Référence :</span>
-                        <span class="nc-detail-value font-bold bg-surface-100 p-2">{{demande.numeroReference || demande.numeroReference}}</span>
+                        <div class="mt-1">
+                            <p-tag severity="info" [value]="demande.numeroReference" styleClass="tag-pill" />
+                        </div>
                     </div>
                     <div class="nc-detail-item" *ngIf="demande.origineService">
                         <span class="nc-detail-label">Processus Destinataire :</span>
@@ -113,10 +115,16 @@
                         <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">{{demande.actionLibelle}}</span>
                     </div>
                     <div class="nc-detail-item" *ngIf="demande.niveauNonConformiteLibelle">
-                        <span class="nc-detail-label">Niveau de la non conformité:</span>
-                        <span class="nc-detail-value max-h-40 overflow-y-auto whitespace-pre-wrap block">
-                            <p-tag [style]="{'font-weight': 'bold'}" [severity]="getStatusSeverity(demande.niveauNonConformiteLibelle)" [value]="demande.niveauNonConformiteLibelle"> </p-tag>
+                        <span class="nc-detail-label">Niveau de la non conformité :</span>
+                        <div class="mt-1">
+                            <span class="text-xs px-2.5 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5 transition-all"
+                                [ngStyle]="getGravityBadgeStyle(demande.niveauNonConformiteLibelle)">
+                                <!-- Point coloré assorti -->
+                                <span class="w-1.5 h-1.5 rounded-full shrink-0" 
+                                    [ngStyle]="{'background-color': getGravityColor(demande.niveauNonConformiteLibelle)}"></span>
+                                {{ demande.niveauNonConformiteLibelle }}
                             </span>
+                        </div>
                     </div>
 
                 </div>
@@ -499,6 +507,17 @@
             <div class="flex mb-2 gap-2">
                 <label for="causes" class="font-normal m-0 font-semibold">Causes identifiées</label>
                 <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCauses.toggle($event)"></i>
+                <span class="ml-auto">
+                    <app-ai-assist-button
+                        siLicenceOuverte
+                        typeAssistance="CAUSES_PLAN_ACTION"
+                        [source]="iaSourceCauses"
+                        [contexte]="iaContextePlanAction"
+                        ressourceType="PLAN_ACTION"
+                        [ressourceId]="planAction.id"
+                        (accepter)="planAction.causeIdentifiees = $event">
+                    </app-ai-assist-button>
+                </span>
             </div>
             <p-popover #infoCauses>
                 <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
@@ -523,6 +542,17 @@
             <div class="flex mb-2 gap-2">
                 <label for="solution" class="font-normal m-0 font-semibold">Solutions retenues</label>
                 <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCorrection.toggle($event)"></i>
+                <span class="ml-auto">
+                    <app-ai-assist-button
+                        siLicenceOuverte
+                        typeAssistance="SOLUTIONS_PLAN_ACTION"
+                        [source]="iaSourceSolutions"
+                        [contexte]="iaContextePlanAction"
+                        ressourceType="PLAN_ACTION"
+                        [ressourceId]="planAction.id"
+                        (accepter)="planAction.solutionRetenues = $event">
+                    </app-ai-assist-button>
+                </span>
             </div>
             <p-popover #infoCorrection>
                 <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">

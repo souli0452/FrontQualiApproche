@@ -5,10 +5,10 @@ import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
-import { NatureParametre, Parametre, ParametreService } from '../../services';
-import { hasAnyPermission } from '@core/auth';
+import { NatureParametre, Parametre, ParametreService } from '../../services/parametre.service';
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
-import { LicenceOuverteDirective } from '@shared';
+import { hasAnyPermission } from '@core/auth/auth-utils';
+import { LicenceOuverteDirective } from '@shared/licence/licence-ouverte.directive';
 
 /** Nature d'un réglage, avec ce qu'elle change pour la saisie. */
 interface Nature {

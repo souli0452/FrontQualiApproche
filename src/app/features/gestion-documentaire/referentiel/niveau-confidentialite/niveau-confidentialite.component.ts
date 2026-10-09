@@ -1,20 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
-import { AppCrudGenericComponent } from '@shared';
 import { FormGroupColumn, MultiSelectSelector, TableColumn } from '../../../../models/generique.model';
-import { NiveauConfidentialite } from '../../models';
-import { NiveauConfidentialiteService } from '../../services';
-import { AppRoleService } from '@features/gestion-utilisateurs/services';
-import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
-import { hasAnyPermission } from '@core/auth';
 import { AlertService } from '@shared/alert-message/alert-message.service';
 import { HeaderPage } from '@shared/header-page/header-page';
 import { BasePaginationComponent } from '../../../../shared/pagination/pagination';
+import { hasAnyPermission } from '@core/auth/auth-utils';
+import { NiveauConfidentialite } from '@features/gestion-documentaire/models/referentiel.model';
+import { AppCrudGenericComponent } from '@shared/app-crud-generic/app-crud-generic.component';
+import { NiveauConfidentialiteService } from '@features/gestion-documentaire/services/referentiel.service';
+import { AppRoleService } from '@features/gestion-utilisateurs/services/role.service';
 
 /**
  * Référentiel des niveaux de confidentialité des documents (Public, Restreint, Confidentiel...).

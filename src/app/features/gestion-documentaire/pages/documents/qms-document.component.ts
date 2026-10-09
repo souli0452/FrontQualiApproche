@@ -5,36 +5,32 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MessageService, MenuItem } from 'primeng/api';
-import { isUserInRoles } from '@core/auth';
 import { NgPrimeModule } from '@prime-ng';
-import {
-  QmsDocumentService,
-  // DocumentQms, QmsDocumentType, QmsDocumentVersion, QmsAuditLog
-} from '../../services';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
-import { WorkflowError, WorkflowService } from '@features/workflow';
-import { AuthService } from '@core/auth';
-import {
-  DomaineApplicationService,
-  NiveauConfidentialiteService,
-  PrioriteDocumentService
-} from '../../services';
-import { DomaineApplication, NiveauConfidentialite, PrioriteDocument } from '../../models';
-import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentType, QmsDocumentVersion } from '../../models';
 import { WorkflowStateDto, WorkflowActionDto, ValidationHistoryDto } from '../../../../models/workflow.model';
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
 import { QmsDocumentListComponent } from './components/qms-document-list.component';
 import { QmsDocumentDetailComponent } from './components/qms-document-detail.component';
 import { QmsDocumentHistoryComponent } from './components/qms-document-history.component';
 import { QmsDocumentAuditComponent } from './components/qms-document-audit.component';
-import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '@shared';
 import { QmsDocumentDemandesComponent } from './components/qms-document-demandes.component';
-import { DemandeDocumentService } from '../../services';
-import { DemandeDocumentDto } from '../../models';
-import { WorkflowHistoriqueComponent } from '@features/workflow';
 import { QmsReclassementDialogComponent } from './components/qms-reclassement-dialog.component';
 import { QmsDocumentAccessDialogComponent, AccessGrant } from './components/qms-document-access-dialog.component';
-import { Structure, StructureService } from '@features/organigramme';
+import { AuthService } from '@core/auth/auth.service';
+import { isUserInRoles } from '@core/auth/auth-utils';
+import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '@features/workflow/execution/workflow-decision-dialog.component';
+import { WorkflowHistoriqueComponent } from '@features/workflow/execution/workflow-historique.component';
+import { WorkflowError, WorkflowService } from '@features/workflow/services/workflow.service';
+import { Structure } from '@features/organigramme/models/structure.model';
+import { StructureService } from '@features/organigramme/services/structure.service';
+import { DomaineApplication, NiveauConfidentialite, PrioriteDocument, QmsDocumentType } from '@features/gestion-documentaire/models/referentiel.model';
+import { DemandeDocumentDto } from '@features/gestion-documentaire/models/demande.model';
+import { QmsDocumentService } from '@features/gestion-documentaire/services/document.service';
+import { DemandeDocumentService } from '@features/gestion-documentaire/services/demande.service';
+import { DomaineApplicationService, NiveauConfidentialiteService, PrioriteDocumentService } from '@features/gestion-documentaire/services/referentiel.service';
+import { DocumentQms, DocumentUserAccess, QmsAuditLog, QmsDocumentVersion } from '@features/gestion-documentaire/models/document.model';
+import { LightboxComponent } from '@features/non-conformite/components/lightbox/lightbox';
+import { ViewChild } from '@angular/core';
 
 /**
  * Les six regards portés sur un document, réunis en onglets d'une même fiche.
@@ -50,19 +46,20 @@ export type OngletDetail = 'detail' | 'historique' | 'partages' | 'audit' | 'dem
   selector: 'app-qms-document',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, NgxPermissionsModule, QmsDocumentListComponent, QmsDocumentDetailComponent, QmsDocumentHistoryComponent, QmsDocumentAuditComponent, WorkflowDecisionDialogComponent, WorkflowHistoriqueComponent, QmsDocumentDemandesComponent,
-    QmsReclassementDialogComponent, QmsDocumentAccessDialogComponent],
+    QmsReclassementDialogComponent, QmsDocumentAccessDialogComponent, LightboxComponent],
   templateUrl: './qms-document.component.html',
   styleUrls: ['./qms-document.component.scss'],
   providers: [MessageService, DatePipe]
 })
 export class QmsDocumentComponent implements OnInit, OnDestroy {
+  @ViewChild('lightbox') lightbox?: LightboxComponent;
   documents: DocumentQms[] = [];
   documentTypes: QmsDocumentType[] = [];
   /** Total du fonds visible, pour que le tableau sache combien de pages il reste. */
   totalDocuments = 0;
   /** Index de la première ligne affichée, dans le référentiel du tableau. */
   premiereLigne = 0;
-  taillePage = 15;
+  taillePage = 10;
   /** Une page a déjà été demandée : les bornes inchangées ne relancent plus rien. */
   private pageDejaChargee = false;
   structures: Structure[] = [];
@@ -70,7 +67,7 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
   filteredUsers: any[] = [];
   selectedStructureFilter?: string;
   selectedUser?: any;
-  loading = false;
+  loading = true;
   destroy$ = new Subject<void>();
 
   // Filter properties
@@ -477,6 +474,36 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
           });
         }
       });
+  }
+
+  ouvrirApercu(doc: DocumentQms): void {
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Visualisation',
+      detail: "Chargement de l'aperçu..."
+    });
+
+    this.qmsService.exportSecuredPdf(doc.id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (blob: Blob) => {
+          const nomFichier = doc.currentObjectName || (doc.documentNumber ? `${doc.documentNumber}.pdf` : 'document.pdf');
+          this.lightbox?.openBlob(blob, nomFichier, doc.titre || doc.documentNumber);
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Aperçu indisponible',
+            detail: 'Le fichier est introuvable ou inaccessible.'
+          });
+        }
+      });
+  }
+
+  modifierDocument(doc: DocumentQms): void {
+    this.router.navigate(['/gestion-documentaire/demandes/nouvelle'], {
+      queryParams: { documentId: doc.id }
+    });
   }
 
   /**

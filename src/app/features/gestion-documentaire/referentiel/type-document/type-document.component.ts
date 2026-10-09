@@ -3,15 +3,15 @@ import { Component } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { AppCrudGenericComponent } from '@shared';
-import { QmsDocumentService } from '../../services';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
 import { DropdownSelector, FormGroupColumn, TableColumn } from '../../../../models/generique.model';
-import { QmsDocumentType } from '../../models';
 import { NgPrimeModule } from '@prime-ng';
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
 import { HeaderPage } from '@shared/header-page/header-page';
 import { BasePaginationComponent } from '../../../../shared/pagination/pagination';
+import { QmsDocumentType } from '@features/gestion-documentaire/models/referentiel.model';
+import { AppCrudGenericComponent } from '@shared/app-crud-generic/app-crud-generic.component';
+import { QmsDocumentService } from '@features/gestion-documentaire/services/document.service';
 
 /**
  * Référentiel des Types de Documents Qualité (Procédure, Manuel, Enregistrement, Instruction...).
@@ -84,7 +84,6 @@ export class TypeDocumentComponent extends BasePaginationComponent {
         protected fb: UntypedFormBuilder,
         protected messageService: MessageService,
         protected qmsService: QmsDocumentService,
-        private ngxPermissionsService: NgxPermissionsService
     ) {
         super();
 

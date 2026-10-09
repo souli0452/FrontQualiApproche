@@ -1,0 +1,6 @@
+# Allège le contexte de build (COPY . . à la racine du dépôt frontal).
+.git
+node_modules
+dist
+.angular
+**/.DS_Store

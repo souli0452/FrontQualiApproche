@@ -1,0 +1,283 @@
+<p-card>
+    <p-toast></p-toast>
+
+    <!-- Barre de filtres et actions -->
+    <div class="flex flex-wrap items-center gap-3 mb-5">
+
+        <!-- Sélecteur d'audit -->
+        <p-select
+            [options]="auditsDisponibles"
+            [(ngModel)]="filtreAuditId"
+            optionLabel="reference"
+            optionValue="id"
+            placeholder="Sélectionner un audit"
+            [loading]="loadingAudits"
+            (onChange)="onChangeAudit($event.value)"
+            class="min-w-[240px]">
+            <ng-template pTemplate="selectedItem" let-item>
+                <span *ngIf="item">{{ item.reference ?? item.typeAuditLibelle }}</span>
+            </ng-template>
+            <ng-template pTemplate="item" let-item>
+                <div class="flex flex-col">
+                    <span class="font-semibold text-xs">{{ item.reference }}</span>
+                    <span class="text-xs text-surface-500">{{ item.typeAuditLibelle }}</span>
+                </div>
+            </ng-template>
+        </p-select>
+
+        <!-- Filtre statut -->
+        <p-selectbutton
+            [options]="[{label:'Tous', value: null}, {label:'Brouillons', value: StatutConstat.BROUILLON}, {label:'Compilés', value: StatutConstat.COMPILE}, {label:'Publiés', value: StatutConstat.PUBLIE}]"
+            [(ngModel)]="filtreStatut"
+            optionLabel="label"
+            optionValue="value"
+            (ngModelChange)="onFiltreStatut($event)">
+        </p-selectbutton>
+
+        <div class="ml-auto">
+            <p-button
+                icon="pi pi-plus"
+                label="Nouveau constat"
+                [disabled]="!filtreAuditId"
+                (onClick)="ouvrirCreation()">
+            </p-button>
+        </div>
+    </div>
+
+    <!-- Liste des constats -->
+    <div *ngIf="loading" class="space-y-3">
+        <p-skeleton *ngFor="let i of [1,2,3,4,5]" height="4rem" borderRadius="8px"></p-skeleton>
+    </div>
+
+    <div *ngIf="!loading && constats.length === 0"
+         class="flex flex-col items-center justify-center py-16 text-center">
+        <div class="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center mb-3 text-blue-500">
+            <i class="pi pi-file-check text-3xl"></i>
+        </div>
+        <p class="text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Aucun constat</p>
+        <p class="text-xs text-surface-500 dark:text-surface-400 mb-4">
+            {{ filtreAuditId ? 'Aucun constat enregistré pour cet audit.' : 'Sélectionnez un audit pour voir ses constats.' }}
+        </p>
+        <p-button
+            *ngIf="filtreAuditId"
+            label="Ajouter un constat"
+            icon="pi pi-plus"
+            size="small"
+            (onClick)="ouvrirCreation()">
+        </p-button>
+    </div>
+
+    <div *ngIf="!loading && constats.length > 0" class="space-y-3">
+        <div *ngFor="let constat of constats; trackBy: trackByConstatId"
+             class="border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden bg-white dark:bg-surface-900">
+
+            <div class="flex items-start gap-4 p-4">
+
+                <!-- Indicateur nature -->
+                <div class="shrink-0 mt-0.5">
+                    <p-tag
+                        [value]="constat.natureLibelle ?? '—'"
+                        severity="secondary"
+                        [rounded]="true">
+                    </p-tag>
+                </div>
+
+                <!-- Contenu -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-semibold text-surface-900 dark:text-surface-100 m-0 mb-1">
+                                <span *ngIf="constat.critereAudit" class="font-mono text-xs text-primary mr-2">{{ constat.critereAudit }}</span>
+                                {{ constat.observation }}
+                            </p>
+                            <p *ngIf="constat.commentaireEquipe" class="text-xs text-surface-600 dark:text-surface-400 m-0 mb-2">
+                                <i class="pi pi-comment mr-1"></i>{{ constat.commentaireEquipe }}
+                            </p>
+                        </div>
+
+                        <!-- Statut -->
+                        <div class="shrink-0">
+                            <p-tag
+                                *ngIf="constat.statut"
+                                [value]="constat.statut === StatutConstat.PUBLIE ? 'Publié' : constat.statut === StatutConstat.COMPILE ? 'Compilé' : 'Brouillon'"
+                                [severity]="constat.statut === StatutConstat.PUBLIE ? 'success' : constat.statut === StatutConstat.COMPILE ? 'warn' : 'secondary'"
+                                [rounded]="true">
+                            </p-tag>
+                        </div>
+                    </div>
+
+                    <!-- Lien NC si applicable -->
+                    <div *ngIf="constat.nonConformiteId"
+                         class="mt-2 p-2 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-lg flex items-center justify-between gap-2">
+                        <span class="text-xs text-red-700 dark:text-red-400">
+                            <i class="pi pi-link mr-1"></i>Non-conformité transmise
+                        </span>
+                        <a routerLink="/non-conformite" class="text-xs font-semibold text-red-700 dark:text-red-400 hover:underline">
+                            Voir dans M05 ↗
+                        </a>
+                    </div>
+
+                    <!-- Méta-informations -->
+                    <div class="flex items-center gap-4 mt-3 text-xs text-surface-500 dark:text-surface-400">
+                        <span *ngIf="constat.dateSaisie">
+                            <i class="pi pi-clock mr-1"></i>{{ constat.dateSaisie | date:'dd/MM/yyyy' }}
+                        </span>
+                        <span *ngIf="constat.transmissionEnAttente"
+                              class="text-amber-600 dark:text-amber-400">
+                            <i class="pi pi-send mr-1"></i>Transmission en attente
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="shrink-0 flex items-center gap-1">
+                    <p-button
+                        *ngIf="constat.statut === StatutConstat.BROUILLON"
+                        icon="pi pi-pencil"
+                        [rounded]="true"
+                        [text]="true"
+                        severity="secondary"
+                        size="small"
+                        pTooltip="Modifier"
+                        tooltipPosition="top"
+                        (onClick)="ouvrirEdition(constat)">
+                    </p-button>
+                    <p-button
+                        *ngIf="constat.statut === StatutConstat.BROUILLON"
+                        icon="pi pi-check"
+                        [rounded]="true"
+                        [text]="true"
+                        severity="warn"
+                        size="small"
+                        pTooltip="Soumettre à l'équipe"
+                        tooltipPosition="top"
+                        (onClick)="validerConstat(constat)">
+                    </p-button>
+                    <p-button
+                        *ngIf="constat.statut === StatutConstat.COMPILE"
+                        icon="pi pi-undo"
+                        [rounded]="true"
+                        [text]="true"
+                        severity="secondary"
+                        size="small"
+                        pTooltip="Retirer en brouillon"
+                        tooltipPosition="top"
+                        (onClick)="retirerConstat(constat)">
+                    </p-button>
+                    <p-button
+                        *ngIf="constat.statut === StatutConstat.COMPILE"
+                        icon="pi pi-send"
+                        [rounded]="true"
+                        [text]="true"
+                        severity="success"
+                        size="small"
+                        pTooltip="Publier"
+                        tooltipPosition="top"
+                        (onClick)="publierConstat(constat)">
+                    </p-button>
+                    <p-button
+                        *ngIf="constat.statut === StatutConstat.BROUILLON"
+                        icon="pi pi-trash"
+                        [rounded]="true"
+                        [text]="true"
+                        severity="danger"
+                        size="small"
+                        pTooltip="Supprimer"
+                        tooltipPosition="top"
+                        (onClick)="supprimerConstat(constat)">
+                    </p-button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</p-card>
+
+<!-- Dialogue création / édition -->
+<p-dialog
+    [(visible)]="afficherDialogue"
+    [header]="constatEnEdition ? 'Modifier le constat' : 'Nouveau constat'"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="w-full max-w-2xl">
+
+    <form [formGroup]="formulaire" class="space-y-4 pt-2">
+
+        <!-- Audit associé -->
+        <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Audit <span class="text-red-500">*</span></label>
+            <p-select
+                formControlName="auditId"
+                [options]="auditsDisponibles"
+                optionLabel="reference"
+                optionValue="id"
+                placeholder="Sélectionner un audit"
+                class="w-full">
+            </p-select>
+            <small *ngIf="formulaire.get('auditId')?.invalid && formulaire.get('auditId')?.touched"
+                   class="text-red-500 text-xs">L'audit est requis.</small>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Critère -->
+            <div class="flex flex-col gap-1">
+                <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Critère de référence</label>
+                <input pInputText formControlName="critereAudit" placeholder="Ex: ISO 9001:2015 §8.5, RQAP-BF D3-C2…" />
+            </div>
+
+            <!-- Nature du constat -->
+            <div class="flex flex-col gap-1">
+                <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Nature du constat <span class="text-red-500">*</span></label>
+                <p-select
+                    formControlName="natureId"
+                    [options]="typesConstat"
+                    optionLabel="label"
+                    optionValue="code"
+                    placeholder="Sélectionner une nature"
+                    class="w-full">
+                </p-select>
+                <small *ngIf="formulaire.get('natureId')?.invalid && formulaire.get('natureId')?.touched"
+                       class="text-red-500 text-xs">La nature est requise.</small>
+            </div>
+        </div>
+
+        <!-- Observation -->
+        <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Observation <span class="text-red-500">*</span></label>
+            <textarea
+                pInputTextarea
+                formControlName="observation"
+                rows="4"
+                placeholder="Observations détaillées, preuves recueillies, contexte…"
+                class="w-full resize-y">
+            </textarea>
+            <small *ngIf="formulaire.get('observation')?.invalid && formulaire.get('observation')?.touched"
+                   class="text-red-500 text-xs">L'observation est requise (2000 caractères max.).</small>
+        </div>
+
+        <!-- Commentaire équipe -->
+        <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Commentaire de l'équipe</label>
+            <input pInputText formControlName="commentaireEquipe" placeholder="Commentaire interne à l'équipe d'audit" />
+        </div>
+
+    </form>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-end gap-2">
+            <p-button
+                label="Annuler"
+                [outlined]="true"
+                severity="secondary"
+                (onClick)="afficherDialogue = false">
+            </p-button>
+            <p-button
+                [label]="constatEnEdition ? 'Enregistrer' : 'Créer en brouillon'"
+                icon="pi pi-save"
+                [loading]="saving"
+                (onClick)="sauvegarder()">
+            </p-button>
+        </div>
+    </ng-template>
+</p-dialog>

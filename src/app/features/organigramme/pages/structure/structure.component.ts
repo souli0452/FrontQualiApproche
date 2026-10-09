@@ -1,21 +1,21 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 
 import { Structure } from '../../models/structure.model';
 import { StructureService } from '../../services/structure.service';
-import { TypeStructure } from '@core/enums';
 import { CategorieProcessus } from '../../models/categorie-processus.model';
 import { TableColumn, FormGroupColumn, DropdownSelector } from '../../../../models/generique.model';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
-import { AppCrudGenericComponent } from '@shared';
 import { HeaderPage } from '../../../../shared/header-page/header-page';
 
 import { Router } from '@angular/router';
 import { AlertService } from '../../../../shared/alert-message/alert-message.service';
 import { BasePaginationComponent } from '../../../../shared/pagination/pagination';
+import { TypeStructure } from '@core/enums/type-structure.enum';
+import { AppCrudGenericComponent } from '@shared/app-crud-generic/app-crud-generic.component';
 
 @Component({
     selector: 'app-structure',

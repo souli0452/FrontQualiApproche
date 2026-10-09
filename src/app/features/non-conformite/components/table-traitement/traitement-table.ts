@@ -3,16 +3,17 @@ import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Table } from 'primeng/table';
 import { Subject, takeUntil } from 'rxjs';
-import { FeaturesService } from '@core';
-import { StatusEnum } from "../../../../utils/global/global-utils";
-import { EtapeTraitement, TypeDemande } from '../../models';
 import { NgPrimeModule } from '@prime-ng';
-import { WorkflowActionsComponent, WorkflowDecisionDialogComponent, DecisionConfirmee } from '@shared';
-import { WorkflowService } from '@features/workflow';
-import { ResultatDecisionDto, StepDecision, WorkflowActionDto } from '@features/workflow/models';
-import { ProcNonConformiteService, NonConformiteService, NiveauNonConformiteService } from '../../services';
 import { Router } from '@angular/router';
-import { GlobalSearchService } from '@shared';
+import { FeaturesService } from '@core/services/feature-service';
+import { EtapeTraitement, TypeDemande } from '@features/non-conformite/models/nc-status.model';
+import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
+import { NiveauNonConformiteService } from '@features/non-conformite/services/niveau-non-conformite.service';
+import { WorkflowActionsComponent } from '@features/workflow/execution/workflow-actions.component';
+import { DecisionConfirmee, WorkflowDecisionDialogComponent } from '@features/workflow/execution/workflow-decision-dialog.component';
+import { WorkflowService } from '@features/workflow/services/workflow.service';
+import { ResultatDecisionDto, StepDecision, WorkflowActionDto } from 'src/app/models/workflow.model';
+import { GlobalSearchService } from '@shared/recherche-globale/global-search.service';
 
 
 @Component({
@@ -29,6 +30,9 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
     @Input() paginator: boolean = true;
     @Input() showGridlines: boolean = true;
     @Input() balanceFrozen: boolean = false;
+
+    @Input() tableStyle: any = { 'min-width': '50rem' };
+
 
     @Input() totalElements: number = 0;
     @Input() pageSize: number = 10;
@@ -57,6 +61,7 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
     @Output() onReceptionner = new EventEmitter<any>();
     @Output() onArchive = new EventEmitter<any>();
     @Output() onDelete = new EventEmitter<any>();
+    @Output() onDetails = new EventEmitter<any>();
 
     @ViewChild('detailContainer', { read: ViewContainerRef, static: true }) detailContainer?: ViewContainerRef;
     @ViewChild('dt') dt?: Table;
@@ -90,7 +95,7 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
         private confirmationService: ConfirmationService,
         private featureService: FeaturesService,
         private datePipe: DatePipe,
-        private nonConformiteService: ProcNonConformiteService,
+        private nonConformiteService: NonConformiteService,
         private workflowService: WorkflowService,
         private router: Router,
         private globalNcService: NonConformiteService,
@@ -298,7 +303,6 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
             this.updateColsFilter();
         }
         if (changes.demandeList) {
-            console.log("DONNEES DU TABLEAU MISES A JOUR (ngOnChanges) :", this.demandeList);
             if (this.dt && this.currentSearchQuery) {
                 setTimeout(() => {
                     this.dt?.filterGlobal(this.currentSearchQuery, 'contains');
@@ -337,8 +341,36 @@ export class TraitementTableComponent implements OnInit, OnChanges, AfterViewIni
         this.detailContainer?.clear();
 
     }
+    /**
+     * Ce qui, dans une ligne, agit déjà par soi-même.
+     *
+     * <p>Case à cocher, boutons, menus, liens et champs : un clic dessus a son propre effet, et
+     * ouvrir la fiche par-dessus le contredirait — cocher une ligne pour un traitement en lot
+     * ferait s'ouvrir le dossier qu'on ne voulait pas lire.</p>
+     */
+    private static readonly ELEMENTS_QUI_AGISSENT =
+        'button, a, input, label, .p-checkbox, .p-menu, .p-overlaypanel, [role="menuitem"]';
+
+    /**
+     * Ouvre la fiche depuis n'importe où dans la ligne.
+     *
+     * <p>Seul le numéro l'ouvrait jusqu'ici — une cible de quelques millimètres, alors que toute
+     * la ligne désigne le même dossier. Le reste du tableau se lisait sans qu'on puisse y entrer,
+     * et rien ne disait où cliquer.</p>
+     */
+    ouvrirDepuisLaLigne(evenement: Event, rowData: any): void {
+        const cible = evenement.target as HTMLElement | null;
+        if (cible?.closest(TraitementTableComponent.ELEMENTS_QUI_AGISSENT)) {
+            return;
+        }
+        this.displayDetails(rowData);
+    }
+
     displayDetails(rowData?: any) {
-        console.log("DONNEES DE LA DEMANDE SELECTIONNEE (displayDetails) :", rowData);
+        if (this.onDetails.observed && rowData) {
+            this.onDetails.emit(rowData);
+            return;
+        }
         if (this.displayDetail) {
             this.closeDetailsDialog();
         } else {

@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { BlockUI } from 'primeng/blockui';
-import { FeaturesService } from '../../services';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
+import { FeaturesService } from '@core/services/feature-service';
 
 @Component({
     selector: 'app-loader',

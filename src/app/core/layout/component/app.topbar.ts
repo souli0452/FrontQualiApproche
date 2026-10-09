@@ -2,7 +2,6 @@ import { Component, HostListener, OnInit, ViewChild, inject } from '@angular/cor
 import { Router, RouterModule, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { LayoutService } from '../service/layout.service';
-import { AuthService, hasAnyPermission, currentUserState } from '../../auth';
 import { MenuItem, MessageService } from 'primeng/api';
 import { Title } from '@angular/platform-browser';
 import { filter, map, takeUntil } from 'rxjs/operators';
@@ -10,16 +9,22 @@ import { FormsModule, ReactiveFormsModule, UntypedFormBuilder} from '@angular/fo
 import { NgPrimeModule } from '../../../../prime-ng.module';
 import { Popover } from 'primeng/popover';
 import { Subject } from 'rxjs';
-import { GlobalSearchService } from '@shared';
-import { NonConformiteService } from '@features/non-conformite';
-import { DocumentaireATraiterService } from '@features/gestion-documentaire';
-import { LicenceService } from '../../licence';
+import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
+import { DocumentaireATraiterService } from '@features/gestion-documentaire/services/documentaire-a-traiter.service';
 import { AuthData } from '../../../models/auth.model';
+import { accesAutorise, hasAnyPermission } from '@core/auth/auth-utils';
+import { LicenceService } from '@core/licence/services/licence.service';
+import { AuthService } from '@core/auth/auth.service';
+import { currentUserState } from '@core/auth/auth.state';
+import { ModuleAbonnement } from '@core/enums/module-abonnement.enum';
+import { QualiAiChatComponent } from '@shared/ia/quali-ai-chat.component';
+import { AideFaqComponent } from '@features/faq/aide-faq.component';
+import { GlobalSearchService } from '@shared/recherche-globale/global-search.service';
 
 @Component({
     selector: 'app-topbar',
     standalone: true,
-    imports: [RouterModule, NgPrimeModule, CommonModule, FormsModule, ReactiveFormsModule],
+    imports: [RouterModule, NgPrimeModule, CommonModule, FormsModule, ReactiveFormsModule, QualiAiChatComponent, AideFaqComponent],
     template: ` 
     <div class="pre-layout-topbar">
         <div class="layout-topbar" [ngClass]="{'topbar-scrolled': isScrolled}">
@@ -58,9 +63,16 @@ import { AuthData } from '../../../models/auth.model';
                     </span>
                 }
 
-                <!-- Bouton Centre d'Aide -->
-                <button type="button" pTooltip="Centre d'aide" tooltipPosition="bottom" (click)="helpVisible = true" class="px-3 py-2 p-button-secondary rounded-full transition-colors hover:bg-surface-100 dark:hover:bg-surface-800">
+                <!-- L'aide : offerte à tous, sans permission ni module. C'est le socle — une
+                     organisation sans assistant IA, ou dont le forfait est épuisé, doit pouvoir
+                     lire les réponses qu'elle a elle-même écrites. -->
+                <button type="button" pTooltip="Aide — foire aux questions" tooltipPosition="bottom" (click)="aideVisible = true" class="px-3 py-2 p-button-secondary rounded-full transition-colors hover:bg-surface-100 dark:hover:bg-surface-800">
                     <i class="pi pi-question-circle" style="font-size: 1.2rem"></i>
+                </button>
+
+                <!-- Assistant IA : caché à qui ne peut pas s'en servir — permission et module. -->
+                <button *ngIf="assistantIaDisponible" type="button" pTooltip="Assistant qualité IA" tooltipPosition="bottom" (click)="assistantIaVisible = true" class="px-3 py-2 p-button-secondary rounded-full transition-colors hover:bg-surface-100 dark:hover:bg-surface-800">
+                    <i class="pi pi-sparkles" style="font-size: 1.2rem"></i>
                 </button>
 
                 <!-- Bouton de Notifications -->
@@ -72,7 +84,7 @@ import { AuthData } from '../../../models/auth.model';
                         <!-- L'effet radar (ping) derrière le badge -->
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                         <!-- Le badge rouge au premier plan -->
-                        <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-white text-[10px] items-center justify-center border border-white dark:border-surface-900 font-bold">
+                        <span class="relative inline-flex rounded-full p-2 h-5 w-5 bg-red-500 font-medium text-white text-[10px] items-center justify-center border border-white dark:border-surface-900">
                             {{ notificationCount }}
                         </span>
                     </span>
@@ -166,27 +178,47 @@ import { AuthData } from '../../../models/auth.model';
                     </div>
                 </div>
         </p-popover>
-        <!-- Drawer du Centre d'Aide -->
-        <p-drawer [modal]="true" [(visible)]="helpVisible" position="right" [style]="{width: '500px'}">
+        <!-- Tiroir de l'aide. Monté à l'ouverture seulement : les réponses se relisent auprès
+             du serveur au ngOnInit, et les charger au démarrage de l'application le ferait pour
+             rien — la plupart des sessions ne l'ouvrent jamais. -->
+        <p-drawer [modal]="true" [(visible)]="aideVisible" position="right" [style]="{width: '480px'}" styleClass="quali-ai-drawer">
             <ng-template pTemplate="header">
-                <div class="inline-flex align-items-center justify-content-center gap-2">
-                    <span class="layout-topbar-title">
-                        <span>Centre d'aide</span>
-                    </span>                      
+                <div class="inline-flex items-center gap-2">
+                    <i class="pi pi-question-circle text-primary"></i>
+                    <span class="layout-topbar-title"><span>Aide</span></span>
                 </div>
-            </ng-template>    
-            
-            <div class="flex flex-col gap-3 mt-4">
-                <div class="p-4 border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-xl flex items-center justify-center text-surface-500">
-                    Le contenu du centre d'aide (FAQ, guides, support) sera ajouté ici plus tard...
+            </ng-template>
+            <app-aide-faq *ngIf="aideVisible" class="block h-full"></app-aide-faq>
+        </p-drawer>
+
+        <!-- Drawer de l'assistant qualité IA -->
+        <p-drawer [modal]="true" [(visible)]="assistantIaVisible" position="right" [style]="{width: '480px'}" styleClass="quali-ai-drawer">
+            <ng-template pTemplate="header">
+                <div class="inline-flex items-center gap-2">
+                    <i class="pi pi-sparkles text-primary"></i>
+                    <span class="layout-topbar-title"><span>Assistant qualité</span></span>
                 </div>
-            </div>
+            </ng-template>
+            <!-- Monté à l'ouverture seulement : le fil se relit auprès du serveur au ngOnInit,
+                 et le charger au démarrage de l'application le ferait pour rien. -->
+            <app-quali-ai-chat *ngIf="assistantIaVisible" class="block h-full"
+                               (navigue)="assistantIaVisible = false"></app-quali-ai-chat>
         </p-drawer>
 
 
     </div>
     `,
     styles: [`
+        /* Le tiroir de l'assistant : sa zone de contenu porte la hauteur sur laquelle le fil
+           s'appuie pour défiler. Sans elle, PrimeNG la laisse libre et le fil s'allonge
+           indéfiniment — la zone de saisie finit sous le bord de l'écran. */
+        ::ng-deep .quali-ai-drawer .p-drawer-content {
+            height: 100%;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
         ::ng-deep .custom-bottom-drawer {
             height: auto !important;
             max-width: 50rem !important;
@@ -271,7 +303,25 @@ export class AppTopbar implements OnInit {
 
     @ViewChild('notificationPopover') notificationPopover!: Popover; 
 
-    helpVisible: boolean = false;
+    /**
+     * Le tiroir de l'aide est-il ouvert ?
+     *
+     * <p>Remplace un `helpVisible` déclaré de longue date et branché nulle part : quelqu'un avait
+     * prévu un point d'aide sans jamais le relier.</p>
+     */
+    aideVisible: boolean = false;
+
+    /** Le tiroir de l'assistant est-il ouvert ? */
+    assistantIaVisible: boolean = false;
+
+    /**
+     * L'assistant est-il offert à cette personne, sur cette installation ?
+     *
+     * <p>Même règle que partout — permission détenue et module souscrit — et la même fonction que
+     * le menu et le garde de routes. Un bouton qui ne rendrait qu'un refus après le clic ferait
+     * passer un droit manquant pour un bogue, et une option non souscrite pour une panne.</p>
+     */
+    assistantIaDisponible: boolean = false;
     notificationVisible: boolean = false;
 
     /**
@@ -313,6 +363,7 @@ export class AppTopbar implements OnInit {
 
 
     ngOnInit() {
+        this.assistantIaDisponible = accesAutorise(['assistant-ia-write'], ModuleAbonnement.ASSISTANT_IA);
         this.user = currentUserState.value as AuthData
         this.updateTitle();
 
@@ -331,114 +382,7 @@ export class AppTopbar implements OnInit {
 
 
         this.ecouterLeDocumentaire();
-
-        // Souscription aux notifications globales de NC
-        // this.nonConformiteService.notificationsNC$.pipe(takeUntil(this.destroy$)).subscribe((notifs: any) => {
-        //     this.totalNC = notifs.total || 0;
-        //     this.notificationsNC = [];
-
-        //     if (notifs.brouillons > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Brouillons en cours",
-        //             detail: `Vous avez ${notifs.brouillons} Non-Conformité(s) en attente de finalisation.`,
-        //             time: "À l'instant",
-        //             icon: "pi pi-pencil",
-        //             colorClass: "bg-orange-100 text-orange-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.reception > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Non-conformités de votre service",
-        //             detail: `Votre service a ${notifs.reception} Non-Conformité(s) publiée(s) en attente de validation.`,
-        //             time: "À l'instant",
-        //             icon: "pi pi-users",
-        //             colorClass: "bg-orange-100 text-orange-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.imputees > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Actions à traiter",
-        //             detail: `Vous avez ${notifs.imputees} Non-Conformité(s) imputée(s) pour traitement.`,
-        //             time: "Urgent",
-        //             icon: "pi pi-exclamation-circle",
-        //             colorClass: "bg-red-100 text-red-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.validationRQ > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Validation RQ",
-        //             detail: `Vous avez ${notifs.validationRQ} Non-Conformité(s) que vous devez valider.`,
-        //             time: "Urgent",
-        //             icon: "pi pi-shield",
-        //             colorClass: "bg-red-100 text-red-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.enAttenteValidation > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Validation Globale",
-        //             detail: `Il y a ${notifs.enAttenteValidation} Non-Conformité(s) en attente de validation.`,
-        //             time: "Urgent",
-        //             icon: "pi pi-shield",
-        //             colorClass: "bg-red-100 text-red-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.validationPilote > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Validation des plans d'actions",
-        //             detail: `Il y a ${notifs.validationPilote} plan(s) d'actions en attente de validation.`,
-        //             time: "Urgent",
-        //             icon: "pi pi-shield",
-        //             colorClass: "bg-red-100 text-red-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.cloture > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Clôture des Non-Conformités",
-        //             detail: `Il y a ${notifs.cloture} Non-Conformité(s) en attente de clôture.`,
-        //             time: "À traiter",
-        //             icon: "pi pi-check-circle",
-        //             colorClass: "bg-green-100 text-green-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.affectation > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Affectation",
-        //             detail: `Vous avez ${notifs.affectation} Non-Conformité(s) en attente d'affectation.`,
-        //             time: "Urgent",
-        //             icon: "pi pi-shield",
-        //             colorClass: "bg-red-100 text-red-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.nonTraiter > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Traitement",
-        //             detail: `Vous avez ${notifs.nonTraiter} Plan(s) d'actions en attente de traitement.`,
-        //             time: "Urgent",
-        //             icon: "pi pi-shield",
-        //             colorClass: "bg-red-100 text-red-600",
-        //             read: false
-        //         });
-        //     }
-        //     if (notifs.soumission > 0) {
-        //         this.notificationsNC.push({
-        //             title: "Non-Conformités rejetées",
-        //             detail: `Vous avez ${notifs.soumission} Non-Conformité(s) rejetée(s) en attente de correction.`,
-        //             time: "À corriger",
-        //             icon: "pi pi-exclamation-triangle",
-        //             colorClass: "bg-red-100 text-red-600",
-        //             read: false
-        //         });
-        //     }
-        // });
-
+        
                 // 1. Initialiser les compteurs des badges du menu
         this.nonConformiteService.rafraichirNotifications();
         // 2. Charger les vraies notifications de la cloche
@@ -451,14 +395,6 @@ export class AppTopbar implements OnInit {
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (notifs) => {
-                    // 👇 VOS LOGS ICI
-                    console.log('🔔 [CLOCHE] Données brutes reçues du backend :', notifs);
-                    if (notifs && notifs.length > 0) {
-                        console.table(notifs); // 👈 Affiche un joli tableau dans la console F12
-                    } else {
-                        console.log('🔔 [CLOCHE] Aucune notification active pour cet utilisateur.');
-                    }
-
                     let totalCount = 0;
                     this.notificationsNC = notifs.map(n => {
                         totalCount += (n.nombre || 1);
@@ -493,19 +429,19 @@ export class AppTopbar implements OnInit {
             case 'PLAN_ACTION_A_DECIDER':
                 icon = 'pi pi-list-check';
                 colorClass = 'bg-orange-100 text-orange-600';
-                route = '/non-conformite/traitement';
+                route = '/non-conformite/plan-action';
                 break;
 
             case 'PLAN_ACTION_ECHEANCE_DEPASSEE':
                 icon = 'pi pi-exclamation-triangle';
                 colorClass = 'bg-red-100 text-red-600';
-                route = '/non-conformite/traitement';
+                route = '/non-conformite/plan-action';
                 break;
 
             case 'PLAN_ACTION_ECHEANCE_PROCHE':
                 icon = 'pi pi-clock';
                 colorClass = 'bg-amber-100 text-amber-600';
-                route = '/non-conformite/traitement';
+                route = '/non-conformite/plan-action';
                 break;
 
             case 'NC_BROUILLON':

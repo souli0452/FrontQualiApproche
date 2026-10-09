@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { HttpClient, HttpRequest } from '@angular/common/http';
-import { FormTraitementComponent, DetailsDialogComponent, TypeDemande } from '@features/non-conformite';
+import { TypeDemande } from '@features/non-conformite/models/nc-status.model';
+import { FormTraitementComponent } from '@features/non-conformite/components/form-traitement/form-traitement';
+import { DetailsDialogComponent } from '@features/non-conformite/components/details-dialog/details-dialog';
 
 @Injectable({ providedIn: 'root' })
 export class FeaturesService {

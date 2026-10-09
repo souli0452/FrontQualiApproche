@@ -1,5 +1,5 @@
 import { CriteriaDto, FilterExtra } from '../../../models/criteria.model';
-import { NcFilter } from '../models';
+import { NcFilter } from '../components/nc-filter-bar/nc-filter-bar';
 
 /**
  * Traduction de la barre de filtres en critères que le serveur sait exécuter.

@@ -1,18 +1,20 @@
 import { Component, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { EtapeTraitement } from '../../models';
 import { HttpResponse } from '@angular/common/http';
-import { showToast, StatusEnum, BasePaginationComponent } from '@shared';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '@prime-ng';
-import { FeaturesService } from '@core';
-import { TraitementTableComponent, NcFilter, NcFilterBarComponent } from '../../components';
-import { AuthService, currentUserState } from '@core/auth';
-import { forkJoin, of, Subject } from 'rxjs';
-import { catchError, map, debounceTime, takeUntil } from 'rxjs/operators';
-import { NonConformiteService } from '../../services';
-import { AlertService } from '@shared';
+import { Subject } from 'rxjs';
+import { debounceTime, takeUntil } from 'rxjs/operators';
+import { FeaturesService } from '@core/services/feature-service';
+import { AuthService } from '@core/auth/auth.service';
+import { currentUserState } from '@core/auth/auth.state';
+import { NcFilter, NcFilterBarComponent } from '@features/non-conformite/components/nc-filter-bar/nc-filter-bar';
+import { TraitementTableComponent } from '@features/non-conformite/components/table-traitement/traitement-table';
+import { EtapeTraitement } from '@features/non-conformite/models/nc-status.model';
+import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
+import { BasePaginationComponent } from '@shared/pagination/pagination';
+import { AlertService } from '@shared/alert-message/alert-message.service';
 
 @Component({
     selector: 'app-nc-traitement',
@@ -89,21 +91,6 @@ export class NCTraitementComponent extends BasePaginationComponent {
         const cur: any = currentUserState.value ?? JSON.parse(localStorage.getItem('currentUser') || '{}');
         const roles: string[] = cur?.roles || cur?.user?.roles || [];
         const perms: string[] = cur?.permissions || [];
-
-        console.group('%c🔍 [DIAGNOSTIC TRAITEMENT NC] Profil & Habilitations', 'color: #0284c7; font-weight: bold; font-size: 13px;');
-        console.table({
-            'Utilisateur connecté': cur?.email || cur?.user?.email || cur?.username || 'Inconnu',
-            'Nom complet': cur?.fullName || cur?.user?.fullName || (cur?.firstName ? `${cur.firstName} ${cur.lastName}` : 'Inconnu'),
-            'Structure ID': cur?.structure?.id || cur?.user?.structureId || cur?.structureId || 'Aucune',
-            'Structure Libellé': cur?.structure?.libelleCourt || cur?.structure?.libelle || cur?.user?.structureLibelle || 'Aucune',
-            'Rôles': roles.join(', ') || 'Aucun',
-            'Rôle RESPONSABLE_QUALITE ?': roles.map((r: string) => r.toUpperCase()).includes('RESPONSABLE_QUALITE'),
-            'Permission TOUTES_STRUCTURES ?': perms.includes('portee-toutes-structures') || perms.includes('TOUTES_STRUCTURES'),
-            'Permission DECIDER_PARTOUT ?': perms.includes('circuit-decider-partout') || perms.includes('DECIDER_PARTOUT'),
-            'Toutes les permissions': perms.join(', ') || 'Aucune'
-        });
-        console.log('Session brute complète :', cur);
-        console.groupEnd();
 
         this.fetchObject();
 
@@ -262,8 +249,6 @@ export class NCTraitementComponent extends BasePaginationComponent {
         this.loading = true;
         this.nonConformiteService.nonConformiteATraiterPage(this.currentPage, this.pageSize).subscribe({
             next: (res: any) => {
-                console.log('%c📥 [RÉPONSE GET /non-conformite/a-traiter] :', 'color: #10b981; font-weight: bold;', res);
-                console.log('%c📋 [Détail dossiers reçus] :', 'color: #10b981;', 'Total :', res?.data?.totalElements ?? res?.data?.length, 'Contenu :', res?.data?.content ?? res?.data);
                 this.applyPagination(res);
                 this.finalizeDemandeList();
             },

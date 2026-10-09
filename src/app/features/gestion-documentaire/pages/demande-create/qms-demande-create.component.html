@@ -150,6 +150,16 @@
                   <label for="description" class="font-semibold m-0">Description</label>
                   <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors"
                      (click)="aideDescription.toggle($event)"></i>
+                  <span class="ml-auto">
+                    <app-ai-assist-button
+                        siLicenceOuverte
+                        typeAssistance="REFORMULATION"
+                        [source]="iaSourceDescription"
+                        [contexte]="iaContexteDemande"
+                        ressourceType="DEMANDE_DOCUMENT"
+                        (accepter)="appliquerReformulation($event)">
+                    </app-ai-assist-button>
+                  </span>
                 </div>
                 <p-popover #aideDescription>
                   <div class="p-2 text-sm text-700 line-height-3" style="max-width: 320px;">

@@ -5,15 +5,14 @@ import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
-import { AppCrudGenericComponent } from '@shared';
 import { FormGroupColumn, TableColumn } from '../../../../models/generique.model';
-import { DomaineApplication } from '../../models';
-import { DomaineApplicationService } from '../../services';
-import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
-import { hasAnyPermission } from '@core/auth';
 import { HeaderPage } from '@shared/header-page/header-page';
 import { AlertService } from '@shared/alert-message/alert-message.service';
 import { BasePaginationComponent } from '../../../../shared/pagination/pagination';
+import { hasAnyPermission } from '@core/auth/auth-utils';
+import { AppCrudGenericComponent } from '@shared/app-crud-generic/app-crud-generic.component';
+import { DomaineApplicationService } from '@features/gestion-documentaire/services/referentiel.service';
+import { DomaineApplication } from '@features/gestion-documentaire/models/referentiel.model';
 
 /**
  * Référentiel des domaines d'application des documents (RH, Achats, Production, SI...).

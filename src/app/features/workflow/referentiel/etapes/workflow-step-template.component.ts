@@ -5,15 +5,14 @@ import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
-import { AppCrudGenericComponent } from '@shared';
+import { AppCrudGenericComponent } from '../../../../shared/app-crud-generic/app-crud-generic.component';
 import { DropdownSelector, FormGroupColumn, TableColumn } from '../../../../models/generique.model';
-import { WorkflowStepTemplate } from '../../../../models/gestion-documentaire.model';
+import { WorkflowStepTemplate } from '@features/gestion-documentaire/models/document.model';
 import { WorkflowStepTemplateService } from '../../services/workflow-step-template.service';
-import { AppRoleService } from '@features/gestion-utilisateurs/services';
-import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
-import { hasAnyPermission } from '@core/auth';
 import { AlertService } from '../../../../shared/alert-message/alert-message.service';
 import { BasePaginationComponent } from '../../../../shared/pagination/pagination';
+import { hasAnyPermission } from '@core/auth/auth-utils';
+import { AppRoleService } from '@features/gestion-utilisateurs/services/role.service';
 
 /**
  * Catalogue d'étapes réutilisables entre circuits.

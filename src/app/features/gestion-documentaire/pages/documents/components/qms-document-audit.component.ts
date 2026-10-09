@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '@prime-ng';
-import { DocumentQms, QmsAuditLog } from '../../../models';
+import { DocumentQms, QmsAuditLog } from '@features/gestion-documentaire/models/document.model';
 
 /**
  * Piste d'audit d'un document : journal des actions, avec leur auteur et leur horodatage.

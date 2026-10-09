@@ -1,21 +1,30 @@
 import { AfterViewInit, Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { ShareConfirmToastComponent, LoaderComponent, USER_STRUCTURE_KEY } from '@core';
 import { MessageService } from 'primeng/api';
 import { Toast } from 'primeng/toast';
 import { AuthData } from './app/models/auth.model';
-import { StructureService } from '@features/organigramme';
+import { ShareConfirmToastComponent } from '@core/components/share-confirm-toast/share-confirm-toast.component';
+import { LoaderComponent } from '@core/components/loader/loader.component';
+import { USER_STRUCTURE_KEY } from './app/utils/global/global-utils';
+import { StructureService } from '@features/organigramme/services/structure.service';
+import { InsideLoaderComponent } from '@core/components/inside-loader/inside-loader.component';
 
 @Component({
     selector: 'app-root',
     standalone: true,
     providers: [],
-    imports: [RouterModule, ShareConfirmToastComponent, LoaderComponent, Toast],
+    imports: [
+        RouterModule, 
+        ShareConfirmToastComponent,
+        Toast,
+        InsideLoaderComponent,
+    ],
     template: ` 
     <p-toast position="bottom-right"/>
     <app-share-confirm-toast></app-share-confirm-toast>
-    <router-outlet></router-outlet> 
-    <app-loader></app-loader>`
+    <router-outlet></router-outlet>
+    <app-inside-loader></app-inside-loader>
+    `
 })
 export class AppComponent implements AfterViewInit {
     user!: any;

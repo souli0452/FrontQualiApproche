@@ -6,9 +6,10 @@ import { MenuItem } from 'primeng/api';
 
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { LayoutService } from '@core/layout';
-import { RoleService, NonConformiteService } from '../services';
 import { HeaderPage } from '@shared/header-page/header-page';
+import { LayoutService } from '@core/layout/service/layout.service';
+import { NonConformiteService } from '../services/non-conformite.service';
+import { RoleService } from '@features/gestion-utilisateurs/services/role.service';
 
 @Component({
   selector: 'app-non-conformite-layout',
@@ -57,9 +58,9 @@ export class NonConformiteLayoutComponent implements OnInit, OnDestroy {
 
 
     buildMenu(notifs?: any) {
-        // Les dossiers du circuit sont directement donnés par notifs.total (qui vaut 2)
-        const totalDossiersEnCircuit = notifs?.total || 0;
-        const totalPlansATraiter = notifs?.nonTraiter || 0;
+        // Plans d'action en attente de réalisation (alimenté par planActionsATraiterPage)
+        const totalPlansATraiter = notifs?.planAction || 0;
+        const totalDossiersEnCircuit = notifs?.aTraiter || 0;
 
         this.items = [
             { label: "Vue d'ensemble", icon: 'pi pi-chart-bar', routerLink: '/non-conformite/vue-ensemble' },
