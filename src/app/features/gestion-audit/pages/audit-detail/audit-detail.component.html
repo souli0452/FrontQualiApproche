@@ -32,10 +32,10 @@
                         </p-tag>
                     </div>
                     <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">
-                        {{ audit.libelleProcessus }}
+                        {{ audit.typeAuditLibelle ?? audit.reference ?? '—' }}
                     </h2>
                     <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">
-                        {{ getTypeLabel(audit.typeAudit ?? '') }} · {{ audit.dateAudit }}
+                        {{ audit.typeAuditLibelle ?? '—' }} · {{ audit.dateDebutPrevue ?? '—' }}
                     </p>
                 </div>
             </div>
@@ -71,41 +71,45 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                         <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mb-1">Type d'audit</p>
-                        <p class="font-medium text-surface-900 dark:text-surface-100 m-0">{{ getTypeLabel(audit.typeAudit ?? '') }}</p>
+                        <p class="font-medium text-surface-900 dark:text-surface-100 m-0">{{ audit.typeAuditLibelle ?? '—' }}</p>
                     </div>
                     <div>
-                        <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mb-1">Date</p>
-                        <p class="font-medium text-surface-900 dark:text-surface-100 m-0">{{ audit.dateAudit ?? '—' }}</p>
+                        <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mb-1">Date de début</p>
+                        <p class="font-medium text-surface-900 dark:text-surface-100 m-0">{{ audit.dateDebutPrevue ?? '—' }}</p>
                     </div>
                     <div>
+                        <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mb-1">Date de fin prévue</p>
+                        <p class="font-medium text-surface-900 dark:text-surface-100 m-0">{{ audit.dateFinPrevue ?? '—' }}</p>
+                    </div>
+                    <div *ngIf="audit.responsableEquipeId">
                         <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mb-1">Responsable d'équipe</p>
-                        <p class="font-medium text-surface-900 dark:text-surface-100 m-0">{{ audit.responsableEquipe ?? '—' }}</p>
+                        <p class="font-medium text-surface-900 dark:text-surface-100 m-0">{{ audit.responsableEquipeId }}</p>
                     </div>
-                    <div>
-                        <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mb-1">Auditeurs</p>
-                        <p class="font-medium text-surface-900 dark:text-surface-100 m-0">{{ audit.auditeurs?.join(', ') ?? '—' }}</p>
+                    <div *ngIf="audit.membreEquipeIds?.length">
+                        <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mb-1">Membres de l'équipe</p>
+                        <p class="font-medium text-surface-900 dark:text-surface-100 m-0">{{ audit.membreEquipeIds?.join(', ') }}</p>
                     </div>
-                    <div *ngIf="audit.sites?.length">
+                    <div *ngIf="audit.siteIds?.length">
                         <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mb-1">Sites</p>
-                        <p class="font-medium text-surface-900 dark:text-surface-100 m-0">{{ audit.sites?.join(', ') }}</p>
+                        <p class="font-medium text-surface-900 dark:text-surface-100 m-0">{{ audit.siteIds?.join(', ') }}</p>
                     </div>
-                    <div *ngIf="audit.score !== undefined && audit.score !== null">
-                        <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mb-1">Score</p>
+                    <div *ngIf="audit.scoreMaturite !== undefined && audit.scoreMaturite !== null">
+                        <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mb-1">Score de maturité</p>
                         <p class="text-xl font-bold m-0"
-                           [class]="audit.score >= 70 ? 'text-emerald-600 dark:text-emerald-400' : audit.score >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'">
-                            {{ audit.score }}%
+                           [class]="audit.scoreMaturite >= 70 ? 'text-emerald-600 dark:text-emerald-400' : audit.scoreMaturite >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'">
+                            {{ audit.scoreMaturite }}%
                         </p>
                     </div>
                 </div>
 
-                <div *ngIf="audit.objectif" class="mt-4 pt-4 border-t border-surface-100 dark:border-surface-800">
-                    <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mb-2">Objectif</p>
-                    <p class="text-sm text-surface-800 dark:text-surface-200 m-0 leading-relaxed">{{ audit.objectif }}</p>
+                <div *ngIf="audit.objectifsAudit" class="mt-4 pt-4 border-t border-surface-100 dark:border-surface-800">
+                    <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mb-2">Objectifs</p>
+                    <p class="text-sm text-surface-800 dark:text-surface-200 m-0 leading-relaxed">{{ audit.objectifsAudit }}</p>
                 </div>
 
-                <div *ngIf="audit.criteres" class="mt-4">
+                <div *ngIf="audit.criteresAudit" class="mt-4">
                     <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mb-2">Critères d'audit</p>
-                    <p class="text-sm text-surface-700 dark:text-surface-300 m-0 font-mono">{{ audit.criteres }}</p>
+                    <p class="text-sm text-surface-700 dark:text-surface-300 m-0 font-mono">{{ audit.criteresAudit }}</p>
                 </div>
             </div>
 
@@ -137,8 +141,12 @@
                         <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ constatsPublies.length }}</span>
                     </div>
                     <div class="flex justify-between items-center text-xs">
+                        <span class="text-surface-500 dark:text-surface-400">Compilés</span>
+                        <span class="font-bold text-amber-600 dark:text-amber-400">{{ constatsCompiles.length }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
                         <span class="text-surface-500 dark:text-surface-400">Brouillons</span>
-                        <span class="font-bold text-amber-600 dark:text-amber-400">{{ constatsBrouillon.length }}</span>
+                        <span class="font-bold text-surface-500 dark:text-surface-400">{{ constatsBrouillon.length }}</span>
                     </div>
                     <div class="flex justify-between items-center text-xs" *ngIf="constatsNc.length > 0">
                         <span class="text-surface-500 dark:text-surface-400">NC générées</span>
@@ -158,7 +166,7 @@
                 </h4>
             </div>
             <p class="text-xs text-red-600 dark:text-red-400 m-0 mb-3">
-                Les constats publiés de type NC ont généré une notification dans le module Non-Conformités. Aucune nouvelle saisie n'est requise.
+                Les constats publiés générateurs de NC ont été transmis au module Non-Conformités. Aucune nouvelle saisie n'est requise.
             </p>
             <a routerLink="/non-conformite"
                class="inline-flex items-center gap-1 text-xs font-semibold text-red-700 dark:text-red-400 hover:underline cursor-pointer">
@@ -191,23 +199,27 @@
                 <div *ngFor="let constat of constats; trackBy: trackByConstatId"
                      class="flex items-start gap-4 p-4 hover:bg-surface-50 dark:hover:bg-surface-800/40 transition-colors">
 
-                    <ng-container *ngIf="getTypeConstatInfo(constat.codeTypeConstat ?? '') as typeInfo">
-                        <p-tag [value]="typeInfo.label" [severity]="typeInfo.severity" [rounded]="true" class="shrink-0 mt-0.5"></p-tag>
-                    </ng-container>
+                    <p-tag
+                        [value]="constat.natureLibelle ?? '—'"
+                        severity="secondary"
+                        [rounded]="true"
+                        class="shrink-0 mt-0.5">
+                    </p-tag>
 
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-semibold text-surface-900 dark:text-surface-100 m-0 mb-0.5">
-                            <span *ngIf="constat.chapitre" class="font-mono text-xs text-primary mr-2">{{ constat.chapitre }}</span>
-                            {{ constat.label }}
-                        </p>
-                        <p *ngIf="constat.observation" class="text-xs text-surface-600 dark:text-surface-400 m-0 mt-1 line-clamp-2">
+                            <span *ngIf="constat.critereAudit" class="font-mono text-xs text-primary mr-2">{{ constat.critereAudit }}</span>
                             {{ constat.observation }}
+                        </p>
+                        <p *ngIf="constat.commentaireEquipe" class="text-xs text-surface-600 dark:text-surface-400 m-0 mt-1 line-clamp-2">
+                            {{ constat.commentaireEquipe }}
                         </p>
                     </div>
 
                     <p-tag
-                        [value]="constat.statut === StatutConstat.PUBLIE ? 'Publié' : 'Brouillon'"
-                        [severity]="constat.statut === StatutConstat.PUBLIE ? 'success' : 'warn'"
+                        *ngIf="constat.statut"
+                        [value]="constat.statut === StatutConstat.PUBLIE ? 'Publié' : constat.statut === StatutConstat.COMPILE ? 'Compilé' : 'Brouillon'"
+                        [severity]="constat.statut === StatutConstat.PUBLIE ? 'success' : constat.statut === StatutConstat.COMPILE ? 'warn' : 'secondary'"
                         [rounded]="true"
                         class="shrink-0">
                     </p-tag>

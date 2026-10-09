@@ -43,7 +43,20 @@ export class UrlConfig {
 
     // Evaluation Service
     static readonly CRITERE_EVALUATION_ROOT_URL = `${EVALUATION_SERVICE}/critere-evaluation`;
-    static readonly AUDIT_ROOT_URL = `${EVALUATION_SERVICE}/audite`;
+    static readonly AUDIT_ROOT_URL = `${EVALUATION_SERVICE}/audits`;
+    static readonly AUDIT_AUDITEURS_URL = `${EVALUATION_SERVICE}/auditeurs`;
+    static readonly AUDIT_CONSTATS_URL = `${EVALUATION_SERVICE}/constats`;
+    static readonly AUDIT_CHECKLISTS_URL = `${EVALUATION_SERVICE}/checklists-audit`;
+    static readonly AUDIT_TYPES_AUDIT_URL = `${EVALUATION_SERVICE}/types-audit`;
+    static readonly AUDIT_TYPES_CONSTAT_URL = `${EVALUATION_SERVICE}/types-constat`;
+    static readonly AUDIT_SITES_URL = `${EVALUATION_SERVICE}/sites-audit`;
+    static readonly AUDIT_REGLES_NOTIF_URL = `${EVALUATION_SERVICE}/regles-notification-audit`;
+    static readonly AUDIT_CODIFICATIONS_URL = `${EVALUATION_SERVICE}/codifications-document`;
+    static readonly AUDIT_EVALUATIONS_RQAPBF_URL = `${EVALUATION_SERVICE}/evaluations-rqapbf`;
+    static readonly AUDIT_EVALUATIONS_AUDITEUR_URL = `${EVALUATION_SERVICE}/evaluations-auditeur`;
+    static readonly AUDIT_REFERENTIEL_RQAPBF_URL = `${EVALUATION_SERVICE}/referentiel-rqapbf`;
+    static readonly AUDIT_PLANS_URL = `${EVALUATION_SERVICE}/plans-audit`;
+    static readonly AUDIT_SIGNATURES_URL = `${EVALUATION_SERVICE}/signatures-audit`;
 
     // Support Service (Gestion Documentaire QMS)
     static readonly QMS_DOCUMENT_ROOT_URL = `${SUPPORT_SERVICE}/qms/documents`;

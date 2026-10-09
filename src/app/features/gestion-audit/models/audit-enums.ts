@@ -3,7 +3,14 @@ export enum StatutAudit {
     EN_PREPARATION = 'EN_PREPARATION',
     EN_COURS = 'EN_COURS',
     EN_RETARD = 'EN_RETARD',
-    CLOTURE = 'CLOTURE'
+    CLOTURE = 'CLOTURE',
+    ANNULE = 'ANNULE'
+}
+
+export enum StatutConstat {
+    BROUILLON = 'BROUILLON',
+    COMPILE = 'COMPILE',
+    PUBLIE = 'PUBLIE'
 }
 
 export enum TypeAudit {
@@ -19,9 +26,19 @@ export enum NiveauRisqueAudit {
     ELEVE = 'ELEVE'
 }
 
-export enum StatutConstat {
-    BROUILLON = 'BROUILLON',
-    PUBLIE = 'PUBLIE'
+export enum NiveauEfficacite {
+    NON_EVALUEE = 'NON_EVALUEE',
+    EFFICACE = 'EFFICACE',
+    PARTIELLEMENT_EFFICACE = 'PARTIELLEMENT_EFFICACE',
+    NON_EFFICACE = 'NON_EFFICACE'
+}
+
+export enum NiveauNotationRQAPBF {
+    NON_CONFORME = 'NON_CONFORME',
+    A_AMELIORER = 'A_AMELIORER',
+    ACCEPTABLE = 'ACCEPTABLE',
+    CONFORME = 'CONFORME',
+    NON_APPLICABLE = 'NON_APPLICABLE'
 }
 
 export const STATUT_AUDIT_LABELS: Record<StatutAudit, string> = {
@@ -29,7 +46,8 @@ export const STATUT_AUDIT_LABELS: Record<StatutAudit, string> = {
     [StatutAudit.EN_PREPARATION]: 'En préparation',
     [StatutAudit.EN_COURS]: 'En cours',
     [StatutAudit.EN_RETARD]: 'En retard',
-    [StatutAudit.CLOTURE]: 'Clôturé'
+    [StatutAudit.CLOTURE]: 'Clôturé',
+    [StatutAudit.ANNULE]: 'Annulé'
 };
 
 export const STATUT_AUDIT_SEVERITY: Record<StatutAudit, string> = {
@@ -37,7 +55,20 @@ export const STATUT_AUDIT_SEVERITY: Record<StatutAudit, string> = {
     [StatutAudit.EN_PREPARATION]: 'warn',
     [StatutAudit.EN_COURS]: 'secondary',
     [StatutAudit.EN_RETARD]: 'danger',
-    [StatutAudit.CLOTURE]: 'success'
+    [StatutAudit.CLOTURE]: 'success',
+    [StatutAudit.ANNULE]: 'secondary'
+};
+
+export const STATUT_CONSTAT_LABELS: Record<StatutConstat, string> = {
+    [StatutConstat.BROUILLON]: 'Brouillon',
+    [StatutConstat.COMPILE]: 'Compilé',
+    [StatutConstat.PUBLIE]: 'Publié'
+};
+
+export const STATUT_CONSTAT_SEVERITY: Record<StatutConstat, string> = {
+    [StatutConstat.BROUILLON]: 'secondary',
+    [StatutConstat.COMPILE]: 'warn',
+    [StatutConstat.PUBLIE]: 'success'
 };
 
 export const TYPE_AUDIT_LABELS: Record<TypeAudit, string> = {
@@ -59,10 +90,24 @@ export const NIVEAU_RISQUE_SEVERITY: Record<NiveauRisqueAudit, string> = {
     [NiveauRisqueAudit.ELEVE]: 'danger'
 };
 
+export const NIVEAU_EFFICACITE_LABELS: Record<NiveauEfficacite, string> = {
+    [NiveauEfficacite.NON_EVALUEE]: 'Non évaluée',
+    [NiveauEfficacite.EFFICACE]: 'Efficace',
+    [NiveauEfficacite.PARTIELLEMENT_EFFICACE]: 'Partiellement efficace',
+    [NiveauEfficacite.NON_EFFICACE]: 'Non efficace'
+};
+
+export const NIVEAU_EFFICACITE_SEVERITY: Record<NiveauEfficacite, string> = {
+    [NiveauEfficacite.NON_EVALUEE]: 'secondary',
+    [NiveauEfficacite.EFFICACE]: 'success',
+    [NiveauEfficacite.PARTIELLEMENT_EFFICACE]: 'warn',
+    [NiveauEfficacite.NON_EFFICACE]: 'danger'
+};
+
 export interface TypeConstat {
     code: string;
     label: string;
-    severity: 'success' | 'warn' | 'danger' | 'info' | 'secondary';
+    severity: string;
     genereNonConformite: boolean;
 }
 
