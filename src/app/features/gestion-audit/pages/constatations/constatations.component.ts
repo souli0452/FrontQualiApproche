@@ -12,7 +12,7 @@ import { AuditLibelleComponent } from '../../components/libelle-aide.component';
 import { AuditGestionService, contenu, messageErreur } from '../../services/audit.service';
 import { AuditReferentielService } from '../../services/audit-referentiel.service';
 import { Audit, ChecklistAudit, ConstatAudit, PointControle, TypeConstatRef } from '../../models/audit.model';
-import { StatutAudit, StatutConstat, STATUT_CONSTAT_LABELS, STATUT_CONSTAT_SEVERITY } from '../../models/audit-enums';
+import { StatutAudit, StatutConstat, STATUT_AUDIT_LABELS, STATUT_AUDIT_SEVERITY, STATUT_CONSTAT_LABELS, STATUT_CONSTAT_SEVERITY } from '../../models/audit-enums';
 import { NatureChoixComponent } from './nature-choix.component';
 import { PreuvesConstatComponent } from './preuves-constat.component';
 
@@ -145,7 +145,9 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
                 next: (res: any) => {
                     this.auditsDisponibles = res?.data?.content ?? [];
                     this.loadingAudits = false;
-                    if (!this.auditId && this.auditsDisponibles.length) {
+                    // On ne choisit l'audit à la place de l'utilisateur que s'il n'y en a qu'un : sinon le
+                    // premier de la liste s'imposait, et l'on saisissait sans voir dans quel audit.
+                    if (!this.auditId && this.auditsDisponibles.length === 1) {
                         this.auditId = this.auditsDisponibles[0].id ?? null;
                     }
                     this.charger();
@@ -155,6 +157,23 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
                     this.erreur(err, 'Les audits n\'ont pas pu être chargés.');
                 }
             });
+    }
+
+    /** « AUD-2026-004 · du 06/10/2026 au 10/10/2026 · En cours » : de quoi reconnaître l'audit. */
+    get auditOptions(): { label: string; value: string }[] {
+        const date = (d?: string) => (d ? d.substring(0, 10).split('-').reverse().join('/') : '…');
+        return this.auditsDisponibles.map(a => ({
+            label: `${a.reference ?? '—'} · du ${date(a.dateDebutPrevue)} au ${date(a.dateFinPrevue)} · ${this.libelleStatutAudit(a)}`,
+            value: a.id!
+        }));
+    }
+
+    libelleStatutAudit(a: Audit): string {
+        return a.statut ? STATUT_AUDIT_LABELS[a.statut] : '';
+    }
+
+    severiteStatutAudit(a: Audit): any {
+        return a.statut ? STATUT_AUDIT_SEVERITY[a.statut] : 'secondary';
     }
 
     get auditCourant(): Audit | undefined {
@@ -366,6 +385,15 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
     // ================================================================ Compilation (C10P)
 
     /** Les groupes de la compilation, par nature, dans l'ordre du paramétrage. */
+    /**
+     * Les groupes se recalculent à chaque cycle : sans cette clé, `*ngFor` recréait chacun d'eux à
+     * chaque fois, et avec eux le constat déplié — dont les preuves se rechargeaient, ce qui
+     * relançait un cycle. L'écran tournait en boucle et ne répondait plus.
+     */
+    parNature(_i: number, g: { type: TypeConstatRef }): string | undefined {
+        return g.type.id;
+    }
+
     get groupes(): { type: TypeConstatRef; constats: ConstatAudit[]; compiles: number }[] {
         const connus = new Set(this.typesConstat.map(t => t.id));
         const types: TypeConstatRef[] = [...this.typesConstat];
