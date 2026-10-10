@@ -10,6 +10,7 @@ import { NgPrimeModule } from '../../../../prime-ng.module';
 import { Popover } from 'primeng/popover';
 import { Subject } from 'rxjs';
 import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
+import { AuditGestionService } from '@features/gestion-audit/services/audit.service';
 import { DocumentaireATraiterService } from '@features/gestion-documentaire/services/documentaire-a-traiter.service';
 import { AuthData } from '../../../models/auth.model';
 import { accesAutorise, hasAnyPermission } from '@core/auth/auth-utils';
@@ -333,18 +334,20 @@ export class AppTopbar implements OnInit {
      */
     notificationsNC: any[] = [];
     notificationsDocumentaire: any[] = [];
+    notificationsAudit: any[] = [];
 
     /** Ce que la cloche déroule : toutes les sources, le documentaire d'abord. */
     get notifications(): any[] {
-        return [...this.notificationsDocumentaire, ...this.notificationsNC];
+        return [...this.notificationsDocumentaire, ...this.notificationsNC, ...this.notificationsAudit];
     }
 
     /** Nombre de dossiers en attente, et non de lignes de notification : c'est ce que le badge disait. */
     private totalNC = 0;
     private totalDocumentaire = 0;
+    private totalAudit = 0;
 
     get notificationCount(): number {
-        return this.totalNC + this.totalDocumentaire;
+        return this.totalNC + this.totalDocumentaire + this.totalAudit;
     }
 
     constructor(
@@ -358,6 +361,7 @@ export class AppTopbar implements OnInit {
         protected messageService: MessageService,
         private nonConformiteService: NonConformiteService,
         private aTraiterDocumentaire: DocumentaireATraiterService,
+        private auditService: AuditGestionService,
     ) {
     }
 
@@ -387,6 +391,11 @@ export class AppTopbar implements OnInit {
         this.nonConformiteService.rafraichirNotifications();
         // 2. Charger les vraies notifications de la cloche
         this.chargerNotificationsCloche();
+        // 3. Le module Audit : compteurs du menu et lignes de la cloche, pour qui y a accès
+        if (hasAnyPermission(['audit-read', 'audit-write', 'audit-conduct', 'audit-validate'])) {
+            this.auditService.rafraichirNotifications();
+            this.chargerNotificationsAudit();
+        }
     }
 
 
@@ -414,6 +423,22 @@ export class AppTopbar implements OnInit {
     /**
      * Associe à chaque code de notification backend une icône, une couleur et sa route de redirection.
      */
+    /** Les lignes du module Audit, à côté de celles des non-conformités et du documentaire. */
+    chargerNotificationsAudit(): void {
+        this.auditService.getNotificationsCloche()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (notifs) => {
+                    this.totalAudit = notifs.reduce((t, n) => t + (n.nombre || 1), 0);
+                    this.notificationsAudit = notifs.map(n => this.mapperNotification(n));
+                },
+                error: () => {
+                    this.notificationsAudit = [];
+                    this.totalAudit = 0;
+                }
+            });
+    }
+
     private mapperNotification(n: any) {
         let icon = 'pi pi-bell';
         let colorClass = 'bg-blue-100 text-blue-600';
@@ -450,6 +475,47 @@ export class AppTopbar implements OnInit {
                 route = '/non-conformite/vue-ensemble';
                 break;
 
+            case 'AUDIT_EN_RETARD':
+                icon = 'pi pi-exclamation-triangle';
+                colorClass = 'bg-red-100 text-red-600';
+                route = '/gestion-audit/programme';
+                break;
+            case 'AUDIT_A_VALIDER':
+                icon = 'pi pi-check-circle';
+                colorClass = 'bg-orange-100 text-orange-600';
+                route = '/gestion-audit/programme';
+                break;
+            case 'AUDIT_DEMARRE_BIENTOT':
+                icon = 'pi pi-clock';
+                colorClass = 'bg-amber-100 text-amber-600';
+                route = '/gestion-audit/programme';
+                break;
+            case 'CONSTATS_A_SAISIR':
+            case 'CONSTATS_BROUILLON':
+                icon = 'pi pi-pencil';
+                colorClass = 'bg-blue-100 text-blue-600';
+                route = '/gestion-audit/constatations';
+                break;
+            case 'CONSTATS_A_VALIDER':
+                icon = 'pi pi-users';
+                colorClass = 'bg-orange-100 text-orange-600';
+                route = '/gestion-audit/constatations';
+                break;
+            case 'SIGNATURE_ATTENDUE':
+                icon = 'pi pi-pen-to-square';
+                colorClass = 'bg-red-100 text-red-600';
+                route = '/gestion-audit/programme';
+                break;
+            case 'ECARTS_A_TRANSMETTRE':
+                icon = 'pi pi-send';
+                colorClass = 'bg-amber-100 text-amber-600';
+                route = '/gestion-audit/suivi';
+                break;
+            case 'CHECKLIST_BROUILLON':
+                icon = 'pi pi-list-check';
+                colorClass = 'bg-blue-100 text-blue-600';
+                route = '/gestion-audit/checklists';
+                break;
             case 'DOCUMENT_A_TRAITER':
             case 'DEMANDE_DOCUMENT_A_INSTRUIRE':
                 icon = 'pi pi-file';

@@ -1,148 +1,99 @@
-<p-card>
+<div class="p-6">
+    <p-toast></p-toast>
 
-    <!-- KPI Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-6">
-        <app-kpi-card
-            *ngFor="let card of kpiCards; trackBy: trackByKpi"
-            [label]="card.label"
-            [value]="card.value"
-            [icon]="card.icon"
-            [color]="card.color"
-            [description]="card.description"
-            [loading]="loading">
-        </app-kpi-card>
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div>
+            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Tableau de bord Audit</h2>
+            <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">Les indicateurs du programme d'audit pour l'année choisie</p>
+        </div>
+        <div class="w-32">
+            <app-select-input [(ngModel)]="annee" [options]="anneeOptions" optionLabel="label" optionValue="value"
+                              [showClear]="false" (selectionChange)="changerAnnee()" />
+        </div>
     </div>
 
-    <!-- Tableau des audits récents -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-4">
+    <p-message *ngIf="erreurTableau" severity="error" styleClass="mb-4 w-full" [text]="erreurTableau"></p-message>
 
-        <!-- Audits récents -->
-        <div class="lg:col-span-8 min-w-0 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden shadow-sm">
-            <div class="flex items-center justify-between p-4 border-b border-surface-100 dark:border-surface-800">
-                <div>
-                    <h3 class="text-base font-bold text-surface-900 dark:text-surface-50 m-0">Audits récents</h3>
-                    <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mt-1">Derniers audits enregistrés dans le système</p>
-                </div>
-                <a routerLink="/gestion-audit/programme"
-                   class="text-xs font-semibold text-primary hover:underline cursor-pointer">
-                    Voir tout
+    <!-- Indicateurs : chacun mène à l'écran qui le détaille -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
+        <a *ngFor="let k of kpis; trackBy: trackByKpi" [routerLink]="k.lien" [queryParams]="k.parametres"
+           class="block no-underline bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 hover:border-primary transition-colors">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wide text-surface-500">{{ k.label }}</span>
+                <i class="pi text-primary" [ngClass]="k.icone"></i>
+            </div>
+            <p-skeleton *ngIf="loading" height="2rem" styleClass="mt-2"></p-skeleton>
+            <div *ngIf="!loading" class="text-2xl font-bold text-surface-900 dark:text-surface-50 mt-2">{{ k.valeur }}</div>
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+        <!-- Radar de maturité -->
+        <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
+            <h3 class="text-base font-bold text-surface-900 dark:text-surface-50 m-0 mb-1">Radar de maturité RQAP-BF</h3>
+            <p class="text-xs text-surface-500 m-0 mb-3">Score officiel moyen par domaine, sur les évaluations de l'année.</p>
+            <p *ngIf="!loading && !domaines.length" class="text-sm text-surface-400 m-0 py-8 text-center">Aucune évaluation RQAP-BF publiée.</p>
+            <p-chart *ngIf="domaines.length" type="radar" [data]="radar" [options]="optionsRadar" height="260px"></p-chart>
+        </div>
+
+        <!-- Notifications automatiques récentes -->
+        <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 flex flex-col">
+            <h3 class="text-base font-bold text-surface-900 dark:text-surface-50 m-0 mb-1">Notifications automatiques récentes</h3>
+            <p class="text-xs text-surface-500 m-0 mb-3">Les rappels envoyés par les règles de notification.</p>
+            <div class="flex-1">
+                <p *ngIf="!tableau.rappelsRecents?.length && !tableau.auditsEnRetard" class="text-sm text-surface-400 m-0">Aucune notification.</p>
+                <a *ngFor="let r of tableau.rappelsRecents" [routerLink]="['/gestion-audit/programme', r.auditId]"
+                   class="flex items-start gap-2 py-2 border-b border-surface-100 dark:border-surface-800 no-underline text-surface-700 dark:text-surface-200">
+                    <i class="pi pi-bell text-primary text-sm mt-0.5"></i>
+                    <span class="text-sm">
+                        Rappel envoyé<span *ngIf="r.destinataires"> à {{ r.destinataires }}</span> — <span class="font-mono font-semibold text-primary">{{ r.auditReference }}</span>
+                        démarre dans {{ r.delaiJours }} jour(s)
+                        <span class="block text-xs text-surface-500">{{ r.regle }} · {{ r.dateRappel | date: 'dd/MM/yyyy' }}</span>
+                    </span>
+                </a>
+                <a *ngIf="tableau.auditsEnRetard" routerLink="/gestion-audit/programme" [queryParams]="{ enRetard: true }"
+                   class="flex items-center gap-2 py-2 no-underline text-red-600 dark:text-red-400">
+                    <i class="pi pi-exclamation-triangle text-sm"></i>
+                    <span class="text-sm font-semibold">{{ tableau.auditsEnRetard }} audit(s) en retard sur le programme</span>
                 </a>
             </div>
-
-            <div *ngIf="loadingAudits" class="p-4">
-                <p-skeleton height="3rem" styleClass="mb-2" *ngFor="let i of [1,2,3,4,5]"></p-skeleton>
-            </div>
-
-            <div *ngIf="!loadingAudits && auditsRecents.length === 0"
-                 class="flex flex-col items-center justify-center py-12 text-center">
-                <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center mb-3 text-blue-500">
-                    <i class="pi pi-clipboard text-2xl"></i>
-                </div>
-                <p class="text-sm text-surface-500 dark:text-surface-400 m-0">Aucun audit enregistré</p>
-            </div>
-
-            <table *ngIf="!loadingAudits && auditsRecents.length > 0"
-                   class="w-full border-collapse text-sm">
-                <thead>
-                    <tr class="bg-surface-50 dark:bg-surface-800">
-                        <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Référence</th>
-                        <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Processus</th>
-                        <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Type</th>
-                        <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Date</th>
-                        <th scope="col" class="text-left px-4 py-3 text-xs font-semibold text-surface-500 dark:text-surface-400">Statut</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let audit of auditsRecents; trackBy: trackByAuditId"
-                        class="border-b border-surface-100 dark:border-surface-800 hover:bg-surface-50 dark:hover:bg-surface-800/50 cursor-pointer"
-                        [routerLink]="['/gestion-audit/programme', audit.id]">
-                        <td class="px-4 py-3 font-mono text-xs font-semibold text-primary">{{ audit.reference ?? '—' }}</td>
-                        <td class="px-4 py-3 text-surface-800 dark:text-surface-200 max-w-[180px] truncate">{{ audit.typeAuditLibelle ?? '—' }}</td>
-                        <td class="px-4 py-3 text-surface-600 dark:text-surface-400 text-xs">{{ audit.typeAuditLibelle ?? '—' }}</td>
-                        <td class="px-4 py-3 text-surface-600 dark:text-surface-400 text-xs whitespace-nowrap">{{ audit.dateDebutPrevue ?? '—' }}</td>
-                        <td class="px-4 py-3">
-                            <p-tag
-                                *ngIf="audit.statut"
-                                [value]="getStatutLabel(audit.statut)"
-                                [severity]="getStatutSeverity(audit.statut)"
-                                [rounded]="true">
-                            </p-tag>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Répartition par statut -->
-        <div class="lg:col-span-4 min-w-0 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5 shadow-sm">
-            <h3 class="text-base font-bold text-surface-900 dark:text-surface-50 mb-1">Répartition par statut</h3>
-            <p class="text-xs text-surface-500 dark:text-surface-400 mb-4 leading-relaxed">
-                Distribution des audits selon leur état d'avancement.
-            </p>
-
-            <div class="space-y-3" *ngIf="!loading">
-                <!-- Planifiés -->
-                <div class="flex items-center justify-between p-2.5 rounded-lg bg-sky-50/60 dark:bg-sky-950/20 border border-sky-100 dark:border-sky-900/30">
-                    <div class="flex items-center gap-2">
-                        <i class="pi pi-calendar text-sky-600 dark:text-sky-400 text-sm"></i>
-                        <span class="text-xs font-medium text-surface-700 dark:text-surface-300">Planifiés</span>
-                    </div>
-                    <span class="text-sm font-bold text-surface-900 dark:text-surface-100">{{ stats.planifies ?? 0 }}</span>
-                </div>
-
-                <!-- En préparation -->
-                <div class="flex items-center justify-between p-2.5 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30">
-                    <div class="flex items-center gap-2">
-                        <i class="pi pi-cog text-amber-600 dark:text-amber-400 text-sm"></i>
-                        <span class="text-xs font-medium text-surface-700 dark:text-surface-300">En préparation</span>
-                    </div>
-                    <span class="text-sm font-bold text-surface-900 dark:text-surface-100">{{ stats.enPreparation ?? 0 }}</span>
-                </div>
-
-                <!-- En cours -->
-                <div class="flex items-center justify-between p-2.5 rounded-lg bg-surface-100/60 dark:bg-surface-800/60 border border-surface-200 dark:border-surface-700">
-                    <div class="flex items-center gap-2">
-                        <i class="pi pi-spinner text-surface-600 dark:text-surface-400 text-sm"></i>
-                        <span class="text-xs font-medium text-surface-700 dark:text-surface-300">En cours</span>
-                    </div>
-                    <span class="text-sm font-bold text-surface-900 dark:text-surface-100">{{ stats.enCours ?? 0 }}</span>
-                </div>
-
-                <!-- En retard -->
-                <div class="flex items-center justify-between p-2.5 rounded-lg bg-red-50/60 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30">
-                    <div class="flex items-center gap-2">
-                        <i class="pi pi-exclamation-circle text-red-600 dark:text-red-400 text-sm"></i>
-                        <span class="text-xs font-medium text-surface-700 dark:text-surface-300">En retard</span>
-                    </div>
-                    <span class="text-sm font-bold text-surface-900 dark:text-surface-100">{{ stats.enRetard ?? 0 }}</span>
-                </div>
-
-                <!-- Clôturés -->
-                <div class="flex items-center justify-between p-2.5 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30">
-                    <div class="flex items-center gap-2">
-                        <i class="pi pi-check-circle text-emerald-600 dark:text-emerald-400 text-sm"></i>
-                        <span class="text-xs font-medium text-surface-700 dark:text-surface-300">Clôturés</span>
-                    </div>
-                    <span class="text-sm font-bold text-surface-900 dark:text-surface-100">{{ stats.clotures ?? 0 }}</span>
-                </div>
-            </div>
-
-            <!-- Taux de clôture -->
-            <div class="mt-4 pt-3 border-t border-surface-100 dark:border-surface-800">
-                <div class="flex items-center justify-between text-xs text-surface-500 dark:text-surface-400 mb-1.5">
-                    <span>Taux de clôture</span>
-                    <span class="font-semibold" [class]="(stats.tauxCloture ?? 0) >= 70 ? 'text-emerald-600' : 'text-amber-600'">
-                        {{ stats.tauxCloture ?? 0 }}%
-                    </span>
-                </div>
-                <div class="h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
-                    <div class="h-full rounded-full transition-all duration-500"
-                         [class]="(stats.tauxCloture ?? 0) >= 70 ? 'bg-emerald-500' : 'bg-amber-500'"
-                         [style.width.%]="stats.tauxCloture ?? 0">
-                    </div>
-                </div>
+            <div class="flex justify-end mt-3">
+                <p-button label="Paramétrer les rappels" icon="pi pi-cog" [outlined]="true" size="small" routerLink="/parametrage-audit/regles-notification"></p-button>
             </div>
         </div>
     </div>
 
-</p-card>
+    <!-- Mes audits -->
+    <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-surface-100 dark:border-surface-800">
+            <h3 class="text-base font-bold text-surface-900 dark:text-surface-50 m-0">Mes audits</h3>
+            <a routerLink="/gestion-audit/programme" [queryParams]="{ mesAudits: true }" class="text-xs font-semibold text-primary hover:underline">Voir tout</a>
+        </div>
+        <div *ngIf="loadingAudits" class="p-4">
+            <p-skeleton height="2.5rem" styleClass="mb-2" *ngFor="let i of [1,2,3]"></p-skeleton>
+        </div>
+        <p *ngIf="!loadingAudits && !mesAudits.length" class="text-sm text-surface-400 text-center m-0 py-8">Vous ne faites partie d'aucune équipe d'audit en {{ annee }}.</p>
+        <table *ngIf="!loadingAudits && mesAudits.length" class="w-full border-collapse text-sm">
+            <thead>
+                <tr class="bg-surface-50 dark:bg-surface-800">
+                    <th scope="col" class="text-left px-4 py-2 text-xs font-semibold text-surface-500">Référence</th>
+                    <th scope="col" class="text-left px-4 py-2 text-xs font-semibold text-surface-500">Processus</th>
+                    <th scope="col" class="text-left px-4 py-2 text-xs font-semibold text-surface-500">Date</th>
+                    <th scope="col" class="text-left px-4 py-2 text-xs font-semibold text-surface-500">Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let audit of mesAudits; trackBy: trackByAuditId"
+                    class="border-t border-surface-100 dark:border-surface-800 hover:bg-surface-50 dark:hover:bg-surface-800/40 cursor-pointer"
+                    [routerLink]="['/gestion-audit/programme', audit.id]">
+                    <td class="px-4 py-2 font-mono text-xs font-semibold text-primary">{{ audit.reference ?? '—' }}</td>
+                    <td class="px-4 py-2 text-surface-800 dark:text-surface-200 max-w-[260px] truncate">{{ libelles.processus(audit.processusId) }}</td>
+                    <td class="px-4 py-2 text-xs text-surface-600 dark:text-surface-400 whitespace-nowrap">{{ audit.dateDebutPrevue ? (audit.dateDebutPrevue | date: 'dd/MM/yyyy') : '—' }}</td>
+                    <td class="px-4 py-2">
+                        <p-tag *ngIf="audit.statut" [value]="getStatutLabel(audit.statut)" [severity]="getStatutSeverity(audit.statut)" [rounded]="true"></p-tag>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

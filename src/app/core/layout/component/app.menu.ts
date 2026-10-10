@@ -253,6 +253,37 @@ export class AppMenu {
                         ModuleAbonnement.DOCUMENTAIRE)
                 }
             ]),
+            // Le paramétrage du module Audit : ce que ses écrans proposent en liste.
+            this.sousGroupe('Audit', 'pi pi-fw pi-clipboard', [
+                {
+                    label: "Types d'audit", routerLink: ['/parametrage-audit/types-audit'],
+                    visible: this.peutVoir(['audit-config', 'CONFIG_GLOBAL_MANAGE'], ModuleAbonnement.AUDIT)
+                },
+                {
+                    label: "Natures de constat", routerLink: ['/parametrage-audit/natures-constat'],
+                    visible: this.peutVoir(['audit-config', 'CONFIG_GLOBAL_MANAGE'], ModuleAbonnement.AUDIT)
+                },
+                {
+                    label: "Sites", routerLink: ['/parametrage-audit/sites'],
+                    visible: this.peutVoir(['audit-config', 'CONFIG_GLOBAL_MANAGE'], ModuleAbonnement.AUDIT)
+                },
+                {
+                    label: "Critères d'évaluation", routerLink: ['/parametrage-audit/criteres-evaluation'],
+                    visible: this.peutVoir(['audit-config', 'CONFIG_GLOBAL_MANAGE'], ModuleAbonnement.AUDIT)
+                },
+                {
+                    label: "Niveaux d'évaluation", routerLink: ['/parametrage-audit/niveaux-evaluation'],
+                    visible: this.peutVoir(['audit-config', 'CONFIG_GLOBAL_MANAGE'], ModuleAbonnement.AUDIT)
+                },
+                {
+                    label: "Règles de notification", routerLink: ['/parametrage-audit/regles-notification'],
+                    visible: this.peutVoir(['audit-config', 'CONFIG_GLOBAL_MANAGE'], ModuleAbonnement.AUDIT)
+                },
+                {
+                    label: "Codification des documents", routerLink: ['/parametrage-audit/codification'],
+                    visible: this.peutVoir(['audit-config', 'CONFIG_GLOBAL_MANAGE'], ModuleAbonnement.AUDIT)
+                }
+            ]),
             // En dernier, et hors des sous-groupes à dessein : la foire aux questions ne relève
             // d'aucun module en particulier — elle répond sur l'application entière. Aucun
             // ModuleAbonnement n'est donc exigé, contrairement aux référentiels voisins : une
@@ -285,6 +316,9 @@ export class AppMenu {
             }
             if (badges['ACTIONS'] !== undefined) {
                 this.updateMenuBadge('Action corrective et préventive', badges['ACTIONS']);
+            }
+            if (badges['AUDIT'] !== undefined) {
+                this.updateMenuBadge('Gestion des Audits', badges['AUDIT']);
             }
         });
 

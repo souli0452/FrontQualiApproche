@@ -1,0 +1,226 @@
+<div class="p-6">
+    <p-toast></p-toast>
+
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
+        <div class="flex items-center gap-3">
+            <p-button icon="pi pi-arrow-left" [rounded]="true" [text]="true" severity="secondary"
+                      [routerLink]="['/gestion-audit/programme', auditId]" pTooltip="Retour à l'audit"></p-button>
+            <div>
+                <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">{{ externe ? 'Rapport d\'audit externe' : 'Rapport d\'audit' }}</h2>
+                <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">
+                    <span class="font-mono font-semibold text-primary">{{ audit?.reference }}</span>
+                    <span *ngIf="audit?.referenceRapport"> · rapport {{ audit?.referenceRapport }}</span>
+                </p>
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-2" *ngIf="rapport && !externe">
+            <p-button icon="pi pi-file-pdf" label="PDF" [outlined]="true" severity="secondary" size="small" (onClick)="exporter('PDF')"></p-button>
+            <p-button icon="pi pi-file-word" label="Word" [outlined]="true" severity="secondary" size="small" (onClick)="exporter('WORD')"></p-button>
+        </div>
+    </div>
+
+    <div *ngIf="loading" class="space-y-3"><p-skeleton height="140px"></p-skeleton><p-skeleton height="300px"></p-skeleton></div>
+
+    <!-- D14X : rapport d'un audit externe -->
+    <ng-container *ngIf="!loading && rapport && externe">
+        <p class="text-xs text-surface-500 m-0 mb-4">
+            Pour un audit externe, le rapport n'est pas rédigé dans l'application : il est transmis par l'organisme auditeur<span *ngIf="audit?.organismeExterne"> ({{ audit?.organismeExterne }})</span>,
+            puis chargé ici pour être diffusé à tous les acteurs de l'audit — sans passer par le circuit de signature interne.
+        </p>
+        <ng-container *ngIf="audit?.rapportCharge; else depotRapport">
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 mb-3 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <i class="pi pi-file-check text-2xl text-primary"></i>
+                    <div>
+                        <div class="font-semibold text-sm">Rapport d'audit chargé</div>
+                        <div class="text-xs text-surface-500">Consultable par l'équipe d'audit, les pilotes de processus et la direction</div>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <p-button icon="pi pi-download" label="Télécharger" [outlined]="true" size="small" (onClick)="telechargerFichier()"></p-button>
+                    <label *ngIf="audit?.statut !== 'CLOTURE' && audit?.statut !== 'ANNULE'" class="p-button p-button-sm p-button-text cursor-pointer" [class.p-disabled]="chargement">
+                        <i class="pi pi-refresh mr-2"></i>Remplacer
+                        <input type="file" class="hidden" accept=".pdf,.doc,.docx,.odt" (change)="deposer($event)" [disabled]="chargement" />
+                    </label>
+                </div>
+            </div>
+            <p-message severity="success" styleClass="w-full" text="Le rapport d'audit a été chargé et rendu disponible à l'ensemble des acteurs concernés."></p-message>
+        </ng-container>
+        <ng-template #depotRapport>
+            <p-message *ngIf="!planCharge" severity="warn" styleClass="w-full mb-3"
+                       text="Le plan d'audit n'a pas encore été chargé : le rapport n'est généralement reçu qu'après la réalisation de l'audit sur site."></p-message>
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
+                <h3 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-3">Charger le rapport d'audit reçu</h3>
+                <label class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-surface-300 dark:border-surface-600 rounded-xl py-8 cursor-pointer hover:border-primary transition-colors"
+                       [class.pointer-events-none]="chargement || audit?.statut === 'CLOTURE' || audit?.statut === 'ANNULE'">
+                    <i class="pi text-3xl text-surface-400" [ngClass]="chargement ? 'pi-spinner pi-spin' : 'pi-upload'"></i>
+                    <span class="text-sm text-surface-600 dark:text-surface-300">Déposez le fichier reçu de l'organisme (PDF ou Word)</span>
+                    <span class="p-button p-button-sm p-button-outlined">Parcourir…</span>
+                    <input type="file" class="hidden" accept=".pdf,.doc,.docx,.odt" (change)="deposer($event)" [disabled]="chargement" />
+                </label>
+            </div>
+        </ng-template>
+    </ng-container>
+
+    <!-- D14 : rapport interne -->
+    <article *ngIf="!loading && rapport && !externe"
+             class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-8 space-y-6 text-sm leading-relaxed">
+        <header class="text-center border-b-2 border-primary pb-4">
+            <div class="text-lg font-bold tracking-wide text-primary">RAPPORT D'AUDIT</div>
+            <div class="font-medium mt-1">{{ audit?.reference }} — {{ libelles.processus(audit?.processusId) }}</div>
+            <div class="text-xs text-surface-500 mt-1">{{ audit?.typeAuditLibelle }} · {{ audit?.dateDebutPrevue | date: 'dd/MM/yyyy' }} → {{ audit?.dateFinPrevue | date: 'dd/MM/yyyy' }}</div>
+        </header>
+
+        <section>
+            <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">1. Contexte</h3>
+            <p class="m-0">Audit de type « {{ audit?.typeAuditLibelle }} » du processus {{ libelles.processus(audit?.processusId) }},
+                sur le(s) site(s) : {{ libelles.sites(audit?.siteIds) }}.</p>
+        </section>
+        <section>
+            <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">2. Objectifs</h3>
+            <p class="m-0 whitespace-pre-line">{{ audit?.objectifsAudit || '—' }}</p>
+        </section>
+        <section>
+            <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">3. Portée</h3>
+            <p class="m-0 whitespace-pre-line">{{ audit?.porteeAudit || '—' }}</p>
+        </section>
+        <section>
+            <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">4. Critères</h3>
+            <p class="m-0 whitespace-pre-line">{{ audit?.criteresAudit || '—' }}</p>
+            <p *ngIf="audit?.referentiels?.length" class="m-0 mt-1 text-xs text-surface-500">Référentiels : {{ audit?.referentiels?.join(', ') }}</p>
+        </section>
+        <section>
+            <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">5. Méthodologie</h3>
+            <p class="m-0">{{ rapport.methodesAudit?.length ? rapport.methodesAudit!.join(', ') : 'Non précisée dans le plan.' }}</p>
+        </section>
+        <section>
+            <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">6. Équipe d'audit</h3>
+            <p class="m-0">Responsable : {{ libelles.auditeur(audit?.responsableEquipeId) }}</p>
+            <p class="m-0">Membres : {{ nomsEquipe }}</p>
+        </section>
+        <section>
+            <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">7. Synthèse des constats publiés</h3>
+            <p *ngIf="!rapport.syntheseParNature?.length" class="m-0 text-surface-500">Aucun constat publié pour le moment.</p>
+            <div class="flex flex-wrap gap-2">
+                <span *ngFor="let g of rapport.syntheseParNature" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border"
+                      [style.borderColor]="g.couleur || '#94a3b8'" [style.color]="g.couleur || '#64748b'">
+                    {{ g.nombre }} {{ g.libelle | lowercase }}
+                </span>
+            </div>
+        </section>
+        <section *ngIf="rapport.syntheseParNature?.length">
+            <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">8. Synthèse quantitative des constats par nature</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+                <table class="w-full border-collapse text-xs self-start">
+                    <thead><tr class="bg-surface-50 dark:bg-surface-800">
+                        <th scope="col" class="text-left px-2 py-1.5">Nature du constat</th>
+                        <th scope="col" class="text-right px-2 py-1.5">Nombre</th>
+                    </tr></thead>
+                    <tbody>
+                        <tr *ngFor="let g of rapport.syntheseParNature" class="border-b border-surface-100 dark:border-surface-800">
+                            <td class="px-2 py-1.5">{{ g.libelle }}</td>
+                            <td class="px-2 py-1.5 text-right font-semibold">{{ g.nombre }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div>
+                    <div *ngFor="let g of rapport.syntheseParNature" class="flex items-center gap-3 mb-1.5">
+                        <span class="w-28 shrink-0 truncate text-xs">{{ g.libelle }}</span>
+                        <div class="flex-1 h-3 rounded bg-surface-100 dark:bg-surface-800 overflow-hidden">
+                            <div class="h-full rounded" [style.width.%]="100 * (g.nombre ?? 0) / maxSynthese()" [style.background]="g.couleur || '#94a3b8'"></div>
+                        </div>
+                        <span class="w-6 text-right text-xs font-semibold">{{ g.nombre }}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">9. Détail des constats publiés</h3>
+            <p *ngIf="!rapport.constats?.length" class="m-0 text-surface-500">Aucun constat publié : les brouillons et la compilation d'équipe n'entrent pas au rapport.</p>
+            <table *ngIf="rapport.constats?.length" class="w-full border-collapse text-xs">
+                <thead><tr class="bg-surface-50 dark:bg-surface-800">
+                    <th scope="col" class="text-left px-2 py-1.5">Point / critère</th>
+                    <th scope="col" class="text-left px-2 py-1.5">Nature</th>
+                    <th scope="col" class="text-left px-2 py-1.5">Observation</th>
+                </tr></thead>
+                <tbody>
+                    <tr *ngFor="let c of rapport.constats" class="border-b border-surface-100 dark:border-surface-800 align-top">
+                        <td class="px-2 py-1.5">{{ c.pointControle || c.critere || '—' }}</td>
+                        <td class="px-2 py-1.5 whitespace-nowrap"><span class="inline-block w-2 h-2 rounded-full mr-1" [style.background]="c.natureCouleur || '#94a3b8'"></span>{{ c.nature }}</td>
+                        <td class="px-2 py-1.5 whitespace-pre-line">{{ c.observation }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <section *ngIf="rapport.scoreRqapbf != null || domaines().length">
+            <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">10. Évaluation RQAP-BF</h3>
+            <p class="m-0 mb-2">Score officiel : <strong>{{ rapport.scoreRqapbf | number: '1.0-1' }} %</strong>
+                <a [routerLink]="['/gestion-audit/programme', auditId, 'resultats-rqapbf']" class="text-primary text-xs ml-2">Voir le détail</a></p>
+            <div *ngFor="let d of domaines()" class="flex justify-between text-xs border-b border-surface-100 py-1"><span>{{ d.domaine }}</span><span class="font-semibold">{{ d.score | number: '1.0-1' }} %</span></div>
+        </section>
+        <section>
+            <div class="flex items-center justify-between border-b border-surface-200 pb-1 mb-2">
+                <h3 class="font-bold text-primary m-0">11. Conclusions</h3>
+                <span *ngIf="!redactionOuverte" class="text-xs text-surface-500"><i class="pi pi-lock text-xs"></i> {{ visaDonne ? 'figées par le premier visa' : 'se rédigent pendant l\'audit' }}</span>
+            </div>
+            <textarea *ngIf="redactionOuverte" pTextarea [(ngModel)]="conclusions" (ngModelChange)="modifie = true" rows="5" class="w-full"
+                      placeholder="Appréciation de l'équipe sur la conformité et l'efficacité du processus audité…"></textarea>
+            <p *ngIf="!redactionOuverte" class="m-0 whitespace-pre-line">{{ conclusions || '—' }}</p>
+        </section>
+        <section>
+            <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">12. Recommandations</h3>
+            <textarea *ngIf="redactionOuverte" pTextarea [(ngModel)]="recommandations" (ngModelChange)="modifie = true" rows="4" class="w-full"
+                      placeholder="Pistes d'amélioration proposées à l'audité…"></textarea>
+            <p *ngIf="!redactionOuverte" class="m-0 whitespace-pre-line">{{ recommandations || '—' }}</p>
+            <div *ngIf="redactionOuverte" class="flex justify-end mt-2">
+                <p-button icon="pi pi-save" label="Enregistrer la rédaction" size="small" [loading]="saving" [disabled]="!modifie" (onClick)="enregistrer()"></p-button>
+            </div>
+        </section>
+        <section>
+            <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">13. Écarts transmis au module Non-conformités</h3>
+            <p *ngIf="!rapport.ecarts?.length" class="m-0 text-surface-500">Aucun écart transmis pour le moment.</p>
+            <!-- Origine / Type / Action, comme la maquette : l'origine est le point de contrôle, à défaut le critère. -->
+            <table *ngIf="rapport.ecarts?.length" class="w-full border-collapse text-xs">
+                <thead><tr class="bg-surface-50 dark:bg-surface-800">
+                    <th scope="col" class="text-left px-2 py-1.5">Origine</th>
+                    <th scope="col" class="text-left px-2 py-1.5">Type</th>
+                    <th scope="col" class="text-left px-2 py-1.5">Action</th>
+                </tr></thead>
+                <tbody>
+                    <tr *ngFor="let e of rapport.ecarts" class="border-b border-surface-100 dark:border-surface-800 align-top">
+                        <td class="px-2 py-1.5">{{ e.pointControle || e.critere || '—' }}</td>
+                        <td class="px-2 py-1.5 whitespace-nowrap"><span class="inline-block w-2 h-2 rounded-full mr-1" [style.background]="e.natureCouleur || '#94a3b8'"></span>{{ e.nature }}</td>
+                        <td class="px-2 py-1.5 whitespace-nowrap">
+                            <a *ngIf="e.nonConformiteId" [routerLink]="['/non-conformite/traitement']" [queryParams]="{ ncId: e.nonConformiteId }" class="text-primary">Ouvrir la fiche complète ↗</a>
+                            <span *ngIf="!e.nonConformiteId" class="text-amber-600">Transmission en attente</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <section>
+            <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">14. Annexes</h3>
+            <p class="m-0">
+                <a [routerLink]="['/gestion-audit/programme', auditId, 'plan']" class="text-primary">Plan d'audit</a>
+                <span *ngIf="audit?.checklistIds?.length"> · {{ audit?.checklistIds?.length }} checklist(s) rattachée(s)</span>
+                · Preuves jointes aux constats
+            </p>
+        </section>
+        <section>
+            <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">15. Signatures</h3>
+            <p *ngIf="!rapport.signatures?.length" class="m-0 text-surface-500">Le circuit de signature n'est pas encore posé.</p>
+            <div *ngFor="let s of rapport.signatures" class="flex items-center justify-between border-b border-surface-100 py-1.5">
+                <span>{{ libelles.utilisateur(s.signataireId) }} <span class="text-xs text-surface-500">— {{ s.fonctionSignataire || '—' }}</span></span>
+                <span class="flex items-center gap-2">
+                    <span *ngIf="s.dateSignature" class="text-xs text-surface-500">{{ s.dateSignature | date: 'dd/MM/yyyy HH:mm' }}</span>
+                    <p-tag [value]="libelleSignature(s.statut)" [severity]="severiteSignature(s.statut)" [rounded]="true"></p-tag>
+                </span>
+            </div>
+        </section>
+    </article>
+
+    <div *ngIf="!loading && rapport && !externe" class="flex justify-end mt-4">
+        <p-button [label]="rapport.signatures?.length ? 'Suivre les signatures' : 'Envoyer en signature'" icon="pi pi-pen-to-square" size="small"
+                  [routerLink]="['/gestion-audit/programme', auditId, 'signatures']"></p-button>
+    </div>
+</div>

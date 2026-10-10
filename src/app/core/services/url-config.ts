@@ -49,7 +49,10 @@ export class UrlConfig {
     static readonly AUDIT_CHECKLISTS_URL = `${EVALUATION_SERVICE}/checklists-audit`;
     static readonly AUDIT_TYPES_AUDIT_URL = `${EVALUATION_SERVICE}/types-audit`;
     static readonly AUDIT_TYPES_CONSTAT_URL = `${EVALUATION_SERVICE}/types-constat`;
-    static readonly AUDIT_SITES_URL = `${EVALUATION_SERVICE}/sites-audit`;
+    // Paramétrage partagé de l'audit, dans referentiel-service (borné à la direction)
+    static readonly AUDIT_SITES_URL = `${REFERENTIEL_SERVICE}/sites`;
+    static readonly AUDIT_CRITERES_EVAL_AUDITEUR_URL = `${REFERENTIEL_SERVICE}/criteres-evaluation-auditeur`;
+    static readonly AUDIT_NIVEAUX_EVAL_AUDITEUR_URL = `${REFERENTIEL_SERVICE}/niveaux-evaluation-auditeur`;
     static readonly AUDIT_REGLES_NOTIF_URL = `${EVALUATION_SERVICE}/regles-notification-audit`;
     static readonly AUDIT_CODIFICATIONS_URL = `${EVALUATION_SERVICE}/codifications-document`;
     static readonly AUDIT_EVALUATIONS_RQAPBF_URL = `${EVALUATION_SERVICE}/evaluations-rqapbf`;

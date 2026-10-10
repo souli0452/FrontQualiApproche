@@ -59,6 +59,8 @@ export class AppCrudGenericComponent implements OnInit, AfterContentChecked, OnC
     @Output() newItemEvent = new EventEmitter<any>();
     @Output() removeEvent = new EventEmitter<any>();
     @Output() filterEvent = new EventEmitter<any>();
+    /** Le texte de la barre de recherche du tableau, pour une liste que le serveur filtre. */
+    @Output() searchEvent = new EventEmitter<string>();
     @Input() requireRqPassword: boolean = false;
 
     @Input() detailCols?: any[];

@@ -13,13 +13,6 @@ export enum StatutConstat {
     PUBLIE = 'PUBLIE'
 }
 
-export enum TypeAudit {
-    INTERNE = 'INTERNE',
-    EXTERNE = 'EXTERNE',
-    REFERENTIEL_QUALITE_NATIONAL = 'REFERENTIEL_QUALITE_NATIONAL',
-    FOURNISSEUR = 'FOURNISSEUR'
-}
-
 export enum NiveauRisqueAudit {
     FAIBLE = 'FAIBLE',
     MODERE = 'MODERE',
@@ -71,13 +64,6 @@ export const STATUT_CONSTAT_SEVERITY: Record<StatutConstat, string> = {
     [StatutConstat.PUBLIE]: 'success'
 };
 
-export const TYPE_AUDIT_LABELS: Record<TypeAudit, string> = {
-    [TypeAudit.INTERNE]: 'Audit interne',
-    [TypeAudit.EXTERNE]: 'Audit externe',
-    [TypeAudit.REFERENTIEL_QUALITE_NATIONAL]: 'Audit référentiel qualité national',
-    [TypeAudit.FOURNISSEUR]: 'Audit fournisseur'
-};
-
 export const NIVEAU_RISQUE_LABELS: Record<NiveauRisqueAudit, string> = {
     [NiveauRisqueAudit.FAIBLE]: 'Faible',
     [NiveauRisqueAudit.MODERE]: 'Modéré',
@@ -120,18 +106,15 @@ export const NIVEAU_EFFICACITE_SEVERITY: Record<NiveauEfficacite, string> = {
     [NiveauEfficacite.NON_EFFICACE]: 'danger'
 };
 
-export interface TypeConstat {
-    code: string;
-    label: string;
-    severity: string;
-    genereNonConformite: boolean;
+/** Le niveau que désigne un score sur 100, aux seuils du serveur (90 / 70 / 50) ; aucun sans score. */
+export function niveauDeScore(score?: number | null): NiveauNotationRQAPBF | null {
+    if (score == null) return null;
+    return score >= 90 ? NiveauNotationRQAPBF.CONFORME : score >= 70 ? NiveauNotationRQAPBF.ACCEPTABLE
+        : score >= 50 ? NiveauNotationRQAPBF.A_AMELIORER : NiveauNotationRQAPBF.NON_CONFORME;
 }
 
-export const TYPES_CONSTAT_DEFAUT: TypeConstat[] = [
-    { code: 'CONFORMITE', label: 'Conformité', severity: 'success', genereNonConformite: false },
-    { code: 'POINT_FORT', label: 'Point fort', severity: 'secondary', genereNonConformite: false },
-    { code: 'PISTE_AMELIORATION', label: "Piste d'amélioration", severity: 'info', genereNonConformite: false },
-    { code: 'POINT_SENSIBLE', label: 'Point sensible', severity: 'secondary', genereNonConformite: false },
-    { code: 'NC_MINEURE', label: 'Non-conformité mineure', severity: 'warn', genereNonConformite: true },
-    { code: 'NC_MAJEURE', label: 'Non-conformité majeure', severity: 'danger', genereNonConformite: true }
-];
+/** Le libellé de ce niveau ; « — » sans score. */
+export function libelleNiveauDeScore(score?: number | null): string {
+    const n = niveauDeScore(score);
+    return n ? NIVEAU_NOTATION_RQAPBF_LABELS[n] : '—';
+}

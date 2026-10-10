@@ -1,283 +1,329 @@
-<p-card>
+<div class="p-6">
     <p-toast></p-toast>
+    <p-confirmpopup></p-confirmpopup>
 
-    <!-- Barre de filtres et actions -->
-    <div class="flex flex-wrap items-center gap-3 mb-5">
-
-        <!-- Sélecteur d'audit -->
-        <p-select
-            [options]="auditsDisponibles"
-            [(ngModel)]="filtreAuditId"
-            optionLabel="reference"
-            optionValue="id"
-            placeholder="Sélectionner un audit"
-            [loading]="loadingAudits"
-            (onChange)="onChangeAudit($event.value)"
-            class="min-w-[240px]">
-            <ng-template pTemplate="selectedItem" let-item>
-                <span *ngIf="item">{{ item.reference ?? item.typeAuditLibelle }}</span>
-            </ng-template>
-            <ng-template pTemplate="item" let-item>
-                <div class="flex flex-col">
-                    <span class="font-semibold text-xs">{{ item.reference }}</span>
-                    <span class="text-xs text-surface-500">{{ item.typeAuditLibelle }}</span>
-                </div>
-            </ng-template>
-        </p-select>
-
-        <!-- Filtre statut -->
-        <p-selectbutton
-            [options]="[{label:'Tous', value: null}, {label:'Brouillons', value: StatutConstat.BROUILLON}, {label:'Compilés', value: StatutConstat.COMPILE}, {label:'Publiés', value: StatutConstat.PUBLIE}]"
-            [(ngModel)]="filtreStatut"
-            optionLabel="label"
-            optionValue="value"
-            (ngModelChange)="onFiltreStatut($event)">
-        </p-selectbutton>
-
-        <div class="ml-auto">
-            <p-button
-                icon="pi pi-plus"
-                label="Nouveau constat"
-                [disabled]="!filtreAuditId"
-                (onClick)="ouvrirCreation()">
-            </p-button>
+    <!-- Audit et vue -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="min-w-[280px]">
+                <app-select-input [(ngModel)]="auditId" [options]="auditsDisponibles" optionLabel="reference" optionValue="id"
+                                  [filter]="true" [showClear]="false" placeholder="Choisir un audit en cours"
+                                  (selectionChange)="changerAudit()" />
+            </div>
+            <span *ngIf="auditCourant" class="text-sm text-surface-500">{{ auditCourant.objectifsAudit | slice: 0 : 80 }}</span>
         </div>
     </div>
 
-    <!-- Liste des constats -->
-    <div *ngIf="loading" class="space-y-3">
-        <p-skeleton *ngFor="let i of [1,2,3,4,5]" height="4rem" borderRadius="8px"></p-skeleton>
+    <!-- Les trois temps du constat, en onglets comme dans les autres modules : saisir, relire, compiler -->
+    <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl mb-4 overflow-hidden">
+        <p-tabs [value]="vue" [scrollable]="true" (valueChange)="changerVue($any($event))">
+            <p-tablist>
+                <p-tab *ngFor="let o of vues; trackBy: parValeur" [value]="o.value">
+                    <div class="flex items-center gap-2 px-2 py-1 select-none">
+                        <i [class]="o.icone"></i>
+                        <span class="whitespace-nowrap">{{ o.label }}</span>
+                        <p-badge *ngIf="o.compte" [value]="o.compte" [severity]="o.value === 'mes-constats' ? 'warn' : 'info'"></p-badge>
+                    </div>
+                </p-tab>
+            </p-tablist>
+        </p-tabs>
     </div>
 
-    <div *ngIf="!loading && constats.length === 0"
-         class="flex flex-col items-center justify-center py-16 text-center">
-        <div class="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center mb-3 text-blue-500">
-            <i class="pi pi-file-check text-3xl"></i>
-        </div>
-        <p class="text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Aucun constat</p>
-        <p class="text-xs text-surface-500 dark:text-surface-400 mb-4">
-            {{ filtreAuditId ? 'Aucun constat enregistré pour cet audit.' : 'Sélectionnez un audit pour voir ses constats.' }}
-        </p>
-        <p-button
-            *ngIf="filtreAuditId"
-            label="Ajouter un constat"
-            icon="pi pi-plus"
-            size="small"
-            (onClick)="ouvrirCreation()">
-        </p-button>
+    <p-message *ngIf="!loadingAudits && !auditsDisponibles.length" severity="info" styleClass="mb-4 w-full"
+               text="Aucun audit en cours : les constats se saisissent une fois l'audit démarré."></p-message>
+    <p-message *ngIf="auditCourant && !saisieOuverte" severity="info" styleClass="mb-4 w-full"
+               text="Cet audit est clôturé : ses constats se consultent sans modification."></p-message>
+
+    <div *ngIf="loading" class="flex gap-5">
+        <p-skeleton width="16rem" height="18rem" borderRadius="12px"></p-skeleton>
+        <p-skeleton height="18rem" borderRadius="12px" styleClass="flex-1"></p-skeleton>
     </div>
 
-    <div *ngIf="!loading && constats.length > 0" class="space-y-3">
-        <div *ngFor="let constat of constats; trackBy: trackByConstatId"
-             class="border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden bg-white dark:bg-surface-900">
+    <ng-container *ngIf="!loading && auditId">
 
-            <div class="flex items-start gap-4 p-4">
+        <!-- ============================================================ C10 — Saisie -->
+        <div *ngIf="vue === 'saisie'" class="flex flex-col md:flex-row items-start gap-5">
+            <aside class="w-full md:w-72 shrink-0 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-2">
+                <p class="text-xs font-semibold uppercase tracking-wide text-surface-500 m-0 px-2 pt-1 pb-2">Mes points de contrôle</p>
+                <p *ngIf="!mesPoints.length" class="text-xs text-surface-500 m-0 px-2 pb-2">
+                    Aucun point de contrôle ne vous est assigné sur les checklists de cet audit.
+                </p>
+                <button *ngFor="let p of mesPoints; trackBy: trackById" type="button" (click)="choisirPoint(p)"
+                        class="w-full text-left px-3 py-2 rounded-lg mb-1 transition-colors border-0 cursor-pointer"
+                        [ngClass]="p.id === pointActif?.id
+                            ? 'bg-primary-50 dark:bg-primary-950/40 text-primary font-semibold'
+                            : 'bg-transparent text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800'">
+                    <span class="block text-sm">
+                        <span *ngIf="p.chapitreISO" class="font-mono text-xs text-surface-500 mr-1">{{ p.chapitreISO }}</span>{{ p.libelle }}
+                    </span>
+                    <span class="block mt-1">
+                        <p-tag *ngIf="p.statutConstat; else aSaisir" [value]="libelleStatut(p.statutConstat)" [severity]="severiteStatut(p.statutConstat)" styleClass="text-[10px] px-1.5 py-0"></p-tag>
+                        <ng-template #aSaisir><p-tag value="À saisir" severity="secondary" styleClass="text-[10px] px-1.5 py-0"></p-tag></ng-template>
+                    </span>
+                </button>
+                <div *ngIf="saisieOuverte" class="border-t border-surface-100 dark:border-surface-800 mt-1 pt-2">
+                    <p-button icon="pi pi-plus" label="Constat hors checklist" [text]="true" size="small" styleClass="w-full" (onClick)="nouveauHorsChecklist()"></p-button>
+                </div>
+            </aside>
 
-                <!-- Indicateur nature -->
-                <div class="shrink-0 mt-0.5">
-                    <p-tag
-                        [value]="constat.natureLibelle ?? '—'"
-                        severity="secondary"
-                        [rounded]="true">
-                    </p-tag>
+            <section class="flex-1 min-w-0 w-full">
+                <div *ngIf="!pointActif && !horsChecklist"
+                     class="flex flex-col items-center justify-center py-16 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl">
+                    <i class="pi pi-list-check text-4xl text-surface-300 dark:text-surface-600 mb-3"></i>
+                    <p class="text-sm text-surface-500 m-0">Sélectionnez l'un des points de contrôle qui vous sont assignés.</p>
                 </div>
 
-                <!-- Contenu -->
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-start justify-between gap-3">
+                <div *ngIf="pointActif || horsChecklist" class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
+                    <div *ngIf="pointActif" class="rounded-lg px-4 py-3 mb-3 bg-primary-50 dark:bg-primary-950/40">
+                        <div class="text-[11px] font-bold uppercase tracking-wide text-primary mb-1">Question proposée par la checklist</div>
+                        <div class="text-sm font-semibold text-surface-900 dark:text-surface-0">{{ pointActif.question || pointActif.libelle }}</div>
+                        <div *ngIf="pointActif.preuveAttendue" class="text-xs text-surface-600 dark:text-surface-300 mt-1">
+                            <i class="pi pi-paperclip text-xs"></i> Preuve attendue : {{ pointActif.preuveAttendue }}
+                        </div>
+                    </div>
+                    <h4 *ngIf="horsChecklist" class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-3">Constat hors checklist</h4>
+
+                    <p class="text-xs text-surface-500 m-0 mb-3">
+                        Ce constat reste <strong>personnel et privé</strong> tant que vous ne l'avez pas publié. En fin de journée, relisez-les dans
+                        « Mes constats du jour », puis publiez-les vers la compilation de l'équipe.
+                    </p>
+
+                    <div class="flex flex-col gap-3">
                         <div>
-                            <p class="text-sm font-semibold text-surface-900 dark:text-surface-100 m-0 mb-1">
-                                <span *ngIf="constat.critereAudit" class="font-mono text-xs text-primary mr-2">{{ constat.critereAudit }}</span>
-                                {{ constat.observation }}
-                            </p>
-                            <p *ngIf="constat.commentaireEquipe" class="text-xs text-surface-600 dark:text-surface-400 m-0 mb-2">
-                                <i class="pi pi-comment mr-1"></i>{{ constat.commentaireEquipe }}
-                            </p>
+                            <app-audit-libelle texte="Constat" [requis]="true" aide="La nature du constat, parmi les types paramétrés. Un type marqué NC ouvrira une non-conformité à la publication." />
+                            <app-nature-choix [types]="typesConstat" [(valeur)]="saisie.natureId" [disabled]="!saisieModifiable" />
                         </div>
-
-                        <!-- Statut -->
-                        <div class="shrink-0">
-                            <p-tag
-                                *ngIf="constat.statut"
-                                [value]="constat.statut === StatutConstat.PUBLIE ? 'Publié' : constat.statut === StatutConstat.COMPILE ? 'Compilé' : 'Brouillon'"
-                                [severity]="constat.statut === StatutConstat.PUBLIE ? 'success' : constat.statut === StatutConstat.COMPILE ? 'warn' : 'secondary'"
-                                [rounded]="true">
-                            </p-tag>
+                        <div>
+                            <app-audit-libelle texte="Critère d'audit" aide="La référence normative, si elle n'est pas déjà portée par le point de contrôle." />
+                            <input pInputText [(ngModel)]="saisie.critereAudit" class="w-full" placeholder="ISO 9001 §7.5.3, procédure PR-QUA-04…" [disabled]="!saisieModifiable" />
+                        </div>
+                        <div>
+                            <app-audit-libelle texte="Observation" [requis]="true" />
+                            <textarea pTextarea [(ngModel)]="saisie.observation" rows="3" [autoResize]="true" class="w-full"
+                                      placeholder="Ce qui a été constaté, avec les preuves examinées…" [disabled]="!saisieModifiable"></textarea>
+                        </div>
+                        <div>
+                            <app-audit-libelle texte="Preuves" />
+                            <app-preuves-constat [constatId]="constatSaisi?.id" [modifiable]="saisieModifiable" />
                         </div>
                     </div>
 
-                    <!-- Lien NC si applicable -->
-                    <div *ngIf="constat.nonConformiteId"
-                         class="mt-2 p-2 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-lg flex items-center justify-between gap-2">
-                        <span class="text-xs text-red-700 dark:text-red-400">
-                            <i class="pi pi-link mr-1"></i>Non-conformité transmise
-                        </span>
-                        <a routerLink="/non-conformite" class="text-xs font-semibold text-red-700 dark:text-red-400 hover:underline">
-                            Voir dans M05 ↗
-                        </a>
-                    </div>
-
-                    <!-- Méta-informations -->
-                    <div class="flex items-center gap-4 mt-3 text-xs text-surface-500 dark:text-surface-400">
-                        <span *ngIf="constat.dateSaisie">
-                            <i class="pi pi-clock mr-1"></i>{{ constat.dateSaisie | date:'dd/MM/yyyy' }}
-                        </span>
-                        <span *ngIf="constat.transmissionEnAttente"
-                              class="text-amber-600 dark:text-amber-400">
-                            <i class="pi pi-send mr-1"></i>Transmission en attente
-                        </span>
+                    <div class="flex flex-wrap items-center justify-between gap-2 mt-4">
+                        <div>
+                            <p-tag *ngIf="constatSaisi" [value]="libelleStatut(constatSaisi.statut)" [severity]="severiteStatut(constatSaisi.statut)" [rounded]="true"></p-tag>
+                            <span *ngIf="constatSaisi && constatSaisi.statut !== StatutConstat.BROUILLON" class="text-xs text-surface-500 ml-2">
+                                {{ constatSaisi.statut === StatutConstat.COMPILE ? 'Déjà transmis à la compilation d\'équipe.' : 'Validé — verrouillé.' }}
+                            </span>
+                        </div>
+                        <div *ngIf="saisieModifiable" class="flex gap-2">
+                            <p-button label="Enregistrer" icon="pi pi-save" [outlined]="true" size="small" [loading]="saving"
+                                      [disabled]="!saisieComplete" (onClick)="enregistrerSaisie()"></p-button>
+                            <p-button *ngIf="pointActif && mesPoints.length > 1" label="Enregistrer et continuer" icon="pi pi-arrow-right" iconPos="right" size="small"
+                                      [loading]="saving" [disabled]="!saisieComplete" (onClick)="enregistrerSaisie(true)"></p-button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Actions -->
-                <div class="shrink-0 flex items-center gap-1">
-                    <p-button
-                        *ngIf="constat.statut === StatutConstat.BROUILLON"
-                        icon="pi pi-pencil"
-                        [rounded]="true"
-                        [text]="true"
-                        severity="secondary"
-                        size="small"
-                        pTooltip="Modifier"
-                        tooltipPosition="top"
-                        (onClick)="ouvrirEdition(constat)">
-                    </p-button>
-                    <p-button
-                        *ngIf="constat.statut === StatutConstat.BROUILLON"
-                        icon="pi pi-check"
-                        [rounded]="true"
-                        [text]="true"
-                        severity="warn"
-                        size="small"
-                        pTooltip="Soumettre à l'équipe"
-                        tooltipPosition="top"
-                        (onClick)="validerConstat(constat)">
-                    </p-button>
-                    <p-button
-                        *ngIf="constat.statut === StatutConstat.COMPILE"
-                        icon="pi pi-undo"
-                        [rounded]="true"
-                        [text]="true"
-                        severity="secondary"
-                        size="small"
-                        pTooltip="Retirer en brouillon"
-                        tooltipPosition="top"
-                        (onClick)="retirerConstat(constat)">
-                    </p-button>
-                    <p-button
-                        *ngIf="constat.statut === StatutConstat.COMPILE"
-                        icon="pi pi-send"
-                        [rounded]="true"
-                        [text]="true"
-                        severity="success"
-                        size="small"
-                        pTooltip="Publier"
-                        tooltipPosition="top"
-                        (onClick)="publierConstat(constat)">
-                    </p-button>
-                    <p-button
-                        *ngIf="constat.statut === StatutConstat.BROUILLON"
-                        icon="pi pi-trash"
-                        [rounded]="true"
-                        [text]="true"
-                        severity="danger"
-                        size="small"
-                        pTooltip="Supprimer"
-                        tooltipPosition="top"
-                        (onClick)="supprimerConstat(constat)">
-                    </p-button>
+                <div class="flex justify-end mt-3">
+                    <p-button label="Mes constats du jour" icon="pi pi-arrow-right" iconPos="right" [text]="true" size="small" (onClick)="changerVue('mes-constats')"></p-button>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================ C10M — Mes constats du jour -->
+        <div *ngIf="vue === 'mes-constats'" class="flex flex-col gap-4">
+            <p class="text-sm text-surface-500 m-0">
+                Relisez ici vos constats enregistrés : reformulez, précisez une observation ou revoyez une nature.
+                Rien n'est visible du reste de l'équipe tant que vous ne l'avez pas publié.
+            </p>
+
+            <div *ngIf="!brouillonsARelire.length && !dejaTransmis.length"
+                 class="py-12 text-center text-sm text-surface-500 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl">
+                Aucun constat enregistré pour le moment.
+            </div>
+
+            <div *ngIf="brouillonsARelire.length" class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
+                <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-surface-100 dark:border-surface-800">
+                    <span class="font-semibold">À relire avant publication <span class="font-normal text-xs text-surface-500">({{ brouillonsARelire.length }})</span></span>
+                    <p-button *ngIf="saisieOuverte" icon="pi pi-send" label="Publier tous mes constats vers la compilation d'équipe" size="small"
+                              [disabled]="enCours" (onClick)="publierTousMesConstats()"></p-button>
+                </div>
+                <ng-container *ngFor="let c of brouillonsARelire; trackBy: trackById">
+                    <ng-container *ngTemplateOutlet="ligne; context: { $implicit: c, auteur: false, retirer: false }"></ng-container>
+                    <div *ngIf="ouvert === c.id" class="px-4 pb-4 pt-1 bg-surface-50/60 dark:bg-surface-800/30 border-t border-surface-100 dark:border-surface-800">
+                        <ng-container *ngTemplateOutlet="edition; context: { $implicit: c, commentaire: false }"></ng-container>
+                        <div *ngIf="saisieOuverte" class="flex justify-end gap-2 mt-3">
+                            <p-button label="Supprimer" icon="pi pi-trash" severity="danger" [text]="true" size="small" (onClick)="supprimer($event, c)"></p-button>
+                            <p-button *ngIf="retoucheModifiee(c)" label="Enregistrer" icon="pi pi-save" [outlined]="true" size="small" [loading]="saving" (onClick)="enregistrerRetouche(c)"></p-button>
+                            <p-button label="Publier ce constat" icon="pi pi-send" size="small" [disabled]="enCours" (onClick)="verser(c)"></p-button>
+                        </div>
+                    </div>
+                </ng-container>
+            </div>
+
+            <div *ngIf="dejaTransmis.length" class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
+                <div class="px-4 py-3 font-semibold border-b border-surface-100 dark:border-surface-800">Déjà transmis à l'équipe</div>
+                <table class="w-full border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-surface-50 dark:bg-surface-800">
+                            <th scope="col" class="text-left px-4 py-2 text-xs font-semibold text-surface-500">Point de contrôle</th>
+                            <th scope="col" class="text-left px-4 py-2 text-xs font-semibold text-surface-500">Nature</th>
+                            <th scope="col" class="text-left px-4 py-2 text-xs font-semibold text-surface-500">Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let c of dejaTransmis; trackBy: trackById" class="border-t border-surface-100 dark:border-surface-800">
+                            <td class="px-4 py-2">{{ libellePoint(c) }}</td>
+                            <td class="px-4 py-2">
+                                <span class="inline-flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full" [style.background]="c.natureCouleur || '#94a3b8'"></span>{{ c.natureLibelle ?? '—' }}</span>
+                            </td>
+                            <td class="px-4 py-2"><p-tag [value]="libelleStatut(c.statut)" [severity]="severiteStatut(c.statut)" [rounded]="true"></p-tag></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-between">
+                <p-button label="Retour à la saisie" icon="pi pi-arrow-left" [text]="true" severity="secondary" size="small" (onClick)="changerVue('saisie')"></p-button>
+                <p-button label="Voir la compilation de l'équipe" icon="pi pi-arrow-right" iconPos="right" [text]="true" size="small" (onClick)="changerVue('compilation')"></p-button>
+            </div>
+        </div>
+
+        <!-- ============================================================ C10P — Compilation d'équipe -->
+        <div *ngIf="vue === 'compilation'" class="flex flex-col gap-4">
+            <p class="text-sm text-surface-500 m-0">
+                Un constat apparaît ici dès que son auteur l'a publié. C'est la base de la <strong>réunion d'équipe</strong> : relisez chaque constat
+                compilé, corrigez-le ou renvoyez-le à son auteur, puis validez ce qui sera présenté à l'audité.
+            </p>
+
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <div class="text-xs text-surface-500">Compilation de l'équipe — à ce jour</div>
+                    <div class="text-2xl font-bold text-surface-900 dark:text-surface-0">{{ equipe.length }} constat(s)</div>
+                    <div class="text-xs text-surface-500">{{ combien(StatutConstat.COMPILE) }} en revue d'équipe · {{ combien(StatutConstat.PUBLIE) }} validé(s) et publié(s)</div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <span *ngFor="let g of groupes" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs border border-surface-200 dark:border-surface-700">
+                        <span class="w-2.5 h-2.5 rounded-full" [style.background]="g.type.couleur || '#94a3b8'"></span>
+                        {{ g.constats.length }} {{ g.type.libelle | lowercase }}
+                    </span>
                 </div>
             </div>
+
+            <div *ngIf="!groupes.length" class="py-12 text-center text-sm text-surface-500 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl">
+                Aucun constat publié vers la compilation pour le moment.
+            </div>
+
+            <div *ngFor="let g of groupes" class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
+                <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-surface-100 dark:border-surface-800">
+                    <span class="inline-flex items-center gap-2 font-semibold">
+                        <span class="w-3 h-3 rounded-full" [style.background]="g.type.couleur || '#94a3b8'"></span>
+                        {{ g.type.libelle }}
+                        <p-tag *ngIf="g.type.genereNonConformite" value="NC" severity="danger"></p-tag>
+                        <span class="font-normal text-xs text-surface-500">{{ g.constats.length }} constat(s)</span>
+                    </span>
+                    <p-button *ngIf="g.compiles && saisieOuverte" icon="pi pi-check" size="small" [disabled]="enCours"
+                              [label]="'Valider ce groupe (' + g.compiles + ' compilé' + (g.compiles > 1 ? 's' : '') + ')'"
+                              (onClick)="validerGroupe($event, g.type, g.compiles)"></p-button>
+                    <span *ngIf="!g.compiles" class="text-xs text-green-600 dark:text-green-400"><i class="pi pi-check text-xs"></i> Tout validé</span>
+                </div>
+                <ng-container *ngFor="let c of g.constats; trackBy: trackById">
+                    <ng-container *ngTemplateOutlet="ligne; context: { $implicit: c, auteur: true, retirer: c.statut === StatutConstat.COMPILE && saisieOuverte }"></ng-container>
+                    <div *ngIf="ouvert === c.id" class="px-4 pb-4 pt-1 bg-surface-50/60 dark:bg-surface-800/30 border-t border-surface-100 dark:border-surface-800">
+                        <ng-container *ngIf="c.statut === StatutConstat.COMPILE && saisieOuverte; else publie">
+                            <div class="text-xs text-surface-500 mb-0.5">Question / point de contrôle</div>
+                            <div class="text-sm mb-3">{{ questionPoint(c) || '—' }}</div>
+                            <ng-container *ngTemplateOutlet="edition; context: { $implicit: c, commentaire: true }"></ng-container>
+
+                            <div *ngIf="renvoiDe === c.id" class="mt-3 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 p-3">
+                                <app-audit-libelle texte="Motif du renvoi" aide="Ce que l'équipe demande à l'auteur de revoir. Facultatif." />
+                                <textarea pTextarea [(ngModel)]="motifRenvoi" rows="2" [autoResize]="true" class="w-full" placeholder="Ce que l'équipe demande de revoir…"></textarea>
+                                <div class="flex justify-end gap-2 mt-2">
+                                    <p-button label="Annuler" severity="secondary" [outlined]="true" size="small" (onClick)="renvoiDe = null"></p-button>
+                                    <p-button label="Renvoyer à l'auteur" icon="pi pi-undo" severity="warn" size="small" [disabled]="enCours" (onClick)="renvoyer(c)"></p-button>
+                                </div>
+                            </div>
+
+                            <div *ngIf="renvoiDe !== c.id" class="flex justify-end gap-2 mt-3">
+                                <p-button label="Retirer ce constat" icon="pi pi-undo" severity="secondary" [outlined]="true" size="small" (onClick)="demanderRenvoi(c)"></p-button>
+                                <p-button *ngIf="retoucheModifiee(c)" label="Enregistrer" icon="pi pi-save" [outlined]="true" size="small" [loading]="saving" (onClick)="enregistrerRetouche(c)"></p-button>
+                                <p-button label="Publier ce constat" icon="pi pi-check" size="small" [disabled]="enCours" (onClick)="valider(c)"></p-button>
+                            </div>
+                        </ng-container>
+                        <ng-template #publie>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                                <div><span class="text-xs text-surface-500 block">Critère</span>{{ c.critereAudit || '—' }}</div>
+                                <div><span class="text-xs text-surface-500 block">Auteur</span>{{ auteur(c) }}</div>
+                                <div class="md:col-span-2"><span class="text-xs text-surface-500 block">Observation</span><span class="whitespace-pre-line">{{ c.observation || '—' }}</span></div>
+                                <div *ngIf="c.commentaireEquipe" class="md:col-span-2"><span class="text-xs text-surface-500 block">Commentaire d'équipe</span>{{ c.commentaireEquipe }}</div>
+                                <div class="md:col-span-2"><span class="text-xs text-surface-500 block mb-1">Preuves</span><app-preuves-constat [constatId]="c.id" [modifiable]="false" /></div>
+                            </div>
+                            <p class="text-xs text-surface-500 m-0 mt-3">
+                                <i class="pi pi-lock text-xs"></i>
+                                {{ c.statut === StatutConstat.PUBLIE ? 'Ce constat est publié : il ne se modifie plus (cohérence avec le rapport et la non-conformité ouverte le cas échéant).' : 'Audit clôturé : lecture seule.' }}
+                            </p>
+                        </ng-template>
+                    </div>
+                </ng-container>
+            </div>
+
+            <div class="flex flex-wrap justify-between gap-2">
+                <p-button label="Retour à la saisie" icon="pi pi-arrow-left" [text]="true" severity="secondary" size="small" (onClick)="changerVue('saisie')"></p-button>
+                <p-button *ngIf="saisieOuverte && combien(StatutConstat.COMPILE)" icon="pi pi-check-circle" size="small" [disabled]="enCours"
+                          label="L'équipe est d'accord — valider tout et aller au rapport" (onClick)="validerTout($event)"></p-button>
+                <p-button *ngIf="!(saisieOuverte && combien(StatutConstat.COMPILE)) && combien(StatutConstat.PUBLIE)" icon="pi pi-file" [outlined]="true" size="small"
+                          label="Voir le rapport" [routerLink]="['/gestion-audit/programme', auditId, 'rapport']"></p-button>
+            </div>
+        </div>
+    </ng-container>
+</div>
+
+<!-- Une ligne de constat, dépliable -->
+<ng-template #ligne let-c let-avecAuteur="auteur" let-retirer="retirer">
+    <div class="flex items-center gap-3 px-4 py-3 border-t border-surface-100 dark:border-surface-800 first:border-t-0 hover:bg-surface-50 dark:hover:bg-surface-800/40 transition-colors cursor-pointer"
+         (click)="basculer(c)">
+        <div class="flex-[1.6] min-w-0">
+            <div class="font-semibold text-sm truncate">{{ libellePoint(c) }}</div>
+            <div class="text-xs text-surface-500 truncate">{{ extrait(c.observation) }}</div>
+        </div>
+        <div class="flex-[0.8] min-w-0 hidden md:block">
+            <span class="inline-flex items-center gap-2 text-sm"><span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="c.natureCouleur || '#94a3b8'"></span>{{ c.natureLibelle ?? '—' }}</span>
+        </div>
+        <div *ngIf="avecAuteur" class="flex-[0.8] min-w-0 text-sm text-surface-600 dark:text-surface-300 truncate hidden md:block">{{ auteur(c) }}</div>
+        <div class="flex items-center gap-1 shrink-0">
+            <p-tag [value]="libelleStatut(c.statut)" [severity]="severiteStatut(c.statut)" [rounded]="true"></p-tag>
+            <i *ngIf="c.nonConformiteId" class="pi pi-link text-xs text-primary" pTooltip="Non-conformité ouverte"></i>
+            <i *ngIf="c.transmissionEnAttente" class="pi pi-clock text-xs text-amber-500" pTooltip="Transmission au module NC en attente"></i>
+        </div>
+        <div class="w-24 text-right shrink-0" (click)="$event.stopPropagation()">
+            <p-button *ngIf="retirer" label="Retirer" size="small" severity="secondary" [outlined]="true" (onClick)="demanderRenvoi(c)"></p-button>
+        </div>
+        <i class="pi text-surface-400 shrink-0" [ngClass]="ouvert === c.id ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+    </div>
+</ng-template>
+
+<!-- La retouche d'un constat, sur place -->
+<ng-template #edition let-c let-commentaire="commentaire">
+    <div class="flex flex-col gap-3">
+        <div>
+            <app-audit-libelle [texte]="commentaire ? 'Nature du constat — modifiable par l\'équipe' : 'Constat'" [requis]="true" />
+            <app-nature-choix [types]="typesConstat" [(valeur)]="retouche.natureId" />
+        </div>
+        <div>
+            <app-audit-libelle texte="Critère d'audit" />
+            <input pInputText [(ngModel)]="retouche.critereAudit" class="w-full" />
+        </div>
+        <div>
+            <app-audit-libelle texte="Observation" [requis]="true" />
+            <textarea pTextarea [(ngModel)]="retouche.observation" rows="3" [autoResize]="true" class="w-full"></textarea>
+        </div>
+        <div *ngIf="commentaire">
+            <app-audit-libelle texte="Commentaire de la réunion d'équipe" aide="Facultatif : motif d'un changement de nature, précision demandée par le responsable d'équipe…" />
+            <textarea pTextarea [(ngModel)]="retouche.commentaireEquipe" rows="2" [autoResize]="true" class="w-full"></textarea>
+        </div>
+        <div>
+            <app-audit-libelle texte="Preuves" />
+            <app-preuves-constat [constatId]="c.id" [modifiable]="true" />
         </div>
     </div>
-
-</p-card>
-
-<!-- Dialogue création / édition -->
-<p-dialog
-    [(visible)]="afficherDialogue"
-    [header]="constatEnEdition ? 'Modifier le constat' : 'Nouveau constat'"
-    [modal]="true"
-    [draggable]="false"
-    [resizable]="false"
-    styleClass="w-full max-w-2xl">
-
-    <form [formGroup]="formulaire" class="space-y-4 pt-2">
-
-        <!-- Audit associé -->
-        <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Audit <span class="text-red-500">*</span></label>
-            <p-select
-                formControlName="auditId"
-                [options]="auditsDisponibles"
-                optionLabel="reference"
-                optionValue="id"
-                placeholder="Sélectionner un audit"
-                class="w-full">
-            </p-select>
-            <small *ngIf="formulaire.get('auditId')?.invalid && formulaire.get('auditId')?.touched"
-                   class="text-red-500 text-xs">L'audit est requis.</small>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <!-- Critère -->
-            <div class="flex flex-col gap-1">
-                <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Critère de référence</label>
-                <input pInputText formControlName="critereAudit" placeholder="Ex: ISO 9001:2015 §8.5, RQAP-BF D3-C2…" />
-            </div>
-
-            <!-- Nature du constat -->
-            <div class="flex flex-col gap-1">
-                <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Nature du constat <span class="text-red-500">*</span></label>
-                <p-select
-                    formControlName="natureId"
-                    [options]="typesConstat"
-                    optionLabel="label"
-                    optionValue="code"
-                    placeholder="Sélectionner une nature"
-                    class="w-full">
-                </p-select>
-                <small *ngIf="formulaire.get('natureId')?.invalid && formulaire.get('natureId')?.touched"
-                       class="text-red-500 text-xs">La nature est requise.</small>
-            </div>
-        </div>
-
-        <!-- Observation -->
-        <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Observation <span class="text-red-500">*</span></label>
-            <textarea
-                pInputTextarea
-                formControlName="observation"
-                rows="4"
-                placeholder="Observations détaillées, preuves recueillies, contexte…"
-                class="w-full resize-y">
-            </textarea>
-            <small *ngIf="formulaire.get('observation')?.invalid && formulaire.get('observation')?.touched"
-                   class="text-red-500 text-xs">L'observation est requise (2000 caractères max.).</small>
-        </div>
-
-        <!-- Commentaire équipe -->
-        <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Commentaire de l'équipe</label>
-            <input pInputText formControlName="commentaireEquipe" placeholder="Commentaire interne à l'équipe d'audit" />
-        </div>
-
-    </form>
-
-    <ng-template pTemplate="footer">
-        <div class="flex justify-end gap-2">
-            <p-button
-                label="Annuler"
-                [outlined]="true"
-                severity="secondary"
-                (onClick)="afficherDialogue = false">
-            </p-button>
-            <p-button
-                [label]="constatEnEdition ? 'Enregistrer' : 'Créer en brouillon'"
-                icon="pi pi-save"
-                [loading]="saving"
-                (onClick)="sauvegarder()">
-            </p-button>
-        </div>
-    </ng-template>
-</p-dialog>
+</ng-template>

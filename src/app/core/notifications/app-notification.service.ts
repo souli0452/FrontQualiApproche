@@ -11,7 +11,7 @@ export interface AppNotificationItem {
     colorClass: string;
     read: boolean;
     route?: string;
-    moduleKey: 'NC' | 'DOC' | 'ACTION' | 'AUTRE';
+    moduleKey: 'NC' | 'DOC' | 'ACTION' | 'AUDIT' | 'AUTRE';
 }
 
 @Injectable({
@@ -55,7 +55,7 @@ export class AppNotificationService {
     /**
      * Met à jour les notifications provenant d'un module spécifique dans la cloche.
      */
-    updateModuleNotifications(moduleKey: 'NC' | 'DOC' | 'ACTION' | 'AUTRE', items: AppNotificationItem[]): void {
+    updateModuleNotifications(moduleKey: 'NC' | 'DOC' | 'ACTION' | 'AUDIT' | 'AUTRE', items: AppNotificationItem[]): void {
         const others = this.notificationsSubject.value.filter(n => n.moduleKey !== moduleKey);
         this.notificationsSubject.next([...others, ...items]);
     }

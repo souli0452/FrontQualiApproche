@@ -43,6 +43,26 @@ export const AUDIT_ROUTES: Routes = [
                 title: 'Signatures'
             },
             {
+                path: 'programme/:id/rapport',
+                loadComponent: () => import('./pages/rapport/rapport-audit.component').then(m => m.RapportAuditComponent),
+                title: "Rapport d'audit"
+            },
+            {
+                path: 'programme/:id/resultats-rqapbf',
+                loadComponent: () => import('./pages/resultats-rqapbf/resultats-rqapbf.component').then(m => m.ResultatsRQAPBFComponent),
+                title: 'Résultats RQAP-BF'
+            },
+            {
+                path: 'programme/:id/evaluation-auditeurs',
+                loadComponent: () => import('./pages/evaluation-auditeurs/evaluation-auditeurs.component').then(m => m.EvaluationAuditeursComponent),
+                title: 'Évaluation des auditeurs'
+            },
+            {
+                path: 'suivi',
+                loadComponent: () => import('./pages/suivi/suivi-programme.component').then(m => m.SuiviProgrammeComponent),
+                title: 'Suivi du programme'
+            },
+            {
                 path: 'programme/:id/evaluation-rqapbf',
                 loadComponent: () => import('./pages/evaluation-rqapbf/evaluation-rqapbf.component').then(m => m.EvaluationRQAPBFComponent),
                 title: 'Évaluation RQAP-BF'

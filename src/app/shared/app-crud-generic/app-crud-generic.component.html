@@ -35,6 +35,7 @@
                     [actionMenuItems]="actionMenuItems"
                     (addClick)="openNew()"
                     (pageChangeEvent)="onPageChange($event)"
+                    (searchValueChange)="searchEvent.emit($event)"
                     (actionClick)="setActionMenu($event.event, $event.menu, $event.rowData)">
                 </app-tableau-affichage>
             </div>

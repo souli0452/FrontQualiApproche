@@ -73,6 +73,7 @@ export interface ActivitePlan {
     personnesAuditees?: string;
 }
 
+/** Le plan d'audit (B8) ; ses dates sont celles de l'audit. */
 export interface PlanAudit {
     id?: string;
     auditId?: string;
@@ -83,8 +84,6 @@ export interface PlanAudit {
     methodesAudit?: string[];
     lieu?: string;
     langue?: string;
-    dateDebut?: string;
-    dateFin?: string;
     moyensNecessaires?: string;
     origine?: string;
     fichierCharge?: boolean;
@@ -235,14 +234,16 @@ export interface EvaluationRQAPBF {
     criteresPublies?: number;
 }
 
+/**
+ * Un auditeur du vivier. Il désigne un utilisateur (`utilisateurId`) : nom, prénom et e-mail
+ * viennent de l'annuaire, jamais d'une saisie.
+ */
 export interface AuditeurFiche {
     id?: string;
     utilisateurId?: string;
     nom?: string;
     prenom?: string;
     email?: string;
-    telephone?: string;
-    qualification?: string;
     domainesHabilites?: string[];
     certifications?: string[];
     disponibilite?: string;
@@ -252,13 +253,78 @@ export interface AuditeurFiche {
     processusGeres?: string[];
     scoreEvaluationMoyen?: number;
     auditsRealises12Mois?: number;
+    /** Lu dans l'annuaire, d'après `utilisateurId` : le serveur ne le sert pas. */
+    nomComplet?: string;
 }
 
+/** Une note d'auditeur sur un critère, à un niveau : critères et niveaux viennent du paramétrage (referentiel-service). */
 export interface EvaluationAuditeur {
     id?: string;
     auditId?: string;
     auditeurId?: string;
-    statut?: string;
+    critereId?: string;
+    critereLibelle?: string;
+    niveauId?: string;
+    niveauLibelle?: string;
+    dateEvaluation?: string;
+    commentaire?: string;
+    statut?: 'BROUILLON' | 'VALIDEE';
+}
+
+/** Critère et niveau d'évaluation des auditeurs, paramétrés par direction. */
+export interface CritereEvaluationAuditeur {
+    id?: string;
+    libelle?: string;
+    actif?: boolean;
+}
+
+export interface NiveauEvaluationAuditeur {
+    id?: string;
+    libelle?: string;
+    ordre?: number;
+    actif?: boolean;
+}
+
+/** Un point de contrôle d'une checklist, assigné à un auditeur. */
+export interface PointControle {
+    id?: string;
+    checklistId?: string;
+    chapitreISO?: string;
+    libelle?: string;
+    question?: string;
+    preuveAttendue?: string;
+    auditeurAssigneId?: string;
+    constatId?: string;
+    statutConstat?: StatutConstat;
+}
+
+export interface ChecklistAudit {
+    id?: string;
+    nom?: string;
+    chapitreISO?: string;
+    statut?: 'BROUILLON' | 'PUBLIEE' | 'ARCHIVEE';
+    points?: PointControle[];
+}
+
+/** Comparaison de deux périodes du programme (D17). */
+export interface PeriodeComparee {
+    debut?: string;
+    fin?: string;
+    evaluations?: number;
+    scoreMoyen?: number | null;
+    parDomaine?: Record<string, number>;
+}
+
+export interface ComparaisonPeriodes {
+    periode1?: PeriodeComparee;
+    periode2?: PeriodeComparee;
+    ecartsParChapitre?: { chapitre?: string; periode1?: number; periode2?: number; evolution?: string }[];
+}
+
+/** Le bilan d'une reprise de transmission des écarts vers le module Non-conformités. */
+export interface TransmissionEcarts {
+    transmis?: number;
+    echecs?: string[];
 }
 
 export interface TypeAuditRef {
@@ -278,6 +344,8 @@ export interface SiteAudit {
     id?: string;
     nom?: string;
     adresse?: string;
+    /** Faux : retiré du paramétrage, il ne se propose plus mais reste lisible sur les audits qui le portent. */
+    actif?: boolean;
 }
 
 export interface AuditFiltres {
@@ -294,7 +362,28 @@ export interface AuditFiltres {
 
 export interface PreuveConstat {
     id?: string;
+    constatId?: string;
     nom?: string;
-    taille?: number;
+    ext?: string;
     type?: string;
+}
+
+/** Ce que le module Audit attend de l'utilisateur, en nombres : un compteur par onglet, et leur somme pour le menu. */
+export interface NotificationsAuditResume {
+    total: number;
+    programme: number;
+    constats: number;
+    suivi: number;
+    checklists: number;
+    signatures: number;
+}
+
+/** Une ligne de la cloche, recalculée par le serveur à chaque appel : elle disparaît une fois le travail fait. */
+export interface NotificationAudit {
+    source: string;
+    code: string;
+    titre: string;
+    detail: string;
+    gravite: 'INFO' | 'ATTENTION' | 'URGENT';
+    nombre: number;
 }

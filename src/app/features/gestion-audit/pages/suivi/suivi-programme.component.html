@@ -1,0 +1,187 @@
+<div class="p-6">
+    <p-toast></p-toast>
+
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Suivi du programme d'audit</h2>
+            <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">Réalisation du programme, comparaison des évaluations et écarts transmis au module Non-conformités</p>
+        </div>
+    </div>
+
+    <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl mb-4 overflow-hidden">
+        <p-tabs [value]="onglet" [scrollable]="true" (valueChange)="onglet = $any($event)">
+            <p-tablist>
+                <p-tab *ngFor="let o of onglets" [value]="o.value">
+                    <div class="flex items-center gap-2 px-2 py-1 select-none">
+                        <i [class]="o.icone"></i><span class="whitespace-nowrap">{{ o.label }}</span>
+                    </div>
+                </p-tab>
+            </p-tablist>
+        </p-tabs>
+    </div>
+
+    <!-- D16 — Suivi du programme -->
+    <ng-container *ngIf="onglet === 'programme'">
+        <div class="flex justify-end mb-3">
+            <div class="w-32">
+                <app-select-input [(ngModel)]="annee" [options]="anneeOptions" optionLabel="label" optionValue="value"
+                                  [showClear]="false" (selectionChange)="chargerProgramme()" />
+            </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
+                <div class="text-xs font-semibold uppercase tracking-wide text-surface-500">Taux de réalisation</div>
+                <div class="text-2xl font-bold mt-2">{{ tableau.tauxRealisation != null ? (tableau.tauxRealisation | number: '1.0-0') + ' %' : '—' }}</div>
+            </div>
+            <a routerLink="/gestion-audit/programme" [queryParams]="{ enRetard: true, annee: annee }"
+               class="block no-underline bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 hover:border-primary transition-colors">
+                <div class="text-xs font-semibold uppercase tracking-wide text-surface-500">Audits en retard</div>
+                <div class="text-2xl font-bold mt-2 text-red-600 dark:text-red-400">{{ tableau.auditsEnRetard ?? 0 }}</div>
+            </a>
+            <button type="button" (click)="onglet = 'comparaison'"
+                    class="text-left bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 hover:border-primary transition-colors cursor-pointer">
+                <div class="text-xs font-semibold uppercase tracking-wide text-surface-500">Score de maturité moyen</div>
+                <div class="text-2xl font-bold mt-2 text-surface-900 dark:text-surface-50">{{ tableau.scoreMaturiteMoyen != null ? (tableau.scoreMaturiteMoyen | number: '1.0-0') + ' %' : '—' }}</div>
+            </button>
+        </div>
+
+        <app-tableau-affichage
+            [tableCols]="colonnesProgramme"
+            [listeObject]="auditsAnnee"
+            [loading]="chargementProgramme"
+            [lazy]="true"
+            [totalElements]="totalProgramme"
+            [pageSize]="tailleProgramme"
+            [currentPage]="pageProgramme"
+            [rowsPerPageOptions]="[10, 25, 50]"
+            [clickableRows]="true"
+            [showTopBar]="false"
+            recordName="audits"
+            [cellTemplates]="cellulesProgramme"
+            (rowClick)="ouvrirAudit($event)"
+            (pageChangeEvent)="onPageProgramme($event)">
+        </app-tableau-affichage>
+    </ng-container>
+
+    <!-- D17 — Historique et comparaison des évaluations -->
+    <ng-container *ngIf="onglet === 'comparaison'">
+        <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                <div>
+                    <app-audit-libelle texte="Période 1" />
+                    <app-select-input [(ngModel)]="periode1" [options]="periodes" optionLabel="label" optionValue="value" [showClear]="false" (selectionChange)="comparer()" />
+                </div>
+                <div>
+                    <app-audit-libelle texte="Période 2" />
+                    <app-select-input [(ngModel)]="periode2" [options]="periodes" optionLabel="label" optionValue="value" [showClear]="false" (selectionChange)="comparer()" />
+                </div>
+            </div>
+        </div>
+
+        <p-skeleton *ngIf="comparant" height="12rem"></p-skeleton>
+        <div *ngIf="comparaison && !comparant" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
+                <h3 class="text-base font-bold m-0 mb-1">Scores par domaine</h3>
+                <p class="text-xs text-surface-500 m-0 mb-3">
+                    {{ libellePeriode(periode1) }} : {{ comparaison.periode1?.scoreMoyen != null ? (comparaison.periode1?.scoreMoyen | number: '1.0-0') + ' %' : '—' }}
+                    ({{ comparaison.periode1?.evaluations ?? 0 }} évaluation(s)) ·
+                    {{ libellePeriode(periode2) }} : {{ comparaison.periode2?.scoreMoyen != null ? (comparaison.periode2?.scoreMoyen | number: '1.0-0') + ' %' : '—' }}
+                    ({{ comparaison.periode2?.evaluations ?? 0 }} évaluation(s))
+                </p>
+                <p *ngIf="!domaines().length" class="text-sm text-surface-400 text-center m-0 py-8">Aucune évaluation validée sur ces périodes.</p>
+                <p-chart *ngIf="domaines().length" type="radar" [data]="radar" [options]="optionsRadar" height="260px"></p-chart>
+            </div>
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
+                <table class="w-full border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-surface-50 dark:bg-surface-800">
+                            <th scope="col" class="text-left px-4 py-2 text-xs font-semibold text-surface-500">Chapitre ISO</th>
+                            <th scope="col" class="text-right px-4 py-2 text-xs font-semibold text-surface-500">Écarts ({{ libellePeriode(periode1) }})</th>
+                            <th scope="col" class="text-right px-4 py-2 text-xs font-semibold text-surface-500">Écarts ({{ libellePeriode(periode2) }})</th>
+                            <th scope="col" class="text-left px-4 py-2 text-xs font-semibold text-surface-500">Évolution</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngIf="!comparaison.ecartsParChapitre?.length"><td colspan="4" class="px-4 py-6 text-center text-surface-400">Aucun écart sur ces périodes.</td></tr>
+                        <tr *ngFor="let e of comparaison.ecartsParChapitre" class="border-t border-surface-100 dark:border-surface-800">
+                            <td class="px-4 py-2">{{ e.chapitre }}</td>
+                            <td class="px-4 py-2 text-right">{{ e.periode1 }}</td>
+                            <td class="px-4 py-2 text-right">{{ e.periode2 }}</td>
+                            <td class="px-4 py-2"><p-tag [value]="evolutionLabel(e.evolution)" [severity]="evolutionSeverite(e.evolution)" [rounded]="true"></p-tag></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- D18 — Écarts RQAP-BF transmis au module Non-conformités -->
+    <ng-container *ngIf="onglet === 'ecarts'">
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+            <p class="text-xs text-surface-500 m-0 max-w-2xl">Le module Audit ne gère pas les plans d'actions : chaque critère publié dont le constat retenu est « NC » (niveaux Non conforme, À améliorer ou Acceptable de la grille officielle) ouvre une non-conformité dans le module Non-conformités, où se gèrent traitement, pilotage et délais.</p>
+            <div class="w-72">
+                <app-select-input [(ngModel)]="auditFiltre" [options]="audits" optionLabel="reference" optionValue="id" [filter]="true"
+                                  placeholder="Tous les audits" (selectionChange)="chargerEcarts()" />
+            </div>
+        </div>
+        <!-- Sans écart, on renvoie là où les résultats se prévisualisent et se publient (C13P) : l'évaluation RQAP-BF de l'audit. -->
+        <p *ngIf="!chargementEcarts && !ecarts.length" class="text-sm text-surface-400 text-center m-0 py-8 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl">
+            Aucun écart publié pour le moment —
+            <ng-container *ngIf="auditFiltre; else sansAuditFiltre">
+                <a [routerLink]="['/gestion-audit/programme', auditFiltre, 'evaluation-rqapbf']" class="text-primary">prévisualiser et publier les résultats de {{ referenceFiltre }}</a>.
+            </ng-container>
+            <ng-template #sansAuditFiltre>voir l'évaluation RQAP-BF de l'audit pour prévisualiser et publier les résultats.</ng-template>
+        </p>
+        <app-tableau-affichage *ngIf="chargementEcarts || ecarts.length"
+            [tableCols]="colonnesEcarts"
+            [listeObject]="ecarts"
+            [loading]="chargementEcarts"
+            [lazy]="true"
+            [totalElements]="totalEcarts"
+            [pageSize]="tailleEcarts"
+            [currentPage]="pageEcarts"
+            [rowsPerPageOptions]="[10, 25, 50]"
+            [showTopBar]="false"
+            [consultation]="true"
+            recordName="écarts"
+            [cellTemplates]="cellulesEcarts"
+            (pageChangeEvent)="onPageEcarts($event)">
+        </app-tableau-affichage>
+    </ng-container>
+</div>
+
+<!-- D16 : cellules -->
+<ng-template #auditAnneeTpl let-a>
+    <span class="font-mono text-xs font-semibold text-primary">{{ a.reference }}</span>
+    <span class="block text-xs text-surface-500">{{ libelles.processus(a.processusId) }}</span>
+</ng-template>
+<ng-template #responsableTpl let-a>
+    <span class="text-sm">{{ libelles.auditeur(a.responsableEquipeId) }}</span>
+</ng-template>
+<ng-template #statutAuditTpl let-a>
+    <p-tag [value]="statutLabel(a.statut)" [severity]="statutSeverite(a.statut)" [rounded]="true"></p-tag>
+</ng-template>
+<ng-template #retardTpl let-a>
+    <p-tag *ngIf="a.enRetard; else sansRetard" [value]="(a.joursDeRetard ?? 0) + ' jour(s)'" severity="danger" [rounded]="true"></p-tag>
+    <ng-template #sansRetard><span class="text-surface-400">—</span></ng-template>
+</ng-template>
+
+<!-- D18 : cellules -->
+<ng-template #ecartAuditTpl let-e>
+    <a [routerLink]="['/gestion-audit/programme', e.auditId]" class="font-mono text-xs font-semibold text-primary">{{ e.auditReference }}</a>
+</ng-template>
+<ng-template #critereTpl let-e>
+    <div class="text-sm"><span class="font-mono text-xs mr-1">{{ e.noeudCode }}</span>{{ e.noeudLibelle }}</div>
+    <div *ngIf="e.preuve || e.commentaire" class="text-xs text-surface-500 mt-1">{{ e.preuve }}<span *ngIf="e.commentaire"> — {{ e.commentaire }}</span></div>
+</ng-template>
+<ng-template #niveauTpl let-e>
+    <div class="flex items-center gap-1 flex-wrap">
+        <p-tag value="NC" severity="danger"></p-tag>
+        <p-tag [value]="niveauLabel(e.niveau)" [severity]="niveauSeverite(e.niveau)"></p-tag>
+    </div>
+</ng-template>
+<ng-template #transmissionTpl let-e>
+    <a *ngIf="e.nonConformiteId" [routerLink]="['/non-conformite/traitement']" [queryParams]="{ ncId: e.nonConformiteId }"
+       class="text-xs font-semibold text-primary whitespace-nowrap">Ouvrir la fiche complète ↗</a>
+    <span *ngIf="!e.nonConformiteId && e.transmissionEnAttente" class="text-xs text-amber-600 whitespace-nowrap"><i class="pi pi-clock text-xs"></i> Transmission en attente</span>
+</ng-template>

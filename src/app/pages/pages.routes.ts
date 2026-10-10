@@ -320,6 +320,94 @@ export default [
     // référentiel complet, avec sa liste, sa saisie et ses conseils, et l'on n'y navigue pas d'un
     // onglet à l'autre en cours de travail. L'ancienne adresse redirige vers les types de
     // document, pour les liens et les favoris.
+    // Paramétrage Audit : une page par liste, comme le paramétrage documentaire. Le même
+    // composant sert les sept listes ; la route dit laquelle.
+    { path: 'parametrage-audit', redirectTo: '/parametrage-audit/types-audit', pathMatch: 'full' },
+    {
+        path: 'parametrage-audit/types-audit',
+        loadComponent: () => import('@features/gestion-audit/parametrage/parametrage-audit-liste.component').then(m => m.ParametrageAuditListeComponent),
+        title: "Types d'audit",
+        canActivate: [permissionGuard],
+        data: {
+            liste: 'types-audit',
+            breadcrumb: "Types d'audit",
+            permissions: ['audit-config', 'audit-read', 'audit-write', 'audit-conduct', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'],
+            module: ModuleAbonnement.AUDIT
+        }
+    },
+    {
+        path: 'parametrage-audit/natures-constat',
+        loadComponent: () => import('@features/gestion-audit/parametrage/parametrage-audit-liste.component').then(m => m.ParametrageAuditListeComponent),
+        title: "Natures de constat",
+        canActivate: [permissionGuard],
+        data: {
+            liste: 'natures-constat',
+            breadcrumb: "Natures de constat",
+            permissions: ['audit-config', 'audit-read', 'audit-write', 'audit-conduct', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'],
+            module: ModuleAbonnement.AUDIT
+        }
+    },
+    {
+        path: 'parametrage-audit/sites',
+        loadComponent: () => import('@features/gestion-audit/parametrage/parametrage-audit-liste.component').then(m => m.ParametrageAuditListeComponent),
+        title: "Sites",
+        canActivate: [permissionGuard],
+        data: {
+            liste: 'sites',
+            breadcrumb: "Sites",
+            permissions: ['audit-config', 'audit-read', 'audit-write', 'audit-conduct', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'],
+            module: ModuleAbonnement.AUDIT
+        }
+    },
+    {
+        path: 'parametrage-audit/criteres-evaluation',
+        loadComponent: () => import('@features/gestion-audit/parametrage/parametrage-audit-liste.component').then(m => m.ParametrageAuditListeComponent),
+        title: "Critères d'évaluation des auditeurs",
+        canActivate: [permissionGuard],
+        data: {
+            liste: 'criteres-evaluation',
+            breadcrumb: "Critères d'évaluation des auditeurs",
+            permissions: ['audit-config', 'audit-read', 'audit-write', 'audit-conduct', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'],
+            module: ModuleAbonnement.AUDIT
+        }
+    },
+    {
+        path: 'parametrage-audit/niveaux-evaluation',
+        loadComponent: () => import('@features/gestion-audit/parametrage/parametrage-audit-liste.component').then(m => m.ParametrageAuditListeComponent),
+        title: "Niveaux d'évaluation des auditeurs",
+        canActivate: [permissionGuard],
+        data: {
+            liste: 'niveaux-evaluation',
+            breadcrumb: "Niveaux d'évaluation des auditeurs",
+            permissions: ['audit-config', 'audit-read', 'audit-write', 'audit-conduct', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'],
+            module: ModuleAbonnement.AUDIT
+        }
+    },
+    {
+        path: 'parametrage-audit/regles-notification',
+        loadComponent: () => import('@features/gestion-audit/parametrage/parametrage-audit-liste.component').then(m => m.ParametrageAuditListeComponent),
+        title: "Règles de notification",
+        canActivate: [permissionGuard],
+        data: {
+            liste: 'regles-notification',
+            breadcrumb: "Règles de notification",
+            permissions: ['audit-config', 'audit-read', 'audit-write', 'audit-conduct', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'],
+            module: ModuleAbonnement.AUDIT
+        }
+    },
+    {
+        path: 'parametrage-audit/codification',
+        loadComponent: () => import('@features/gestion-audit/parametrage/parametrage-audit-liste.component').then(m => m.ParametrageAuditListeComponent),
+        title: "Codification des documents",
+        canActivate: [permissionGuard],
+        data: {
+            liste: 'codification',
+            breadcrumb: "Codification des documents",
+            permissions: ['audit-config', 'audit-read', 'audit-write', 'audit-conduct', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'],
+            module: ModuleAbonnement.AUDIT
+        }
+    },
+
     { path: 'parametrage-document', redirectTo: '/parametrage-document/types', pathMatch: 'full' },
     {
         path: 'parametrage-document/types',

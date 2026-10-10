@@ -6,6 +6,8 @@ import { MenuItem } from 'primeng/api';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { HeaderPage } from '@shared/header-page/header-page';
+import { AuditGestionService } from '../services/audit.service';
+import { NotificationsAuditResume } from '../models/audit.model';
 
 @Component({
     selector: 'app-audit-layout',
@@ -26,7 +28,7 @@ export class AuditLayoutComponent implements OnInit, OnDestroy {
         { label: 'Gestion des audits', routerLink: '/gestion-audit' }
     ];
 
-    constructor(private router: Router) {
+    constructor(private router: Router, private auditService: AuditGestionService) {
         this.routerSubscription = this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd) {
                 this.activeTab = event.urlAfterRedirects.split('?')[0];
@@ -37,9 +39,12 @@ export class AuditLayoutComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.activeTab = this.router.url.split('?')[0];
         this.buildMenu();
+        // Les compteurs des onglets, comme dans le module Non-conformités : relus après chaque geste.
+        this.auditService.notificationsAudit$.pipe(takeUntil(this.destroy$)).subscribe(r => this.buildMenu(r));
+        this.auditService.rafraichirNotifications();
     }
 
-    buildMenu(): void {
+    buildMenu(r?: NotificationsAuditResume): void {
         this.items = [
             {
                 label: "Vue d'ensemble",
@@ -57,6 +62,11 @@ export class AuditLayoutComponent implements OnInit, OnDestroy {
                 routerLink: '/gestion-audit/constatations'
             },
             {
+                label: 'Suivi du programme',
+                icon: 'pi pi-chart-line',
+                routerLink: '/gestion-audit/suivi'
+            },
+            {
                 label: 'Checklists',
                 icon: 'pi pi-list-check',
                 routerLink: '/gestion-audit/checklists'
@@ -72,6 +82,16 @@ export class AuditLayoutComponent implements OnInit, OnDestroy {
                 routerLink: '/gestion-audit/referentiel-rqapbf'
             }
         ];
+        const compteurs: Record<string, number | undefined> = {
+            '/gestion-audit/programme': r?.programme,
+            '/gestion-audit/constatations': r?.constats,
+            '/gestion-audit/suivi': r?.suivi,
+            '/gestion-audit/checklists': r?.checklists
+        };
+        this.items = this.items.map(i => {
+            const n = compteurs[i.routerLink as string];
+            return { ...i, badge: n && n > 0 ? String(n) : undefined };
+        });
     }
 
     onTabChange(url: any): void {

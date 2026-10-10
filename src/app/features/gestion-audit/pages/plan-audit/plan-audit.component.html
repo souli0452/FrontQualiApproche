@@ -1,76 +1,325 @@
-<div class="p-6 max-w-5xl mx-auto">
+<div class="p-6">
     <p-toast></p-toast>
+    <p-confirmpopup></p-confirmpopup>
 
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Plan d'audit</h2>
-            <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">Calendrier détaillé des activités d'audit</p>
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+        <div class="flex items-center gap-3">
+            <p-button icon="pi pi-arrow-left" [rounded]="true" [text]="true" severity="secondary"
+                      [routerLink]="['/gestion-audit/programme', auditId]" pTooltip="Retour à l'audit"></p-button>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">{{ externe ? 'Plan d\'audit externe' : 'Plan d\'audit' }}</h2>
+                    <p-tag *ngIf="plan" [value]="libelleStatut" [severity]="severiteStatut" [rounded]="true"></p-tag>
+                </div>
+                <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">
+                    <span class="font-mono font-semibold text-primary">{{ audit?.reference }}</span>
+                    — {{ libelles.processus(audit?.processusId) }}
+                    <span *ngIf="plan?.reference"> · plan {{ plan?.reference }}</span>
+                    · {{ audit?.dateDebutPrevue | date: 'dd/MM/yyyy' }} → {{ audit?.dateFinPrevue | date: 'dd/MM/yyyy' }}
+                </p>
+            </div>
         </div>
-        <div class="flex gap-2">
-            <p-button icon="pi pi-download" label="Télécharger" [outlined]="true" severity="secondary" size="small" (onClick)="telecharger()"></p-button>
-            <p-button icon="pi pi-share-alt" label="Partager" [outlined]="true" severity="secondary" size="small" (onClick)="partager()"></p-button>
-            <p-button icon="pi pi-save" label="Sauvegarder" size="small" [loading]="saving" (onClick)="sauvegarder()"></p-button>
+        <div class="flex flex-wrap items-center gap-2" *ngIf="plan && !externe">
+            <p-tabs [value]="vue" (valueChange)="vue = $any($event)">
+                <p-tablist>
+                    <p-tab *ngFor="let o of vues" [value]="o.value">
+                        <div class="flex items-center gap-2 px-2 py-1 select-none">
+                            <i [class]="o.icone"></i><span class="whitespace-nowrap">{{ o.label }}</span>
+                        </div>
+                    </p-tab>
+                </p-tablist>
+            </p-tabs>
+            <ng-container *ngIf="!nouveau && !plan.fichierCharge">
+                <p-button icon="pi pi-file-pdf" label="PDF" [outlined]="true" severity="secondary" size="small" (onClick)="exporter('PDF')"></p-button>
+                <p-button icon="pi pi-file-word" label="Word" [outlined]="true" severity="secondary" size="small" (onClick)="exporter('WORD')"></p-button>
+            </ng-container>
+            <!-- Un plan reçu ne se charge que sur un audit externe (B7X) ; ici, un fichier chargé avant reste lisible. -->
+            <p-button *ngIf="plan.fichierCharge" icon="pi pi-download" label="Plan chargé" [outlined]="true" severity="secondary" size="small" (onClick)="telechargerFichier()"></p-button>
         </div>
     </div>
 
     <div *ngIf="loading" class="space-y-3">
-        <p-skeleton height="100px" borderRadius="12px"></p-skeleton>
-        <p-skeleton height="200px" borderRadius="12px"></p-skeleton>
+        <p-skeleton height="140px" borderRadius="12px"></p-skeleton>
+        <p-skeleton height="240px" borderRadius="12px"></p-skeleton>
     </div>
 
-    <div *ngIf="!loading && !plan" class="flex flex-col items-center justify-center py-20">
-        <i class="pi pi-calendar text-5xl text-surface-300 dark:text-surface-600 mb-4"></i>
-        <p class="text-sm text-surface-500 dark:text-surface-400 m-0">Aucun plan défini pour cet audit.</p>
-    </div>
-
-    <ng-container *ngIf="!loading && plan">
-        <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5 mb-5">
-            <h3 class="text-sm font-bold text-surface-700 dark:text-surface-300 uppercase tracking-wide m-0 mb-4">Informations générales du plan</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <!-- B7X : plan d'un audit externe, transmis par l'organisme puis chargé -->
+    <ng-container *ngIf="!loading && plan && externe">
+        <p class="text-xs text-surface-500 m-0 mb-4">
+            Pour un audit externe, le plan n'est pas élaboré dans l'application : il est transmis par l'organisme auditeur, puis chargé ici.
+            Il est alors consultable par l'équipe d'audit, sans ressaisie.
+        </p>
+        <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 mb-4">
+            <h3 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-3">Informations communiquées par l'organisme auditeur</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 <div>
-                    <label class="text-xs text-surface-500 dark:text-surface-400 block mb-1">Date de début</label>
-                    <input pInputText [(ngModel)]="plan.dateDebut" class="w-full" placeholder="JJ/MM/AAAA" />
+                    <div class="text-xs text-surface-500 mb-0.5">Organisme</div>
+                    <div>{{ audit?.organismeExterne || '—' }}</div>
                 </div>
                 <div>
-                    <label class="text-xs text-surface-500 dark:text-surface-400 block mb-1">Date de fin</label>
-                    <input pInputText [(ngModel)]="plan.dateFin" class="w-full" placeholder="JJ/MM/AAAA" />
+                    <div class="text-xs text-surface-500 mb-0.5">Dates d'audit</div>
+                    <div>{{ audit?.dateDebutPrevue | date: 'dd/MM/yyyy' }} → {{ audit?.dateFinPrevue | date: 'dd/MM/yyyy' }}</div>
                 </div>
-                <div class="sm:col-span-2">
-                    <label class="text-xs text-surface-500 dark:text-surface-400 block mb-1">Lieu</label>
-                    <input pInputText [(ngModel)]="plan.lieu" class="w-full" placeholder="Lieu de l'audit" />
+                <div class="md:col-span-2">
+                    <div class="text-xs text-surface-500 mb-0.5">Objectifs</div>
+                    <div class="whitespace-pre-line">{{ audit?.objectifsAudit || '—' }}</div>
                 </div>
-            </div>
-        </div>
-
-        <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-bold text-surface-700 dark:text-surface-300 uppercase tracking-wide m-0">Activités planifiées</h3>
-                <p-button icon="pi pi-plus" label="Ajouter" size="small" (onClick)="ajouterActivite()"></p-button>
-            </div>
-
-            <div *ngIf="!plan.activites?.length" class="py-8 text-center">
-                <p class="text-sm text-surface-500 dark:text-surface-400 m-0">Aucune activité planifiée. Cliquez sur « Ajouter » pour en créer une.</p>
-            </div>
-
-            <div class="space-y-3">
-                <div *ngFor="let activite of plan.activites; let i = index; trackBy: trackByIndex"
-                     class="border border-surface-200 dark:border-surface-700 rounded-lg p-4">
-                    <div class="flex items-start gap-3">
-                        <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div class="sm:col-span-2">
-                                <label class="text-xs text-surface-500 dark:text-surface-400 block mb-1">Libellé de l'activité</label>
-                                <input pInputText [(ngModel)]="activite.libelleActivite" class="w-full" placeholder="Description de l'activité" />
-                            </div>
-                            <div>
-                                <label class="text-xs text-surface-500 dark:text-surface-400 block mb-1">Auditeur</label>
-                                <input pInputText [(ngModel)]="activite.auditeur" class="w-full" placeholder="Auditeur responsable" />
-                            </div>
-                        </div>
-                        <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" size="small"
-                                  (onClick)="retirerActivite(i)"></p-button>
+                <div class="md:col-span-2">
+                    <div class="text-xs text-surface-500 mb-1">Sites concernés</div>
+                    <div class="flex flex-wrap gap-1">
+                        <p-tag *ngFor="let s of sitesAudit" [value]="s" severity="secondary"></p-tag>
+                        <span *ngIf="!sitesAudit.length" class="text-surface-400">—</span>
                     </div>
                 </div>
             </div>
         </div>
+
+        <ng-container *ngIf="plan.fichierCharge; else depotPlan">
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 mb-3 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <i class="pi pi-file-check text-2xl text-primary"></i>
+                    <div>
+                        <div class="font-semibold text-sm">Plan d'audit chargé</div>
+                        <div class="text-xs text-surface-500">Consultable par l'équipe d'audit</div>
+                    </div>
+                </div>
+                <p-button icon="pi pi-download" label="Télécharger" [outlined]="true" size="small" (onClick)="telechargerFichier()"></p-button>
+            </div>
+            <p-message severity="success" styleClass="w-full mb-3" text="Le plan d'audit a été chargé : c'est lui qui fait foi, sans ressaisie."></p-message>
+            <div class="flex justify-end">
+                <p-button label="Voir le rapport d'audit externe" icon="pi pi-arrow-right" iconPos="right" size="small"
+                          [routerLink]="['/gestion-audit/programme', auditId, 'rapport']"></p-button>
+            </div>
+        </ng-container>
+        <ng-template #depotPlan>
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
+                <h3 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-3">Charger le plan d'audit reçu</h3>
+                <label class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-surface-300 dark:border-surface-600 rounded-xl py-8 cursor-pointer hover:border-primary transition-colors"
+                       [class.pointer-events-none]="auditTermine">
+                    <i class="pi pi-upload text-3xl text-surface-400"></i>
+                    <span class="text-sm text-surface-600 dark:text-surface-300">Déposez le fichier reçu de l'organisme (PDF ou Word)</span>
+                    <span class="p-button p-button-sm p-button-outlined">Parcourir…</span>
+                    <input type="file" class="hidden" accept=".pdf,.doc,.docx,.odt" (change)="chargerFichier($event)" [disabled]="auditTermine" />
+                </label>
+            </div>
+        </ng-template>
+    </ng-container>
+
+    <ng-container *ngIf="!loading && plan && !externe">
+        <p-message *ngIf="nouveau" severity="info" styleClass="mb-4 w-full"
+                   text="Ce plan n'est pas encore enregistré : il reprend les objectifs, la portée et les critères de l'audit."></p-message>
+        <p-message *ngIf="plan.fichierCharge" severity="success" styleClass="mb-4 w-full"
+                   text="Un plan reçu a été chargé : c'est lui qui fait foi."></p-message>
+
+        <!-- B7 : élaboration -->
+        <div *ngIf="vue === 'elaboration'" class="flex flex-col gap-4">
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
+                <h3 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-3">Cadre de l'audit</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                    <div>
+                        <app-audit-libelle texte="Objectifs de l'audit" />
+                        <textarea pTextarea [(ngModel)]="plan.objectifs" rows="2" [autoResize]="true" class="w-full" [disabled]="!modifiable"></textarea>
+                    </div>
+                    <div>
+                        <app-audit-libelle texte="Portée de l'audit" aide="Périmètre, sites, exclusions." />
+                        <textarea pTextarea [(ngModel)]="plan.portee" rows="2" [autoResize]="true" class="w-full" [disabled]="!modifiable"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <app-audit-libelle texte="Critères d'audit" />
+                        <textarea pTextarea [(ngModel)]="plan.criteres" rows="2" [autoResize]="true" class="w-full" [disabled]="!modifiable"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <app-audit-libelle texte="Méthodes d'audit" />
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+                            <label *ngFor="let m of methodes" class="flex items-center gap-2 text-sm cursor-pointer">
+                                <p-checkbox [binary]="true" [ngModel]="plan.methodesAudit?.includes(m)" (onChange)="basculerMethode(m)" [disabled]="!modifiable"></p-checkbox>
+                                {{ m }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-1">Équipe d'audit</h3>
+                        <p class="text-sm m-0">Responsable : {{ libelles.auditeur(audit?.responsableEquipeId) }}
+                            <span *ngIf="audit?.membreEquipeIds?.length"> · Auditeur(s) associé(s) : {{ nomsMembres }}</span></p>
+                        <p class="text-xs text-surface-400 m-0 mt-0.5">Reprise de la fiche de planification.</p>
+                    </div>
+                    <p-button *ngIf="equipeModifiable" label="Modifier l'équipe" icon="pi pi-users" [outlined]="true" size="small"
+                              [routerLink]="['/gestion-audit/programme/edit', auditId]"></p-button>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
+                <div class="flex items-center justify-between p-4 pb-3">
+                    <h3 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0">Programme détaillé et horaires</h3>
+                    <p-button *ngIf="modifiable && !activiteEnEdition" icon="pi pi-plus" label="Ajouter une activité" size="small" [outlined]="true" (onClick)="ouvrirActivite()"></p-button>
+                </div>
+                <p *ngIf="!equipe.length && modifiable" class="text-xs text-amber-600 m-0 px-4 pb-3">L'équipe de l'audit est vide : désignez-la sur la fiche de l'audit pour affecter les activités.</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-surface-50 dark:bg-surface-800">
+                                <th scope="col" class="text-left px-3 py-2 text-xs font-semibold text-surface-500 w-32">Horaire</th>
+                                <th scope="col" class="text-left px-3 py-2 text-xs font-semibold text-surface-500">Activité</th>
+                                <th scope="col" class="text-left px-3 py-2 text-xs font-semibold text-surface-500">Processus audité</th>
+                                <th scope="col" class="text-left px-3 py-2 text-xs font-semibold text-surface-500">Auditeur</th>
+                                <th scope="col" class="text-left px-3 py-2 text-xs font-semibold text-surface-500">Personnes auditées</th>
+                                <th scope="col" class="w-20" *ngIf="modifiable"><span class="sr-only">Actions</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngIf="!plan.activites?.length">
+                                <td [attr.colspan]="modifiable ? 6 : 5" class="text-center text-surface-400 py-6">Aucune activité planifiée.</td>
+                            </tr>
+                            <tr *ngFor="let a of plan.activites; let i = index; trackBy: trackByIndex"
+                                class="border-t border-surface-100 dark:border-surface-800 align-top"
+                                [ngClass]="{ 'bg-primary-50 dark:bg-primary-950/30': activiteEnEdition?.index === i }">
+                                <td class="px-3 py-2 font-mono text-xs whitespace-nowrap">{{ horaire(a) }}</td>
+                                <td class="px-3 py-2">{{ a.libelleActivite }}</td>
+                                <td class="px-3 py-2 text-surface-600 dark:text-surface-300">{{ a.processusConcerne || '—' }}</td>
+                                <td class="px-3 py-2 text-surface-600 dark:text-surface-300">{{ a.auditeur || '—' }}</td>
+                                <td class="px-3 py-2 text-surface-600 dark:text-surface-300">{{ a.personnesAuditees || '—' }}</td>
+                                <td *ngIf="modifiable" class="px-2 py-1 whitespace-nowrap">
+                                    <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="secondary" size="small" pTooltip="Modifier" (onClick)="ouvrirActivite(i)"></p-button>
+                                    <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" size="small" pTooltip="Retirer" (onClick)="retirerActivite(i)"></p-button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div *ngIf="activiteEnEdition" class="border-t border-surface-200 dark:border-surface-700 p-4 bg-surface-50/60 dark:bg-surface-800/30">
+                    <h4 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-3">{{ activiteEnEdition.index === null ? 'Nouvelle activité' : 'Modifier l\'activité' }}</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                        <div>
+                            <app-audit-libelle texte="Début" />
+                            <input pInputText type="time" [(ngModel)]="activiteEnEdition.activite.horaireDebut" class="w-full" />
+                        </div>
+                        <div>
+                            <app-audit-libelle texte="Fin" />
+                            <input pInputText type="time" [(ngModel)]="activiteEnEdition.activite.horaireFin" class="w-full" />
+                        </div>
+                        <div class="md:col-span-2">
+                            <app-audit-libelle texte="Activité" [requis]="true" />
+                            <input pInputText [(ngModel)]="activiteEnEdition.activite.libelleActivite" class="w-full" placeholder="Réunion d'ouverture, visite, revue documentaire…" />
+                        </div>
+                        <div>
+                            <app-audit-libelle texte="Processus audité" aide="Choisi parmi les structures." />
+                            <app-select-input [(ngModel)]="activiteEnEdition.activite.processusConcerne" [options]="processus" optionLabel="libelle" optionValue="libelle"
+                                              [filter]="true" placeholder="Choisir un processus" />
+                        </div>
+                        <div>
+                            <app-audit-libelle texte="Auditeur" aide="Choisi dans l'équipe de l'audit." />
+                            <app-select-input [(ngModel)]="activiteEnEdition.activite.auditeur" [options]="equipe" optionLabel="nom" optionValue="nom"
+                                              placeholder="Membre de l'équipe" />
+                        </div>
+                        <div class="md:col-span-2">
+                            <app-audit-libelle texte="Personnes auditées" aide="Choisies dans l'annuaire des utilisateurs." />
+                            <app-multiselect-input [(ngModel)]="activiteEnEdition.personnes" [options]="personnes" optionLabel="nomComplet" optionValue="nomComplet"
+                                                   display="chip" placeholder="Choisir dans l'annuaire" />
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-4">
+                        <p-button label="Annuler" severity="secondary" [outlined]="true" size="small" (onClick)="activiteEnEdition = null"></p-button>
+                        <p-button [label]="activiteEnEdition.index === null ? 'Ajouter l\'activité' : 'Appliquer'" icon="pi pi-check" size="small"
+                                  [disabled]="!activiteEnEdition.activite.libelleActivite?.trim()" (onClick)="appliquerActivite()"></p-button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
+                <h3 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-3">Logistique</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                    <div>
+                        <app-audit-libelle texte="Lieu" aide="Choisi parmi les sites paramétrés ; ceux de l'audit en tête." />
+                        <app-select-input [(ngModel)]="plan.lieu" [options]="lieux" optionLabel="nom" optionValue="nom" [filter]="true"
+                                          placeholder="Choisir un site" [disabled]="!modifiable" />
+                    </div>
+                    <div>
+                        <app-audit-libelle texte="Langue de l'audit" aide="Français ou anglais ; une autre langue se tape dans la liste." />
+                        <p-select [(ngModel)]="plan.langue" [options]="langues" [editable]="true" styleClass="w-full" appendTo="body"
+                                  placeholder="Choisir une langue" [disabled]="!modifiable"></p-select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <app-audit-libelle texte="Moyens nécessaires" />
+                        <input pInputText [(ngModel)]="plan.moyensNecessaires" class="w-full" placeholder="Salle de réunion, accès aux documents…" [disabled]="!modifiable" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <p-button *ngIf="modifiable" icon="pi pi-save" label="Enregistrer en brouillon" [outlined]="true" size="small" [loading]="saving" (onClick)="sauvegarder()"></p-button>
+                <p-button label="Aperçu et diffusion" icon="pi pi-arrow-right" iconPos="right" size="small" (onClick)="vue = 'apercu'"></p-button>
+            </div>
+        </div>
+
+        <!-- B8 : aperçu et diffusion -->
+        <ng-container *ngIf="vue === 'apercu'">
+            <article class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-8 space-y-5 text-sm leading-relaxed">
+                <header class="text-center border-b-2 border-primary pb-4">
+                    <div class="text-xs tracking-wide text-surface-500">PLAN D'AUDIT</div>
+                    <div class="text-lg font-bold text-primary mt-1">{{ audit?.reference }} — {{ libelles.processus(audit?.processusId) }}</div>
+                    <div class="text-xs text-surface-500 mt-1"><span *ngIf="plan.reference">Réf. {{ plan.reference }} · </span>{{ audit?.dateDebutPrevue | date: 'dd/MM/yyyy' }} → {{ audit?.dateFinPrevue | date: 'dd/MM/yyyy' }}</div>
+                </header>
+                <section>
+                    <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">1. Objectifs de l'audit</h3>
+                    <p class="m-0 whitespace-pre-line">{{ plan.objectifs || '—' }}</p>
+                </section>
+                <section>
+                    <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">2. Portée de l'audit</h3>
+                    <p class="m-0 whitespace-pre-line">{{ plan.portee || '—' }}</p>
+                </section>
+                <section>
+                    <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">3. Critères d'audit</h3>
+                    <p class="m-0 whitespace-pre-line">{{ plan.criteres || '—' }}</p>
+                </section>
+                <section>
+                    <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">4. Méthodes d'audit</h3>
+                    <p class="m-0">{{ plan.methodesAudit?.length ? plan.methodesAudit!.join(' · ') : '—' }}</p>
+                </section>
+                <section>
+                    <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">5. Équipe d'audit</h3>
+                    <p class="m-0">Responsable : {{ libelles.auditeur(audit?.responsableEquipeId) }}<span *ngIf="audit?.membreEquipeIds?.length"> · Auditeur(s) associé(s) : {{ nomsMembres }}</span></p>
+                </section>
+                <section>
+                    <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">6. Programme détaillé et horaires</h3>
+                    <p *ngIf="!plan.activites?.length" class="m-0 text-surface-500">Aucune activité planifiée.</p>
+                    <table *ngIf="plan.activites?.length" class="w-full border-collapse text-xs">
+                        <thead><tr class="bg-surface-50 dark:bg-surface-800">
+                            <th scope="col" class="text-left px-2 py-1.5">Horaire</th>
+                            <th scope="col" class="text-left px-2 py-1.5">Activité</th>
+                            <th scope="col" class="text-left px-2 py-1.5">Processus audité</th>
+                            <th scope="col" class="text-left px-2 py-1.5">Auditeur</th>
+                            <th scope="col" class="text-left px-2 py-1.5">Personnes auditées</th>
+                        </tr></thead>
+                        <tbody>
+                            <tr *ngFor="let a of plan.activites" class="border-b border-surface-100 dark:border-surface-800 align-top">
+                                <td class="px-2 py-1.5 whitespace-nowrap">{{ horaire(a) }}</td>
+                                <td class="px-2 py-1.5">{{ a.libelleActivite }}</td>
+                                <td class="px-2 py-1.5">{{ a.processusConcerne || '—' }}</td>
+                                <td class="px-2 py-1.5">{{ a.auditeur || '—' }}</td>
+                                <td class="px-2 py-1.5">{{ a.personnesAuditees || '—' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+                <section>
+                    <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">7. Logistique</h3>
+                    <p class="m-0">Lieu : {{ plan.lieu || '—' }} · Langue : {{ plan.langue || '—' }} · Moyens : {{ plan.moyensNecessaires || '—' }}</p>
+                </section>
+            </article>
+
+            <p-message *ngIf="plan.statut === 'PARTAGE'" severity="success" styleClass="w-full mt-4"
+                       [text]="'Plan d\'audit partagé avec l\'audité' + (plan.datePartage ? ' le ' + (plan.datePartage | date: 'dd/MM/yyyy à HH:mm') : '') + '.'"></p-message>
+            <div class="flex justify-end gap-2 mt-4" *ngIf="!auditTermine && plan.statut !== 'PARTAGE'">
+                <p-message *ngIf="nouveau" severity="warn" styleClass="mr-auto" text="Enregistrez le plan avant de le valider."></p-message>
+                <p-button *ngIf="!nouveau && plan.statut === 'BROUILLON'" icon="pi pi-check" label="Valider le plan" severity="success" size="small" (onClick)="valider($event)"></p-button>
+                <p-button *ngIf="plan.statut === 'VALIDE'" icon="pi pi-share-alt" label="Partager avec l'audité" size="small" (onClick)="partager()"></p-button>
+            </div>
+        </ng-container>
     </ng-container>
 </div>

@@ -1,0 +1,98 @@
+<div class="p-6">
+    <p-toast></p-toast>
+
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+        <div class="flex items-center gap-3">
+            <p-button icon="pi pi-arrow-left" [rounded]="true" [text]="true" severity="secondary"
+                      [routerLink]="['/gestion-audit/programme', auditId]" pTooltip="Retour à l'audit"></p-button>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Résultats de l'évaluation RQAP-BF</h2>
+                    <p-tag *ngIf="evaluation" [value]="officiel ? 'Officiels' : 'Provisoires'" [severity]="officiel ? 'success' : 'warn'" [rounded]="true"></p-tag>
+                </div>
+                <p class="text-sm text-surface-500 m-0 mt-1"><span class="font-mono font-semibold text-primary">{{ audit?.reference }}</span></p>
+            </div>
+        </div>
+        <p-button icon="pi pi-pencil" label="Reprendre la notation" size="small" [outlined]="true" [routerLink]="['/gestion-audit/programme', auditId, 'evaluation-rqapbf']"></p-button>
+    </div>
+
+    <div *ngIf="loading" class="space-y-3"><p-skeleton height="200px"></p-skeleton><p-skeleton height="240px"></p-skeleton></div>
+
+    <div *ngIf="!loading && !evaluation" class="flex flex-col items-center py-16 gap-3">
+        <i class="pi pi-chart-bar text-5xl text-surface-300"></i>
+        <p class="text-sm text-surface-500 m-0">Cet audit n'a pas encore d'évaluation RQAP-BF.</p>
+        <p-button label="Ouvrir la notation" size="small" [routerLink]="['/gestion-audit/programme', auditId, 'evaluation-rqapbf']"></p-button>
+    </div>
+
+    <ng-container *ngIf="!loading && evaluation">
+        <p-message *ngIf="!officiel" severity="warn" styleClass="mb-4 w-full"
+                   text="Résultats provisoires : l'évaluation n'est pas validée, ils comptent aussi les notes encore en brouillon."></p-message>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5 flex flex-col items-center justify-center text-center">
+                <div class="text-xs text-surface-500">{{ officiel ? 'Score global officiel' : 'Score global provisoire' }}</div>
+                <div class="text-5xl font-bold my-2" [ngClass]="couleur(score)">{{ score != null ? (score | number: '1.0-0') + ' %' : '—' }}</div>
+                <p-tag [value]="'Niveau ' + niveau" [rounded]="true" severity="info"></p-tag>
+                <div class="mt-3 text-amber-500 text-lg">
+                    <i *ngFor="let e of etoiles" class="pi" [ngClass]="e === 1 ? 'pi-star-fill' : e === 0.5 ? 'pi-star-half-fill' : 'pi-star'"></i>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
+                <div class="text-sm font-semibold mb-2">Radar des domaines</div>
+                <p-chart *ngIf="domaines.length" type="radar" [data]="radar" [options]="optionsRadar" height="220px"></p-chart>
+            </div>
+        </div>
+
+        <p class="text-xs text-surface-500 m-0 mb-1">
+            {{ evaluation.criteresPublies ?? 0 }} / {{ totalCriteres }} critères publiés à ce jour ({{ evaluation.criteresNotes ?? 0 }} notés) — le reste demeure hors rapport officiel.
+            {{ nombreNc }} écart(s) au constat « NC ».
+        </p>
+        <p class="text-xs text-surface-500 m-0 mb-3">
+            Dépliez un domaine pour le détail par section et sous-section, ou
+            <a class="text-primary cursor-pointer hover:underline" [routerLink]="['/gestion-audit/programme', auditId, 'evaluation-rqapbf']">reprenez la saisie depuis le référentiel</a>.
+        </p>
+
+        <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
+            <div class="hidden md:flex items-center gap-4 px-4 py-2 bg-surface-50 dark:bg-surface-800 text-xs font-semibold text-surface-500">
+                <span class="flex-1">Domaine</span><span class="w-20 text-right">Score</span><span class="w-32">Niveau</span><span class="w-28">Statut</span><span class="w-4"></span>
+            </div>
+            <div *ngFor="let d of domaines" class="border-t border-surface-100 dark:border-surface-800 first:border-t-0">
+                <button type="button" (click)="basculer(d)"
+                        class="w-full flex flex-wrap md:flex-nowrap items-center gap-x-4 gap-y-1 px-4 py-3 text-left bg-transparent border-0 cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800/40">
+                    <span class="flex-1 min-w-0 text-sm font-semibold"><span class="font-mono text-xs text-primary mr-1">{{ d.code }}</span>{{ d.libelle }}</span>
+                    <span class="w-20 text-right text-sm font-semibold" [ngClass]="couleur(scoreDomaine(d))">{{ scoreDomaine(d) != null ? (scoreDomaine(d) | number: '1.0-0') + ' %' : '—' }}</span>
+                    <span class="w-32 text-sm">{{ niveauDe(scoreDomaine(d)) }}</span>
+                    <span class="w-28"><p-tag [value]="avancement(d).libelle" [severity]="avancement(d).severite" [rounded]="true"></p-tag></span>
+                    <i class="pi text-xs text-surface-400 w-4" [ngClass]="ouverts.has(d.id!) ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+                </button>
+                <div *ngIf="ouverts.has(d.id!)" class="px-4 pb-3">
+                    <p *ngIf="!lignes(d).length" class="text-sm text-surface-400 m-0 py-2">Ce domaine n'a pas de section.</p>
+                    <table *ngIf="lignes(d).length" class="w-full border-collapse text-sm">
+                        <thead>
+                            <tr class="text-xs text-surface-500">
+                                <th scope="col" class="text-left py-2">Section / sous-section</th>
+                                <th scope="col" class="text-right py-2 w-20">Score</th>
+                                <th scope="col" class="text-left py-2 pl-4 w-28">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let l of lignes(d)" class="border-t border-surface-100 dark:border-surface-800">
+                                <td class="py-2" [style.padding-left.px]="l.profondeur * 20">
+                                    <span class="font-mono text-xs mr-1">{{ l.noeud.code }}</span>
+                                    <span [ngClass]="{ 'font-semibold': l.profondeur === 0 }">{{ l.noeud.libelle }}</span>
+                                </td>
+                                <td class="py-2 text-right font-semibold" [ngClass]="couleur(l.score)">{{ l.score != null ? (l.score | number: '1.0-0') + ' %' : '—' }}</td>
+                                <td class="py-2 pl-4"><p-tag [value]="avancement(l.noeud).libelle" [severity]="avancement(l.noeud).severite" [rounded]="true"></p-tag></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end mt-4">
+            <p-button icon="pi pi-flag" label="Voir les écarts transmis au module Non-conformités" size="small"
+                      routerLink="/gestion-audit/suivi" [queryParams]="{ onglet: 'ecarts', auditId: auditId }"></p-button>
+        </div>
+    </ng-container>
+</div>

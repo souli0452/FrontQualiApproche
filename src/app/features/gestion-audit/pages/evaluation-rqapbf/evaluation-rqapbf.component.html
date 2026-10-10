@@ -1,67 +1,297 @@
-<div class="p-6 max-w-5xl mx-auto">
+<div class="p-6">
     <p-toast></p-toast>
+    <p-confirmpopup></p-confirmpopup>
 
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Évaluation RQAP-BF</h2>
-            <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">Notation par rapport au référentiel qualité des achats publics</p>
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+        <div class="flex items-center gap-3">
+            <p-button icon="pi pi-arrow-left" [rounded]="true" [text]="true" severity="secondary"
+                      [routerLink]="['/gestion-audit/programme', auditId]" pTooltip="Retour à l'audit"></p-button>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Évaluation RQAP-BF</h2>
+                    <p-tag *ngIf="evaluation" [value]="validee ? 'Validée' : 'Brouillon'" [severity]="validee ? 'success' : 'secondary'" [rounded]="true"></p-tag>
+                </div>
+                <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">
+                    <span class="font-mono font-semibold text-primary">{{ audit?.reference }}</span>
+                    <span *ngIf="evaluation"> · {{ evaluation.criteresNotes ?? 0 }} / {{ totalCriteres }} critère(s) noté(s), {{ evaluation.criteresPublies ?? 0 }} publié(s)</span>
+                </p>
+            </div>
         </div>
-        <div class="flex gap-2" *ngIf="evaluation">
-            <p-button icon="pi pi-save" label="Sauvegarder" [outlined]="true" size="small" [loading]="saving" (onClick)="sauvegarderNotations()"></p-button>
-            <p-button icon="pi pi-send" label="Publier" size="small" [disabled]="evaluation.statut === 'PUBLIEE'" (onClick)="publier()"></p-button>
+        <div class="flex flex-wrap items-center gap-2" *ngIf="evaluation">
+            <p-button icon="pi pi-eye" label="Prévisualiser les résultats" size="small" [outlined]="true" (onClick)="allerApercu()"></p-button>
+            <p-button icon="pi pi-chart-bar" label="Résultats" size="small" [outlined]="true" severity="secondary"
+                      [routerLink]="['/gestion-audit/programme', auditId, 'resultats-rqapbf']"></p-button>
+            <p-button *ngIf="!validee" icon="pi pi-lock" label="Valider" size="small" severity="success" [disabled]="actionEnCours" (onClick)="valider($event)"></p-button>
         </div>
     </div>
 
-    <div *ngIf="loading || loadingRef" class="space-y-3">
-        <p-skeleton *ngFor="let i of [1,2,3]" height="80px" borderRadius="8px"></p-skeleton>
+    <div *ngIf="loading" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <p-skeleton *ngFor="let i of [1,2,3,4]" height="110px" borderRadius="12px"></p-skeleton>
     </div>
 
-    <ng-container *ngIf="!loading && !loadingRef">
-        <div *ngIf="!evaluation" class="flex flex-col items-center justify-center py-20">
-            <i class="pi pi-chart-bar text-5xl text-surface-300 dark:text-surface-600 mb-4"></i>
+    <ng-container *ngIf="!loading">
+        <div *ngIf="!evaluation" class="flex flex-col items-center justify-center py-16 gap-3">
+            <i class="pi pi-chart-bar text-5xl text-surface-300 dark:text-surface-600"></i>
             <p class="text-sm text-surface-500 dark:text-surface-400 m-0">Aucune évaluation RQAP-BF pour cet audit.</p>
+            <p-button *ngIf="!auditTermine" icon="pi pi-plus" label="Ouvrir une évaluation" [loading]="actionEnCours" (onClick)="ouvrir()"></p-button>
         </div>
+
+        <p-message *ngIf="evaluation && !domaines.length" severity="warn" styleClass="mb-4 w-full"
+                   text="Le référentiel RQAP-BF est vide : renseignez-le avant de noter."></p-message>
 
         <ng-container *ngIf="evaluation">
-            <!-- Score global -->
-            <div *ngIf="evaluation.scoreGlobal !== undefined"
-                 class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5 mb-5">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mb-1">Score de maturité global</p>
-                        <p class="text-3xl font-bold m-0"
-                           [class]="evaluation.scoreGlobal >= 70 ? 'text-emerald-600' : evaluation.scoreGlobal >= 50 ? 'text-amber-600' : 'text-red-600'">
-                            {{ evaluation.scoreGlobal }}%
-                        </p>
-                    </div>
-                    <p-tag *ngIf="evaluation.statut" [value]="evaluation.statut" severity="secondary" [rounded]="true"></p-tag>
-                </div>
-            </div>
+            <!-- Fil d'Ariane -->
+            <nav *ngIf="vue !== 'domaines'" class="flex flex-wrap items-center gap-1 text-sm mb-4">
+                <button type="button" class="text-primary hover:underline bg-transparent border-0 p-0 cursor-pointer" (click)="allerDomaines()">Domaines</button>
+                <ng-container *ngIf="domaine && vue !== 'apercu'">
+                    <i class="pi pi-angle-right text-xs text-surface-400"></i>
+                    <button *ngIf="vue !== 'sections'; else domaineCourant" type="button" class="text-primary hover:underline bg-transparent border-0 p-0 cursor-pointer"
+                            (click)="choisirDomaine(domaine)">{{ domaine.code }} — {{ domaine.libelle }}</button>
+                    <ng-template #domaineCourant><span class="text-surface-700 dark:text-surface-200 font-semibold">{{ domaine.code }} — {{ domaine.libelle }}</span></ng-template>
+                </ng-container>
+                <ng-container *ngIf="section && (vue === 'criteres' || vue === 'notation')">
+                    <i class="pi pi-angle-right text-xs text-surface-400"></i>
+                    <button *ngIf="vue === 'notation'; else sectionCourante" type="button" class="text-primary hover:underline bg-transparent border-0 p-0 cursor-pointer"
+                            (click)="choisirSection(section)">{{ section.code }} — {{ section.libelle }}</button>
+                    <ng-template #sectionCourante><span class="text-surface-700 dark:text-surface-200 font-semibold">{{ section.code }} — {{ section.libelle }}</span></ng-template>
+                </ng-container>
+                <ng-container *ngIf="vue === 'notation' && critere">
+                    <i class="pi pi-angle-right text-xs text-surface-400"></i>
+                    <span class="text-surface-700 dark:text-surface-200 font-semibold">{{ critere.code }}</span>
+                </ng-container>
+                <ng-container *ngIf="vue === 'apercu'">
+                    <i class="pi pi-angle-right text-xs text-surface-400"></i>
+                    <span class="text-surface-700 dark:text-surface-200 font-semibold">Prévisualisation</span>
+                </ng-container>
+            </nav>
 
-            <!-- Notations par critère -->
-            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
-                <div class="p-4 border-b border-surface-100 dark:border-surface-800">
-                    <h3 class="text-sm font-bold text-surface-700 dark:text-surface-300 uppercase tracking-wide m-0">Notations par critère</h3>
+            <!-- C11 · Sélection du domaine -->
+            <ng-container *ngIf="vue === 'domaines'">
+                <p class="text-sm text-surface-500 m-0 mb-4">Choisissez un domaine pour descendre vers ses sections, puis ses exigences et critères.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button *ngFor="let d of domaines" type="button" (click)="choisirDomaine(d)"
+                            class="text-left bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 cursor-pointer hover:border-primary transition-colors">
+                        <div class="flex items-start justify-between gap-2 mb-2">
+                            <span class="font-semibold text-sm text-surface-900 dark:text-surface-50">
+                                <span class="font-mono text-xs text-primary mr-1">{{ d.code }}</span>{{ d.libelle }}
+                            </span>
+                            <i class="pi pi-arrow-right text-xs text-surface-400 mt-1"></i>
+                        </div>
+                        <p-progressbar [value]="score(d) ?? 0" [showValue]="false" styleClass="h-2 mb-2"></p-progressbar>
+                        <div class="flex justify-between text-xs text-surface-500">
+                            <span>Score : {{ score(d) != null ? (score(d) | number: '1.0-0') + ' %' : '—' }}</span>
+                            <span *ngIf="feuilles(d).length; else aCompleter">{{ nbNotes(d) }} / {{ feuilles(d).length }} critère(s) noté(s)</span>
+                            <ng-template #aCompleter><span class="italic">Référentiel à compléter</span></ng-template>
+                        </div>
+                    </button>
                 </div>
-                <div *ngFor="let notation of evaluation.notations"
-                     class="flex items-center gap-4 p-4 border-b border-surface-100 dark:border-surface-800 last:border-0">
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-surface-900 dark:text-surface-100 m-0">{{ notation.noeudLibelle ?? notation.noeudCode }}</p>
-                        <p *ngIf="notation.commentaire" class="text-xs text-surface-500 dark:text-surface-400 m-0 mt-0.5">{{ notation.commentaire }}</p>
+            </ng-container>
+
+            <!-- C11S · Sélection de la section -->
+            <ng-container *ngIf="vue === 'sections' && domaine">
+                <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 mb-4">
+                    <div class="font-semibold mb-1">{{ domaine.code }} — {{ domaine.libelle }}</div>
+                    <div class="text-xs text-surface-500 mb-2">
+                        Score global du domaine : {{ score(domaine) != null ? (score(domaine) | number: '1.0-0') + ' %' : '—' }}
+                        <ng-container *ngIf="score(domaine) != null"> · Niveau {{ niveauDe(score(domaine)) }}</ng-container>
+                        · {{ nbNotes(domaine) }} / {{ feuilles(domaine).length }} critère(s) noté(s)
                     </div>
-                    <p-select
-                        [(ngModel)]="notation.niveau"
-                        [options]="niveauOptions"
-                        optionLabel="label"
-                        optionValue="value"
-                        placeholder="Sélectionner"
-                        styleClass="w-48">
-                    </p-select>
+                    <p-progressbar [value]="score(domaine) ?? 0" [showValue]="false" styleClass="h-2"></p-progressbar>
                 </div>
-                <div *ngIf="!evaluation.notations?.length" class="p-8 text-center">
-                    <p class="text-sm text-surface-500 dark:text-surface-400 m-0">Aucun critère à évaluer.</p>
+                <p *ngIf="!domaine.enfants?.length" class="text-sm text-surface-400 m-0">Ce domaine n'a ni section ni critère.</p>
+                <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden" *ngIf="domaine.enfants?.length">
+                    <button *ngFor="let s of tries(domaine.enfants)" type="button" (click)="choisirSection(s)"
+                            class="w-full flex items-center gap-4 px-4 py-3 text-left bg-transparent border-0 border-b border-surface-100 dark:border-surface-800 last:border-b-0 cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800/40">
+                        <span class="flex-1 min-w-0 text-sm font-semibold"><span class="font-mono text-xs text-primary mr-1">{{ s.code }}</span>{{ s.libelle }}</span>
+                        <span class="w-16 text-sm text-right">{{ score(s) != null ? (score(s) | number: '1.0-0') + ' %' : '—' }}</span>
+                        <span class="w-28"><p-tag [value]="avancement(s).libelle" [severity]="avancement(s).severite" [rounded]="true"></p-tag></span>
+                        <i class="pi pi-arrow-right text-xs text-surface-400"></i>
+                    </button>
                 </div>
-            </div>
+            </ng-container>
+
+            <!-- C11Q · Exigences et critères de la section -->
+            <ng-container *ngIf="vue === 'criteres' && section">
+                <p class="text-sm text-surface-500 m-0 mb-4">
+                    Dépliez jusqu'au critère puis notez dans l'ordre. Le niveau détaillé fait le score ; le constat retenu pour la synthèse reste binaire (Conforme / NC).
+                </p>
+
+                <ng-template #ligneCritere let-c>
+                    <button type="button" (click)="noter(c)"
+                            class="w-full flex flex-wrap items-center gap-2 px-3 py-2 text-left bg-transparent border-0 border-t border-surface-100 dark:border-surface-800 cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800/40">
+                        <span class="flex-1 min-w-0 text-sm"><span class="font-mono text-xs font-semibold mr-1">{{ c.code }}</span>{{ c.libelle }}</span>
+                        <p-tag [value]="rang(notation(c.id)?.niveau) + libelleNiveau(notation(c.id)?.niveau)" [severity]="severiteNiveau(notation(c.id)?.niveau)"></p-tag>
+                        <p-tag *ngIf="constat(notation(c.id)?.niveau) as k" [value]="k === 'NC' ? 'NC' : 'Conforme'" [severity]="k === 'NC' ? 'danger' : 'success'"></p-tag>
+                        <p-tag *ngIf="notation(c.id)" [value]="notation(c.id)?.statut === 'PUBLIE' ? 'Publié' : 'Brouillon'"
+                               [severity]="notation(c.id)?.statut === 'PUBLIE' ? 'success' : 'secondary'" [rounded]="true"></p-tag>
+                    </button>
+                </ng-template>
+
+                <ng-template #groupe let-n let-profondeur="profondeur">
+                    <div class="border border-surface-200 dark:border-surface-700 rounded-lg overflow-hidden" [ngClass]="profondeur ? 'mt-2' : 'mb-3 bg-white dark:bg-surface-900'">
+                        <button type="button" (click)="basculer(n)"
+                                class="w-full flex items-center gap-2 px-3 py-2 text-left bg-surface-50 dark:bg-surface-800 border-0 cursor-pointer">
+                            <i class="pi text-xs text-surface-400" [ngClass]="ouverts.has(n.id) ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
+                            <span class="flex-1 text-sm font-semibold">{{ n.code }} — {{ n.libelle }}</span>
+                            <span class="text-xs text-surface-500">{{ nbNotes(n) }} / {{ feuilles(n).length }}</span>
+                        </button>
+                        <div *ngIf="ouverts.has(n.id)" class="pl-3">
+                            <ng-container *ngFor="let e of tries(n.enfants)">
+                                <ng-container *ngIf="e.enfants?.length; else feuille">
+                                    <div class="pr-2 pb-2"><ng-container *ngTemplateOutlet="groupe; context: { $implicit: e, profondeur: profondeur + 1 }"></ng-container></div>
+                                </ng-container>
+                                <ng-template #feuille><ng-container *ngTemplateOutlet="ligneCritere; context: { $implicit: e }"></ng-container></ng-template>
+                            </ng-container>
+                        </div>
+                    </div>
+                </ng-template>
+
+                <ng-container *ngIf="section.enfants?.length; else sectionFeuille">
+                    <ng-container *ngFor="let e of tries(section.enfants)">
+                        <ng-container *ngIf="e.enfants?.length; else critereDirect">
+                            <ng-container *ngTemplateOutlet="groupe; context: { $implicit: e, profondeur: 0 }"></ng-container>
+                        </ng-container>
+                        <ng-template #critereDirect>
+                            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-lg overflow-hidden mb-2">
+                                <ng-container *ngTemplateOutlet="ligneCritere; context: { $implicit: e }"></ng-container>
+                            </div>
+                        </ng-template>
+                    </ng-container>
+                </ng-container>
+                <ng-template #sectionFeuille>
+                    <p-message severity="secondary" styleClass="w-full"
+                               text="Contenu détaillé (exigences et critères) à compléter lors du paramétrage du référentiel pour cette section."></p-message>
+                </ng-template>
+
+                <div class="flex justify-end gap-2 mt-4">
+                    <p-button label="Prévisualiser les résultats" [outlined]="true" size="small" (onClick)="allerApercu()"></p-button>
+                    <p-button [label]="validee ? 'Consulter les notes' : 'Commencer / continuer la notation'" icon="pi pi-arrow-right" iconPos="right" size="small"
+                              [disabled]="!feuilles(section).length" (onClick)="noter()"></p-button>
+                </div>
+            </ng-container>
+
+            <!-- C12 · Formulaire de notation -->
+            <ng-container *ngIf="vue === 'notation' && critere">
+                <div class="text-xs text-surface-500 mb-2">{{ chemin }} · Critère {{ position + 1 }} / {{ criteresSection.length }}</div>
+                <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 mb-4">
+                    <div class="text-sm font-semibold mb-3"><span class="font-mono text-xs text-primary mr-1">{{ critere.code }}</span>{{ critere.libelle }}</div>
+                    <div *ngIf="critere.preuveAttendue" class="text-xs bg-surface-50 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg px-3 py-2 mb-3">
+                        <i class="pi pi-search text-xs mr-1"></i>Élément(s) de preuve attendu(s) : {{ critere.preuveAttendue }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="block font-semibold mb-1">Niveau de conformité (grille officielle RQAP-BF) <span class="text-red-500">*</span></label>
+                        <p-selectbutton [options]="niveauOptions" [(ngModel)]="saisie.niveau" optionLabel="label" optionValue="value"
+                                        [disabled]="!critereModifiable" (onChange)="modifiee = true" styleClass="flex-wrap">
+                            <ng-template #item let-o>
+                                <span class="text-sm">{{ rang(o.value) }}{{ o.label }}</span>
+                            </ng-template>
+                        </p-selectbutton>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3 mb-3">
+                        <div>
+                            <label class="block font-semibold mb-1">Éléments de preuve</label>
+                            <textarea pTextarea [(ngModel)]="saisie.preuve" rows="2" [autoResize]="true" class="w-full" placeholder="Ce qui a été examiné"
+                                      [disabled]="!critereModifiable" (ngModelChange)="modifiee = true"></textarea>
+                        </div>
+                        <div>
+                            <label class="block font-semibold mb-1">Commentaire</label>
+                            <textarea pTextarea [(ngModel)]="saisie.commentaire" rows="2" [autoResize]="true" class="w-full"
+                                      [disabled]="!critereModifiable" (ngModelChange)="modifiee = true"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-surface-500">Score du critère</span>
+                            <p-tag [value]="saisie.niveau ? bareme(saisie.niveau) : 'Non noté'" [severity]="severiteNiveau(saisie.niveau)"></p-tag>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-surface-500">Constat retenu (synthèse)</span>
+                            <p-tag *ngIf="constat(saisie.niveau) as k; else sansConstat" [value]="k === 'NC' ? 'NC' : 'Conforme'" [severity]="k === 'NC' ? 'danger' : 'success'"></p-tag>
+                            <ng-template #sansConstat><p-tag value="—" severity="secondary"></p-tag></ng-template>
+                        </div>
+                    </div>
+
+                    <p-message *ngIf="constat(saisie.niveau) === 'NC' && notation(critere.id)?.statut !== 'PUBLIE'" severity="warn" styleClass="mt-3 w-full"
+                               [text]="critere.code + ' — constat NC (' + libelleNiveau(saisie.niveau) + ') : une fois publié, il ouvrira une non-conformité dans la structure auditée.'"></p-message>
+                    <!-- Publié au constat NC : l'écart est parti vers le module Non-conformités, sans nouvelle saisie. -->
+                    <ng-container *ngIf="notation(critere.id) as n">
+                        <p-message *ngIf="n.statut === 'PUBLIE' && n.constatRetenu === 'NC'" severity="info" styleClass="mt-3 w-full">
+                            <div class="flex flex-wrap items-center justify-between gap-2 w-full">
+                                <span class="text-sm">Constat publié : transmis au module Non-conformités, sans nouvelle saisie.</span>
+                                <a *ngIf="n.nonConformiteId" [routerLink]="['/non-conformite/traitement']" [queryParams]="{ ncId: n.nonConformiteId }"
+                                   class="text-xs font-semibold text-primary whitespace-nowrap">Ouvrir la fiche complète ↗</a>
+                                <span *ngIf="!n.nonConformiteId && n.transmissionEnAttente" class="text-xs text-amber-600 whitespace-nowrap"><i class="pi pi-clock text-xs"></i> Transmission en attente</span>
+                            </div>
+                        </p-message>
+                    </ng-container>
+
+                    <div class="flex items-center justify-between mt-3 pt-3 border-t border-surface-100 dark:border-surface-800">
+                        <p-tag [value]="notation(critere.id)?.statut === 'PUBLIE' ? 'Publié' : notation(critere.id) ? 'Brouillon' : 'Non enregistré'"
+                               [severity]="notation(critere.id)?.statut === 'PUBLIE' ? 'success' : 'secondary'" [rounded]="true"></p-tag>
+                        <p-button *ngIf="critereModifiable" label="Publier ce critère" icon="pi pi-send" size="small" [outlined]="true"
+                                  [disabled]="!saisie.niveau || actionEnCours" (onClick)="publierCritere()"></p-button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between">
+                    <p-button label="Précédent" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" size="small"
+                              [disabled]="position === 0 || actionEnCours" (onClick)="precedent()"></p-button>
+                    <p-button [label]="position >= criteresSection.length - 1 ? 'Terminer et prévisualiser les résultats' : 'Enregistrer et continuer'"
+                              icon="pi pi-arrow-right" iconPos="right" size="small" [loading]="actionEnCours" (onClick)="suivant()"></p-button>
+                </div>
+            </ng-container>
+
+            <!-- C13P · Prévisualisation par niveau, avant publication -->
+            <ng-container *ngIf="vue === 'apercu'">
+                <p class="text-sm text-surface-500 m-0 mb-4">
+                    Tous les critères notés, brouillons et publiés, regroupés par niveau : à relire avant publication.
+                    Publier un groupe transmet au module Non-conformités les critères dont le constat est « NC ».
+                </p>
+                <p *ngIf="!groupes.length" class="text-sm text-surface-400 text-center py-8 m-0">Aucun critère noté pour le moment.</p>
+                <div *ngFor="let g of groupes" class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl mb-4 overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-surface-50 dark:bg-surface-800">
+                        <div class="flex items-center gap-2">
+                            <p-tag [value]="libelleNiveau(g.niveau)" [severity]="severiteNiveau(g.niveau)"></p-tag>
+                            <span class="text-xs text-surface-500">{{ g.notations.length }} critère(s)</span>
+                        </div>
+                        <p-button *ngIf="g.brouillons && !validee" [label]="'Publier ce groupe (' + g.brouillons + ' brouillon' + (g.brouillons > 1 ? 's' : '') + ')'"
+                                  icon="pi pi-send" size="small" [disabled]="actionEnCours" (onClick)="publierGroupe($event, g.niveau)"></p-button>
+                        <span *ngIf="!g.brouillons" class="text-xs text-emerald-600 font-semibold"><i class="pi pi-check text-xs"></i> Tout publié</span>
+                    </div>
+                    <table class="w-full border-collapse text-sm">
+                        <thead>
+                            <tr class="text-xs text-surface-500">
+                                <th scope="col" class="text-left px-4 py-2 w-28">Réf.</th>
+                                <th scope="col" class="text-left px-4 py-2">Exigence / critère</th>
+                                <th scope="col" class="text-left px-4 py-2 w-28">Constat</th>
+                                <th scope="col" class="text-left px-4 py-2 w-28">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let n of g.notations" class="border-t border-surface-100 dark:border-surface-800">
+                                <td class="px-4 py-2 font-mono text-xs">{{ n.noeudCode }}</td>
+                                <td class="px-4 py-2">{{ n.noeudLibelle }}</td>
+                                <td class="px-4 py-2">
+                                    <p-tag *ngIf="constat(n.niveau) as k; else tiret" [value]="k === 'NC' ? 'NC' : 'Conforme'" [severity]="k === 'NC' ? 'danger' : 'success'"></p-tag>
+                                    <ng-template #tiret>—</ng-template>
+                                </td>
+                                <td class="px-4 py-2">
+                                    <p-tag [value]="n.statut === 'PUBLIE' ? 'Publié' : 'Brouillon'" [severity]="n.statut === 'PUBLIE' ? 'success' : 'secondary'" [rounded]="true"></p-tag>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p *ngIf="nonNotes > 0" class="text-xs text-surface-500 m-0">{{ nonNotes }} critère(s) non encore noté(s) — hors de cette prévisualisation.</p>
+                <div class="flex flex-wrap justify-end gap-2 mt-4">
+                    <p-button label="Retour au référentiel" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" size="small" (onClick)="allerDomaines()"></p-button>
+                    <p-button *ngIf="!validee" label="Publier tout et voir les résultats" icon="pi pi-arrow-right" iconPos="right" size="small"
+                              [disabled]="actionEnCours || !groupes.length" (onClick)="publierToutEtVoir($event)"></p-button>
+                </div>
+            </ng-container>
         </ng-container>
     </ng-container>
 </div>

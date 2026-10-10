@@ -3,27 +3,34 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { NgPrimeModule } from '@prime-ng';
-import { Subject } from 'rxjs';
+import { Subject, tap } from 'rxjs';
 import { takeUntil, catchError, of } from 'rxjs';
 import { MessageService, ConfirmationService } from 'primeng/api';
-import { AuditGestionService } from '../../services/audit.service';
-import { Audit, ConstatAudit } from '../../models/audit.model';
+import { SelectInputComponent } from '@shared/ui/select-input/select-input.component';
+import { AuditGestionService, contenu, messageErreur } from '../../services/audit.service';
+import { AuditReferentielService, LIBELLES_VIDES, LibellesAudit } from '../../services/audit-referentiel.service';
+import { ActionMaitriseRisque, Audit, AvancementAudit, ChecklistAudit, ConstatAudit, NoeudReferentiel, SiteAudit } from '../../models/audit.model';
 import {
     StatutAudit,
-    TypeAudit,
     NiveauRisqueAudit,
     StatutConstat,
     STATUT_AUDIT_LABELS,
     STATUT_AUDIT_SEVERITY,
-    TYPE_AUDIT_LABELS,
     NIVEAU_RISQUE_LABELS,
-    NIVEAU_RISQUE_SEVERITY
+    NIVEAU_RISQUE_SEVERITY,
+    NiveauEfficacite,
+    NIVEAU_EFFICACITE_LABELS
 } from '../../models/audit-enums';
 
+/**
+ * La fiche d'un audit : en-tête et trois blocs de réalisation (écran C9 de la maquette), puis la
+ * fiche de planification en consultation (A3), l'équipe, le risque et ses actions — dont
+ * l'efficacité s'évalue ici — et les constats. La planification se corrige sur sa propre page.
+ */
 @Component({
     selector: 'app-audit-detail',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule],
+    imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, SelectInputComponent],
     providers: [MessageService, ConfirmationService],
     templateUrl: './audit-detail.component.html'
 })
@@ -35,18 +42,20 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
     loadingConstats = true;
     actionEnCours = false;
     auditId: string | null = null;
+    libelles: LibellesAudit = LIBELLES_VIDES;
 
-    // Dialogue annulation
-    afficherDialogueAnnulation = false;
-    motifAnnulation = '';
+    avancement: AvancementAudit | null = null;
+    private sites: SiteAudit[] = [];
+    private checklists: ChecklistAudit[] = [];
+    private domaines = new Map<string, string>();
+
+    readonly efficaciteOptions = Object.values(NiveauEfficacite).map(n => ({ label: NIVEAU_EFFICACITE_LABELS[n], value: n }));
 
     readonly StatutAudit = StatutAudit;
-    readonly TypeAudit = TypeAudit;
     readonly NiveauRisqueAudit = NiveauRisqueAudit;
     readonly StatutConstat = StatutConstat;
     readonly STATUT_AUDIT_LABELS = STATUT_AUDIT_LABELS;
     readonly STATUT_AUDIT_SEVERITY = STATUT_AUDIT_SEVERITY;
-    readonly TYPE_AUDIT_LABELS = TYPE_AUDIT_LABELS;
     readonly NIVEAU_RISQUE_LABELS = NIVEAU_RISQUE_LABELS;
     readonly NIVEAU_RISQUE_SEVERITY = NIVEAU_RISQUE_SEVERITY;
 
@@ -54,6 +63,7 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
 
     constructor(
         private auditService: AuditGestionService,
+        private referentiel: AuditReferentielService,
         private route: ActivatedRoute,
         private router: Router,
         private messageService: MessageService,
@@ -62,9 +72,20 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.auditId = this.route.snapshot.paramMap.get('id');
+        this.referentiel.libelles().pipe(takeUntil(this.destroy$)).subscribe({
+            next: l => (this.libelles = l),
+            error: () => undefined // des tirets suffisent : la fiche reste lisible
+        });
+        this.referentiel.sites().pipe(takeUntil(this.destroy$), catchError(() => of([] as SiteAudit[])))
+            .subscribe(s => (this.sites = s));
+        this.auditService.getChecklists().pipe(takeUntil(this.destroy$), catchError(() => of(null)))
+            .subscribe(res => (this.checklists = contenu<ChecklistAudit>(res)));
+        this.auditService.getReferentielRQAPBF().pipe(takeUntil(this.destroy$), catchError(() => of(null)))
+            .subscribe(res => this.indexerDomaines(contenu<NoeudReferentiel>(res)));
         if (this.auditId) {
             this.chargerAudit(this.auditId);
             this.chargerConstats(this.auditId);
+            this.chargerAvancement(this.auditId);
         }
     }
 
@@ -73,8 +94,8 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
         this.auditService.findById(id)
             .pipe(
                 takeUntil(this.destroy$),
-                catchError(() => {
-                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Impossible de charger l'audit." });
+                catchError(err => {
+                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: messageErreur(err, "Impossible de charger l'audit."), life: 8000 });
                     return of(null);
                 })
             )
@@ -84,26 +105,42 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
             });
     }
 
+    chargerAvancement(auditId: string): void {
+        this.auditService.getAvancement(auditId)
+            .pipe(takeUntil(this.destroy$), catchError(() => of(null)))
+            .subscribe((res: any) => (this.avancement = res?.data ?? null));
+    }
+
+    private indexerDomaines(noeuds: NoeudReferentiel[]): void {
+        noeuds.forEach(n => {
+            if (n.id) this.domaines.set(n.id, [n.code, n.libelle].filter(Boolean).join(' — '));
+            this.indexerDomaines(n.enfants ?? []);
+        });
+    }
+
     chargerConstats(auditId: string): void {
         this.loadingConstats = true;
-        this.auditService.getConstats(auditId, undefined, 0, 100)
+        this.auditService.constatsDeLAudit(auditId)
             .pipe(
                 takeUntil(this.destroy$),
-                catchError(() => of({ data: { content: [] } }))
+                catchError(err => {
+                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: messageErreur(err, 'Les constats n\'ont pas pu être chargés.'), life: 8000 });
+                    return of([] as ConstatAudit[]);
+                })
             )
-            .subscribe((res: any) => {
-                this.constats = res?.data?.content ?? [];
+            .subscribe(constats => {
+                this.constats = constats;
                 this.loadingConstats = false;
             });
     }
 
     // ---- Cycle de vie ----
 
-    valider(): void {
+    valider(event: Event): void {
         if (!this.auditId) return;
         this.confirmationService.confirm({
+            target: event.currentTarget as EventTarget,
             message: "Valider cet audit et le passer en préparation ?",
-            header: 'Confirmation',
             icon: 'pi pi-check-circle',
             accept: () => this.executerTransition(() =>
                 this.auditService.validerAudit(this.auditId!),
@@ -112,11 +149,11 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    demarrer(): void {
+    demarrer(event: Event): void {
         if (!this.auditId) return;
         this.confirmationService.confirm({
+            target: event.currentTarget as EventTarget,
             message: "Démarrer l'exécution de cet audit ?",
-            header: 'Confirmation',
             icon: 'pi pi-play',
             accept: () => this.executerTransition(() =>
                 this.auditService.demarrerAudit(this.auditId!),
@@ -125,25 +162,37 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    ouvrirDialogueAnnulation(): void {
-        this.motifAnnulation = '';
-        this.afficherDialogueAnnulation = true;
-    }
-
-    confirmerAnnulation(): void {
-        if (!this.auditId || !this.motifAnnulation.trim()) return;
-        this.afficherDialogueAnnulation = false;
-        this.executerTransition(
-            () => this.auditService.annulerAudit(this.auditId!, this.motifAnnulation),
-            "L'audit a été annulé."
-        );
-    }
-
-    cloturer(): void {
+    annuler(event: Event): void {
         if (!this.auditId) return;
         this.confirmationService.confirm({
+            target: event.currentTarget as EventTarget,
+            message: "Un audit annulé sort du programme et ne se reprend pas. Confirmer l'annulation ?",
+            icon: 'pi pi-times-circle',
+            acceptLabel: "Annuler l'audit",
+            rejectLabel: 'Retour',
+            acceptButtonStyleClass: 'p-button-danger',
+            accept: () => this.executerTransition(() => this.auditService.annulerAudit(this.auditId!), "L'audit a été annulé.")
+        });
+    }
+
+    evaluerEfficacite(action: ActionMaitriseRisque, niveau: NiveauEfficacite): void {
+        if (!this.auditId || !action.id || niveau === action.efficacite) return;
+        this.auditService.setEfficaciteAction(this.auditId, action.id, niveau)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: res => {
+                    this.audit = res?.data ?? this.audit;
+                    this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Efficacité de l\'action enregistrée.' });
+                },
+                error: err => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: messageErreur(err, "L'efficacité n'a pas pu être enregistrée."), life: 8000 })
+            });
+    }
+
+    cloturer(event: Event): void {
+        if (!this.auditId) return;
+        this.confirmationService.confirm({
+            target: event.currentTarget as EventTarget,
             message: "Clôturer définitivement cet audit ?",
-            header: 'Clôture',
             icon: 'pi pi-lock',
             accept: () => this.executerTransition(() =>
                 this.auditService.cloturerAudit(this.auditId!),
@@ -158,12 +207,20 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
         this.auditService.transmettreEcarts(this.auditId)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-                next: () => {
-                    this.messageService.add({ severity: 'success', summary: 'Écarts transmis', detail: 'Les non-conformités ont été envoyées au module amélioration.' });
+                next: res => {
+                    const bilan = res?.data;
+                    const echecs = bilan?.echecs ?? [];
+                    this.messageService.add({
+                        severity: echecs.length ? 'warn' : 'success',
+                        summary: 'Transmission des écarts',
+                        detail: `${bilan?.transmis ?? 0} non-conformité(s) ouverte(s).` + (echecs.length ? ` Échecs : ${echecs.join(' ; ')}` : ''),
+                        life: echecs.length ? 10000 : 4000
+                    });
                     this.actionEnCours = false;
+                    if (this.auditId) this.chargerConstats(this.auditId);
                 },
-                error: () => {
-                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'La transmission des écarts a échoué.' });
+                error: err => {
+                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: messageErreur(err, 'La transmission des écarts a échoué.'), life: 8000 });
                     this.actionEnCours = false;
                 }
             });
@@ -171,15 +228,17 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
 
     private executerTransition(fn: () => any, successMsg: string): void {
         this.actionEnCours = true;
-        fn().pipe(takeUntil(this.destroy$))
+        fn().pipe(tap(() => this.auditService.rafraichirNotifications())).pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res: any) => {
                     this.audit = res?.data ?? this.audit;
+                    if (this.auditId) this.chargerAvancement(this.auditId);
                     this.messageService.add({ severity: 'success', summary: 'Succès', detail: successMsg });
                     this.actionEnCours = false;
                 },
-                error: () => {
-                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "L'opération a échoué." });
+                error: (err: unknown) => {
+                    // Le serveur dit pourquoi (équipe incomplète, rapport non signé…) : on le montre.
+                    this.messageService.add({ severity: 'error', summary: 'Opération refusée', detail: messageErreur(err, "L'opération a échoué."), life: 10000 });
                     this.actionEnCours = false;
                 }
             });
@@ -193,7 +252,7 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (blob) => this.sauvegarderBlob(blob, `rapport-audit-${this.audit?.reference ?? this.auditId}.pdf`),
-                error: () => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de télécharger le rapport.' })
+                error: err => this.erreurBlob(err, 'Impossible de télécharger le rapport.')
             });
     }
 
@@ -203,7 +262,7 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (blob) => this.sauvegarderBlob(blob, `rapport-audit-${this.audit?.reference ?? this.auditId}.pdf`),
-                error: () => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "L'export PDF a échoué." })
+                error: err => this.erreurBlob(err, "L'export PDF a échoué.")
             });
     }
 
@@ -213,7 +272,7 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (blob) => this.sauvegarderBlob(blob, `rapport-audit-${this.audit?.reference ?? this.auditId}.docx`),
-                error: () => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "L'export Word a échoué." })
+                error: err => this.erreurBlob(err, "L'export Word a échoué.")
             });
     }
 
@@ -240,6 +299,36 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
 
     // ---- Helpers ----
 
+    /** La planification se corrige tant que l'audit n'a pas démarré. */
+    get peutModifier(): boolean {
+        return [StatutAudit.PLANIFIE, StatutAudit.EN_PREPARATION, StatutAudit.EN_RETARD].includes(this.audit?.statut as StatutAudit);
+    }
+
+    get raisonsCloture(): string {
+        return this.avancement?.cloturable === false ? (this.avancement.raisonsDeNePasCloturer ?? []).join(' · ') : '';
+    }
+
+    get libellePlan(): string {
+        return ({ BROUILLON: 'Brouillon', VALIDE: 'Validé', PARTAGE: 'Diffusé' } as Record<string, string>)[this.avancement?.statutPlan ?? ''] ?? 'Pas encore élaboré';
+    }
+
+    get sitesDeLAudit(): string[] {
+        return (this.audit?.siteIds ?? []).map(id => this.sites.find(s => s.id === id)?.nom ?? '—');
+    }
+
+    get domainesDeLAudit(): string {
+        const ids = this.audit?.domaineRqapbfIds ?? [];
+        return ids.length ? ids.map(id => this.domaines.get(id) ?? '—').join(', ') : 'Tous les domaines';
+    }
+
+    get checklistsDeLAudit(): string {
+        return (this.audit?.checklistIds ?? []).map(id => this.checklists.find(c => c.id === id)?.nom ?? '—').join(', ') || '—';
+    }
+
+    libelleEfficacite(n?: string): string {
+        return NIVEAU_EFFICACITE_LABELS[(n ?? NiveauEfficacite.NON_EVALUEE) as NiveauEfficacite] ?? n ?? '—';
+    }
+
     get peutValider(): boolean {
         return this.audit?.statut === StatutAudit.PLANIFIE;
     }
@@ -248,8 +337,9 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
         return this.audit?.statut === StatutAudit.EN_PREPARATION;
     }
 
+    /** Seul un audit en cours se clôture : en retard, il n'a jamais démarré, le serveur refuserait. */
     get peutCloturer(): boolean {
-        return this.audit?.statut === StatutAudit.EN_COURS || this.audit?.statut === StatutAudit.EN_RETARD;
+        return this.audit?.statut === StatutAudit.EN_COURS;
     }
 
     get peutAnnuler(): boolean {
@@ -268,8 +358,19 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
         return STATUT_AUDIT_LABELS[statut as StatutAudit] ?? statut;
     }
 
-    getTypeLabel(type: string): string {
-        return TYPE_AUDIT_LABELS[type as TypeAudit] ?? type;
+    /** Le corps d'une erreur demandée en blob est un Blob : le relire pour en tirer le message du serveur. */
+    private async erreurBlob(err: any, defaut: string): Promise<void> {
+        let detail = defaut;
+        try {
+            detail = JSON.parse(await (err?.error as Blob).text())?.message ?? defaut;
+        } catch {
+            /* corps illisible : message par défaut */
+        }
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail, life: 8000 });
+    }
+
+    get nomsEquipe(): string {
+        return (this.audit?.membreEquipeIds ?? []).map(id => this.libelles.auditeur(id)).join(', ') || '—';
     }
 
     getNiveauRisqueLabel(niveau: string): string {

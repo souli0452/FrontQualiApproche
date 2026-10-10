@@ -1,184 +1,183 @@
-<div class="p-6 max-w-4xl mx-auto">
-    <p-toast></p-toast>
+<p-toast></p-toast>
 
-    <!-- En-tête -->
-    <div class="flex items-center gap-3 mb-6">
-        <p-button
-            icon="pi pi-arrow-left"
-            [rounded]="true"
-            [text]="true"
-            severity="secondary"
-            (onClick)="annuler()"
-            pTooltip="Retour au programme">
-        </p-button>
+<p-skeleton *ngIf="loading" height="600px" borderRadius="12px" styleClass="m-4"></p-skeleton>
+
+<app-audit-page-formulaire *ngIf="!loading"
+    [titre]="modeEdition ? 'Modifier l\'audit ' + (reference ?? '') : 'Planifier un audit'"
+    [sousTitre]="modeEdition ? 'Mettez à jour la planification de l\'audit. Elle ne se modifie plus une fois l\'audit démarré.' : 'Renseignez le processus audité, l\'équipe et les objectifs. La référence de l\'audit est attribuée à l\'enregistrement.'"
+    [icone]="modeEdition ? 'pi-pencil' : 'pi-calendar-plus'"
+    [conseils]="conseils">
+
+    <p-message *ngIf="verrouille" severity="info" styleClass="mb-4 w-full"
+               text="L'audit a démarré ou est terminé : sa planification ne se modifie plus."></p-message>
+
+    <p-stepper [value]="etape" (valueChange)="allerA($event)" styleClass="mb-2">
+        <p-step-list>
+            <p-step *ngFor="let e of etapes; let n = index" [value]="n + 1" [disabled]="!etapeAtteignable(n + 1)">{{ e }}</p-step>
+        </p-step-list>
+    </p-stepper>
+
+    <form [formGroup]="formulaire" (ngSubmit)="sauvegarder()">
+
+      <div *ngIf="etape === 1" class="flex flex-col gap-3">
+        <h4 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0">Identification</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+            <div>
+                <app-audit-libelle texte="Type d'audit" [requis]="true"
+                    aide="Les types se définissent dans Configurations › Audit. Un type « externe » n'élabore ni plan ni circuit de signature ici : l'organisme les transmet." />
+                <app-select-input formControlName="typeAuditId" [options]="typesAudit" optionLabel="libelle" optionValue="id" [filter]="true"
+                                  placeholder="Choisir un type d'audit" />
+                <small *ngIf="invalide('typeAuditId')" class="p-error">Ce champ est requis</small>
+                <small *ngIf="!typesAudit.length" class="text-amber-600 text-xs">Aucun type d'audit paramétré pour votre direction.</small>
+            </div>
+            <div>
+                <app-audit-libelle texte="Processus audité" [requis]="true"
+                    aide="La structure dont le fonctionnement est audité. Les écarts relevés ouvriront leur non-conformité dans cette structure." />
+                <app-select-input formControlName="processusId" [options]="processus" optionLabel="libelleLong" optionValue="id" [filter]="true"
+                                  filterBy="libelleLong,libelleCourt" placeholder="Choisir une structure" />
+                <small *ngIf="invalide('processusId')" class="p-error">Ce champ est requis</small>
+            </div>
+            <div [ngClass]="{ 'md:col-span-2': !typeChoisi?.circuitExterne }">
+                <app-audit-libelle texte="Sites / périmètres" aide="Les sites couverts par l'audit, choisis parmi ceux du paramétrage." />
+                <app-multiselect-input formControlName="siteIds" [options]="sites" optionLabel="nom" optionValue="id" display="chip"
+                                       placeholder="Choisir un ou plusieurs sites" />
+            </div>
+            <div *ngIf="typeChoisi?.circuitExterne">
+                <app-audit-libelle texte="Organisme externe" aide="L'organisme qui mène l'audit (certificateur, client, autorité…)." />
+                <input pInputText formControlName="organismeExterne" class="w-full" placeholder="Exemple : Bureau Veritas" />
+            </div>
+        </div>
+
+        <h4 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0">Calendrier</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+            <div>
+                <app-audit-libelle texte="Début prévu" [requis]="true" />
+                <input pInputText type="date" formControlName="dateDebutPrevue" class="w-full" />
+                <small *ngIf="invalide('dateDebutPrevue')" class="p-error">Ce champ est requis</small>
+            </div>
+            <div>
+                <app-audit-libelle texte="Fin prévue" [requis]="true" />
+                <input pInputText type="date" formControlName="dateFinPrevue" class="w-full" />
+                <small *ngIf="invalide('dateFinPrevue')" class="p-error">Ce champ est requis</small>
+            </div>
+            <div class="md:col-span-2">
+                <app-audit-libelle texte="Durée estimée (jours)" aide="Le temps passé sur place, qui peut être inférieur à la période prévue." />
+                <input pInputText type="number" min="1" formControlName="dureeEstimeeJours" class="w-full" />
+            </div>
+        </div>
+
+      </div>
+
+      <div *ngIf="etape === 2" class="flex flex-col gap-3">
+        <h4 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0">Équipe d'audit</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+            <div>
+                <app-audit-libelle texte="Responsable d'équipe" [requis]="true"
+                    aide="Choisi dans le vivier d'auditeurs. Un conflit d'intérêts avec le processus audité ou une indisponibilité sur la période se signale dès le choix ; la validation de l'audit tranche." />
+                <app-select-input formControlName="responsableEquipeId" [options]="auditeurs" optionLabel="libelleChoix" optionValue="id" [filter]="true"
+                                  filterBy="nomComplet,libelleChoix" placeholder="Choisir dans le vivier" />
+                <small *ngIf="invalide('responsableEquipeId')" class="p-error">Ce champ est requis</small>
+                <small *ngIf="!auditeurs.length" class="text-amber-600 text-xs">Le vivier d'auditeurs est vide.</small>
+                <ng-container *ngTemplateOutlet="alertes; context: { liste: alertesResponsable }"></ng-container>
+            </div>
+            <div>
+                <app-audit-libelle texte="Auditeurs associés" aide="Chaque auditeur est proposé avec ses domaines habilités. Les mêmes contrôles que pour le responsable s'appliquent." />
+                <app-multiselect-input formControlName="membreEquipeIds" [options]="auditeurs" optionLabel="libelleChoix" optionValue="id" display="chip"
+                                       [filter]="true" filterBy="nomComplet,libelleChoix" placeholder="Choisir les membres de l'équipe" />
+                <ng-container *ngTemplateOutlet="alertes; context: { liste: alertesMembres }"></ng-container>
+            </div>
+        </div>
+
+      </div>
+
+      <!-- Les alertes d'équipe, comme sur la maquette : elles préviennent, elles ne bloquent pas. -->
+      <ng-template #alertes let-liste="liste">
+        <div *ngIf="liste.length" class="mt-1 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-xs text-red-700 dark:text-red-300">
+            <div *ngFor="let a of liste" class="flex items-start gap-1.5">
+                <i class="pi pi-exclamation-triangle mt-0.5"></i>
+                <span>{{ a }}</span>
+            </div>
+        </div>
+      </ng-template>
+
+      <div *ngIf="etape === 3" class="flex flex-col gap-3">
+        <h4 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0">Objectifs, portée et critères</h4>
         <div>
-            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">
-                {{ modeEdition ? "Modifier l'audit" : 'Planifier un audit' }}
-            </h2>
-            <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">
-                {{ modeEdition ? "Mise à jour des informations de l'audit" : 'Création d\'un nouvel audit dans le programme' }}
-            </p>
+            <app-audit-libelle texte="Objectifs de l'audit" [requis]="true" aide="Ce que l'audit doit vérifier ou évaluer. Ils sont repris dans le plan et le rapport." />
+            <textarea pTextarea formControlName="objectifsAudit" rows="2" [autoResize]="true" class="w-full"
+                      placeholder="Exemple : vérifier la maîtrise des documents et des enregistrements du processus…"></textarea>
+            <small *ngIf="invalide('objectifsAudit')" class="p-error">Ce champ est requis</small>
+        </div>
+        <div>
+            <app-audit-libelle texte="Portée" aide="Les activités, lieux et période couverts par l'audit." />
+            <textarea pTextarea formControlName="porteeAudit" rows="2" [autoResize]="true" class="w-full"></textarea>
+        </div>
+        <div>
+            <app-audit-libelle texte="Critères d'audit" aide="Les exigences de référence : chapitres de norme, procédures internes, exigences réglementaires…" />
+            <textarea pTextarea formControlName="criteresAudit" rows="2" [autoResize]="true" class="w-full"
+                      placeholder="ISO 9001:2015 §7.5 · RQAP-BF Domaine 4…"></textarea>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+            <div>
+                <app-audit-libelle texte="Checklists" aide="Les checklists publiées à employer : leurs points de contrôle seront proposés aux auditeurs pendant l'audit." />
+                <app-multiselect-input formControlName="checklistIds" [options]="checklists" optionLabel="nom" optionValue="id" display="chip"
+                                       placeholder="Checklists publiées" />
+            </div>
+            <div>
+                <app-audit-libelle texte="Domaines RQAP-BF évalués" aide="Sans choix, l'évaluation RQAP-BF porte sur tous les domaines du référentiel." />
+                <app-multiselect-input formControlName="domaineRqapbfIds" [options]="domaines" optionLabel="libelle" optionValue="id" display="chip"
+                                       placeholder="Tous les domaines" />
+            </div>
+        </div>
+        <div>
+            <app-audit-libelle texte="Référentiels" aide="Les normes ou grilles de référence, séparées par des virgules." />
+            <input pInputText formControlName="referentiels" class="w-full" placeholder="ISO 9001, Grille RQAP-BF" />
+        </div>
+
+      </div>
+
+      <div *ngIf="etape === 4" class="flex flex-col gap-3">
+        <h4 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0">Risque</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+            <div>
+                <app-audit-libelle texte="Niveau de risque" />
+                <app-select-input formControlName="niveauRisque" [options]="niveauRisqueOptions" optionLabel="label" optionValue="value" [showClear]="false" />
+            </div>
+            <div>
+                <app-audit-libelle texte="Description du risque" aide="Ce qui justifie le niveau retenu : enjeux du processus, incidents passés, changements récents…" />
+                <textarea pTextarea formControlName="descriptionRisque" rows="2" [autoResize]="true" class="w-full"></textarea>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between">
+            <app-audit-libelle texte="Actions de maîtrise des risques"
+                aide="Les mesures prévues pour réduire le risque lié à l'audit. Leur efficacité s'évalue ensuite depuis la fiche de l'audit." />
+            <p-button *ngIf="!verrouille" icon="pi pi-plus" label="Ajouter une action" size="small" [outlined]="true" (onClick)="ajouterAction()"></p-button>
+        </div>
+        <p *ngIf="!actions.length" class="text-sm text-surface-400 m-0 -mt-3">Aucune action prévue.</p>
+        <div *ngFor="let a of actions; let i = index" class="grid grid-cols-1 md:grid-cols-12 gap-3 items-start -mt-2">
+            <input pInputText [(ngModel)]="a.libelle" [ngModelOptions]="{ standalone: true }" class="md:col-span-6 w-full"
+                   placeholder="Action (ex : désigner un observateur indépendant)" [disabled]="verrouille" />
+            <div class="md:col-span-3">
+                <app-select-input [(ngModel)]="a.responsable" [ngModelOptions]="{ standalone: true }" [options]="utilisateurs"
+                                  optionLabel="nomComplet" optionValue="nomComplet" [filter]="true" placeholder="Responsable" [disabled]="verrouille" />
+            </div>
+            <input pInputText type="date" [(ngModel)]="a.delai" [ngModelOptions]="{ standalone: true }" class="md:col-span-2 w-full" [disabled]="verrouille" />
+            <p-button *ngIf="!verrouille" icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" class="md:col-span-1" (onClick)="retirerAction(i)"></p-button>
+        </div>
+      </div>
+    </form>
+
+    <div actions class="contents">
+        <button pButton type="button" class="p-button-secondary font-bold" label="Annuler" (click)="annuler()"></button>
+        <div class="flex gap-2">
+            <button *ngIf="etape > 1" pButton type="button" class="p-button-secondary p-button-outlined font-bold" icon="pi pi-arrow-left"
+                    label="Précédent" (click)="precedent()"></button>
+            <button *ngIf="etape < etapes.length" pButton type="button" class="p-button-primary font-bold" icon="pi pi-arrow-right" iconPos="right"
+                    label="Suivant" (click)="suivant()"></button>
+            <!-- En modification, on enregistre depuis n'importe quelle étape ; à la création, au bout du parcours. -->
+            <button *ngIf="!verrouille && (modeEdition || etape === etapes.length)" pButton type="button" class="p-button-primary font-bold" icon="pi pi-save"
+                    [label]="modeEdition ? 'Enregistrer les modifications' : 'Planifier l\'audit'" [loading]="saving" (click)="sauvegarder()"></button>
         </div>
     </div>
-
-    <p-skeleton *ngIf="loading" height="600px" borderRadius="12px"></p-skeleton>
-
-    <form *ngIf="!loading" [formGroup]="formulaire" (ngSubmit)="sauvegarder()">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-            <!-- Colonne gauche -->
-            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5 space-y-4">
-                <h3 class="text-sm font-bold text-surface-700 dark:text-surface-300 uppercase tracking-wide m-0 pb-2 border-b border-surface-100 dark:border-surface-800">
-                    Identification
-                </h3>
-
-                <!-- Référence -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Référence</label>
-                    <input pInputText formControlName="reference" placeholder="Ex: AUD-2026-013 (générée automatiquement)" />
-                </div>
-
-                <!-- Type d'audit -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Type d'audit <span class="text-red-500">*</span></label>
-                    <p-select
-                        formControlName="typeAuditId"
-                        [options]="typeAuditOptions"
-                        optionLabel="label"
-                        optionValue="value"
-                        class="w-full">
-                    </p-select>
-                    <small *ngIf="formulaire.get('typeAuditId')?.invalid && formulaire.get('typeAuditId')?.touched"
-                           class="text-red-500 text-xs">Le type d'audit est requis.</small>
-                </div>
-
-                <!-- Date de début -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Date de début prévue <span class="text-red-500">*</span></label>
-                    <input pInputText type="date" formControlName="dateDebutPrevue" />
-                    <small *ngIf="formulaire.get('dateDebutPrevue')?.invalid && formulaire.get('dateDebutPrevue')?.touched"
-                           class="text-red-500 text-xs">La date est requise.</small>
-                </div>
-
-                <!-- Date de fin -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Date de fin prévue</label>
-                    <input pInputText type="date" formControlName="dateFinPrevue" />
-                </div>
-
-                <!-- Statut -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Statut</label>
-                    <p-select
-                        formControlName="statut"
-                        [options]="statutOptions"
-                        optionLabel="label"
-                        optionValue="value"
-                        class="w-full">
-                    </p-select>
-                </div>
-            </div>
-
-            <!-- Colonne droite -->
-            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5 space-y-4">
-                <h3 class="text-sm font-bold text-surface-700 dark:text-surface-300 uppercase tracking-wide m-0 pb-2 border-b border-surface-100 dark:border-surface-800">
-                    Équipe & Risque
-                </h3>
-
-                <!-- Responsable -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Responsable d'équipe (ID) <span class="text-red-500">*</span></label>
-                    <input pInputText formControlName="responsableEquipeId" placeholder="UUID du responsable" />
-                    <small *ngIf="formulaire.get('responsableEquipeId')?.invalid && formulaire.get('responsableEquipeId')?.touched"
-                           class="text-red-500 text-xs">Le responsable est requis.</small>
-                </div>
-
-                <!-- Membres équipe -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Membres de l'équipe (IDs)</label>
-                    <input pInputText formControlName="membreEquipeIds" placeholder="UUIDs des membres (séparés par des virgules)" />
-                </div>
-
-                <!-- Niveau de risque -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Niveau de risque</label>
-                    <p-select
-                        formControlName="niveauRisque"
-                        [options]="niveauRisqueOptions"
-                        optionLabel="label"
-                        optionValue="value"
-                        class="w-full">
-                    </p-select>
-                </div>
-
-                <!-- Description risque -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Description du risque</label>
-                    <textarea
-                        pInputTextarea
-                        formControlName="descriptionRisque"
-                        rows="3"
-                        placeholder="Contexte et justification du niveau de risque attribué…"
-                        class="w-full resize-none">
-                    </textarea>
-                </div>
-            </div>
-
-            <!-- Objectifs et critères — pleine largeur -->
-            <div class="lg:col-span-2 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5 space-y-4">
-                <h3 class="text-sm font-bold text-surface-700 dark:text-surface-300 uppercase tracking-wide m-0 pb-2 border-b border-surface-100 dark:border-surface-800">
-                    Objectifs & Critères
-                </h3>
-
-                <!-- Objectifs -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Objectifs de l'audit <span class="text-red-500">*</span></label>
-                    <textarea
-                        pInputTextarea
-                        formControlName="objectifsAudit"
-                        rows="3"
-                        placeholder="Décrire précisément ce que l'audit vise à vérifier ou évaluer…"
-                        class="w-full resize-y">
-                    </textarea>
-                    <small *ngIf="formulaire.get('objectifsAudit')?.invalid && formulaire.get('objectifsAudit')?.touched"
-                           class="text-red-500 text-xs">Les objectifs sont requis.</small>
-                </div>
-
-                <!-- Portée -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Portée de l'audit</label>
-                    <input pInputText formControlName="porteeAudit" placeholder="Périmètre organisationnel et géographique couvert…" />
-                </div>
-
-                <!-- Critères -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-surface-600 dark:text-surface-400">Critères d'audit</label>
-                    <textarea
-                        pInputTextarea
-                        formControlName="criteresAudit"
-                        rows="2"
-                        placeholder="Référentiels applicables : ISO 9001:2015 §8.4 · RQAP-BF Domaine 4…"
-                        class="w-full resize-y">
-                    </textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- Actions -->
-        <div class="flex justify-end gap-3 mt-6">
-            <p-button
-                label="Annuler"
-                [outlined]="true"
-                severity="secondary"
-                type="button"
-                (onClick)="annuler()">
-            </p-button>
-            <p-button
-                [label]="modeEdition ? 'Enregistrer les modifications' : 'Planifier l\'audit'"
-                icon="pi pi-save"
-                type="submit"
-                [loading]="saving">
-            </p-button>
-        </div>
-    </form>
-</div>
+</app-audit-page-formulaire>
