@@ -51,7 +51,7 @@ export class SearchAgentComponent implements OnInit {
                     this.searchedAgentChange.emit(this.searchedAgent);
                 },
                 error: (error) => {
-                    console.log(error);
+                    console.error('Recherche d\'agent impossible', error?.status);
                 }
             });
     }

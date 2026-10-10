@@ -246,11 +246,8 @@ export class FormTraitementComponent {
          // Essayer origineId en priorité, sinon utiliser structureSoumissionId
          const structureId = this.demande?.origineId || this.demande?.structureDeSoumissionId;
 
-         console.log("🔍 fetchUsersByStructure() appelé !");
-         console.log("   - ID de structure retenu pour le filtre :", structureId);
 
          if (!structureId) {
-             console.log("   ⚠️ Annulation : aucun ID de structure trouvé.");
              return;
          }
 
@@ -259,7 +256,6 @@ export class FormTraitementComponent {
              .pipe()
              .subscribe({
                  next: (res: any) => {
-                     console.log("✅ Réponse de loadAgentPublicByService :", res);
                      
                      const list = res.data?.content || res.content || [];
                      this.usersByStructure = list.map((user: any) => this.extractUserInfos(user));

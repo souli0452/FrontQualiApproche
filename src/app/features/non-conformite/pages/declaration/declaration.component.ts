@@ -158,7 +158,6 @@ export class NcComposeComponent implements OnInit {
             payload.etatTraitement = EtapeTraitement.SOUMISSION;
         }
 
-        console.log("📤 [NC COMPOSE] Données officielles envoyées :", payload);
 
         if (payload.id != null && publish) {
             const dejaEnregistre = payload.id;

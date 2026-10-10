@@ -30,7 +30,6 @@ import { AiAssistButtonComponent } from '@shared/ia/ai-assist-button.component';
 export class DetailsDialogComponent {
     @Input() set demande(valeur: any) {
         this._demande = valeur ?? {};
-        console.log("DEMANDE DANS DETAILS-DIALOG:", valeur);
     }
     get demande(): any {
         return this._demande;
@@ -97,7 +96,6 @@ export class DetailsDialogComponent {
         if (this.planAction.dateEcheance && typeof this.planAction.dateEcheance === 'string') {
             this.planAction.dateEcheance = this.planAction.dateEcheance.replace(/-/g, '/');
         }
-        console.log(this.planAction.dateEcheance);
         this.fetchUsers();
         this.motifRejetDialog = true;
     }
@@ -136,7 +134,6 @@ export class DetailsDialogComponent {
         this.planAction.responsableEmail = this.user.email;
         this.planAction.responsableNomComplet = this.user.nomComplet;
         this.planAction.responsableId = this.user.id;
-        console.log(this.planAction);
         this.service.updatePlanAction(this.planAction).subscribe({
             next: (data) => {
                 this.motifRejetDialog = false;

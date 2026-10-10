@@ -181,7 +181,6 @@ export class RoleDetailComponent implements OnInit, OnDestroy {
                     const rolesArray = resp.data.content || [];
                     
                     const role = rolesArray.find((r) => r.id === id);
-                    console.log("le role est : ", role);
                     
                     if (role) {
                         this.roleForm.patchValue(role);

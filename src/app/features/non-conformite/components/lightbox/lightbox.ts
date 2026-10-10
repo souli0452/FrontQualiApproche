@@ -3,9 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NgPrimeModule } from '@prime-ng';
 import { PieceJointeFichierService } from '@features/non-conformite/services/piece-jointe-fichier.service';
-
-/** Extensions que le navigateur sait peindre lui-même, sans aide. */
-const IMAGES = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg'];
+import { enregistrerBlob, reemballer, typeAffichable } from '../../../../utils/fichier/apercu-fichier';
 
 @Component({
     selector: 'app-lightbox',
@@ -124,12 +122,7 @@ export class LightboxComponent implements OnDestroy {
     /** Enregistre le fichier affiché, sous le nom qu'il porte. */
     public telecharger(): void {
         if (!this.blob) return;
-        const url = window.URL.createObjectURL(this.blob);
-        const lien = window.document.createElement('a');
-        lien.href = url;
-        lien.download = this.nomFichier;
-        lien.click();
-        setTimeout(() => window.URL.revokeObjectURL(url), 100);
+        enregistrerBlob(this.blob, this.nomFichier);
     }
 
     ngOnDestroy(): void {
@@ -142,26 +135,30 @@ export class LightboxComponent implements OnDestroy {
      * <p>Un nom sans extension est tenu pour un PDF : c'est le cas du fonds documentaire, dont les
      * fichiers sont désignés par leur numéro. Traiter ces documents comme illisibles priverait
      * d'aperçu ceux-là mêmes pour lesquels il a été fait.</p>
+     *
+     * <p>Le type retenu se décide sur le contenu autant que sur le nom (voir `apercu-fichier`) et
+     * le contenu est réemballé sous ce type : le cadre PDF chargerait sinon, dans l'origine de
+     * l'application, une page HTML qui se ferait passer pour un PDF. Le SVG, qui peut porter du
+     * script, n'est plus montré : il s'enregistre.</p>
      */
     private preparer(blob: Blob, nomFichier: string): void {
         this.libererObjectUrl();
 
-        const nom = (nomFichier || '').toLowerCase().trim();
-        const extension = nom.includes('.') ? nom.slice(nom.lastIndexOf('.')) : '';
+        const type = typeAffichable(blob, nomFichier, true);
 
-        this.isImage = IMAGES.includes(extension);
-        this.isPdf = !this.isImage && (extension === '.pdf' || extension === '');
-        this.apercuImpossible = !this.isImage && !this.isPdf;
+        this.isImage = !!type && type.startsWith('image/');
+        this.isPdf = type === 'application/pdf';
+        this.apercuImpossible = !type;
 
         this.blob = blob;
         this.nomFichier = nomFichier || 'document';
 
-        if (this.apercuImpossible) {
+        if (!type) {
             this.url = null;
             return;
         }
 
-        this.objectUrl = window.URL.createObjectURL(blob);
+        this.objectUrl = window.URL.createObjectURL(reemballer(blob, type));
         this.url = this.sanitizer.bypassSecurityTrustResourceUrl(this.objectUrl);
     }
 

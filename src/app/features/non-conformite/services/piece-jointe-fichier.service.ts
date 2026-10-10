@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AMELIORATION_SERVICE } from '@core/services/url-config';
+import { enregistrerBlob, ouvrirOuEnregistrer } from '../../../utils/fichier/apercu-fichier';
 
 /**
  * Contenu des pièces jointes des non-conformités et des plans d'action.
@@ -48,22 +49,20 @@ export class PieceJointeFichierService {
     /** Télécharge la pièce sous son nom d'origine. */
     telecharger(pj: any): void {
         this.contenu(pj).subscribe({
-            next: (blob) => {
-                const url = window.URL.createObjectURL(blob);
-                const lien = document.createElement('a');
-                lien.href = url;
-                lien.download = this.nomDe(pj);
-                lien.click();
-                setTimeout(() => window.URL.revokeObjectURL(url), 100);
-            },
+            next: (blob) => enregistrerBlob(blob, this.nomDe(pj)),
             error: (erreur) => console.error('Téléchargement impossible', erreur)
         });
     }
 
-    /** Ouvre la pièce dans un nouvel onglet. */
+    /**
+     * Ouvre la pièce dans un nouvel onglet si c'est un PDF ou une image, l'enregistre sinon.
+     *
+     * <p>Un onglet ouvert sur une URL `blob:` partage l'origine de l'application : une pièce HTML
+     * ou SVG y exécuterait ses scripts avec la session de qui la consulte (voir `apercu-fichier`).</p>
+     */
     visualiser(pj: any): void {
         this.contenu(pj).subscribe({
-            next: (blob) => window.open(window.URL.createObjectURL(blob), '_blank'),
+            next: (blob) => ouvrirOuEnregistrer(blob, this.nomDe(pj)),
             error: (erreur) => console.error('Aperçu impossible', erreur)
         });
     }

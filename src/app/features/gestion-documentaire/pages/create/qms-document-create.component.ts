@@ -188,8 +188,6 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
   }
 
   trySetUserStructure(): void {
-    console.log("---- DEBUG ---- ID de l'utilisateur :", this.currentUserStructureId, "| Nombre de structures chargées :", this.structures.length);
-    console.log("---- DEBUG ---- Liste des 4 structures :", this.structures);
 
     if (this.currentUserStructureId && this.structures.length > 0) {
       const userStructure = this.structures.find(s =>
@@ -201,8 +199,6 @@ export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
       if (userStructure) {
         this.documentForm.patchValue({ service: userStructure });
 
-        console.log("====> Processus Emetteur récupéré :", userStructure);
-        console.log("====> Valeur actuelle du formulaire :", this.documentForm.value);
       }
     }
   }

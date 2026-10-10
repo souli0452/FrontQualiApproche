@@ -101,6 +101,11 @@ export class WorkflowDiagramComponent implements OnChanges, OnDestroy {
     /** Couleur des flèches qui remontent vers une étape antérieure. */
     private static readonly COULEUR_RETOUR = '#f97316';
 
+    /** Entités Mermaid des caractères qu'un libellé ne doit pas porter tels quels (voir `libelle`). */
+    private static readonly ENTITES_MERMAID: Record<string, string> = {
+        '#': '#35;', ';': '#59;', '&': '#amp;', '<': '#lt;', '>': '#gt;', '"': '#quot;', "'": '#39;'
+    };
+
     @ViewChild('diagramme') private conteneur?: ElementRef<HTMLElement>;
 
     svg: SafeHtml | null = null;
@@ -358,9 +363,31 @@ export class WorkflowDiagramComponent implements OnChanges, OnDestroy {
         return (code || '').replace(/[^A-Za-z0-9_]+/g, '_') || '_';
     }
 
-    /** Libellé d'arête : ni guillemets, ni deux-points, ni retour ligne — Mermaid s'y perdrait. */
+    /**
+     * Libellé d'étape ou d'arête, rendu inerte avant d'entrer dans le source Mermaid.
+     *
+     * <p>Les noms d'étapes et d'actions sont saisis par les administrateurs du paramétrage et
+     * s'affichent chez tous ceux qui consultent un dossier : un `<img onerror=…>` glissé dans un nom
+     * deviendrait du code exécuté chez eux. Les caractères qui font du HTML ou ferment une chaîne
+     * Mermaid sont donc remplacés par les entités propres à Mermaid (`#lt;`, `#quot;`…), qu'il
+     * restitue en entités HTML dans le dessin : le texte s'affiche tel quel, sans jamais être
+     * interprété. Le `#` est échappé lui aussi, faute de quoi un nom contenant déjà « #lt; » serait
+     * décodé au lieu d'être montré.</p>
+     *
+     * <p>Le point-virgule l'est également : Mermaid y voit la fin d'une instruction, et l'étiquette
+     * d'une arête, qui n'est pas entre guillemets, s'y couperait — la suite du nom serait lue comme
+     * une instruction nouvelle. Tout se remplace en <b>une seule passe</b> : les entités produites
+     * contiennent elles-mêmes `#` et `;`, qu'une passe suivante viendrait réécrire.</p>
+     *
+     * <p>Les deux-points restent remplacés — Mermaid y verrait le début d'une étiquette — et les
+     * retours ligne repliés, qui couperaient la déclaration en deux.</p>
+     */
     private libelle(texte: string): string {
-        return (texte || '').replace(/"/g, "'").replace(/:/g, ' -').replace(/\s+/g, ' ').trim();
+        return (texte || '')
+            .replace(/[#;&<>"']/g, caractere => WorkflowDiagramComponent.ENTITES_MERMAID[caractere])
+            .replace(/:/g, ' -')
+            .replace(/\s+/g, ' ')
+            .trim();
     }
 
     // ------------------------------------------------------------------ rendu
@@ -371,9 +398,12 @@ export class WorkflowDiagramComponent implements OnChanges, OnDestroy {
         }
         try {
             const mermaid = (await import('mermaid')).default;
+            // `strict` : Mermaid passe le dessin au crible de DOMPurify et ignore les liens et
+            // appels de fonctions qu'un source pourrait déclarer. Le diagramme n'en a pas besoin,
+            // et ses libellés viennent de saisies utilisateur.
             mermaid.initialize({
                 startOnLoad: false,
-                securityLevel: 'loose',
+                securityLevel: 'strict',
                 theme: this.themeSombre() ? 'dark' : 'default',
                 fontFamily: 'inherit'
             });

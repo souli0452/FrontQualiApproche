@@ -7,6 +7,7 @@ import { Subject } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { AuthService } from '@core/auth/auth.service';
+import { IdentifiantsTemporaires, MotDePasseTemporaireService } from '@core/auth/mot-de-passe-temporaire.service';
 
 @Component({
   selector: 'app-reset-password',
@@ -21,20 +22,29 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
     newPasswordForm!: FormGroup;
     errorMessage = '';
     isTemporaryPasswordReset: boolean = false;
+    /** Identifiants confiés par l'écran de connexion ; absents quand on arrive par le lien du courriel. */
+    private identifiantsTemporaires: IdentifiantsTemporaires | null = null;
 
     constructor(
         private router: Router,
         private fb: FormBuilder,
         private route: ActivatedRoute,
-        private authService: AuthService
+        private authService: AuthService,
+        private motDePasseTemporaire: MotDePasseTemporaireService
     ) {}
 
     ngOnInit(): void {
         const token = this.route.snapshot.queryParamMap.get('token');
         const userId = this.route.snapshot.queryParamMap.get('userId');
-        const username = this.route.snapshot.queryParamMap.get('username');
 
-        this.isTemporaryPasswordReset = !!username && !token && !userId;
+        // Deux chemins mènent ici : le lien du courriel (jeton et identifiant dans l'URL, à usage
+        // unique côté serveur) et la connexion avec un mot de passe temporaire, dont l'ancien mot
+        // de passe est passé en mémoire et jamais par l'URL.
+        this.identifiantsTemporaires = this.motDePasseTemporaire.reprendre();
+        this.isTemporaryPasswordReset = !!this.identifiantsTemporaires && !token && !userId;
+        if (!token && !userId && !this.identifiantsTemporaires) {
+            this.errorMessage = 'Session expirée : reconnectez-vous avec votre mot de passe temporaire.';
+        }
 
         this.newPasswordForm = this.fb.group(
             {
@@ -51,28 +61,21 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
             return;
         }
 
-        // const password = this.newPasswordForm.get('password')?.value;
+        const password = this.newPasswordForm.get('password')?.value;
 
-        // if (this.isTemporaryPasswordReset) {
-        //     const username = this.route.snapshot.queryParamMap.get('username');
-        //     const oldPassword = this.route.snapshot.queryParamMap.get('oldpwd');
-        //     if (username && oldPassword) {
-        //         console.log(username,oldPassword)
-        //         this.handleTemporaryPasswordReset(username, password, oldPassword);
-        //     } else {
-        //         this.errorMessage = 'Les informations sont incorrectes.';
-        //     }
-        // } else {
-        //     const token = this.authService.getAccessToken();
-        //     const user = this.authService.getUser();
-        //     console.log(user)
-        //     if (!token || !user) {
-        //         console.error('Token ou userId manquant');
-        //         return;
-        //     }
+        if (this.isTemporaryPasswordReset && this.identifiantsTemporaires) {
+            const { username, motDePasse } = this.identifiantsTemporaires;
+            this.handleTemporaryPasswordReset(username, password, motDePasse);
+            return;
+        }
 
-        //     this.handleTokenPasswordReset(user.userId!, password, token);
-        // }
+        const token = this.route.snapshot.queryParamMap.get('token');
+        const userId = this.route.snapshot.queryParamMap.get('userId');
+        if (!token || !userId) {
+            this.errorMessage = 'Session expirée : reconnectez-vous avec votre mot de passe temporaire.';
+            return;
+        }
+        this.handleTokenPasswordReset(userId, password, token);
     }
 
     private handleTemporaryPasswordReset(username: string, password: string, oldPassword: string): void {

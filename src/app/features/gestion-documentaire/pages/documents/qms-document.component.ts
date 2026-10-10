@@ -7,6 +7,7 @@ import { takeUntil } from 'rxjs/operators';
 import { MessageService, MenuItem } from 'primeng/api';
 import { NgPrimeModule } from '@prime-ng';
 import { showToast, StatusEnum } from '../../../../utils/global/global-utils';
+import { ouvrirOuEnregistrer } from '../../../../utils/fichier/apercu-fichier';
 import { WorkflowStateDto, WorkflowActionDto, ValidationHistoryDto } from '../../../../models/workflow.model';
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
 import { QmsDocumentListComponent } from './components/qms-document-list.component';
@@ -428,8 +429,9 @@ export class QmsDocumentComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (blob: Blob) => {
-          const url = window.URL.createObjectURL(blob);
-          window.open(url, '_blank');
+          // Le fichier porte le numéro du document, sans extension : il est tenu pour un PDF. Tout
+          // autre contenu s'enregistre plutôt que de s'ouvrir dans l'origine de l'application.
+          ouvrirOuEnregistrer(blob, doc.documentNumber ?? 'document', true);
         },
         error: () => {
           this.messageService.add({

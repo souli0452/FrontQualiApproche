@@ -38,7 +38,6 @@ export class EmailVerificationComponent implements OnInit, OnDestroy{
     checkEmailVerification(): void {
         const token = this.route.snapshot.queryParamMap.get('token');
         const userId = this.route.snapshot.queryParamMap.get('userId');
-        console.log(userId)
         this.authService.isEmailVerified(userId!).pipe(
             takeUntil(this.destroy$)).subscribe({
             next: (res) => {

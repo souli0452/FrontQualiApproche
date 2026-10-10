@@ -113,11 +113,8 @@ export class GestionDocumentaireLayoutComponent implements OnInit, OnDestroy {
     }
 
     creerDocument(): void {
-        console.log('>>> [DEBUG] Clic sur Nouveau Document intercepté !');
-        this.router.navigate(['/gestion-documentaire/create']).then(succes => {
-            console.log('>>> [DEBUG] Navigation vers /create réussie ?', succes);
-        }).catch(err => {
-            console.error('>>> [DEBUG] Erreur de navigation :', err);
+        this.router.navigate(['/gestion-documentaire/create']).catch(err => {
+            console.error('Erreur de navigation :', err);
         });
     }
 

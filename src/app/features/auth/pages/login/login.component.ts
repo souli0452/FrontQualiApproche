@@ -9,6 +9,7 @@ import { NgPrimeModule } from '../../../../../prime-ng.module';
 import { USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../../../utils/global/global-utils';
 import { ApiItemResponse } from '../../../../models/response.model';
 import { AuthService } from '@core/auth/auth.service';
+import { MotDePasseTemporaireService } from '@core/auth/mot-de-passe-temporaire.service';
 import { isUserInRoles } from '@core/auth/auth-utils';
 import { AuthData, LoginRequest } from '@features/auth/models/auth.model';
 import { StructureService } from '@features/organigramme/services/structure.service';
@@ -37,7 +38,8 @@ export class LoginComponent implements OnInit{
                 private router: Router
                 ,private route: ActivatedRoute,
                 private structureService: StructureService,
-                private messageService: MessageService) {
+                private messageService: MessageService,
+                private motDePasseTemporaire: MotDePasseTemporaireService) {
         this.loginForm = this.fb.group({
             username: ['', Validators.required],
             password: ['', Validators.required],
@@ -64,22 +66,18 @@ export class LoginComponent implements OnInit{
                     // On vérifie directement le rôle sans passer connectedUser car la fonction lit en mémoire
                     if (isUserInRoles(['SUPER_ADMIN'])) {
 
-                        this.router.navigate(['/configurations']).then(success => {
-                            console.log('Navigation réussie ?', success);
-                        }).catch(err => {
+                        this.router.navigate(['/configurations']).catch(err => {
                             console.error('Erreur de navigation :', err);
                         });
 
                         // this.router.navigate(['/configurations']);
-                        // console.log("Rediriger vers configurations");
                     } else {
-                        console.log("Je suis ici 2");
                         this.router.navigate(['/non-conformite/vue-ensemble']);
                     }
                 }
             },
             error: (err) => {
-                console.log('Aucune session active ou cookie expiré/absent.', err);
+                // Aucune session active, ou cookie expiré : l'écran de connexion reste affiché.
                 // Optionnel : redirection vers le login si la session a expiré
                 // this.router.navigate(['/login']);
             }
@@ -140,9 +138,10 @@ export class LoginComponent implements OnInit{
                                 detailMessage = "Votre compte a été désactivé.";
                             } else if (data.temporaryPwd) {
                                 detailMessage = "Mot de passe temporaire. Redirection...";
-                                this.router.navigate(['/reset-password'], {
-                                    queryParams: { username: credentials.username, oldpwd: credentials.password }
-                                });
+                                // Le mot de passe saisi reste en mémoire : dans l'URL, il finirait
+                                // dans l'historique et les journaux du serveur web.
+                                this.motDePasseTemporaire.deposer(credentials.username, credentials.password);
+                                this.router.navigate(['/reset-password']);
                             }
                         } else {
                             detailMessage = err.error?.message || 'Une erreur est survenue.';

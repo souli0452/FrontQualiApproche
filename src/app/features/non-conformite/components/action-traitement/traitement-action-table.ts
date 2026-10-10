@@ -150,7 +150,6 @@ export class TraitementActionTable implements OnInit {
         if (this.peutChangerLeResponsable && !this.utilisateursDeMaStructure.length) {
             this.chargerLesCollegues();
         }
-        console.log( this.planAction);
         this.displayDialog=true;
 
     }

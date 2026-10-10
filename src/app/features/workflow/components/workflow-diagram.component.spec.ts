@@ -89,6 +89,50 @@ describe('WorkflowDiagramComponent', () => {
         expect(component.codeMermaid).toContain('state "Rédaction" as REDACTION');
     });
 
+    it('rend inertes les balises glissées dans un nom d\'étape ou d\'action', () => {
+        component.workflow = {
+            nom: 'Circuit', resourceType: 'DOCUMENT',
+            steps: [{
+                code: 'A', nomEtape: '<img src=x onerror="alert(1)">', stepOrder: 1,
+                transitions: [{ decision: 'APPROUVE', label: 'R&D <b>urgent</b>', terminal: true }]
+            }]
+        };
+
+        // Les noms sont saisis au paramétrage et affichés à tous : aucun caractère qui fasse du HTML
+        // ou ferme la chaîne Mermaid ne doit atteindre le source tel quel.
+        expect(component.codeMermaid).toContain(
+            'state "#lt;img src=x onerror=#quot;alert(1)#quot;#gt;" as A');
+        expect(component.codeMermaid).toContain('A --> [*] : R#amp;D #lt;b#gt;urgent#lt;/b#gt;');
+        expect(component.codeMermaid).not.toContain('<img');
+        expect(component.codeMermaid).not.toContain('<b>');
+    });
+
+    it('échappe le dièse, pour qu\'une entité déjà écrite reste du texte', () => {
+        component.workflow = {
+            nom: 'Circuit', resourceType: 'DOCUMENT',
+            steps: [{ code: 'A', nomEtape: 'Lot #lt; n°2', stepOrder: 1, transitions: [] }]
+        };
+
+        // Le point-virgule de l'entité est échappé à son tour : rien ne reste à décoder.
+        expect(component.codeMermaid).toContain('state "Lot #35;lt#59; n°2" as A');
+    });
+
+    it('neutralise le point-virgule, que Mermaid prendrait pour une fin d\'instruction', () => {
+        component.workflow = {
+            nom: 'Circuit', resourceType: 'DOCUMENT',
+            steps: [{
+                code: 'A', nomEtape: 'Revue; classement', stepOrder: 1,
+                transitions: [{ decision: 'APPROUVE', label: 'Valider; style A fill:red', terminal: true }]
+            }]
+        };
+
+        // Une seule passe : l'entité du dièse ne doit pas être réécrite par celle du point-virgule,
+        // ni l'inverse.
+        expect(component.codeMermaid).toContain('state "Revue#59; classement" as A');
+        expect(component.codeMermaid).toContain('A --> [*] : Valider#59; style A fill -red');
+        expect(component.codeMermaid).not.toContain('Valider;');
+    });
+
     it('neutralise les deux-points d\'un libellé, que Mermaid prendrait pour une étiquette', () => {
         component.workflow = {
             nom: 'Circuit', resourceType: 'DOCUMENT',

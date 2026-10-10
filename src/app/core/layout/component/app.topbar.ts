@@ -645,7 +645,6 @@ export class AppTopbar implements OnInit {
 
     onSearch() {
         if (this.searchQuery && this.searchQuery.trim()) {
-            console.log('Searching for:', this.searchQuery);
             // Rediriger vers la page de recherche globale
             this.router.navigate(['/recherche'], { queryParams: { q: this.searchQuery } });
             this.searchQuery = ''; // Optionnel : vider la recherche

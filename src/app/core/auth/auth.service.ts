@@ -151,10 +151,13 @@ export class AuthService extends BaseCrudService<AuthData, number> {
     updateUser(user: AuthData): Observable<HttpResponse<void>> {
         return this.http.put<void>(`${QualiUrlConfig.USERS_URL}/update`, user, { observe: 'response' });
     }
+    /**
+     * Les mots de passe et les jetons voyagent dans le corps de la requête, jamais dans l'URL :
+     * une URL se retrouve dans les journaux de la passerelle et du serveur, dans l'historique du
+     * navigateur et dans l'en-tête Referer — autant d'endroits où un secret n'a rien à faire.
+     */
     resetPassword(userId: string, password: string): Observable<HttpResponse<void>> {
-        const params = new HttpParams().set('userId', userId).set('password', password);
-        return this.http.patch<void>(QualiUrlConfig.RESET_PASSWORD_URL, null, {
-            params,
+        return this.http.patch<void>(QualiUrlConfig.RESET_PASSWORD_URL, { userId, password }, {
             observe: 'response'
         });
     }
@@ -182,27 +185,23 @@ export class AuthService extends BaseCrudService<AuthData, number> {
         });
     }
 
+    /** L'adresse part dans le corps : c'est une donnée personnelle, elle n'a pas à figurer dans les journaux d'accès. */
     initiatePasswordReset(email: string): Observable<HttpResponse<void>> {
-        const params = new HttpParams().set('email', email);
-        return this.http.post<void>(QualiUrlConfig.INITIATE_RESET_PASSWORD_URL, null, {
-            params,
+        return this.http.post<void>(QualiUrlConfig.INITIATE_RESET_PASSWORD_URL, { email }, {
             observe: 'response'
         });
     }
 
+    /** Jeton reçu par courriel et nouveau mot de passe dans le corps, pour la même raison que `resetPassword`. */
     reinitializePwd(userId: string, password: string, token: string): Observable<HttpResponse<void>> {
-        const params = new HttpParams().set('userId', userId).set('token', token).set('password', password);
-
-        return this.http.put<void>(QualiUrlConfig.REINITIALIZE_PASSWORD_URL, null, {
-            params,
+        return this.http.put<void>(QualiUrlConfig.REINITIALIZE_PASSWORD_URL, { userId, token, password }, {
             observe: 'response'
         });
     }
 
+    /** Ancien et nouveau mots de passe dans le corps, pour la même raison que `resetPassword`. */
     updateTemporaryPassword(username: string, password: string, oldPassword: string): Observable<{ data: any }> {
-        const params = new HttpParams().set('username', username).set('password', password).set('oldPassword', oldPassword);
-
-        return this.http.put<{ data: any }>(QualiUrlConfig.UPDATE_PASSWORD_URL, null, { params });
+        return this.http.put<{ data: any }>(QualiUrlConfig.UPDATE_PASSWORD_URL, { username, oldPassword, password });
     }
 
     private replaceArgs(args: Map<string, any>, url: string): string {
