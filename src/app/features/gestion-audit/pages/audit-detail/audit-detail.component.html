@@ -67,7 +67,7 @@
                 <div class="font-semibold text-surface-900 dark:text-surface-50 mb-2">Constats ISO 9001 <i class="pi pi-arrow-right text-xs ml-1"></i></div>
                 <p-progressbar [value]="avancement?.pourcentageConstats ?? 0" [showValue]="false" styleClass="h-2"></p-progressbar>
                 <div class="text-xs text-surface-500 mt-1">
-                    {{ avancement?.pourcentageConstats ?? 0 }} % saisi
+                    {{ (avancement?.pourcentageConstats ?? 0) | number: '1.0-0' }} % saisi
                     <span *ngIf="avancement?.pointsDeControle"> · {{ avancement?.pointsRenseignes ?? 0 }}/{{ avancement?.pointsDeControle }} points</span>
                 </div>
             </a>
@@ -79,7 +79,7 @@
                 </div>
                 <p-progressbar [value]="avancement?.pourcentageRqapbf ?? 0" [showValue]="false" styleClass="h-2"></p-progressbar>
                 <div class="text-xs text-surface-500 mt-1">
-                    {{ avancement?.pourcentageRqapbf ?? 0 }} % complété
+                    {{ (avancement?.pourcentageRqapbf ?? 0) | number: '1.0-0' }} % complété
                     <span *ngIf="avancement?.criteresAEvaluer"> · {{ avancement?.criteresNotes ?? 0 }}/{{ avancement?.criteresAEvaluer }} critères</span>
                 </div>
             </a>

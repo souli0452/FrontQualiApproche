@@ -33,6 +33,7 @@
                     <i class="pi pi-file-check text-2xl text-primary"></i>
                     <div>
                         <div class="font-semibold text-sm">Rapport d'audit chargé</div>
+                        <div *ngIf="audit?.nomFichierRapport" class="text-sm"><i class="pi pi-paperclip text-xs mr-1"></i>{{ audit?.nomFichierRapport }}</div>
                         <div class="text-xs text-surface-500">Consultable par l'équipe d'audit, les pilotes de processus et la direction</div>
                     </div>
                 </div>

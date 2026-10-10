@@ -27,6 +27,10 @@ export interface Audit {
     statut?: StatutAudit;
     origineRapport?: string;
     rapportCharge?: boolean;
+    /** Nom d'origine du rapport chargé, extension comprise (absent pour un chargement ancien). */
+    nomFichierRapport?: string;
+    /** L'utilisateur connecté est-il responsable ou auditeur associé de cet audit ? Calculé par le serveur. */
+    jeSuisDeLEquipe?: boolean;
     conclusionsRapport?: string;
     recommandationsRapport?: string;
     scoreMaturite?: number;
@@ -87,6 +91,8 @@ export interface PlanAudit {
     moyensNecessaires?: string;
     origine?: string;
     fichierCharge?: boolean;
+    /** Nom d'origine du plan reçu, extension comprise (absent pour un chargement ancien). */
+    nomFichierCharge?: string;
     statut?: string;
     datePartage?: string;
     activites?: ActivitePlan[];
@@ -283,6 +289,23 @@ export interface NiveauEvaluationAuditeur {
     libelle?: string;
     ordre?: number;
     actif?: boolean;
+    /** Teinte paramétrée, en #RRGGBB ; absente, elle se déduit du rang (voir couleurDuNiveau). */
+    couleur?: string;
+}
+
+/** Les teintes par défaut de l'échelle, du plus bas au plus haut. */
+const TEINTES_PAR_RANG = ['#dc2626', '#f59e0b', '#2563eb', '#65a30d', '#15803d'];
+
+/**
+ * La couleur d'un niveau d'évaluation : celle du paramétrage, ou à défaut celle de son rang dans
+ * l'échelle (rouge pour le plus bas, vert pour le plus haut).
+ */
+export function couleurDuNiveau(n: NiveauEvaluationAuditeur | null | undefined, echelle: NiveauEvaluationAuditeur[]): string {
+    if (!n) return '#94a3b8';
+    if (n.couleur) return n.couleur;
+    const i = echelle.findIndex(x => x.id === n.id);
+    const r = echelle.length > 1 && i >= 0 ? i / (echelle.length - 1) : 1;
+    return TEINTES_PAR_RANG[r < 0.2 ? 0 : r < 0.4 ? 1 : r < 0.6 ? 2 : r < 0.8 ? 3 : 4];
 }
 
 /** Un point de contrôle d'une checklist, assigné à un auditeur. */

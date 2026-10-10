@@ -35,10 +35,11 @@
                     </div>
                     <!-- La moyenne globale est celle du portefeuille (tous audits) ; celle de cet audit s'affiche à part. -->
                     <div class="flex flex-wrap items-center gap-2">
-                        <p-tag *ngIf="niveauGlobal(a) as n; else nonEvalue" [value]="'Moyenne globale : ' + n.libelle" [severity]="severite(n)" [rounded]="true"
-                               pTooltip="Tous audits confondus, telle que le portefeuille des auditeurs l'affiche"></p-tag>
+                        <span *ngIf="niveauGlobal(a) as n; else nonEvalue" class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-semibold text-white"
+                              [style.background]="couleur(n)" pTooltip="Tous audits confondus, telle que le portefeuille des auditeurs l'affiche">Moyenne globale : {{ n.libelle }}</span>
                         <ng-template #nonEvalue><p-tag value="Non évalué" severity="secondary" [rounded]="true"></p-tag></ng-template>
-                        <p-tag *ngIf="niveauMoyen(a) as n" [value]="'Moyenne de cet audit : ' + n.libelle" [severity]="severite(n)" [rounded]="true"></p-tag>
+                        <span *ngIf="niveauMoyen(a) as n" class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-semibold text-white"
+                              [style.background]="couleur(n)">Moyenne de cet audit : {{ n.libelle }}</span>
                     </div>
                 </div>
 
@@ -54,9 +55,11 @@
                                     [disabled]="verrouillee(a, c)"
                                     (click)="choisir(a, c, n)"
                                     class="px-3 py-1.5 text-xs border-0 border-r last:border-r-0 border-surface-200 dark:border-surface-700 transition-colors disabled:cursor-not-allowed"
+                                    [style.background]="choix[cle(a.id, c.id)] === n.id ? couleur(n) : null"
                                     [ngClass]="choix[cle(a.id, c.id)] === n.id
-                                        ? classeNiveau(n)
+                                        ? 'text-white font-semibold'
                                         : 'bg-transparent text-surface-600 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800'">
+                                <span *ngIf="choix[cle(a.id, c.id)] !== n.id" class="inline-block w-2 h-2 rounded-full mr-1 align-middle" [style.background]="couleur(n)"></span>
                                 {{ n.libelle }}
                             </button>
                         </div>

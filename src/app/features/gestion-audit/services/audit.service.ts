@@ -29,6 +29,17 @@ const TYPES_CONSTAT = UrlConfig.AUDIT_TYPES_CONSTAT_URL;
 const SITES = UrlConfig.AUDIT_SITES_URL;
 
 /** Le message du serveur, à afficher tel quel plutôt qu'un message générique. */
+
+/** Les filtres du portefeuille des auditeurs (A4), tels que le serveur les lit. */
+export interface FiltresVivier {
+    statut?: string;
+    structureId?: string;
+    certification?: string;
+    nonEvalues?: boolean;
+    /** Tranche de moyenne d'un niveau : minimum exclu, maximum compris. */
+    moyenneMin?: number | null;
+    moyenneMax?: number | null;
+}
 export function messageErreur(erreur: unknown, defaut: string): string {
     const e = erreur as HttpErrorResponse;
     return e?.error?.message || e?.error?.error || defaut;
@@ -471,9 +482,15 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
      * L'écran du vivier, page par page. Le serveur ne connaît pas les noms : une recherche se
      * résout d'abord dans l'annuaire, et `utilisateurIds` borne la page aux personnes trouvées.
      */
-    pageAuditeurs(page: number, size: number, utilisateurIds?: string[]): Observable<ApiResponse<AuditeurFiche>> {
+    pageAuditeurs(page: number, size: number, utilisateurIds?: string[], filtres: FiltresVivier = {}): Observable<ApiResponse<AuditeurFiche>> {
         const params: Record<string, any> = { page, size };
         if (utilisateurIds) params['utilisateurIds'] = utilisateurIds.join(',');
+        if (filtres.statut) params['statut'] = filtres.statut;
+        if (filtres.structureId) params['structureId'] = filtres.structureId;
+        if (filtres.certification) params['certification'] = filtres.certification;
+        if (filtres.nonEvalues) params['nonEvalues'] = true;
+        if (filtres.moyenneMin != null) params['moyenneMin'] = filtres.moyenneMin;
+        if (filtres.moyenneMax != null) params['moyenneMax'] = filtres.moyenneMax;
         return this.http.get<ApiResponse<AuditeurFiche>>(AUDITEURS, { params: this.buildParams(params) });
     }
 

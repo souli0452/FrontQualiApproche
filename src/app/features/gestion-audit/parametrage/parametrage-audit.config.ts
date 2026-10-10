@@ -196,15 +196,18 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
         formCols: [
             CHAMP_ID,
             { field: 'ordre', label: 'Rang dans l\'échelle (1 = le plus bas)', header: 'Rang', placeholder: '1', helpText: 'Le rang ordonne l\'échelle ; la moyenne d\'un auditeur se calcule dessus.', type: 'number', min: 1, visible: true, required: true, class: 'md:col-6' },
-            { field: 'libelle', label: 'Libellé du niveau (ex : Satisfaisant)', header: 'Libellé', placeholder: 'Ex : Satisfaisant', helpText: 'Le libellé affiché sur l\'échelle de notation.', type: 'string', visible: true, required: true, class: 'md:col-6' }
+            { field: 'libelle', label: 'Libellé du niveau (ex : Satisfaisant)', header: 'Libellé', placeholder: 'Ex : Satisfaisant', helpText: 'Le libellé affiché sur l\'échelle de notation.', type: 'string', visible: true, required: true, class: 'md:col-6' },
+            { field: 'couleur', label: 'Couleur du niveau', header: 'Couleur', helpText: 'La couleur du niveau sur la notation de l\'équipe et dans le portefeuille des auditeurs.', type: 'color', visible: true, required: false }
         ],
         tableCols: [
             { field: 'ordre', header: 'Rang', type: 'number', width: '6rem' },
-            { field: 'libelle', header: 'Niveau', type: 'badge', severityField: 'severite' }
+            { field: 'libelle', header: 'Niveau', type: 'string' },
+            { field: 'couleur', header: 'Couleur', type: 'color', width: '7rem' }
         ],
         detailCols: [
             { field: 'ordre', header: 'Rang' },
-            { field: 'libelle', header: 'Niveau' }
+            { field: 'libelle', header: 'Niveau' },
+            { field: 'couleur', header: 'Couleur', type: 'color' }
         ],
         valeursParDefaut: {}
     },

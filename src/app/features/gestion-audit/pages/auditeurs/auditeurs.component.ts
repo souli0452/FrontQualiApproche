@@ -10,9 +10,9 @@ import { TableauAffichageComponent } from '@shared/tableau-affichage/tableau-aff
 import { TableColumn } from '../../../../models/generique.model';
 import { Structure } from '@features/organigramme/models/structure.model';
 import { AuditLibelleComponent } from '../../components/libelle-aide.component';
-import { AuditGestionService, contenu, messageErreur } from '../../services/audit.service';
+import { AuditGestionService, FiltresVivier, contenu, messageErreur } from '../../services/audit.service';
 import { AuditReferentielService, UtilisateurAnnuaire } from '../../services/audit-referentiel.service';
-import { AuditeurFiche, NiveauEvaluationAuditeur } from '../../models/audit.model';
+import { AuditeurFiche, NiveauEvaluationAuditeur, couleurDuNiveau } from '../../models/audit.model';
 
 /**
  * Portefeuille des auditeurs (écran A4 de la maquette) : une ligne par auditeur dans le tableau
@@ -77,6 +77,14 @@ export class AuditAuditeursComponent implements OnInit, OnDestroy {
     readonly statutOptions = [
         { label: 'Actif', value: 'ACTIF' },
         { label: 'Inactif (garde son historique, ne s\'affecte plus)', value: 'INACTIF' }
+    ];
+
+    /** Les filtres du portefeuille ; `niveau` vaut l'identifiant d'un niveau, ou « NON_EVALUE ». */
+    filtres: { statut?: string; structureId?: string; certification?: string; niveau?: string } = {};
+
+    readonly statutFiltreOptions = [
+        { label: 'Actif', value: 'ACTIF' },
+        { label: 'Inactif', value: 'INACTIF' }
     ];
 
     private libelleStructure = new Map<string, string>();
@@ -147,7 +155,7 @@ export class AuditAuditeursComponent implements OnInit, OnDestroy {
             this.loading = false;
             return;
         }
-        this.auditService.pageAuditeurs(this.currentPage, this.pageSize, cibles)
+        this.auditService.pageAuditeurs(this.currentPage, this.pageSize, cibles, this.filtresDuServeur())
             .pipe(
                 switchMap(res => this.referentiel.nommer(contenu<AuditeurFiche>(res))
                     .pipe(map(page => ({ page, total: res?.data?.totalElements ?? 0 })))),
@@ -195,6 +203,63 @@ export class AuditAuditeursComponent implements OnInit, OnDestroy {
         { label: 'Retirer du vivier', icon: 'pi pi-trash', command: () => this.supprimer(a) }
     ];
 
+    /** Les niveaux de l'échelle, et « Non évalué », pour filtrer par évaluation moyenne. */
+    get niveauOptions(): { label: string; value: string }[] {
+        return [
+            { label: 'Non évalué', value: 'NON_EVALUE' },
+            ...this.niveaux.map(n => ({ label: n.libelle ?? '—', value: n.id! }))
+        ];
+    }
+
+    /** Les certifications que portent les auditeurs du vivier, chacune une fois. */
+    get certificationOptions(): { label: string; value: string }[] {
+        const vues = new Map<string, string>();
+        this.vivier.forEach(a => (a.certifications ?? []).forEach(c => {
+            const cle = c.trim().toLowerCase();
+            if (cle && !vues.has(cle)) vues.set(cle, c.trim());
+        }));
+        return [...vues.values()].sort((a, b) => a.localeCompare(b, 'fr')).map(c => ({ label: c, value: c }));
+    }
+
+    get filtresActifs(): boolean {
+        return Object.values(this.filtres).some(v => !!v);
+    }
+
+    filtrer(): void {
+        this.currentPage = 0;
+        this.charger();
+    }
+
+    reinitialiserFiltres(): void {
+        this.filtres = {};
+        this.filtrer();
+    }
+
+    /**
+     * Ce que le serveur lit. Un niveau se traduit en tranche de moyenne, à mi-chemin de ses
+     * voisins dans l'échelle : c'est la règle même qui ramène une moyenne à son niveau affiché
+     * (voir niveauMoyen), pour qu'un auditeur sorte sous le niveau qu'on lui voit.
+     */
+    private filtresDuServeur(): FiltresVivier {
+        const f: FiltresVivier = {
+            statut: this.filtres.statut,
+            structureId: this.filtres.structureId,
+            certification: this.filtres.certification
+        };
+        if (this.filtres.niveau === 'NON_EVALUE') {
+            f.nonEvalues = true;
+        } else if (this.filtres.niveau) {
+            const echelle = [...this.niveaux].sort((a, b) => (a.ordre ?? 0) - (b.ordre ?? 0));
+            const i = echelle.findIndex(n => n.id === this.filtres.niveau);
+            if (i >= 0) {
+                const ordre = echelle[i].ordre ?? 0;
+                f.moyenneMin = i > 0 ? ((echelle[i - 1].ordre ?? 0) + ordre) / 2 : null;
+                f.moyenneMax = i < echelle.length - 1 ? (ordre + (echelle[i + 1].ordre ?? 0)) / 2 : null;
+            }
+        }
+        return f;
+    }
+
     /** Les utilisateurs que la recherche désigne ; aucune borne sans recherche. */
     private utilisateursCherches(): string[] | undefined {
         const r = this.recherche.trim().toLowerCase();
@@ -218,23 +283,38 @@ export class AuditAuditeursComponent implements OnInit, OnDestroy {
      * niveaux attribués, on la ramène au libellé du niveau paramétré.
      */
     niveauMoyen(a: AuditeurFiche): string | null {
+        return this.niveauMoyenDe(a)?.libelle ?? null;
+    }
+
+    /** La couleur du niveau moyen, celle que l'échelle lui donne au paramétrage. */
+    couleurMoyenne(a: AuditeurFiche): string {
+        return couleurDuNiveau(this.niveauMoyenDe(a), this.niveaux);
+    }
+
+    private niveauMoyenDe(a: AuditeurFiche): NiveauEvaluationAuditeur | null {
         if (a.scoreEvaluationMoyen == null || !this.niveaux.length) {
             return null;
         }
-        const proche = this.niveaux.reduce((m, n) =>
+        return this.niveaux.reduce((m, n) =>
             Math.abs((n.ordre ?? 0) - a.scoreEvaluationMoyen!) < Math.abs((m.ordre ?? 0) - a.scoreEvaluationMoyen!) ? n : m);
-        return proche.libelle ?? null;
     }
 
     structure(id?: string): string {
         return id ? this.libelleStructure.get(id) ?? '—' : '—';
     }
 
-    basculerAjout(): void {
-        if (this.enEdition && !this.enEdition.id) {
+    /** La fenêtre de la fiche est ouverte tant qu'une fiche est en édition ; la fermer l'abandonne. */
+    get editionOuverte(): boolean {
+        return this.enEdition !== null;
+    }
+
+    set editionOuverte(ouverte: boolean) {
+        if (!ouverte) {
             this.enEdition = null;
-            return;
         }
+    }
+
+    ouvrirAjout(): void {
         this.enEdition = {};
         this.formulaire.reset({ statut: 'ACTIF', processusGeres: [], domainesHabilites: [], certifications: [] });
         this.formulaire.get('utilisateurId')?.enable();

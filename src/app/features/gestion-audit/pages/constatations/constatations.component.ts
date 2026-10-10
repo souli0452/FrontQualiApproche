@@ -6,6 +6,7 @@ import { NgPrimeModule } from '@prime-ng';
 import { Observable, Subject, catchError, forkJoin, of, takeUntil, throwError, tap } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { currentUserState } from '@core/auth/auth.state';
+import { hasAnyPermission } from '@core/auth/auth-utils';
 import { SelectInputComponent } from '@shared/ui/select-input/select-input.component';
 import { AuditLibelleComponent } from '../../components/libelle-aide.component';
 import { AuditGestionService, contenu, messageErreur } from '../../services/audit.service';
@@ -101,18 +102,20 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
         if (vue && ['saisie', 'mes-constats', 'compilation'].includes(vue)) {
             this.vue = vue;
         }
-        forkJoin({
-            types: this.referentiel.typesConstat(),
-            auditeurs: this.referentiel.auditeurs(),
-            checklists: this.auditService.getChecklists()
-        }).pipe(takeUntil(this.destroy$)).subscribe({
-            next: ({ types, auditeurs, checklists }) => {
-                this.typesConstat = types;
-                this.nomsAuditeurs = new Map(auditeurs.map(a => [a.id!, a.nomComplet ?? '—']));
-                // Les points de toutes les checklists : la compilation montre aussi ceux des collègues.
-                contenu<ChecklistAudit>(checklists).forEach(c => (c.points ?? []).forEach(p => p.id && this.points.set(p.id, p)));
-            },
-            error: err => this.erreur(err, 'Le paramétrage (types de constat, auditeurs, checklists) n\'a pas pu être chargé.')
+        // Chaque liste de son côté : un refus sur l'une (un valideur qui ne lit pas le vivier, par
+        // exemple) faisait tomber les trois, et l'écran perdait natures, auteurs et points ensemble.
+        this.referentiel.typesConstat().pipe(takeUntil(this.destroy$)).subscribe({
+            next: types => (this.typesConstat = types),
+            error: err => this.erreur(err, 'Les natures de constat n\'ont pas pu être chargées.')
+        });
+        this.referentiel.auditeurs().pipe(takeUntil(this.destroy$)).subscribe({
+            next: auditeurs => (this.nomsAuditeurs = new Map(auditeurs.map(a => [a.id!, a.nomComplet ?? '—']))),
+            error: err => this.erreur(err, 'Le vivier d\'auditeurs n\'a pas pu être chargé : les auteurs ne s\'affichent pas.')
+        });
+        this.auditService.getChecklists().pipe(takeUntil(this.destroy$)).subscribe({
+            // Les points de toutes les checklists : la compilation montre aussi ceux des collègues.
+            next: checklists => contenu<ChecklistAudit>(checklists).forEach(c => (c.points ?? []).forEach(p => p.id && this.points.set(p.id, p))),
+            error: err => this.erreur(err, 'Les checklists n\'ont pas pu être chargées.')
         });
         this.chargerAudits();
     }
@@ -161,6 +164,21 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
     /** On saisit et on compile pendant l'audit ; clôturé, il ne se lit plus qu'en lecture. */
     get saisieOuverte(): boolean {
         return this.auditCourant?.statut === StatutAudit.EN_COURS;
+    }
+
+    /**
+     * Retoucher ou retirer un constat compilé : geste de l'équipe, que le serveur réserve à ses
+     * membres qui conduisent l'audit. Les boutons s'offraient à tout lecteur, qui prenait un 403.
+     */
+    get peutRetoucher(): boolean {
+        return this.saisieOuverte && !!this.auditCourant?.jeSuisDeLEquipe && hasAnyPermission(['audit-conduct']);
+    }
+
+    /** Publier (valider) un constat compilé : l'équipe, ou qui détient la validation sans en être. */
+    get peutValider(): boolean {
+        return this.saisieOuverte
+            && (hasAnyPermission(['audit-validate'])
+                || (!!this.auditCourant?.jeSuisDeLEquipe && hasAnyPermission(['audit-conduct'])));
     }
 
     charger(garderSaisie = false): void {

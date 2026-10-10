@@ -254,7 +254,9 @@ export class PlanAuditComponent implements OnInit, OnDestroy {
 
     telechargerFichier(): void {
         if (!this.auditId) return;
-        this.enregistrerBlob(this.auditService.telechargerPlan(this.auditId), `plan-${this.audit?.reference ?? this.auditId}`);
+        // Le nom d'origine porte l'extension : sans elle, le poste ne sait pas ouvrir le fichier.
+        this.enregistrerBlob(this.auditService.telechargerPlan(this.auditId),
+            this.plan?.nomFichierCharge || `plan-${this.audit?.reference ?? this.auditId}`);
     }
 
     private enregistrerBlob(appel$: Observable<Blob>, nom: string): void {

@@ -7,62 +7,74 @@
             <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Portefeuille des auditeurs</h2>
             <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">Les utilisateurs habilités à conduire des audits, leur disponibilité et leur évaluation</p>
         </div>
-        <p-button [icon]="enEdition && !enEdition.id ? 'pi pi-times' : 'pi pi-user-plus'"
-                  [label]="enEdition && !enEdition.id ? 'Fermer' : 'Ajouter un auditeur'" (onClick)="basculerAjout()"></p-button>
+        <p-button icon="pi pi-user-plus" label="Ajouter un auditeur" (onClick)="ouvrirAjout()"></p-button>
     </div>
 
-    <!-- Fiche d'auditeur, à l'inscription comme à la modification -->
-    <ng-template #fiche>
-        <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
-            <h4 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-3">{{ enEdition?.id ? 'Modifier la fiche' : 'Nouvel auditeur' }}</h4>
-            <form [formGroup]="formulaire" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
-                <div>
-                    <app-audit-libelle texte="Utilisateur" [requis]="true" aide="La personne inscrite au vivier, choisie dans l'annuaire des utilisateurs." />
-                    <app-select-input formControlName="utilisateurId" [options]="utilisateursProposes" optionLabel="nomComplet" optionValue="id"
-                                      [filter]="true" filterBy="nomComplet,email" placeholder="Choisir dans l'annuaire" />
-                    <small *ngIf="formulaire.get('utilisateurId')?.invalid && formulaire.get('utilisateurId')?.touched" class="p-error">Ce champ est requis</small>
-                </div>
-                <div>
-                    <app-audit-libelle texte="Structure d'appartenance" aide="Il ne peut pas auditer sa propre structure." />
-                    <app-select-input formControlName="structureAppartenance" [options]="structures" optionLabel="libelleLong" optionValue="id" [filter]="true"
-                                      placeholder="Choisir une structure" />
-                </div>
-                <div>
-                    <app-audit-libelle texte="Domaines / processus habilités" aide="Saisissez un domaine puis Entrée, pour chaque domaine." />
-                    <p-autoComplete formControlName="domainesHabilites" [multiple]="true" [typeahead]="false" styleClass="w-full" placeholder="Ex : Gestion documentaire, Achats"></p-autoComplete>
-                </div>
-                <div>
-                    <app-audit-libelle texte="Certifications" aide="Saisissez une certification puis Entrée (ISO 9001, RQAP-BF niv. 1…)." />
-                    <p-autoComplete formControlName="certifications" [multiple]="true" [typeahead]="false" styleClass="w-full" placeholder="Saisir puis Entrée"></p-autoComplete>
-                </div>
-                <div>
-                    <app-audit-libelle texte="Disponibilité" />
-                    <input pInputText formControlName="disponibilite" class="w-full" placeholder="Ex : 2 jours par mois" />
-                </div>
-                <div>
-                    <app-audit-libelle texte="Niveau d'habilitation" />
-                    <input pInputText formControlName="niveauHabilitation" class="w-full" placeholder="Ex : responsable d'audit" />
-                </div>
-                <div>
-                    <app-audit-libelle texte="Processus gérés" aide="Ceux dont il est responsable ou pilote : il ne pourra pas les auditer (conflit d'intérêts)." />
-                    <app-multiselect-input formControlName="processusGeres" [options]="structures" optionLabel="libelleLong" optionValue="id" display="chip"
-                                           placeholder="Choisir les processus" />
-                </div>
-                <div>
-                    <app-audit-libelle texte="Statut" />
-                    <app-select-input formControlName="statut" [options]="statutOptions" optionLabel="label" optionValue="value" [showClear]="false" />
-                </div>
-            </form>
-            <div class="flex justify-end gap-2 mt-4">
+    <!-- Fiche d'auditeur, à l'inscription comme à la modification : en fenêtre, au-dessus du portefeuille -->
+    <p-dialog [(visible)]="editionOuverte" [modal]="true" [draggable]="false" [resizable]="false"
+              [style]="{ width: '52rem' }" [breakpoints]="{ '960px': '90vw', '640px': '100vw' }"
+              [header]="enEdition?.id ? 'Modifier la fiche de ' + (enEdition?.nomComplet ?? 'l\'auditeur') : 'Nouvel auditeur'">
+        <form [formGroup]="formulaire" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+            <div>
+                <app-audit-libelle texte="Utilisateur" [requis]="true" aide="La personne inscrite au vivier, choisie dans l'annuaire des utilisateurs." />
+                <app-select-input formControlName="utilisateurId" [options]="utilisateursProposes" optionLabel="nomComplet" optionValue="id"
+                                  [filter]="true" filterBy="nomComplet,email" placeholder="Choisir dans l'annuaire" />
+                <small *ngIf="formulaire.get('utilisateurId')?.invalid && formulaire.get('utilisateurId')?.touched" class="p-error">Ce champ est requis</small>
+            </div>
+            <div>
+                <app-audit-libelle texte="Structure d'appartenance" aide="Il ne peut pas auditer sa propre structure." />
+                <app-select-input formControlName="structureAppartenance" [options]="structures" optionLabel="libelleLong" optionValue="id" [filter]="true"
+                                  placeholder="Choisir une structure" />
+            </div>
+            <div>
+                <app-audit-libelle texte="Domaines / processus habilités" aide="Saisissez un domaine puis Entrée, pour chaque domaine." />
+                <p-autoComplete formControlName="domainesHabilites" [multiple]="true" [typeahead]="false" appendTo="body" styleClass="w-full" placeholder="Ex : Gestion documentaire, Achats"></p-autoComplete>
+            </div>
+            <div>
+                <app-audit-libelle texte="Certifications" aide="Saisissez une certification puis Entrée (ISO 9001, RQAP-BF niv. 1…)." />
+                <p-autoComplete formControlName="certifications" [multiple]="true" [typeahead]="false" appendTo="body" styleClass="w-full" placeholder="Saisir puis Entrée"></p-autoComplete>
+            </div>
+            <div>
+                <app-audit-libelle texte="Disponibilité" />
+                <input pInputText formControlName="disponibilite" class="w-full" placeholder="Ex : 2 jours par mois" />
+            </div>
+            <div>
+                <app-audit-libelle texte="Niveau d'habilitation" />
+                <input pInputText formControlName="niveauHabilitation" class="w-full" placeholder="Ex : responsable d'audit" />
+            </div>
+            <div>
+                <app-audit-libelle texte="Processus gérés" aide="Ceux dont il est responsable ou pilote : il ne pourra pas les auditer (conflit d'intérêts)." />
+                <app-multiselect-input formControlName="processusGeres" [options]="structures" optionLabel="libelleLong" optionValue="id" display="chip"
+                                       placeholder="Choisir les processus" />
+            </div>
+            <div>
+                <app-audit-libelle texte="Statut" />
+                <app-select-input formControlName="statut" [options]="statutOptions" optionLabel="label" optionValue="value" [showClear]="false" />
+            </div>
+        </form>
+        <ng-template pTemplate="footer">
+            <div class="flex justify-end gap-2">
                 <p-button label="Annuler" severity="secondary" [outlined]="true" size="small" (onClick)="enEdition = null"></p-button>
                 <p-button [label]="enEdition?.id ? 'Enregistrer la fiche' : 'Enregistrer l\'auditeur'" icon="pi pi-save" size="small" [loading]="saving" (onClick)="sauvegarder()"></p-button>
             </div>
-        </div>
-    </ng-template>
+        </ng-template>
+    </p-dialog>
 
-    <!-- À l'inscription comme à la modification, la fiche s'édite au-dessus du tableau -->
-    <div *ngIf="enEdition" class="mb-4">
-        <ng-container *ngTemplateOutlet="fiche"></ng-container>
+    <!-- Filtres : tous choisis dans des listes -->
+    <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-3 mb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <app-select-input [(ngModel)]="filtres.niveau" [options]="niveauOptions" optionLabel="label" optionValue="value"
+                              placeholder="Évaluation : toutes" (selectionChange)="filtrer()" />
+            <app-select-input [(ngModel)]="filtres.statut" [options]="statutFiltreOptions" optionLabel="label" optionValue="value"
+                              placeholder="Statut : tous" (selectionChange)="filtrer()" />
+            <app-select-input [(ngModel)]="filtres.structureId" [options]="structures" optionLabel="libelleLong" optionValue="id"
+                              [filter]="true" placeholder="Structure : toutes" (selectionChange)="filtrer()" />
+            <app-select-input [(ngModel)]="filtres.certification" [options]="certificationOptions" optionLabel="label" optionValue="value"
+                              [filter]="true" placeholder="Certification : toutes" (selectionChange)="filtrer()" />
+        </div>
+        <div *ngIf="filtresActifs" class="flex justify-end mt-2">
+            <p-button label="Réinitialiser les filtres" icon="pi pi-filter-slash" [text]="true" size="small" (onClick)="reinitialiserFiltres()"></p-button>
+        </div>
     </div>
 
     <app-tableau-affichage
@@ -114,7 +126,9 @@
 </ng-template>
 
 <ng-template #evaluationTpl let-a>
-    <p-tag [value]="niveauMoyen(a) ?? 'Non évalué'" [severity]="niveauMoyen(a) ? 'contrast' : 'secondary'" [rounded]="true"></p-tag>
+    <span *ngIf="niveauMoyen(a) as n; else nonEvalue" class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-semibold text-white"
+          [style.background]="couleurMoyenne(a)">{{ n }}</span>
+    <ng-template #nonEvalue><p-tag value="Non évalué" severity="secondary" [rounded]="true"></p-tag></ng-template>
 </ng-template>
 
 <!-- Le détail d'une ligne : activité et évaluation, en fenêtre ; la fenêtre épouse son contenu, les actions restent en pied -->
@@ -143,7 +157,8 @@
             <div>
                 <div class="text-xs text-surface-500 mb-0.5">Évaluation à la clôture</div>
                 <div *ngIf="niveauMoyen(a); else sansEval">
-                    Moyenne : <p-tag [value]="niveauMoyen(a)!" severity="contrast" [rounded]="true"></p-tag>
+                    Moyenne : <span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-semibold text-white"
+                                    [style.background]="couleurMoyenne(a)">{{ niveauMoyen(a) }}</span>
                 </div>
                 <ng-template #sansEval><span class="text-surface-500">Aucune évaluation enregistrée pour le moment.</span></ng-template>
             </div>

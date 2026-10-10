@@ -80,6 +80,7 @@
                     <i class="pi pi-file-check text-2xl text-primary"></i>
                     <div>
                         <div class="font-semibold text-sm">Plan d'audit chargé</div>
+                        <div *ngIf="plan.nomFichierCharge" class="text-sm"><i class="pi pi-paperclip text-xs mr-1"></i>{{ plan.nomFichierCharge }}</div>
                         <div class="text-xs text-surface-500">Consultable par l'équipe d'audit</div>
                     </div>
                 </div>

@@ -1,11 +1,12 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NgPrimeModule } from '@prime-ng';
-import { Observable, Subject, forkJoin, takeUntil, tap } from 'rxjs';
+import { Observable, Subject, catchError, forkJoin, map, of, takeUntil, tap } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { AuditGestionService, contenu, messageErreur } from '../../services/audit.service';
+import { QuitterSansPerte } from './sortie-de-notation.guard';
 import { Audit, EvaluationRQAPBF, NoeudReferentiel, NotationCritere } from '../../models/audit.model';
 import {
     NiveauNotationRQAPBF,
@@ -57,7 +58,7 @@ interface Saisie {
     providers: [MessageService, ConfirmationService],
     templateUrl: './evaluation-rqapbf.component.html'
 })
-export class EvaluationRQAPBFComponent implements OnInit, OnDestroy {
+export class EvaluationRQAPBFComponent implements OnInit, OnDestroy, QuitterSansPerte {
 
     audit: Audit | null = null;
     evaluation: EvaluationRQAPBF | null = null;
@@ -253,6 +254,50 @@ export class EvaluationRQAPBFComponent implements OnInit, OnDestroy {
                 this.chargerSaisie();
             }
         });
+    }
+
+    /** Une sortie sans niveau a déjà été signalée : la suivante abandonne la saisie. */
+    private abandonAnnonce = false;
+
+    /**
+     * Quitter la page par le menu ou un lien : même règle que les boutons de la notation. Avec un
+     * niveau, la saisie s'enregistre d'abord ; sans niveau, rien ne peut s'enregistrer, et
+     * l'auditeur est prévenu une fois — s'il quitte de nouveau, il abandonne sa saisie en
+     * connaissance de cause. Pas de dialogue : un avertissement, comme pour Suivant.
+     */
+    peutQuitter(): boolean | Observable<boolean> {
+        if (this.vue !== 'notation' || !this.modifiee || !this.evaluation?.id || !this.critere) {
+            return true;
+        }
+        if (!this.saisie.niveau) {
+            if (this.abandonAnnonce) {
+                return true;
+            }
+            this.abandonAnnonce = true;
+            this.messageService.add({
+                severity: 'warn', summary: 'Saisie non enregistrée',
+                detail: 'Choisissez un niveau pour enregistrer la preuve et le commentaire, ou quittez de nouveau pour les abandonner.'
+            });
+            return false;
+        }
+        return this.auditService.sauvegarderNotations(this.evaluation.id, [{ noeudId: this.critere.id, ...this.saisie }]).pipe(
+            map(() => {
+                this.modifiee = false;
+                return true;
+            }),
+            catchError(err => {
+                this.erreur(err, 'La note n\'a pas pu être enregistrée : la page reste ouverte.');
+                return of(false);
+            })
+        );
+    }
+
+    /** Fermer l'onglet ou recharger la page : le navigateur prévient lui-même. */
+    @HostListener('window:beforeunload', ['$event'])
+    avantDeQuitterLOnglet(event: BeforeUnloadEvent): void {
+        if (this.vue === 'notation' && this.modifiee) {
+            event.preventDefault();
+        }
     }
 
     /** Quitter la notation enregistre d'abord la saisie en cours, pour ne rien perdre. */

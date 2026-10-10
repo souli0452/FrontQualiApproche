@@ -7,7 +7,7 @@ import { Subject, forkJoin, takeUntil } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { AuditGestionService, contenu, messageErreur } from '../../services/audit.service';
 import { AuditReferentielService } from '../../services/audit-referentiel.service';
-import { Audit, AuditeurFiche, CritereEvaluationAuditeur, EvaluationAuditeur, NiveauEvaluationAuditeur } from '../../models/audit.model';
+import { Audit, AuditeurFiche, CritereEvaluationAuditeur, EvaluationAuditeur, NiveauEvaluationAuditeur, couleurDuNiveau } from '../../models/audit.model';
 
 /**
  * L'évaluation de l'équipe d'un audit mené, en cours ou clôturé (écran D15E de la maquette) :
@@ -243,23 +243,9 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
         return this.niveaux.reduce((p, n) => (Math.abs((n.ordre ?? 0) - m) < Math.abs((p.ordre ?? 0) - m) ? n : p));
     }
 
-    /** Une teinte par rang, du plus bas (rouge) au plus haut (vert) : l'échelle est paramétrable. */
-    private rang(n: NiveauEvaluationAuditeur): number {
-        const i = this.niveaux.findIndex(x => x.id === n.id);
-        return this.niveaux.length > 1 ? i / (this.niveaux.length - 1) : 1;
-    }
-
-    severite(n: NiveauEvaluationAuditeur): any {
-        const r = this.rang(n);
-        return r < 0.25 ? 'danger' : r < 0.5 ? 'warn' : r < 0.75 ? 'info' : 'success';
-    }
-
-    classeNiveau(n: NiveauEvaluationAuditeur): string {
-        const r = this.rang(n);
-        return r < 0.25 ? 'bg-red-500 text-white font-semibold'
-            : r < 0.5 ? 'bg-amber-500 text-white font-semibold'
-            : r < 0.75 ? 'bg-primary text-primary-contrast font-semibold'
-            : 'bg-emerald-600 text-white font-semibold';
+    /** La couleur paramétrée du niveau, ou celle de son rang dans l'échelle. */
+    couleur(n: NiveauEvaluationAuditeur | null): string {
+        return couleurDuNiveau(n, this.niveaux);
     }
 
     /** Relit les évaluations de l'audit et les moyennes globales, qu'une note vient de déplacer. */

@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { sortieDeNotationGuard } from './pages/evaluation-rqapbf/sortie-de-notation.guard';
 import { AuditLayoutComponent } from './layout/audit-layout.component';
 
 export const AUDIT_ROUTES: Routes = [
@@ -65,6 +66,7 @@ export const AUDIT_ROUTES: Routes = [
             {
                 path: 'programme/:id/evaluation-rqapbf',
                 loadComponent: () => import('./pages/evaluation-rqapbf/evaluation-rqapbf.component').then(m => m.EvaluationRQAPBFComponent),
+                canDeactivate: [sortieDeNotationGuard],
                 title: 'Évaluation RQAP-BF'
             },
             {

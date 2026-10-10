@@ -222,15 +222,15 @@
                         <p-tag *ngIf="g.type.genereNonConformite" value="NC" severity="danger"></p-tag>
                         <span class="font-normal text-xs text-surface-500">{{ g.constats.length }} constat(s)</span>
                     </span>
-                    <p-button *ngIf="g.compiles && saisieOuverte" icon="pi pi-check" size="small" [disabled]="enCours"
+                    <p-button *ngIf="g.compiles && peutValider" icon="pi pi-check" size="small" [disabled]="enCours"
                               [label]="'Valider ce groupe (' + g.compiles + ' compilé' + (g.compiles > 1 ? 's' : '') + ')'"
                               (onClick)="validerGroupe($event, g.type, g.compiles)"></p-button>
                     <span *ngIf="!g.compiles" class="text-xs text-green-600 dark:text-green-400"><i class="pi pi-check text-xs"></i> Tout validé</span>
                 </div>
                 <ng-container *ngFor="let c of g.constats; trackBy: trackById">
-                    <ng-container *ngTemplateOutlet="ligne; context: { $implicit: c, auteur: true, retirer: c.statut === StatutConstat.COMPILE && saisieOuverte }"></ng-container>
+                    <ng-container *ngTemplateOutlet="ligne; context: { $implicit: c, auteur: true, retirer: c.statut === StatutConstat.COMPILE && peutRetoucher }"></ng-container>
                     <div *ngIf="ouvert === c.id" class="px-4 pb-4 pt-1 bg-surface-50/60 dark:bg-surface-800/30 border-t border-surface-100 dark:border-surface-800">
-                        <ng-container *ngIf="c.statut === StatutConstat.COMPILE && saisieOuverte; else publie">
+                        <ng-container *ngIf="c.statut === StatutConstat.COMPILE && peutRetoucher; else publie">
                             <div class="text-xs text-surface-500 mb-0.5">Question / point de contrôle</div>
                             <div class="text-sm mb-3">{{ questionPoint(c) || '—' }}</div>
                             <ng-container *ngTemplateOutlet="edition; context: { $implicit: c, commentaire: true }"></ng-container>
@@ -247,7 +247,7 @@
                             <div *ngIf="renvoiDe !== c.id" class="flex justify-end gap-2 mt-3">
                                 <p-button label="Retirer ce constat" icon="pi pi-undo" severity="secondary" [outlined]="true" size="small" (onClick)="demanderRenvoi(c)"></p-button>
                                 <p-button *ngIf="retoucheModifiee(c)" label="Enregistrer" icon="pi pi-save" [outlined]="true" size="small" [loading]="saving" (onClick)="enregistrerRetouche(c)"></p-button>
-                                <p-button label="Publier ce constat" icon="pi pi-check" size="small" [disabled]="enCours" (onClick)="valider(c)"></p-button>
+                                <p-button *ngIf="peutValider" label="Publier ce constat" icon="pi pi-check" size="small" [disabled]="enCours" (onClick)="valider(c)"></p-button>
                             </div>
                         </ng-container>
                         <ng-template #publie>
@@ -260,8 +260,13 @@
                             </div>
                             <p class="text-xs text-surface-500 m-0 mt-3">
                                 <i class="pi pi-lock text-xs"></i>
-                                {{ c.statut === StatutConstat.PUBLIE ? 'Ce constat est publié : il ne se modifie plus (cohérence avec le rapport et la non-conformité ouverte le cas échéant).' : 'Audit clôturé : lecture seule.' }}
+                                {{ c.statut === StatutConstat.PUBLIE ? 'Ce constat est publié : il ne se modifie plus (cohérence avec le rapport et la non-conformité ouverte le cas échéant).'
+                                    : !saisieOuverte ? 'Audit clôturé : lecture seule.'
+                                    : 'Seule l\'équipe d\'audit retouche ou retire un constat compilé.' }}
                             </p>
+                            <div *ngIf="c.statut === StatutConstat.COMPILE && peutValider" class="flex justify-end mt-3">
+                                <p-button label="Publier ce constat" icon="pi pi-check" size="small" [disabled]="enCours" (onClick)="valider(c)"></p-button>
+                            </div>
                         </ng-template>
                     </div>
                 </ng-container>
@@ -269,9 +274,9 @@
 
             <div class="flex flex-wrap justify-between gap-2">
                 <p-button label="Retour à la saisie" icon="pi pi-arrow-left" [text]="true" severity="secondary" size="small" (onClick)="changerVue('saisie')"></p-button>
-                <p-button *ngIf="saisieOuverte && combien(StatutConstat.COMPILE)" icon="pi pi-check-circle" size="small" [disabled]="enCours"
+                <p-button *ngIf="peutValider && combien(StatutConstat.COMPILE)" icon="pi pi-check-circle" size="small" [disabled]="enCours"
                           label="L'équipe est d'accord — valider tout et aller au rapport" (onClick)="validerTout($event)"></p-button>
-                <p-button *ngIf="!(saisieOuverte && combien(StatutConstat.COMPILE)) && combien(StatutConstat.PUBLIE)" icon="pi pi-file" [outlined]="true" size="small"
+                <p-button *ngIf="!(peutValider && combien(StatutConstat.COMPILE)) && combien(StatutConstat.PUBLIE)" icon="pi pi-file" [outlined]="true" size="small"
                           label="Voir le rapport" [routerLink]="['/gestion-audit/programme', auditId, 'rapport']"></p-button>
             </div>
         </div>
@@ -323,7 +328,7 @@
         </div>
         <div>
             <app-audit-libelle texte="Preuves" />
-            <app-preuves-constat [constatId]="c.id" [modifiable]="true" />
+            <app-preuves-constat [constatId]="c.id" [modifiable]="saisieOuverte" />
         </div>
     </div>
 </ng-template>

@@ -142,7 +142,9 @@ export class RapportAuditComponent implements OnInit, OnDestroy {
 
     telechargerFichier(): void {
         if (!this.auditId) return;
-        this.telecharger(this.auditService.telechargerRapportFichier(this.auditId), `rapport-${this.audit?.reference ?? this.auditId}`);
+        // Le nom d'origine porte l'extension : sans elle, le poste ne sait pas ouvrir le fichier.
+        this.telecharger(this.auditService.telechargerRapportFichier(this.auditId),
+            this.audit?.nomFichierRapport || `rapport-${this.audit?.reference ?? this.auditId}`);
     }
 
     deposer(evenement: Event): void {

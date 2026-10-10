@@ -190,11 +190,6 @@ export class ParametrageAuditListeComponent extends BasePaginationComponent impl
         if (this.liste.tri) {
             const tri = this.liste.tri;
             prepares.sort((a, b) => (a[tri] ?? 0) - (b[tri] ?? 0));
-            // Une teinte par rang dans l'échelle, du plus bas (rouge) au plus haut (vert).
-            prepares = prepares.map((l, i) => {
-                const r = prepares.length > 1 ? i / (prepares.length - 1) : 1;
-                return { ...l, severite: r < 0.25 ? 'danger' : r < 0.5 ? 'warn' : r < 0.75 ? 'info' : 'success' };
-            });
         }
         return prepares;
     }
