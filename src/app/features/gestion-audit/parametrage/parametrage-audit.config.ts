@@ -89,9 +89,9 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
         champLibelle: 'libelle',
         formCols: [
             CHAMP_ID,
-            { field: 'libelle', label: 'Nom du type d\'audit (ex : Audit interne, Audit de certification)', header: 'Nom du type', placeholder: 'Ex : Audit de certification', type: 'string', visible: true, required: true },
+            { field: 'libelle', label: 'Nom du type d\'audit (ex : Audit interne, Audit de certification)', header: 'Nom du type', placeholder: 'Ex : Audit de certification', type: 'string', visible: true, required: true, class: 'md:col-6' },
             { field: 'typeNonConformiteId', label: 'Type de non-conformité ouvert par les constats de ce type d\'audit', header: 'Origine des NC', type: 'dropdown', visible: true, required: false, class: 'md:col-6' },
-            { field: 'circuitExterne', label: 'Audit externe : plan et rapport reçus de l\'organisme auditeur', header: 'Audit externe', type: 'boolean', visible: true, required: false, class: 'md:col-6' }
+            { field: 'circuitExterne', label: 'Audit externe : plan et rapport reçus de l\'organisme auditeur', header: 'Audit externe', type: 'boolean', visible: true, required: false }
         ],
         tableCols: [
             { field: 'libelle', header: 'Type d\'audit', type: 'string', filter: true },
@@ -120,8 +120,8 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
             CHAMP_ID,
             { field: 'libelle', label: 'Libellé du type de constat (ex : Point fort, Non-conformité mineure)', header: 'Libellé', placeholder: 'Ex : Non-conformité critique', type: 'string', visible: true, required: true, class: 'md:col-6' },
             { field: 'couleur', label: 'Couleur de la pastille', header: 'Couleur', type: 'color', visible: true, required: false, class: 'md:col-6' },
-            { field: 'genereNonConformite', label: 'Génère une non-conformité à la publication du constat', header: 'Génère une NC', type: 'boolean', visible: true, required: false, class: 'md:col-6' },
-            { field: 'niveauNonConformiteId', label: 'Gravité de la non-conformité ouverte', header: 'Gravité de la NC', type: 'dropdown', visible: true, required: false, class: 'md:col-6' }
+            { field: 'genereNonConformite', label: 'Génère une non-conformité à la publication du constat', header: 'Génère une NC', type: 'boolean', visible: true, required: false },
+            { field: 'niveauNonConformiteId', label: 'Gravité de la non-conformité ouverte', header: 'Gravité de la NC', type: 'dropdown', visible: true, required: false }
         ],
         tableCols: [
             { field: 'libelle', header: 'Libellé', type: 'string', filter: true },
@@ -195,9 +195,9 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
         tri: 'ordre',
         formCols: [
             CHAMP_ID,
-            { field: 'ordre', label: 'Rang dans l\'échelle (1 = le plus bas)', header: 'Rang', placeholder: '1', type: 'number', min: 1, visible: true, required: true, class: 'md:col-6' },
             { field: 'libelle', label: 'Libellé du niveau (ex : Satisfaisant)', header: 'Libellé', placeholder: 'Ex : Satisfaisant', type: 'string', visible: true, required: true, class: 'md:col-6' },
-            { field: 'couleur', label: 'Couleur du niveau', header: 'Couleur', type: 'color', visible: true, required: false }
+            { field: 'couleur', label: 'Couleur du niveau', header: 'Couleur', type: 'color', visible: true, required: false, class: 'md:col-6' },
+            { field: 'ordre', label: 'Rang dans l\'échelle (1 = le plus bas)', header: 'Rang', placeholder: '1', type: 'number', min: 1, visible: true, required: true }
         ],
         tableCols: [
             { field: 'ordre', header: 'Rang', type: 'number', width: '6rem' },
@@ -222,10 +222,10 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
         champLibelle: 'libelle',
         formCols: [
             CHAMP_ID,
-            { field: 'libelle', label: 'Nom de la règle de rappel', header: 'Nom de la règle', placeholder: 'Ex : Rappel J-10', type: 'string', visible: true, required: true },
-            { field: 'delaiJours', label: 'Délai avant le démarrage de l\'audit, en jours', header: 'Délai (jours)', placeholder: '10', type: 'number', min: 1, visible: true, required: true, class: 'md:col-6' },
-            { field: 'actif', label: 'Règle active', header: 'Règle active', type: 'boolean', visible: true, required: false, class: 'md:col-6' },
-            { field: 'destinataires', label: 'Destinataires du rappel', header: 'Destinataires', type: 'multiselect', visible: true, required: false }
+            { field: 'libelle', label: 'Nom de la règle de rappel', header: 'Nom de la règle', placeholder: 'Ex : Rappel J-10', type: 'string', visible: true, required: true, class: 'md:col-6' },
+            { field: 'destinataires', label: 'Destinataires du rappel', header: 'Destinataires', type: 'multiselect', visible: true, required: false, class: 'md:col-6' },
+            { field: 'delaiJours', label: 'Délai avant le démarrage de l\'audit, en jours', header: 'Délai (jours)', placeholder: '10', type: 'number', min: 1, visible: true, required: true },
+            { field: 'actif', label: 'Règle active', header: 'Règle active', type: 'boolean', visible: true, required: false }
         ],
         tableCols: [
             { field: 'libelle', header: 'Règle', type: 'string', filter: true },
@@ -259,7 +259,7 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
             { field: 'prefixe', label: 'Préfixe de la structure (ex : QS)', header: 'Préfixe', placeholder: 'Ex : QS', type: 'string', visible: true, required: true, class: 'md:col-6' },
             { field: 'separateur', label: 'Séparateur entre les segments de la référence', header: 'Séparateur', type: 'dropdown', visible: true, required: false, class: 'md:col-6' },
             { field: 'annee', label: 'Année en cours (ne se saisit qu\'à la création)', header: 'Année', placeholder: String(new Date().getFullYear()), type: 'string', visible: true, required: false, class: 'md:col-6' },
-            { field: 'compteur', label: 'Dernier numéro déjà émis (ne se saisit qu\'à la création)', header: 'Dernier numéro émis', placeholder: '0', type: 'number', min: 0, visible: true, required: false, class: 'md:col-6' }
+            { field: 'compteur', label: 'Dernier numéro déjà émis (ne se saisit qu\'à la création)', header: 'Dernier numéro émis', placeholder: '0', type: 'number', min: 0, visible: true, required: false }
         ],
         tableCols: [
             { field: 'documentLibelle', header: 'Document', type: 'string' },
