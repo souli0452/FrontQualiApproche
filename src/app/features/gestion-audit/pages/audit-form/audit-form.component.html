@@ -11,7 +11,12 @@
     <p-message *ngIf="verrouille" severity="info" styleClass="mb-4 w-full"
                text="L'audit a démarré ou est terminé : sa planification ne se modifie plus."></p-message>
 
-    <p-stepper [value]="etape" (valueChange)="allerA($event)" styleClass="mb-2">
+    <!-- Sur petit écran, l'étapier débordait et la 4e étape sortait de l'écran (observation 7) :
+         un repère « Étape 2 / 4 » le remplace. -->
+    <div class="md:hidden flex items-center justify-between mb-3 px-1">
+        <span class="text-sm font-semibold text-primary">Étape {{ etape }} / {{ etapes.length }} — {{ etapes[etape - 1] }}</span>
+    </div>
+    <p-stepper [value]="etape" (valueChange)="allerA($event)" styleClass="mb-2 etapes-audit hidden md:block">
         <p-step-list>
             <p-step *ngFor="let e of etapes; let n = index" [value]="n + 1" [disabled]="!etapeAtteignable(n + 1)">{{ e }}</p-step>
         </p-step-list>
@@ -33,8 +38,8 @@
             <div>
                 <app-audit-libelle texte="Processus audité" [requis]="true"
                     aide="La structure dont le fonctionnement est audité. Les écarts relevés ouvriront leur non-conformité dans cette structure." />
-                <app-select-input formControlName="processusId" [options]="processus" optionLabel="libelleLong" optionValue="id" [filter]="true"
-                                  filterBy="libelleLong,libelleCourt" placeholder="Choisir une structure" />
+                <app-select-input formControlName="processusId" [options]="processus" optionLabel="libelleChoix" optionValue="id" [filter]="true"
+                                  filterBy="libelleChoix,libelleCourt" placeholder="Choisir un processus" />
                 <small *ngIf="invalide('processusId')" class="p-error">Ce champ est requis</small>
             </div>
             <div [ngClass]="{ 'md:col-span-2': !typeChoisi?.circuitExterne }">
@@ -58,11 +63,15 @@
             <div>
                 <app-audit-libelle texte="Fin prévue" [requis]="true" />
                 <input pInputText type="date" formControlName="dateFinPrevue" class="w-full" />
-                <small *ngIf="invalide('dateFinPrevue')" class="p-error">Ce champ est requis</small>
+                <small *ngIf="invalide('dateFinPrevue') && formulaire.get('dateFinPrevue')?.hasError('required')" class="p-error">Ce champ est requis</small>
+                <small *ngIf="formulaire.get('dateFinPrevue')?.hasError('finAvantDebut')" class="p-error">La fin prévue précède le début.</small>
             </div>
             <div class="md:col-span-2">
-                <app-audit-libelle texte="Durée estimée (jours)" aide="Le temps passé sur place, qui peut être inférieur à la période prévue." />
+                <app-audit-libelle texte="Durée estimée (jours)" aide="Proposée d'après les jours ouvrés de la période ; modifiable si le temps passé sur place est moindre." />
                 <input pInputText type="number" min="1" formControlName="dureeEstimeeJours" class="w-full" />
+                <small *ngIf="formulaire.get('dureeEstimeeJours')?.hasError('dureeHorsPeriode') as e" class="p-error">
+                    La durée dépasse la période prévue ({{ formulaire.get('dureeEstimeeJours')?.getError('dureeHorsPeriode')?.jours }} jour(s)).
+                </small>
             </div>
         </div>
 
@@ -82,7 +91,8 @@
             </div>
             <div>
                 <app-audit-libelle texte="Auditeurs associés" aide="Chaque auditeur est proposé avec ses domaines habilités. Les mêmes contrôles que pour le responsable s'appliquent." />
-                <app-multiselect-input formControlName="membreEquipeIds" [options]="auditeurs" optionLabel="libelleChoix" optionValue="id" display="chip"
+                <app-multiselect-input formControlName="membreEquipeIds" [options]="membresPossibles" optionLabel="nomComplet" optionValue="id" display="comma"
+                                       [maxSelectedLabels]="2" selectedItemsLabel="{0} auditeurs choisis"
                                        [filter]="true" filterBy="nomComplet,libelleChoix" placeholder="Choisir les membres de l'équipe" />
                 <ng-container *ngTemplateOutlet="alertes; context: { liste: alertesMembres }"></ng-container>
             </div>
@@ -123,7 +133,8 @@
                 <app-multiselect-input formControlName="checklistIds" [options]="checklists" optionLabel="nom" optionValue="id" display="chip"
                                        placeholder="Checklists publiées" />
             </div>
-            <div>
+            <!-- Réservé aux audits RQAP-BF : il était proposé pour un audit ISO 9001 (observation 10). -->
+            <div *ngIf="estRqapbf">
                 <app-audit-libelle texte="Domaines RQAP-BF évalués" aide="Sans choix, l'évaluation RQAP-BF porte sur tous les domaines du référentiel." />
                 <app-multiselect-input formControlName="domaineRqapbfIds" [options]="domaines" optionLabel="libelle" optionValue="id" display="chip"
                                        placeholder="Tous les domaines" />
@@ -155,15 +166,46 @@
             <p-button *ngIf="!verrouille" icon="pi pi-plus" label="Ajouter une action" size="small" [outlined]="true" (onClick)="ajouterAction()"></p-button>
         </div>
         <p *ngIf="!actions.length" class="text-sm text-surface-400 m-0 -mt-3">Aucune action prévue.</p>
-        <div *ngFor="let a of actions; let i = index" class="grid grid-cols-1 md:grid-cols-12 gap-3 items-start -mt-2">
-            <input pInputText [(ngModel)]="a.libelle" [ngModelOptions]="{ standalone: true }" class="md:col-span-6 w-full"
-                   placeholder="Action (ex : désigner un observateur indépendant)" [disabled]="verrouille" />
-            <div class="md:col-span-3">
-                <app-select-input [(ngModel)]="a.responsable" [ngModelOptions]="{ standalone: true }" [options]="utilisateurs"
-                                  optionLabel="nomComplet" optionValue="nomComplet" [filter]="true" placeholder="Responsable" [disabled]="verrouille" />
+        <!-- Chaque action dans sa carte, ses champs nommés : le texte d'exemple seul disparaissait à la saisie (observation 11). -->
+        <div *ngFor="let a of actions; let i = index" class="border border-surface-200 dark:border-surface-700 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold uppercase tracking-wide text-surface-500">Action {{ i + 1 }}</span>
+                <p-button *ngIf="!verrouille" icon="pi pi-trash" label="Retirer" [text]="true" severity="danger" size="small" (onClick)="retirerAction(i)"></p-button>
             </div>
-            <input pInputText type="date" [(ngModel)]="a.delai" [ngModelOptions]="{ standalone: true }" class="md:col-span-2 w-full" [disabled]="verrouille" />
-            <p-button *ngIf="!verrouille" icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" class="md:col-span-1" (onClick)="retirerAction(i)"></p-button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                <div class="md:col-span-2">
+                    <app-audit-libelle texte="Action" [requis]="true" />
+                    <input pInputText [(ngModel)]="a.libelle" [ngModelOptions]="{ standalone: true }" class="w-full"
+                           placeholder="Ex : désigner un observateur indépendant" [disabled]="verrouille" />
+                </div>
+                <div>
+                    <app-audit-libelle texte="Responsable" />
+                    <app-select-input [(ngModel)]="a.responsable" [ngModelOptions]="{ standalone: true }" [options]="utilisateurs"
+                                      optionLabel="nomComplet" optionValue="nomComplet" [filter]="true" placeholder="Choisir dans l'annuaire" [disabled]="verrouille" />
+                </div>
+                <div>
+                    <app-audit-libelle texte="Échéance" />
+                    <input pInputText type="date" [(ngModel)]="a.delai" [ngModelOptions]="{ standalone: true }" class="w-full" [disabled]="verrouille" />
+                </div>
+            </div>
+        </div>
+      </div>
+
+      <!-- Récapitulatif avant de planifier (observation 11) -->
+      <div *ngIf="recapitulatif" class="flex flex-col gap-3 mt-4 rounded-xl border border-primary-200 dark:border-primary-800 p-4">
+        <h4 class="text-sm font-bold uppercase tracking-wide text-primary m-0">Récapitulatif avant de planifier</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <div><span class="text-xs text-surface-500 block">Type d'audit</span>{{ typeChoisi?.libelle || '—' }}</div>
+            <div><span class="text-xs text-surface-500 block">Processus audité</span>{{ libelleDe(processus, formulaire.value.processusId, 'libelleChoix') }}</div>
+            <div><span class="text-xs text-surface-500 block">Période</span>{{ formulaire.value.dateDebutPrevue | date: 'dd/MM/yyyy' }} → {{ formulaire.value.dateFinPrevue | date: 'dd/MM/yyyy' }}
+                <span *ngIf="formulaire.value.dureeEstimeeJours"> · {{ formulaire.value.dureeEstimeeJours }} jour(s)</span></div>
+            <div><span class="text-xs text-surface-500 block">Responsable d'équipe</span>{{ libelleDe(auditeurs, formulaire.value.responsableEquipeId, 'nomComplet') }}</div>
+            <div class="md:col-span-2"><span class="text-xs text-surface-500 block">Auditeurs associés</span>
+                <span *ngFor="let id of formulaire.value.membreEquipeIds; let last = last">{{ libelleDe(auditeurs, id, 'nomComplet') }}{{ last ? '' : ', ' }}</span>
+                <span *ngIf="!formulaire.value.membreEquipeIds?.length">—</span></div>
+            <div class="md:col-span-2"><span class="text-xs text-surface-500 block">Objectifs</span>{{ formulaire.value.objectifsAudit || '—' }}</div>
+            <div><span class="text-xs text-surface-500 block">Checklists</span>{{ formulaire.value.checklistIds?.length || 0 }} retenue(s)</div>
+            <div><span class="text-xs text-surface-500 block">Risque</span>{{ formulaire.value.niveauRisque || '—' }} · {{ actions.length }} action(s) de maîtrise</div>
         </div>
       </div>
     </form>
@@ -176,8 +218,12 @@
             <button *ngIf="etape < etapes.length" pButton type="button" class="p-button-primary font-bold" icon="pi pi-arrow-right" iconPos="right"
                     label="Suivant" (click)="suivant()"></button>
             <!-- En modification, on enregistre depuis n'importe quelle étape ; à la création, au bout du parcours. -->
-            <button *ngIf="!verrouille && (modeEdition || etape === etapes.length)" pButton type="button" class="p-button-primary font-bold" icon="pi pi-save"
-                    [label]="modeEdition ? 'Enregistrer les modifications' : 'Planifier l\'audit'" [loading]="saving" (click)="sauvegarder()"></button>
+            <button *ngIf="!verrouille && (modeEdition || etape === etapes.length) && !recapitulatif" pButton type="button" class="p-button-primary font-bold" icon="pi pi-save"
+                    [label]="modeEdition ? 'Enregistrer les modifications' : 'Planifier l\'audit'" [loading]="saving" (click)="planifier()"></button>
+            <button *ngIf="recapitulatif" pButton type="button" class="p-button-secondary p-button-outlined font-bold" icon="pi pi-pencil"
+                    label="Modifier" (click)="recapitulatif = false"></button>
+            <button *ngIf="recapitulatif" pButton type="button" class="p-button-primary font-bold" icon="pi pi-check"
+                    label="Confirmer et planifier" [loading]="saving" (click)="sauvegarder()"></button>
         </div>
     </div>
 </app-audit-page-formulaire>

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgPrimeModule } from '@prime-ng';
+import { Structure } from '@features/organigramme/models/structure.model';
 import { Observable, Subject, forkJoin, takeUntil, tap } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { SelectInputComponent } from '@shared/ui/select-input/select-input.component';
@@ -35,6 +36,9 @@ const LANGUES_AUDIT = ['Français', 'Anglais'];
  * activité dans l'équipe de l'audit, le processus parmi les structures, les personnes auditées
  * dans l'annuaire, le lieu parmi les sites.</p>
  */
+/** Les méthodes proposées d'office à un plan neuf : les plus courantes, que l'on décoche au besoin. */
+const METHODES_PAR_DEFAUT = ['Entretiens avec les agents du processus', 'Observation sur site', 'Revue documentaire'];
+
 @Component({
     selector: 'app-plan-audit',
     standalone: true,
@@ -85,6 +89,23 @@ export class PlanAuditComponent implements OnInit, OnDestroy {
         if (this.auditId) this.charger(this.auditId);
     }
 
+    /** Le processus audité de la fiche, proposé pour chaque nouvelle activité. */
+    private processusDeLAudit?: Structure;
+
+    /** Réviser un plan validé ou partagé : il repasse en brouillon, dans une nouvelle version (observation 18). */
+    reviser(event: Event): void {
+        if (!this.auditId) return;
+        this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
+            target: event.currentTarget as EventTarget,
+            message: `Rouvrir le plan pour le corriger ? Il passera en version ${(this.plan?.version ?? 1) + 1}, à valider puis à partager de nouveau.`,
+            icon: 'pi pi-pencil',
+            acceptLabel: 'Réviser',
+            rejectLabel: 'Retour',
+            accept: () => this.geste(this.auditService.reviserPlan(this.auditId!), 'Plan rouvert en brouillon.')
+        });
+    }
+
     charger(auditId: string): void {
         this.loading = true;
         forkJoin({
@@ -102,6 +123,7 @@ export class PlanAuditComponent implements OnInit, OnDestroy {
                     this.libelles = libelles;
                     const ids = [this.audit?.responsableEquipeId, ...(this.audit?.membreEquipeIds ?? [])];
                     this.equipe = auditeurs.filter(a => ids.includes(a.id)).map(a => ({ nom: a.nomComplet ?? '—' }));
+                    this.processusDeLAudit = structures.find(s => s.id === this.audit?.processusId);
                     this.processus = structures.map(s => ({ libelle: s.libelleLong || s.libelleCourt || '—' }));
                     this.personnes = utilisateurs;
                     const siteIds = this.audit?.siteIds ?? [];
@@ -136,11 +158,14 @@ export class PlanAuditComponent implements OnInit, OnDestroy {
                     if (err?.status === 404) {
                         // Pas encore de plan : un brouillon repris de l'audit, créé au premier enregistrement.
                         this.nouveau = true;
+                        // Repris de la fiche : le lieu (premier site de l'audit) et les méthodes usuelles,
+                        // que l'on décoche au besoin (observation 16).
                         this.plan = {
                             objectifs: this.audit?.objectifsAudit,
                             portee: this.audit?.porteeAudit,
                             criteres: this.audit?.criteresAudit,
-                            methodesAudit: [],
+                            methodesAudit: [...METHODES_PAR_DEFAUT],
+                            lieu: this.sitesAudit[0],
                             langue: 'Français',
                             activites: []
                         };
@@ -169,7 +194,24 @@ export class PlanAuditComponent implements OnInit, OnDestroy {
     }
 
     horaire(a: ActivitePlan): string {
-        return [a.horaireDebut, a.horaireFin].filter(Boolean).join(' – ') || '—';
+        const heures = [a.horaireDebut, a.horaireFin].filter(Boolean).join(' – ');
+        const jour = a.jour ? a.jour.slice(0, 10).split('-').reverse().join('/') : '';
+        return [jour, heures].filter(Boolean).join(' · ') || '—';
+    }
+
+    /** Ce qui empêche d'appliquer l'activité en cours d'édition, dit sous le formulaire. */
+    get erreurCreneau(): string | null {
+        const a = this.activiteEnEdition?.activite;
+        if (!a) return null;
+        const debut = this.audit?.dateDebutPrevue?.slice(0, 10);
+        const fin = this.audit?.dateFinPrevue?.slice(0, 10);
+        if (a.jour && debut && fin && (a.jour < debut || a.jour > fin)) {
+            return 'Le jour doit tomber dans la période de l\'audit.';
+        }
+        if (a.horaireDebut && a.horaireFin && a.horaireFin <= a.horaireDebut) {
+            return 'L\'heure de fin doit suivre l\'heure de début.';
+        }
+        return null;
     }
 
     get externe(): boolean {
@@ -208,6 +250,7 @@ export class PlanAuditComponent implements OnInit, OnDestroy {
     valider(event: Event): void {
         if (!this.auditId) return;
         this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
             target: event.currentTarget as EventTarget,
             message: 'Une fois validé, le plan ne se modifie plus. Continuer ?',
             icon: 'pi pi-check-circle',
@@ -217,9 +260,24 @@ export class PlanAuditComponent implements OnInit, OnDestroy {
         });
     }
 
-    partager(): void {
+    /** Le partage se confirme, en disant qui le courriel préviendra (observation 14). */
+    partager(event?: Event): void {
         if (!this.auditId) return;
-        this.geste(this.auditService.partagerPlan(this.auditId), 'Plan partagé avec l\'audité.');
+        const cible = event?.currentTarget as EventTarget;
+        this.auditService.destinataires(this.auditId, 'PARTAGE_PLAN').pipe(takeUntil(this.destroy$)).subscribe(destinataires => {
+            const qui = destinataires.length
+                ? 'Un courriel préviendra : ' + destinataires.map(d => d.nom).join(', ') + '.'
+                : 'Le processus audité n\'a pas de pilote joignable : personne ne sera prévenu par courriel.';
+            this.confirmationService.confirm({
+                rejectButtonProps: { severity: 'secondary', outlined: true },
+                target: cible,
+                message: `Partager le plan avec l'audité ? ${qui}`,
+                icon: 'pi pi-share-alt',
+                acceptLabel: 'Partager',
+                rejectLabel: 'Retour',
+                accept: () => this.geste(this.auditService.partagerPlan(this.auditId!), 'Plan partagé avec l\'audité.')
+            });
+        });
     }
 
     chargerFichier(evenement: Event): void {
@@ -289,16 +347,23 @@ export class PlanAuditComponent implements OnInit, OnDestroy {
 
     ouvrirActivite(index: number | null = null): void {
         const existante = index === null ? undefined : this.plan?.activites?.[index];
+        // Une nouvelle activité prend le jour de la précédente, ou le premier jour de l'audit.
+        const derniere = this.plan?.activites?.[this.plan.activites.length - 1];
+        const jourParDefaut = derniere?.jour ?? this.audit?.dateDebutPrevue?.slice(0, 10);
         this.activiteEnEdition = {
             index,
-            activite: { ...(existante ?? { libelleActivite: '' }) },
+            activite: { ...(existante ?? {
+                libelleActivite: '', jour: jourParDefaut,
+                // Le processus audité de la fiche, proposé d'office (observation 16).
+                processusConcerne: this.processusDeLAudit ? (this.processusDeLAudit.libelleLong || this.processusDeLAudit.libelleCourt) : undefined
+            }) },
             personnes: (existante?.personnesAuditees ?? '').split(',').map(p => p.trim()).filter(Boolean)
         };
     }
 
     /** Range l'activité dans le plan ; elle s'enregistre avec lui (« Enregistrer en brouillon »). */
     appliquerActivite(): void {
-        if (!this.plan || !this.activiteEnEdition?.activite.libelleActivite?.trim()) return;
+        if (!this.plan || !this.activiteEnEdition?.activite.libelleActivite?.trim() || this.erreurCreneau) return;
         const { index, activite, personnes } = this.activiteEnEdition;
         const saisie: ActivitePlan = { ...activite, personnesAuditees: personnes.join(', ') || undefined };
         const activites = [...(this.plan.activites ?? [])];
@@ -307,7 +372,9 @@ export class PlanAuditComponent implements OnInit, OnDestroy {
         } else {
             activites[index] = saisie;
         }
-        this.plan.activites = activites;
+        // Rangées par jour puis par heure : les activités de J1 et J2 se mêlaient au tri par heure.
+        this.plan.activites = activites.sort((x, y) =>
+            (x.jour ?? '').localeCompare(y.jour ?? '') || (x.horaireDebut ?? '').localeCompare(y.horaireDebut ?? ''));
         this.activiteEnEdition = null;
     }
 

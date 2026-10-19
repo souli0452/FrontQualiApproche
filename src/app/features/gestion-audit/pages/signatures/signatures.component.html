@@ -10,12 +10,17 @@
                 <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">
                     <span class="font-mono font-semibold text-primary">{{ audit?.reference }}</span>
                     <span *ngIf="audit?.referenceRapport"> · rapport {{ audit?.referenceRapport }}</span>
-                    <span *ngIf="signatures.length"> · {{ signees }} / {{ signatures.length }} signature(s)</span>
+                    <span *ngIf="signatures.length"> · {{ signees }} / {{ actifs }} signature(s)</span>
                 </p>
             </div>
         </div>
+        <div class="flex flex-wrap gap-2">
+        <!-- L'aperçu avant de signer : le rapport tel qu'il sera visé. -->
+        <p-button icon="pi pi-eye" label="Relire le rapport" size="small" [outlined]="true" severity="secondary"
+                  [routerLink]="['/gestion-audit/programme', auditId, 'rapport']"></p-button>
         <p-button *ngIf="peutPoserCircuit && !circuitOuvert" icon="pi pi-users" size="small" [outlined]="true"
                   [label]="signatures.length ? 'Reposer le circuit' : 'Poser le circuit'" (onClick)="ouvrirCircuit()"></p-button>
+        </div>
     </div>
 
     <p-message *ngIf="!loading && audit?.circuitExterne" severity="info" styleClass="mb-3 w-full"
@@ -30,7 +35,7 @@
          class="bg-white dark:bg-surface-900 border border-primary-200 dark:border-primary-800 rounded-xl p-4 mb-4">
         <div class="flex items-center justify-between mb-3">
             <h3 class="text-base font-semibold m-0">Circuit de signature</h3>
-            <span class="text-xs text-surface-500">Sans ordre imposé · reposer le circuit efface les signatures en attente</span>
+            <span class="text-xs text-surface-500">Chacun signe quand il le peut · un signataire en attente se remplace sans reposer le circuit</span>
         </div>
         <div class="grid grid-cols-12 gap-x-4 gap-y-3">
             <div class="col-span-12">
@@ -40,8 +45,14 @@
                                (onChange)="onSignatairesChange()"></p-multiselect>
             </div>
             <ng-container *ngFor="let id of signatairesChoisis">
-                <div class="col-span-12 md:col-span-6 flex items-center text-sm font-medium">{{ nom(id) }}</div>
+                <div class="col-span-12 text-sm font-semibold mt-1">{{ nom(id) }}</div>
                 <div class="col-span-12 md:col-span-6">
+                    <app-audit-libelle texte="Signe en tant que" aide="Rédigé, vérifié ou approuvé : ce que le visa atteste." />
+                    <p-select [(ngModel)]="roles[id]" [options]="rolesVisa" optionLabel="label" optionValue="value" [showClear]="true"
+                              placeholder="Choisir un titre" styleClass="w-full" appendTo="body"></p-select>
+                </div>
+                <div class="col-span-12 md:col-span-6">
+                    <app-audit-libelle texte="Fonction" />
                     <input pInputText [(ngModel)]="fonctions[id]" class="w-full" placeholder="Fonction du signataire" />
                 </div>
             </ng-container>
@@ -63,40 +74,52 @@
     </div>
 
     <p-table *ngIf="!loading && signatures.length" [value]="signatures" dataKey="id" [expandedRowKeys]="refusOuvert"
-             styleClass="p-datatable-sm" [tableStyle]="{ 'min-width': '40rem' }">
+             styleClass="p-datatable-sm" [tableStyle]="{ 'min-width': '40rem' }" [scrollable]="true">
         <ng-template #header>
             <tr>
                 <th>Signataire</th>
+                <th>Titre</th>
                 <th>Fonction</th>
                 <th style="width: 9rem">Statut</th>
-                <th style="width: 16rem">Action</th>
+                <th style="width: 16rem" pFrozenColumn alignFrozen="right">Action</th>
             </tr>
         </ng-template>
         <ng-template #body let-s>
-            <tr [ngClass]="{ 'bg-primary-50 dark:bg-primary-950/20': aMoi(s) }">
+            <tr [ngClass]="{ 'bg-primary-50 dark:bg-primary-950/20': aMoi(s), 'opacity-60': s.statut === 'REMPLACEE' }">
                 <td class="font-medium">
-                    {{ nom(s.signataireId) }} <span *ngIf="s.signataireId === moi" class="text-xs text-primary">(vous)</span>
+                    <span [class.line-through]="s.statut === 'REMPLACEE'">{{ nom(s.signataireId) }}</span>
+                    <span *ngIf="s.signataireId === moi" class="text-xs text-primary">(vous)</span>
                 </td>
+                <td class="text-surface-600 dark:text-surface-300">{{ s.roleLibelle || '—' }}</td>
                 <td class="text-surface-600 dark:text-surface-300">{{ s.fonctionSignataire || '—' }}</td>
                 <td><p-tag [value]="libelleStatut(s.statut)" [severity]="severiteStatut(s.statut)" [rounded]="true"></p-tag></td>
-                <td>
+                <td pFrozenColumn alignFrozen="right" class="bg-surface-0 dark:bg-surface-900">
                     <div *ngIf="aMoi(s); else horodatage" class="flex gap-2">
                         <p-button label="Signer" icon="pi pi-check" size="small" [loading]="actionEnCours" (onClick)="signer()"></p-button>
                         <p-button label="Refuser" icon="pi pi-times" severity="danger" [outlined]="true" size="small"
                                   [disabled]="actionEnCours" (onClick)="ouvrirRefus(s)"></p-button>
                     </div>
                     <ng-template #horodatage>
-                        <span class="text-xs text-surface-500">
-                            <ng-container *ngIf="s.dateSignature">le {{ s.dateSignature | date: 'dd/MM/yyyy à HH:mm' }}</ng-container>
-                            <ng-container *ngIf="s.motifRefus"> · {{ s.motifRefus }}</ng-container>
-                        </span>
+                        <div *ngIf="s.statut === 'EN_ATTENTE' && peutGererCircuit; else trace" class="flex flex-wrap gap-2">
+                            <p-button label="Relancer" icon="pi pi-envelope" size="small" [outlined]="true" severity="secondary"
+                                      [disabled]="actionEnCours" (onClick)="relancer(s)"></p-button>
+                            <p-button label="Remplacer" icon="pi pi-user-edit" size="small" [outlined]="true" severity="secondary"
+                                      [disabled]="actionEnCours" (onClick)="ouvrirRemplacement(s)"></p-button>
+                        </div>
+                        <ng-template #trace>
+                            <span class="text-xs text-surface-500">
+                                <ng-container *ngIf="s.dateSignature">le {{ s.dateSignature | date: 'dd/MM/yyyy à HH:mm' }}</ng-container>
+                                <ng-container *ngIf="s.motifRefus"> · {{ s.motifRefus }}</ng-container>
+                                <ng-container *ngIf="s.statut === 'REMPLACEE'">remplacé le {{ s.remplaceLe | date: 'dd/MM/yyyy à HH:mm' }}<span *ngIf="s.remplacePar"> par {{ s.remplacePar }}</span></ng-container>
+                            </span>
+                        </ng-template>
                     </ng-template>
                 </td>
             </tr>
         </ng-template>
         <ng-template #expandedrow let-s>
             <tr>
-                <td colspan="4">
+                <td colspan="5">
                     <app-audit-libelle texte="Motif du refus" [requis]="true" aide="Votre refus arrête le circuit. Indiquez ce qui doit être revu dans le rapport." />
                     <textarea pTextarea [(ngModel)]="motifRefus" rows="2" [autoResize]="true" class="w-full" placeholder="Ce qui doit être revu…"></textarea>
                     <div class="flex justify-end gap-2 mt-2">
@@ -107,6 +130,35 @@
             </tr>
         </ng-template>
     </p-table>
+
+    <!-- Remplacer un signataire en attente, sans reposer le circuit ni effacer les visas donnés. -->
+    <div *ngIf="remplacementDe" class="bg-white dark:bg-surface-900 border border-primary-200 dark:border-primary-800 rounded-xl p-4 mt-4">
+        <h3 class="text-base font-semibold m-0 mb-3">Remplacer {{ nom(remplacementDe.signataireId) }}<span *ngIf="remplacementDe.roleLibelle"> — {{ remplacementDe.roleLibelle }}</span></h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+            <div>
+                <app-audit-libelle texte="Nouveau signataire" [requis]="true" aide="Choisi dans l'annuaire. Il reprend le titre du visa remplacé." />
+                <p-select [(ngModel)]="remplacant" [options]="remplacantsPossibles" optionLabel="nomComplet" optionValue="id" [filter]="true"
+                          placeholder="Choisir dans l'annuaire" styleClass="w-full" appendTo="body" (onChange)="onRemplacantChange()"></p-select>
+            </div>
+            <div>
+                <app-audit-libelle texte="Fonction" />
+                <input pInputText [(ngModel)]="fonctionRemplacant" class="w-full" placeholder="Fonction du signataire" />
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-4">
+            <p-button label="Annuler" severity="secondary" [outlined]="true" size="small" (onClick)="remplacementDe = null"></p-button>
+            <p-button label="Remplacer" icon="pi pi-check" size="small" [disabled]="!remplacant || actionEnCours" (onClick)="confirmerRemplacement()"></p-button>
+        </div>
+    </div>
+
+    <app-request-password
+        [(visible)]="confirmationSignature"
+        title="Confirmer votre signature"
+        [message]="messageSignature"
+        [expectedValue]="referenceASaisir"
+        targetLabel="la référence du rapport"
+        [loading]="actionEnCours"
+        (confirm)="confirmerSignature()" />
 
     <!-- Toujours proposé, comme dans la maquette : l'évaluation de l'équipe ne dépend pas du circuit. -->
     <div *ngIf="!loading" class="flex justify-end mt-4">

@@ -151,6 +151,40 @@ export class AuditChecklistsComponent implements OnInit, OnDestroy {
         this.nouveauPoint = { chapitreISO: this.active?.chapitreISO, libelle: '' } as PointControle;
     }
 
+    importEnCours = false;
+
+    /** Ajoute à la checklist les points lus dans une grille Excel ou CSV ; ils se relisent et se retirent ici. */
+    importer(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const fichier = input.files?.[0];
+        input.value = '';
+        if (!fichier || !this.active) return;
+        this.importEnCours = true;
+        this.auditService.importerPoints(fichier).pipe(takeUntil(this.destroy$)).subscribe({
+            next: res => {
+                this.importEnCours = false;
+                const lus = contenu<PointControle>(res);
+                const points = [...(this.active?.points ?? []), ...lus];
+                this.enregistrer({ points }, `${lus.length} point(s) importé(s) : relisez-les avant de publier.`);
+            },
+            error: err => {
+                this.importEnCours = false;
+                this.messageService.add({ severity: 'error', summary: 'Import impossible', detail: messageErreur(err, 'Le fichier n\'a pas pu être lu.'), life: 8000 });
+            }
+        });
+    }
+
+    telechargerModele(): void {
+        this.auditService.telechargerModeleImport().pipe(takeUntil(this.destroy$)).subscribe(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Modele_points_de_controle.xlsx';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    }
+
     ajouterPoint(): void {
         if (!this.nouveauPoint?.libelle?.trim()) {
             return;
@@ -167,6 +201,7 @@ export class AuditChecklistsComponent implements OnInit, OnDestroy {
     retirerPoint(event: Event, i: number): void {
         const point = this.active?.points?.[i];
         this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
             target: event.currentTarget as EventTarget,
             message: `Retirer « ${point?.libelle} » de la checklist ?`,
             icon: 'pi pi-trash',
@@ -203,6 +238,7 @@ export class AuditChecklistsComponent implements OnInit, OnDestroy {
 
     publier(event: Event, cl: ChecklistAudit): void {
         this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
             target: event.currentTarget as EventTarget,
             message: `Publier « ${cl.nom} » ? Elle pourra servir dans les audits, et ne se modifiera plus.`,
             icon: 'pi pi-send',
@@ -231,6 +267,7 @@ export class AuditChecklistsComponent implements OnInit, OnDestroy {
 
     supprimer(event: Event, cl: ChecklistAudit): void {
         this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
             target: event.currentTarget as EventTarget,
             message: `Supprimer « ${cl.nom} » ?`,
             icon: 'pi pi-trash',

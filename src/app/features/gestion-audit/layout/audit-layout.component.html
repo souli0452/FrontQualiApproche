@@ -1,9 +1,9 @@
 <div class="card-first overflow-hidden border-none premium-hub transition-colors duration-300">
     <app-header-page
         title="Gestion des Audits"
-        subtitle="Planification, déroulement et constatations des audits internes et externes"
+        [subtitle]="estAccueil ? 'Planification, déroulement et constatations des audits internes et externes' : ''"
         [breadcrumbs]="breadcrumbs"
-        [buttonText]="'Planifier un audit'"
+        [buttonText]="boutonPlanifier ? 'Planifier un audit' : undefined"
         buttonIcon="pi pi-plus"
         buttonLink="/gestion-audit/programme/create"
     />

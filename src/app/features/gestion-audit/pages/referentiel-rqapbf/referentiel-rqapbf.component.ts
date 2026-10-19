@@ -158,6 +158,7 @@ export class ReferentielRQAPBFComponent implements OnInit, OnDestroy {
 
     supprimer(event: Event, n: NoeudReferentiel): void {
         this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
             target: event.currentTarget as EventTarget,
             message: `Supprimer « ${n.code} — ${n.libelle} » ?`,
             icon: 'pi pi-trash',

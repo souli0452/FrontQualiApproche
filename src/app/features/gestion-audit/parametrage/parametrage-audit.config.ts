@@ -36,6 +36,8 @@ export interface ListeParametrageAudit {
     listesMultiples?: Record<string, string>;
     /** Champs à choix multiple que le serveur garde en une seule chaîne, séparée par des virgules. */
     listesEnTexte?: string[];
+    /** Les lignes sont fixes (une par niveau d'une grille) : ni ajout ni suppression, seulement la modification. */
+    lectureEtModificationSeules?: boolean;
     /** Le champ qui ordonne les lignes : demandé au serveur, et repris pour teinter l'échelle. */
     tri?: string;
     /** Les colonnes calculées d'une ligne, à partir de la ligne et des options chargées. */
@@ -242,7 +244,67 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
         valeursParDefaut: { libelle: 'Rappel avant démarrage d\'audit', actif: true, delaiJours: 10, destinataires: ['Équipe d\'audit'] },
         listesMultiples: { destinataires: 'destinataires' },
         listesEnTexte: ['destinataires'],
-        enrichir: l => ({ ...l, destinatairesTexte: l.destinataires || '—' })
+        enrichir: l => ({ ...l, destinatairesTexte: l.destinataires ? String(l.destinataires).split(',').map((d: string) => d.trim()).join(', ') : '—' })
+    },
+    {
+        cle: 'ecarts-rqapbf',
+        titre: 'Écarts RQAP-BF',
+        sousTitre: 'Les niveaux de la grille RQAP-BF qui ouvrent une non-conformité à la publication d\'un critère.',
+        boutonNouveau: '',
+        formHeader: 'Règle d\'écart d\'un niveau RQAP-BF',
+        formLongDescription: 'Un critère publié à un niveau qui ouvre une non-conformité part vers le module Non-conformités. Par défaut, « Non conforme » et « À améliorer » en ouvrent une, « Acceptable » non. « Conforme » et « Non applicable » n\'en ouvrent jamais. Un critère déjà transmis garde son dossier.',
+        url: UrlConfig.AUDIT_REGLES_ECARTS_RQAPBF_URL,
+        champLibelle: 'libelle',
+        lectureEtModificationSeules: true,
+        formCols: [
+            CHAMP_ID,
+            { field: 'ouvreNonConformite', label: 'Ouvre une non-conformité', header: 'Ouvre une non-conformité', type: 'boolean', visible: true, required: false }
+        ],
+        tableCols: [
+            { field: 'libelle', header: 'Niveau de la grille', type: 'string' },
+            { field: 'ouvreNonConformite', header: 'À la publication', type: 'boolean', labelTrue: 'Ouvre une NC', labelFalse: 'N\'ouvre pas de NC', width: '12rem' }
+        ],
+        detailCols: [
+            { field: 'libelle', header: 'Niveau' },
+            { field: 'ouvreNonConformite', header: 'Ouvre une non-conformité', type: 'boolean' }
+        ],
+        valeursParDefaut: {}
+    },
+    {
+        cle: 'mentions-rqapbf',
+        titre: 'Mentions RQAP-BF',
+        sousTitre: 'La grille qui traduit le score global RQAP-BF en niveau, mention et étoiles.',
+        boutonNouveau: '',
+        formHeader: 'Tranche de la grille des mentions',
+        formLongDescription: 'Une tranche va de son score minimal, inclus, au score minimal de la suivante ; la première commence à 0. Un domaine sous 50 % plafonne la mention à la tranche qui contient 50, et des écarts relevés la rendent « sous réserve ». Grille par défaut en attendant la grille officielle.',
+        url: UrlConfig.AUDIT_TRANCHES_SCORE_RQAPBF_URL,
+        champLibelle: 'niveau',
+        lectureEtModificationSeules: true,
+        formCols: [
+            CHAMP_ID,
+            { field: 'scoreMin', label: 'Score minimal, en % (inclus)', header: 'À partir de', placeholder: '50', type: 'number', min: 0, visible: true, required: true, class: 'md:col-6' },
+            { field: 'etoiles', label: 'Étoiles (0 à 5)', header: 'Étoiles', placeholder: '2', type: 'number', min: 0, visible: true, required: true, class: 'md:col-6' },
+            { field: 'niveau', label: 'Niveau', header: 'Niveau', placeholder: 'Niveau intermédiaire', type: 'string', visible: true, required: true, class: 'md:col-12' },
+            { field: 'mention', label: 'Mention délivrée', header: 'Mention', placeholder: 'Certificat de conformité moyenne', type: 'string', visible: true, required: true, class: 'md:col-12' }
+        ],
+        tableCols: [
+            { field: 'trancheTexte', header: 'Score', type: 'string', width: '9rem' },
+            { field: 'niveau', header: 'Niveau', type: 'string' },
+            { field: 'mention', header: 'Mention', type: 'string' },
+            { field: 'etoilesTexte', header: 'Étoiles', type: 'string', width: '7rem' }
+        ],
+        detailCols: [
+            { field: 'trancheTexte', header: 'Score' },
+            { field: 'niveau', header: 'Niveau' },
+            { field: 'mention', header: 'Mention' },
+            { field: 'etoilesTexte', header: 'Étoiles' }
+        ],
+        valeursParDefaut: {},
+        enrichir: t => ({
+            ...t,
+            trancheTexte: t.scoreMax < 100 ? `[${t.scoreMin} – ${t.scoreMax}[` : `[${t.scoreMin} – 100]`,
+            etoilesTexte: t.etoiles ? '★'.repeat(t.etoiles) : '—'
+        })
     },
     {
         cle: 'codification',

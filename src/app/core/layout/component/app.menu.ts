@@ -268,15 +268,23 @@ export class AppMenu {
                     visible: this.peutVoir(['audit-config', 'CONFIG_GLOBAL_MANAGE'], ModuleAbonnement.AUDIT)
                 },
                 {
-                    label: "Critères d'évaluation", routerLink: ['/parametrage-audit/criteres-evaluation'],
+                    label: "Critères d'évaluation des auditeurs", routerLink: ['/parametrage-audit/criteres-evaluation'],
                     visible: this.peutVoir(['audit-config', 'CONFIG_GLOBAL_MANAGE'], ModuleAbonnement.AUDIT)
                 },
                 {
-                    label: "Niveaux d'évaluation", routerLink: ['/parametrage-audit/niveaux-evaluation'],
+                    label: "Niveaux d'évaluation des auditeurs", routerLink: ['/parametrage-audit/niveaux-evaluation'],
                     visible: this.peutVoir(['audit-config', 'CONFIG_GLOBAL_MANAGE'], ModuleAbonnement.AUDIT)
                 },
                 {
                     label: "Règles de notification", routerLink: ['/parametrage-audit/regles-notification'],
+                    visible: this.peutVoir(['audit-config', 'CONFIG_GLOBAL_MANAGE'], ModuleAbonnement.AUDIT)
+                },
+                {
+                    label: "Écarts RQAP-BF", routerLink: ['/parametrage-audit/ecarts-rqapbf'],
+                    visible: this.peutVoir(['audit-config', 'CONFIG_GLOBAL_MANAGE'], ModuleAbonnement.AUDIT)
+                },
+                {
+                    label: "Mentions RQAP-BF", routerLink: ['/parametrage-audit/mentions-rqapbf'],
                     visible: this.peutVoir(['audit-config', 'CONFIG_GLOBAL_MANAGE'], ModuleAbonnement.AUDIT)
                 },
                 {

@@ -55,6 +55,8 @@ export class UrlConfig {
     static readonly AUDIT_NIVEAUX_EVAL_AUDITEUR_URL = `${REFERENTIEL_SERVICE}/niveaux-evaluation-auditeur`;
     static readonly AUDIT_REGLES_NOTIF_URL = `${EVALUATION_SERVICE}/regles-notification-audit`;
     static readonly AUDIT_CODIFICATIONS_URL = `${EVALUATION_SERVICE}/codifications-document`;
+    static readonly AUDIT_REGLES_ECARTS_RQAPBF_URL = `${EVALUATION_SERVICE}/regles-ecarts-rqapbf`;
+    static readonly AUDIT_TRANCHES_SCORE_RQAPBF_URL = `${EVALUATION_SERVICE}/tranches-score-rqapbf`;
     static readonly AUDIT_EVALUATIONS_RQAPBF_URL = `${EVALUATION_SERVICE}/evaluations-rqapbf`;
     static readonly AUDIT_EVALUATIONS_AUDITEUR_URL = `${EVALUATION_SERVICE}/evaluations-auditeur`;
     static readonly AUDIT_REFERENTIEL_RQAPBF_URL = `${EVALUATION_SERVICE}/referentiel-rqapbf`;

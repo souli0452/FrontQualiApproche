@@ -59,6 +59,7 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
 
     charger(auditId: string): void {
         this.loading = true;
+        this.referentiel.rafraichirAuditeurs();
         forkJoin({
             audit: this.auditService.findById(auditId),
             auditeurs: this.referentiel.auditeurs(),
@@ -70,8 +71,9 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: r => {
                     this.audit = (r.audit as any)?.data ?? null;
-                    const ids = [this.audit?.responsableEquipeId, ...(this.audit?.membreEquipeIds ?? [])];
-                    this.equipe = r.auditeurs.filter(a => ids.includes(a.id));
+                    // Toute l'équipe, dans l'ordre de l'audit : le responsable, puis les membres.
+                    const ids = [...new Set([this.audit?.responsableEquipeId, ...(this.audit?.membreEquipeIds ?? [])].filter(Boolean))] as string[];
+                    this.equipe = ids.map(id => r.auditeurs.find(a => a.id === id) ?? { id, nomComplet: 'Auditeur hors du vivier' } as AuditeurFiche);
                     this.equipe.forEach(a => this.chargerMoyenneGlobale(a));
                     const evals = contenu<EvaluationAuditeur>(r.evaluations);
                     // Un critère ou un niveau retiré reste affiché là où il a déjà servi.
@@ -125,6 +127,11 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
         if (!this.verrouillee(a, c)) {
             this.choix[this.cle(a.id, c.id)] = n.id;
         }
+    }
+
+    /** « Tout Satisfaisant » : un niveau posé d'un geste sur tous les critères encore modifiables. */
+    choisirPartout(a: AuditeurFiche, n: NiveauEvaluationAuditeur): void {
+        this.criteres.forEach(c => this.choisir(a, c, n));
     }
 
     /** Les critères dont la note choisie diffère de l'enregistrée (ou tous, si le commentaire a changé). */

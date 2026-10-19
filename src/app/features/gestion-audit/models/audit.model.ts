@@ -20,6 +20,8 @@ export interface Audit {
     dateDebutPrevue?: string;
     dateFinPrevue?: string;
     dureeEstimeeJours?: number;
+    /** Posée au démarrage ; peut précéder la date prévue. */
+    dateDebutReelle?: string;
     enRetard?: boolean;
     joursDeRetard?: number;
     niveauRisque?: NiveauRisqueAudit;
@@ -55,6 +57,11 @@ export interface ConstatAudit {
     datePublication?: string;
     dateSaisie?: string;
     commentaireEquipe?: string;
+    /** Revenu de la compilation : le motif, qui l'a renvoyé et quand. */
+    renvoye?: boolean;
+    motifRenvoi?: string;
+    renvoyeLe?: string;
+    renvoyePar?: string;
     natureId?: string;
     natureLibelle?: string;
     natureCouleur?: string;
@@ -69,6 +76,8 @@ export interface ConstatAudit {
 
 export interface ActivitePlan {
     id?: string;
+    /** Le jour de l'activité, dans la période de l'audit (aaaa-mm-jj). */
+    jour?: string;
     horaireDebut?: string;
     horaireFin?: string;
     libelleActivite?: string;
@@ -95,6 +104,10 @@ export interface PlanAudit {
     nomFichierCharge?: string;
     statut?: string;
     datePartage?: string;
+    /** 1 à l'élaboration ; chaque révision en ouvre une nouvelle. */
+    version?: number;
+    reviseLe?: string;
+    revisePar?: string;
     activites?: ActivitePlan[];
 }
 
@@ -141,6 +154,8 @@ export interface AvancementAudit {
     criteresNotes?: number;
     criteresPublies?: number;
     pourcentageRqapbf?: number;
+    /** Écarts publiés sans dossier au module NC : la fiche propose de reprendre leur transmission. */
+    ecartsEnAttente?: number;
     cloturable?: boolean;
     raisonsDeNePasCloturer?: string[];
 }
@@ -170,6 +185,8 @@ export interface ConstatRapport {
     observation?: string;
     datePublication?: string;
     nonConformiteId?: string;
+    numeroNonConformite?: string;
+    auditeur?: string;
 }
 
 export interface SignatureAudit {
@@ -182,6 +199,12 @@ export interface SignatureAudit {
     statut?: string;
     dateSignature?: string;
     motifRefus?: string;
+    /** À quel titre il signe : REDIGE, VERIFIE, APPROUVE. */
+    role?: string;
+    roleLibelle?: string;
+    /** Remplacé avant d'avoir signé : quand, et par qui. */
+    remplaceLe?: string;
+    remplacePar?: string;
 }
 
 export interface RapportAudit {
@@ -191,8 +214,11 @@ export interface RapportAudit {
     constats?: ConstatRapport[];
     ecarts?: ConstatRapport[];
     scoreRqapbf?: number;
+    mentionRqapbf?: MentionRQAPBF;
     resultatsRqapbfParDomaine?: Record<string, number>;
     signatures?: SignatureAudit[];
+    /** Les preuves jointes aux constats publiés. */
+    nombrePreuves?: number;
 }
 
 export interface NoeudReferentiel {
@@ -224,6 +250,20 @@ export interface NotationCritere {
     transmissionEnAttente?: boolean;
 }
 
+/** Ce que vaut un score RQAP-BF selon la grille des mentions de la direction. */
+export interface MentionRQAPBF {
+    rang: number;
+    niveau: string;
+    mention: string;
+    etoiles: number;
+    scoreMin: number;
+    scoreMax: number;
+    plafonnee?: boolean;
+    domainesSousLeSeuil?: string[];
+    sousReserve?: boolean;
+    ecarts?: number;
+}
+
 export interface EvaluationRQAPBF {
     id?: string;
     auditId?: string;
@@ -235,6 +275,8 @@ export interface EvaluationRQAPBF {
     resultatsParDomaine?: Record<string, number>;
     scoreOfficiel?: number;
     resultatsOfficielsParDomaine?: Record<string, number>;
+    mention?: MentionRQAPBF;
+    mentionOfficielle?: MentionRQAPBF;
     scoresParNoeud?: Record<string, number>;
     criteresNotes?: number;
     criteresPublies?: number;
@@ -348,6 +390,8 @@ export interface ComparaisonPeriodes {
 export interface TransmissionEcarts {
     transmis?: number;
     echecs?: string[];
+    /** Encore à transmettre après ce passage : le serveur en traite un lot, l'écran relance. */
+    restants?: number;
 }
 
 export interface TypeAuditRef {
@@ -409,4 +453,15 @@ export interface NotificationAudit {
     detail: string;
     gravite: 'INFO' | 'ATTENTION' | 'URGENT';
     nombre: number;
+}
+
+/** Un point de contrôle d'un audit et l'auditeur de l'équipe qui le renseigne (nul : toute l'équipe). */
+export interface RepartitionPoint {
+    pointId?: string;
+    checklist?: string;
+    chapitreISO?: string;
+    libelle?: string;
+    auditeurId?: string | null;
+    /** « audit », « modèle », ou rien. */
+    origine?: string | null;
 }

@@ -46,7 +46,7 @@
                    class="flex items-start gap-2 py-2 border-b border-surface-100 dark:border-surface-800 no-underline text-surface-700 dark:text-surface-200">
                     <i class="pi pi-bell text-primary text-sm mt-0.5"></i>
                     <span class="text-sm">
-                        Rappel envoyé<span *ngIf="r.destinataires"> à {{ r.destinataires }}</span> — <span class="font-mono font-semibold text-primary">{{ r.auditReference }}</span>
+                        Rappel envoyé<span *ngIf="r.destinataires"> à {{ r.destinataires.split(',').join(', ') }}</span> — <span class="font-mono font-semibold text-primary">{{ r.auditReference }}</span>
                         démarre dans {{ r.delaiJours }} jour(s)
                         <span class="block text-xs text-surface-500">{{ r.regle }} · {{ r.dateRappel | date: 'dd/MM/yyyy' }}</span>
                     </span>
@@ -73,7 +73,9 @@
             <p-skeleton height="2.5rem" styleClass="mb-2" *ngFor="let i of [1,2,3]"></p-skeleton>
         </div>
         <p *ngIf="!loadingAudits && !mesAudits.length" class="text-sm text-surface-400 text-center m-0 py-8">Vous ne faites partie d'aucune équipe d'audit en {{ annee }}.</p>
-        <table *ngIf="!loadingAudits && mesAudits.length" class="w-full border-collapse text-sm">
+        <!-- Le statut et la référence ne se coupent plus : le processus cède la place (observation 4). -->
+        <div *ngIf="!loadingAudits && mesAudits.length" class="overflow-x-auto">
+        <table class="w-full border-collapse text-sm">
             <thead>
                 <tr class="bg-surface-50 dark:bg-surface-800">
                     <th scope="col" class="text-left px-4 py-2 text-xs font-semibold text-surface-500">Référence</th>
@@ -86,14 +88,15 @@
                 <tr *ngFor="let audit of mesAudits; trackBy: trackByAuditId"
                     class="border-t border-surface-100 dark:border-surface-800 hover:bg-surface-50 dark:hover:bg-surface-800/40 cursor-pointer"
                     [routerLink]="['/gestion-audit/programme', audit.id]">
-                    <td class="px-4 py-2 font-mono text-xs font-semibold text-primary">{{ audit.reference ?? '—' }}</td>
-                    <td class="px-4 py-2 text-surface-800 dark:text-surface-200 max-w-[260px] truncate">{{ libelles.processus(audit.processusId) }}</td>
+                    <td class="px-4 py-2 font-mono text-xs font-semibold text-primary whitespace-nowrap">{{ audit.reference ?? '—' }}</td>
+                    <td class="px-4 py-2 text-surface-800 dark:text-surface-200 max-w-[260px] truncate" [title]="libelles.processus(audit.processusId)">{{ libelles.processus(audit.processusId) }}</td>
                     <td class="px-4 py-2 text-xs text-surface-600 dark:text-surface-400 whitespace-nowrap">{{ audit.dateDebutPrevue ? (audit.dateDebutPrevue | date: 'dd/MM/yyyy') : '—' }}</td>
-                    <td class="px-4 py-2">
+                    <td class="px-4 py-2 whitespace-nowrap">
                         <p-tag *ngIf="audit.statut" [value]="getStatutLabel(audit.statut)" [severity]="getStatutSeverity(audit.statut)" [rounded]="true"></p-tag>
                     </td>
                 </tr>
             </tbody>
         </table>
+        </div>
     </div>
 </div>

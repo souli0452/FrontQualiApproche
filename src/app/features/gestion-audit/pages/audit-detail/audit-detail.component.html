@@ -25,6 +25,7 @@
                         <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">
                             {{ audit.typeAuditLibelle ?? '—' }}
                             · {{ audit.dateDebutPrevue ? (audit.dateDebutPrevue | date: 'dd/MM/yyyy') : '—' }} → {{ audit.dateFinPrevue ? (audit.dateFinPrevue | date: 'dd/MM/yyyy') : '—' }}
+                            <span *ngIf="audit.dateDebutReelle"> · démarré le {{ audit.dateDebutReelle | date: 'dd/MM/yyyy' }}</span>
                             · Responsable : {{ libelles.auditeur(audit.responsableEquipeId) }}
                             <span *ngIf="audit.membreEquipeIds?.length"> · Auditeurs : {{ nomsEquipe }}</span>
                         </p>
@@ -39,7 +40,7 @@
                         <p-button icon="pi pi-lock" label="Terminer l'audit" size="small" severity="warn" [loading]="actionEnCours"
                                   [disabled]="avancement?.cloturable === false" (onClick)="cloturer($event)"></p-button>
                     </span>
-                    <p-button *ngIf="peutTransmettreEcarts" icon="pi pi-share-alt" label="Transmettre les écarts" size="small" severity="secondary" [outlined]="true"
+                    <p-button *ngIf="peutTransmettreEcarts || transmission" icon="pi pi-share-alt" [label]="libelleTransmission" size="small" severity="warn" [outlined]="true"
                               [loading]="actionEnCours" (onClick)="transmettreEcarts()"></p-button>
                     <ng-container *ngIf="audit.statut === StatutAudit.CLOTURE">
                         <p-button icon="pi pi-file-pdf" label="PDF" size="small" severity="secondary" [outlined]="true" (onClick)="exporterPdf()"></p-button>
@@ -48,11 +49,33 @@
                     <p-button *ngIf="peutAnnuler" icon="pi pi-times-circle" label="Annuler l'audit" size="small" [text]="true" severity="danger"
                               [loading]="actionEnCours" (onClick)="annuler($event)"></p-button>
                 </div>
+                <!-- Le motif ne se lisait qu'au survol, invisible sur tablette (observation 13). -->
+                <p *ngIf="peutCloturer && avancement?.cloturable === false" class="text-xs text-amber-700 dark:text-amber-300 m-0 mt-2">
+                    <i class="pi pi-info-circle text-xs"></i> Pour terminer l'audit : {{ raisonsCloture }}
+                </p>
             </div>
         </div>
 
-        <!-- Les trois blocs de la réalisation (C9) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <!-- Le circuit de l'audit, et ce qui vient ensuite (observation 12) -->
+        <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl px-4 py-3 mb-4">
+            <div class="flex flex-wrap items-center gap-2">
+                <ng-container *ngFor="let e of frise; let dernier = last">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+                          [ngClass]="e.etat === 'fait' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                                   : e.etat === 'courant' ? 'bg-primary text-primary-contrast'
+                                   : 'bg-surface-100 text-surface-500 dark:bg-surface-800'">
+                        <i class="pi text-[10px]" [ngClass]="e.etat === 'fait' ? 'pi-check' : e.etat === 'courant' ? 'pi-circle-fill' : 'pi-circle'"></i>{{ e.libelle }}
+                    </span>
+                    <i *ngIf="!dernier" class="pi pi-angle-right text-surface-400 text-xs"></i>
+                </ng-container>
+            </div>
+            <div *ngIf="etapeSuivante" class="text-xs text-surface-600 dark:text-surface-300 mt-2">
+                <i class="pi pi-arrow-circle-right text-xs text-primary"></i> Étape suivante : {{ etapeSuivante }}
+            </div>
+        </div>
+
+        <!-- Les blocs de la réalisation (C9) -->
+        <div class="grid grid-cols-1 gap-4 mb-4" [ngClass]="estRqapbf ? 'md:grid-cols-3' : 'md:grid-cols-2'">
             <a [routerLink]="['/gestion-audit/programme', audit.id, 'plan']"
                class="block bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 no-underline text-inherit hover:border-primary transition-colors">
                 <div class="font-semibold text-surface-900 dark:text-surface-50 mb-2">Plan d'audit <i class="pi pi-arrow-right text-xs ml-1"></i></div>
@@ -64,14 +87,19 @@
             </a>
             <a routerLink="/gestion-audit/constatations" [queryParams]="{ auditId: audit.id }"
                class="block bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 no-underline text-inherit hover:border-primary transition-colors">
-                <div class="font-semibold text-surface-900 dark:text-surface-50 mb-2">Constats ISO 9001 <i class="pi pi-arrow-right text-xs ml-1"></i></div>
-                <p-progressbar [value]="avancement?.pourcentageConstats ?? 0" [showValue]="false" styleClass="h-2"></p-progressbar>
-                <div class="text-xs text-surface-500 mt-1">
-                    {{ (avancement?.pourcentageConstats ?? 0) | number: '1.0-0' }} % saisi
-                    <span *ngIf="avancement?.pointsDeControle"> · {{ avancement?.pointsRenseignes ?? 0 }}/{{ avancement?.pointsDeControle }} points</span>
+                <div class="font-semibold text-surface-900 dark:text-surface-50 mb-2">Constats <i class="pi pi-arrow-right text-xs ml-1"></i></div>
+                <!-- Tous les constats comptent, avec ou sans checklist : « 0 % saisi » s'affichait avec deux constats publiés. -->
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <p-tag [value]="(avancement?.constatsPublies ?? 0) + ' publié(s)'" severity="success" [rounded]="true"></p-tag>
+                    <p-tag *ngIf="avancement?.constatsCompiles" [value]="avancement?.constatsCompiles + ' en compilation'" severity="info" [rounded]="true"></p-tag>
+                    <p-tag *ngIf="avancement?.constatsBrouillon" [value]="avancement?.constatsBrouillon + ' brouillon(s)'" severity="secondary" [rounded]="true"></p-tag>
+                </div>
+                <div *ngIf="avancement?.pointsDeControle" class="mt-2">
+                    <p-progressbar [value]="avancement?.pourcentageConstats ?? 0" [showValue]="false" styleClass="h-2"></p-progressbar>
+                    <div class="text-xs text-surface-500 mt-1">Checklist : {{ avancement?.pointsRenseignes ?? 0 }}/{{ avancement?.pointsDeControle }} points couverts</div>
                 </div>
             </a>
-            <a [routerLink]="['/gestion-audit/programme', audit.id, 'evaluation-rqapbf']"
+            <a *ngIf="estRqapbf" [routerLink]="['/gestion-audit/programme', audit.id, 'evaluation-rqapbf']"
                class="block bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 no-underline text-inherit hover:border-primary transition-colors">
                 <div class="font-semibold text-surface-900 dark:text-surface-50 mb-2">
                     Évaluation RQAP-BF <i class="pi pi-arrow-right text-xs ml-1"></i>
@@ -87,7 +115,7 @@
 
         <!-- Clôture et suite -->
         <div class="flex flex-wrap gap-2 mb-4">
-            <p-button icon="pi pi-trophy" label="Résultats RQAP-BF" size="small" [outlined]="true" severity="secondary"
+            <p-button *ngIf="estRqapbf" icon="pi pi-trophy" label="Résultats RQAP-BF" size="small" [outlined]="true" severity="secondary"
                       [routerLink]="['/gestion-audit/programme', audit.id, 'resultats-rqapbf']"></p-button>
             <p-button icon="pi pi-file" label="Rapport d'audit" size="small" [outlined]="true" severity="secondary"
                       [routerLink]="['/gestion-audit/programme', audit.id, 'rapport']"></p-button>

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { NgPrimeModule } from '@prime-ng';
 import { Observable, Subject, catchError, debounceTime, forkJoin, map, of, switchMap, takeUntil } from 'rxjs';
 import { MessageService } from 'primeng/api';
@@ -28,6 +28,30 @@ type ChoixAuditeur = AuditeurFiche & { libelleChoix: string };
  * <p>Dès qu'un auditeur est choisi, un conflit d'intérêts ou une indisponibilité se signale sous
  * le champ, sans bloquer la saisie : c'est la validation de l'audit, côté serveur, qui tranche.</p>
  */
+/** « fin » ne précède pas « début » : l'assistant passait à l'étape suivante avec des dates inversées. */
+function finApresDebut(fin: AbstractControl): ValidationErrors | null {
+    const debut = fin.parent?.get('dateDebutPrevue')?.value;
+    return debut && fin.value && fin.value < debut ? { finAvantDebut: true } : null;
+}
+
+/** La durée tient dans la période : 3 jours étaient acceptés pour un audit du 22 au 23. */
+function dureeDansLaPeriode(duree: AbstractControl): ValidationErrors | null {
+    const debut = duree.parent?.get('dateDebutPrevue')?.value;
+    const fin = duree.parent?.get('dateFinPrevue')?.value;
+    if (!debut || !fin || duree.value == null || duree.value === '' || fin < debut) return null;
+    const jours = Math.round((Date.parse(fin) - Date.parse(debut)) / 86400000) + 1;
+    return Number(duree.value) > jours ? { dureeHorsPeriode: { jours } } : null;
+}
+
+/** Les jours du lundi au vendredi entre deux dates « aaaa-mm-jj », bornes comprises. */
+function joursOuvres(debut: string, fin: string): number {
+    let n = 0;
+    for (let d = new Date(debut + 'T00:00:00'); d <= new Date(fin + 'T00:00:00'); d.setDate(d.getDate() + 1)) {
+        if (d.getDay() !== 0 && d.getDay() !== 6) n++;
+    }
+    return Math.max(n, 1);
+}
+
 @Component({
     selector: 'app-audit-form',
     standalone: true,
@@ -96,8 +120,8 @@ export class AuditFormComponent implements OnInit, OnDestroy {
             processusId: [null, Validators.required],
             siteIds: [[]],
             dateDebutPrevue: [null, Validators.required],
-            dateFinPrevue: [null, Validators.required],
-            dureeEstimeeJours: [null, Validators.min(1)],
+            dateFinPrevue: [null, [Validators.required, finApresDebut]],
+            dureeEstimeeJours: [null, [Validators.min(1), dureeDansLaPeriode]],
             organismeExterne: [null],
             responsableEquipeId: [null, Validators.required],
             membreEquipeIds: [[]],
@@ -121,10 +145,31 @@ export class AuditFormComponent implements OnInit, OnDestroy {
         ['processusId', 'dateDebutPrevue', 'dateFinPrevue', 'responsableEquipeId', 'membreEquipeIds'].forEach(c =>
             this.formulaire.get(c)?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => this.controleEquipe$.next())
         );
+        // Les dates se contrôlent ensemble, et la durée se propose d'elle-même tant qu'on ne l'a
+        // pas saisie : les jours ouvrés de la période (recette du 17 oct. 2026, observation 6).
+        ['dateDebutPrevue', 'dateFinPrevue'].forEach(c =>
+            this.formulaire.get(c)?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+                const v = this.formulaire.getRawValue();
+                const duree = this.formulaire.get('dureeEstimeeJours')!;
+                if (duree.pristine && v.dateDebutPrevue && v.dateFinPrevue && v.dateFinPrevue >= v.dateDebutPrevue) {
+                    duree.setValue(joursOuvres(v.dateDebutPrevue, v.dateFinPrevue), { emitEvent: false });
+                }
+                this.formulaire.get('dateFinPrevue')?.updateValueAndValidity({ emitEvent: false });
+                duree.updateValueAndValidity({ emitEvent: false });
+            })
+        );
+        // Le responsable ne figure pas aussi parmi les membres.
+        this.formulaire.get('responsableEquipeId')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(responsable => {
+            const membres: string[] = this.formulaire.get('membreEquipeIds')?.value ?? [];
+            if (responsable && membres.includes(responsable)) {
+                this.formulaire.get('membreEquipeIds')?.setValue(membres.filter(m => m !== responsable));
+            }
+        });
         this.controleEquipe$
             .pipe(debounceTime(200), switchMap(() => this.controlerEquipe()), takeUntil(this.destroy$))
             .subscribe(alertes => (this.alertesEquipe = alertes));
 
+        this.referentiel.rafraichirAuditeurs();
         forkJoin({
             typesAudit: this.referentiel.typesAudit(),
             processus: this.referentiel.processus(),
@@ -138,7 +183,12 @@ export class AuditFormComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: listes => {
                     this.typesAudit = listes.typesAudit;
-                    this.processus = listes.processus;
+                    // Rangés par type, puis par nom, et le type en tête du libellé : directions et
+                    // services se mêlaient sous « Choisir une structure » (observation 10).
+                    this.processus = [...listes.processus]
+                        .map(s => ({ ...s, libelleChoix: `${s.typeStructure === 'DIRECTION' ? 'Direction' : 'Processus'} — ${s.libelleLong || s.libelleCourt || '—'}` }))
+                        .sort((x: any, y: any) => (x.typeStructure === y.typeStructure ? 0 : x.typeStructure === 'DIRECTION' ? -1 : 1)
+                            || x.libelleChoix.localeCompare(y.libelleChoix, 'fr'));
                     this.tousLesSites = listes.sites;
                     this.sites = listes.sites.filter(s => s.actif !== false);
                     this.tousLesAuditeurs = listes.auditeurs;
@@ -186,6 +236,12 @@ export class AuditFormComponent implements OnInit, OnDestroy {
                         domaineRqapbfIds: audit.domaineRqapbfIds ?? [],
                         referentiels: audit.referentiels?.join(', ')
                     });
+                    // La durée enregistrée prime sur celle que les dates proposeraient.
+                    if (audit.dureeEstimeeJours != null) {
+                        const duree = this.formulaire.get('dureeEstimeeJours')!;
+                        duree.setValue(audit.dureeEstimeeJours, { emitEvent: false });
+                        duree.markAsDirty();
+                    }
                     // Les données de planification se corrigent tant que l'audit n'a pas démarré.
                     this.verrouille = ![StatutAudit.PLANIFIE, StatutAudit.EN_PREPARATION, StatutAudit.EN_RETARD].includes(audit.statut as StatutAudit);
                     if (this.verrouille) {
@@ -201,12 +257,34 @@ export class AuditFormComponent implements OnInit, OnDestroy {
     }
 
     /** « Nom — domaines habilités » : ce qui aide à composer l'équipe, comme sur la maquette. */
+    /**
+     * Triés par nom, et distingués par leur adresse quand deux portent le même : deux « Super
+     * Admin » s'affichaient indiscernables (observation 10).
+     */
     private proposer(liste: AuditeurFiche[]): ChoixAuditeur[] {
-        return liste.map(a => ({
-            ...a,
-            libelleChoix: a.domainesHabilites?.length ? `${a.nomComplet} — ${a.domainesHabilites.join(', ')}` : a.nomComplet ?? '—'
-        }));
+        const homonymes = new Set(liste.map(a => a.nomComplet).filter((n, i, t) => t.indexOf(n) !== i));
+        return liste
+            .map(a => {
+                const nom = homonymes.has(a.nomComplet) && a.email ? `${a.nomComplet} (${a.email})` : a.nomComplet ?? '—';
+                return { ...a, libelleChoix: a.domainesHabilites?.length ? `${nom} — ${a.domainesHabilites.join(', ')}` : nom };
+            })
+            .sort((x, y) => x.libelleChoix.localeCompare(y.libelleChoix, 'fr'));
     }
+
+    /**
+     * Les membres possibles : le vivier, sans le responsable d'équipe déjà choisi (observation 9).
+     * Gardés tant que ni le vivier ni le responsable ne changent : une liste recréée à chaque
+     * détection rouvrirait la sélection.
+     */
+    get membresPossibles(): ChoixAuditeur[] {
+        const responsable = this.formulaire.get('responsableEquipeId')?.value ?? null;
+        if (this.membresCache.source !== this.auditeurs || this.membresCache.responsable !== responsable) {
+            this.membresCache = { source: this.auditeurs, responsable, liste: this.auditeurs.filter(a => a.id !== responsable) };
+        }
+        return this.membresCache.liste;
+    }
+    private membresCache: { source: ChoixAuditeur[] | null; responsable: string | null; liste: ChoixAuditeur[] } =
+        { source: null, responsable: null, liste: [] };
 
     // ---- Contrôle de l'équipe ----
 
@@ -236,15 +314,16 @@ export class AuditFormComponent implements OnInit, OnDestroy {
                     alertes.push(`${nom} pilote le processus audité — conflit d'intérêts détecté.`);
                 }
             }
-            const libre$ = v.dateDebutPrevue && v.dateFinPrevue
-                ? this.auditService.verifierDisponibilite(id, v.dateDebutPrevue, v.dateFinPrevue, this.auditId ?? undefined).pipe(
-                    map(res => (res as any)?.data !== false),
-                    catchError(() => of(true)) // le serveur ne répond pas : la validation tranchera
+            // La raison exacte : inactif, ou l'audit qui l'occupe déjà sur la période (observation 8).
+            const raison$ = v.dateDebutPrevue && v.dateFinPrevue
+                ? this.auditService.raisonIndisponibilite(id, v.dateDebutPrevue, v.dateFinPrevue, this.auditId ?? undefined).pipe(
+                    map(res => (res as any)?.data as string | null),
+                    catchError(() => of(null)) // le serveur ne répond pas : la validation tranchera
                 )
-                : of(true);
-            return libre$.pipe(map(libre => {
-                if (!libre) {
-                    alertes.push(`${nom} est inactif ou déjà engagé sur un autre audit sur cette période.`);
+                : of(null);
+            return raison$.pipe(map(raison => {
+                if (raison) {
+                    alertes.push(`${nom} ${raison}.`);
                 }
                 return [id, alertes] as [string, string[]];
             }));
@@ -264,6 +343,7 @@ export class AuditFormComponent implements OnInit, OnDestroy {
     suivant(): void {
         if (this.etapeValide(this.etape)) {
             this.etape++;
+            this.remonter();
         } else {
             this.marquerEtape(this.etape);
         }
@@ -271,12 +351,19 @@ export class AuditFormComponent implements OnInit, OnDestroy {
 
     precedent(): void {
         this.etape = Math.max(1, this.etape - 1);
+        this.remonter();
     }
 
     allerA(n: number | undefined): void {
         if (n && this.etapeAtteignable(n)) {
             this.etape = n;
+            this.remonter();
         }
+    }
+
+    /** La nouvelle étape s'ouvre en haut : la page restait au niveau des boutons (observation 7). */
+    private remonter(): void {
+        setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
     /** On revient toujours en arrière ; on n'avance que par-dessus des étapes complètes. */
@@ -298,7 +385,35 @@ export class AuditFormComponent implements OnInit, OnDestroy {
         this.champsParEtape[n - 1].forEach(c => this.formulaire.get(c)?.markAsTouched());
     }
 
+    /** À la création, un récapitulatif des quatre étapes précède l'enregistrement (observation 11). */
+    recapitulatif = false;
+
+    planifier(): void {
+        if (this.modeEdition) {
+            this.sauvegarder();
+            return;
+        }
+        if (this.formulaire.invalid) {
+            this.sauvegarder();
+            return;
+        }
+        this.recapitulatif = true;
+        this.remonter();
+    }
+
+    /** Un audit RQAP-BF : son type ou ses référentiels le nomment, ou des domaines sont déjà choisis. */
+    get estRqapbf(): boolean {
+        const v = this.formulaire.getRawValue();
+        return /rqap/i.test(`${this.typeChoisi?.libelle ?? ''} ${v.referentiels ?? ''}`) || !!v.domaineRqapbfIds?.length;
+    }
+
+    libelleDe(liste: { id?: string }[], id: string | null | undefined, champ: string): string {
+        const trouve: any = liste.find(x => x.id === id);
+        return trouve?.[champ] ?? '—';
+    }
+
     sauvegarder(): void {
+        this.recapitulatif = false;
         if (this.formulaire.invalid) {
             this.formulaire.markAllAsTouched();
             // Ramène à la première étape incomplète, là où l'erreur s'affiche.

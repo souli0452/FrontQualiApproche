@@ -12,7 +12,7 @@ import {
     EvaluationRQAPBF, AuditeurFiche, EvaluationAuditeur, ChecklistAudit,
     TypeAuditRef, TypeConstatRef, SiteAudit, PreuveConstat,
     PointControle, ComparaisonPeriodes, TransmissionEcarts,
-    NotificationsAuditResume, NotificationAudit
+    NotificationsAuditResume, NotificationAudit, RepartitionPoint
 } from '../models/audit.model';
 import { ApiItemResponse, ApiResponse } from '../../../models/response.model';
 import { NiveauEfficacite, NiveauNotationRQAPBF } from '../models/audit-enums';
@@ -202,6 +202,14 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
 
     // ---- Écarts & actions de maîtrise des risques ----
 
+    /** Qui un geste préviendra par courriel : la confirmation le montre avant (observation 14). */
+    destinataires(auditId: string, geste: 'VALIDATION' | 'PARTAGE_PLAN'): Observable<{ nom: string; email?: string; titre: string }[]> {
+        return this.http.get<any>(`${AUDITS}/${auditId}/destinataires`, { params: { geste } }).pipe(
+            map(res => (res?.data ?? []) as { nom: string; email?: string; titre: string }[]),
+            catchError(() => of([]))
+        );
+    }
+
     /** Renvoie au module Non-conformités les écarts publiés qui n'y ont pas encore de dossier. */
     transmettreEcarts(auditId: string): Observable<ApiItemResponse<TransmissionEcarts>> {
         return this.http.put<ApiItemResponse<TransmissionEcarts>>(
@@ -333,16 +341,37 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
 
     // ---- Preuves ----
 
+    // ---- Pièces justificatives d'une notation RQAP-BF (observation 31) ----
+
+    getPreuvesNotation(notationId: string): Observable<ApiResponse<PreuveConstat>> {
+        return this.http.get<ApiResponse<PreuveConstat>>(`${EVALS_RQAPBF}/notations/${notationId}/preuves`);
+    }
+
+    ajouterPreuvesNotation(notationId: string, fichiers: File[]): Observable<ApiItemResponse<PreuveConstat[]>> {
+        const formData = new FormData();
+        fichiers.forEach(f => formData.append('fichiers', f));
+        return this.http.post<ApiItemResponse<PreuveConstat[]>>(`${EVALS_RQAPBF}/notations/${notationId}/preuves`, formData);
+    }
+
+    supprimerPreuveNotation(preuveId: string): Observable<ApiItemResponse<any>> {
+        return this.http.delete<ApiItemResponse<any>>(`${EVALS_RQAPBF}/preuves/${preuveId}`);
+    }
+
+    telechargerPreuveNotation(preuveId: string): Observable<Blob> {
+        return this.http.get(`${EVALS_RQAPBF}/preuves/${preuveId}`, { responseType: 'blob' });
+    }
+
     getPreuves(constatId: string): Observable<ApiResponse<PreuveConstat>> {
         return this.http.get<ApiResponse<PreuveConstat>>(
             `${CONSTATS}/${constatId}/preuves`
         );
     }
 
-    ajouterPreuve(constatId: string, fichier: File): Observable<ApiItemResponse<PreuveConstat>> {
+    /** Tous les fichiers en un envoi : le serveur les reçoit en liste sous « fichiers ». */
+    ajouterPreuves(constatId: string, fichiers: File[]): Observable<ApiItemResponse<PreuveConstat[]>> {
         const formData = new FormData();
-        formData.append('fichiers', fichier);
-        return this.http.post<ApiItemResponse<PreuveConstat>>(
+        fichiers.forEach(f => formData.append('fichiers', f));
+        return this.http.post<ApiItemResponse<PreuveConstat[]>>(
             `${CONSTATS}/${constatId}/preuves`, formData
         );
     }
@@ -386,6 +415,11 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
         return this.http.get(`${AUDITS}/${auditId}/plan/export`, { responseType: 'blob', params: this.buildParams({ format }) });
     }
 
+    /** Rouvre un plan validé ou partagé, dans une nouvelle version. */
+    reviserPlan(auditId: string): Observable<ApiItemResponse<PlanAudit>> {
+        return this.http.put<ApiItemResponse<PlanAudit>>(`${AUDITS}/${auditId}/plan/reviser`, null);
+    }
+
     partagerPlan(auditId: string): Observable<ApiItemResponse<PlanAudit>> {
         return this.http.put<ApiItemResponse<PlanAudit>>(
             `${AUDITS}/${auditId}/plan/partager`, null
@@ -418,13 +452,44 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
         );
     }
 
+    /** Remplace un signataire qui n'a pas encore signé ; les visas donnés restent. */
+    remplacerSignataire(auditId: string, signatureId: string, nouveau: Partial<SignatureAudit>): Observable<ApiResponse<SignatureAudit>> {
+        return this.http.put<ApiResponse<SignatureAudit>>(`${AUDITS}/${auditId}/signatures/${signatureId}/remplacer`, nouveau);
+    }
+
+    /** Relance par courriel un signataire dont le visa est attendu. */
+    relancerSignataire(auditId: string, signatureId: string): Observable<void> {
+        return this.http.post<void>(`${AUDITS}/${auditId}/signatures/${signatureId}/relancer`, null);
+    }
+
     refuserSignature(auditId: string, motif: string): Observable<ApiItemResponse<SignatureAudit>> {
         return this.http.put<ApiItemResponse<SignatureAudit>>(
             `${AUDITS}/${auditId}/signatures/refuser`, { motif }
         );
     }
 
+    /** Qui renseigne quel point de contrôle sur l'audit ; un point sans auditeur s'offre à toute l'équipe. */
+    getRepartition(auditId: string): Observable<ApiItemResponse<RepartitionPoint[]>> {
+        return this.http.get<ApiItemResponse<RepartitionPoint[]>>(`${CONSTATS}/repartition`, { params: { auditId } });
+    }
+
+    repartirPoints(auditId: string, repartition: RepartitionPoint[]): Observable<ApiItemResponse<RepartitionPoint[]>> {
+        return this.http.put<ApiItemResponse<RepartitionPoint[]>>(`${CONSTATS}/repartition`, repartition, { params: { auditId } });
+    }
+
     // ---- Checklists ----
+
+    /** Lit les points d'une grille Excel ou CSV, sans rien enregistrer : l'écran les ajoute à la checklist. */
+    importerPoints(fichier: File): Observable<ApiItemResponse<PointControle[]>> {
+        const formData = new FormData();
+        formData.append('fichier', fichier);
+        return this.http.post<ApiItemResponse<PointControle[]>>(`${CHECKLISTS}/import-points`, formData);
+    }
+
+    /** Le modèle Excel à remplir pour l'import de points. */
+    telechargerModeleImport(): Observable<Blob> {
+        return this.http.get(`${CHECKLISTS}/modele-import`, { responseType: 'blob' });
+    }
 
     /** L'écran des checklists, page par page ; `statut`, `search` et `sort` bornent la page. */
     pageChecklists(page: number, size: number, filtres: Record<string, any> = {}): Observable<ApiResponse<ChecklistAudit>> {
@@ -531,6 +596,14 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
         );
     }
 
+    /** Pourquoi l'auditeur n'est pas libre sur la période (inactif, ou l'audit qui l'occupe) ; vide s'il l'est. */
+    raisonIndisponibilite(auditeurId: string, debut: string, fin: string, auditIdExclu?: string): Observable<ApiItemResponse<string | null>> {
+        return this.http.get<ApiItemResponse<string | null>>(
+            `${AUDITEURS}/${auditeurId}/indisponibilite`,
+            { params: this.buildParams({ debut, fin, auditId: auditIdExclu }) }
+        );
+    }
+
     verifierConflitInteret(auditeurId: string, auditId: string): Observable<ApiItemResponse<any>> {
         return this.http.get<ApiItemResponse<any>>(
             `${AUDITEURS}/${auditeurId}/conflit-interet`,
@@ -609,6 +682,12 @@ export class AuditGestionService extends BaseCrudService<Audit, string> {
 
     getReferentielRQAPBF(): Observable<ApiItemResponse<NoeudReferentiel[]>> {
         return this.http.get<ApiItemResponse<NoeudReferentiel[]>>(`${REF_RQAPBF}/all`);
+    }
+
+    /** Pour la direction, les niveaux RQAP-BF qui ouvrent une non-conformité (paramétrage Audit). */
+    getReglesEcartsRQAPBF(): Observable<ApiItemResponse<{ niveau: string; ouvreNonConformite: boolean }[]>> {
+        return this.http.get<ApiItemResponse<{ niveau: string; ouvreNonConformite: boolean }[]>>(
+            `${UrlConfig.AUDIT_REGLES_ECARTS_RQAPBF_URL}/all`);
     }
 
     creerNoeud(noeud: Partial<NoeudReferentiel>): Observable<ApiItemResponse<NoeudReferentiel>> {

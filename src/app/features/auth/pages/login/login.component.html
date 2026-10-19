@@ -57,6 +57,8 @@
                         </div>
 
                         <div class="flex flex-col gap-2 text-left">
+                            <p-message *ngIf="sessionExpiree" severity="warn" styleClass="w-full mt-4"
+                                       text="Votre session a expiré. Reconnectez-vous : vous reviendrez à la page où vous étiez."></p-message>
                             <!-- <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div> -->
                             <button type="submit" pButton pRipple class="w-full my-8 px-5 py-4 font-bold text-lg rounded-full" label="Se connecter" [disabled]="loginForm.invalid"></button>
                             <button type="button" pButton pRipple class="w-full p-button-text text-primary-500 py-4 font-bold text-lg rounded-full" label="Mot de passe oublié ?" (click)="toggleScreen()"></button>
