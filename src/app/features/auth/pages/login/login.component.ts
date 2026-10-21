@@ -22,6 +22,11 @@ import { StructureService } from '@features/organigramme/services/structure.serv
     imports: [CommonModule, FormsModule, ReactiveFormsModule, NgPrimeModule]
 })
 export class LoginComponent implements OnInit{
+    /** Arrivé ici parce que la session a expiré : on le dit (recette Audit du 17 oct. 2026, §9). */
+    get sessionExpiree(): boolean {
+        return this.route.snapshot.queryParamMap.get('expiree') === '1';
+    }
+
     destroy$: Subject<boolean> = new Subject<boolean>();
     loginForm: FormGroup;
     errorMessage: string | null = null;

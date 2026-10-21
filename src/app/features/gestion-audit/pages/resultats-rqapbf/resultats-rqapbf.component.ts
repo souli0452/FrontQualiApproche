@@ -5,7 +5,8 @@ import { NgPrimeModule } from '@prime-ng';
 import { Subject, forkJoin, takeUntil } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { AuditGestionService, contenu, messageErreur } from '../../services/audit.service';
-import { Audit, EvaluationRQAPBF, NoeudReferentiel, NotationCritere } from '../../models/audit.model';
+import { MentionRqapbfComponent } from '../../components/mention-rqapbf.component';
+import { Audit, EvaluationRQAPBF, MentionRQAPBF, NoeudReferentiel, NotationCritere } from '../../models/audit.model';
 import { NiveauNotationRQAPBF, libelleNiveauDeScore, niveauDeScore } from '../../models/audit-enums';
 
 interface LigneResultat {
@@ -32,7 +33,7 @@ const COULEUR_NIVEAU: Record<NiveauNotationRQAPBF, string> = {
 @Component({
     selector: 'app-resultats-rqapbf',
     standalone: true,
-    imports: [CommonModule, RouterModule, NgPrimeModule],
+    imports: [CommonModule, RouterModule, NgPrimeModule, MentionRqapbfComponent],
     providers: [MessageService],
     templateUrl: './resultats-rqapbf.component.html'
 })
@@ -114,9 +115,9 @@ export class ResultatsRQAPBFComponent implements OnInit, OnDestroy {
         return this.officiel ? this.evaluation?.scoreOfficiel : this.evaluation?.scoreGlobal;
     }
 
-    /** Le niveau atteint, aux seuils du serveur (90 / 70 / 50), partagés avec l'écran d'évaluation. */
-    get niveau(): string {
-        return this.niveauDe(this.score);
+    /** La mention du score global, selon la grille des mentions de la direction. */
+    get mention(): MentionRQAPBF | undefined {
+        return this.officiel ? this.evaluation?.mentionOfficielle : this.evaluation?.mention;
     }
 
     niveauDe(s?: number | null): string {
@@ -146,10 +147,6 @@ export class ResultatsRQAPBFComponent implements OnInit, OnDestroy {
         return this.domaines.reduce((t, d) => t + this.feuilles(d).length, 0);
     }
 
-    get etoiles(): number[] {
-        const s = this.score ?? 0;
-        return [1, 2, 3, 4, 5].map(i => (s >= i * 20 ? 1 : s >= i * 20 - 10 ? 0.5 : 0));
-    }
 
     /**
      * Le score d'un domaine : officiel (critères publiés) ou provisoire, sous la clé « code — libellé »

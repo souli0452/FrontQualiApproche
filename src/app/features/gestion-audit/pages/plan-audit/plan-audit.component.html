@@ -30,8 +30,8 @@
                 </p-tablist>
             </p-tabs>
             <ng-container *ngIf="!nouveau && !plan.fichierCharge">
-                <p-button icon="pi pi-file-pdf" label="PDF" [outlined]="true" severity="secondary" size="small" (onClick)="exporter('PDF')"></p-button>
-                <p-button icon="pi pi-file-word" label="Word" [outlined]="true" severity="secondary" size="small" (onClick)="exporter('WORD')"></p-button>
+                <p-button icon="pi pi-file-pdf" label="Télécharger en PDF" severity="danger" size="small" (onClick)="exporter('PDF')"></p-button>
+                <p-button icon="pi pi-file-word" label="Télécharger en Word" severity="info" size="small" (onClick)="exporter('WORD')"></p-button>
             </ng-container>
             <!-- Un plan reçu ne se charge que sur un audit externe (B7X) ; ici, un fichier chargé avant reste lisible. -->
             <p-button *ngIf="plan.fichierCharge" icon="pi pi-download" label="Plan chargé" [outlined]="true" severity="secondary" size="small" (onClick)="telechargerFichier()"></p-button>
@@ -196,6 +196,11 @@
                 <div *ngIf="activiteEnEdition" class="border-t border-surface-200 dark:border-surface-700 p-4 bg-surface-50/60 dark:bg-surface-800/30">
                     <h4 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-3">{{ activiteEnEdition.index === null ? 'Nouvelle activité' : 'Modifier l\'activité' }}</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                        <div class="md:col-span-2">
+                            <app-audit-libelle texte="Jour" aide="Dans la période de l'audit." />
+                            <input pInputText type="date" [(ngModel)]="activiteEnEdition.activite.jour" class="w-full"
+                                   [min]="audit?.dateDebutPrevue?.slice(0, 10) ?? ''" [max]="audit?.dateFinPrevue?.slice(0, 10) ?? ''" />
+                        </div>
                         <div>
                             <app-audit-libelle texte="Début" />
                             <input pInputText type="time" [(ngModel)]="activiteEnEdition.activite.horaireDebut" class="w-full" />
@@ -224,10 +229,11 @@
                                                    display="chip" placeholder="Choisir dans l'annuaire" />
                         </div>
                     </div>
+                    <small *ngIf="erreurCreneau" class="p-error block mt-2">{{ erreurCreneau }}</small>
                     <div class="flex justify-end gap-2 mt-4">
                         <p-button label="Annuler" severity="secondary" [outlined]="true" size="small" (onClick)="activiteEnEdition = null"></p-button>
                         <p-button [label]="activiteEnEdition.index === null ? 'Ajouter l\'activité' : 'Appliquer'" icon="pi pi-check" size="small"
-                                  [disabled]="!activiteEnEdition.activite.libelleActivite?.trim()" (onClick)="appliquerActivite()"></p-button>
+                                  [disabled]="!activiteEnEdition.activite.libelleActivite?.trim() || !!erreurCreneau" (onClick)="appliquerActivite()"></p-button>
                     </div>
                 </div>
             </div>
@@ -319,7 +325,9 @@
             <div class="flex justify-end gap-2 mt-4" *ngIf="!auditTermine && plan.statut !== 'PARTAGE'">
                 <p-message *ngIf="nouveau" severity="warn" styleClass="mr-auto" text="Enregistrez le plan avant de le valider."></p-message>
                 <p-button *ngIf="!nouveau && plan.statut === 'BROUILLON'" icon="pi pi-check" label="Valider le plan" severity="success" size="small" (onClick)="valider($event)"></p-button>
-                <p-button *ngIf="plan.statut === 'VALIDE'" icon="pi pi-share-alt" label="Partager avec l'audité" size="small" (onClick)="partager()"></p-button>
+                <p-button *ngIf="plan.statut === 'VALIDE'" icon="pi pi-share-alt" label="Partager avec l'audité" size="small" (onClick)="partager($event)"></p-button>
+                <p-button *ngIf="!nouveau && (plan.statut === 'VALIDE' || plan.statut === 'PARTAGE') && !auditTermine" icon="pi pi-pencil" label="Réviser le plan"
+                          size="small" severity="secondary" [outlined]="true" (onClick)="reviser($event)"></p-button>
             </div>
         </ng-container>
     </ng-container>

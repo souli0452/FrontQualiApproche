@@ -68,12 +68,16 @@
                                 <span *ngIf="active.chapitreISO">Chapitre {{ active.chapitreISO }} · </span>{{ active.points?.length ?? 0 }} point(s) de contrôle
                             </p>
                         </div>
-                        <div class="flex gap-1 shrink-0">
-                            <p-button *ngIf="modifiable" icon="pi pi-pencil" [rounded]="true" [text]="true" severity="secondary" size="small" pTooltip="Renommer" (onClick)="ouvrirRenommage()"></p-button>
-                            <p-button *ngIf="modifiable" icon="pi pi-send" label="Publier" size="small" severity="success" [outlined]="true" (onClick)="publier($event, active)"></p-button>
-                            <p-button icon="pi pi-copy" [rounded]="true" [text]="true" severity="secondary" size="small" pTooltip="Dupliquer" (onClick)="dupliquer(active)"></p-button>
-                            <p-button *ngIf="active.statut === 'PUBLIEE'" icon="pi pi-inbox" [rounded]="true" [text]="true" severity="warn" size="small" pTooltip="Archiver" (onClick)="archiver(active)"></p-button>
-                            <p-button *ngIf="modifiable" icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" size="small" pTooltip="Supprimer" (onClick)="supprimer($event, active)"></p-button>
+                        <!-- Des actions nommées : des icônes seules ne se comprenaient pas (observation 33). -->
+                        <div class="flex flex-wrap gap-1 shrink-0">
+                            <p-button *ngIf="modifiable" icon="pi pi-pencil" label="Renommer" [text]="true" severity="secondary" size="small" (onClick)="ouvrirRenommage()"></p-button>
+                            <p-button icon="pi pi-copy" label="Dupliquer" [text]="true" severity="secondary" size="small" (onClick)="dupliquer(active)"></p-button>
+                            <p-button *ngIf="active.statut === 'PUBLIEE'" icon="pi pi-inbox" label="Archiver" [text]="true" severity="warn" size="small" (onClick)="archiver(active)"></p-button>
+                            <p-button *ngIf="modifiable" icon="pi pi-trash" label="Supprimer" [text]="true" severity="danger" size="small" (onClick)="supprimer($event, active)"></p-button>
+                            <span *ngIf="modifiable" [pTooltip]="active.points?.length ? '' : 'Ajoutez au moins un point de contrôle avant de publier.'">
+                                <p-button icon="pi pi-send" label="Publier" size="small" severity="success"
+                                          [disabled]="!active.points?.length" (onClick)="publier($event, active)"></p-button>
+                            </span>
                         </div>
                     </div>
                     <div *ngIf="renommage" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
@@ -166,7 +170,16 @@
                         </div>
                     </div>
                     <ng-template #boutonPoint>
-                        <p-button icon="pi pi-plus" label="Ajouter un point de contrôle" [outlined]="true" size="small" (onClick)="ouvrirNouveauPoint()"></p-button>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <p-button icon="pi pi-plus" label="Ajouter un point de contrôle" [outlined]="true" size="small" (onClick)="ouvrirNouveauPoint()"></p-button>
+                            <!-- Les grilles existent souvent sous Excel : elles s'importent, puis se relisent ici. -->
+                            <label class="p-button p-button-outlined p-button-secondary p-button-sm cursor-pointer !py-1">
+                                <i class="pi" [ngClass]="importEnCours ? 'pi-spin pi-spinner' : 'pi-file-import'"></i>
+                                <span class="ml-2">Importer depuis Excel / CSV</span>
+                                <input type="file" class="hidden" accept=".xlsx,.xls,.csv" (change)="importer($event)" [disabled]="importEnCours" />
+                            </label>
+                            <p-button icon="pi pi-download" label="Modèle Excel" [text]="true" size="small" (onClick)="telechargerModele()"></p-button>
+                        </div>
                     </ng-template>
                 </div>
             </ng-container>

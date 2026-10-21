@@ -43,6 +43,18 @@ export class AuditLayoutComponent implements OnInit, OnDestroy {
         this.auditService.rafraichirNotifications();
     }
 
+    /**
+     * L'en-tête se fait discret hors du tableau de bord : il prenait tout le premier écran, et le
+     * bouton « Planifier un audit » se répétait sur chaque page (recette du 17 oct. 2026, observation 1).
+     */
+    get estAccueil(): boolean {
+        return this.activeTab === '/gestion-audit/vue-ensemble' || this.activeTab === '/gestion-audit';
+    }
+
+    get boutonPlanifier(): boolean {
+        return this.estAccueil || this.activeTab === '/gestion-audit/programme';
+    }
+
     buildMenu(r?: NotificationsAuditResume): void {
         this.items = [
             {

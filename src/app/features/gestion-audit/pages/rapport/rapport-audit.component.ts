@@ -17,10 +17,12 @@ import { RapportAudit } from '../../models/audit.model';
  * rédigent ici, pendant l'audit et tant qu'aucun visa n'est donné. Audit externe : le rapport
  * est rédigé par l'organisme, on le charge, et il ne passe pas par le circuit interne.</p>
  */
+import { MentionRqapbfComponent } from '../../components/mention-rqapbf.component';
+
 @Component({
     selector: 'app-rapport-audit',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule],
+    imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, MentionRqapbfComponent],
     providers: [MessageService],
     templateUrl: './rapport-audit.component.html'
 })
@@ -106,6 +108,17 @@ export class RapportAuditComponent implements OnInit, OnDestroy {
 
     maxSynthese(): number {
         return Math.max(1, ...(this.rapport?.syntheseParNature ?? []).map(g => g.nombre ?? 0));
+    }
+
+    /**
+     * Le numéro d'une section, compté parmi celles qui s'affichent : écrit en dur, il sautait de 9 à
+     * 11 quand une section manquait, et différait du PDF (observation 24). Même ordre que le PDF.
+     */
+    num(cle: string): number {
+        const visibles = ['contexte', 'objectifs', 'portee', 'criteres', 'methodologie', 'equipe', 'synthese', 'detail',
+            ...(this.rapport?.scoreRqapbf != null ? ['rqapbf'] : []),
+            'conclusions', 'recommandations', 'ecarts', 'annexes', 'signatures'];
+        return visibles.indexOf(cle) + 1;
     }
 
     domaines(): { domaine: string; score: number }[] {

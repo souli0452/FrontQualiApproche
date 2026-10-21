@@ -39,6 +39,7 @@ import {
                 <app-crud-generic
                     #crudGeneric
                     [requireRqPassword]="true"
+                    [notDelete]="!!liste.lectureEtModificationSeules"
                     [showAddButton]="false"
                     [dialogWidth]="'40rem'"
                     [formLongDescription]="liste.formLongDescription"
@@ -155,6 +156,7 @@ export class ParametrageAuditListeComponent extends BasePaginationComponent impl
 
     /** Une codification par document : plus d'ajout quand tous en ont une. */
     get peutAjouter(): boolean {
+        if (this.liste.lectureEtModificationSeules) return false;
         return this.liste.cle !== 'codification' || this.totalElements < TYPES_DOCUMENT_AUDIT.length;
     }
 

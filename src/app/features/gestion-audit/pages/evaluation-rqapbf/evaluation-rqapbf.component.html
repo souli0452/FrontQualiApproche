@@ -21,7 +21,7 @@
             <p-button icon="pi pi-eye" label="Prévisualiser les résultats" size="small" [outlined]="true" (onClick)="allerApercu()"></p-button>
             <p-button icon="pi pi-chart-bar" label="Résultats" size="small" [outlined]="true" severity="secondary"
                       [routerLink]="['/gestion-audit/programme', auditId, 'resultats-rqapbf']"></p-button>
-            <p-button *ngIf="!validee" icon="pi pi-lock" label="Valider" size="small" severity="success" [disabled]="actionEnCours" (onClick)="valider($event)"></p-button>
+            <p-button *ngIf="!validee" icon="pi pi-check-circle" label="Valider l'évaluation" size="small" severity="success" [disabled]="actionEnCours" (onClick)="valider($event)"></p-button>
         </div>
     </div>
 
@@ -180,20 +180,17 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="block font-semibold mb-2">Niveau de conformité (grille officielle RQAP-BF) <span class="text-red-500">*</span></label>
-                        <!-- Boutons colorés : rouge → orange → bleu → vert → gris, conformes à la grille officielle -->
-                        <div class="flex flex-wrap gap-2">
-                            <button *ngFor="let o of niveauOptions" type="button"
-                                    [disabled]="!critereModifiable"
-                                    (click)="saisie.niveau = o.value; modifiee = true"
-                                    class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border-2 transition-all disabled:cursor-not-allowed disabled:opacity-50"
-                                    [ngClass]="saisie.niveau === o.value
-                                        ? 'text-white border-transparent shadow-md'
-                                        : 'bg-white dark:bg-surface-900 text-surface-700 dark:text-surface-200 hover:opacity-80'"
-                                    [style.border-color]="saisie.niveau !== o.value ? couleurNiveau(o.value) : 'transparent'"
-                                    [style.background]="saisie.niveau === o.value ? couleurNiveau(o.value) : null">
-                                <span class="font-mono text-xs opacity-70">{{ rang(o.value) }}</span>
-                                <span>{{ o.label }}</span>
+                        <label class="block font-semibold mb-1">Niveau de conformité (grille officielle RQAP-BF) <span class="text-red-500">*</span></label>
+                        <!-- Le niveau choisi prend la couleur de la grille ; les boutons passent à la ligne
+                             plutôt que de couper « Non applicable » (observation 31). -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2" role="radiogroup" aria-label="Niveau de conformité">
+                            <button *ngFor="let o of niveauOptions" type="button" role="radio" [attr.aria-checked]="saisie.niveau === o.value"
+                                    [disabled]="!critereModifiable" (click)="saisie.niveau = o.value; modifiee = true"
+                                    class="px-3 py-2 rounded-lg border-2 text-sm text-left transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                    [style.border-color]="couleurNiveau(o.value)"
+                                    [style.background]="saisie.niveau === o.value ? couleurNiveau(o.value) : 'transparent'"
+                                    [ngClass]="saisie.niveau === o.value ? 'text-white font-semibold' : 'text-surface-700 dark:text-surface-200'">
+                                <i *ngIf="saisie.niveau === o.value" class="pi pi-check text-xs mr-1"></i>{{ rang(o.value) }}{{ o.label }}
                             </button>
                         </div>
                     </div>
@@ -208,6 +205,10 @@
                             <label class="block font-semibold mb-1">Commentaire</label>
                             <textarea pTextarea [(ngModel)]="saisie.commentaire" rows="2" [autoResize]="true" class="w-full"
                                       [disabled]="!critereModifiable" (ngModelChange)="modifiee = true"></textarea>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block font-semibold mb-1">Pièces justificatives</label>
+                            <app-preuves-constat source="notation" [constatId]="notation(critere.id)?.id" [modifiable]="!validee" />
                         </div>
                     </div>
 
@@ -284,7 +285,7 @@
                                 <td class="px-4 py-2 font-mono text-xs">{{ n.noeudCode }}</td>
                                 <td class="px-4 py-2">{{ n.noeudLibelle }}</td>
                                 <td class="px-4 py-2">
-                                    <p-tag *ngIf="constat(n.niveau) as k; else tiret" [value]="k === 'NC' ? 'NC' : 'Conforme'" [severity]="k === 'NC' ? 'danger' : 'success'"></p-tag>
+                                    <p-tag *ngIf="(n.constatRetenu || constat(n.niveau)) as k; else tiret" [value]="k === 'NC' ? 'NC' : 'Conforme'" [severity]="k === 'NC' ? 'danger' : 'success'"></p-tag>
                                     <ng-template #tiret>—</ng-template>
                                 </td>
                                 <td class="px-4 py-2">

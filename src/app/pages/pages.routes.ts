@@ -396,6 +396,30 @@ export default [
         }
     },
     {
+        path: 'parametrage-audit/mentions-rqapbf',
+        loadComponent: () => import('@features/gestion-audit/parametrage/parametrage-audit-liste.component').then(m => m.ParametrageAuditListeComponent),
+        title: "Mentions RQAP-BF",
+        canActivate: [permissionGuard],
+        data: {
+            liste: 'mentions-rqapbf',
+            breadcrumb: "Mentions RQAP-BF",
+            permissions: ['audit-config', 'audit-read', 'audit-write', 'audit-conduct', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'],
+            module: ModuleAbonnement.AUDIT
+        }
+    },
+    {
+        path: 'parametrage-audit/ecarts-rqapbf',
+        loadComponent: () => import('@features/gestion-audit/parametrage/parametrage-audit-liste.component').then(m => m.ParametrageAuditListeComponent),
+        title: "Écarts RQAP-BF",
+        canActivate: [permissionGuard],
+        data: {
+            liste: 'ecarts-rqapbf',
+            breadcrumb: "Écarts RQAP-BF",
+            permissions: ['audit-config', 'audit-read', 'audit-write', 'audit-conduct', 'CONFIG_READ', 'CONFIG_GLOBAL_MANAGE'],
+            module: ModuleAbonnement.AUDIT
+        }
+    },
+    {
         path: 'parametrage-audit/codification',
         loadComponent: () => import('@features/gestion-audit/parametrage/parametrage-audit-liste.component').then(m => m.ParametrageAuditListeComponent),
         title: "Codification des documents",

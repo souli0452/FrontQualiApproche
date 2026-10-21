@@ -36,6 +36,8 @@ export interface ListeParametrageAudit {
     listesMultiples?: Record<string, string>;
     /** Champs à choix multiple que le serveur garde en une seule chaîne, séparée par des virgules. */
     listesEnTexte?: string[];
+    /** Les lignes sont fixes (une par niveau d'une grille) : ni ajout ni suppression, seulement la modification. */
+    lectureEtModificationSeules?: boolean;
     /** Le champ qui ordonne les lignes : demandé au serveur, et repris pour teinter l'échelle. */
     tri?: string;
     /** Les colonnes calculées d'une ligne, à partir de la ligne et des options chargées. */
@@ -89,9 +91,9 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
         champLibelle: 'libelle',
         formCols: [
             CHAMP_ID,
-            { field: 'libelle', label: 'Nom du type d\'audit (ex : Audit interne, Audit de certification)', header: 'Nom du type', placeholder: 'Ex : Audit de certification', helpText: 'Le nom proposé à la planification d\'un audit et au filtre du programme.', type: 'string', visible: true, required: true },
-            { field: 'typeNonConformiteId', label: 'Type de non-conformité ouvert par les constats de ce type d\'audit', header: 'Origine des NC', helpText: 'Le type de non-conformité (module NC) que les constats de ce type d\'audit ouvrent.', type: 'dropdown', visible: true, required: false, class: 'md:col-6' },
-            { field: 'circuitExterne', label: 'Audit externe : plan et rapport reçus de l\'organisme auditeur', header: 'Audit externe', helpText: 'Plan et rapport reçus de l\'organisme auditeur, sans rédaction ni signature dans l\'application.', type: 'boolean', visible: true, required: false, class: 'md:col-6' }
+            { field: 'libelle', label: 'Nom du type d\'audit (ex : Audit interne, Audit de certification)', header: 'Nom du type', placeholder: 'Ex : Audit de certification', type: 'string', visible: true, required: true, class: 'md:col-6' },
+            { field: 'typeNonConformiteId', label: 'Type de non-conformité ouvert par les constats de ce type d\'audit', header: 'Origine des NC', type: 'dropdown', visible: true, required: false, class: 'md:col-6' },
+            { field: 'circuitExterne', label: 'Audit externe : plan et rapport reçus de l\'organisme auditeur', header: 'Audit externe', type: 'boolean', visible: true, required: false }
         ],
         tableCols: [
             { field: 'libelle', header: 'Type d\'audit', type: 'string', filter: true },
@@ -118,10 +120,10 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
         champLibelle: 'libelle',
         formCols: [
             CHAMP_ID,
-            { field: 'libelle', label: 'Libellé du type de constat (ex : Point fort, Non-conformité mineure)', header: 'Libellé', placeholder: 'Ex : Non-conformité critique', helpText: 'La nature proposée à la saisie des constats et à l\'évaluation RQAP-BF.', type: 'string', visible: true, required: true, class: 'md:col-6' },
-            { field: 'couleur', label: 'Couleur de la pastille', header: 'Couleur', helpText: 'La couleur de la pastille qui signale ce type sur les constats.', type: 'color', visible: true, required: false, class: 'md:col-6' },
-            { field: 'genereNonConformite', label: 'Génère une non-conformité à la publication du constat', header: 'Génère une NC', helpText: 'À la publication du constat, un dossier s\'ouvre dans le module Non-conformités.', type: 'boolean', visible: true, required: false, class: 'md:col-6' },
-            { field: 'niveauNonConformiteId', label: 'Gravité de la non-conformité ouverte', header: 'Gravité de la NC', helpText: 'Le niveau de gravité (module NC) du dossier ouvert.', type: 'dropdown', visible: true, required: false, class: 'md:col-6' }
+            { field: 'libelle', label: 'Libellé du type de constat (ex : Point fort, Non-conformité mineure)', header: 'Libellé', placeholder: 'Ex : Non-conformité critique', type: 'string', visible: true, required: true, class: 'md:col-6' },
+            { field: 'couleur', label: 'Couleur de la pastille', header: 'Couleur', type: 'color', visible: true, required: false, class: 'md:col-6' },
+            { field: 'genereNonConformite', label: 'Génère une non-conformité à la publication du constat', header: 'Génère une NC', type: 'boolean', visible: true, required: false },
+            { field: 'niveauNonConformiteId', label: 'Gravité de la non-conformité ouverte', header: 'Gravité de la NC', type: 'dropdown', visible: true, required: false }
         ],
         tableCols: [
             { field: 'libelle', header: 'Libellé', type: 'string', filter: true },
@@ -151,8 +153,8 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
         champLibelle: 'nom',
         formCols: [
             CHAMP_ID,
-            { field: 'nom', label: 'Nom du site (ex : Siège Ouagadougou)', header: 'Nom', placeholder: 'Ex : Siège Ouagadougou', helpText: 'Le nom sous lequel le site se choisit à la planification d\'un audit.', type: 'string', visible: true, required: true, class: 'md:col-6' },
-            { field: 'adresse', label: 'Adresse du site', header: 'Adresse', placeholder: 'Ex : Avenue de l\'Indépendance', helpText: 'L\'adresse, reprise sur le plan d\'audit.', type: 'string', visible: true, required: false, class: 'md:col-6' }
+            { field: 'nom', label: 'Nom du site (ex : Siège Ouagadougou)', header: 'Nom', placeholder: 'Ex : Siège Ouagadougou', type: 'string', visible: true, required: true, class: 'md:col-6' },
+            { field: 'adresse', label: 'Adresse du site', header: 'Adresse', placeholder: 'Ex : Avenue de l\'Indépendance', type: 'string', visible: true, required: false, class: 'md:col-6' }
         ],
         tableCols: [
             { field: 'nom', header: 'Site', type: 'string', filter: true },
@@ -176,7 +178,7 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
         champLibelle: 'libelle',
         formCols: [
             CHAMP_ID,
-            { field: 'libelle', label: 'Libellé du critère d\'évaluation (ex : Esprit d\'équipe)', header: 'Libellé', placeholder: 'Ex : Esprit d\'équipe', helpText: 'Le critère sur lequel chaque auditeur est noté à la clôture d\'un audit.', type: 'string', visible: true, required: true }
+            { field: 'libelle', label: 'Libellé du critère d\'évaluation (ex : Esprit d\'équipe)', header: 'Libellé', placeholder: 'Ex : Esprit d\'équipe', type: 'string', visible: true, required: true }
         ],
         tableCols: [{ field: 'libelle', header: 'Critère d\'évaluation', type: 'string', filter: true }],
         detailCols: [{ field: 'libelle', header: 'Critère d\'évaluation' }],
@@ -195,9 +197,9 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
         tri: 'ordre',
         formCols: [
             CHAMP_ID,
-            { field: 'ordre', label: 'Rang dans l\'échelle (1 = le plus bas)', header: 'Rang', placeholder: '1', helpText: 'Le rang ordonne l\'échelle ; la moyenne d\'un auditeur se calcule dessus.', type: 'number', min: 1, visible: true, required: true, class: 'md:col-6' },
-            { field: 'libelle', label: 'Libellé du niveau (ex : Satisfaisant)', header: 'Libellé', placeholder: 'Ex : Satisfaisant', helpText: 'Le libellé affiché sur l\'échelle de notation.', type: 'string', visible: true, required: true, class: 'md:col-6' },
-            { field: 'couleur', label: 'Couleur du niveau', header: 'Couleur', helpText: 'La couleur du niveau sur la notation de l\'équipe et dans le portefeuille des auditeurs.', type: 'color', visible: true, required: false }
+            { field: 'libelle', label: 'Libellé du niveau (ex : Satisfaisant)', header: 'Libellé', placeholder: 'Ex : Satisfaisant', type: 'string', visible: true, required: true, class: 'md:col-6' },
+            { field: 'couleur', label: 'Couleur du niveau', header: 'Couleur', type: 'color', visible: true, required: false, class: 'md:col-6' },
+            { field: 'ordre', label: 'Rang dans l\'échelle (1 = le plus bas)', header: 'Rang', placeholder: '1', type: 'number', min: 1, visible: true, required: true }
         ],
         tableCols: [
             { field: 'ordre', header: 'Rang', type: 'number', width: '6rem' },
@@ -222,10 +224,10 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
         champLibelle: 'libelle',
         formCols: [
             CHAMP_ID,
-            { field: 'libelle', label: 'Nom de la règle de rappel', header: 'Nom de la règle', placeholder: 'Ex : Rappel J-10', helpText: 'Posé d\'avance d\'après la maquette, et modifiable.', type: 'string', visible: true, required: true },
-            { field: 'delaiJours', label: 'Délai avant le démarrage de l\'audit, en jours', header: 'Délai (jours)', placeholder: '10', helpText: 'Le rappel part ce nombre de jours avant la date de début prévue.', type: 'number', min: 1, visible: true, required: true, class: 'md:col-6' },
-            { field: 'actif', label: 'Règle active', header: 'Règle active', helpText: 'Une règle inactive reste enregistrée mais ne déclenche aucun rappel.', type: 'boolean', visible: true, required: false, class: 'md:col-6' },
-            { field: 'destinataires', label: 'Destinataires du rappel', header: 'Destinataires', helpText: 'Les rôles prévenus ; la ronde de nuit les trace avec le rappel.', type: 'multiselect', visible: true, required: false }
+            { field: 'libelle', label: 'Nom de la règle de rappel', header: 'Nom de la règle', placeholder: 'Ex : Rappel J-10', type: 'string', visible: true, required: true, class: 'md:col-6' },
+            { field: 'destinataires', label: 'Destinataires du rappel', header: 'Destinataires', type: 'multiselect', visible: true, required: false, class: 'md:col-6' },
+            { field: 'delaiJours', label: 'Délai avant le démarrage de l\'audit, en jours', header: 'Délai (jours)', placeholder: '10', type: 'number', min: 1, visible: true, required: true },
+            { field: 'actif', label: 'Règle active', header: 'Règle active', type: 'boolean', visible: true, required: false }
         ],
         tableCols: [
             { field: 'libelle', header: 'Règle', type: 'string', filter: true },
@@ -242,7 +244,67 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
         valeursParDefaut: { libelle: 'Rappel avant démarrage d\'audit', actif: true, delaiJours: 10, destinataires: ['Équipe d\'audit'] },
         listesMultiples: { destinataires: 'destinataires' },
         listesEnTexte: ['destinataires'],
-        enrichir: l => ({ ...l, destinatairesTexte: l.destinataires || '—' })
+        enrichir: l => ({ ...l, destinatairesTexte: l.destinataires ? String(l.destinataires).split(',').map((d: string) => d.trim()).join(', ') : '—' })
+    },
+    {
+        cle: 'ecarts-rqapbf',
+        titre: 'Écarts RQAP-BF',
+        sousTitre: 'Les niveaux de la grille RQAP-BF qui ouvrent une non-conformité à la publication d\'un critère.',
+        boutonNouveau: '',
+        formHeader: 'Règle d\'écart d\'un niveau RQAP-BF',
+        formLongDescription: 'Un critère publié à un niveau qui ouvre une non-conformité part vers le module Non-conformités. Par défaut, « Non conforme » et « À améliorer » en ouvrent une, « Acceptable » non. « Conforme » et « Non applicable » n\'en ouvrent jamais. Un critère déjà transmis garde son dossier.',
+        url: UrlConfig.AUDIT_REGLES_ECARTS_RQAPBF_URL,
+        champLibelle: 'libelle',
+        lectureEtModificationSeules: true,
+        formCols: [
+            CHAMP_ID,
+            { field: 'ouvreNonConformite', label: 'Ouvre une non-conformité', header: 'Ouvre une non-conformité', type: 'boolean', visible: true, required: false }
+        ],
+        tableCols: [
+            { field: 'libelle', header: 'Niveau de la grille', type: 'string' },
+            { field: 'ouvreNonConformite', header: 'À la publication', type: 'boolean', labelTrue: 'Ouvre une NC', labelFalse: 'N\'ouvre pas de NC', width: '12rem' }
+        ],
+        detailCols: [
+            { field: 'libelle', header: 'Niveau' },
+            { field: 'ouvreNonConformite', header: 'Ouvre une non-conformité', type: 'boolean' }
+        ],
+        valeursParDefaut: {}
+    },
+    {
+        cle: 'mentions-rqapbf',
+        titre: 'Mentions RQAP-BF',
+        sousTitre: 'La grille qui traduit le score global RQAP-BF en niveau, mention et étoiles.',
+        boutonNouveau: '',
+        formHeader: 'Tranche de la grille des mentions',
+        formLongDescription: 'Une tranche va de son score minimal, inclus, au score minimal de la suivante ; la première commence à 0. Un domaine sous 50 % plafonne la mention à la tranche qui contient 50, et des écarts relevés la rendent « sous réserve ». Grille par défaut en attendant la grille officielle.',
+        url: UrlConfig.AUDIT_TRANCHES_SCORE_RQAPBF_URL,
+        champLibelle: 'niveau',
+        lectureEtModificationSeules: true,
+        formCols: [
+            CHAMP_ID,
+            { field: 'scoreMin', label: 'Score minimal, en % (inclus)', header: 'À partir de', placeholder: '50', type: 'number', min: 0, visible: true, required: true, class: 'md:col-6' },
+            { field: 'etoiles', label: 'Étoiles (0 à 5)', header: 'Étoiles', placeholder: '2', type: 'number', min: 0, visible: true, required: true, class: 'md:col-6' },
+            { field: 'niveau', label: 'Niveau', header: 'Niveau', placeholder: 'Niveau intermédiaire', type: 'string', visible: true, required: true, class: 'md:col-12' },
+            { field: 'mention', label: 'Mention délivrée', header: 'Mention', placeholder: 'Certificat de conformité moyenne', type: 'string', visible: true, required: true, class: 'md:col-12' }
+        ],
+        tableCols: [
+            { field: 'trancheTexte', header: 'Score', type: 'string', width: '9rem' },
+            { field: 'niveau', header: 'Niveau', type: 'string' },
+            { field: 'mention', header: 'Mention', type: 'string' },
+            { field: 'etoilesTexte', header: 'Étoiles', type: 'string', width: '7rem' }
+        ],
+        detailCols: [
+            { field: 'trancheTexte', header: 'Score' },
+            { field: 'niveau', header: 'Niveau' },
+            { field: 'mention', header: 'Mention' },
+            { field: 'etoilesTexte', header: 'Étoiles' }
+        ],
+        valeursParDefaut: {},
+        enrichir: t => ({
+            ...t,
+            trancheTexte: t.scoreMax < 100 ? `[${t.scoreMin} – ${t.scoreMax}[` : `[${t.scoreMin} – 100]`,
+            etoilesTexte: t.etoiles ? '★'.repeat(t.etoiles) : '—'
+        })
     },
     {
         cle: 'codification',
@@ -255,11 +317,11 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
         champLibelle: 'typeDocument',
         formCols: [
             CHAMP_ID,
-            { field: 'typeDocument', label: 'Document codifié (audit, plan ou rapport)', header: 'Document', helpText: 'Une règle par document ; le document ne se change plus après création.', type: 'dropdown', visible: true, required: true, class: 'md:col-6' },
-            { field: 'prefixe', label: 'Préfixe de la structure (ex : QS)', header: 'Préfixe', placeholder: 'Ex : QS', helpText: 'Le préfixe placé en tête de chaque référence.', type: 'string', visible: true, required: true, class: 'md:col-6' },
-            { field: 'separateur', label: 'Séparateur entre les segments de la référence', header: 'Séparateur', helpText: 'Le caractère entre préfixe, type, année et numéro.', type: 'dropdown', visible: true, required: false, class: 'md:col-6' },
-            { field: 'annee', label: 'Année en cours (ne se saisit qu\'à la création)', header: 'Année', placeholder: String(new Date().getFullYear()), helpText: 'Le compteur repart à zéro au changement d\'année.', type: 'string', visible: true, required: false, class: 'md:col-6' },
-            { field: 'compteur', label: 'Dernier numéro déjà émis (ne se saisit qu\'à la création)', header: 'Dernier numéro émis', placeholder: '0', helpText: 'La prochaine référence portera ce numéro plus un.', type: 'number', min: 0, visible: true, required: false, class: 'md:col-6' }
+            { field: 'typeDocument', label: 'Document codifié (audit, plan ou rapport)', header: 'Document', type: 'dropdown', visible: true, required: true, class: 'md:col-6' },
+            { field: 'prefixe', label: 'Préfixe de la structure (ex : QS)', header: 'Préfixe', placeholder: 'Ex : QS', type: 'string', visible: true, required: true, class: 'md:col-6' },
+            { field: 'separateur', label: 'Séparateur entre les segments de la référence', header: 'Séparateur', type: 'dropdown', visible: true, required: false, class: 'md:col-6' },
+            { field: 'annee', label: 'Année en cours (ne se saisit qu\'à la création)', header: 'Année', placeholder: String(new Date().getFullYear()), type: 'string', visible: true, required: false, class: 'md:col-6' },
+            { field: 'compteur', label: 'Dernier numéro déjà émis (ne se saisit qu\'à la création)', header: 'Dernier numéro émis', placeholder: '0', type: 'number', min: 0, visible: true, required: false }
         ],
         tableCols: [
             { field: 'documentLibelle', header: 'Document', type: 'string' },

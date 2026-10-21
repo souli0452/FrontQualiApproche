@@ -6,17 +6,25 @@
             <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Programme annuel d'audit</h2>
             <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">Colonnes alignées sur ISO 19011 — cliquez une ligne pour sa fiche résumée (sites, objectif, critères, équipe, risque et actions de maîtrise.</p>
         </div>
-        <p-button icon="pi pi-plus" label="Nouvel audit" (onClick)="creerAudit()"></p-button>
+        <!-- « Planifier un audit » est dans l'en-tête du module : le second bouton faisait doublon (observation 32). -->
+        <div class="flex flex-wrap gap-2">
+            <p-button icon="pi pi-file-excel" label="Exporter" [outlined]="true" severity="secondary" size="small" [loading]="exportEnCours" (onClick)="exporter()"></p-button>
+        </div>
     </div>
 
     <!-- Filtres : tous choisis dans des listes -->
     <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-3 mb-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <p-iconfield class="lg:col-span-2">
+        <div class="flex flex-wrap items-center gap-2" [class.mb-3]="filtresOuverts">
+            <p-iconfield class="flex-1 min-w-[14rem]">
                 <p-inputicon styleClass="pi pi-search" />
                 <input pInputText type="text" class="w-full" placeholder="Rechercher par référence, objectifs…"
                        [(ngModel)]="searchText" (ngModelChange)="onSearch($event)" />
             </p-iconfield>
+            <p-button [icon]="filtresOuverts ? 'pi pi-chevron-up' : 'pi pi-filter'" size="small" [outlined]="true" severity="secondary"
+                      [label]="'Filtres' + (filtresActifs ? ' (' + filtresActifs + ')' : '')" (onClick)="filtresOuverts = !filtresOuverts"></p-button>
+        </div>
+        <ng-container *ngIf="filtresOuverts">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <app-multiselect-input [(ngModel)]="filtres.statuts" [options]="statutOptions" optionLabel="label" optionValue="value"
                                    [filter]="false" placeholder="Statut : tous" (selectionChange)="recharger()" />
             <app-select-input [(ngModel)]="filtres.typeAuditId" [options]="typesAudit" optionLabel="libelle" optionValue="id"
@@ -41,6 +49,7 @@
             </div>
             <p-button icon="pi pi-filter-slash" label="Réinitialiser" [text]="true" severity="secondary" size="small" styleClass="ml-auto" (onClick)="reinitialiserFiltres()"></p-button>
         </div>
+        </ng-container>
     </div>
 
     <p-message *ngIf="erreurChargement" severity="error" styleClass="mb-4 w-full" [text]="erreurChargement"></p-message>

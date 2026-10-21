@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -11,7 +11,7 @@ import { SelectInputComponent } from '@shared/ui/select-input/select-input.compo
 import { AuditLibelleComponent } from '../../components/libelle-aide.component';
 import { AuditGestionService, contenu, messageErreur } from '../../services/audit.service';
 import { AuditReferentielService } from '../../services/audit-referentiel.service';
-import { Audit, ChecklistAudit, ConstatAudit, PointControle, TypeConstatRef } from '../../models/audit.model';
+import { Audit, AuditeurFiche, ChecklistAudit, ConstatAudit, PointControle, RepartitionPoint, TypeConstatRef } from '../../models/audit.model';
 import { StatutAudit, StatutConstat, STATUT_AUDIT_LABELS, STATUT_AUDIT_SEVERITY, STATUT_CONSTAT_LABELS, STATUT_CONSTAT_SEVERITY } from '../../models/audit-enums';
 import { NatureChoixComponent } from './nature-choix.component';
 import { PreuvesConstatComponent } from './preuves-constat.component';
@@ -68,6 +68,11 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
 
     private points = new Map<string, PointControle>();
     private nomsAuditeurs = new Map<string, string>();
+    private vivier: AuditeurFiche[] = [];
+
+    /** La répartition des points de l'audit, ouverte par le responsable d'équipe (observation 20). */
+    repartitionOuverte = false;
+    repartition: RepartitionPoint[] = [];
 
     // ---- Saisie (C10) ----
     /** Le point actif : un point assigné, ou `null` pour un constat hors checklist. */
@@ -75,6 +80,8 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
     horsChecklist = false;
     /** Le constat en cours de saisie sur le point actif (existant ou à créer). */
     constatSaisi: ConstatAudit | null = null;
+    /** Les preuves de la saisie : elles gardent les fichiers choisis avant le premier enregistrement. */
+    @ViewChild('preuvesSaisie') preuvesSaisie?: PreuvesConstatComponent;
     saisie: Retouche = {};
 
     // ---- Relecture (C10M, C10P) ----
@@ -109,7 +116,10 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
             error: err => this.erreur(err, 'Les natures de constat n\'ont pas pu être chargées.')
         });
         this.referentiel.auditeurs().pipe(takeUntil(this.destroy$)).subscribe({
-            next: auditeurs => (this.nomsAuditeurs = new Map(auditeurs.map(a => [a.id!, a.nomComplet ?? '—']))),
+            next: auditeurs => {
+                this.vivier = auditeurs;
+                this.nomsAuditeurs = new Map(auditeurs.map(a => [a.id!, a.nomComplet ?? '—']));
+            },
             error: err => this.erreur(err, 'Le vivier d\'auditeurs n\'a pas pu être chargé : les auteurs ne s\'affichent pas.')
         });
         this.auditService.getChecklists().pipe(takeUntil(this.destroy$)).subscribe({
@@ -193,6 +203,55 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
         return this.saisieOuverte && !!this.auditCourant?.jeSuisDeLEquipe && hasAnyPermission(['audit-conduct']);
     }
 
+    /** Répartir les points : le responsable d'équipe, ou qui détient la validation. */
+    get peutRepartir(): boolean {
+        const audit = this.auditCourant;
+        if (!this.saisieOuverte || !audit) return false;
+        if (hasAnyPermission(['audit-validate'])) return true;
+        const moi = currentUserState.value?.user?.userId;
+        const responsable = this.vivier.find(a => a.id === audit.responsableEquipeId);
+        return !!moi && responsable?.utilisateurId === moi;
+    }
+
+    /** L'équipe de l'audit, proposée pour chaque point ; posée à l'ouverture de la répartition. */
+    optionsEquipe: { label: string; value: string | null }[] = [];
+
+    private equipeProposee(): { label: string; value: string | null }[] {
+        const audit = this.auditCourant;
+        const ids = [audit?.responsableEquipeId, ...(audit?.membreEquipeIds ?? [])].filter(Boolean) as string[];
+        return [{ label: 'Toute l\'équipe', value: null },
+            ...[...new Set(ids)].map(id => ({ label: this.nomsAuditeurs.get(id) ?? '—', value: id }))];
+    }
+
+    ouvrirRepartition(): void {
+        if (!this.auditId) return;
+        this.auditService.getRepartition(this.auditId).pipe(takeUntil(this.destroy$)).subscribe({
+            next: res => {
+                this.repartition = contenu<RepartitionPoint>(res);
+                this.optionsEquipe = this.equipeProposee();
+                this.repartitionOuverte = true;
+            },
+            error: err => this.erreur(err, 'La répartition des points n\'a pas pu être chargée.')
+        });
+    }
+
+    enregistrerRepartition(): void {
+        if (!this.auditId) return;
+        this.saving = true;
+        this.auditService.repartirPoints(this.auditId, this.repartition).pipe(takeUntil(this.destroy$)).subscribe({
+            next: () => {
+                this.saving = false;
+                this.repartitionOuverte = false;
+                this.messageService.add({ severity: 'success', summary: 'Répartition enregistrée', detail: 'Chaque membre voit désormais ses points.' });
+                this.charger(true);
+            },
+            error: err => {
+                this.saving = false;
+                this.erreur(err, 'La répartition n\'a pas pu être enregistrée.');
+            }
+        });
+    }
+
     /** Publier (valider) un constat compilé : l'équipe, ou qui détient la validation sans en être. */
     get peutValider(): boolean {
         return this.saisieOuverte
@@ -240,6 +299,7 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
     }
 
     changerAudit(): void {
+        this.preuvesSaisie?.vider();
         this.pointActif = null;
         this.horsChecklist = false;
         this.constatSaisi = null;
@@ -262,12 +322,14 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
     // ================================================================ Saisie (C10)
 
     choisirPoint(p: PointControle): void {
+        this.preuvesSaisie?.vider();
         this.pointActif = p;
         this.horsChecklist = false;
         this.rattacherSaisie();
     }
 
     nouveauHorsChecklist(): void {
+        this.preuvesSaisie?.vider();
         this.pointActif = null;
         this.horsChecklist = true;
         this.constatSaisi = null;
@@ -311,7 +373,8 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
         return this.mesPoints[(i + 1) % this.mesPoints.length];
     }
 
-    enregistrerSaisie(continuer: boolean | 'nouveau' = false): void {
+    /** continuer : passe au point suivant ; nouveau : ouvre un nouveau constat hors checklist. */
+    enregistrerSaisie(continuer = false, nouveau = false): void {
         if (!this.auditId || !this.saisieComplete) {
             return;
         }
@@ -328,9 +391,11 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
             next: (res: any) => {
                 const c: ConstatAudit = res?.data ?? res;
                 this.saving = false;
-                this.messageService.add({ severity: 'success', summary: 'Enregistré',
-                    detail: continuer === 'nouveau' ? 'Constat enregistré. Saisissez le suivant.' : 'Constat enregistré dans vos brouillons.' });
-                if (continuer === 'nouveau') {
+                if (c?.id) {
+                    this.preuvesSaisie?.deposerEnAttente(c.id);
+                }
+                this.messageService.add({ severity: 'success', summary: 'Enregistré', detail: 'Constat enregistré dans vos brouillons.' });
+                if (nouveau) {
                     this.nouveauHorsChecklist();
                 } else if (continuer && this.pointSuivant) {
                     this.pointActif = this.pointSuivant;
@@ -338,7 +403,7 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
                 } else {
                     this.constatSaisi = c;
                 }
-                this.charger(continuer !== 'nouveau');
+                this.charger(!nouveau);
             },
             error: err => {
                 this.saving = false;
@@ -360,10 +425,26 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
         return moi ? this.equipe.filter(c => c.redacteurUtilisateurId === moi) : [];
     }
 
-    publierTousMesConstats(): void {
+    /** Tous mes brouillons d'un geste : on le confirme d'abord, il ne se reprend pas (observation 22). */
+    publierTousMesConstats(event?: Event): void {
         if (!this.auditId) return;
-        this.geste(this.auditService.publierMesConstats(this.auditId), 'Vos constats rejoignent la compilation d\'équipe.');
+        const n = this.brouillonsARelire.length;
+        this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
+            target: event?.currentTarget as EventTarget,
+            message: `Publier vos ${n} constat(s) vers la compilation d'équipe ? Ils ne se modifieront plus que par l'équipe.`,
+            icon: 'pi pi-send',
+            acceptLabel: 'Publier',
+            rejectLabel: 'Retour',
+            accept: () => {
+                this.publicationFaite = true;
+                this.geste(this.auditService.publierMesConstats(this.auditId!), 'Vos constats rejoignent la compilation d\'équipe.');
+            }
+        });
     }
+
+    /** Après « Publier tous », la liste vide dit où sont partis les constats. */
+    publicationFaite = false;
 
     verser(c: ConstatAudit): void {
         // On enregistre d'abord ce qui a été retouché, puis on verse.
@@ -372,6 +453,7 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
 
     supprimer(event: Event, c: ConstatAudit): void {
         this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
             target: event.currentTarget as EventTarget,
             message: 'Ce brouillon sera définitivement supprimé. Continuer ?',
             icon: 'pi pi-trash',
@@ -421,6 +503,7 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
     validerGroupe(event: Event, type: TypeConstatRef, n: number): void {
         if (!this.auditId) return;
         this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
             target: event.currentTarget as EventTarget,
             message: `Valider les ${n} constat(s) « ${type.libelle} » en compilation ? Publiés, ils ne se modifieront plus${type.genereNonConformite ? ' et ouvriront leur non-conformité' : ''}.`,
             icon: 'pi pi-check-circle',
@@ -433,6 +516,7 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
     validerTout(event: Event): void {
         if (!this.auditId) return;
         this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
             target: event.currentTarget as EventTarget,
             message: `L'équipe est d'accord : les ${this.combien(StatutConstat.COMPILE)} constat(s) en compilation seront publiés et ne se modifieront plus. Les écarts ouvriront leur non-conformité.`,
             icon: 'pi pi-check-circle',

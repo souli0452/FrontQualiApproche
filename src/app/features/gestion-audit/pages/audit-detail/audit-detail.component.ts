@@ -138,10 +138,23 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
 
     valider(event: Event): void {
         if (!this.auditId) return;
+        const cible = event.currentTarget as EventTarget;
+        // Qui sera prévenu se dit avant le geste (observation 14).
+        this.auditService.destinataires(this.auditId, 'VALIDATION').pipe(takeUntil(this.destroy$)).subscribe(destinataires =>
+            this.confirmerValidation(cible, destinataires));
+    }
+
+    private confirmerValidation(cible: EventTarget, destinataires: { nom: string; titre: string }[]): void {
+        const qui = destinataires.length
+            ? ' Un courriel préviendra : ' + destinataires.map(d => `${d.nom} (${d.titre.toLowerCase()})`).join(', ') + '.'
+            : ' Personne ne sera prévenu par courriel : ni l\'équipe ni le pilote n\'ont d\'adresse connue.';
         this.confirmationService.confirm({
-            target: event.currentTarget as EventTarget,
-            message: "Valider cet audit et le passer en préparation ?",
+            rejectButtonProps: { severity: 'secondary', outlined: true },
+            target: cible,
+            message: 'Valider cet audit et le passer en préparation ?' + qui,
             icon: 'pi pi-check-circle',
+            acceptLabel: 'Valider et notifier',
+            rejectLabel: 'Retour',
             accept: () => this.executerTransition(() =>
                 this.auditService.validerAudit(this.auditId!),
                 'Audit validé — préparation en cours.'
@@ -152,9 +165,14 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
     demarrer(event: Event): void {
         if (!this.auditId) return;
         this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
             target: event.currentTarget as EventTarget,
-            message: "Démarrer l'exécution de cet audit ?",
-            icon: 'pi pi-play',
+            message: this.demarrageAnticipe
+                ? `Cet audit est prévu le ${this.formatJour(this.audit!.dateDebutPrevue!)}. Le démarrer dès aujourd'hui ? La date réelle de début sera retenue.`
+                : "Démarrer l'exécution de cet audit ?",
+            icon: this.demarrageAnticipe ? 'pi pi-exclamation-triangle' : 'pi pi-play',
+            acceptLabel: 'Démarrer',
+            rejectLabel: 'Retour',
             accept: () => this.executerTransition(() =>
                 this.auditService.demarrerAudit(this.auditId!),
                 "L'audit est en cours."
@@ -162,9 +180,21 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    /** Démarrer avant la date prévue reste permis, mais se dit (recette du 17 oct. 2026, observation 13). */
+    get demarrageAnticipe(): boolean {
+        const prevu = this.audit?.dateDebutPrevue;
+        return !!prevu && new Date().toISOString().slice(0, 10) < prevu.slice(0, 10);
+    }
+
+    private formatJour(iso: string): string {
+        const [a, m, j] = iso.slice(0, 10).split('-');
+        return `${j}/${m}/${a}`;
+    }
+
     annuler(event: Event): void {
         if (!this.auditId) return;
         this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
             target: event.currentTarget as EventTarget,
             message: "Un audit annulé sort du programme et ne se reprend pas. Confirmer l'annulation ?",
             icon: 'pi pi-times-circle',
@@ -191,6 +221,7 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
     cloturer(event: Event): void {
         if (!this.auditId) return;
         this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
             target: event.currentTarget as EventTarget,
             message: "Clôturer définitivement cet audit ?",
             icon: 'pi pi-lock',
@@ -201,29 +232,56 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    /** Pendant une transmission : combien sont partis, sur combien. */
+    transmission: { faits: number; total: number } | null = null;
+
+    /**
+     * Transmet les écarts en attente, lot par lot : le serveur en traite un par appel et dit ce
+     * qui reste. On relance tant qu'il en reste et que le lot précédent a avancé ; un lot qui
+     * n'avance plus (module NC indisponible, audit sans processus) arrête et dit pourquoi.
+     */
     transmettreEcarts(): void {
         if (!this.auditId) return;
         this.actionEnCours = true;
-        this.auditService.transmettreEcarts(this.auditId)
+        this.transmission = { faits: 0, total: this.avancement?.ecartsEnAttente ?? 0 };
+        const echecs: string[] = [];
+        const passe = () => this.auditService.transmettreEcarts(this.auditId!)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: res => {
                     const bilan = res?.data;
-                    const echecs = bilan?.echecs ?? [];
-                    this.messageService.add({
-                        severity: echecs.length ? 'warn' : 'success',
-                        summary: 'Transmission des écarts',
-                        detail: `${bilan?.transmis ?? 0} non-conformité(s) ouverte(s).` + (echecs.length ? ` Échecs : ${echecs.join(' ; ')}` : ''),
-                        life: echecs.length ? 10000 : 4000
-                    });
-                    this.actionEnCours = false;
-                    if (this.auditId) this.chargerConstats(this.auditId);
+                    const transmis = bilan?.transmis ?? 0;
+                    echecs.push(...(bilan?.echecs ?? []));
+                    this.transmission!.faits += transmis;
+                    if ((bilan?.restants ?? 0) > 0 && transmis > 0) {
+                        passe();
+                    } else {
+                        this.finirTransmission(echecs);
+                    }
                 },
                 error: err => {
-                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: messageErreur(err, 'La transmission des écarts a échoué.'), life: 8000 });
-                    this.actionEnCours = false;
+                    echecs.push(messageErreur(err, 'La transmission des écarts a échoué.'));
+                    this.finirTransmission(echecs);
                 }
             });
+        passe();
+    }
+
+    private finirTransmission(echecs: string[]): void {
+        const faits = this.transmission?.faits ?? 0;
+        this.messageService.add({
+            severity: echecs.length ? 'warn' : 'success',
+            summary: 'Transmission des écarts',
+            detail: `${faits} non-conformité(s) ouverte(s).` + (echecs.length ? ` Restent en attente : ${echecs.slice(0, 5).join(' ; ')}${echecs.length > 5 ? ` (et ${echecs.length - 5} autres)` : ''}` : ''),
+            life: echecs.length ? 12000 : 4000
+        });
+        this.transmission = null;
+        this.actionEnCours = false;
+        this.auditService.rafraichirNotifications();
+        if (this.auditId) {
+            this.chargerConstats(this.auditId);
+            this.chargerAvancement(this.auditId);
+        }
     }
 
     private executerTransition(fn: () => any, successMsg: string): void {
@@ -308,6 +366,41 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
         return this.avancement?.cloturable === false ? (this.avancement.raisonsDeNePasCloturer ?? []).join(' · ') : '';
     }
 
+    /**
+     * Un audit RQAP-BF : il désigne des domaines du référentiel, son type ou ses référentiels le
+     * nomment, ou une évaluation y est commencée. La carte « 0/307 critères » s'affichait sur un
+     * audit ISO 9001 (observation 12).
+     */
+    get estRqapbf(): boolean {
+        const a = this.audit;
+        if (!a) return false;
+        const texte = [a.typeAuditLibelle, ...(a.referentiels ?? [])].join(' ');
+        return !!a.domaineRqapbfIds?.length || /rqap/i.test(texte) || (this.avancement?.criteresNotes ?? 0) > 0;
+    }
+
+    /** Le circuit de l'audit, du point de vue de son statut. */
+    get frise(): { libelle: string; etat: 'fait' | 'courant' | 'a-venir' }[] {
+        const ordre = ['PLANIFIE', 'EN_PREPARATION', 'EN_COURS', 'CLOTURE'];
+        const libelles = ['Planifié', 'Validé · en préparation', 'En cours', 'Clôturé'];
+        const statut = this.audit?.statut === StatutAudit.EN_RETARD ? 'EN_PREPARATION' : this.audit?.statut ?? '';
+        const i = ordre.indexOf(statut);
+        return libelles.map((libelle, k) => ({ libelle, etat: k < i ? 'fait' : k === i ? 'courant' : 'a-venir' }));
+    }
+
+    /** Ce qui reste à faire pour avancer, dit en clair plutôt que par des boutons grisés. */
+    get etapeSuivante(): string {
+        switch (this.audit?.statut) {
+            case StatutAudit.PLANIFIE: return 'valider l\'audit et notifier l\'équipe.';
+            case StatutAudit.EN_PREPARATION:
+            case StatutAudit.EN_RETARD: return 'élaborer et partager le plan d\'audit, puis démarrer l\'audit.';
+            case StatutAudit.EN_COURS:
+                return this.avancement?.cloturable === false
+                    ? 'saisir et publier les constats, rédiger le rapport, le faire signer, puis terminer l\'audit.'
+                    : 'terminer l\'audit, puis évaluer l\'équipe.';
+            default: return '';
+        }
+    }
+
     get libellePlan(): string {
         return ({ BROUILLON: 'Brouillon', VALIDE: 'Validé', PARTAGE: 'Diffusé' } as Record<string, string>)[this.avancement?.statutPlan ?? ''] ?? 'Pas encore élaboré';
     }
@@ -346,8 +439,16 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
         return this.audit?.statut !== StatutAudit.CLOTURE && this.audit?.statut !== StatutAudit.ANNULE;
     }
 
+    /** Dès qu'un écart publié attend son dossier, quel que soit le palier de l'audit. */
     get peutTransmettreEcarts(): boolean {
-        return (this.audit?.statut === StatutAudit.CLOTURE) && this.constatsPublies.length > 0;
+        return this.audit?.statut !== StatutAudit.ANNULE && (this.avancement?.ecartsEnAttente ?? 0) > 0;
+    }
+
+    get libelleTransmission(): string {
+        if (this.transmission) {
+            return `Transmission… ${this.transmission.faits} / ${this.transmission.total}`;
+        }
+        return `Transmettre les écarts en attente (${this.avancement?.ecartsEnAttente ?? 0})`;
     }
 
     getStatutSeverity(statut: string): string {

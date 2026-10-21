@@ -136,19 +136,7 @@ export class ProgrammeAuditComponent implements OnInit, OnDestroy {
         this.pageDemandee = true;
         this.loading = true;
         this.erreurChargement = null;
-        const f = this.filtres;
-        const params: Record<string, any> = {
-            search: f.search,
-            statuts: f.statuts?.length ? f.statuts : undefined,
-            typeAuditId: f.typeAuditId,
-            domaineId: f.domaineId,
-            niveauRisque: f.niveauRisque,
-            responsableId: f.responsableId,
-            enRetard: f.enRetard ? true : undefined,
-            mesAudits: f.mesAudits ? true : undefined,
-            annee: f.annee
-        };
-        this.auditService.findAll(this.currentPage, this.pageSize, params)
+        this.auditService.findAll(this.currentPage, this.pageSize, this.parametres())
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res: any) => {
@@ -164,6 +152,64 @@ export class ProgrammeAuditComponent implements OnInit, OnDestroy {
                     this.erreurChargement = messageErreur(err, 'Impossible de charger le programme d\'audit.');
                 }
             });
+    }
+
+    private parametres(): Record<string, any> {
+        const f = this.filtres;
+        return {
+            search: f.search,
+            statuts: f.statuts?.length ? f.statuts : undefined,
+            typeAuditId: f.typeAuditId,
+            domaineId: f.domaineId,
+            niveauRisque: f.niveauRisque,
+            responsableId: f.responsableId,
+            enRetard: f.enRetard ? true : undefined,
+            mesAudits: f.mesAudits ? true : undefined,
+            annee: f.annee
+        };
+    }
+
+    /** Les filtres se replient : empilés, ils occupaient tout l'écran (observation 32). */
+    filtresOuverts = false;
+
+    get filtresActifs(): number {
+        const f = this.filtres;
+        return [f.statuts?.length, f.typeAuditId, f.domaineId, f.niveauRisque, f.responsableId, f.annee, f.mesAudits, f.enRetard]
+            .filter(Boolean).length;
+    }
+
+    exportEnCours = false;
+
+    /**
+     * Le programme filtré, en CSV qu'Excel ouvre directement (point-virgule, encodage UTF-8 avec
+     * marque) : il n'y avait pas d'export (observation 32).
+     */
+    exporter(): void {
+        this.exportEnCours = true;
+        this.auditService.findAll(0, 1000, this.parametres()).pipe(takeUntil(this.destroy$)).subscribe({
+            next: (res: any) => {
+                const lignes: Audit[] = res?.data?.content ?? [];
+                const cellule = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+                const jour = (d?: string) => (d ? d.slice(0, 10).split('-').reverse().join('/') : '');
+                const entete = ['Référence', 'Type', 'Processus', 'Début prévu', 'Fin prévue', 'Responsable', 'Équipe', 'Risque', 'Statut'];
+                const corps = lignes.map(a => [
+                    a.reference, a.typeAuditLibelle, this.libelles.processus(a.processusId), jour(a.dateDebutPrevue), jour(a.dateFinPrevue),
+                    this.libelles.auditeur(a.responsableEquipeId), this.nomsMembres(a), a.niveauRisque, this.getStatutLabel(a.statut)
+                ].map(cellule).join(';'));
+                const csv = '\uFEFF' + [entete.map(cellule).join(';'), ...corps].join('\r\n');
+                const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+                const lien = document.createElement('a');
+                lien.href = url;
+                lien.download = `Programme_audit${this.filtres.annee ? '_' + this.filtres.annee : ''}.csv`;
+                lien.click();
+                URL.revokeObjectURL(url);
+                this.exportEnCours = false;
+            },
+            error: err => {
+                this.exportEnCours = false;
+                this.erreurChargement = messageErreur(err, 'L\'export du programme a échoué.');
+            }
+        });
     }
 
     recharger(): void {

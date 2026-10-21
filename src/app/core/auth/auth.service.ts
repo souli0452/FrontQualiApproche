@@ -100,20 +100,29 @@ export class AuthService extends BaseCrudService<AuthData, number> {
         );
     }
 
-    logout(): void {
+    /**
+     * Ferme la session. {@code expiree} : la session est morte d'elle-même — la connexion le dit,
+     * et ramène ensuite à la page où l'on était.
+     */
+    logout(expiree = false): void {
         this.http.post(QualiUrlConfig.LOGOUT_URL, {}, { withCredentials: true })
             .subscribe({
-                next: () => this.clearSession(),
-                error: () => this.clearSession() // on nettoie quand même, même si le backend échoue
+                next: () => this.clearSession(expiree),
+                error: () => this.clearSession(expiree) // on nettoie quand même, même si le backend échoue
             });
     }
-    private clearSession(): void {
+    private clearSession(expiree = false): void {
         sessionStorage.removeItem('userId');
         sessionStorage.removeItem('current_user_structure');
         localStorage.removeItem('current_user_structure');
         this.isLoggedIn.next(false);
         currentUserState.next(null);
-        this.router.navigate(['/login']);
+        const ici = this.router.url;
+        if (expiree && ici && !ici.startsWith('/login')) {
+            this.router.navigate(['/login'], { queryParams: { returnUrl: ici, expiree: 1 } });
+        } else {
+            this.router.navigate(['/login']);
+        }
     }
 
     hasPermission(permission: string): boolean {

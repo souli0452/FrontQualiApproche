@@ -359,6 +359,7 @@ export class AuditAuditeursComponent implements OnInit, OnDestroy {
     supprimer(a: AuditeurFiche): void {
         this.detailOuvert = false;
         this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
             header: 'Retirer du vivier',
             message: `Retirer « ${a.nomComplet} » du vivier ? Un auditeur déjà affecté se passe plutôt en inactif, pour garder son historique.`,
             icon: 'pi pi-trash',

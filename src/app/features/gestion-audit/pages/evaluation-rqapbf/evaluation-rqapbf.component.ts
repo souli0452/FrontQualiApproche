@@ -51,10 +51,11 @@ interface Saisie {
  * Une note reste en brouillon, hors rapport officiel, jusqu'à sa publication — critère par
  * critère ou par groupe de niveau. Valider publie le reste et fige l'évaluation.</p>
  */
+import { PreuvesConstatComponent } from '../constatations/preuves-constat.component';
 @Component({
     selector: 'app-evaluation-rqapbf',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule],
+    imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, PreuvesConstatComponent],
     providers: [MessageService, ConfirmationService],
     templateUrl: './evaluation-rqapbf.component.html'
 })
@@ -104,12 +105,18 @@ export class EvaluationRQAPBFComponent implements OnInit, OnDestroy, QuitterSans
         forkJoin({
             audit: this.auditService.findById(auditId),
             arbre: this.auditService.getReferentielRQAPBF(),
-            evaluation: this.auditService.getEvaluationRQAPBF(auditId)
+            evaluation: this.auditService.getEvaluationRQAPBF(auditId),
+            // Sans droit de lecture du paramétrage, la règle par défaut vaut.
+            regles: this.auditService.getReglesEcartsRQAPBF().pipe(catchError(() => of(null)))
         })
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-                next: ({ audit, arbre, evaluation }) => {
+                next: ({ audit, arbre, evaluation, regles }) => {
                     this.audit = (audit as any)?.data ?? null;
+                    const posees = contenu<{ niveau: string; ouvreNonConformite: boolean }>(regles);
+                    if (posees.length) {
+                        this.niveauxEnEcart = new Set(posees.filter(r => r.ouvreNonConformite).map(r => r.niveau));
+                    }
                     const racines = contenu<NoeudReferentiel>(arbre);
                     this.domaineIds = new Set(racines.map(r => r.id!));
                     // Les domaines retenus par l'audit, ou tous s'il n'en désigne aucun.
@@ -341,9 +348,15 @@ export class EvaluationRQAPBFComponent implements OnInit, OnDestroy, QuitterSans
     // ---- Constat et barème ----
 
     /** Le constat retenu pour la synthèse : seul « Conforme » vaut conforme ; « N/A » n'en donne pas. */
+    /**
+     * Les niveaux que la direction tient pour des écarts (paramétrage Audit) ; par défaut, ceux
+     * du serveur : « Acceptable » n'en est pas un.
+     */
+    niveauxEnEcart = new Set<string>([NiveauNotationRQAPBF.NON_CONFORME, NiveauNotationRQAPBF.A_AMELIORER]);
+
     constat(niveau?: string): 'CONFORME' | 'NC' | null {
         if (!niveau || niveau === NiveauNotationRQAPBF.NON_APPLICABLE) return null;
-        return niveau === NiveauNotationRQAPBF.CONFORME ? 'CONFORME' : 'NC';
+        return this.niveauxEnEcart.has(niveau) ? 'NC' : 'CONFORME';
     }
 
     bareme(niveau?: string): string {
@@ -419,6 +432,7 @@ export class EvaluationRQAPBFComponent implements OnInit, OnDestroy, QuitterSans
     publierGroupe(event: Event, niveau: NiveauNotationRQAPBF): void {
         if (!this.evaluation?.id) return;
         this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
             target: event.currentTarget as EventTarget,
             message: `Publier les critères notés « ${NIVEAU_NOTATION_RQAPBF_LABELS[niveau]} » ? Une note publiée entre au rapport officiel et ne se corrige plus.`
                 + (this.constat(niveau) === 'NC' ? ' Leur constat « NC » sera transmis au module Non-conformités.' : ''),
@@ -432,6 +446,7 @@ export class EvaluationRQAPBFComponent implements OnInit, OnDestroy, QuitterSans
     publierToutEtVoir(event: Event): void {
         if (!this.evaluation?.id) return;
         this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
             target: event.currentTarget as EventTarget,
             message: 'Publier tous les critères notés ? Ils entrent au rapport officiel et ne se corrigent plus.',
             icon: 'pi pi-send',
@@ -445,8 +460,9 @@ export class EvaluationRQAPBFComponent implements OnInit, OnDestroy, QuitterSans
     valider(event: Event): void {
         if (!this.evaluation?.id) return;
         this.confirmationService.confirm({
+            rejectButtonProps: { severity: 'secondary', outlined: true },
             target: event.currentTarget as EventTarget,
-            message: 'Tout ce qui est noté sera publié et l\'évaluation figée : ses résultats deviennent officiels. Les critères au constat « NC » ouvriront une non-conformité. Continuer ?',
+            message: 'Tout ce qui est noté sera publié et l\'évaluation figée : ses résultats deviennent officiels. Seuls les critères au constat « NC » pas encore publiés ouvriront une non-conformité ; ceux déjà publiés ont la leur. Continuer ?',
             icon: 'pi pi-lock',
             acceptLabel: 'Valider',
             rejectLabel: 'Retour',

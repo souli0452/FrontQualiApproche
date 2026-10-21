@@ -14,7 +14,13 @@ import { AuthService } from '../auth/auth.service';
 export class AuthInterceptor implements HttpInterceptor {
 
   private isRefreshing = false;
-  private refreshTokenSubject = new BehaviorSubject<boolean>(false);
+  /**
+   * L'issue du rafraîchissement en cours. Les requêtes arrivées pendant qu'il tourne attendaient
+   * un succès : s'il échouait, elles restaient suspendues et la page semblait figée, chaque geste
+   * échouant sans un mot (recette du module Audit du 17 oct. 2026, §9). Elles reçoivent désormais
+   * l'échec.
+   */
+  private refreshTokenSubject = new BehaviorSubject<'attente' | 'ok' | 'echec'>('attente');
 
   constructor(private authService: AuthService) {}
 
@@ -51,14 +57,14 @@ export class AuthInterceptor implements HttpInterceptor {
     if (!this.isRefreshing) {
 
       this.isRefreshing = true;
-      this.refreshTokenSubject.next(false);
+      this.refreshTokenSubject.next('attente');
 
       return this.authService.refreshToken().pipe(
 
         switchMap(() => {
 
           this.isRefreshing = false;
-          this.refreshTokenSubject.next(true);
+          this.refreshTokenSubject.next('ok');
 
           return next.handle(
             request.clone({
@@ -71,7 +77,9 @@ export class AuthInterceptor implements HttpInterceptor {
         catchError(error => {
 
           this.isRefreshing = false;
-          this.authService.logout();
+          this.refreshTokenSubject.next('echec');
+          // La session a expiré : on le dit, et on ramènera l'utilisateur où il était.
+          this.authService.logout(true);
 
           return throwError(() => error);
 
@@ -82,16 +90,14 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return this.refreshTokenSubject.pipe(
 
-      filter(success => success),
+      filter(issue => issue !== 'attente'),
 
       take(1),
 
-      switchMap(() =>
-        next.handle(
-          request.clone({
-            withCredentials: true
-          })
-        )
+      switchMap(issue =>
+        issue === 'ok'
+          ? next.handle(request.clone({ withCredentials: true }))
+          : throwError(() => new HttpErrorResponse({ status: 401, statusText: 'Session expirée', url: request.url }))
       )
 
     );

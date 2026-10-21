@@ -100,6 +100,7 @@ export class AuditReferentielService {
     }
 
     utilisateurs(): Observable<UtilisateurAnnuaire[]> {
+        this.expirer();
         return (this.utilisateurs$ ??= this.http
             .get(UrlConfig.USERS_URL, { params: { page: 0, size: 1000 } })
             .pipe(
@@ -107,12 +108,22 @@ export class AuditReferentielService {
                     ...u,
                     nomComplet: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.username || u.email || '—'
                 }) as UtilisateurAnnuaire)),
+                // Triés, et deux homonymes distingués par leur adresse : deux « Super Admin »
+                // s'affichaient indiscernables (recette du 17 oct. 2026, observation 10).
+                map(utilisateurs => {
+                    const vus = new Map<string, number>();
+                    utilisateurs.forEach(u => vus.set(u.nomComplet, (vus.get(u.nomComplet) ?? 0) + 1));
+                    return utilisateurs
+                        .map(u => ((vus.get(u.nomComplet) ?? 0) > 1 && u.email ? { ...u, nomComplet: `${u.nomComplet} (${u.email})` } : u))
+                        .sort((x, y) => x.nomComplet.localeCompare(y.nomComplet, 'fr'));
+                }),
                 shareReplay(1)
             ));
     }
 
     /** Le vivier d'auditeurs entier, nommé d'après l'annuaire, pour les listes de choix. */
     auditeurs(): Observable<AuditeurFiche[]> {
+        this.expirer();
         return (this.auditeurs$ ??= this.auditService.getAuditeurs().pipe(
             switchMap(vivier => this.nommer(contenu<AuditeurFiche>(vivier))),
             shareReplay(1)
@@ -166,6 +177,30 @@ export class AuditReferentielService {
                 };
             })
         );
+    }
+
+    /**
+     * Relit le vivier et l'annuaire au prochain appel : un écran qui compose ou évalue une équipe
+     * doit voir l'auditeur inscrit entre-temps, ailleurs (observations 8 et 27).
+     */
+    rafraichirAuditeurs(): void {
+        this.auditeurs$ = this.utilisateurs$ = undefined;
+    }
+
+    /**
+     * Le vivier et l'annuaire se gardent le temps d'un écran, pas d'une session : gardés jusqu'à
+     * la déconnexion, un auditeur inscrit entre-temps manquait aux listes, et un membre s'affichait
+     * « — » (recette du 17 oct. 2026, observations 8, 16 et 27).
+     */
+    private static readonly DUREE_CACHE_MS = 30_000;
+    private chargesLe = 0;
+
+    private expirer(): void {
+        const maintenant = Date.now();
+        if (maintenant - this.chargesLe > AuditReferentielService.DUREE_CACHE_MS) {
+            this.auditeurs$ = this.utilisateurs$ = undefined;
+            this.chargesLe = maintenant;
+        }
     }
 
     /** Oublie les listes chargées, après une modification du paramétrage. */
