@@ -311,7 +311,7 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
         return this.mesPoints[(i + 1) % this.mesPoints.length];
     }
 
-    enregistrerSaisie(continuer = false): void {
+    enregistrerSaisie(continuer: boolean | 'nouveau' = false): void {
         if (!this.auditId || !this.saisieComplete) {
             return;
         }
@@ -328,14 +328,17 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
             next: (res: any) => {
                 const c: ConstatAudit = res?.data ?? res;
                 this.saving = false;
-                this.messageService.add({ severity: 'success', summary: 'Enregistré', detail: 'Constat enregistré dans vos brouillons.' });
-                if (continuer && this.pointSuivant) {
+                this.messageService.add({ severity: 'success', summary: 'Enregistré',
+                    detail: continuer === 'nouveau' ? 'Constat enregistré. Saisissez le suivant.' : 'Constat enregistré dans vos brouillons.' });
+                if (continuer === 'nouveau') {
+                    this.nouveauHorsChecklist();
+                } else if (continuer && this.pointSuivant) {
                     this.pointActif = this.pointSuivant;
                     this.horsChecklist = false;
                 } else {
                     this.constatSaisi = c;
                 }
-                this.charger(true);
+                this.charger(continuer !== 'nouveau');
             },
             error: err => {
                 this.saving = false;

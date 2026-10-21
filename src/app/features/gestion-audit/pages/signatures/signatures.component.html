@@ -1,5 +1,6 @@
 <div class="p-6">
     <p-toast></p-toast>
+    <p-confirmpopup></p-confirmpopup>
 
     <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div class="flex items-center gap-3">
@@ -81,7 +82,7 @@
                 <td><p-tag [value]="libelleStatut(s.statut)" [severity]="severiteStatut(s.statut)" [rounded]="true"></p-tag></td>
                 <td>
                     <div *ngIf="aMoi(s); else horodatage" class="flex gap-2">
-                        <p-button label="Signer" icon="pi pi-check" size="small" [loading]="actionEnCours" (onClick)="signer()"></p-button>
+                        <p-button label="Signer" icon="pi pi-check" size="small" [loading]="actionEnCours" (onClick)="signer($event)"></p-button>
                         <p-button label="Refuser" icon="pi pi-times" severity="danger" [outlined]="true" size="small"
                                   [disabled]="actionEnCours" (onClick)="ouvrirRefus(s)"></p-button>
                     </div>

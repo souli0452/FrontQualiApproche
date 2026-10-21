@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { NgPrimeModule } from '@prime-ng';
 import { Observable, Subject, catchError, debounceTime, forkJoin, map, of, switchMap, takeUntil } from 'rxjs';
 import { MessageService } from 'primeng/api';
@@ -109,7 +109,7 @@ export class AuditFormComponent implements OnInit, OnDestroy {
             referentiels: [null],
             checklistIds: [[]],
             domaineRqapbfIds: [[]]
-        });
+        }, { validators: this.datesCoherentes });
     }
 
     ngOnInit(): void {
@@ -264,6 +264,7 @@ export class AuditFormComponent implements OnInit, OnDestroy {
     suivant(): void {
         if (this.etapeValide(this.etape)) {
             this.etape++;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
             this.marquerEtape(this.etape);
         }
@@ -271,12 +272,20 @@ export class AuditFormComponent implements OnInit, OnDestroy {
 
     precedent(): void {
         this.etape = Math.max(1, this.etape - 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     allerA(n: number | undefined): void {
         if (n && this.etapeAtteignable(n)) {
             this.etape = n;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+    }
+
+    private datesCoherentes(group: AbstractControl): ValidationErrors | null {
+        const debut = group.get('dateDebutPrevue')?.value;
+        const fin = group.get('dateFinPrevue')?.value;
+        return debut && fin && fin < debut ? { finAvantDebut: true } : null;
     }
 
     /** On revient toujours en arrière ; on n'avance que par-dessus des étapes complètes. */

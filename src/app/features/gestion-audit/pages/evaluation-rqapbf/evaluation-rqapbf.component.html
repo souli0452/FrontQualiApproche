@@ -180,13 +180,22 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="block font-semibold mb-1">Niveau de conformité (grille officielle RQAP-BF) <span class="text-red-500">*</span></label>
-                        <p-selectbutton [options]="niveauOptions" [(ngModel)]="saisie.niveau" optionLabel="label" optionValue="value"
-                                        [disabled]="!critereModifiable" (onChange)="modifiee = true" styleClass="flex-wrap">
-                            <ng-template #item let-o>
-                                <span class="text-sm">{{ rang(o.value) }}{{ o.label }}</span>
-                            </ng-template>
-                        </p-selectbutton>
+                        <label class="block font-semibold mb-2">Niveau de conformité (grille officielle RQAP-BF) <span class="text-red-500">*</span></label>
+                        <!-- Boutons colorés : rouge → orange → bleu → vert → gris, conformes à la grille officielle -->
+                        <div class="flex flex-wrap gap-2">
+                            <button *ngFor="let o of niveauOptions" type="button"
+                                    [disabled]="!critereModifiable"
+                                    (click)="saisie.niveau = o.value; modifiee = true"
+                                    class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border-2 transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                                    [ngClass]="saisie.niveau === o.value
+                                        ? 'text-white border-transparent shadow-md'
+                                        : 'bg-white dark:bg-surface-900 text-surface-700 dark:text-surface-200 hover:opacity-80'"
+                                    [style.border-color]="saisie.niveau !== o.value ? couleurNiveau(o.value) : 'transparent'"
+                                    [style.background]="saisie.niveau === o.value ? couleurNiveau(o.value) : null">
+                                <span class="font-mono text-xs opacity-70">{{ rang(o.value) }}</span>
+                                <span>{{ o.label }}</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3 mb-3">

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { NgPrimeModule } from '@prime-ng';
 import { Observable, Subject, forkJoin, takeUntil, tap } from 'rxjs';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { currentUserState } from '@core/auth/auth.state';
 import { AuditGestionService, contenu, messageErreur } from '../../services/audit.service';
 import { AuditReferentielService, UtilisateurAnnuaire } from '../../services/audit-referentiel.service';
@@ -24,7 +24,7 @@ import { AuditLibelleComponent } from '../../components/libelle-aide.component';
     selector: 'app-audit-signatures',
     standalone: true,
     imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, AuditLibelleComponent],
-    providers: [MessageService],
+    providers: [MessageService, ConfirmationService],
     templateUrl: './signatures.component.html'
 })
 export class AuditSignaturesComponent implements OnInit, OnDestroy {
@@ -52,7 +52,8 @@ export class AuditSignaturesComponent implements OnInit, OnDestroy {
         private auditService: AuditGestionService,
         private referentiel: AuditReferentielService,
         private route: ActivatedRoute,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private confirmationService: ConfirmationService
     ) {}
 
     ngOnInit(): void {
@@ -129,9 +130,16 @@ export class AuditSignaturesComponent implements OnInit, OnDestroy {
         this.geste(this.auditService.poserCircuitSignature(this.auditId, circuit), 'Circuit de signature posé.');
     }
 
-    signer(): void {
+    signer(event: Event): void {
         if (!this.auditId) return;
-        this.geste(this.auditService.signerAudit(this.auditId), 'Votre signature est enregistrée.');
+        this.confirmationService.confirm({
+            target: event.currentTarget as EventTarget,
+            message: 'Confirmez-vous votre signature électronique du rapport d\'audit ?',
+            icon: 'pi pi-pen-to-square',
+            acceptLabel: 'Signer',
+            rejectLabel: 'Annuler',
+            accept: () => this.geste(this.auditService.signerAudit(this.auditId!), 'Votre signature est enregistrée.')
+        });
     }
 
     ouvrirRefus(s: SignatureAudit): void {

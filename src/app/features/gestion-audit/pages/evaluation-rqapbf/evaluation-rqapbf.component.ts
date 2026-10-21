@@ -358,6 +358,18 @@ export class EvaluationRQAPBFComponent implements OnInit, OnDestroy, QuitterSans
         return NIVEAU_NOTATION_RQAPBF_SEVERITY[niveau as NiveauNotationRQAPBF] ?? 'secondary';
     }
 
+    /** Couleur hex officielle de chaque niveau de la grille RQAP-BF, pour un code visuel immédiat. */
+    couleurNiveau(niveau?: string): string {
+        const COULEURS: Record<string, string> = {
+            [NiveauNotationRQAPBF.NON_CONFORME]: '#dc2626',
+            [NiveauNotationRQAPBF.A_AMELIORER]:  '#ea580c',
+            [NiveauNotationRQAPBF.ACCEPTABLE]:   '#0284c7',
+            [NiveauNotationRQAPBF.CONFORME]:     '#16a34a',
+            [NiveauNotationRQAPBF.NON_APPLICABLE]: '#94a3b8'
+        };
+        return COULEURS[niveau ?? ''] ?? '#94a3b8';
+    }
+
     /** Le rang du niveau dans la grille (1 à 4), comme sur la grille officielle. */
     rang(niveau?: string): string {
         const i = ORDRE_NIVEAUX.indexOf(niveau as NiveauNotationRQAPBF);

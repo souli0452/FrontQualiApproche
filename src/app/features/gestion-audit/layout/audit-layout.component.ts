@@ -5,14 +5,13 @@ import { NgPrimeModule } from '@prime-ng';
 import { MenuItem } from 'primeng/api';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { HeaderPage } from '@shared/header-page/header-page';
 import { AuditGestionService } from '../services/audit.service';
 import { NotificationsAuditResume } from '../models/audit.model';
 
 @Component({
     selector: 'app-audit-layout',
     standalone: true,
-    imports: [CommonModule, NgPrimeModule, RouterModule, HeaderPage],
+    imports: [CommonModule, NgPrimeModule, RouterModule],
     templateUrl: './audit-layout.component.html',
     styleUrl: './audit-layout.component.scss'
 })
@@ -98,6 +97,10 @@ export class AuditLayoutComponent implements OnInit, OnDestroy {
         if (url && typeof url === 'string') {
             this.router.navigate([url]);
         }
+    }
+
+    get libelleOngletActif(): string {
+        return this.items.find(i => this.activeTab.startsWith(i.routerLink as string))?.label ?? '';
     }
 
     trackByRouterLink(_index: number, item: MenuItem): string {

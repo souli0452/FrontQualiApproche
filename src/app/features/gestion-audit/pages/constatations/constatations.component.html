@@ -133,11 +133,14 @@
                                 {{ constatSaisi.statut === StatutConstat.COMPILE ? 'Déjà transmis à la compilation d\'équipe.' : 'Validé — verrouillé.' }}
                             </span>
                         </div>
-                        <div *ngIf="saisieModifiable" class="flex gap-2">
+                        <div *ngIf="saisieModifiable" class="flex flex-wrap gap-2">
                             <p-button label="Enregistrer" icon="pi pi-save" [outlined]="true" size="small" [loading]="saving"
                                       [disabled]="!saisieComplete" (onClick)="enregistrerSaisie()"></p-button>
                             <p-button *ngIf="pointActif && mesPoints.length > 1" label="Enregistrer et continuer" icon="pi pi-arrow-right" iconPos="right" size="small"
                                       [loading]="saving" [disabled]="!saisieComplete" (onClick)="enregistrerSaisie(true)"></p-button>
+                            <p-button *ngIf="saisieOuverte" label="Enregistrer et nouveau constat" icon="pi pi-plus" iconPos="right" size="small"
+                                      severity="secondary" [outlined]="true" [loading]="saving" [disabled]="!saisieComplete"
+                                      (onClick)="enregistrerSaisie('nouveau')"></p-button>
                         </div>
                     </div>
                 </div>

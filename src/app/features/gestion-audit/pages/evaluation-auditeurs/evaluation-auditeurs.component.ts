@@ -248,6 +248,27 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
         return couleurDuNiveau(n, this.niveaux);
     }
 
+    /** Le niveau le plus élevé selon l'ordre paramétré (raccourci "Tout Satisfaisant"). */
+    get niveauTop(): NiveauEvaluationAuditeur | null {
+        if (!this.niveaux.length) return null;
+        return this.niveaux.reduce((top, n) => (n.ordre ?? 0) > (top.ordre ?? 0) ? n : top);
+    }
+
+    get libelleNiveauTop(): string {
+        return this.niveauTop?.libelle ?? 'Satisfaisant';
+    }
+
+    /** Attribue le niveau le plus élevé à tous les critères non encore verrouillés d'un auditeur. */
+    toutSatisfaisant(auditeur: AuditeurFiche): void {
+        const top = this.niveauTop;
+        if (!top || !this.evaluable) return;
+        for (const c of this.criteres) {
+            if (!this.verrouillee(auditeur, c)) {
+                this.choix[this.cle(auditeur.id, c.id)] = top.id;
+            }
+        }
+    }
+
     /** Relit les évaluations de l'audit et les moyennes globales, qu'une note vient de déplacer. */
     private recharger(): void {
         if (!this.auditId) return;
