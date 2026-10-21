@@ -99,7 +99,9 @@
                     <div class="text-xs text-surface-500 mt-1">Checklist : {{ avancement?.pointsRenseignes ?? 0 }}/{{ avancement?.pointsDeControle }} points couverts</div>
                 </div>
             </a>
-            <a *ngIf="estRqapbf" [routerLink]="['/gestion-audit/programme', audit.id, 'evaluation-rqapbf']"
+            <!-- Carte RQAP-BF masquée si aucun critère n'est à évaluer (audits purement ISO 9001) -->
+            <a *ngIf="!avancement || avancement.criteresAEvaluer"
+               [routerLink]="['/gestion-audit/programme', audit.id, 'evaluation-rqapbf']"
                class="block bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 no-underline text-inherit hover:border-primary transition-colors">
                 <div class="font-semibold text-surface-900 dark:text-surface-50 mb-2">
                     Évaluation RQAP-BF <i class="pi pi-arrow-right text-xs ml-1"></i>

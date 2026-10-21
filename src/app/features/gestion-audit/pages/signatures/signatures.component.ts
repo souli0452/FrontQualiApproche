@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { NgPrimeModule } from '@prime-ng';
 import { Observable, Subject, forkJoin, takeUntil, tap } from 'rxjs';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { currentUserState } from '@core/auth/auth.state';
 import { AuditGestionService, contenu, messageErreur } from '../../services/audit.service';
 import { AuditReferentielService, UtilisateurAnnuaire } from '../../services/audit-referentiel.service';
