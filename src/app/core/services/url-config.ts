@@ -11,6 +11,9 @@ export const WORKFLOW_SERVICE = `${SERVICE_PREFIX}/workflow-service/api/v1`;
 export const IA_SERVICE = `${SERVICE_PREFIX}/ia-service/api/v1`;
 
 export class UrlConfig {
+    // Gestion des clients de l'installation, réservée à l'administrateur de la plateforme.
+    static readonly PLATEFORME_CLIENTS_URL = `${REFERENTIEL_SERVICE}/plateforme/clients`;
+
     // Amelioration Service
     static readonly RECLAMATION_ROOT_URL = `${AMELIORATION_SERVICE}/reclamation`;
     static readonly ACTION_CORRECTIVE_PREVENTIVE_ROOT_URL = `${AMELIORATION_SERVICE}/action-corrective`;

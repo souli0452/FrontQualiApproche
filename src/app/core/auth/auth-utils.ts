@@ -32,6 +32,17 @@ export function hasMenuProfile(): boolean {
     return authData.permissions.some(p => p.startsWith('menu-'));
 }
 
+/**
+ * Le compte connecté administre-t-il la plateforme (rôle de royaume PLATEFORME_ADMIN) ?
+ *
+ * Lu dans `/me`, qui le porte à la racine de la réponse ou dans `user` selon l'appel : le frontal
+ * ne lit pas le jeton. N'ouvre que l'affichage — referentiel-service vérifie le rôle sur le jeton.
+ */
+export function estAdministrateurDePlateforme(): boolean {
+    const authData: any = currentUserState.value;
+    return !!(authData?.plateformeAdmin || authData?.user?.plateformeAdmin);
+}
+
 export function isLicenseActive(): boolean {
     const authData = currentUserState.value;
     return authData?.licenseActive || false;

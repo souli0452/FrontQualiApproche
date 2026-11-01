@@ -3,7 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { NgPrimeModule } from '../../../prime-ng.module';
-import { hasAnyPermission } from '@core/auth/auth-utils';
+import { estAdministrateurDePlateforme, hasAnyPermission } from '@core/auth/auth-utils';
 import { LicenceService } from '@core/licence/services/licence.service';
 import { EtatLicence } from '@core/licence/models/etat-licence.model';
 
@@ -183,6 +183,11 @@ export class LicenceDialogComponent implements OnInit {
      * déclenchait aussi, et l'utilisateur ne pouvait plus rien consulter derrière.
      */
     get doitSAfficher(): boolean {
+        // L'administrateur de la plateforme n'appartient à aucun client, donc à aucune licence :
+        // la fenêtre, impossible à fermer, lui masquerait la gestion des clients.
+        if (estAdministrateurDePlateforme()) {
+            return false;
+        }
         return !!this.etat && (this.etat.statut === 'ABSENTE' || this.ouvertureForcee);
     }
 

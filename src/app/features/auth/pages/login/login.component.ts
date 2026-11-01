@@ -10,7 +10,7 @@ import { USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../../../utils/global/g
 import { ApiItemResponse } from '../../../../models/response.model';
 import { AuthService } from '@core/auth/auth.service';
 import { MotDePasseTemporaireService } from '@core/auth/mot-de-passe-temporaire.service';
-import { isUserInRoles } from '@core/auth/auth-utils';
+import { estAdministrateurDePlateforme, isUserInRoles } from '@core/auth/auth-utils';
 import { AuthData, LoginRequest } from '@features/auth/models/auth.model';
 import { StructureService } from '@features/organigramme/services/structure.service';
 
@@ -69,7 +69,10 @@ export class LoginComponent implements OnInit{
                         return;
                     }
                     // On vérifie directement le rôle sans passer connectedUser car la fonction lit en mémoire
-                    if (isUserInRoles(['SUPER_ADMIN'])) {
+                    if (estAdministrateurDePlateforme()) {
+                        // Il ne voit les données d'aucun client : son seul écran est la liste des clients.
+                        this.router.navigate(['/plateforme/clients']);
+                    } else if (isUserInRoles(['SUPER_ADMIN'])) {
 
                         this.router.navigate(['/configurations']).catch(err => {
                             console.error('Erreur de navigation :', err);
@@ -212,7 +215,9 @@ export class LoginComponent implements OnInit{
             });
             return;
         }
-        this.router.navigate(['/non-conformite/vue-ensemble']);
+        // L'administrateur de la plateforme ne voit les données d'aucun client : la vue d'ensemble
+        // des non-conformités serait vide, son écran est la liste des clients.
+        this.router.navigate([estAdministrateurDePlateforme() ? '/plateforme/clients' : '/non-conformite/vue-ensemble']);
     }
 
     initiatePasswordReset(): void {

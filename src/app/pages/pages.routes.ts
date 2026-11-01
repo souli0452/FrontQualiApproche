@@ -41,6 +41,7 @@ import {
 } from '../features/gestion-documentaire/pages/documents-partages/qms-documents-partages.component';
 
 import { permissionGuard } from '../core/guards/permission.guard';
+import { plateformeGuard } from '../core/guards/plateforme.guard';
 import { LicenceComponent } from '@core/licence/pages/licence.component';
 import { PlanActionComponent } from '@features/non-conformite/pages/plan-action/plan-action.component';
 import { NiveauNonConformiteComponent } from '@features/non-conformite/referentiel/niveau-nc/niveau-nc.component';
@@ -443,6 +444,22 @@ export default [
             permissions: ['document-type-read', 'document-type-write'],
             module: ModuleAbonnement.DOCUMENTAIRE
         }
+    },
+    {
+        // La gestion des clients : réservée à l'administrateur de la plateforme, qui n'a ni
+        // permission applicative ni licence — d'où sa garde propre, et aucun `module`.
+        path: 'plateforme/clients',
+        loadComponent: () => import('@features/plateforme/clients-liste.component').then(m => m.ClientsListeComponent),
+        title: 'Clients',
+        canActivate: [plateformeGuard],
+        data: { breadcrumb: 'Clients' }
+    },
+    {
+        path: 'plateforme/clients/nouveau',
+        loadComponent: () => import('@features/plateforme/client-form.component').then(m => m.ClientFormComponent),
+        title: 'Nouveau client',
+        canActivate: [plateformeGuard],
+        data: { breadcrumb: 'Nouveau client' }
     },
     {
         // La FAQ est un référentiel de l'application : elle s'affiche dans l'aide et vaut pour

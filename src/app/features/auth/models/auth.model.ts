@@ -12,6 +12,11 @@ export interface AuthData {
     licenseDaysRemaining: number;
     modulesSubscribed: string[];
     permissions: string[];
+    /**
+     * Le compte administre la plateforme : il crée les clients, et ne voit rien de leurs données.
+     * Le jeton vit en cookie HttpOnly — c'est `/me` qui le dit au frontal.
+     */
+    plateformeAdmin?: boolean;
     refresh_expires_in: number;
     scope: string;
     token_type: string;

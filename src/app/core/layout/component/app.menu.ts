@@ -5,7 +5,7 @@ import { MenuItem } from 'primeng/api';
 import { AppMenuitem } from './app.menuitem';
 import { ChangeDetectorRef } from '@angular/core';
 import { AppNotificationService } from '@core/notifications/app-notification.service';
-import { accesAutorise, hasAnyPermission, hasMenuProfile } from '@core/auth/auth-utils';
+import { accesAutorise, estAdministrateurDePlateforme, hasAnyPermission, hasMenuProfile } from '@core/auth/auth-utils';
 import { ModuleAbonnement } from '@core/enums/module-abonnement.enum';
 
 @Component({
@@ -303,7 +303,17 @@ export class AppMenu {
             }
         ];
 
+        // L'administrateur de la plateforme n'a pas de permission applicative : sans cette
+        // rubrique, son menu serait vide. Un compte de client ne la voit jamais.
+        const plateforme: MenuItem[] = [
+            {
+                label: 'Clients', icon: 'pi pi-fw pi-building', routerLink: ['/plateforme/clients'],
+                visible: estAdministrateurDePlateforme()
+            }
+        ];
+
         this.model = [
+            this.rubrique('Plateforme', 'pi pi-fw pi-globe', 'menu-plateforme', plateforme),
             this.rubrique('Accueil', 'pi pi-fw pi-home', 'menu-accueil', accueil),
             this.rubrique('Gestion documentaire', 'pi pi-fw pi-briefcase', 'menu-gestion-documentaire', documentaire),
             this.rubrique('Qualité & Conformité', 'pi pi-fw pi-verified', 'menu-qualite', qualite),
