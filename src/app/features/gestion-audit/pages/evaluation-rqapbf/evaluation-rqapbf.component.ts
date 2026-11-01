@@ -463,7 +463,7 @@ export class EvaluationRQAPBFComponent implements OnInit, OnDestroy, QuitterSans
             rejectButtonProps: { severity: 'secondary', outlined: true },
             target: event.currentTarget as EventTarget,
             message: 'Tout ce qui est noté sera publié et l\'évaluation figée : ses résultats deviennent officiels. Seuls les critères au constat « NC » pas encore publiés ouvriront une non-conformité ; ceux déjà publiés ont la leur. Continuer ?',
-            icon: 'pi pi-lock',
+            icon: 'pi pi-check-circle',
             acceptLabel: 'Valider',
             rejectLabel: 'Retour',
             accept: () => this.enregistrerPuis(() => this.geste(this.auditService.validerEvaluationRQAPBF(this.evaluation!.id!), 'Évaluation validée.'))
