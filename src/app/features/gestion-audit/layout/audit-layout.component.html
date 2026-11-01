@@ -11,8 +11,8 @@
                     Gestion des Audits<ng-container *ngIf="libelleOngletActif"> — {{ libelleOngletActif }}</ng-container>
                 </span>
             </div>
-            <!-- Bouton « Planifier » affiché uniquement sur la liste du programme -->
-            <p-button *ngIf="activeTab === '/gestion-audit/programme'"
+            <!-- Bouton « Planifier » : tableau de bord et programme (obs. 01) -->
+            <p-button *ngIf="boutonPlanifier"
                       icon="pi pi-plus" label="Planifier un audit" size="small"
                       routerLink="/gestion-audit/programme/create" class="shrink-0" />
         </div>

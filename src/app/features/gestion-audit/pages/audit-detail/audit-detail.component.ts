@@ -378,13 +378,28 @@ export class AuditDetailComponent implements OnInit, OnDestroy {
         return !!a.domaineRqapbfIds?.length || /rqap/i.test(texte) || (this.avancement?.criteresNotes ?? 0) > 0;
     }
 
-    /** Le circuit de l'audit, du point de vue de son statut. */
+    /** Le circuit de l'audit (obs. 12) : Planifié → En préparation → En cours → Rapport → Signé → Clôturé. */
     get frise(): { libelle: string; etat: 'fait' | 'courant' | 'a-venir' }[] {
-        const ordre = ['PLANIFIE', 'EN_PREPARATION', 'EN_COURS', 'CLOTURE'];
-        const libelles = ['Planifié', 'Validé · en préparation', 'En cours', 'Clôturé'];
-        const statut = this.audit?.statut === StatutAudit.EN_RETARD ? 'EN_PREPARATION' : this.audit?.statut ?? '';
-        const i = ordre.indexOf(statut);
-        return libelles.map((libelle, k) => ({ libelle, etat: k < i ? 'fait' : k === i ? 'courant' : 'a-venir' }));
+        const statut = this.audit?.statut === StatutAudit.EN_RETARD ? StatutAudit.EN_PREPARATION : this.audit?.statut ?? '';
+        const cloture = statut === StatutAudit.CLOTURE;
+        const enCours = statut === StatutAudit.EN_COURS || cloture;
+        const rapportRedige = cloture || (enCours && (this.avancement?.cloturable === true || (this.avancement?.constatsPublies ?? 0) > 0));
+        const signe = cloture;
+
+        const etapes: { libelle: string; actif: boolean; terminal: boolean }[] = [
+            { libelle: 'Planifié',              actif: true,         terminal: false },
+            { libelle: 'En préparation',         actif: statut !== StatutAudit.PLANIFIE, terminal: false },
+            { libelle: 'En cours',               actif: enCours,      terminal: false },
+            { libelle: 'Rapport',                actif: rapportRedige, terminal: false },
+            { libelle: 'Signé',                  actif: signe,        terminal: false },
+            { libelle: 'Clôturé',               actif: cloture,      terminal: true  }
+        ];
+
+        const dernierActif = etapes.reduce((acc, e, i) => e.actif ? i : acc, -1);
+        return etapes.map((e, i) => ({
+            libelle: e.libelle,
+            etat: i < dernierActif ? 'fait' : i === dernierActif ? 'courant' : 'a-venir'
+        }));
     }
 
     /** Ce qui reste à faire pour avancer, dit en clair plutôt que par des boutons grisés. */
