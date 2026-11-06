@@ -32,11 +32,12 @@ jobs:
         run: |
           echo "Calling Coolify webhook..."
 
-          HTTP_STATUS=$(curl -sS \
+          HTTP_STATUS=$(curl -sSL \
             -o response.txt \
             -w "%{http_code}" \
             -X POST "$FRONTEND_WEBHOOK" \
-            -H "Authorization: Bearer $COOLIFY_TOKEN")
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            -H "Content-Type: application/json")
 
           echo "HTTP Status: $HTTP_STATUS"
           echo "Response:"
