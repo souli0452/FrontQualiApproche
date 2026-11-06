@@ -1,3 +1,4 @@
+
 name: Deploy Frontend
 
 on:
@@ -19,22 +20,31 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm install  # <-- Plus de "cd"
+        run: npm install
 
       - name: Build Angular
-        run: npm run build -- --configuration production # <-- Plus de "cd"
+        run: npm run build -- --configuration production
 
       - name: Trigger Coolify Deployment
+        env:
+          FRONTEND_WEBHOOK: ${{ secrets.FRONTEND_WEBHOOK }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
         run: |
           echo "Calling Coolify webhook..."
-          response=$(curl -s -o response.txt -w "%{http_code}" \
-          -X GET "${{ secrets.FRONTEND_WEBHOOK }}" \
-          -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}")
-          echo "HTTP Status: $response"
+
+          HTTP_STATUS=$(curl -sS \
+            -o response.txt \
+            -w "%{http_code}" \
+            -X POST "$FRONTEND_WEBHOOK" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN")
+
+          echo "HTTP Status: $HTTP_STATUS"
           echo "Response:"
           cat response.txt
-          if [ "$response" -ne 200 ]; then
+
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
             echo "Deployment webhook failed!"
             exit 1
           fi
+
           echo "Deployment triggered successfully!"
