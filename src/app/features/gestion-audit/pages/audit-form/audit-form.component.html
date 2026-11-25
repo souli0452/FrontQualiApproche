@@ -2,14 +2,18 @@
 
 <p-skeleton *ngIf="loading" height="600px" borderRadius="12px" styleClass="m-4"></p-skeleton>
 
-<app-audit-page-formulaire *ngIf="!loading"
+<app-audit-page-formulaire 
+    *ngIf="!loading"
     [titre]="modeEdition ? 'Modifier l\'audit ' + (reference ?? '') : 'Planifier un audit'"
     [sousTitre]="modeEdition ? 'Mettez à jour la planification de l\'audit. Elle ne se modifie plus une fois l\'audit démarré.' : 'Renseignez le processus audité, l\'équipe et les objectifs. La référence de l\'audit est attribuée à l\'enregistrement.'"
     [icone]="modeEdition ? 'pi-pencil' : 'pi-calendar-plus'"
     [conseils]="conseils">
 
-    <p-message *ngIf="verrouille" severity="info" styleClass="mb-4 w-full"
-               text="L'audit a démarré ou est terminé : sa planification ne se modifie plus."></p-message>
+    <p-message 
+        *ngIf="verrouille" 
+        severity="info" 
+        styleClass="mb-4 w-full"
+        text="L'audit a démarré ou est terminé : sa planification ne se modifie plus."></p-message>
 
     <!-- Sur petit écran, l'étapier débordait et la 4e étape sortait de l'écran (observation 7) :
          un repère « Étape 2 / 4 » le remplace. -->
@@ -28,10 +32,17 @@
         <h4 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0">Identification</h4>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
             <div>
-                <app-audit-libelle texte="Type d'audit" [requis]="true"
+                <app-audit-libelle 
+                    texte="Type d'audit" 
+                    [requis]="true"
                     aide="Les types se définissent dans Configurations › Audit. Un type « externe » n'élabore ni plan ni circuit de signature ici : l'organisme les transmet." />
-                <app-select-input formControlName="typeAuditId" [options]="typesAudit" optionLabel="libelle" optionValue="id" [filter]="true"
-                                  placeholder="Choisir un type d'audit" />
+                <app-select-input 
+                    formControlName="typeAuditId" 
+                    [options]="typesAudit" 
+                    optionLabel="libelle" 
+                    optionValue="id" 
+                    [filter]="true"
+                    placeholder="Choisir un type d'audit" />
                 <small *ngIf="invalide('typeAuditId')" class="p-error">Ce champ est requis</small>
                 <small *ngIf="!typesAudit.length" class="text-amber-600 text-xs">Aucun type d'audit paramétré pour votre direction.</small>
             </div>
@@ -133,23 +144,24 @@
                 <app-multiselect-input formControlName="checklistIds" [options]="checklists" optionLabel="nom" optionValue="id" display="chip"
                                        placeholder="Checklists publiées" />
             </div>
-            <!-- Réservé aux audits RQAP-BF : il était proposé pour un audit ISO 9001 (observation 10). -->
-            <div *ngIf="estRqapbf">
+            <div>
+                <app-audit-libelle texte="Référentiels" aide="Les normes ou grilles de référence, séparées par des virgules." />
+                <input pInputText formControlName="referentiels" class="w-full" placeholder="ISO 9001, Grille RQAP-BF" />
+            </div>
+            <!-- Réservé aux audits RQAP-BF : pleine largeur en dessous pour les chips -->
+            <div *ngIf="estRqapbf" class="md:col-span-2">
                 <app-audit-libelle texte="Domaines RQAP-BF évalués" aide="Sans choix, l'évaluation RQAP-BF porte sur tous les domaines du référentiel." />
                 <app-multiselect-input formControlName="domaineRqapbfIds" [options]="domaines" optionLabel="libelle" optionValue="id" display="chip"
                                        placeholder="Tous les domaines" />
             </div>
         </div>
-        <div>
-            <app-audit-libelle texte="Référentiels" aide="Les normes ou grilles de référence, séparées par des virgules." />
-            <input pInputText formControlName="referentiels" class="w-full" placeholder="ISO 9001, Grille RQAP-BF" />
-        </div>
 
       </div>
 
-      <div *ngIf="etape === 4" class="flex flex-col gap-3">
+      <div *ngIf="etape === 4" class="flex flex-col gap-4">
         <h4 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0">Risque</h4>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+
+        <div class="flex flex-col gap-3">
             <div>
                 <app-audit-libelle texte="Niveau de risque" />
                 <app-select-input formControlName="niveauRisque" [options]="niveauRisqueOptions" optionLabel="label" optionValue="value" [showClear]="false" />
@@ -160,32 +172,37 @@
             </div>
         </div>
 
-        <div class="flex items-center justify-between">
-            <app-audit-libelle texte="Actions de maîtrise des risques"
-                aide="Les mesures prévues pour réduire le risque lié à l'audit. Leur efficacité s'évalue ensuite depuis la fiche de l'audit." />
-            <p-button *ngIf="!verrouille" icon="pi pi-plus" label="Ajouter une action" size="small" [outlined]="true" (onClick)="ajouterAction()"></p-button>
-        </div>
-        <p *ngIf="!actions.length" class="text-sm text-surface-400 m-0 -mt-3">Aucune action prévue.</p>
-        <!-- Chaque action dans sa carte, ses champs nommés : le texte d'exemple seul disparaissait à la saisie (observation 11). -->
-        <div *ngFor="let a of actions; let i = index" class="border border-surface-200 dark:border-surface-700 rounded-lg p-3">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-semibold uppercase tracking-wide text-surface-500">Action {{ i + 1 }}</span>
-                <p-button *ngIf="!verrouille" icon="pi pi-trash" label="Retirer" [text]="true" severity="danger" size="small" (onClick)="retirerAction(i)"></p-button>
+        <!-- Bloc Actions de maîtrise des risques avec border + box-shadow (clair & dark) -->
+        <div class="rounded-[5px] border border-[#dddddd] dark:border-surface-700 bg-[var(--surface-card)] shadow-card p-4 flex flex-col gap-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <app-audit-libelle texte="Actions de maîtrise des risques"
+                    aide="Les mesures prévues pour réduire le risque lié à l'audit. Leur efficacité s'évalue ensuite depuis la fiche de l'audit." />
+                <p-button *ngIf="!verrouille" icon="pi pi-plus" label="Ajouter une action" severity="info" size="small" (onClick)="ajouterAction()"></p-button>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
-                <div class="md:col-span-2">
-                    <app-audit-libelle texte="Action" [requis]="true" />
-                    <input pInputText [(ngModel)]="a.libelle" [ngModelOptions]="{ standalone: true }" class="w-full"
-                           placeholder="Ex : désigner un observateur indépendant" [disabled]="verrouille" />
+
+            <p *ngIf="!actions.length" class="text-[13px] text-[var(--text-color-secondary)] m-0">Aucune action prévue.</p>
+
+            <div *ngFor="let a of actions; let i = index"
+                 class="rounded-[5px] border border-[#dddddd] dark:border-surface-700 bg-surface-50/50 dark:bg-surface-800/40 shadow-card p-3.5">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[12px] font-semibold uppercase tracking-wide text-[var(--text-color-secondary)]">Action {{ i + 1 }}</span>
+                    <p-button *ngIf="!verrouille" icon="pi pi-trash" label="Retirer" [text]="true" severity="danger" size="small" (onClick)="retirerAction(i)"></p-button>
                 </div>
-                <div>
-                    <app-audit-libelle texte="Responsable" />
-                    <app-select-input [(ngModel)]="a.responsable" [ngModelOptions]="{ standalone: true }" [options]="utilisateurs"
-                                      optionLabel="nomComplet" optionValue="nomComplet" [filter]="true" placeholder="Choisir dans l'annuaire" [disabled]="verrouille" />
-                </div>
-                <div>
-                    <app-audit-libelle texte="Échéance" />
-                    <input pInputText type="date" [(ngModel)]="a.delai" [ngModelOptions]="{ standalone: true }" class="w-full" [disabled]="verrouille" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                    <div class="md:col-span-2">
+                        <app-audit-libelle texte="Action" [requis]="true" />
+                        <input pInputText [(ngModel)]="a.libelle" [ngModelOptions]="{ standalone: true }" class="w-full"
+                               placeholder="Ex : désigner un observateur indépendant" [disabled]="verrouille" />
+                    </div>
+                    <div>
+                        <app-audit-libelle texte="Responsable" />
+                        <app-select-input [(ngModel)]="a.responsable" [ngModelOptions]="{ standalone: true }" [options]="utilisateurs"
+                                          optionLabel="nomComplet" optionValue="nomComplet" [filter]="true" placeholder="Choisir dans l'annuaire" [disabled]="verrouille" />
+                    </div>
+                    <div>
+                        <app-audit-libelle texte="Échéance" />
+                        <input pInputText type="date" [(ngModel)]="a.delai" [ngModelOptions]="{ standalone: true }" class="w-full" [disabled]="verrouille" />
+                    </div>
                 </div>
             </div>
         </div>
@@ -215,14 +232,14 @@
         <div class="flex gap-2">
             <button *ngIf="etape > 1" pButton type="button" class="p-button-secondary p-button-outlined font-bold" icon="pi pi-arrow-left"
                     label="Précédent" (click)="precedent()"></button>
-            <button *ngIf="etape < etapes.length" pButton type="button" class="p-button-primary font-bold" icon="pi pi-arrow-right" iconPos="right"
+            <button *ngIf="etape < etapes.length" pButton type="button" class="p-button-info font-bold" icon="pi pi-arrow-right" iconPos="right"
                     label="Suivant" (click)="suivant()"></button>
             <!-- En modification, on enregistre depuis n'importe quelle étape ; à la création, au bout du parcours. -->
-            <button *ngIf="!verrouille && (modeEdition || etape === etapes.length) && !recapitulatif" pButton type="button" class="p-button-primary font-bold" icon="pi pi-save"
+            <button *ngIf="!verrouille && (modeEdition || etape === etapes.length) && !recapitulatif" pButton type="button" class="p-button-info font-bold" icon="pi pi-save"
                     [label]="modeEdition ? 'Enregistrer les modifications' : 'Planifier l\'audit'" [loading]="saving" (click)="planifier()"></button>
             <button *ngIf="recapitulatif" pButton type="button" class="p-button-secondary p-button-outlined font-bold" icon="pi pi-pencil"
                     label="Modifier" (click)="recapitulatif = false"></button>
-            <button *ngIf="recapitulatif" pButton type="button" class="p-button-primary font-bold" icon="pi pi-check"
+            <button *ngIf="recapitulatif" pButton type="button" class="p-button-info font-bold" icon="pi pi-check"
                     label="Confirmer et planifier" [loading]="saving" (click)="sauvegarder()"></button>
         </div>
     </div>

@@ -8,7 +8,7 @@
         buttonLink="/non-conformite/create" 
     />
     <!-- Navigation Hub (Tabs) -->
-    <div class="bg-surface-0 dark:bg-surface-900 ">
+    <div class="bg-transparent mb-5">
         <p-tabs [value]="activeTab" [scrollable]="true" (valueChange)="onTabChange($event)">
             <p-tablist>
                 <p-tab *ngFor="let tab of items; trackBy: trackByRouterLink" [value]="tab.routerLink">

@@ -117,40 +117,44 @@ export interface LigneATraiter {
         }
     `],
     template: `
-        <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 overflow-hidden shadow-xs flex flex-col h-full">
+        <div class="rounded-[5px] border border-[#dddddd] dark:border-surface-700 bg-[var(--surface-card)] overflow-hidden shadow-card flex flex-col h-full">
             <!-- En-tête de la section -->
-            <div class="flex items-center gap-2 px-4 py-3 border-b border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900">
-                <i [class]="icone" class="text-primary text-base"></i>
-                <span class="font-semibold text-base text-surface-900 dark:text-surface-0">{{ titre }}</span>
+            <div class="flex items-center gap-2.5 px-4 py-3 border-b border-[#dddddd]/80 dark:border-surface-700 bg-[var(--surface-card)]">
+                <span class="w-8 h-8 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                    <i [class]="icone + ' !text-sm'"></i>
+                </span>
+                <span class="font-bold text-sm text-[var(--heading-color)] truncate">{{ titre }}</span>
                 @if (lignes.length) {
-                    <p-tag severity="warn" [value]="lignes.length + ''"></p-tag>
+                    <p-tag severity="warn" [value]="lignes.length + ''" styleClass="!text-[11px]"></p-tag>
                 }
                 <span class="flex-1"></span>
                 @if (lienLibelle) {
                     <p-button [label]="lienLibelle" icon="pi pi-arrow-right" iconPos="right"
-                              size="small" [text]="true" (onClick)="voirTout.emit()"></p-button>
+                              size="small" [text]="true" severity="secondary"
+                              styleClass="!text-[#0084ca] dark:!text-sky-400 !font-semibold !text-xs"
+                              (onClick)="voirTout.emit()"></p-button>
                 }
             </div>
 
             @if (lignes.length) {
                 <div class="overflow-x-auto flex-grow">
-                    <p-table 
-                        [value]="paginatedLignes" 
-                        [loading]="chargement" 
-                        [showLoader]="false" 
+                    <p-table
+                        [value]="paginatedLignes"
+                        [loading]="chargement"
+                        [showLoader]="false"
                         styleClass="p-datatable-sm"
                         [rowHover]="true">
-                        
+
                         <!-- ─── HEADER DE LA TABLE (3 COLONNES) ───────────────────── -->
                         <ng-template pTemplate="header">
                             <tr>
-                                <th class="py-2.5 px-4 !bg-slate-50 dark:!bg-surface-800 text-surface-700 dark:text-surface-300 font-semibold text-xs border-b border-surface-200 dark:border-surface-700">
+                                <th scope="col" class="py-2.5 px-4 !bg-surface-50 dark:!bg-surface-800/70 text-[var(--text-color-secondary)] font-semibold text-xs uppercase tracking-wider border-b border-[#dddddd]/80 dark:border-surface-700">
                                     <span>Dossier</span>
                                 </th>
-                                <th class="py-2.5 px-4 !bg-slate-50 dark:!bg-surface-800 text-surface-700 dark:text-surface-300 font-semibold text-xs border-b border-surface-200 dark:border-surface-700 w-44">
+                                <th scope="col" class="py-2.5 px-4 !bg-surface-50 dark:!bg-surface-800/70 text-[var(--text-color-secondary)] font-semibold text-xs uppercase tracking-wider border-b border-[#dddddd]/80 dark:border-surface-700 w-44">
                                     <span>Étape</span>
                                 </th>
-                                <th class="py-2.5 px-3 !bg-slate-50 dark:!bg-surface-800 text-surface-700 dark:text-surface-300 font-semibold text-xs border-b border-surface-200 dark:border-surface-700 text-center w-14">
+                                <th scope="col" class="py-2.5 px-3 !bg-surface-50 dark:!bg-surface-800/70 text-[var(--text-color-secondary)] font-semibold text-xs uppercase tracking-wider border-b border-[#dddddd]/80 dark:border-surface-700 text-center w-14">
                                     <span>Action</span>
                                 </th>
                             </tr>
@@ -158,30 +162,30 @@ export interface LigneATraiter {
 
                         <!-- ─── CORPS DE LA TABLE ──────────────────────────────────── -->
                         <ng-template pTemplate="body" let-ligne>
-                            <tr class="hover:bg-surface-50/80 dark:hover:bg-surface-800/50 transition-colors border-b border-surface-200 dark:border-surface-700">
-                                
-                                <!-- 1. Colonne Dossier avec liseré gauche accentué -->
-                                <td class="py-2.5 px-4 border-l-[3px] border-l-primary">
+                            <tr class="hover:bg-surface-50/80 dark:hover:bg-surface-800/50 transition-colors border-b border-[#dddddd]/60 dark:border-surface-700/70">
+
+                                <!-- 1. Colonne Dossier -->
+                                <td class="py-2.5 px-4">
                                     <div class="flex items-center gap-3">
                                         <!-- Icône fichier -->
-                                        <div class="w-10 h-10 rounded-lg bg-blue-50/80 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/40 flex items-center justify-center shrink-0 p-1 shadow-2xs">
-                                            <img [src]="ligne.iconeFichier || 'assets/images/doc-file.png'" class="w-6 h-6 object-contain" alt="doc icon" />
+                                        <div class="w-9 h-9 rounded-[5px] bg-[#0ea5e9]/10 border border-[#0ea5e9]/25 flex items-center justify-center shrink-0 p-1">
+                                            <img [src]="ligne.iconeFichier || 'assets/images/doc-file.png'" class="w-5 h-5 object-contain" alt="doc icon" />
                                         </div>
                                         <!-- Détails Dossier -->
                                         <div class="flex flex-col min-w-0">
                                             <div class="flex items-center gap-1.5 leading-none mb-1">
-                                                <span *ngIf="ligne.reference" class="font-mono text-[11px] font-semibold text-surface-500 dark:text-surface-400 tracking-wide">
+                                                <span *ngIf="ligne.reference" class="font-mono text-[11px] font-semibold text-[var(--text-color-secondary)] tracking-wide">
                                                     {{ ligne.reference }}
                                                 </span>
-                                                <span *ngIf="ligne.badge" class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 border border-surface-200 dark:border-surface-700 shrink-0">
+                                                <span *ngIf="ligne.badge" class="px-1.5 py-0.5 rounded-[4px] text-[9px] font-bold uppercase tracking-wider bg-surface-100 dark:bg-surface-800 text-[var(--text-color-secondary)] border border-[#dddddd] dark:border-surface-700 shrink-0">
                                                     {{ ligne.badge }}
                                                 </span>
                                             </div>
-                                            <span class="font-semibold text-xs text-surface-900 dark:text-surface-50 truncate max-w-[280px]" [title]="ligne.titre">
+                                            <span class="font-semibold text-xs text-[var(--heading-color)] truncate max-w-[280px]" [title]="ligne.titre">
                                                 {{ ligne.titre }}
                                             </span>
-                                            <div class="flex items-center gap-1 text-[11px] text-surface-400 dark:text-surface-500 mt-0.5">
-                                                <i class="pi pi-user text-[10px]"></i>
+                                            <div class="flex items-center gap-1 text-[11px] text-[var(--text-color-secondary)] mt-0.5">
+                                                <i class="pi pi-user !text-[10px]"></i>
                                                 <span class="truncate">{{ ligne.auteur || 'Non renseigné' }}</span>
                                             </div>
                                         </div>
@@ -191,15 +195,15 @@ export interface LigneATraiter {
                                 <!-- 2. Colonne Étape (avec statut temporel) -->
                                 <td class="py-2.5 px-4">
                                     <div class="flex items-center gap-2.5">
-                                        <div class="w-7 h-7 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-200/70 dark:border-amber-800/40 shadow-2xs">
-                                            <i [class]="ligne.iconeEtape || 'pi pi-pencil'" class="text-xs"></i>
+                                        <div class="w-7 h-7 rounded-[5px] bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/25">
+                                            <i [class]="(ligne.iconeEtape || 'pi pi-pencil') + ' !text-xs'"></i>
                                         </div>
                                         <div class="flex flex-col min-w-0">
-                                            <span class="font-semibold text-xs text-surface-900 dark:text-surface-100 truncate">
+                                            <span class="font-semibold text-xs text-[var(--heading-color)] truncate">
                                                 {{ ligne.etape || 'Rédaction' }}
                                             </span>
                                             <div class="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 font-medium">
-                                                <i class="pi pi-clock text-[9px]"></i>
+                                                <i class="pi pi-clock !text-[9px]"></i>
                                                 <span class="truncate">{{ ligne.delaiRelatif || ('Depuis le ' + ligne.depuis) }}</span>
                                             </div>
                                         </div>
@@ -208,15 +212,16 @@ export interface LigneATraiter {
 
                                 <!-- 3. Colonne Action (3 points verticaux) -->
                                 <td class="py-2.5 px-3 text-center">
-                                    <p-button 
-                                        icon="pi pi-ellipsis-v" 
-                                        [rounded]="true" 
-                                        [text]="true" 
+                                    <p-button
+                                        icon="pi pi-ellipsis-v"
+                                        severity="secondary"
+                                        [rounded]="true"
+                                        [text]="true"
                                         size="small"
-                                        (click)="openRowMenu($event, ligne, menu)"
+                                        (onClick)="openRowMenu($event, ligne, menu)"
                                         pTooltip="Actions disponibles"
                                         tooltipPosition="left"
-                                        styleClass="w-8 h-8 text-surface-600 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800">
+                                        styleClass="!w-8 !h-8 text-[var(--text-color-secondary)] hover:bg-surface-100 dark:hover:bg-surface-800">
                                     </p-button>
                                 </td>
 
@@ -225,19 +230,19 @@ export interface LigneATraiter {
                     </p-table>
                 </div>
 
-                <!-- Footer / Paginator (Style Non-Conformités NC, sans texte ni sélecteur) -->
-                <div class="flex items-center justify-end px-3 py-2 bg-surface-0 dark:bg-surface-900 border-t border-surface-200 dark:border-surface-700 mt-auto paginator-nc">
-                    <p-paginator 
-                        [first]="first" 
-                        [rows]="rows" 
-                        [totalRecords]="lignes.length" 
+                <!-- Footer / Paginator -->
+                <div class="flex items-center justify-end px-3 py-2 bg-[var(--surface-card)] border-t border-[#dddddd]/80 dark:border-surface-700 mt-auto paginator-nc">
+                    <p-paginator
+                        [first]="first"
+                        [rows]="rows"
+                        [totalRecords]="lignes.length"
                         (onPageChange)="onPageChange($event)">
                     </p-paginator>
                 </div>
             } @else {
-                <div class="flex flex-col items-center gap-2 py-8 text-surface-400">
-                    <i class="pi pi-check-circle text-2xl"></i>
-                    <span class="text-sm">{{ messageVide }}</span>
+                <div class="flex flex-col items-center gap-2 py-8 text-[var(--text-color-secondary)]">
+                    <i class="pi pi-check-circle !text-2xl text-emerald-500"></i>
+                    <span class="text-xs">{{ messageVide }}</span>
                 </div>
             }
         </div>

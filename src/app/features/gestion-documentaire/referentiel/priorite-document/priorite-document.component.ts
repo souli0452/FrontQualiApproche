@@ -28,43 +28,45 @@ import { PrioriteDocumentService } from '@features/gestion-documentaire/services
     ],
     providers: [],
     template: `
-        <app-header-page 
-            [title]="pageLabel" 
-            [subtitle]="'Ajoutez ou modifiez les priorités des documents'"
-            [breadcrumbs]="breadcrumbs"
-            [buttonText]="'Nouvelle Priorité'" 
-            buttonIcon="pi pi-plus"
-            (actionClick)="crudGeneric.openNew()"
-        />
-        <div class="page-layout">
-            <app-crud-generic
-                #crudGeneric
-                [requireRqPassword]="true"
-                [deleteConfirmField]="'libelle'"
-                [showAddButton]="false"
-                detailLongDescription="Ce référentiel définit les niveaux de priorité applicables aux documents du SMQ. Ils permettent de hiérarchiser les flux de relecture et d'approbation dans les circuits de validation, d'attribuer des codes couleurs d'alerte et de sensibiliser les acteurs sur les délais de traitement attendus."
-                formLongDescription="Renseignez les critères de cette priorité documentaire. Définissez le libellé, le rang d'affichage (1 pour le plus urgent) ainsi qu'une couleur d'identification au format hexadécimal (ex: #dc2626 pour le rouge). Les champs marqués d'un astérisque sont obligatoires."
-                [dialogWidth]="'40rem'"
-                [loading]="loading"
-                [pageLabel]="pageLabel"
-                [tableCols]="tableCols"
-                [listeObject]="dataList"
-                [formGroup]="formGroup"
-                [formCols]="formCols"
-                [isAffich]="true"
-                [closeDialog]="closeDialog"
-                [formHeader]="formHeader"
-                (newItemEvent)="onSave($event)"
-                (removeEvent)="onDelete($event)"
-                [isPagination]="true"
-                [totalElements]="totalElements"
-                [currentPage]="currentPage"
-                [pageSize]="pageSize"
-                (pageChangeEvent)="onPageChange($event)"
-                [consultation]="!peutEcrire"
-                [notModif]="!peutEcrire"
-                [notDelete]="!peutEcrire">
-            </app-crud-generic>
+        <div class="card-first overflow-x-clip border-none transition-colors duration-300">
+            <app-header-page
+                [title]="pageLabel"
+                [subtitle]="'Ajoutez ou modifiez les priorités des documents'"
+                [breadcrumbs]="breadcrumbs"
+                [buttonText]="'Nouvelle priorité'"
+                buttonIcon="pi pi-plus"
+                (actionClick)="crudGeneric.openNew()"
+            />
+            <div class="page-layout">
+                <app-crud-generic
+                    #crudGeneric
+                    [requireRqPassword]="true"
+                    [deleteConfirmField]="'libelle'"
+                    [showAddButton]="false"
+                    detailLongDescription="Ce référentiel définit les niveaux de priorité applicables aux documents du SMQ. Ils permettent de hiérarchiser les flux de relecture et d'approbation dans les circuits de validation, d'attribuer des codes couleurs d'alerte et de sensibiliser les acteurs sur les délais de traitement attendus."
+                    formLongDescription="Renseignez les critères de cette priorité documentaire. Définissez le libellé, le rang d'affichage (1 pour le plus urgent) ainsi qu'une couleur d'identification au format hexadécimal (ex: #dc2626 pour le rouge). Les champs marqués d'un astérisque sont obligatoires."
+                    [dialogWidth]="'40rem'"
+                    [loading]="loading"
+                    [pageLabel]="pageLabel"
+                    [tableCols]="tableCols"
+                    [listeObject]="dataList"
+                    [formGroup]="formGroup"
+                    [formCols]="formCols"
+                    [isAffich]="true"
+                    [closeDialog]="closeDialog"
+                    [formHeader]="formHeader"
+                    (newItemEvent)="onSave($event)"
+                    (removeEvent)="onDelete($event)"
+                    [isPagination]="true"
+                    [totalElements]="totalElements"
+                    [currentPage]="currentPage"
+                    [pageSize]="pageSize"
+                    (pageChangeEvent)="onPageChange($event)"
+                    [consultation]="!peutEcrire"
+                    [notModif]="!peutEcrire"
+                    [notDelete]="!peutEcrire">
+                </app-crud-generic>
+            </div>
         </div>
     `
 })

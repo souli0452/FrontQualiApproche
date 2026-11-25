@@ -1,193 +1,231 @@
-<!-- Le corps est rendu soit dans un dialogue, soit tel quel dans un onglet de la fiche du document.
-     Un seul gabarit pour les deux : le dupliquer aurait fait diverger le formulaire d'octroi et les
-     deux listes de partages au premier correctif. -->
 <ng-template #corps>
-  <div class="p-fluid mt-2" *ngIf="document">
-
-    <!-- Info Alert Box -->
-    <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg mb-4 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <span class="text-sm font-bold text-slate-500">Document :</span>
-        <span class="text-sm font-bold text-slate-700">
-          <i class="pi pi-file text-indigo-500 mr-1"></i>
-          {{ document.documentNumber }}
-        </span>
-      </div>
-      <div class="flex items-center gap-2 ml-3">
-        <span class="text-sm font-bold text-slate-500">Rédacteur :</span>
-        <span class="text-sm font-bold text-slate-700">{{ document.redacteur }}</span>
-      </div>
-    </div>
-
-    <!-- Custom Button Tabs -->
-    <div class="flex border-b border-slate-200 mb-4 gap-2">
-      <button pButton type="button" label="Accès utilisateurs" class="p-button-text p-button-sm mr-2" [ngClass]="{'p-button-primary font-bold border-bottom-2 border-primary': activeTab === 'access'}" (click)="activeTab = 'access'"></button>
-      <button pButton type="button" label="Ajouter un accès" class="p-button-text p-button-sm" [ngClass]="{'p-button-primary font-bold border-bottom-2 border-primary': activeTab === 'grant'}" (click)="activeTab = 'grant'"></button>
-      <button pButton type="button" label="Partager à une structure" class="p-button-text p-button-sm" [ngClass]="{'p-button-primary font-bold border-bottom-2 border-primary': activeTab === 'structure'}" (click)="activeTab = 'structure'"></button>
-    </div>
-
-    <!-- Tab 1: Liste des accès existants -->
-    <div *ngIf="activeTab === 'access'" class="py-2">
-      <p class="text-sm text-slate-500 mb-3">Liste des utilisateurs ayant accès à ce document.</p>
-
-      <div *ngIf="loadingAccess" class="text-center py-4 text-slate-400">
-        <i class="pi pi-spin pi-spinner text-2xl"></i>
-      </div>
-
-      <p-table *ngIf="!loadingAccess" [value]="accessList" styleClass="p-datatable-sm p-datatable-striped">
-        <ng-template pTemplate="header">
-          <tr>
-            <th scope="col">Utilisateur</th>
-            <th scope="col">Email</th>
-            <th scope="col">Rôle</th>
-            <th scope="col">Accordé le</th>
-            <th scope="col" class="text-center">Action</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-access>
-          <tr>
-            <td><span class="font-semibold text-slate-800">{{ access.userFullName || access.userId }}</span></td>
-            <td class="text-sm text-slate-500">{{ access.userEmail || '-' }}</td>
-            <td>
-              <p-tag [value]="access.role" [severity]="access.role === 'WRITE' ? 'warn' : 'info'" styleClass="text-xs"></p-tag>
-            </td>
-            <td class="text-xs text-slate-500">{{ access.grantedAt | date:'dd/MM/yyyy HH:mm' }}</td>
-            <td class="text-center">
-              <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" (click)="revoke.emit(access)" pTooltip="Révoquer l'accès"></button>
-            </td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="5" class="text-center py-4 text-slate-400">
-              <i class="pi pi-lock-open text-3xl mb-2 block"></i>
-              Aucun accès spécifique accordé pour ce document.
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </div>
-
-    <div *ngIf="activeTab === 'grant'" class="py-2">
-      <form [formGroup]="form" (ngSubmit)="valider()">
-        <p class="text-sm text-slate-500 mb-4">Accordez des droits d'accès à un utilisateur du système sur ce document.</p>
-
-        <div class="grid grid-cols-12 gap-3 mb-4">
-          <!-- Structure Filter Dropdown -->
-          <div class="col-span-12 md:col-span-6">
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Filtrer par Structure (Service)</label>
-            <p-select [options]="structures" [(ngModel)]="selectedStructureFilter" [ngModelOptions]="{standalone: true}" optionLabel="libelleLong" optionValue="id" placeholder="Toutes les structures" class="w-full" appendTo="body" [filter]="true" [showClear]="true" (onChange)="onStructureFilterChange($event.value)"></p-select>
-          </div>
-
-          <!-- System Users Dropdown -->
-          <div class="col-span-12 md:col-span-6">
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Utilisateur du système <span class="text-red-500">*</span></label>
-            <p-select [options]="filteredUsers" [(ngModel)]="selectedUser" [ngModelOptions]="{standalone: true}" optionLabel="fullName" placeholder="Choisir un utilisateur..." class="w-full" appendTo="body" [filter]="true" [showClear]="true" (onChange)="onUserSelected($event.value)"></p-select>
-          </div>
+    <div *ngIf="document">
+        <!-- Info Alert Box -->
+        <div class="p-3 bg-surface-50 dark:bg-surface-800/60 border border-[#dddddd] dark:border-surface-700 rounded-[5px] mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold text-[var(--text-color-secondary)]">Document :</span>
+                <span class="text-xs font-bold text-[var(--heading-color)] font-mono flex items-center gap-1.5">
+                    <i class="pi pi-file text-[#0084ca] dark:text-sky-400 !text-xs"></i>
+                    {{ document.documentNumber }}
+                </span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold text-[var(--text-color-secondary)]">Rédacteur :</span>
+                <span class="text-xs font-bold text-[var(--heading-color)]">{{ document.redacteur || '—' }}</span>
+            </div>
         </div>
 
-        <div class="grid grid-cols-12 gap-3">
-          <!-- Read-only User Details for confirmation -->
-          <div class="col-span-12 md:col-span-5">
-            <label class="block text-xs font-semibold text-slate-600 mb-1">ID Keycloak de l'utilisateur</label>
-            <input pInputText formControlName="userId" placeholder="Identifiant Keycloak..." class="w-full bg-slate-50 text-slate-500" [readonly]="true" />
-          </div>
-          <div class="col-span-12 md:col-span-4">
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Nom complet</label>
-            <input pInputText formControlName="userFullName" placeholder="Nom complet..." class="w-full bg-slate-50 text-slate-500" [readonly]="true" />
-          </div>
-          <div class="col-span-12 md:col-span-3">
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Email</label>
-            <input pInputText formControlName="userEmail" type="email" placeholder="Email..." class="w-full bg-slate-50 text-slate-500" [readonly]="true" />
-          </div>
-
-          <!-- Role Selection -->
-          <div class="col-span-12 md:col-span-6 mt-2">
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Rôle / Droits accordés <span class="text-red-500">*</span></label>
-            <p-select [options]="roleOptions" formControlName="role" optionLabel="label" optionValue="value" appendTo="body" placeholder="Choisir un rôle" class="w-full"></p-select>
-          </div>
-
-          <div class="col-span-12 flex justify-end mt-4">
-            <button pButton type="submit" label="Accorder l'accès" icon="pi pi-check" class="p-button-primary w-auto shadow-sm" [disabled]="form.invalid"></button>
-          </div>
+        <!-- Onglets internes -->
+        <div class="flex flex-wrap border-b border-[#dddddd]/80 dark:border-surface-700 mb-4 gap-1">
+            <button type="button"
+                    class="px-3.5 py-2 text-xs bg-transparent border-0 border-b-2 transition-colors cursor-pointer"
+                    [ngClass]="activeTab === 'access'
+                        ? 'border-[#0084ca] text-[#0084ca] dark:text-sky-400 font-bold'
+                        : 'border-transparent text-[var(--text-color-secondary)] hover:text-[var(--heading-color)] font-medium'"
+                    (click)="activeTab = 'access'">
+                Accès utilisateurs
+            </button>
+            <button type="button"
+                    class="px-3.5 py-2 text-xs bg-transparent border-0 border-b-2 transition-colors cursor-pointer"
+                    [ngClass]="activeTab === 'grant'
+                        ? 'border-[#0084ca] text-[#0084ca] dark:text-sky-400 font-bold'
+                        : 'border-transparent text-[var(--text-color-secondary)] hover:text-[var(--heading-color)] font-medium'"
+                    (click)="activeTab = 'grant'">
+                Ajouter un accès
+            </button>
+            <button type="button"
+                    class="px-3.5 py-2 text-xs bg-transparent border-0 border-b-2 transition-colors cursor-pointer"
+                    [ngClass]="activeTab === 'structure'
+                        ? 'border-[#0084ca] text-[#0084ca] dark:text-sky-400 font-bold'
+                        : 'border-transparent text-[var(--text-color-secondary)] hover:text-[var(--heading-color)] font-medium'"
+                    (click)="activeTab = 'structure'">
+                Partager à une structure
+            </button>
         </div>
-      </form>
+
+        <!-- Tab 1 : Liste des accès existants -->
+        <div *ngIf="activeTab === 'access'" class="py-1">
+            <p class="text-xs text-[var(--text-color-secondary)] mt-0 mb-3">
+                Liste des utilisateurs ayant un accès individuel à ce document.
+            </p>
+
+            <div *ngIf="loadingAccess" class="text-center py-6 text-[var(--text-color-secondary)]">
+                <i class="pi pi-spin pi-spinner !text-2xl text-[#0084ca]"></i>
+            </div>
+
+            <div *ngIf="!loadingAccess" class="border border-[#dddddd] dark:border-surface-700 rounded-[5px] overflow-hidden">
+                <p-table [value]="accessList" styleClass="p-datatable-sm p-datatable-striped">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th scope="col">Utilisateur</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Rôle</th>
+                            <th scope="col">Accordé le</th>
+                            <th scope="col" class="text-center">Action</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-access>
+                        <tr>
+                            <td><span class="font-semibold text-xs text-[var(--heading-color)]">{{ access.userFullName || access.userId }}</span></td>
+                            <td class="text-xs text-[var(--text-color-secondary)]">{{ access.userEmail || '—' }}</td>
+                            <td>
+                                <p-tag [value]="access.role" [severity]="access.role === 'WRITE' ? 'warn' : 'info'" styleClass="!text-xs"></p-tag>
+                            </td>
+                            <td class="text-xs text-[var(--text-color-secondary)]">{{ access.grantedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                            <td class="text-center">
+                                <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" size="small"
+                                          (onClick)="revoke.emit(access)" pTooltip="Révoquer l'accès"></p-button>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="5" class="text-center py-6 text-[var(--text-color-secondary)]">
+                                <i class="pi pi-lock-open !text-2xl mb-2 block opacity-60"></i>
+                                <span class="text-xs">Aucun accès spécifique accordé pour ce document.</span>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </div>
+
+        <!-- Tab 2 : Accorder un accès utilisateur -->
+        <div *ngIf="activeTab === 'grant'" class="py-1">
+            <form [formGroup]="form" (ngSubmit)="valider()">
+                <p class="text-xs text-[var(--text-color-secondary)] mt-0 mb-4">
+                    Accordez des droits d'accès à un utilisateur du système sur ce document.
+                </p>
+
+                <div class="grid grid-cols-12 gap-4 mb-4">
+                    <div class="col-span-12 md:col-span-6">
+                        <label class="block text-xs font-semibold text-[var(--heading-color)] mb-1.5">Filtrer par structure (service)</label>
+                        <p-select [options]="structures" [(ngModel)]="selectedStructureFilter" [ngModelOptions]="{standalone: true}"
+                                  optionLabel="libelleLong" optionValue="id" placeholder="Toutes les structures"
+                                  class="w-full" styleClass="w-full" appendTo="body" [filter]="true" [showClear]="true"
+                                  (onChange)="onStructureFilterChange($event.value)"></p-select>
+                    </div>
+
+                    <div class="col-span-12 md:col-span-6">
+                        <label class="block text-xs font-semibold text-[var(--heading-color)] mb-1.5">
+                            Utilisateur du système <span class="text-rose-500">*</span>
+                        </label>
+                        <p-select [options]="filteredUsers" [(ngModel)]="selectedUser" [ngModelOptions]="{standalone: true}"
+                                  optionLabel="fullName" placeholder="Choisir un utilisateur..."
+                                  class="w-full" styleClass="w-full" appendTo="body" [filter]="true" [showClear]="true"
+                                  (onChange)="onUserSelected($event.value)"></p-select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-12 gap-4">
+                    <div class="col-span-12 md:col-span-5">
+                        <label class="block text-xs font-semibold text-[var(--text-color-secondary)] mb-1.5">ID Keycloak de l'utilisateur</label>
+                        <input pInputText formControlName="userId" placeholder="Identifiant Keycloak..." class="w-full opacity-75" [readonly]="true" />
+                    </div>
+                    <div class="col-span-12 md:col-span-4">
+                        <label class="block text-xs font-semibold text-[var(--text-color-secondary)] mb-1.5">Nom complet</label>
+                        <input pInputText formControlName="userFullName" placeholder="Nom complet..." class="w-full opacity-75" [readonly]="true" />
+                    </div>
+                    <div class="col-span-12 md:col-span-3">
+                        <label class="block text-xs font-semibold text-[var(--text-color-secondary)] mb-1.5">Email</label>
+                        <input pInputText formControlName="userEmail" type="email" placeholder="Email..." class="w-full opacity-75" [readonly]="true" />
+                    </div>
+
+                    <div class="col-span-12 md:col-span-6">
+                        <label class="block text-xs font-semibold text-[var(--heading-color)] mb-1.5">
+                            Rôle / Droits accordés <span class="text-rose-500">*</span>
+                        </label>
+                        <p-select [options]="roleOptions" formControlName="role" optionLabel="label" optionValue="value"
+                                  appendTo="body" placeholder="Choisir un rôle" class="w-full" styleClass="w-full"></p-select>
+                    </div>
+
+                    <div class="col-span-12 flex justify-end pt-3 border-t border-[#dddddd]/70 dark:border-surface-700">
+                        <p-button type="submit" label="Accorder l'accès" icon="pi pi-check" severity="info" size="small"
+                                  [disabled]="form.invalid"></p-button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tab 3 : Partage à une structure -->
+        <div *ngIf="activeTab === 'structure'" class="py-1">
+            <div class="rounded-[5px] border border-[#0ea5e9]/35 bg-[#0ea5e9]/10 dark:bg-[#0ea5e9]/15 px-3.5 py-2.5 mb-4 flex items-start gap-2.5">
+                <i class="pi pi-info-circle text-[#0ea5e9] !text-sm mt-0.5 shrink-0"></i>
+                <p class="text-xs text-[#0369a1] dark:text-sky-300 m-0 leading-relaxed">
+                    Ouvre le document à <strong>tous les membres</strong> de la structure choisie, sans avoir à
+                    les nommer un à un. L'accès obtenu est volontairement étroit : consultation et
+                    téléchargement, sans historique ni suivi interne.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-12 gap-3 items-start">
+                <div class="col-span-12 md:col-span-8">
+                    <label class="block text-xs font-semibold text-[var(--heading-color)] mb-1.5">
+                        Structure destinataire <span class="text-rose-500">*</span>
+                    </label>
+                    <p-select [options]="structuresPartageables" [(ngModel)]="structurePartage"
+                              [ngModelOptions]="{standalone: true}" optionLabel="libelleLong" optionValue="id"
+                              placeholder="Choisir la structure…" class="w-full" styleClass="w-full" appendTo="body"
+                              [filter]="true" [showClear]="true"></p-select>
+                    <small class="block mt-1 text-xs text-[var(--text-color-secondary)]">
+                        La structure émettrice n'y figure pas : ses membres voient déjà ce document.
+                    </small>
+                </div>
+                <div class="col-span-12 md:col-span-4 md:pt-6">
+                    <p-button type="button" label="Partager" icon="pi pi-share-alt" severity="info" size="small"
+                              [disabled]="!structurePartage" (onClick)="partagerStructure()"></p-button>
+                </div>
+            </div>
+
+            <div class="mt-5" *ngIf="partagesStructure.length">
+                <div class="text-xs font-bold uppercase tracking-wider text-[var(--text-color-secondary)] mb-2">
+                    Structures déjà destinataires
+                </div>
+                <div class="border border-[#dddddd] dark:border-surface-700 rounded-[5px] overflow-hidden">
+                    <p-table [value]="partagesStructure" styleClass="p-datatable-sm p-datatable-striped">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th scope="col">Structure</th>
+                                <th scope="col">Partagé par</th>
+                                <th scope="col">À l'étape</th>
+                                <th scope="col" class="text-center">Action</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-partage>
+                            <tr>
+                                <td class="font-semibold text-xs text-[var(--heading-color)]">{{ partage.structureLibelle || partage.structureId }}</td>
+                                <td class="text-xs text-[var(--text-color-secondary)]">{{ partage.sharedByFullName || '—' }}</td>
+                                <td class="text-xs text-[var(--text-color-secondary)]">{{ partage.etapeCode || '—' }}</td>
+                                <td class="text-center">
+                                    <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" size="small"
+                                              pTooltip="Retirer ce partage"
+                                              (onClick)="retirerPartageStructure.emit(partage)"></p-button>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <!-- Partage à une structure entière. Le destinataire se choisit ici, à l'étape où l'on juge
-         utile de montrer le document — et non à la soumission, où l'on ne sait pas encore à qui
-         il devra être communiqué. -->
-    <div *ngIf="activeTab === 'structure'" class="py-2">
-      <p class="text-sm text-slate-500 mb-4">
-        Ouvre le document à <strong>tous les membres</strong> de la structure choisie, sans avoir à
-        les nommer un à un. L'accès obtenu est volontairement étroit : consultation et
-        téléchargement, sans historique ni suivi interne.
-      </p>
-
-      <div class="grid grid-cols-12 gap-3">
-        <div class="col-span-12 md:col-span-8">
-          <label class="block text-xs font-semibold text-slate-600 mb-1">
-            Structure destinataire <span class="text-red-500">*</span>
-          </label>
-          <p-select [options]="structuresPartageables" [(ngModel)]="structurePartage"
-                    [ngModelOptions]="{standalone: true}" optionLabel="libelleLong" optionValue="id"
-                    placeholder="Choisir la structure…" class="w-full" appendTo="body"
-                    [filter]="true" [showClear]="true"></p-select>
-          <small class="block mt-1 text-slate-500">
-            La structure émettrice n'y figure pas : ses membres voient déjà ce document.
-          </small>
-        </div>
-        <div class="col-span-12 md:col-span-4 flex items-end">
-          <button pButton type="button" label="Partager" icon="pi pi-share-alt"
-                  class="p-button-primary w-auto shadow-sm" [disabled]="!structurePartage"
-                  (click)="partagerStructure()"></button>
-        </div>
-      </div>
-
-      <div class="mt-5" *ngIf="partagesStructure.length">
-        <div class="text-xs font-bold uppercase text-slate-500 mb-2">Structures déjà destinataires</div>
-        <p-table [value]="partagesStructure" styleClass="p-datatable-sm p-datatable-striped">
-          <ng-template pTemplate="header">
-            <tr>
-              <th scope="col">Structure</th>
-              <th scope="col">Partagé par</th>
-              <th scope="col">À l'étape</th>
-              <th scope="col" class="text-center">Action</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-partage>
-            <tr>
-              <td class="font-semibold text-slate-800">{{ partage.structureLibelle || partage.structureId }}</td>
-              <td class="text-sm text-slate-500">{{ partage.sharedByFullName || '—' }}</td>
-              <td class="text-sm text-slate-500">{{ partage.etapeCode || '—' }}</td>
-              <td class="text-center">
-                <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
-                        pTooltip="Retirer ce partage"
-                        (click)="retirerPartageStructure.emit(partage)"></button>
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </div>
-    </div>
-
-  </div>
 </ng-template>
 
 @if (enDialogue) {
-  <p-dialog header="Gestion des Accès au Document" [visible]="visible"
-            (visibleChange)="visible = $event; visibleChange.emit($event)" [modal]="true"
-            [style]="{ width: '65rem', height: '42rem' }"
-            [breakpoints]="{ '960px': '75vw', '640px': '90vw' }">
-    <ng-container [ngTemplateOutlet]="corps"></ng-container>
-    <ng-template pTemplate="footer">
-      <div class="flex justify-end">
-        <button pButton label="Fermer" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="fermer()"></button>
-      </div>
-    </ng-template>
-  </p-dialog>
+    <p-dialog header="Gestion des accès au document" [visible]="visible"
+              (visibleChange)="visible = $event; visibleChange.emit($event)" [modal]="true"
+              [style]="{ width: '62rem' }"
+              [breakpoints]="{ '960px': '78vw', '640px': '92vw' }">
+        <ng-container [ngTemplateOutlet]="corps"></ng-container>
+        <ng-template pTemplate="footer">
+            <div class="flex justify-end">
+                <p-button label="Fermer" severity="secondary" [outlined]="true" size="small"
+                          styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                          (onClick)="fermer()"></p-button>
+            </div>
+        </ng-template>
+    </p-dialog>
 } @else {
-  <!-- En onglet : pas d'en-tête ni de bouton « Fermer ». L'onglet dit où l'on est, et la fiche
-       porte déjà le retour à la liste. -->
-  <ng-container [ngTemplateOutlet]="corps"></ng-container>
+    <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-5">
+        <ng-container [ngTemplateOutlet]="corps"></ng-container>
+    </div>
 }

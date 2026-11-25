@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { NgPrimeModule } from '@prime-ng';
 import { MenuItem } from 'primeng/api';
@@ -25,6 +26,7 @@ import { DocumentaireATraiterService, DocumentaireATraiter } from '../services/d
     standalone: true,
     imports: [
         CommonModule,
+        FormsModule,
         NgPrimeModule,
         RouterModule,
         NgxPermissionsModule,
@@ -50,16 +52,15 @@ export class GestionDocumentaireLayoutComponent implements OnInit, OnDestroy {
     ) {
         this.routerSubscription = this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd) {
-                this.activeTab = event.urlAfterRedirects.split('?')[0];
+                this.activeTab = this.resolveActiveTab(event.urlAfterRedirects);
             }
         });
     }
 
     ngOnInit(): void {
-        this.activeTab = this.router.url.split('?')[0];
-        
         // 1. Initialiser le menu par défaut
         this.initMenu();
+        this.activeTab = this.resolveActiveTab(this.router.url);
 
         // 2. Écouter en temps réel les documents et demandes en attente
         this.documentaireATraiterService.aTraiter$
@@ -74,27 +75,40 @@ export class GestionDocumentaireLayoutComponent implements OnInit, OnDestroy {
 
     initMenu(): void {
         this.items = [
-            { 
-                label: "Vue d'ensemble", 
-                icon: 'pi pi-chart-bar', 
-                routerLink: '/gestion-documentaire/vue-ensemble' 
+            {
+                label: "Vue d'ensemble",
+                icon: 'pi pi-chart-bar',
+                routerLink: '/gestion-documentaire/vue-ensemble'
             },
-            { 
-                label: 'Documents', 
-                icon: 'pi pi-file', 
+            {
+                label: 'Documents',
+                icon: 'pi pi-file',
                 routerLink: '/gestion-documentaire/documents'
             },
-            { 
-                label: 'Documents partagés avec moi', 
-                icon: 'pi pi-share-alt', 
-                routerLink: '/gestion-documentaire/partages' 
+            {
+                label: 'Documents partagés avec moi',
+                icon: 'pi pi-share-alt',
+                routerLink: '/gestion-documentaire/partages'
             },
-            { 
-                label: 'Demandes', 
-                icon: 'pi pi-inbox', 
+            {
+                label: 'Demandes',
+                icon: 'pi pi-inbox',
                 routerLink: '/gestion-documentaire/demandes'
             }
         ];
+    }
+
+    private resolveActiveTab(url: string): string {
+        const clean = (url || '').split('?')[0];
+        const exact = this.items.find((i) => i.routerLink === clean);
+        if (exact) return exact.routerLink as string;
+        if (!clean.endsWith('/create')) {
+            const prefix = this.items.find(
+                (i) => i.routerLink && clean.startsWith((i.routerLink as string) + '/')
+            );
+            if (prefix) return prefix.routerLink as string;
+        }
+        return clean;
     }
 
     updateBadges(etat?: DocumentaireATraiter): void {
@@ -110,6 +124,8 @@ export class GestionDocumentaireLayoutComponent implements OnInit, OnDestroy {
         if (demandeTab) {
             demandeTab.badge = demandesATraiter > 0 ? demandesATraiter.toString() : undefined;
         }
+
+        this.items = [...this.items];
     }
 
     creerDocument(): void {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -14,6 +14,7 @@ import { AuditGestionService, messageErreur } from '../../services/audit.service
 import { AuditReferentielService, LIBELLES_VIDES, LibellesAudit, UtilisateurAnnuaire } from '../../services/audit-referentiel.service';
 import { ActivitePlan, Audit, PlanAudit, SiteAudit } from '../../models/audit.model';
 import { StatutAudit } from '../../models/audit-enums';
+import { LightboxComponent } from '@features/non-conformite/components/lightbox/lightbox';
 
 /** Les méthodes d'audit que propose le plan (ISO 19011 §6.3), aux mots de la maquette (B7). */
 const METHODES_AUDIT = [
@@ -42,11 +43,14 @@ const METHODES_PAR_DEFAUT = ['Entretiens avec les agents du processus', 'Observa
 @Component({
     selector: 'app-plan-audit',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, SelectInputComponent, MultiselectInputComponent, AuditLibelleComponent],
+    imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, SelectInputComponent, MultiselectInputComponent, AuditLibelleComponent, LightboxComponent],    
     providers: [MessageService, ConfirmationService],
     templateUrl: './plan-audit.component.html'
 })
 export class PlanAuditComponent implements OnInit, OnDestroy {
+
+    @ViewChild('lightbox') lightbox?: LightboxComponent;
+    apercuEnCours = false;
 
     audit: Audit | null = null;
     plan: PlanAudit | null = null;
@@ -92,15 +96,56 @@ export class PlanAuditComponent implements OnInit, OnDestroy {
     /** Le processus audité de la fiche, proposé pour chaque nouvelle activité. */
     private processusDeLAudit?: Structure;
 
+        confirmationMeta: {
+        ton: 'info' | 'warn' | 'danger';
+        bloquant?: boolean;
+        encart?: { titre: string; icone: string; lignes: string[]; ton: 'info' | 'warn' | 'danger' };
+    } = { ton: 'info' };
+
+    get confirmationBadgeClasses(): string {
+        switch (this.confirmationMeta.ton) {
+            case 'warn':   return 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 ring-amber-50/50 dark:ring-amber-950/20';
+            case 'danger': return 'bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 ring-rose-50/50 dark:ring-rose-950/20';
+            default:       return 'bg-[#0084ca]/10 dark:bg-[#0084ca]/20 text-[#0084ca] dark:text-sky-400 ring-[#0084ca]/10';
+        }
+    }
+
+    get confirmationEncartClasses(): string {
+        switch (this.confirmationMeta.encart?.ton) {
+            case 'warn':   return 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200';
+            case 'danger': return 'border-rose-300 dark:border-rose-700 bg-rose-50 dark:bg-rose-950/30 text-rose-900 dark:text-rose-200';
+            default:       return 'border-[#0084ca]/30 dark:border-sky-700/60 bg-[#0084ca]/5 dark:bg-sky-950/30 text-[var(--heading-color)]';
+        }
+    }
+
+    get confirmationAcceptClasses(): string {
+        switch (this.confirmationMeta.ton) {
+            case 'warn':   return 'p-button-warn p-button-sm flex-1 justify-center rounded-[6px]';
+            case 'danger': return 'p-button-danger p-button-sm flex-1 justify-center rounded-[6px]';
+            default:       return 'p-button-info p-button-sm flex-1 justify-center rounded-[6px]';
+        }
+    }
+
     /** Réviser un plan validé ou partagé : il repasse en brouillon, dans une nouvelle version (observation 18). */
-    reviser(event: Event): void {
+    reviser(_event?: Event): void {
         if (!this.auditId) return;
+        const prochaineVersion = (this.plan?.version ?? 1) + 1;
+        this.confirmationMeta = {
+            ton: 'warn',
+            encart: {
+                titre: `Passage en version ${prochaineVersion}`,
+                icone: 'pi-info-circle',
+                lignes: ['Le plan repassera en brouillon et devra être validé puis partagé de nouveau avec l\'audité.'],
+                ton: 'warn'
+            }
+        };
         this.confirmationService.confirm({
-            rejectButtonProps: { severity: 'secondary', outlined: true },
-            target: event.currentTarget as EventTarget,
-            message: `Rouvrir le plan pour le corriger ? Il passera en version ${(this.plan?.version ?? 1) + 1}, à valider puis à partager de nouveau.`,
-            icon: 'pi pi-pencil',
-            acceptLabel: 'Réviser',
+            key: 'plan-action',
+            header: "Réviser le plan d'audit",
+            message: 'Souhaitez-vous rouvrir ce plan pour le corriger ?',
+            icon: 'pi-pencil',
+            acceptLabel: 'Réviser le plan',
+            acceptIcon: 'pi pi-pencil',
             rejectLabel: 'Retour',
             accept: () => this.geste(this.auditService.reviserPlan(this.auditId!), 'Plan rouvert en brouillon.')
         });
@@ -236,46 +281,103 @@ export class PlanAuditComponent implements OnInit, OnDestroy {
         return ({ BROUILLON: 'secondary', VALIDE: 'info', PARTAGE: 'success' } as Record<string, string>)[this.plan?.statut ?? ''] ?? 'warn';
     }
 
-    sauvegarder(): void {
-        if (!this.auditId || !this.plan) return;
-        const sansLibelle = (this.plan.activites ?? []).some(a => !a.libelleActivite?.trim());
+    /** Vérifie que chaque créneau porte libellé, auditeur et personnes auditées (obs. 04). */
+    private verifierActivites(): boolean {
+        const activites = this.plan?.activites ?? [];
+        const sansLibelle = activites.some(a => !a.libelleActivite?.trim());
         if (sansLibelle) {
             this.messageService.add({ severity: 'warn', summary: 'Activité incomplète', detail: 'Chaque activité doit avoir un libellé.' });
-            return;
+            return false;
         }
+        const incomplete = activites.find(a => !a.auditeur?.trim() || !a.personnesAuditees?.trim());
+        if (incomplete) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Créneau incomplet',
+                detail: `L'activité « ${incomplete.libelleActivite} » doit indiquer un auditeur et au moins une personne auditée.`,
+                life: 7000
+            });
+            return false;
+        }
+        return true;
+    }
+
+    sauvegarder(): void {
+        if (!this.auditId || !this.plan || !this.verifierActivites()) return;
         this.saving = true;
         this.geste(this.auditService.sauvegarderPlanAudit(this.auditId, this.plan), 'Plan enregistré.', () => (this.saving = false));
     }
 
-    valider(event: Event): void {
-        if (!this.auditId) return;
+    valider(_event?: Event): void {
+        if (!this.auditId || !this.verifierActivites()) return;
+        this.confirmationMeta = {
+            ton: 'info',
+            encart: {
+                titre: 'Plan prêt à être partagé',
+                icone: 'pi-check-circle',
+                lignes: ['Une fois validé, le plan ne se modifie plus directement (une révision créera une nouvelle version).'],
+                ton: 'info'
+            }
+        };
         this.confirmationService.confirm({
-            rejectButtonProps: { severity: 'secondary', outlined: true },
-            target: event.currentTarget as EventTarget,
-            message: 'Une fois validé, le plan ne se modifie plus. Continuer ?',
-            icon: 'pi pi-check-circle',
-            acceptLabel: 'Valider',
+            key: 'plan-action',
+            header: "Valider le plan d'audit",
+            message: 'Confirmer la validation de ce plan ?',
+            icon: 'pi-check-circle',
+            acceptLabel: 'Valider le plan',
+            acceptIcon: 'pi pi-check',
             rejectLabel: 'Retour',
             accept: () => this.geste(this.auditService.validerPlan(this.auditId!), 'Plan validé.')
         });
     }
 
-    /** Le partage se confirme, en disant qui le courriel préviendra (observation 14). */
-    partager(event?: Event): void {
+    /** Le partage se bloque s'il n'y a aucun destinataire joignable (obs. 04 & PDF Notifications). */
+    partager(_event?: Event): void {
         if (!this.auditId) return;
-        const cible = event?.currentTarget as EventTarget;
         this.auditService.destinataires(this.auditId, 'PARTAGE_PLAN').pipe(takeUntil(this.destroy$)).subscribe(destinataires => {
-            const qui = destinataires.length
-                ? 'Un courriel préviendra : ' + destinataires.map(d => d.nom).join(', ') + '.'
-                : 'Le processus audité n\'a pas de pilote joignable : personne ne sera prévenu par courriel.';
+            if (!destinataires.length) {
+                this.confirmationMeta = {
+                    ton: 'danger',
+                    bloquant: true,
+                    encart: {
+                        titre: 'Aucun destinataire joignable par courriel',
+                        icone: 'pi-exclamation-triangle',
+                        lignes: [
+                            "Le processus audité n'a aucun pilote disposant d'une adresse e-mail connue.",
+                            "Désignez un pilote joignable sur ce processus (ou prévenez l'administrateur) avant de partager le plan."
+                        ],
+                        ton: 'danger'
+                    }
+                };
+                this.confirmationService.confirm({
+                    key: 'plan-action',
+                    header: 'Partage impossible',
+                    message: "Le plan ne peut pas être partagé tant qu'aucun destinataire ne peut être prévenu.",
+                    icon: 'pi-ban',
+                    rejectLabel: 'Fermer'
+                });
+                return;
+            }
+
+            this.confirmationMeta = {
+                ton: 'info',
+                bloquant: false,
+                encart: {
+                    titre: `Un courriel de notification sera envoyé à (${destinataires.length}) :`,
+                    icone: 'pi-envelope',
+                    lignes: destinataires.map(d => `${d.nom}${d.titre ? ' — ' + d.titre : ''}`),
+                    ton: 'info'
+                }
+            };
             this.confirmationService.confirm({
-                rejectButtonProps: { severity: 'secondary', outlined: true },
-                target: cible,
-                message: `Partager le plan avec l'audité ? ${qui}`,
-                icon: 'pi pi-share-alt',
-                acceptLabel: 'Partager',
+                key: 'plan-action',
+                header: "Partager le plan avec l'audité",
+                message: "Confirmer la diffusion de ce plan d'audit ?",
+                icon: 'pi-share-alt',
+                acceptLabel: 'Partager le plan',
+                acceptIcon: 'pi pi-share-alt',
                 rejectLabel: 'Retour',
-                accept: () => this.geste(this.auditService.partagerPlan(this.auditId!), 'Plan partagé avec l\'audité.')
+                accept: () => this.geste(this.auditService.partagerPlan(this.auditId!), "Plan partagé avec l'audité.")
             });
         });
     }
@@ -302,6 +404,46 @@ export class PlanAuditComponent implements OnInit, OnDestroy {
                 this.erreur(err, 'L\'opération a échoué.');
             }
         });
+    }
+
+        get nbMembresEquipe(): number {
+        return new Set([this.audit?.responsableEquipeId, ...(this.audit?.membreEquipeIds ?? [])].filter(Boolean)).size;
+    }
+
+    voirPdf(): void {
+        if (!this.auditId || this.apercuEnCours) return;
+        this.apercuEnCours = true;
+        const nom = `plan-${this.audit?.reference ?? this.auditId}.pdf`;
+        this.auditService.exporterPlan(this.auditId, 'PDF')
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: blob => {
+                    this.apercuEnCours = false;
+                    this.lightbox?.openBlob(blob, nom, `Plan d'audit ${this.plan?.reference ?? this.audit?.reference ?? ''}`.trim());
+                },
+                error: err => {
+                    this.apercuEnCours = false;
+                    this.erreur(err, 'Impossible d\'ouvrir l\'aperçu du PDF.');
+                }
+            });
+    }
+
+    voirFichier(): void {
+        if (!this.auditId || this.apercuEnCours) return;
+        this.apercuEnCours = true;
+        const nom = this.plan?.nomFichierCharge || `plan-${this.audit?.reference ?? this.auditId}.pdf`;
+        this.auditService.telechargerPlan(this.auditId)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: blob => {
+                    this.apercuEnCours = false;
+                    this.lightbox?.openBlob(blob, nom, 'Plan d\'audit externe');
+                },
+                error: err => {
+                    this.apercuEnCours = false;
+                    this.erreur(err, 'Impossible d\'ouvrir l\'aperçu du fichier.');
+                }
+            });
     }
 
     exporter(format: 'PDF' | 'WORD'): void {
@@ -361,9 +503,17 @@ export class PlanAuditComponent implements OnInit, OnDestroy {
         };
     }
 
+    get activiteComplete(): boolean {
+        const e = this.activiteEnEdition;
+        return !!e?.activite.libelleActivite?.trim()
+            && !!e.activite.auditeur?.trim()
+            && e.personnes.length > 0
+            && !this.erreurCreneau;
+    }
+
     /** Range l'activité dans le plan ; elle s'enregistre avec lui (« Enregistrer en brouillon »). */
     appliquerActivite(): void {
-        if (!this.plan || !this.activiteEnEdition?.activite.libelleActivite?.trim() || this.erreurCreneau) return;
+        if (!this.plan || !this.activiteEnEdition || !this.activiteComplete) return;
         const { index, activite, personnes } = this.activiteEnEdition;
         const saisie: ActivitePlan = { ...activite, personnesAuditees: personnes.join(', ') || undefined };
         const activites = [...(this.plan.activites ?? [])];

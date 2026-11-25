@@ -10,8 +10,8 @@ import { hasAnyPermission } from '@core/auth/auth-utils';
 import { SelectInputComponent } from '@shared/ui/select-input/select-input.component';
 import { AuditLibelleComponent } from '../../components/libelle-aide.component';
 import { AuditGestionService, contenu, messageErreur } from '../../services/audit.service';
-import { AuditReferentielService } from '../../services/audit-referentiel.service';
-import { Audit, AuditeurFiche, ChecklistAudit, ConstatAudit, PointControle, RepartitionPoint, TypeConstatRef } from '../../models/audit.model';
+import { AuditReferentielService, LIBELLES_VIDES, LibellesAudit } from '../../services/audit-referentiel.service';
+import { Audit, AuditeurFiche, ChecklistAudit, ConstatAudit, PointControle, RepartitionPoint, SignatureAudit, TypeConstatRef } from '../../models/audit.model';
 import { StatutAudit, StatutConstat, STATUT_AUDIT_LABELS, STATUT_AUDIT_SEVERITY, STATUT_CONSTAT_LABELS, STATUT_CONSTAT_SEVERITY } from '../../models/audit-enums';
 import { NatureChoixComponent } from './nature-choix.component';
 import { PreuvesConstatComponent } from './preuves-constat.component';
@@ -53,6 +53,7 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
     vue: Vue = 'saisie';
     auditId: string | null = null;
     auditsDisponibles: Audit[] = [];
+    libelles: LibellesAudit = LIBELLES_VIDES;
     loadingAudits = false;
     loading = false;
     saving = false;
@@ -65,6 +66,8 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
     equipe: ConstatAudit[] = [];
     /** Les points de contrôle qui me sont assignés sur cet audit. */
     mesPoints: PointControle[] = [];
+    /** Circuit de signature du rapport : un circuit actif (non refusé) verrouille la saisie. */
+    signaturesRapport: SignatureAudit[] = [];
 
     private points = new Map<string, PointControle>();
     private nomsAuditeurs = new Map<string, string>();
@@ -127,6 +130,11 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
             next: checklists => contenu<ChecklistAudit>(checklists).forEach(c => (c.points ?? []).forEach(p => p.id && this.points.set(p.id, p))),
             error: err => this.erreur(err, 'Les checklists n\'ont pas pu être chargées.')
         });
+
+        this.referentiel.libelles().pipe(takeUntil(this.destroy$)).subscribe({
+            next: l => (this.libelles = l),
+            error: () => undefined
+        });
         this.chargerAudits();
     }
 
@@ -138,12 +146,23 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
         return o.value;
     }
 
+    private _vuesCache: { label: string; value: Vue; icone: string; compte: number }[] = [];
+    private _vuesBrouillons = -1;
+    private _vuesEquipe = -1;
+
     get vues() {
-        return [
-            { label: 'Saisie', value: 'saisie', icone: 'pi pi-pencil', compte: 0 },
-            { label: 'Mes constats du jour', value: 'mes-constats', icone: 'pi pi-user', compte: this.brouillonsARelire.length },
-            { label: 'Compilation d\'équipe', value: 'compilation', icone: 'pi pi-users', compte: this.equipe.length }
-        ];
+        const nbB = this.brouillonsARelire.length;
+        const nbE = this.equipe.length;
+        if (nbB !== this._vuesBrouillons || nbE !== this._vuesEquipe) {
+            this._vuesBrouillons = nbB;
+            this._vuesEquipe = nbE;
+            this._vuesCache = [
+                { label: 'Saisie', value: 'saisie', icone: 'pi pi-pencil', compte: 0 },
+                { label: 'Mes constats du jour', value: 'mes-constats', icone: 'pi pi-user', compte: nbB },
+                { label: 'Compilation d\'équipe', value: 'compilation', icone: 'pi pi-users', compte: nbE }
+            ];
+        }
+        return this._vuesCache;
     }
 
     /** Les audits où l'on saisit des constats : démarrés, ou clôturés pour relecture. */
@@ -173,7 +192,7 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
     get auditOptions(): { label: string; value: string }[] {
         const date = (d?: string) => (d ? d.substring(0, 10).split('-').reverse().join('/') : '…');
         return this.auditsDisponibles.map(a => ({
-            label: `${a.reference ?? '—'} · du ${date(a.dateDebutPrevue)} au ${date(a.dateFinPrevue)} · ${this.libelleStatutAudit(a)}`,
+            label: `${a.reference ?? '—'} — ${this.libelles.processus(a.processusId)} · ${date(a.dateDebutPrevue)} → ${date(a.dateFinPrevue)} · ${this.libelleStatutAudit(a)}`,
             value: a.id!
         }));
     }
@@ -190,9 +209,23 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
         return this.auditsDisponibles.find(a => a.id === this.auditId);
     }
 
-    /** On saisit et on compile pendant l'audit ; clôturé, il ne se lit plus qu'en lecture. */
+    /** Vrai uniquement sur un audit en cours dès qu'un circuit de signature actif (non refusé) est posé. */
+    get rapportEnSignature(): boolean {
+        if (this.auditCourant?.statut !== StatutAudit.EN_COURS) return false;
+        const actives = this.signaturesRapport.filter(s => s.statut !== 'REMPLACEE');
+        if (!actives.length || actives.some(s => s.statut === 'REFUSEE')) return false;
+        return actives.some(s => s.statut === 'SIGNEE' || s.statut === 'EN_ATTENTE');
+    }
+
+    get resumeSignatures(): string {
+        const actives = this.signaturesRapport.filter(s => s.statut !== 'REMPLACEE');
+        const signees = actives.filter(s => s.statut === 'SIGNEE').length;
+        return `${signees}/${actives.length}`;
+    }
+
+    /** On saisit et on compile pendant l'audit tant que le rapport n'est pas en signature. */
     get saisieOuverte(): boolean {
-        return this.auditCourant?.statut === StatutAudit.EN_COURS;
+        return this.auditCourant?.statut === StatutAudit.EN_COURS && !this.rapportEnSignature;
     }
 
     /**
@@ -264,6 +297,7 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
             this.brouillons = [];
             this.equipe = [];
             this.mesPoints = [];
+            this.signaturesRapport = [];
             return;
         }
         this.loading = true;
@@ -274,12 +308,14 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
         forkJoin({
             equipe: this.auditService.getConstats(this.auditId),
             brouillons: this.auditService.getMesBrouillons(this.auditId).pipe(catchError(sansDroit)),
-            points: this.auditService.getMesPoints(this.auditId).pipe(catchError(sansDroit))
+            points: this.auditService.getMesPoints(this.auditId).pipe(catchError(sansDroit)),
+            signatures: this.auditService.getSignatures(this.auditId).pipe(catchError(() => of(null)))
         }).pipe(takeUntil(this.destroy$)).subscribe({
-            next: ({ equipe, brouillons, points }) => {
+            next: ({ equipe, brouillons, points, signatures }) => {
                 this.equipe = contenu<ConstatAudit>(equipe);
                 this.brouillons = contenu<ConstatAudit>(brouillons);
                 this.mesPoints = contenu<PointControle>(points);
+                this.signaturesRapport = contenu<SignatureAudit>(signatures);
                 this.mesPoints.forEach(p => p.id && this.points.set(p.id, p));
                 this.loading = false;
                 if (brouillons === null && points === null && this.vue === 'saisie') {
@@ -304,9 +340,25 @@ export class AuditConstatationsComponent implements OnInit, OnDestroy {
         this.horsChecklist = false;
         this.constatSaisi = null;
         this.ouvert = null;
+        this.signaturesRapport = [];
         this.majUrl();
         this.charger();
     }
+
+    selectionnerAudit(id?: string): void {
+        if (!id) return;
+        this.auditId = id;
+        this.changerAudit();
+    }
+
+    get nbPointsSaisis(): number {
+        return this.mesPoints.filter(p => !!p.statutConstat).length;
+    }
+
+    get pctPointsSaisis(): number {
+        return this.mesPoints.length ? Math.round((this.nbPointsSaisis / this.mesPoints.length) * 100) : 0;
+    }
+    
 
     changerVue(v: Vue): void {
         this.vue = v;

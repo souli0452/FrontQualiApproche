@@ -14,7 +14,7 @@ export default {
                 '40': '40px',
             },
             fontFamily: {
-                sans: ['Poppins', 'sans-serif'],
+                sans: ['Golos Text', 'sans-serif'],
             },
             colors: {
                 primary: {
@@ -29,6 +29,9 @@ export default {
                     800: '#122238',
                     900: '#0e1a2a',
                 },
+            },
+            boxShadow: {
+                card: 'var(--card-shadow)',
             },
         },
         screens: {

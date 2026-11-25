@@ -1,37 +1,36 @@
-<div class="flex items-center justify-between mb-8 custom-flex-col">
-    <!-- Left: Title and Breadcrumbs -->
-    <div class="flex flex-col gap-2 w-1/2 first">
-        <h1 class="text-xl md:text-2xl font-extrabold text-surface-900 dark:text-surface-0 m-0 tracking-tight">{{ title }}</h1>
-        <p class="text-sm font-medium text-surface-900 dark:text-surface-400 m-0">{{ subtitle }}</p>
-        <div class="flex items-center gap-2 text-sm font-semibold text-surface-500 dark:text-surface-400">
+<div class="flex items-center justify-between gap-3 mb-5 custom-flex-col">
+    <!-- Left: Title, Subtitle and Breadcrumbs -->
+    <div class="flex flex-col gap-1 first min-w-0">
+        <h4 class="text-[20px] font-bold leading-snug text-[var(--heading-color)] m-0">{{ title }}</h4>
+                <p *ngIf="subtitle" class="text-[12px] font-normal text-[var(--text-color-secondary)] m-0">{{ subtitle }}</p>
+        <div *ngIf="breadcrumbs?.length" class="flex flex-wrap items-center gap-2 text-[14px] text-[var(--text-color-secondary)] mt-0.5">
             <ng-container *ngFor="let crumb of breadcrumbs; let last = last">
-                <a *ngIf="crumb.routerLink" [routerLink]="crumb.routerLink" class="hover:text-primary-500 transition-colors cursor-pointer">
+                <a *ngIf="crumb.routerLink && !last"
+                   [routerLink]="crumb.routerLink"
+                   class="font-normal text-[var(--text-color-secondary)] hover:text-[#0084ca] transition-colors cursor-pointer">
                     {{ crumb.label }}
                 </a>
-                <span *ngIf="!crumb.routerLink">
+                <span *ngIf="!crumb.routerLink || last"
+                      [ngClass]="last ? 'font-medium text-[var(--heading-color)]' : 'font-normal'">
                     {{ crumb.label }}
                 </span>
-                <i *ngIf="!last" class="pi pi-angle-right text-[10px] opacity-70"></i>
+                <i *ngIf="!last" class="pi pi-angle-right !text-[12px] text-[var(--text-color-secondary)]"></i>
             </ng-container>
         </div>
     </div>
 
     <!-- Right: Action Button -->
-        <!-- Right: Action Button -->
-    <div *ngIf="buttonText" class="custom-mt second">
-
+    <div *ngIf="buttonText" class="custom-mt second shrink-0">
         <!-- 1. Si on demande la licence (withLicence = true) -->
         <ng-container *ngIf="withLicence">
-            <p-button *ngIf="buttonLink" siLicenceOuverte [icon]="buttonIcon" [label]="buttonText" [routerLink]="buttonLink" severity="info" />
-            <p-button *ngIf="!buttonLink" siLicenceOuverte [icon]="buttonIcon" [label]="buttonText" severity="info" (click)="onActionButtonClick()" />
+            <p-button *ngIf="buttonLink" siLicenceOuverte [icon]="buttonIcon" [label]="buttonText" [routerLink]="buttonLink" severity="info" size="small" />
+            <p-button *ngIf="!buttonLink" siLicenceOuverte [icon]="buttonIcon" [label]="buttonText" severity="info" size="small" (click)="onActionButtonClick()" />
         </ng-container>
 
         <!-- 2. Si on ne demande pas la licence (withLicence = false) -->
         <ng-container *ngIf="!withLicence">
-            <p-button *ngIf="buttonLink" [icon]="buttonIcon" [label]="buttonText" [routerLink]="buttonLink" severity="info" />
-            <p-button *ngIf="!buttonLink" [icon]="buttonIcon" [label]="buttonText" severity="info" (click)="onActionButtonClick()" />
+            <p-button *ngIf="buttonLink" [icon]="buttonIcon" [label]="buttonText" [routerLink]="buttonLink" severity="info" size="small" />
+            <p-button *ngIf="!buttonLink" [icon]="buttonIcon" [label]="buttonText" severity="info" size="small" (click)="onActionButtonClick()" />
         </ng-container>
-
     </div>
-
 </div>

@@ -8,11 +8,14 @@
     top: 0;
     width: 100%;
     padding: 0 2rem;
-    // background-color: var(--surface-card);
     transition: left 0.4s cubic-bezier(0.05, 0.74, 0.2, 0.99), padding-left 0.4s cubic-bezier(0.05, 0.74, 0.2, 0.99);
     display: flex;
     align-items: center;
     padding-left: 22rem;
+    background-color: var(--surface-card);
+    border-bottom: 1px solid var(--surface-border);
+
+
 
     .layout-topbar-logo-container {
         width: 20rem;

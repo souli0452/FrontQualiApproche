@@ -1,162 +1,197 @@
-<div class="flex flex-col md:flex-row">
-    <div class="w-full md:w-2/3 md:pr-4">
+<div class="card-first overflow-x-clip border-none premium-hub transition-colors duration-300">
+    <app-header-page
+        [title]="modification ? 'Modifier une question' : 'Nouvelle question'"
+        subtitle="Ce que vous écrivez ici s'affiche dans l'aide et est repris mot pour mot par l'assistant IA"
+        [breadcrumbs]="breadcrumbs"
+        buttonText="Retour à la liste"
+        buttonIcon="pi pi-arrow-left"
+        (actionClick)="retour()"
+    />
 
-        <div class="p-4 bg-gray-50 rounded-xl border border-2 border-gray-100">
-            <div class="flex items-center gap-3">
-                <div class="flex items-center justify-center bg-blue-50 text-blue-500 rounded-full"
-                     style="width: 3.5rem; height: 3.5rem">
-                    <i class="pi text-2xl" [ngClass]="modification ? 'pi-pencil' : 'pi-question-circle'"></i>
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start mt-2">
+        <!-- Colonne gauche : Formulaire principal -->
+        <div class="xl:col-span-8 bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-5">
+            <!-- En-tête de la carte -->
+            <div class="flex items-center gap-3 pb-4 mb-5 border-b border-[#dddddd]/70 dark:border-surface-700">
+                <div class="w-11 h-11 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                    <i class="pi !text-xl" [ngClass]="modification ? 'pi-pencil' : 'pi-question-circle'"></i>
                 </div>
-                <div class="flex flex-col">
-                    <span class="font-bold text-2xl text-900 mb-1">
-                        {{ modification ? 'Modifier une question' : 'Nouvelle question' }}
-                    </span>
-                    <span class="text-500 text-sm">
-                        Ce que vous écrivez ici s'affiche dans l'aide de l'application.
-                        <br>
-                        L'assistant IA le reprendra tel quel plutôt que d'inventer une réponse.
-                    </span>
+                <div class="min-w-0">
+                    <h3 class="text-[16px] font-bold text-[var(--heading-color)] m-0">
+                        {{ modification ? 'Modifier la question et sa réponse' : 'Rédiger la question et sa réponse' }}
+                    </h3>
+                    <p class="text-xs text-[var(--text-color-secondary)] m-0 mt-0.5 leading-snug">
+                        L'assistant IA reprendra votre réponse telle quelle plutôt que d'en inventer une.
+                    </p>
                 </div>
             </div>
-            <hr>
 
-            <div class="w-full">
-                <div class="surface-section p-4 border-round shadow-1 h-full">
-
-                    <!-- La question -->
-                    <div class="field mb-4">
-                        <div class="flex items-center mb-2 gap-2">
-                            <label for="question" class="font-semibold m-0">
-                                La question <span class="text-red-500">*</span>
+            <div class="flex flex-col gap-5">
+                <!-- La question -->
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-1.5">
+                        <div class="flex items-center gap-1.5">
+                            <label for="question" class="text-sm font-semibold text-[var(--heading-color)] m-0">
+                                La question <span class="text-rose-500">*</span>
                             </label>
-                            <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors"
-                               (click)="infoQuestion.toggle($event)"></i>
+                            <button type="button"
+                                    class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-0 cursor-pointer inline-flex items-center"
+                                    (click)="infoQuestion.toggle($event)"
+                                    aria-label="Aide sur la formulation de la question">
+                                <i class="pi pi-question-circle !text-xs"></i>
+                            </button>
                         </div>
-                        <p-popover #infoQuestion>
-                            <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                                Formulez-la comme un utilisateur la poserait, avec ses mots à lui.
-                                C'est sur cette formulation que l'assistant reconnaîtra qu'une
-                                question s'en approche.
-                            </div>
-                        </p-popover>
-                        <input id="question" pInputText class="w-full" [(ngModel)]="entree.question"
-                               placeholder="Qui doit viser une procédure avant sa diffusion ?" />
+                        <span class="text-xs font-mono tabular-nums"
+                              [ngClass]="(entree.question || '').length > QUESTION_MAX ? 'text-rose-600 dark:text-rose-400 font-semibold' : 'text-[var(--text-color-secondary)]'">
+                            {{ (entree.question || '').length }} / {{ QUESTION_MAX }}
+                        </span>
                     </div>
+                    <p-popover #infoQuestion>
+                        <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[300px]">
+                            Formulez-la comme un utilisateur la poserait, avec ses mots à lui.
+                            C'est sur cette formulation que l'assistant reconnaîtra qu'une question s'en approche.
+                        </div>
+                    </p-popover>
+                    <input id="question" pInputText class="w-full" [(ngModel)]="entree.question"
+                           placeholder="Ex : Qui doit viser une procédure avant sa diffusion ?" />
+                </div>
 
-                    <!-- La réponse -->
-                    <div class="field mb-4">
-                        <div class="flex items-center mb-2 gap-2">
-                            <label for="reponse" class="font-semibold m-0">
-                                La réponse <span class="text-red-500">*</span>
+                <!-- La réponse -->
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-1.5">
+                        <div class="flex items-center gap-1.5">
+                            <label for="reponse" class="text-sm font-semibold text-[var(--heading-color)] m-0">
+                                La réponse <span class="text-rose-500">*</span>
                             </label>
-                            <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors"
-                               (click)="infoReponse.toggle($event)"></i>
+                            <button type="button"
+                                    class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-0 cursor-pointer inline-flex items-center"
+                                    (click)="infoReponse.toggle($event)"
+                                    aria-label="Aide sur la rédaction de la réponse">
+                                <i class="pi pi-question-circle !text-xs"></i>
+                            </button>
                         </div>
-                        <p-popover #infoReponse>
-                            <div class="p-2 text-sm text-700 line-height-3" style="max-width: 320px;">
-                                L'assistant la reprendra sans la reformuler : écrivez-la comme vous
-                                voudriez qu'on y réponde. Gardez-la brève — ce texte lui est
-                                transmis à chaque question posée, et une réponse longue occupe la
-                                place des autres. Au-delà de quelques phrases, joignez plutôt le
-                                document.
-                            </div>
-                        </p-popover>
-                        <textarea id="reponse" pTextarea class="w-full" rows="6" [autoResize]="true"
-                                  [(ngModel)]="entree.reponse"
-                                  placeholder="Le pilote du processus vise en premier, puis le responsable qualité."></textarea>
-                        <small class="text-500">{{ (entree.reponse || '').length }} / 1500 caractères</small>
+                        <span class="text-xs font-mono tabular-nums"
+                              [ngClass]="(entree.reponse || '').length > REPONSE_MAX ? 'text-rose-600 dark:text-rose-400 font-semibold' : 'text-[var(--text-color-secondary)]'">
+                            {{ (entree.reponse || '').length }} / {{ REPONSE_MAX }}
+                        </span>
                     </div>
-
-                    <!-- La publication. Masquée à qui n'en a pas le droit : décider de ce qui
-                         paraît est une responsabilité distincte de celle d'écrire, et le serveur
-                         refuse de toute façon le changement. -->
-                    <div class="field" *ngIf="peutPublier">
-                        <div class="flex items-center gap-3">
-                            <p-toggleswitch inputId="publiee" [(ngModel)]="entree.publiee"></p-toggleswitch>
-                            <div class="flex flex-col">
-                                <label for="publiee" class="font-semibold m-0">Publier cette réponse</label>
-                                <small class="text-500">
-                                    Une réponse non publiée reste enregistrée, sans paraître dans
-                                    l'aide ni être récitée par l'assistant.
-                                </small>
-                            </div>
+                    <p-popover #infoReponse>
+                        <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[320px]">
+                            L'assistant la reprendra sans la reformuler : écrivez-la comme vous voudriez qu'on y réponde.
+                            Gardez-la brève — au-delà de quelques phrases, joignez plutôt le document.
                         </div>
-                    </div>
-
+                    </p-popover>
+                    <textarea id="reponse" pTextarea class="w-full" rows="6" [autoResize]="true"
+                              [(ngModel)]="entree.reponse"
+                              placeholder="Ex : Le pilote du processus vise en premier, puis le responsable qualité."></textarea>
                 </div>
+
+                <!-- La publication (si habilité) -->
+                <div *ngIf="peutPublier"
+                     class="rounded-[5px] border border-[#dddddd]/80 dark:border-surface-700 bg-surface-50/70 dark:bg-surface-800/40 px-4 py-3 flex items-center gap-3">
+                    <p-toggleswitch inputId="publiee" [(ngModel)]="entree.publiee"></p-toggleswitch>
+                    <div class="flex flex-col min-w-0">
+                        <label for="publiee" class="text-sm font-semibold text-[var(--heading-color)] m-0 cursor-pointer">
+                            Publier cette réponse
+                        </label>
+                        <small class="text-xs text-[var(--text-color-secondary)] leading-snug mt-0.5">
+                            Une réponse non publiée reste enregistrée, sans paraître dans l'aide ni être récitée par l'assistant.
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Information si brouillon obligatoire -->
+                <div *ngIf="!peutPublier"
+                     class="rounded-[5px] border border-[#0ea5e9]/35 bg-[#0ea5e9]/10 dark:bg-[#0ea5e9]/15 px-4 py-3 flex items-start gap-2.5">
+                    <i class="pi pi-info-circle text-[#0ea5e9] !text-sm mt-0.5 shrink-0"></i>
+                    <span class="text-xs text-[#0369a1] dark:text-sky-300 leading-relaxed">
+                        Votre réponse sera enregistrée comme brouillon. Une personne habilitée la publiera après relecture.
+                    </span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-wrap items-center justify-between gap-2 mt-6 pt-4 border-t border-[#dddddd]/70 dark:border-surface-700">
+                <p-button label="Annuler" severity="secondary" [outlined]="true" size="small"
+                          styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                          (onClick)="retour()"></p-button>
+                <p-button icon="pi pi-check" severity="info" size="small"
+                          [label]="modification ? 'Enregistrer' : (peutPublier && entree.publiee ? 'Publier la réponse' : 'Enregistrer le brouillon')"
+                          [disabled]="!estValide() || enregistrement"
+                          [loading]="enregistrement"
+                          (onClick)="enregistrer()"></p-button>
             </div>
         </div>
 
-        <!-- Ce que devient la réponse quand on ne peut pas la publier soi-même. -->
-        <div *ngIf="!peutPublier" class="flex items-center gap-3 mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-            <i class="pi pi-info-circle text-blue-500"></i>
-            <span class="text-sm text-slate-700">
-                Votre réponse sera enregistrée comme brouillon. Une personne habilitée la publiera
-                après relecture.
-            </span>
-        </div>
+        <!-- Colonne droite : Pièces jointes + Conseils rapides -->
+        <div class="xl:col-span-4 flex flex-col gap-5">
+            <!-- Pièces jointes -->
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-4">
+                <div class="flex items-center justify-between gap-2 mb-3">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="w-8 h-8 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                            <i class="pi pi-paperclip !text-sm"></i>
+                        </span>
+                        <div class="min-w-0">
+                            <h3 class="text-sm font-bold text-[var(--heading-color)] m-0 leading-tight">Pièces jointes</h3>
+                            <span class="text-[11px] text-[var(--text-color-secondary)]">Procédure, formulaire ou modèle</span>
+                        </div>
+                    </div>
+                    <button type="button"
+                            class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-1 cursor-pointer inline-flex items-center"
+                            (click)="infoFichiers.toggle($event)"
+                            aria-label="Aide sur les pièces jointes">
+                        <i class="pi pi-question-circle !text-xs"></i>
+                    </button>
+                </div>
+                <p-popover #infoFichiers>
+                    <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[300px]">
+                        Facultatif. Un formulaire, une procédure, un modèle : ce que le texte ne peut pas dire.
+                        L'assistant les signale sans les lire ; on les ouvre depuis l'aide.
+                    </div>
+                </p-popover>
 
-        <div class="flex justify-between gap-2 mt-8">
-            <button pButton pRipple class="p-button-secondary font-bold" label="Annuler"
-                    (click)="retour()"></button>
-
-            <button pButton pRipple class="font-bold" icon="pi pi-check"
-                    [label]="modification ? 'Enregistrer' : (peutPublier ? 'Publier la réponse' : 'Enregistrer le brouillon')"
-                    [disabled]="!estValide() || enregistrement"
-                    [loading]="enregistrement"
-                    (click)="enregistrer()"></button>
-        </div>
-    </div>
-
-    <div class="w-full md:w-1/3 mt-6 md:mt-0">
-
-        <div class="p-4 bg-gray-50 rounded-xl border border-2 border-gray-100">
-            <div class="flex items-center mb-2 gap-2">
-                <h3 class="text-xl font-bold text-900 mt-0">Pièces jointes</h3>
-                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors"
-                   (click)="infoFichiers.toggle($event)"></i>
+                <app-file-upload
+                    [existingFiles]="entree.fichiers || []"
+                    (removeExisting)="retirerPieceExistante($event)"
+                    (fileUploaded)="recevoirFichiers($event)">
+                </app-file-upload>
             </div>
-            <p-popover #infoFichiers>
-                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                    Facultatif. Un formulaire, une procédure, un modèle : ce que le texte ne peut
-                    pas dire. L'assistant les signale sans les lire ; on les ouvre depuis l'aide.
-                </div>
-            </p-popover>
 
-            <app-file-upload
-                [existingFiles]="entree.fichiers || []"
-                (removeExisting)="retirerPieceExistante($event)"
-                (fileUploaded)="recevoirFichiers($event)">
-            </app-file-upload>
-        </div>
+            <!-- Conseils rapides -->
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-4">
+                <div class="flex items-center gap-2.5 mb-3 pb-2.5 border-b border-[#dddddd]/70 dark:border-surface-700">
+                    <span class="w-8 h-8 rounded-[5px] bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <i class="pi pi-lightbulb !text-sm"></i>
+                    </span>
+                    <h3 class="text-sm font-bold text-[var(--heading-color)] m-0">Conseils rapides</h3>
+                </div>
 
-        <div class="p-4 bg-gray-50 rounded-xl mt-6 border border-2 border-gray-100">
-            <h3 class="text-xl font-bold text-900 mt-0 mb-4">Conseils rapides</h3>
-
-            <div class="flex flex-col gap-3">
-                <div class="flex align-items-start gap-3">
-                    <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-                    <span class="text-700 line-height-3">Posez la question comme on vous la pose réellement, pas comme elle figure dans une procédure.</span>
-                </div>
-                <div class="flex align-items-start gap-3">
-                    <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-                    <span class="text-700 line-height-3">Une réponse qui se suffit à elle-même : l'assistant ne la complétera pas.</span>
-                </div>
-                <div class="flex align-items-start gap-3">
-                    <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-                    <span class="text-700 line-height-3">Brève de préférence — elle est transmise à l'assistant à chaque question posée.</span>
-                </div>
-                <div class="flex align-items-start gap-3">
-                    <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-                    <span class="text-700 line-height-3">Vos règles font autorité : écrivez l'usage de la maison, même s'il diffère de l'habitude.</span>
-                </div>
-                <div class="flex align-items-start gap-3">
-                    <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-                    <span class="text-700 line-height-3">Joignez le document plutôt que de le recopier dans la réponse.</span>
-                </div>
-                <div class="flex align-items-start gap-3">
-                    <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-                    <span class="text-700 line-height-3">Laissez non publiée le temps de la faire relire.</span>
+                <div class="flex flex-col gap-2.5 text-xs text-[var(--text-color-secondary)] leading-relaxed">
+                    <div class="flex items-start gap-2.5">
+                        <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                        <span>Posez la question comme on vous la pose réellement, pas comme elle figure dans une procédure.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                        <span>Une réponse qui se suffit à elle-même : l'assistant ne la complétera pas.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                        <span>Brève de préférence — elle est transmise à l'assistant à chaque question posée.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                        <span>Vos règles font autorité : écrivez l'usage de la maison, même s'il diffère de l'habitude.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                        <span>Joignez le document plutôt que de le recopier dans la réponse.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                        <span>Laissez non publiée le temps de la faire relire.</span>
+                    </div>
                 </div>
             </div>
         </div>

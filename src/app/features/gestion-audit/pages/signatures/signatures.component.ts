@@ -1,16 +1,17 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { NgPrimeModule } from '@prime-ng';
-import { Observable, Subject, forkJoin, takeUntil, tap } from 'rxjs';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { Observable, Subject, catchError, forkJoin, of, takeUntil, tap } from 'rxjs';
+import { MessageService } from 'primeng/api';
 import { currentUserState } from '@core/auth/auth.state';
 import { AuditGestionService, contenu, messageErreur } from '../../services/audit.service';
 import { AuditReferentielService, UtilisateurAnnuaire } from '../../services/audit-referentiel.service';
-import { Audit, SignatureAudit } from '../../models/audit.model';
+import { Audit, AvancementAudit, SignatureAudit } from '../../models/audit.model';
 import { AuditLibelleComponent } from '../../components/libelle-aide.component';
 import { RequestPasswordComponent } from '@shared/request-password/request-password';
+import { LightboxComponent } from '@features/non-conformite/components/lightbox/lightbox';
 
 /**
  * Le circuit de signature du rapport (D15) : un tableau Signataire / Fonction / Statut / Action,
@@ -24,13 +25,17 @@ import { RequestPasswordComponent } from '@shared/request-password/request-passw
 @Component({
     selector: 'app-audit-signatures',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, AuditLibelleComponent, RequestPasswordComponent],
+    imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, AuditLibelleComponent, RequestPasswordComponent, LightboxComponent],    
     providers: [MessageService],
     templateUrl: './signatures.component.html'
 })
 export class AuditSignaturesComponent implements OnInit, OnDestroy {
+    @ViewChild(LightboxComponent) lightbox?: LightboxComponent;
+    apercuEnCours = false;
 
     audit: Audit | null = null;
+    avancement: AvancementAudit | null = null;
+    confirmeSansConstat = false;
     signatures: SignatureAudit[] = [];
     utilisateurs: UtilisateurAnnuaire[] = [];
     loading = true;
@@ -84,12 +89,14 @@ export class AuditSignaturesComponent implements OnInit, OnDestroy {
         forkJoin({
             audit: this.auditService.findById(auditId),
             signatures: this.auditService.getSignatures(auditId),
-            utilisateurs: this.referentiel.utilisateurs()
+            utilisateurs: this.referentiel.utilisateurs(),
+            avancement: this.auditService.getAvancement(auditId).pipe(catchError(() => of(null)))
         })
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-                next: ({ audit, signatures, utilisateurs }) => {
+                next: ({ audit, signatures, utilisateurs, avancement }) => {
                     this.audit = (audit as any)?.data ?? null;
+                    this.avancement = (avancement as any)?.data ?? null;
                     this.signatures = contenu<SignatureAudit>(signatures).sort((a, b) => (a.ordre ?? 0) - (b.ordre ?? 0));
                     this.utilisateurs = utilisateurs;
                     this.noms = new Map(utilisateurs.map(u => [u.id, u.nomComplet]));
@@ -124,16 +131,50 @@ export class AuditSignaturesComponent implements OnInit, OnDestroy {
         return this.signatures.filter(s => s.statut !== 'REMPLACEE').length;
     }
 
+    get enAttente(): number {
+        return this.signatures.filter(s => s.statut === 'EN_ATTENTE').length;
+    }
+
+    get progressionSignatures(): number {
+        return this.actifs > 0 ? Math.round((this.signees / this.actifs) * 100) : 0;
+    }
+
+    voirPdf(): void {
+        if (!this.auditId) return;
+        this.apercuEnCours = true;
+        const nom = `rapport-${this.audit?.reference ?? this.auditId}.pdf`;
+        const titre = `Rapport d'audit — ${this.audit?.reference ?? ''}`;
+        this.auditService.exporterRapport(this.auditId, 'PDF')
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: blob => {
+                    this.apercuEnCours = false;
+                    this.lightbox?.openBlob(blob, nom, titre);
+                },
+                error: async err => {
+                    this.apercuEnCours = false;
+                    let detail = "Impossible de charger l'aperçu PDF.";
+                    try {
+                        detail = JSON.parse(await (err?.error as Blob).text())?.message ?? detail;
+                    } catch {
+                        /* corps illisible */
+                    }
+                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail, life: 8000 });
+                }
+            });
+    }
+
     /** Le circuit se (re)pose tant que l'audit est en cours et que personne n'a encore signé — ou après un refus. */
     get peutPoserCircuit(): boolean {
         return this.audit?.statut === 'EN_COURS' && !this.audit?.circuitExterne && (this.signees === 0 || this.circuitRefuse);
     }
 
-    ouvrirCircuit(): void {
+        ouvrirCircuit(): void {
         const actifs = this.signatures.filter(s => s.statut !== 'REMPLACEE');
         this.signatairesChoisis = actifs.map(s => s.signataireId!).filter(Boolean);
         this.fonctions = Object.fromEntries(actifs.map(s => [s.signataireId!, s.fonctionSignataire ?? '']));
         this.roles = Object.fromEntries(actifs.map(s => [s.signataireId!, s.role ?? null]));
+        this.confirmeSansConstat = false;
         this.circuitOuvert = true;
     }
 
@@ -146,8 +187,32 @@ export class AuditSignaturesComponent implements OnInit, OnDestroy {
         }
     }
 
+    /** Chaque signataire doit porter un rôle, avec au moins un « Approuvé par » (obs. 26). */
+    get tousRolesChoisis(): boolean {
+        return this.signatairesChoisis.length > 0 && this.signatairesChoisis.every(id => !!this.roles[id]);
+    }
+
+    get aUnApprobateur(): boolean {
+        return this.signatairesChoisis.some(id => this.roles[id] === 'APPROUVE');
+    }
+
+    get aucunConstatPublie(): boolean {
+        return this.avancement != null && (this.avancement.constatsPublies ?? 0) === 0;
+    }
+
+    get messageValidationCircuit(): string | null {
+        if (!this.signatairesChoisis.length) return null;
+        if (!this.tousRolesChoisis) return 'Choisissez un titre (« Signe en tant que ») pour chaque signataire.';
+        if (!this.aUnApprobateur) return 'Le circuit doit comporter au moins un signataire « Approuvé par ».';
+        return null;
+    }
+
+    get peutSoumettreCircuit(): boolean {
+        return this.tousRolesChoisis && this.aUnApprobateur && (!this.aucunConstatPublie || this.confirmeSansConstat);
+    }
+
     poserCircuit(): void {
-        if (!this.auditId || !this.signatairesChoisis.length) return;
+        if (!this.auditId || !this.peutSoumettreCircuit) return;
         const circuit = this.signatairesChoisis.map(id => ({
             signataireId: id, fonctionSignataire: this.fonctions[id] || undefined, role: this.roles[id] || undefined
         }));

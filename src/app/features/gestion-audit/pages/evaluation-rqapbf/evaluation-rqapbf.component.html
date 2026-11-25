@@ -8,7 +8,7 @@
                       [routerLink]="['/gestion-audit/programme', auditId]" pTooltip="Retour à l'audit"></p-button>
             <div>
                 <div class="flex items-center gap-2">
-                    <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Évaluation RQAP-BF</h2>
+                    <h2 class="text-[16px] font-bold text-surface-900 dark:text-surface-50 m-0">Évaluation RQAP-BF</h2>
                     <p-tag *ngIf="evaluation" [value]="validee ? 'Validée' : 'Brouillon'" [severity]="validee ? 'success' : 'secondary'" [rounded]="true"></p-tag>
                 </div>
                 <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">

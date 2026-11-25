@@ -1,28 +1,29 @@
-<p-card>
-<!-- ====================================================================
-    1. BANDEAU D'ALERTES
-    ==================================================================== -->
-<app-smart-alert-banner 
-    [alerts]="smartAlerts">
-</app-smart-alert-banner>
-<!-- 1. BADGE DE PORTÉE DYNAMIQUE (RQ vs PILOTE) -->
-    <div class="flex items-center justify-between mb-4 pb-3 border-b border-surface-200 dark:border-surface-700">
-        <div class="flex items-center gap-2.5">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
-                  [ngClass]="porteeGlobale 
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40' 
-                    : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40'">
-                <i [class]="porteeGlobale ? 'pi pi-globe text-xs' : 'pi pi-building text-xs'"></i>
+<div>
+    <!-- ====================================================================
+         1. BANDEAU D'ALERTES
+         ==================================================================== -->
+    <app-smart-alert-banner
+        [alerts]="smartAlerts">
+    </app-smart-alert-banner>
+
+    <!-- 2. BADGE DE PORTÉE DYNAMIQUE (RQ vs PILOTE) -->
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-[#dddddd]/80 dark:border-surface-700">
+        <div class="flex flex-wrap items-center gap-2.5">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[5px] text-xs font-semibold border"
+                  [ngClass]="porteeGlobale
+                    ? 'bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-300 border-[#0ea5e9]/35'
+                    : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'">
+                <i [class]="porteeGlobale ? 'pi pi-globe !text-xs' : 'pi pi-building !text-xs'"></i>
                 <span>{{ porteeGlobale ? 'Périmètre Global' : 'Périmètre Local' }}</span>
             </span>
-            <span class="text-xs text-surface-500 dark:text-surface-400">
-                Chiffres consolidés sur <strong class="text-surface-700 dark:text-surface-200">{{ porteeGlobale ? 'toutes les structures' : 'votre structure' }}</strong>.
+            <span class="text-xs text-[var(--text-color-secondary)]">
+                Chiffres consolidés sur <strong class="text-[var(--heading-color)]">{{ porteeGlobale ? 'toutes les structures' : 'votre structure' }}</strong>.
             </span>
         </div>
     </div>
-    <!-- 2. LES 4 CARTES KPI DYNAMIQUES ET CONTEXTUELLES -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        
+
+    <!-- 3. LES 4 CARTES KPI DYNAMIQUES ET CONTEXTUELLES -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         <!-- 1. Documents à traiter -->
         <app-kpi-card
             label="Documents à traiter"
@@ -37,6 +38,7 @@
             routerLink="/gestion-documentaire/documents"
             [clickable]="true">
         </app-kpi-card>
+
         <!-- 2. Demandes à instruire -->
         <app-kpi-card
             label="Demandes à instruire"
@@ -51,6 +53,7 @@
             routerLink="/gestion-documentaire/demandes"
             [clickable]="true">
         </app-kpi-card>
+
         <!-- 3. Total Documents -->
         <app-kpi-card
             label="Total Documents"
@@ -65,6 +68,7 @@
             routerLink="/gestion-documentaire/documents"
             [clickable]="true">
         </app-kpi-card>
+
         <!-- 4. En retard de révision -->
         <app-kpi-card
             label="En retard de révision"
@@ -72,7 +76,7 @@
             [color]="(stats?.documentsEnRetardRevision || 0) > 0 ? 'red' : 'green'"
             [value]="stats?.documentsEnRetardRevision || 0"
             [loading]="loading"
-            [description]="(stats?.documentsEnRetardRevision || 0) > 0 
+            [description]="(stats?.documentsEnRetardRevision || 0) > 0
                 ? (porteeGlobale ? 'Documents échus sur toutes les structures' : 'Documents échus dans votre structure')
                 : 'Tous les documents sont à jour'"
             [meterData]="retardRevisionMeterData"
@@ -83,9 +87,9 @@
         </app-kpi-card>
     </div>
 
-    <!-- 3. GRAPHIQUES DE PILOTAGE : ÉVOLUTION ET RÉPARTITION -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-6">
-        <!-- Bloc 1 : Graphique d'Évolution (Gauche ~60% sur Desktop) -->
+    <!-- 4. GRAPHIQUES DE PILOTAGE : ÉVOLUTION ET RÉPARTITION -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-5">
+        <!-- Bloc 1 : Graphique d'Évolution -->
         <div class="lg:col-span-7 xl:col-span-7 min-w-0 w-full">
             <app-chart-evolution
                 [title]="'Évolution de l\'activité documentaire'"
@@ -99,7 +103,7 @@
             </app-chart-evolution>
         </div>
 
-        <!-- Bloc 2 : Donut Répartition du Patrimoine (Droite ~40% sur Desktop) -->
+        <!-- Bloc 2 : Donut Répartition du Patrimoine -->
         <div class="lg:col-span-5 xl:col-span-5 min-w-0 w-full">
             <app-chart-donut
                 [title]="donutMode === 'STATUT' ? 'Statut du Patrimoine' : 'Typologie documentaire'"
@@ -110,23 +114,23 @@
                 [labels]="donutLabels"
                 [colors]="donutColors"
                 [customStats]="donutStats">
-                <div header-action class="flex items-center bg-slate-100 dark:bg-surface-800 p-1 rounded-xl border border-slate-200/90 dark:border-surface-700 shadow-2xs gap-1">
-                    <button type="button" 
-                            class="px-3 py-1.5 rounded-lg font-semibold text-xs border-none cursor-pointer transition-all duration-200 flex items-center gap-1.5 select-none"
-                            [ngClass]="donutMode === 'STATUT' ? 'bg-[#0084ca] text-white shadow-sm ring-1 ring-[#0084ca]/20 font-bold' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-surface-700 bg-transparent'"
+                <div header-action class="flex items-center bg-surface-100 dark:bg-surface-800 p-1 rounded-[5px] border border-[#dddddd] dark:border-surface-700 gap-1">
+                    <button type="button"
+                            class="px-3 py-1 rounded-[4px] font-semibold text-xs border-0 cursor-pointer transition-all duration-200 flex items-center gap-1.5 select-none"
+                            [ngClass]="donutMode === 'STATUT' ? 'bg-[#0084ca] text-white shadow-xs' : 'text-[var(--text-color-secondary)] hover:text-[var(--heading-color)] hover:bg-surface-200/60 dark:hover:bg-surface-700 bg-transparent'"
                             (click)="setDonutMode('STATUT')"
                             pTooltip="Afficher la répartition par statut de validation"
                             tooltipPosition="bottom">
-                        <i class="pi pi-check-circle text-[11px]" [ngClass]="donutMode === 'STATUT' ? 'text-white' : 'text-slate-400'"></i>
+                        <i class="pi pi-check-circle !text-[11px]" [ngClass]="donutMode === 'STATUT' ? 'text-white' : 'text-[var(--text-color-secondary)]'"></i>
                         <span>Statuts</span>
                     </button>
-                    <button type="button" 
-                            class="px-3 py-1.5 rounded-lg font-semibold text-xs border-none cursor-pointer transition-all duration-200 flex items-center gap-1.5 select-none"
-                            [ngClass]="donutMode === 'TYPE' ? 'bg-[#0084ca] text-white shadow-sm ring-1 ring-[#0084ca]/20 font-bold' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-surface-700 bg-transparent'"
+                    <button type="button"
+                            class="px-3 py-1 rounded-[4px] font-semibold text-xs border-0 cursor-pointer transition-all duration-200 flex items-center gap-1.5 select-none"
+                            [ngClass]="donutMode === 'TYPE' ? 'bg-[#0084ca] text-white shadow-xs' : 'text-[var(--text-color-secondary)] hover:text-[var(--heading-color)] hover:bg-surface-200/60 dark:hover:bg-surface-700 bg-transparent'"
                             (click)="setDonutMode('TYPE')"
                             pTooltip="Afficher la typologie des documents (Procédure, Norme...)"
                             tooltipPosition="bottom">
-                        <i class="pi pi-tags text-[11px]" [ngClass]="donutMode === 'TYPE' ? 'text-white' : 'text-slate-400'"></i>
+                        <i class="pi pi-tags !text-[11px]" [ngClass]="donutMode === 'TYPE' ? 'text-white' : 'text-[var(--text-color-secondary)]'"></i>
                         <span>Types</span>
                     </button>
                 </div>
@@ -134,11 +138,8 @@
         </div>
     </div>
 
-    <!-- ------------------------------------------------------------------ à traiter -->
-    <!-- Ce qui attend un geste, avec de quoi le faire sur place : les boutons sont ceux que le
-         circuit ouvre à l'appelant sur chaque dossier. Auparavant l'écran montrait des courbes de
-         dépôts, et il fallait aller chercher ailleurs les dossiers qui attendaient. -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6 items-start">
+    <!-- 5. DOSSIERS À TRAITER -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
         <app-qms-a-traiter
             titre="Documents attendant votre décision"
             icone="pi pi-inbox"
@@ -172,4 +173,4 @@
 
     <!-- Lightbox de visualisation des documents (PDF et images) -->
     <app-lightbox #lightbox></app-lightbox>
-</p-card>
+</div>

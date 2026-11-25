@@ -48,11 +48,11 @@ export class QmsDocumentDemandesComponent {
 
     couleurEtat(demande: DemandeDocumentDto): string {
         switch (demande.etat) {
-            case 'EN_COURS': return 'bg-blue-50 text-blue-700 border-blue-100';
-            case 'ACCEPTEE': return 'bg-amber-50 text-amber-800 border-amber-100';
-            case 'REFUSEE': return 'bg-slate-100 text-slate-600 border-slate-200';
-            case 'EXECUTEE': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
-            default: return 'bg-slate-50 text-slate-600 border-slate-200';
+            case 'EN_COURS': return 'bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-300 border-[#0ea5e9]/35';
+            case 'ACCEPTEE': return 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30';
+            case 'REFUSEE': return 'bg-surface-100 dark:bg-surface-800 text-[var(--text-color-secondary)] border-[#dddddd] dark:border-surface-700';
+            case 'EXECUTEE': return 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30';
+            default: return 'bg-surface-100 dark:bg-surface-800 text-[var(--text-color-secondary)] border-[#dddddd] dark:border-surface-700';
         }
     }
 
@@ -61,6 +61,6 @@ export class QmsDocumentDemandesComponent {
     }
 
     couleurIcone(demande: DemandeDocumentDto): string {
-        return demande.type === 'SUPPRESSION' ? 'text-red-500' : 'text-indigo-500';
+        return demande.type === 'SUPPRESSION' ? 'text-rose-500' : 'text-[#0084ca] dark:text-sky-400';
     }
 }

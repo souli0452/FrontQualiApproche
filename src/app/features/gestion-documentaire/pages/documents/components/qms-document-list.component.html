@@ -6,7 +6,6 @@
     [totalElements]="totalDocuments"
     [pageSize]="taillePage"
     [currentPage]="premiereLigne / taillePage"
-    [rowsPerPageOptions]="[5, 10, 20, 50]"
     [clickableRows]="true"
     [hasFilters]="true"
     [showSearch]="true"
@@ -23,20 +22,24 @@
 
     <!-- Header Actions (Actualiser & Réinitialiser) -->
     <div header-actions class="flex items-center gap-1.5">
-        <button pButton pRipple 
-                *ngIf="hasActiveFilters()"
-                label="Effacer filtres" 
-                icon="pi pi-filter-slash" 
-                class="p-button-text p-button-sm p-button-secondary text-xs"
-                (click)="reinitialiserFiltres()">
-        </button>
-        <button pButton pRipple 
-                icon="pi pi-refresh" 
-                class="p-button-text p-button-rounded p-button-secondary p-button-sm" 
-                pTooltip="Actualiser" 
-                tooltipPosition="bottom"
-                (click)="refresh.emit()">
-        </button>
+        <p-button *ngIf="hasActiveFilters()"
+                  label="Effacer filtres"
+                  icon="pi pi-filter-slash"
+                  severity="secondary"
+                  [text]="true"
+                  size="small"
+                  styleClass="!text-xs"
+                  (onClick)="reinitialiserFiltres()">
+        </p-button>
+        <p-button icon="pi pi-refresh"
+                  severity="secondary"
+                  [text]="true"
+                  [rounded]="true"
+                  size="small"
+                  pTooltip="Actualiser"
+                  tooltipPosition="bottom"
+                  (onClick)="refresh.emit()">
+        </p-button>
     </div>
 
     <!-- Filters Slot -->
@@ -80,7 +83,7 @@
 
 <!-- Template Version -->
 <ng-template #versionTpl let-doc>
-    <span class="font-mono text-xs bg-slate-100 dark:bg-surface-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-surface-700 px-2.5 py-1 rounded-md font-semibold">
+    <span class="font-mono text-xs bg-surface-100 dark:bg-surface-800 text-[var(--heading-color)] border border-[#dddddd] dark:border-surface-700 px-2 py-0.5 rounded-[4px] font-semibold">
         v{{ doc.numeroVersion ?? 0 }}
     </span>
 </ng-template>
@@ -88,14 +91,14 @@
 <!-- Template Statut & Workflow -->
 <ng-template #statusTpl let-doc>
     <div class="flex flex-col gap-1 text-left">
-        <p-tag [value]="statusLabel(doc)" [severity]="statusSeverity(doc)" styleClass="text-xs w-fit"></p-tag>
-        <span class="text-xs text-slate-400" *ngIf="etapeDeCircuit(doc) && !circuitTermine(doc)">
-            <i class="pi pi-arrow-right text-xs mr-1"></i>{{ etapeDeCircuit(doc) }}
+        <p-tag [value]="statusLabel(doc)" [severity]="statusSeverity(doc)" styleClass="!text-xs w-fit"></p-tag>
+        <span class="text-xs text-[var(--text-color-secondary)]" *ngIf="etapeDeCircuit(doc) && !circuitTermine(doc)">
+            <i class="pi pi-arrow-right !text-[10px] mr-1"></i>{{ etapeDeCircuit(doc) }}
         </span>
-        <span class="text-xs text-emerald-600 font-semibold" *ngIf="circuitTermine(doc)">
-            <i class="pi pi-check-circle text-xs mr-1"></i>Circuit terminé
+        <span class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold" *ngIf="circuitTermine(doc)">
+            <i class="pi pi-check-circle !text-[11px] mr-1"></i>Circuit terminé
         </span>
         <p-tag *ngIf="aUneDecisionAttendue(doc)" severity="warn" icon="pi pi-bell"
-               value="Action attendue" styleClass="text-xs w-fit"></p-tag>
+               value="Action attendue" styleClass="!text-xs w-fit"></p-tag>
     </div>
 </ng-template>

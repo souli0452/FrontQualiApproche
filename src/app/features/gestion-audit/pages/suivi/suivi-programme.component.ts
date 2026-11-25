@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NgPrimeModule } from '@prime-ng';
 import { Subject, takeUntil } from 'rxjs';
-import { MessageService } from 'primeng/api';
+import { MenuItem, MessageService } from 'primeng/api';
 import { SelectInputComponent } from '@shared/ui/select-input/select-input.component';
+import { KpiCardComponent } from '@shared/kpi-card/kpi-card.component';
 import { TableauAffichageComponent } from '@shared/tableau-affichage/tableau-affichage';
 import { TableColumn } from '../../../../models/generique.model';
 import { AuditLibelleComponent } from '../../components/libelle-aide.component';
@@ -31,6 +32,19 @@ interface Periode {
     fin: string;
 }
 
+interface IndicateurSuivi {
+    id: string;
+    label: string;
+    valeur: string | number;
+    icone: string;
+    color: 'blue' | 'orange' | 'red' | 'green' | 'purple' | 'solid-blue';
+    subText?: string;
+    percentage?: number;
+    meterData?: { label: string; value: number; color: string }[];
+    meterMax?: number;
+    action: () => void;
+}
+
 /**
  * Le suivi du programme, en trois onglets d'après la maquette : réalisation du programme (D16),
  * historique et comparaison des évaluations (D17), écarts RQAP-BF transmis au module
@@ -42,13 +56,14 @@ interface Periode {
 @Component({
     selector: 'app-suivi-programme',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, SelectInputComponent, AuditLibelleComponent, TableauAffichageComponent],
+    imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, SelectInputComponent, KpiCardComponent, AuditLibelleComponent, TableauAffichageComponent],
     providers: [MessageService],
     templateUrl: './suivi-programme.component.html'
 })
 export class SuiviProgrammeComponent implements OnInit, OnDestroy {
 
-    readonly onglets = [
+    ecartsEnAttente = 0;
+    onglets: { label: string; value: Onglet; icone: string; badge?: number }[] = [
         { label: 'Suivi du programme', value: 'programme', icone: 'pi pi-chart-bar' },
         { label: 'Comparaison', value: 'comparaison', icone: 'pi pi-arrow-right-arrow-left' },
         { label: 'Écarts RQAP-BF', value: 'ecarts', icone: 'pi pi-exclamation-triangle' }
@@ -61,6 +76,8 @@ export class SuiviProgrammeComponent implements OnInit, OnDestroy {
     annee = new Date().getFullYear();
     anneeOptions = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() + 1 - i).map(a => ({ label: String(a), value: a }));
     tableau: TableauDeBord = {};
+    chargementIndicateurs = true;
+    kpisProgramme: IndicateurSuivi[] = [];
     auditsAnnee: Audit[] = [];
     totalProgramme = 0;
     pageProgramme = 0;
@@ -84,6 +101,7 @@ export class SuiviProgrammeComponent implements OnInit, OnDestroy {
     periode1 = String(new Date().getFullYear() - 1);
     periode2 = String(new Date().getFullYear());
     comparaison: ComparaisonPeriodes | null = null;
+    domainesComparaison: { domaine: string; p1?: number; p2?: number }[] = [];
     comparant = false;
     radar: any;
     optionsRadar: any;
@@ -137,6 +155,21 @@ export class SuiviProgrammeComponent implements OnInit, OnDestroy {
         const demande = q.get('onglet') as Onglet | null;
         this.onglet = demande && this.onglets.some(o => o.value === demande) ? demande : this.auditFiltre ? 'ecarts' : 'programme';
 
+        this.construireKpis();
+        this.auditService.notificationsAudit$.pipe(takeUntil(this.destroy$)).subscribe(r => {
+            this.ecartsEnAttente = r?.suivi ?? 0;
+            this.onglets = [
+                { label: 'Suivi du programme', value: 'programme', icone: 'pi pi-chart-bar' },
+                { label: 'Comparaison', value: 'comparaison', icone: 'pi pi-arrow-right-arrow-left' },
+                {
+                    label: 'Écarts RQAP-BF',
+                    value: 'ecarts',
+                    icone: 'pi pi-exclamation-triangle',
+                    badge: this.ecartsEnAttente > 0 ? this.ecartsEnAttente : undefined
+                }
+            ];
+        });
+
         this.referentiel.libelles().pipe(takeUntil(this.destroy$)).subscribe({
             next: l => (this.libelles = l),
             error: () => undefined // les tirets suffisent ; la page reste lisible
@@ -152,13 +185,84 @@ export class SuiviProgrammeComponent implements OnInit, OnDestroy {
 
     /** Une autre année : les indicateurs, et la première page de ses audits. */
     chargerProgramme(): void {
+        this.chargementIndicateurs = true;
         this.auditService.getTableauDeBord(this.annee).pipe(takeUntil(this.destroy$)).subscribe({
-            next: res => (this.tableau = res?.data ?? {}),
-            error: err => this.erreur(err, 'Les indicateurs n\'ont pas pu être chargés.')
+            next: res => {
+                this.tableau = res?.data ?? {};
+                this.construireKpis();
+                this.chargementIndicateurs = false;
+            },
+            error: err => {
+                this.tableau = {};
+                this.construireKpis();
+                this.chargementIndicateurs = false;
+                this.erreur(err, 'Les indicateurs n\'ont pas pu être chargés.');
+            }
         });
         this.pageProgramme = 0;
         this.chargerAuditsAnnee();
     }
+
+    private construireKpis(): void {
+        const t = this.tableau;
+        const taux = t.tauxRealisation != null ? Math.round(t.tauxRealisation) : undefined;
+        const realises = t.auditsRealises ?? 0;
+        const planifies = t.auditsPlanifies ?? 0;
+        const enRetard = t.auditsEnRetard ?? 0;
+        const maturite = t.scoreMaturiteMoyen != null ? Math.round(t.scoreMaturiteMoyen) : undefined;
+
+        this.kpisProgramme = [
+            {
+                id: 'taux-realisation',
+                label: 'Taux de réalisation',
+                valeur: taux != null ? `${taux} %` : '—',
+                icone: 'pi pi-chart-bar',
+                color: 'solid-blue',
+                percentage: taux,
+                meterData: [{ label: 'Réalisation', value: taux ?? 0, color: '#ffffff' }],
+                meterMax: 100,
+                subText: planifies > 0 ? `${realises} réalisé(s) sur ${planifies} prévu(s)` : `Avancement programme ${this.annee}`,
+                action: () => this.router.navigate(['/gestion-audit/programme'], { queryParams: { annee: this.annee } })
+            },
+            {
+                id: 'audits-en-retard',
+                label: 'Audits en retard',
+                valeur: enRetard,
+                icone: 'pi pi-exclamation-triangle',
+                color: 'red',
+                meterData: [{ label: 'En retard', value: enRetard > 0 ? 100 : 0, color: '#e11d48' }],
+                meterMax: 100,
+                subText: enRetard > 0 ? 'Cliquer pour filtrer les retards' : 'Aucun retard sur le programme',
+                action: () => this.router.navigate(['/gestion-audit/programme'], { queryParams: { enRetard: true, annee: this.annee } })
+            },
+            {
+                id: 'score-maturite',
+                label: 'Score de maturité moyen',
+                valeur: maturite != null ? `${maturite} %` : '—',
+                icone: 'pi pi-verified',
+                color: 'green',
+                percentage: maturite,
+                meterData: [{ label: 'Maturité', value: maturite ?? 0, color: '#10b981' }],
+                meterMax: 100,
+                subText: 'Comparer l\'évolution RQAP-BF',
+                action: () => (this.onglet = 'comparaison')
+            }
+        ];
+    }
+
+    getActionMenuProgramme = (a: Audit): MenuItem[] => [
+        { label: 'Ouvrir la fiche complète', icon: 'pi pi-external-link', command: () => this.ouvrirAudit(a) },
+        {
+            label: a.circuitExterne ? 'Plan d\'audit externe' : 'Plan d\'audit',
+            icon: 'pi pi-file-edit',
+            command: () => a.id && this.router.navigate(['/gestion-audit/programme', a.id, 'plan'])
+        },
+        {
+            label: 'Évaluation RQAP-BF',
+            icon: 'pi pi-sliders-h',
+            command: () => a.id && this.router.navigate(['/gestion-audit/programme', a.id, 'evaluation-rqapbf'])
+        }
+    ];
 
     onPageProgramme(event: { page: number; size: number }): void {
         const page = event.page ?? 0;
@@ -248,12 +352,6 @@ export class SuiviProgrammeComponent implements OnInit, OnDestroy {
         });
     }
 
-    domaines(): { domaine: string; p1?: number; p2?: number }[] {
-        const d1 = this.comparaison?.periode1?.parDomaine ?? {};
-        const d2 = this.comparaison?.periode2?.parDomaine ?? {};
-        return [...new Set([...Object.keys(d1), ...Object.keys(d2)])].map(domaine => ({ domaine, p1: d1[domaine], p2: d2[domaine] }));
-    }
-
     libellePeriode(valeur: string): string {
         return this.periodes.find(p => p.value === valeur)?.label ?? valeur;
     }
@@ -287,24 +385,74 @@ export class SuiviProgrammeComponent implements OnInit, OnDestroy {
         return NIVEAU_NOTATION_RQAPBF_SEVERITY[n as NiveauNotationRQAPBF] ?? 'secondary';
     }
 
+    trackByOnglet(_i: number, o: { value: string }): string {
+        return o.value;
+    }
+
+    trackByKpi(_i: number, k: IndicateurSuivi): string {
+        return k.id;
+    }
+
     private construireRadar(): void {
-        const d = this.domaines();
+        const d1 = this.comparaison?.periode1?.parDomaine ?? {};
+        const d2 = this.comparaison?.periode2?.parDomaine ?? {};
+        this.domainesComparaison = [...new Set([...Object.keys(d1), ...Object.keys(d2)])]
+            .map(domaine => ({ domaine, p1: d1[domaine], p2: d2[domaine] }));
+
+        const d = this.domainesComparaison;
         const style = getComputedStyle(document.documentElement);
-        const primaire = style.getPropertyValue('--p-primary-500').trim() || '#3b82f6';
+        const primaire = style.getPropertyValue('--p-primary-500').trim() || '#0084ca';
         const neutre = style.getPropertyValue('--p-surface-400').trim() || '#94a3b8';
         const texte = style.getPropertyValue('--p-text-muted-color').trim() || '#64748b';
         const grille = style.getPropertyValue('--p-content-border-color').trim() || '#e2e8f0';
         this.radar = {
             labels: d.map(x => x.domaine),
             datasets: [
-                { label: this.libellePeriode(this.periode1), data: d.map(x => x.p1 ?? 0), borderColor: neutre, backgroundColor: neutre + '33', pointBackgroundColor: neutre },
-                { label: this.libellePeriode(this.periode2), data: d.map(x => x.p2 ?? 0), borderColor: primaire, backgroundColor: primaire + '33', pointBackgroundColor: primaire }
+                {
+                    label: this.libellePeriode(this.periode1),
+                    data: d.map(x => Math.round(x.p1 ?? 0)),
+                    borderColor: neutre,
+                    backgroundColor: neutre + '33',
+                    pointBackgroundColor: neutre,
+                    pointBorderColor: '#ffffff'
+                },
+                {
+                    label: this.libellePeriode(this.periode2),
+                    data: d.map(x => Math.round(x.p2 ?? 0)),
+                    borderColor: primaire,
+                    backgroundColor: primaire + '33',
+                    pointBackgroundColor: primaire,
+                    pointBorderColor: '#ffffff'
+                }
             ]
         };
         this.optionsRadar = {
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { color: texte } } },
-            scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: grille }, pointLabels: { color: texte } } }
+            plugins: {
+                legend: { position: 'bottom', labels: { color: texte } },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx: any) => ` ${ctx.dataset.label} : ${ctx.parsed?.r ?? 0} %`
+                    }
+                }
+            },
+            scales: {
+                r: {
+                    min: 0,
+                    max: 100,
+                    ticks: {
+                        display: true,
+                        stepSize: 25,
+                        backdropColor: 'transparent',
+                        color: texte,
+                        font: { size: 10 },
+                        callback: (value: any) => `${value} %`
+                    },
+                    grid: { color: grille },
+                    angleLines: { color: grille },
+                    pointLabels: { color: texte, font: { size: 11, weight: '500' } }
+                }
+            }
         };
     }
 

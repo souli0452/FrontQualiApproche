@@ -10,6 +10,8 @@ import { AuditGestionService, contenu, messageErreur } from '../../services/audi
 import { AuditReferentielService } from '../../services/audit-referentiel.service';
 import { AuditeurFiche, ChecklistAudit, PointControle } from '../../models/audit.model';
 
+type ConfirmationTone = 'info' | 'success' | 'warn' | 'danger';
+
 /**
  * Paramétrage des checklists d'audit (écran B6 de la maquette) : les checklists à gauche, les
  * points de contrôle de la checklist choisie à droite.
@@ -35,6 +37,7 @@ export class AuditChecklistsComponent implements OnInit, OnDestroy {
     currentPage = 0;
     pageSize = 10;
     auditeurs: AuditeurFiche[] = [];
+    private nomsAuditeurs = new Map<string, string>();
     active: ChecklistAudit | null = null;
     loading = true;
     saving = false;
@@ -46,8 +49,9 @@ export class AuditChecklistsComponent implements OnInit, OnDestroy {
     renommage = false;
     brouillonNom = '';
     brouillonChapitre = '';
+    confirmationTone: ConfirmationTone = 'info';
 
-    readonly filtres = [
+    readonly filtres: { label: string; value: string | null }[] = [
         { label: 'Toutes', value: null },
         { label: 'Brouillons', value: 'BROUILLON' },
         { label: 'Publiées', value: 'PUBLIEE' },
@@ -65,7 +69,10 @@ export class AuditChecklistsComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.referentiel.auditeurs().pipe(takeUntil(this.destroy$)).subscribe({
-            next: a => (this.auditeurs = a.filter(x => x.statut !== 'INACTIF')),
+            next: a => {
+                this.nomsAuditeurs = new Map(a.filter(x => x.id).map(x => [x.id!, x.nomComplet ?? '—']));
+                this.auditeurs = a.filter(x => x.statut !== 'INACTIF');
+            },
             error: err => this.erreur(err, 'Le vivier d\'auditeurs n\'a pas pu être chargé.')
         });
         this.charger();
@@ -93,7 +100,9 @@ export class AuditChecklistsComponent implements OnInit, OnDestroy {
     }
 
     /** Un autre statut : on repart de la première page. */
-    filtrer(): void {
+    choisirFiltre(valeur: string | null): void {
+        if (this.filtreStatut === valeur) return;
+        this.filtreStatut = valeur;
         this.currentPage = 0;
         this.charger();
     }
@@ -106,6 +115,49 @@ export class AuditChecklistsComponent implements OnInit, OnDestroy {
 
     get modifiable(): boolean {
         return this.active?.statut === 'BROUILLON';
+    }
+
+    get confirmationBadgeClasses(): string {
+        switch (this.confirmationTone) {
+            case 'danger':
+                return 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 ring-rose-50/70 dark:ring-rose-950/30';
+            case 'warn':
+                return 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 ring-amber-50/70 dark:ring-amber-950/30';
+            case 'success':
+                return 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 ring-emerald-50/70 dark:ring-emerald-950/30';
+            default:
+                return 'bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 ring-[#0ea5e9]/10';
+        }
+    }
+
+    get confirmationAcceptClasses(): string {
+        const base = 'p-button-sm flex-1 justify-center rounded-[5px]';
+        switch (this.confirmationTone) {
+            case 'danger':
+                return `p-button-danger ${base}`;
+            case 'warn':
+                return `p-button-warn ${base}`;
+            case 'success':
+                return `p-button-success ${base}`;
+            default:
+                return `p-button-info ${base}`;
+        }
+    }
+
+    nomAuditeur(id?: string): string | null {
+        if (!id) return null;
+        return this.nomsAuditeurs.get(id) ?? null;
+    }
+
+    initialesAuditeur(id?: string): string {
+        const nom = this.nomAuditeur(id);
+        if (!nom) return '?';
+        return nom
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(part => part[0]?.toUpperCase() ?? '')
+            .join('');
     }
 
     choisir(cl: ChecklistAudit): void {
@@ -198,16 +250,17 @@ export class AuditChecklistsComponent implements OnInit, OnDestroy {
         this.enregistrer({ points }, 'Auditeur assigné.');
     }
 
-    retirerPoint(event: Event, i: number): void {
+    retirerPoint(i: number): void {
         const point = this.active?.points?.[i];
+        this.confirmationTone = 'danger';
         this.confirmationService.confirm({
-            rejectButtonProps: { severity: 'secondary', outlined: true },
-            target: event.currentTarget as EventTarget,
-            message: `Retirer « ${point?.libelle} » de la checklist ?`,
-            icon: 'pi pi-trash',
+            key: 'checklist-action',
+            header: 'Retirer ce point de contrôle',
+            message: `Voulez-vous retirer « ${point?.libelle || 'ce point'} » de la checklist ?`,
+            icon: 'pi-trash',
             acceptLabel: 'Retirer',
-            rejectLabel: 'Retour',
-            acceptButtonStyleClass: 'p-button-danger',
+            acceptIcon: 'pi pi-trash',
+            rejectLabel: 'Annuler',
             accept: () => this.enregistrer({ points: (this.active?.points ?? []).filter((_, j) => j !== i) }, 'Point de contrôle retiré.')
         });
     }
@@ -236,20 +289,32 @@ export class AuditChecklistsComponent implements OnInit, OnDestroy {
             });
     }
 
-    publier(event: Event, cl: ChecklistAudit): void {
+    publier(cl: ChecklistAudit): void {
+        this.confirmationTone = 'success';
         this.confirmationService.confirm({
-            rejectButtonProps: { severity: 'secondary', outlined: true },
-            target: event.currentTarget as EventTarget,
-            message: `Publier « ${cl.nom} » ? Elle pourra servir dans les audits, et ne se modifiera plus.`,
-            icon: 'pi pi-send',
+            key: 'checklist-action',
+            header: 'Publier la checklist',
+            message: `Publier « ${cl.nom} » ? Elle deviendra utilisable dans les audits et ne pourra plus être modifiée directement.`,
+            icon: 'pi-send',
             acceptLabel: 'Publier',
+            acceptIcon: 'pi pi-send',
             rejectLabel: 'Retour',
             accept: () => this.geste(this.auditService.publierChecklist(cl.id!), 'Checklist publiée.')
         });
     }
 
     archiver(cl: ChecklistAudit): void {
-        this.geste(this.auditService.archiverChecklist(cl.id!), 'Checklist archivée.');
+        this.confirmationTone = 'warn';
+        this.confirmationService.confirm({
+            key: 'checklist-action',
+            header: 'Archiver la checklist',
+            message: `Archiver « ${cl.nom} » ? Elle ne sera plus proposée pour les nouveaux audits (les audits existants la conservent).`,
+            icon: 'pi-inbox',
+            acceptLabel: 'Archiver',
+            acceptIcon: 'pi pi-inbox',
+            rejectLabel: 'Retour',
+            accept: () => this.geste(this.auditService.archiverChecklist(cl.id!), 'Checklist archivée.')
+        });
     }
 
     dupliquer(cl: ChecklistAudit): void {
@@ -265,15 +330,16 @@ export class AuditChecklistsComponent implements OnInit, OnDestroy {
         });
     }
 
-    supprimer(event: Event, cl: ChecklistAudit): void {
+    supprimer(cl: ChecklistAudit): void {
+        this.confirmationTone = 'danger';
         this.confirmationService.confirm({
-            rejectButtonProps: { severity: 'secondary', outlined: true },
-            target: event.currentTarget as EventTarget,
-            message: `Supprimer « ${cl.nom} » ?`,
-            icon: 'pi pi-trash',
+            key: 'checklist-action',
+            header: 'Supprimer le brouillon',
+            message: `Supprimer définitivement la checklist « ${cl.nom} » et tous ses points de contrôle ?`,
+            icon: 'pi-trash',
             acceptLabel: 'Supprimer',
-            rejectLabel: 'Retour',
-            acceptButtonStyleClass: 'p-button-danger',
+            acceptIcon: 'pi pi-trash',
+            rejectLabel: 'Annuler',
             accept: () => {
                 this.active = null;
                 this.geste(this.auditService.supprimerChecklist(cl.id!), 'Checklist supprimée.');
@@ -299,6 +365,10 @@ export class AuditChecklistsComponent implements OnInit, OnDestroy {
 
     severiteStatut(s?: string): any {
         return ({ BROUILLON: 'secondary', PUBLIEE: 'success', ARCHIVEE: 'contrast' } as Record<string, string>)[s ?? ''] ?? 'secondary';
+    }
+
+    trackById(_i: number, cl: ChecklistAudit): string {
+        return cl.id ?? String(_i);
     }
 
     trackByIndex(i: number): number {

@@ -1,67 +1,98 @@
-<div class="p-6">
-    <p-toast></p-toast>
-    <p-confirmdialog></p-confirmdialog>
-
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <div>
-            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Portefeuille des auditeurs</h2>
-            <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">Les utilisateurs habilités à conduire des audits, leur disponibilité et leur évaluation</p>
+<p-toast></p-toast>
+<p-confirmdialog
+    #cd
+    key="auditeur-action"
+    appendTo="body"
+    maskStyleClass="backdrop-blur-sm"
+    [closable]="false"
+    [draggable]="false"
+    [style]="{ width: '440px', maxWidth: '92vw' }"
+    styleClass="border-none bg-transparent shadow-none">
+    <ng-template pTemplate="headless" let-message>
+        <div class="p-6 bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-2xl flex flex-col items-center text-center whitespace-normal">
+            <div class="w-14 h-14 rounded-full flex items-center justify-center mb-3.5 ring-8 bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 ring-rose-50/70 dark:ring-rose-950/30">
+                <i class="pi !text-2xl" [ngClass]="message.icon || 'pi-trash'"></i>
+            </div>
+            <h3 class="text-[17px] font-bold text-[var(--heading-color)] m-0 mb-1.5">
+                {{ message.header || 'Confirmation' }}
+            </h3>
+            <p class="text-[13px] text-[var(--text-color-secondary)] m-0 leading-relaxed px-1">
+                {{ message.message }}
+            </p>
+            <div class="w-full border-t border-[#dddddd]/70 dark:border-surface-700 my-4"></div>
+            <div class="flex items-center justify-center gap-3 w-full">
+                <button type="button" pButton
+                        [label]="message.rejectLabel || 'Annuler'"
+                        class="p-button-outlined p-button-secondary p-button-sm flex-1 justify-center rounded-[5px]"
+                        (click)="cd.onReject()">
+                </button>
+                <button type="button" pButton
+                        [label]="message.acceptLabel || 'Retirer'"
+                        [icon]="message.acceptIcon || 'pi pi-trash'"
+                        class="p-button-danger p-button-sm flex-1 justify-center rounded-[5px]"
+                        (click)="cd.onAccept()">
+                </button>
+            </div>
         </div>
-        <p-button icon="pi pi-user-plus" label="Ajouter un auditeur" (onClick)="ouvrirAjout()"></p-button>
+    </ng-template>
+</p-confirmdialog>
+
+<!-- Tableau unifié du portefeuille des auditeurs (aligné sur Programme d'audit) -->
+<app-tableau-affichage
+    title="Portefeuille des auditeurs"
+    titleIcon="pi pi-users"
+    subtitle="Les utilisateurs habilités à conduire des audits, leur disponibilité et leur évaluation"
+    [badgeCount]="totalElements"
+    [tableCols]="tableCols"
+    [minWidth]="'44rem'"
+    [listeObject]="auditeurs"
+    [loading]="loading"
+    [loadingRows]="pageSize"
+    [lazy]="true"
+    [totalElements]="totalElements"
+    [pageSize]="pageSize"
+    [currentPage]="currentPage"
+    [clickableRows]="true"
+    [showTopBar]="true"
+    [showSearch]="true"
+    [searchValue]="recherche"
+    placeholderRecherche="Nom ou courriel…"
+    [hasFilters]="filtresOuverts"
+    recordName="auditeurs"
+    [cellTemplates]="cellTemplates"
+    [getActionMenuItems]="getActionMenuItems"
+    (searchValueChange)="rechercher($event)"
+    (rowClick)="ouvrirDetail($event)"
+    (pageChangeEvent)="onPageChange($event)">
+
+    <div header-actions class="flex flex-wrap items-center gap-2">
+        <p-button
+            [icon]="filtresOuverts ? 'pi pi-chevron-up' : 'pi pi-filter'"
+            size="small"
+            [outlined]="true"
+            [severity]="nbFiltresActifs ? 'info' : 'secondary'"
+            [label]="'Filtres' + (nbFiltresActifs ? ' (' + nbFiltresActifs + ')' : '')"
+            (onClick)="filtresOuverts = !filtresOuverts">
+        </p-button>
+        <p-button
+            *ngIf="nbFiltresActifs"
+            icon="pi pi-filter-slash"
+            label="Effacer"
+            [text]="true"
+            severity="secondary"
+            size="small"
+            (onClick)="reinitialiserFiltres()">
+        </p-button>
+        <p-button
+            icon="pi pi-user-plus"
+            label="Ajouter un auditeur"
+            severity="info"
+            size="small"
+            (onClick)="ouvrirAjout()">
+        </p-button>
     </div>
 
-    <!-- Fiche d'auditeur, à l'inscription comme à la modification : en fenêtre, au-dessus du portefeuille -->
-    <p-dialog [(visible)]="editionOuverte" [modal]="true" [draggable]="false" [resizable]="false"
-              [style]="{ width: '52rem' }" [breakpoints]="{ '960px': '90vw', '640px': '100vw' }"
-              [header]="enEdition?.id ? 'Modifier la fiche de ' + (enEdition?.nomComplet ?? 'l\'auditeur') : 'Nouvel auditeur'">
-        <form [formGroup]="formulaire" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
-            <div>
-                <app-audit-libelle texte="Utilisateur" [requis]="true" aide="La personne inscrite au vivier, choisie dans l'annuaire des utilisateurs." />
-                <app-select-input formControlName="utilisateurId" [options]="utilisateursProposes" optionLabel="nomComplet" optionValue="id"
-                                  [filter]="true" filterBy="nomComplet,email" placeholder="Choisir dans l'annuaire" />
-                <small *ngIf="formulaire.get('utilisateurId')?.invalid && formulaire.get('utilisateurId')?.touched" class="p-error">Ce champ est requis</small>
-            </div>
-            <div>
-                <app-audit-libelle texte="Structure d'appartenance" aide="Il ne peut pas auditer sa propre structure." />
-                <app-select-input formControlName="structureAppartenance" [options]="structures" optionLabel="libelleLong" optionValue="id" [filter]="true"
-                                  placeholder="Choisir une structure" />
-            </div>
-            <div>
-                <app-audit-libelle texte="Domaines / processus habilités" aide="Saisissez un domaine puis Entrée, pour chaque domaine." />
-                <p-autoComplete formControlName="domainesHabilites" [multiple]="true" [typeahead]="false" appendTo="body" styleClass="w-full" placeholder="Ex : Gestion documentaire, Achats"></p-autoComplete>
-            </div>
-            <div>
-                <app-audit-libelle texte="Certifications" aide="Saisissez une certification puis Entrée (ISO 9001, RQAP-BF niv. 1…)." />
-                <p-autoComplete formControlName="certifications" [multiple]="true" [typeahead]="false" appendTo="body" styleClass="w-full" placeholder="Saisir puis Entrée"></p-autoComplete>
-            </div>
-            <div>
-                <app-audit-libelle texte="Disponibilité" />
-                <input pInputText formControlName="disponibilite" class="w-full" placeholder="Ex : 2 jours par mois" />
-            </div>
-            <div>
-                <app-audit-libelle texte="Niveau d'habilitation" />
-                <input pInputText formControlName="niveauHabilitation" class="w-full" placeholder="Ex : responsable d'audit" />
-            </div>
-            <div>
-                <app-audit-libelle texte="Processus gérés" aide="Ceux dont il est responsable ou pilote : il ne pourra pas les auditer (conflit d'intérêts)." />
-                <app-multiselect-input formControlName="processusGeres" [options]="structures" optionLabel="libelleLong" optionValue="id" display="chip"
-                                       placeholder="Choisir les processus" />
-            </div>
-            <div>
-                <app-audit-libelle texte="Statut" />
-                <app-select-input formControlName="statut" [options]="statutOptions" optionLabel="label" optionValue="value" [showClear]="false" />
-            </div>
-        </form>
-        <ng-template pTemplate="footer">
-            <div class="flex justify-end gap-2">
-                <p-button label="Annuler" severity="secondary" [outlined]="true" size="small" (onClick)="enEdition = null"></p-button>
-                <p-button [label]="enEdition?.id ? 'Enregistrer la fiche' : 'Enregistrer l\'auditeur'" icon="pi pi-save" size="small" [loading]="saving" (onClick)="sauvegarder()"></p-button>
-            </div>
-        </ng-template>
-    </p-dialog>
-
-    <!-- Filtres : tous choisis dans des listes -->
-    <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-3 mb-4">
+    <div filters class="pt-3 mt-1 border-t border-[#dddddd]/70 dark:border-surface-700">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <app-select-input [(ngModel)]="filtres.niveau" [options]="niveauOptions" optionLabel="label" optionValue="value"
                               placeholder="Évaluation : toutes" (selectionChange)="filtrer()" />
@@ -72,53 +103,37 @@
             <app-select-input [(ngModel)]="filtres.certification" [options]="certificationOptions" optionLabel="label" optionValue="value"
                               [filter]="true" placeholder="Certification : toutes" (selectionChange)="filtrer()" />
         </div>
-        <div *ngIf="filtresActifs" class="flex justify-end mt-2">
-            <p-button label="Réinitialiser les filtres" icon="pi pi-filter-slash" [text]="true" size="small" (onClick)="reinitialiserFiltres()"></p-button>
+        <div *ngIf="nbFiltresActifs" class="flex justify-end mt-2">
+            <p-button label="Réinitialiser les filtres" icon="pi pi-filter-slash" [text]="true" severity="secondary" size="small"
+                      (onClick)="reinitialiserFiltres()"></p-button>
         </div>
     </div>
+</app-tableau-affichage>
 
-    <app-tableau-affichage
-        [tableCols]="tableCols"
-        [listeObject]="auditeurs"
-        [loading]="loading"
-        [lazy]="true"
-        [totalElements]="totalElements"
-        [pageSize]="pageSize"
-        [currentPage]="currentPage"
-        [rowsPerPageOptions]="[10, 25, 50]"
-        [clickableRows]="true"
-        [showSearch]="true"
-        [placeholderRecherche]="'Nom ou courriel…'"
-        recordName="auditeurs"
-        [cellTemplates]="cellTemplates"
-        [getActionMenuItems]="getActionMenuItems"
-        (searchValueChange)="rechercher($event)"
-        (rowClick)="ouvrirDetail($event)"
-        (pageChangeEvent)="onPageChange($event)">
-    </app-tableau-affichage>
-</div>
-
+<!-- Cellules du tableau -->
 <ng-template #nomTpl let-a>
     <div class="flex items-center gap-3 min-w-0">
-        <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs shrink-0">{{ initiales(a) }}</span>
+        <span class="w-8 h-8 rounded-full bg-[#0084ca]/12 dark:bg-sky-500/20 flex items-center justify-center text-[#0084ca] dark:text-sky-300 font-bold text-xs shrink-0">
+            {{ initiales(a) }}
+        </span>
         <span class="min-w-0">
-            <span class="block font-semibold text-sm text-surface-900 dark:text-surface-100 truncate">{{ a.nomComplet }}</span>
-            <span *ngIf="a.email" class="block text-xs text-surface-500 truncate">{{ a.email }}</span>
+            <span class="block font-semibold text-sm text-[var(--heading-color)] truncate">{{ a.nomComplet }}</span>
+            <span *ngIf="a.email" class="block text-xs text-[var(--text-color-secondary)] truncate">{{ a.email }}</span>
         </span>
     </div>
 </ng-template>
 
 <ng-template #domainesTpl let-a>
-    <span class="text-sm text-surface-600 dark:text-surface-300">{{ a.domainesHabilites?.join(', ') || '—' }}</span>
+    <span class="text-sm text-[var(--heading-color)]">{{ a.domainesHabilites?.join(', ') || '—' }}</span>
 </ng-template>
 
 <ng-template #certificationsTpl let-a>
-    <span class="text-sm text-surface-600 dark:text-surface-300">{{ a.certifications?.join(', ') || 'Aucune' }}</span>
+    <span class="text-sm text-[var(--text-color-secondary)]">{{ a.certifications?.join(', ') || 'Aucune' }}</span>
 </ng-template>
 
 <ng-template #disponibiliteTpl let-a>
     <p-tag *ngIf="a.disponibilite; else dispoVide" [value]="a.disponibilite" severity="info" [rounded]="true"></p-tag>
-    <ng-template #dispoVide><span class="text-sm text-surface-400">—</span></ng-template>
+    <ng-template #dispoVide><span class="text-sm text-[var(--text-color-secondary)]">—</span></ng-template>
 </ng-template>
 
 <ng-template #statutTpl let-a>
@@ -131,58 +146,162 @@
     <ng-template #nonEvalue><p-tag value="Non évalué" severity="secondary" [rounded]="true"></p-tag></ng-template>
 </ng-template>
 
-<!-- Le détail d'une ligne : activité et évaluation, en fenêtre ; la fenêtre épouse son contenu, les actions restent en pied -->
-<p-dialog [(visible)]="detailOuvert" [modal]="true" [dismissableMask]="true" [draggable]="false" [resizable]="false" [maximizable]="true"
-          [style]="{ width: '48rem' }" [breakpoints]="{ '960px': '90vw', '640px': '100vw' }"
-          [header]="detail?.nomComplet ?? 'Auditeur'">
+<!-- Modale Ajout / Modification d'auditeur -->
+<p-dialog
+    [(visible)]="editionOuverte"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    maskStyleClass="backdrop-blur-sm"
+    [style]="{ width: '50rem', maxWidth: '95vw' }"
+    [breakpoints]="{ '960px': '92vw', '640px': '100vw' }">
+    <ng-template pTemplate="header">
+        <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-full bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                <i class="pi !text-xl" [ngClass]="enEdition?.id ? 'pi-user-edit' : 'pi-user-plus'"></i>
+            </div>
+            <div class="flex flex-col">
+                <span class="font-bold text-base text-[var(--heading-color)]">
+                    {{ enEdition?.id ? 'Modifier la fiche de ' + (enEdition?.nomComplet ?? 'l\'auditeur') : 'Nouvel auditeur' }}
+                </span>
+                <span class="text-xs text-[var(--text-color-secondary)]">
+                    Habilitations, rattachement organisationnel et prévention des conflits d'intérêts
+                </span>
+            </div>
+        </div>
+    </ng-template>
+
+    <form [formGroup]="formulaire" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3 pt-1">
+        <div>
+            <app-audit-libelle texte="Utilisateur" [requis]="true" aide="La personne inscrite au vivier, choisie dans l'annuaire des utilisateurs." />
+            <app-select-input formControlName="utilisateurId" [options]="utilisateursProposes" optionLabel="nomComplet" optionValue="id"
+                              [filter]="true" filterBy="nomComplet,email" placeholder="Choisir dans l'annuaire" />
+            <small *ngIf="formulaire.get('utilisateurId')?.invalid && formulaire.get('utilisateurId')?.touched" class="p-error">Ce champ est requis</small>
+        </div>
+        <div>
+            <app-audit-libelle texte="Structure d'appartenance" aide="Il ne peut pas auditer sa propre structure." />
+            <app-select-input formControlName="structureAppartenance" [options]="structures" optionLabel="libelleLong" optionValue="id" [filter]="true"
+                              placeholder="Choisir une structure" />
+        </div>
+        <div>
+            <app-audit-libelle texte="Domaines / processus habilités" aide="Saisissez un domaine puis Entrée, pour chaque domaine." />
+            <p-autoComplete formControlName="domainesHabilites" [multiple]="true" [typeahead]="false" appendTo="body" styleClass="w-full" placeholder="Ex : Gestion documentaire, Achats"></p-autoComplete>
+        </div>
+        <div>
+            <app-audit-libelle texte="Certifications" aide="Saisissez une certification puis Entrée (ISO 9001, RQAP-BF niv. 1…)." />
+            <p-autoComplete formControlName="certifications" [multiple]="true" [typeahead]="false" appendTo="body" styleClass="w-full" placeholder="Saisir puis Entrée"></p-autoComplete>
+        </div>
+        <div>
+            <app-audit-libelle texte="Disponibilité" />
+            <input pInputText formControlName="disponibilite" class="w-full" placeholder="Ex : 2 jours par mois" />
+        </div>
+        <div>
+            <app-audit-libelle texte="Niveau d'habilitation" />
+            <input pInputText formControlName="niveauHabilitation" class="w-full" placeholder="Ex : responsable d'audit" />
+        </div>
+        <div>
+            <app-audit-libelle texte="Processus gérés" aide="Ceux dont il est responsable ou pilote : il ne pourra pas les auditer (conflit d'intérêts)." />
+            <app-multiselect-input formControlName="processusGeres" [options]="structures" optionLabel="libelleLong" optionValue="id" display="chip"
+                                   placeholder="Choisir les processus" />
+        </div>
+        <div>
+            <app-audit-libelle texte="Statut" />
+            <app-select-input formControlName="statut" [options]="statutOptions" optionLabel="label" optionValue="value" [showClear]="false" />
+        </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-end gap-2 pt-2">
+            <p-button label="Annuler" severity="secondary" [outlined]="true" size="small"
+                      styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                      (onClick)="enEdition = null"></p-button>
+            <p-button [label]="enEdition?.id ? 'Enregistrer la fiche' : 'Enregistrer l\'auditeur'" icon="pi pi-save" severity="info" size="small"
+                      [loading]="saving" (onClick)="sauvegarder()"></p-button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Modale Fiche détaillée d'un auditeur -->
+<p-dialog
+    [(visible)]="detailOuvert"
+    [modal]="true"
+    [dismissableMask]="true"
+    maskStyleClass="backdrop-blur-sm"
+    [draggable]="false"
+    [resizable]="false"
+    [maximizable]="true"
+    [style]="{ width: '48rem', maxWidth: '95vw' }"
+    [breakpoints]="{ '960px': '92vw', '640px': '100vw' }">
+    <ng-template pTemplate="header">
+        <div class="flex items-center gap-3 min-w-0" *ngIf="detail as a">
+            <span class="w-11 h-11 rounded-full bg-[#0084ca]/12 dark:bg-sky-500/20 flex items-center justify-center text-[#0084ca] dark:text-sky-300 font-bold text-base shrink-0">
+                {{ initiales(a) }}
+            </span>
+            <div class="flex flex-col min-w-0">
+                <span class="font-bold text-base text-[var(--heading-color)] truncate">{{ a.nomComplet ?? 'Auditeur' }}</span>
+                <span class="text-xs text-[var(--text-color-secondary)] truncate">{{ a.email || 'Membre du vivier d\'auditeurs' }}</span>
+            </div>
+        </div>
+    </ng-template>
+
     <ng-container *ngIf="detail as a">
-        <div class="flex items-center gap-2 flex-wrap mb-4">
+        <div class="flex items-center gap-2 flex-wrap mb-4 pb-3 border-b border-[#dddddd]/80 dark:border-surface-700">
             <p-tag [value]="a.statut === 'INACTIF' ? 'Inactif' : 'Actif'" [severity]="a.statut === 'INACTIF' ? 'secondary' : 'success'" [rounded]="true"></p-tag>
             <p-tag *ngIf="a.disponibilite" [value]="a.disponibilite" severity="info" [rounded]="true"></p-tag>
-            <span *ngIf="a.email" class="text-sm text-surface-500 ml-auto">{{ a.email }}</span>
+            <span *ngIf="a.niveauHabilitation" class="text-xs font-medium text-[var(--text-color-secondary)] ml-auto">
+                {{ a.niveauHabilitation }}
+            </span>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-            <div>
-                <div class="text-xs text-surface-500 mb-0.5">Structure d'appartenance</div>
-                <div class="font-medium">{{ structure(a.structureAppartenance) }}</div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-sm">
+            <div class="bg-surface-50/70 dark:bg-surface-800/40 border border-[#dddddd]/80 dark:border-surface-700 rounded-[5px] p-3">
+                <div class="text-xs text-[var(--text-color-secondary)] mb-1">Structure d'appartenance</div>
+                <div class="font-semibold text-[var(--heading-color)]">{{ structure(a.structureAppartenance) }}</div>
             </div>
-            <div>
-                <div class="text-xs text-surface-500 mb-0.5">Niveau d'habilitation</div>
-                <div class="font-medium">{{ a.niveauHabilitation || '—' }}</div>
+            <div class="bg-surface-50/70 dark:bg-surface-800/40 border border-[#dddddd]/80 dark:border-surface-700 rounded-[5px] p-3">
+                <div class="text-xs text-[var(--text-color-secondary)] mb-1">Niveau d'habilitation</div>
+                <div class="font-semibold text-[var(--heading-color)]">{{ a.niveauHabilitation || '—' }}</div>
             </div>
-            <div>
-                <div class="text-xs text-surface-500 mb-0.5">Audits réalisés (12 derniers mois)</div>
-                <div class="font-semibold">{{ a.auditsRealises12Mois ?? 0 }}</div>
+            <div class="bg-surface-50/70 dark:bg-surface-800/40 border border-[#dddddd]/80 dark:border-surface-700 rounded-[5px] p-3">
+                <div class="text-xs text-[var(--text-color-secondary)] mb-1">Audits réalisés (12 derniers mois)</div>
+                <div class="text-base font-bold text-[#0084ca] dark:text-sky-400">{{ a.auditsRealises12Mois ?? 0 }}</div>
             </div>
-            <div>
-                <div class="text-xs text-surface-500 mb-0.5">Évaluation à la clôture</div>
-                <div *ngIf="niveauMoyen(a); else sansEval">
-                    Moyenne : <span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-semibold text-white"
-                                    [style.background]="couleurMoyenne(a)">{{ niveauMoyen(a) }}</span>
+            <div class="bg-surface-50/70 dark:bg-surface-800/40 border border-[#dddddd]/80 dark:border-surface-700 rounded-[5px] p-3">
+                <div class="text-xs text-[var(--text-color-secondary)] mb-1">Évaluation à la clôture</div>
+                <div *ngIf="niveauMoyen(a); else sansEval" class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold text-white"
+                          [style.background]="couleurMoyenne(a)">{{ niveauMoyen(a) }}</span>
                 </div>
-                <ng-template #sansEval><span class="text-surface-500">Aucune évaluation enregistrée pour le moment.</span></ng-template>
+                <ng-template #sansEval><span class="text-xs text-[var(--text-color-secondary)]">Aucune évaluation enregistrée</span></ng-template>
             </div>
-            <div class="md:col-span-2">
-                <div class="text-xs text-surface-500 mb-1">Domaines / processus habilités</div>
-                <div class="flex flex-wrap gap-1">
+        </div>
+
+        <div class="space-y-3 text-sm">
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-3.5">
+                <div class="text-xs font-semibold uppercase tracking-wide text-[var(--text-color-secondary)] mb-2">Domaines / processus habilités</div>
+                <div class="flex flex-wrap gap-1.5">
                     <p-tag *ngFor="let d of a.domainesHabilites ?? []" [value]="d" severity="secondary"></p-tag>
-                    <span *ngIf="!a.domainesHabilites?.length" class="text-surface-400">—</span>
+                    <span *ngIf="!a.domainesHabilites?.length" class="text-xs text-[var(--text-color-secondary)]">—</span>
                 </div>
             </div>
-            <div class="md:col-span-2">
-                <div class="text-xs text-surface-500 mb-1">Certifications</div>
-                <div class="flex flex-wrap gap-1">
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-3.5">
+                <div class="text-xs font-semibold uppercase tracking-wide text-[var(--text-color-secondary)] mb-2">Certifications</div>
+                <div class="flex flex-wrap gap-1.5">
                     <p-tag *ngFor="let c of a.certifications ?? []" [value]="c" severity="info"></p-tag>
-                    <span *ngIf="!a.certifications?.length" class="text-surface-400">Aucune</span>
+                    <span *ngIf="!a.certifications?.length" class="text-xs text-[var(--text-color-secondary)]">Aucune certification renseignée</span>
                 </div>
             </div>
         </div>
-        <p class="text-xs text-surface-500 m-0 mt-4">Le détail des évaluations se consulte depuis l'évaluation des auditeurs de l'audit concerné.</p>
+
+        <p class="text-xs text-[var(--text-color-secondary)] m-0 mt-4">
+            Le détail des évaluations se consulte depuis l'évaluation des auditeurs de l'audit concerné.
+        </p>
     </ng-container>
+
     <ng-template pTemplate="footer">
-        <div *ngIf="detail as a" class="flex justify-end gap-2">
-            <p-button icon="pi pi-trash" label="Retirer du vivier" severity="danger" [text]="true" size="small" (onClick)="supprimer(a)"></p-button>
-            <p-button icon="pi pi-pencil" label="Modifier la fiche" [outlined]="true" size="small" (onClick)="ouvrirEdition(a)"></p-button>
+        <div *ngIf="detail as a" class="flex flex-wrap justify-end gap-2 pt-2">
+            <p-button icon="pi pi-trash" label="Retirer du vivier" severity="danger" [outlined]="true" size="small" (onClick)="supprimer(a)"></p-button>
+            <p-button icon="pi pi-pencil" label="Modifier la fiche" severity="info" size="small" (onClick)="ouvrirEdition(a)"></p-button>
         </div>
     </ng-template>
 </p-dialog>

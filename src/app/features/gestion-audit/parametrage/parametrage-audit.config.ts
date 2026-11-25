@@ -219,7 +219,7 @@ export const LISTES_PARAMETRAGE_AUDIT: ListeParametrageAudit[] = [
         sousTitre: 'Les rappels envoyés avant le démarrage d\'un audit : chaque nuit, un audit validé dont le début approche déclenche la règle au délai correspondant.',
         boutonNouveau: 'Nouvelle règle',
         formHeader: 'Création et mise à jour d\'une règle de rappel',
-        formLongDescription: 'La maquette ne demande que le délai : le libellé et les destinataires sont posés d\'avance et restent modifiables.',
+        formLongDescription: 'Définissez le délai en jours avant le démarrage de l\'audit ainsi que les destinataires à prévenir.',        
         url: UrlConfig.AUDIT_REGLES_NOTIF_URL,
         champLibelle: 'libelle',
         formCols: [

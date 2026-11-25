@@ -1,11 +1,14 @@
 .uploader-container {
-    border: 1px solid #dee2e6;
-    background-color: #fdfdfd;
-    transition: all 0.3s ease;
-    box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.01);
-    border-radius: 8px;
+    border: 1px dashed var(--surface-border);
+    background-color: var(--surface-ground);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+    border-radius: 5px;
 }
 
+.uploader-container.is-dragging {
+    border-color: #0084ca;
+    background-color: rgba(0, 132, 202, 0.06);
+}
 
 .custom-upload-btn {
     cursor: pointer;
@@ -13,19 +16,18 @@
 }
 
 .file-item {
-    background-color: #fff;
-    transition: box-shadow 0.3s ease;
+    background-color: var(--surface-card);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .file-item:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    box-shadow: var(--card-shadow);
 }
 
 .details {
-    line-height: 1.4;
+    line-height: 1.35;
 }
 
 .progress-bar-custom {
     border-radius: 50px;
-    background-color: #e2eafc;
 }

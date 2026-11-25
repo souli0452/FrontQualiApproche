@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
@@ -18,7 +20,7 @@ import { NonConformiteService } from '@features/non-conformite/services/non-conf
 import { PlanActionService } from '@features/non-conformite/services/plan-action.service';
 
 /** Un dossier qui attend une décision de l'utilisateur, quelle que soit sa famille. */
-interface DecisionAttendue {
+export interface DecisionAttendue {
     id: string;
     /** Référence courte et stable : numéro de document, de non-conformité, d'action. */
     reference?: string;
@@ -33,13 +35,15 @@ interface DecisionAttendue {
     parametres?: Record<string, string>;
     /** Échéance du dossier, telle que le serveur l'écrit. Portée par les actions correctives. */
     echeance?: string;
-    /**
-     * Dépôt d'une pièce jointe exigée par l'étape, rendant la référence qui la désigne.
-     *
-     * <p>Propre au dossier : la pièce se range dans le module qui le porte. Absent, le champ n'est
-     * pas présenté — c'est alors l'écran du module qui permettra de joindre la pièce.</p>
-     */
+    /** Dépôt d'une pièce jointe exigée par l'étape, rendant la référence qui la désigne. */
     deposerFichier?: (fichier: File) => Observable<string>;
+}
+
+/** Ligne enrichie pour l'affichage dans la bannette unifiée. */
+export interface LigneBannette extends DecisionAttendue {
+    familleCle: Famille['cle'];
+    familleCourt: string;
+    familleIcone: string;
 }
 
 /** Un élément de ventilation modulaire pour les popovers d'indicateurs. */
@@ -53,10 +57,11 @@ export interface ElementVentilation {
 }
 
 /** Une famille de dossiers, avec ce qu'il faut pour décider d'en parler ou non. */
-interface Famille {
+export interface Famille {
     cle: 'documents' | 'demandes' | 'nonConformites' | 'plansAction';
     titre: string;
     libelleCourt: string;
+    badgeCourt: string;
     icone: string;
     /** Écran complet de la famille, quand il y a plus de lignes que la place n'en montre. */
     route: string;
@@ -67,36 +72,27 @@ interface Famille {
 
 /**
  * Ce que la liste de travail sait de la journée, à l'usage du reste de l'accueil.
- *
- * <p>Publié plutôt que lu à travers le composant : la synthèse et les indicateurs s'affichent
- * <b>avant</b> cette liste, et interroger un composant enfant qui n'existe pas encore au moment où
- * l'on dessine ce qui le précède donne un premier rendu faux, corrigé au cycle suivant.</p>
  */
 export interface EtatDeLaListe {
-    /** Un chargement est en cours : les nombres ne veulent encore rien dire. */
     chargement: boolean;
-    /** Dossiers en attente d'une décision de l'utilisateur, toutes familles confondues. */
     total: number;
-    /** L'utilisateur suit-il des actions correctives ? */
     suitDesActions: boolean;
     plansEnRetard: number;
     plansEcheanceProche: number;
-    /** Répartition par module pour la ventilation interactive des indicateurs. */
     repartition: ElementVentilation[];
 }
 
-/** Nombre de lignes montrées par famille : au-delà, l'écran du module est plus indiqué. */
-const LIGNES_MONTREES = 5;
+/** Nombre de lignes montrées dans un onglet filtré par famille. */
+const LIGNES_MONTREES = 7;
+
+/** Nombre maximum de lignes par famille lorsqu'on affiche l'onglet « Tout ». */
+const LIGNES_PAR_FAMILLE_TOUT = 3;
 
 /** Fenêtre au-delà de laquelle une échéance n'est plus « proche ». */
 const JOURS_ECHEANCE_PROCHE = 7;
 
 /**
- * Jours restants avant une échéance, ou {@code null} si la date n'est pas lisible.
- *
- * <p>Les dates arrivent selon le module en `yyyy-MM-dd` ou en `dd-MM-yyyy`. Une date qu'on ne sait
- * pas lire n'est <b>pas</b> comptée : mieux vaut un indicateur qui sous-estime le retard qu'un
- * indicateur qui l'invente, et qu'on cesserait de croire.</p>
+ * Jours restants avant une échéance, ou null si la date n'est pas lisible.
  */
 function joursAvant(echeance?: string): number | null {
     if (!echeance) {
@@ -121,26 +117,20 @@ function joursAvant(echeance?: string): number | null {
 
 /**
  * Ce qui attend une décision de l'utilisateur, dès la page d'accueil.
- *
- * <p>Un système de management de la qualité ne se pilote pas depuis des courbes : il se pilote
- * depuis les dossiers arrêtés en attente de quelqu'un. La première question de qui se connecte est
- * « qu'attend-on de moi ? », et la réponse tenait jusqu'ici dans quatre écrans à ouvrir un par un.</p>
- *
- * <p>Chaque famille n'est interrogée que si l'organisation a souscrit son module <b>et</b> que
- * l'utilisateur détient la permission d'y lire : appeler sans cela n'aurait rendu qu'un refus, et
- * afficher une section vide laisserait croire qu'il n'y a rien à faire là où il n'y a simplement pas
- * accès.</p>
- *
- * <p>Les décisions sont prises <b>ici</b>, sans changer d'écran : {@code app-workflow-actions} rend
- * les actions que le serveur déclare ouvertes sur chaque dossier et recueille ce que l'étape exige.
- * Aucune règle n'est rejouée dans le tableau de bord — la liste elle-même vient du moteur, qui seul
- * sait qui peut agir sur quoi.</p>
  */
 @Component({
     selector: 'app-mes-decisions',
     standalone: true,
-    imports: [CommonModule, ButtonModule, TagModule, TooltipModule, SkeletonModule,
-        WorkflowActionsComponent],
+    imports: [
+        CommonModule,
+        FormsModule,
+        ButtonModule,
+        InputTextModule,
+        TagModule,
+        TooltipModule,
+        SkeletonModule,
+        WorkflowActionsComponent
+    ],
     providers: [MessageService],
     templateUrl: 'mes-decisions.component.html',
 })
@@ -150,6 +140,9 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
 
     /** État courant, publié à chaque fois qu'une famille répond. */
     @Output() etat = new EventEmitter<EtatDeLaListe>();
+
+    /** Notifie le parent lorsqu'on change l'onglet actif de la bannette. */
+    @Output() ongletChange = new EventEmitter<'all' | Famille['cle']>();
 
     private readonly documentaire = inject(DocumentaireATraiterService);
     private readonly documentService = inject(QmsDocumentService);
@@ -163,18 +156,92 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
     /** Familles auxquelles l'utilisateur a accès, dans l'ordre où elles s'affichent. */
     famillesVisibles: Famille[] = [];
 
-    /**
-     * Familles à montrer : celles qui portent quelque chose, et celles qu'on attend encore.
-     *
-     * <p>Une section vide n'apprend rien : elle occupe l'écran pour dire qu'il n'y a rien à y faire,
-     * et fait descendre ce qui, justement, attend une décision. Quand tout est vide, c'est la phrase
-     * de synthèse de l'accueil qui le dit, une fois pour toutes.</p>
-     *
-     * <p>Celles qui chargent restent affichées : leur faire apparaître puis disparaître la section au
-     * fil des réponses du serveur donnerait un écran qui saute.</p>
-     */
+    /** Onglet sélectionné dans la bannette unifiée. */
+    ongletActif: 'all' | Famille['cle'] = 'all';
+
+    /** Filtre texte sur référence, titre, détail ou étape. */
+    termeRecherche = '';
+
     get famillesAAfficher(): Famille[] {
         return this.famillesVisibles.filter((famille) => famille.chargement || famille.lignes.length);
+    }
+
+    /** Famille actuellement ciblée si un onglet dédié est actif. */
+    get familleActive(): Famille | undefined {
+        if (this.ongletActif === 'all') {
+            return undefined;
+        }
+        return this.famillesVisibles.find((f) => f.cle === this.ongletActif);
+    }
+
+    /** Dossiers correspondant à l'onglet et au filtre texte (avant troncature). */
+    get lignesCorrespondantes(): LigneBannette[] {
+        const q = this.termeRecherche.trim().toLowerCase();
+        const sources = this.ongletActif === 'all'
+            ? this.famillesVisibles
+            : this.famillesVisibles.filter((f) => f.cle === this.ongletActif);
+
+        const resultat: LigneBannette[] = [];
+        for (const famille of sources) {
+            const lignesFamille = famille.lignes.filter((ligne) => {
+                if (!q) return true;
+                return (ligne.reference || '').toLowerCase().includes(q)
+                    || (ligne.titre || '').toLowerCase().includes(q)
+                    || (ligne.detail || '').toLowerCase().includes(q)
+                    || (ligne.state?.currentStateName || '').toLowerCase().includes(q)
+                    || famille.badgeCourt.toLowerCase().includes(q);
+            });
+
+            const tranche = (this.ongletActif === 'all' && !q)
+                ? lignesFamille.slice(0, LIGNES_PAR_FAMILLE_TOUT)
+                : lignesFamille;
+
+            for (const ligne of tranche) {
+                resultat.push({
+                    ...ligne,
+                    familleCle: famille.cle,
+                    familleCourt: famille.badgeCourt,
+                    familleIcone: famille.icone
+                });
+            }
+        }
+        return resultat;
+    }
+
+    /** Lignes visibles dans la bannette. */
+    get lignesAffichees(): LigneBannette[] {
+        if (this.ongletActif === 'all' && !this.termeRecherche.trim()) {
+            return this.lignesCorrespondantes;
+        }
+        return this.lignesCorrespondantes.slice(0, LIGNES_MONTREES);
+    }
+
+    /** Nombre total réel de dossiers pour l'onglet actif. */
+    get totalPourOngletActif(): number {
+        if (this.ongletActif === 'all') {
+            return this.total;
+        }
+        return this.familleActive?.lignes.length ?? 0;
+    }
+
+    /** Lien "Tout voir" contextuel dans l'en-tête et le pied de la bannette. */
+    get cibleVoirTout(): { route: string; libelle: string } | null {
+        if (this.familleActive) {
+            return {
+                route: this.familleActive.route,
+                libelle: this.familleActive.lignes.length
+                    ? `Voir les ${this.familleActive.lignes.length}`
+                    : 'Ouvrir le module'
+            };
+        }
+        const principale = this.famillesVisibles.find((f) => f.lignes.length > 0) || this.famillesVisibles[0];
+        if (!principale) {
+            return null;
+        }
+        return {
+            route: principale.route,
+            libelle: `Voir ${principale.badgeCourt.toLowerCase()}`
+        };
     }
 
     /** Nombre total de dossiers en attente, pour la phrase de synthèse de l'accueil. */
@@ -239,25 +306,61 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
         this.destroy$.complete();
     }
 
-    /**
-     * Les familles que cet utilisateur peut voir.
-     *
-     * <p>Documents et demandes forment deux sections distinctes : instruire une demande de
-     * modification et valider un document ne sont pas le même geste, et les mélanger obligerait à
-     * relire chaque ligne pour savoir de quoi il s'agit.</p>
-     */
+    selectionnerOnglet(cle: 'all' | Famille['cle']): void {
+        if (cle !== 'all' && !this.famillesVisibles.some((f) => f.cle === cle)) {
+            return;
+        }
+        this.ongletActif = cle;
+        this.ongletChange.emit(cle);
+    }
+
+    reinitialiserFiltres(): void {
+        this.ongletActif = 'all';
+        this.termeRecherche = '';
+        this.ongletChange.emit('all');
+    }
+
+    iconeBoiteClasse(cle: Famille['cle']): string {
+        switch (cle) {
+            case 'documents':
+                return 'bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 border-[#0ea5e9]/30';
+            case 'demandes':
+                return 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/30';
+            case 'nonConformites':
+                return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30';
+            case 'plansAction':
+                return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
+        }
+    }
+
+    badgeOngletClasse(famille: Famille): string {
+        if (famille.lignes.length === 0) {
+            return 'bg-surface-100 dark:bg-surface-800 text-[var(--text-color-secondary)]';
+        }
+        switch (famille.cle) {
+            case 'documents':
+                return 'bg-[#0ea5e9]/15 text-[#0084ca] dark:text-sky-300';
+            case 'demandes':
+                return 'bg-violet-500/15 text-violet-700 dark:text-violet-300';
+            case 'nonConformites':
+                return 'bg-amber-500/15 text-amber-700 dark:text-amber-300';
+            case 'plansAction':
+                return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300';
+        }
+    }
+
     private famillesAccessibles(): Famille[] {
         const familles: Famille[] = [];
         if (this.accesDocumentaire) {
             familles.push({
                 cle: 'documents', titre: 'Documents attendant votre décision',
-                libelleCourt: 'Documents qualité',
+                libelleCourt: 'Documents qualité', badgeCourt: 'Documents',
                 icone: 'pi pi-file', route: '/gestion-documentaire/documents',
                 lignes: [], chargement: true
             });
             familles.push({
                 cle: 'demandes', titre: 'Demandes à instruire',
-                libelleCourt: 'Demandes de documents',
+                libelleCourt: 'Demandes de documents', badgeCourt: 'Demandes',
                 icone: 'pi pi-inbox', route: '/gestion-documentaire/demandes',
                 lignes: [], chargement: true
             });
@@ -265,7 +368,7 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
         if (this.accesNonConformites) {
             familles.push({
                 cle: 'nonConformites', titre: 'Non-conformités attendant votre décision',
-                libelleCourt: 'Non-conformités',
+                libelleCourt: 'Non-conformités', badgeCourt: 'Non-conformités',
                 icone: 'pi pi-exclamation-triangle', route: '/non-conformite/vue-ensemble',
                 lignes: [], chargement: true
             });
@@ -273,7 +376,7 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
         if (this.accesPlansAction) {
             familles.push({
                 cle: 'plansAction', titre: 'Actions correctives à mener',
-                libelleCourt: 'Plans d\'actions',
+                libelleCourt: 'Plans d\'actions', badgeCourt: 'Actions',
                 icone: 'pi pi-check-square', route: '/non-conformite/actions',
                 lignes: [], chargement: true
             });
@@ -281,12 +384,6 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
         return familles;
     }
 
-    /**
-     * Relit les familles accessibles.
-     *
-     * <p>Rappelé après chaque décision : le dossier décidé quitte la liste, et la cloche de
-     * notifications se corrige du même coup — elle lit le même état que le module documentaire.</p>
-     */
     charger(): void {
         this.famillesVisibles.forEach((famille) => famille.chargement = true);
         this.publier();
@@ -318,8 +415,6 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
                             this.demandeService.deposerFichierDEtape(demande.id, fichier)
                     })));
                 },
-                // Un module indisponible ne doit pas vider l'accueil des autres : la section reste,
-                // simplement vide, et les non-conformités s'affichent quand même.
                 error: () => { this.poser('documents', []); this.poser('demandes', []); }
             });
         }
@@ -330,9 +425,6 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
                 .subscribe((nonConformites: any[]) => this.poser('nonConformites',
                     (nonConformites ?? []).map((nc) => ({
                         id: nc.id,
-                        // Les noms sont ceux de NonConformiteDto, tel que le serveur le rend : la ligne
-                        // lisait numeroDeReference et sourceDeNonConformiteLibelle, que rien n'envoie —
-                        // chaque dossier paraissait sans référence, sous un titre générique.
                         reference: nc.numeroReference,
                         titre: nc.typeNonConformiteLibelle || nc.originNonConformiteLibelle
                             || 'Non-conformité',
@@ -371,19 +463,7 @@ export class MesDecisionsComponent implements OnInit, OnDestroy {
         this.publier();
     }
 
-    /**
-     * Publie l'état, toujours après le cycle de détection en cours.
-     *
-     * <p>La première publication a lieu pendant que le parent se dessine — il crée cette liste au
-     * milieu de son propre gabarit. Émettre alors change une valeur qu'il vient de vérifier, ce
-     * qu'Angular signale en {@code NG0100} et qui, en production, aurait donné un affichage en retard
-     * d'un cycle. Le report d'une micro-tâche suffit : l'état publié est celui du moment où il est
-     * lu, et les publications suivantes viennent de réponses réseau, donc déjà hors du cycle.</p>
-     */
     private publier(): void {
-        // L'état est saisi maintenant et remis ensuite : le prendre dans la micro-tâche perdrait le
-        // moment du chargement, et l'accueil passerait du silence au résultat sans jamais dire
-        // qu'il cherche.
         const repartition: ElementVentilation[] = this.famillesVisibles.map((f) => ({
             cle: f.cle,
             titre: f.titre,

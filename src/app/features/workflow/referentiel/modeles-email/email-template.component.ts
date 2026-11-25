@@ -44,7 +44,6 @@ import { hasAnyPermission } from '@core/auth/auth-utils';
                 [formHeader]="formHeader"
                 (newItemEvent)="onSave($event)"
                 (removeEvent)="onDelete($event)"
-                [isPagination]="false"
                 [consultation]="!peutEcrire"
                 [notModif]="!peutEcrire"
                 [isPagination]="true"

@@ -27,115 +27,176 @@ import { FaqService } from './faq.service';
     imports: [HeaderPage, CommonModule, NgPrimeModule, TableauAffichageComponent],
     providers: [ConfirmationService],
     template: `
-        <app-header-page
-            [title]="pageLabel"
-            [subtitle]="'Les réponses de votre organisation, dans l\\'aide et par l\\'assistant'"
-            [breadcrumbs]="breadcrumbs"
-            [buttonText]="peutEcrire ? 'Nouvelle question' : ''"
-            buttonIcon="pi pi-plus"
-            (actionClick)="nouvelle()"
-        />
-        <div class="page-layout">
-            <!-- Deux onglets plutôt qu'une colonne « Publiée » à trier : on vient voir l'un ou
-                 l'autre, pas les deux mêlés. Les brouillons attendent une relecture, les publiées
-                 sont en service — ce sont deux travaux distincts. -->
-            <p-tabs [value]="onglet" (valueChange)="changerDOnglet($event)">
-                <p-tablist>
-                    <p-tab value="publiees">
-                        <i class="pi pi-eye mr-2"></i>Publiées
-                        <p-badge *ngIf="comptePubliees > 0" [value]="comptePubliees" severity="success" styleClass="ml-2"></p-badge>
-                    </p-tab>
-                    <p-tab value="nonPubliees">
-                        <i class="pi pi-eye-slash mr-2"></i>Non publiées
-                        <p-badge *ngIf="compteNonPubliees > 0" [value]="compteNonPubliees" severity="warn" styleClass="ml-2"></p-badge>
-                    </p-tab>
-                </p-tablist>
-            </p-tabs>
+        <div class="card-first overflow-x-clip border-none premium-hub transition-colors duration-300">
+            <app-header-page
+                [title]="pageLabel"
+                [subtitle]="'Les réponses de votre organisation, dans l\\'aide et par l\\'assistant'"
+                [breadcrumbs]="breadcrumbs"
+                [buttonText]="peutEcrire ? 'Nouvelle question' : ''"
+                buttonIcon="pi pi-plus"
+                (actionClick)="nouvelle()"
+            />
 
-            <!-- La barre d'action de lot n'apparaît qu'une fois quelque chose de coché : une
-                 barre toujours présente et le plus souvent inerte encombre sans servir. -->
+            <!-- Onglets Publiées / Non publiées -->
+            <div class="bg-transparent mb-5">
+                <p-tabs [value]="onglet" (valueChange)="changerDOnglet($event)">
+                    <p-tablist>
+                        <p-tab value="publiees">
+                            <div class="flex items-center gap-2 px-2 py-1 select-none">
+                                <i class="pi pi-eye"></i>
+                                <span class="whitespace-nowrap">Publiées</span>
+                                <p-badge *ngIf="comptePubliees > 0" [value]="comptePubliees" severity="success"></p-badge>
+                            </div>
+                        </p-tab>
+                        <p-tab value="nonPubliees">
+                            <div class="flex items-center gap-2 px-2 py-1 select-none">
+                                <i class="pi pi-eye-slash"></i>
+                                <span class="whitespace-nowrap">Non publiées</span>
+                                <p-badge *ngIf="compteNonPubliees > 0" [value]="compteNonPubliees" severity="warn"></p-badge>
+                            </div>
+                        </p-tab>
+                    </p-tablist>
+                </p-tabs>
+            </div>
+
+            <!-- Barre d'action de lot (affichée uniquement lorsqu'au moins une ligne est cochée) -->
             <div *ngIf="selection.length > 0"
-                 class="flex items-center justify-between gap-3 mb-3 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                <span class="text-sm text-slate-700">
-                    {{ selection.length }} réponse(s) sélectionnée(s)
+                 class="flex flex-wrap items-center justify-between gap-3 mb-4 px-4 py-2.5 rounded-[5px] border border-[#0ea5e9]/35 bg-[#0ea5e9]/10 dark:bg-[#0ea5e9]/15">
+                <span class="text-[13px] font-semibold text-[#0369a1] dark:text-sky-300 flex items-center gap-2">
+                    <i class="pi pi-check-square text-[#0ea5e9] !text-sm"></i>
+                    <span>{{ selection.length }} réponse(s) sélectionnée(s)</span>
                 </span>
                 <div class="flex items-center gap-2">
-                    <button pButton pRipple class="p-button-text p-button-secondary" label="Tout décocher"
-                            (click)="viderLaSelection()"></button>
-                    <button pButton pRipple
-                            [icon]="onglet === 'publiees' ? 'pi pi-eye-slash' : 'pi pi-eye'"
-                            [label]="onglet === 'publiees' ? 'Retirer de la publication' : 'Publier'"
-                            [loading]="publicationEnCours"
-                            (click)="publierLaSelection()"></button>
+                    <p-button label="Tout décocher" severity="secondary" [outlined]="true" size="small"
+                              styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                              (onClick)="viderLaSelection()"></p-button>
+                    <p-button severity="info" size="small"
+                              [icon]="onglet === 'publiees' ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                              [label]="onglet === 'publiees' ? 'Retirer de la publication' : 'Publier'"
+                              [loading]="publicationEnCours"
+                              (onClick)="publierLaSelection()"></p-button>
                 </div>
             </div>
 
+            <!-- Tableau unifié -->
             <app-tableau-affichage
+                [title]="onglet === 'publiees' ? 'Questions publiées' : 'Questions non publiées'"
+                [titleIcon]="onglet === 'publiees' ? 'pi pi-eye' : 'pi pi-eye-slash'"
+                [subtitle]="onglet === 'publiees' ? 'Réponses visibles dans l\\'aide et reprises par l\\'assistant IA' : 'Brouillons en attente de relecture ou de publication'"
+                [badgeCount]="totalElements"
                 [selectionMultiple]="peutPublier"
                 [lignesSelectionnees]="selection"
                 (selectionChange)="selection = $event"
                 [tableCols]="tableCols"
+                [minWidth]="'36rem'"
                 [listeObject]="dataList"
                 [loading]="loading"
+                [loadingRows]="pageSize"
+                [showTopBar]="true"
                 [showSearch]="true"
+                placeholderRecherche="Rechercher une question…"
                 [clickableRows]="true"
                 [isPagination]="true"
                 [totalElements]="totalElements"
                 [pageSize]="pageSize"
                 [currentPage]="currentPage"
+                recordName="questions"
                 [getActionMenuItems]="actionsDeLaLigne"
                 (rowClick)="voirLeDetail($event)"
                 (pageChangeEvent)="onPageChange($event)">
             </app-tableau-affichage>
         </div>
-        <p-confirmdialog></p-confirmdialog>
 
-        <!-- Le détail en lecture : on ouvre pour relire une réponse avant de la publier, sans
-             entrer en modification et risquer de la changer par mégarde. -->
-        <p-drawer [(visible)]="detailVisible" position="right" [style]="{width: '520px'}" [modal]="true">
+        <!-- Confirmation centrée harmonisée -->
+        <p-confirmdialog
+            #cd
+            key="faq-delete"
+            appendTo="body"
+            maskStyleClass="backdrop-blur-sm"
+            [closable]="false"
+            [draggable]="false"
+            [style]="{ width: '440px', maxWidth: '92vw' }"
+            styleClass="border-none bg-transparent shadow-none">
+            <ng-template pTemplate="headless" let-message>
+                <div class="p-6 bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-2xl flex flex-col items-center text-center whitespace-normal">
+                    <div class="w-14 h-14 rounded-full flex items-center justify-center mb-3.5 ring-8 bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 ring-rose-50/70 dark:ring-rose-950/30">
+                        <i class="pi !text-2xl" [ngClass]="message.icon || 'pi-trash'"></i>
+                    </div>
+                    <h3 class="text-[17px] font-bold text-[var(--heading-color)] m-0 mb-1.5">
+                        {{ message.header || 'Confirmation' }}
+                    </h3>
+                    <p class="text-[13px] text-[var(--text-color-secondary)] m-0 leading-relaxed px-1">
+                        {{ message.message }}
+                    </p>
+                    <div class="w-full border-t border-[#dddddd]/70 dark:border-surface-700 my-4"></div>
+                    <div class="flex items-center justify-center gap-3 w-full">
+                        <button type="button" pButton
+                                [label]="message.rejectLabel || 'Annuler'"
+                                class="p-button-outlined p-button-secondary p-button-sm flex-1 justify-center rounded-[5px]"
+                                (click)="cd.onReject()">
+                        </button>
+                        <button type="button" pButton
+                                [label]="message.acceptLabel || 'Supprimer'"
+                                icon="pi pi-trash"
+                                class="p-button-danger p-button-sm flex-1 justify-center rounded-[5px]"
+                                (click)="cd.onAccept()">
+                        </button>
+                    </div>
+                </div>
+            </ng-template>
+        </p-confirmdialog>
+
+        <!-- Tiroir détail en lecture -->
+        <p-drawer [(visible)]="detailVisible" position="right" [style]="{ width: '520px', maxWidth: '100vw' }" [modal]="true">
             <ng-template pTemplate="header">
-                <div class="inline-flex items-center gap-2">
-                    <i class="pi pi-question-circle text-primary"></i>
-                    <span class="layout-topbar-title"><span>Détail de la réponse</span></span>
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                        <i class="pi pi-question-circle !text-base"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold text-[15px] text-[var(--heading-color)]">Détail de la réponse</div>
+                        <div class="text-xs text-[var(--text-color-secondary)]">Aperçu tel qu'affiché dans l'aide</div>
+                    </div>
                 </div>
             </ng-template>
 
-            <div *ngIf="detail" class="flex flex-col gap-4">
-                <div>
-                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-2">Question</h3>
-                    <p class="text-sm font-medium text-slate-800 m-0">{{ detail.question }}</p>
+            <div *ngIf="detail" class="flex flex-col gap-4 pt-1">
+                <div class="flex items-center justify-between gap-2">
+                    <p-tag [severity]="detail.publiee ? 'success' : 'warn'"
+                           [rounded]="true"
+                           [value]="detail.publiee ? 'Publiée' : 'Non publiée'"></p-tag>
                 </div>
 
-                <div>
-                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-2">Réponse</h3>
-                    <p class="text-sm text-slate-700 whitespace-pre-line m-0">{{ detail.reponse }}</p>
+                <div class="rounded-[5px] border border-[#dddddd] dark:border-surface-700 bg-[var(--surface-card)] p-4">
+                    <h3 class="text-[11px] font-bold text-[var(--text-color-secondary)] uppercase tracking-wide m-0 mb-1.5">Question</h3>
+                    <p class="text-sm font-semibold text-[var(--heading-color)] m-0 leading-relaxed">{{ detail.question }}</p>
                 </div>
 
-                <div *ngIf="detail.fichiers?.length">
-                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-2">Pièces jointes</h3>
+                <div class="rounded-[5px] border border-[#dddddd] dark:border-surface-700 bg-[var(--surface-card)] p-4">
+                    <h3 class="text-[11px] font-bold text-[var(--text-color-secondary)] uppercase tracking-wide m-0 mb-1.5">Réponse</h3>
+                    <p class="text-sm text-[var(--heading-color)] whitespace-pre-line m-0 leading-relaxed">{{ detail.reponse }}</p>
+                </div>
+
+                <div *ngIf="detail.fichiers?.length" class="rounded-[5px] border border-[#dddddd] dark:border-surface-700 bg-[var(--surface-card)] p-4">
+                    <h3 class="text-[11px] font-bold text-[var(--text-color-secondary)] uppercase tracking-wide m-0 mb-2">Pièces jointes</h3>
                     <div class="flex flex-col gap-2">
                         <div *ngFor="let fichier of detail.fichiers"
-                             class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                            <i class="pi pi-paperclip text-indigo-500 text-sm"></i>
-                            <span class="flex-1 min-w-0 text-xs text-slate-700 truncate">{{ fichier.nom }}</span>
+                             class="flex items-center gap-2.5 bg-surface-50 dark:bg-surface-800/60 border border-[#dddddd]/80 dark:border-surface-700 rounded-[5px] px-3 py-2">
+                            <i class="pi pi-paperclip text-[#0084ca] dark:text-sky-400 !text-sm shrink-0"></i>
+                            <span class="flex-1 min-w-0 text-xs font-medium text-[var(--heading-color)] truncate">{{ fichier.nom }}</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <p-tag [severity]="detail.publiee ? 'success' : 'warn'"
-                           [value]="detail.publiee ? 'Publiée' : 'Non publiée'"></p-tag>
-                </div>
-
-                <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-200">
-                    <button *ngIf="peutPublier" pButton pRipple
-                            [icon]="detail.publiee ? 'pi pi-eye-slash' : 'pi pi-eye'"
-                            [label]="detail.publiee ? 'Retirer de la publication' : 'Publier'"
-                            [loading]="publicationEnCours"
-                            (click)="basculerLaPublication(detail)"></button>
-                    <button *ngIf="peutEcrire" pButton pRipple class="p-button-outlined"
-                            icon="pi pi-pencil" label="Modifier"
-                            (click)="modifier(detail)"></button>
+                <div class="flex flex-wrap justify-end gap-2 pt-3 border-t border-[#dddddd]/70 dark:border-surface-700">
+                    <p-button *ngIf="peutEcrire" icon="pi pi-pencil" label="Modifier" severity="secondary" [outlined]="true" size="small"
+                              styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                              (onClick)="modifier(detail)"></p-button>
+                    <p-button *ngIf="peutPublier" severity="info" size="small"
+                              [icon]="detail.publiee ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                              [label]="detail.publiee ? 'Retirer de la publication' : 'Publier'"
+                              [loading]="publicationEnCours"
+                              (onClick)="basculerLaPublication(detail)"></p-button>
                 </div>
             </div>
         </p-drawer>
@@ -365,11 +426,12 @@ export class FaqComponent extends BasePaginationComponent implements OnInit, OnD
 
     private confirmerSuppression(entree: EntreeFaq): void {
         this.confirmation.confirm({
+            key: 'faq-delete',
             header: 'Supprimer cette question ?',
             message: `« ${entree.question} » disparaîtra de l'aide, et l'assistant cessera de la réciter.`,
+            icon: 'pi-trash',
             acceptLabel: 'Supprimer',
             rejectLabel: 'Annuler',
-            acceptButtonStyleClass: 'p-button-danger',
             accept: () => this.supprimer(entree)
         });
     }

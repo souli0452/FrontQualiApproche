@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -18,17 +18,45 @@ import { RapportAudit } from '../../models/audit.model';
  * est rédigé par l'organisme, on le charge, et il ne passe pas par le circuit interne.</p>
  */
 import { MentionRqapbfComponent } from '../../components/mention-rqapbf.component';
+import { LightboxComponent } from '@features/non-conformite/components/lightbox/lightbox';
+import {
+    NgApexchartsModule,
+    ApexNonAxisChartSeries,
+    ApexChart,
+    ApexPlotOptions,
+    ApexStroke,
+    ApexLegend,
+    ApexDataLabels,
+    ApexTooltip,
+    ApexResponsive
+} from 'ng-apexcharts';
+
+interface SyntheseDonutOptions {
+    series: ApexNonAxisChartSeries;
+    chart: ApexChart;
+    labels: string[];
+    colors: string[];
+    plotOptions: ApexPlotOptions;
+    stroke: ApexStroke;
+    legend: ApexLegend;
+    dataLabels: ApexDataLabels;
+    tooltip: ApexTooltip;
+    responsive: ApexResponsive[];
+}
 
 @Component({
     selector: 'app-rapport-audit',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, MentionRqapbfComponent],
+    imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, NgApexchartsModule, MentionRqapbfComponent, LightboxComponent],
     providers: [MessageService],
     templateUrl: './rapport-audit.component.html'
 })
 export class RapportAuditComponent implements OnInit, OnDestroy {
 
+    @ViewChild('lightbox') lightbox?: LightboxComponent;
+    apercuEnCours = false;
     rapport: RapportAudit | null = null;
+    syntheseChart: SyntheseDonutOptions | null = null;
     libelles: LibellesAudit = LIBELLES_VIDES;
     loading = true;
     saving = false;
@@ -62,6 +90,7 @@ export class RapportAuditComponent implements OnInit, OnDestroy {
         this.auditService.getRapport(auditId).pipe(takeUntil(this.destroy$)).subscribe({
             next: res => {
                 this.rapport = (res as any)?.data ?? res;
+                this.construireSyntheseChart();
                 this.conclusions = this.rapport?.audit?.conclusionsRapport ?? '';
                 this.recommandations = this.rapport?.audit?.recommandationsRapport ?? '';
                 this.modifie = false;
@@ -106,8 +135,124 @@ export class RapportAuditComponent implements OnInit, OnDestroy {
         return (this.audit?.membreEquipeIds ?? []).map(id => this.libelles.auditeur(id)).join(', ') || '—';
     }
 
-    maxSynthese(): number {
-        return Math.max(1, ...(this.rapport?.syntheseParNature ?? []).map(g => g.nombre ?? 0));
+    get nbSignaturesSignees(): number {
+        return (this.rapport?.signatures ?? []).filter(s => s.statut === 'SIGNEE').length;
+    }
+
+    get nbSignaturesTotal(): number {
+        return (this.rapport?.signatures ?? []).length;
+    }
+
+    get nbMembresEquipe(): number {
+        const ids = new Set<string>();
+        if (this.audit?.responsableEquipeId) ids.add(this.audit.responsableEquipeId);
+        (this.audit?.membreEquipeIds ?? []).forEach(id => ids.add(id));
+        return ids.size;
+    }
+
+    get totalConstatsSynthese(): number {
+        return (this.rapport?.syntheseParNature ?? []).reduce((s, g) => s + (g.nombre ?? 0), 0);
+    }
+
+    get totalEcartsNcSynthese(): number {
+        const groupes = this.rapport?.syntheseParNature ?? [];
+        const aFlag = groupes.some(g => g.genereNonConformite !== undefined);
+        if (aFlag) {
+            return groupes.filter(g => g.genereNonConformite).reduce((s, g) => s + (g.nombre ?? 0), 0);
+        }
+        return this.rapport?.ecarts?.length ?? 0;
+    }
+
+    get totalHorsNcSynthese(): number {
+        return Math.max(0, this.totalConstatsSynthese - this.totalEcartsNcSynthese);
+    }
+
+    pctSynthese(nombre?: number): number {
+        const total = this.totalConstatsSynthese;
+        return total ? Math.round(((nombre ?? 0) / total) * 100) : 0;
+    }
+
+    private construireSyntheseChart(): void {
+        const groupes = (this.rapport?.syntheseParNature ?? []).filter(g => (g.nombre ?? 0) > 0);
+        if (!groupes.length) {
+            this.syntheseChart = null;
+            return;
+        }
+        const total = groupes.reduce((s, g) => s + (g.nombre ?? 0), 0);
+        this.syntheseChart = {
+            series: groupes.map(g => g.nombre ?? 0),
+            labels: groupes.map(g => g.libelle ?? 'Autre'),
+            colors: groupes.map(g => g.couleur || '#94a3b8'),
+            chart: {
+                type: 'donut',
+                width: 175,
+                height: 175,
+                background: 'transparent',
+                fontFamily: 'Golos Text, sans-serif',
+                animations: { enabled: true, speed: 450 }
+            },
+            plotOptions: {
+                pie: {
+                    expandOnClick: true,
+                    donut: {
+                        size: '70%',
+                        labels: {
+                            show: true,
+                            name: {
+                                show: true,
+                                fontSize: '12px',
+                                fontWeight: 500,
+                                color: 'var(--text-color-secondary)',
+                                offsetY: -4
+                            },
+                            value: {
+                                show: true,
+                                fontSize: '20px',
+                                fontWeight: 700,
+                                color: 'var(--heading-color)',
+                                offsetY: 4,
+                                formatter: (val: string) => {
+                                    const n = Number(val) || 0;
+                                    const pct = total ? Math.round((n / total) * 100) : 0;
+                                    return `${n} (${pct}%)`;
+                                }
+                            },
+                            total: {
+                                show: true,
+                                showAlways: false,
+                                label: 'Constats',
+                                fontSize: '12px',
+                                fontWeight: 500,
+                                color: 'var(--text-color-secondary)',
+                                formatter: () => String(total)
+                            }
+                        }
+                    }
+                }
+            },
+            stroke: {
+                show: true,
+                width: 3,
+                colors: ['var(--surface-card)']
+            },
+            legend: { show: false },
+            dataLabels: { enabled: false },
+            tooltip: {
+                theme: 'dark',
+                y: {
+                    formatter: (val: number) => {
+                        const pct = total ? Math.round((val / total) * 100) : 0;
+                        return `${val} constat(s) — ${pct} %`;
+                    }
+                }
+            },
+            responsive: [
+                {
+                    breakpoint: 640,
+                    options: { chart: { height: 200 } }
+                }
+            ]
+        };
     }
 
     /**
@@ -151,6 +296,57 @@ export class RapportAuditComponent implements OnInit, OnDestroy {
         }
         this.telecharger(this.auditService.exporterRapport(this.auditId, format),
             `rapport-${this.audit?.reference ?? this.auditId}.${format === 'PDF' ? 'pdf' : 'docx'}`);
+    }
+
+    voirPdf(): void {
+        if (!this.auditId) return;
+        if (this.modifie) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Rédaction non enregistrée',
+                detail: "Enregistrez d'abord vos conclusions : l'aperçu reprend la version enregistrée."
+            });
+            return;
+        }
+        this.apercuEnCours = true;
+        const nom = `rapport-${this.audit?.reference ?? this.auditId}.pdf`;
+        const titre = `Rapport d'audit — ${this.audit?.reference ?? ''}`;
+        this.auditService.exporterRapport(this.auditId, 'PDF')
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: blob => {
+                    this.apercuEnCours = false;
+                    this.lightbox?.openBlob(blob, nom, titre);
+                },
+                error: async err => {
+                    this.apercuEnCours = false;
+                    let detail = "Impossible de charger l'aperçu PDF.";
+                    try {
+                        detail = JSON.parse(await (err?.error as Blob).text())?.message ?? detail;
+                    } catch {
+                        /* corps illisible */
+                    }
+                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail, life: 8000 });
+                }
+            });
+    }
+
+    voirFichier(): void {
+        if (!this.auditId) return;
+        this.apercuEnCours = true;
+        const nom = this.audit?.nomFichierRapport || `rapport-${this.audit?.reference ?? this.auditId}.pdf`;
+        this.auditService.telechargerRapportFichier(this.auditId)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: blob => {
+                    this.apercuEnCours = false;
+                    this.lightbox?.openBlob(blob, nom, "Rapport d'audit externe");
+                },
+                error: err => {
+                    this.apercuEnCours = false;
+                    this.erreur(err, "Impossible d'ouvrir l'aperçu du fichier.");
+                }
+            });
     }
 
     telechargerFichier(): void {

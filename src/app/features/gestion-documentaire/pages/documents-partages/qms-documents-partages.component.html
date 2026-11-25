@@ -1,5 +1,6 @@
 <p-toast></p-toast>
-<div class="p-4">
+
+<div>
     <app-tableau-affichage
         [tableCols]="tableCols"
         [listeObject]="sharedDocuments"
@@ -7,14 +8,13 @@
         [totalElements]="sharedDocuments.length"
         [pageSize]="pageSize"
         [currentPage]="currentPage"
-        [rowsPerPageOptions]="[5, 10, 20, 50]"
         [clickableRows]="true"
         [showSearch]="true"
         [placeholderRecherche]="'Numéro, titre, structure ou rédacteur...'"
         [filterFields]="filterFields"
         title="Documents partagés avec moi"
         titleIcon="pi pi-share-alt"
-        titleIconClass="text-emerald-500"
+        titleIconClass="text-[#0084ca] dark:text-sky-400"
         subtitle="Documents d'autres structures, ouverts à la consultation et au téléchargement. Leur historique et leur suivi interne restent à la structure qui les a émis."
         [badgeCount]="sharedDocuments.length"
         recordName="documents partagés"
@@ -25,42 +25,44 @@
 
         <!-- Header Actions (Actualiser) -->
         <div header-actions class="flex items-center gap-1.5">
-            <button pButton pRipple 
-                    icon="pi pi-refresh" 
-                    class="p-button-text p-button-rounded p-button-secondary p-button-sm" 
-                    pTooltip="Actualiser" 
-                    tooltipPosition="bottom"
-                    (click)="loadSharedDocuments()">
-            </button>
+            <p-button icon="pi pi-refresh"
+                      severity="secondary"
+                      [text]="true"
+                      [rounded]="true"
+                      size="small"
+                      pTooltip="Actualiser"
+                      tooltipPosition="bottom"
+                      (onClick)="loadSharedDocuments()">
+            </p-button>
         </div>
     </app-tableau-affichage>
 </div>
 
 <!-- Cell Templates -->
 <ng-template #versionTemplate let-row>
-    <span *ngIf="row.versionLabel" 
-          class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+    <span *ngIf="row.versionLabel"
+          class="inline-flex items-center px-2 py-0.5 rounded-[4px] font-mono text-xs font-semibold bg-surface-100 dark:bg-surface-800 text-[var(--heading-color)] border border-[#dddddd] dark:border-surface-700">
         {{ row.versionLabel }}
     </span>
-    <span *ngIf="!row.versionLabel" class="text-slate-400 text-xs">—</span>
+    <span *ngIf="!row.versionLabel" class="text-[var(--text-color-secondary)] text-xs">—</span>
 </ng-template>
 
 <ng-template #structureTemplate let-row>
-    <span class="font-medium text-slate-700 dark:text-slate-200">
+    <span class="font-medium text-[var(--heading-color)]">
         {{ row.serviceSigle || row.serviceLibelle || '—' }}
     </span>
 </ng-template>
 
 <ng-template #partageTemplate let-row>
     <div class="flex flex-col items-start gap-1">
-        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5"
-              [ngClass]="row.partageStructure 
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' 
-                : 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800'">
-            <i class="pi" [ngClass]="row.partageStructure ? 'pi-building' : 'pi-user'" style="font-size: 0.75rem;"></i>
+        <span class="px-2 py-0.5 rounded-[4px] text-xs font-semibold inline-flex items-center gap-1.5 border"
+              [ngClass]="row.partageStructure
+                ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-300'
+                : 'bg-[#0ea5e9]/10 text-[#0084ca] border-[#0ea5e9]/35 dark:text-sky-300'">
+            <i class="pi !text-[11px]" [ngClass]="row.partageStructure ? 'pi-building' : 'pi-user'"></i>
             {{ row.partageStructure ? 'À ma structure' : 'À moi' }}
         </span>
-        <span class="text-[11px] text-slate-400 dark:text-slate-500" *ngIf="row.partagePar">
+        <span class="text-[11px] text-[var(--text-color-secondary)]" *ngIf="row.partagePar">
             par {{ row.partagePar }}
         </span>
     </div>

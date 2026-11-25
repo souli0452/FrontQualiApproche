@@ -13,13 +13,25 @@ import { NgPrimeModule } from '@prime-ng';
 })
 export class FileUploadComponent {
     @Input() styleClass: string = '';
-    @Input() existingFiles: any[] = []; // 👈 Les fichiers déjà en base de données
+    @Input() existingFiles: any[] = []; // Fichiers déjà enregistrés côté serveur
     @Input() maxFiles: number = 5;
     @Input() maxFileSizeMB: number = 10;
     @Input() allowedExts: string[] = ['doc', 'docx', 'xlsx', 'pdf', 'jpeg', 'jpg', 'txt', 'png'];
 
+    // Nouveaux inputs rétrocompatibles (valeurs par défaut identiques à l'existant)
+    @Input() readonly: boolean = false;
+    @Input() showDownload: boolean = false;
+    @Input() immediate: boolean = false; // true = émet filesAdded sans empiler dans uploadedFiles (envoi direct API)
+    @Input() uploading: boolean = false;
+    @Input() hint: string = '';
+    @Input() emptyMessage: string = 'Glissez-déposez vos fichiers ici';
+    @Input() disabledMessage: string = 'Aucune pièce jointe.';
+    @Input() pendingHint: string = '';
+
     @Output() fileUploaded = new EventEmitter<any>();
-    @Output() removeExisting = new EventEmitter<number>(); // 👈 Événement de suppression d'un fichier existant
+    @Output() removeExisting = new EventEmitter<number>();
+    @Output() filesAdded = new EventEmitter<File[]>();
+    @Output() downloadExisting = new EventEmitter<number>();
 
     uploadedFiles: {
         file: File;
@@ -34,10 +46,25 @@ export class FileUploadComponent {
 
     constructor(private messageService: MessageService) {}
 
+    get acceptString(): string {
+        return this.allowedExts.map(e => '.' + e).join(',');
+    }
+
+    get totalFilesCount(): number {
+        return this.uploadedFiles.length + (this.existingFiles?.length || 0);
+    }
+
+    getExistingFileName(file: any): string {
+        return file?.nom || file?.name || 'Fichier';
+    }
 
     onDragOver(event: DragEvent) {
         event.preventDefault();
         event.stopPropagation();
+        if (this.readonly || this.uploading) {
+            this.isDragging = false;
+            return;
+        }
         this.isDragging = true;
     }
 
@@ -51,6 +78,7 @@ export class FileUploadComponent {
         event.preventDefault();
         event.stopPropagation();
         this.isDragging = false;
+        if (this.readonly || this.uploading) return;
         if (event.dataTransfer && event.dataTransfer.files) {
             this.handleFiles(Array.from(event.dataTransfer.files));
         }
@@ -58,71 +86,94 @@ export class FileUploadComponent {
 
     onFileSelected(event: Event) {
         const input = event.target as HTMLInputElement;
-        if (!input.files) return;
+        if (!input.files || this.readonly || this.uploading) return;
 
         this.handleFiles(Array.from(input.files));
         input.value = ''; // Reset input
     }
 
     private handleFiles(newFiles: File[]) {
-        const maxAllowedNew = this.maxFiles - this.existingFiles.length;
+        const existingCount = this.existingFiles?.length || 0;
+        const maxAllowedNew = this.maxFiles - existingCount;
+        const validFiles: File[] = [];
+        let acceptedCount = this.uploadedFiles.length;
 
         for (const file of newFiles) {
-            const ext = file.name.split('.').pop()?.toLowerCase() || '';
+            const dotIndex = file.name.lastIndexOf('.');
+            const ext = dotIndex < 0 ? '' : file.name.substring(dotIndex + 1).toLowerCase();
             const fileSizeMB = file.size / (1024 * 1024);
 
             if (!this.allowedExts.includes(ext)) {
-                this.messageService.add({ 
-                    severity: 'error', 
-                    summary: 'Type non supporté', 
-                    detail: `L'extension .${ext} n'est pas autorisée.`, 
-                    life: 5000 
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Type non supporté',
+                    detail: `L'extension ${ext ? '.' + ext : '(inconnue)'} n'est pas autorisée.`,
+                    life: 5000
                 });
                 continue;
             }
 
             if (fileSizeMB > this.maxFileSizeMB) {
-                this.messageService.add({ 
-                    severity: 'error', 
-                    summary: 'Fichier trop lourd', 
-                    detail: `Le fichier dépasse la taille maximale autorisée de ${this.maxFileSizeMB} Mo.`, 
-                    life: 5000 
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Fichier trop lourd',
+                    detail: `Le fichier dépasse la taille maximale autorisée de ${this.maxFileSizeMB} Mo.`,
+                    life: 5000
                 });
                 continue;
             }
 
-            if (this.uploadedFiles.length < maxAllowedNew) {
-                const fileObj = {
-                    file,
-                    extension: ext,
-                    name: this.formatFileName(file.name, ext),
-                    size: this.formatBytes(file.size),
-                    loading: true,
-                    icon: this.getFileIcon(ext)
-                };
+            if (acceptedCount < maxAllowedNew) {
+                validFiles.push(file);
+                acceptedCount++;
 
-                this.uploadedFiles.push(fileObj);
-                this.fileUploaded.emit(this.uploadedFiles);
+                if (!this.immediate) {
+                    const fileObj = {
+                        file,
+                        extension: ext,
+                        name: this.formatFileName(file.name, ext),
+                        size: this.formatBytes(file.size),
+                        loading: true,
+                        icon: this.getFileIcon(ext)
+                    };
 
-                setTimeout(() => {
-                    fileObj.loading = false;
+                    this.uploadedFiles.push(fileObj);
                     this.fileUploaded.emit(this.uploadedFiles);
-                }, 1500);
+
+                    setTimeout(() => {
+                        fileObj.loading = false;
+                        if (this.uploadedFiles.includes(fileObj)) {
+                            this.fileUploaded.emit(this.uploadedFiles);
+                        }
+                    }, 1500);
+                }
             } else {
-                this.messageService.add({ 
-                    severity: 'error', 
-                    summary: 'Limite atteinte', 
-                    detail: `Le nombre maximal de ${this.maxFiles} fichier(s) est atteint.`, 
-                    life: 5000 
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Limite atteinte',
+                    detail: `Le nombre maximal de ${this.maxFiles} fichier(s) est atteint.`,
+                    life: 5000
                 });
                 break;
             }
         }
+
+        if (validFiles.length > 0) {
+            this.filesAdded.emit(validFiles);
+        }
     }
 
+    /** Vide la file locale (ex. changement de point de contrôle ou après envoi). */
+    clear(emit: boolean = true): void {
+        this.uploadedFiles = [];
+        if (emit) {
+            this.fileUploaded.emit(this.uploadedFiles);
+        }
+    }
 
     formatFileName(name: string, extension: string): string {
-        const baseName = name.substring(0, name.lastIndexOf('.')) || name;
+        const dotIndex = name.lastIndexOf('.');
+        const baseName = dotIndex > 0 ? name.substring(0, dotIndex) : name;
         if (baseName.length > 10) {
             return baseName.substring(0, 10) + '....' + extension;
         }
@@ -130,17 +181,26 @@ export class FileUploadComponent {
     }
 
     getFileIcon(extension: string): string {
-        const icons: { [key: string]: string } = {
+        const icons: Record<string, string> = {
             doc: 'assets/images/doc-file.png',
             docx: 'assets/images/doc-file.png',
+            odt: 'assets/images/doc-file.png',
+            rtf: 'assets/images/doc-file.png',
+            xls: 'assets/images/xls-file.png',
             xlsx: 'assets/images/xls-file.png',
+            ods: 'assets/images/xls-file.png',
+            csv: 'assets/images/xls-file.png',
             pdf: 'assets/images/pdf-file.png',
             jpeg: 'assets/images/jpeg-file.png',
             jpg: 'assets/images/jpeg-file.png',
             png: 'assets/images/jpeg-file.png',
+            gif: 'assets/images/jpeg-file.png',
+            bmp: 'assets/images/jpeg-file.png',
+            webp: 'assets/images/jpeg-file.png',
+            svg: 'assets/images/jpeg-file.png',
             txt: 'assets/images/txt-file.png'
         };
-        return icons[extension] || 'assets/images/unknown-file.png'; // Icône par défaut pour les fichiers inconnus
+        return icons[extension] || 'assets/images/unknown-file.png';
     }
 
     formatBytes(bytes: number): string {
@@ -152,10 +212,16 @@ export class FileUploadComponent {
 
     removeFile(index: number) {
         this.uploadedFiles.splice(index, 1);
-        this.fileUploaded.emit(this.uploadedFiles); // Mettre à jour la liste des fichiers dans le parent
+        this.fileUploaded.emit(this.uploadedFiles);
     }
 
     deleteExisting(index: number) {
         this.removeExisting.emit(index);
+    }
+
+    onDownloadExisting(index: number) {
+        if (this.showDownload) {
+            this.downloadExisting.emit(index);
+        }
     }
 }

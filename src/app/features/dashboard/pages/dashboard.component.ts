@@ -1,34 +1,31 @@
 import { CommonModule } from '@angular/common';
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { currentUserState } from '@core/auth/auth.state';
-import { getCurrentUserStructure } from '@core/auth/auth-utils';
-import { EtatDeLaListe, MesDecisionsComponent } from '../components/mes-decisions/mes-decisions.component';
+import { accesAutorise, getCurrentUserStructure } from '@core/auth/auth-utils';
+import { ModuleAbonnement } from '@core/enums/module-abonnement.enum';
+import { LicenceOuverteDirective } from '@shared/licence/licence-ouverte.directive';
+import { ElementVentilation, EtatDeLaListe, Famille, MesDecisionsComponent } from '../components/mes-decisions/mes-decisions.component';
 import { ActionsRapidesComponent } from '../components/actions-rapide/actions-rapides.component';
 import { IndicateursComponent } from '../components/indicateurs/indicateurs.component';
 
 /**
  * Accueil : ce qu'on attend de vous, et ce que vous pouvez entreprendre.
- *
- * <p>Cette page présentait des graphiques de non-conformités — par processus, par niveau, par mois.
- * Deux choses les condamnaient. D'abord ils ne s'affichaient plus : le chargement des données avait
- * été mis en commentaire, et chacun rendait un cadre vide. Ensuite, ils étaient les mêmes pour tout
- * le monde : un agent d'un service qui n'a pas souscrit au module des non-conformités y voyait des
- * cadres vides, et un pilote n'y trouvait aucun de ses dossiers en attente.</p>
- *
- * <p>Une page d'accueil de système qualité doit répondre à une question et une seule : <b>qu'attend-on
- * de moi ?</b> D'où deux blocs, tous deux réglés sur le module souscrit et les permissions détenues :
- * les dossiers arrêtés en attente d'une décision de cette personne, avec de quoi la prendre sur
- * place, puis les gestes qu'elle peut entreprendre.</p>
- *
- * <p>Les statistiques ne sont pas perdues : chaque module a la sienne, sur son propre écran, où elle
- * porte sur un périmètre que le lecteur connaît.</p>
  */
 @Component({
     selector: 'app-dashboard',
     standalone: true,
-    imports: [CommonModule, ButtonModule, TooltipModule, MesDecisionsComponent, ActionsRapidesComponent, IndicateursComponent],
+    imports: [
+        CommonModule,
+        ButtonModule,
+        TooltipModule,
+        LicenceOuverteDirective,
+        MesDecisionsComponent,
+        ActionsRapidesComponent,
+        IndicateursComponent
+    ],
     templateUrl: 'dashboard.component.html'
 })
 export class Dashboard {
@@ -36,8 +33,13 @@ export class Dashboard {
     @ViewChild(MesDecisionsComponent) private mesDecisions?: MesDecisionsComponent;
     @ViewChild(IndicateursComponent) private indicateursComp?: IndicateursComponent;
 
+    private readonly router = inject(Router);
+
     /** État de rafraîchissement manuel */
     isRefreshing = false;
+
+    /** Onglet actuellement actif dans la bannette (pour synchroniser la carte Charge par module). */
+    filtreModuleActif: 'all' | Famille['cle'] = 'all';
 
     /** Date du jour formatée en français */
     readonly dateDuJour: string = (() => {
@@ -47,12 +49,7 @@ export class Dashboard {
         return texte.charAt(0).toUpperCase() + texte.slice(1);
     })();
 
-    /**
-     * Ce que la liste de travail a trouvé.
-     *
-     * <p>Reçu d'elle, et non lu à travers elle : la synthèse et les indicateurs se dessinent avant,
-     * et interroger un composant qui n'existe pas encore aurait donné un premier rendu faux.</p>
-     */
+    /** Ce que la liste de travail a trouvé. */
     etat?: EtatDeLaListe;
 
     /** Les nombres veulent-ils déjà dire quelque chose ? */
@@ -60,30 +57,37 @@ export class Dashboard {
         return !!this.etat && !this.etat.chargement;
     }
 
-    /** Nom de la personne connectée, tel qu'on l'appelle. */
+    /** Vrai si l'utilisateur dispose d'au moins un module suivi par un circuit de décisions. */
+    get aDesDecisionsSuivies(): boolean {
+        return (this.etat?.repartition?.length ?? 0) > 0;
+    }
+
+    /** Nom de la personne connectée, initiales et structure. */
     readonly nom: string;
+    readonly initiales: string;
     readonly structure: string;
+    readonly canDeclareNc: boolean;
+    readonly canCreateDoc: boolean;
 
     constructor() {
-        // Les deux formes de la réponse d'authentification sont acceptées : le nom figure tantôt à
-        // la racine, tantôt sous `user`. N'en lire qu'une donnait un « Bonjour » sans personne.
         const racine: any = currentUserState.value ?? {};
         const utilisateur: any = racine.user ?? {};
         const prenom = racine.firstName || utilisateur.firstName || '';
         const patronyme = racine.lastName || utilisateur.lastName || '';
         this.nom = `${prenom} ${patronyme}`.trim()
             || racine.username || utilisateur.username || utilisateur.email || '';
-        // Le libellé court d'abord : c'est celui que les agents emploient entre eux.
+        const parties = this.nom.split(/\s+/).filter(Boolean);
+        this.initiales = parties.length >= 2
+            ? `${parties[0][0]}${parties[parties.length - 1][0]}`.toUpperCase()
+            : (parties[0]?.slice(0, 2).toUpperCase() || 'QS');
         const structure = getCurrentUserStructure();
         this.structure = structure?.libelleCourt || structure?.libelleLong || '';
+
+        this.canDeclareNc = accesAutorise(['nc-write', 'SUBMIT_NC'], ModuleAbonnement.NON_CONFORMITE);
+        this.canCreateDoc = accesAutorise(['document-write'], ModuleAbonnement.DOCUMENTAIRE);
     }
 
-    /**
-     * Phrase de synthèse.
-     *
-     * <p>Tant qu'une famille n'a pas répondu, on ne dit pas « rien ne vous attend » : ce serait
-     * affirmer une absence qu'on ne connaît pas encore.</p>
-     */
+    /** Phrase de synthèse contextuelle. */
     get synthese(): string {
         if (!this.etat) {
             return 'Voici votre journée.';
@@ -100,14 +104,72 @@ export class Dashboard {
             : `${total} dossiers attendent votre décision.`;
     }
 
-    /**
-     * Déclenche un rafraîchissement manuel de l'ensemble des données de l'accueil.
-     */
+    pourcentageCharge(count: number): number {
+        const total = this.etat?.total ?? 0;
+        if (!total || !count) return 0;
+        return Math.round((count / total) * 100);
+    }
+
+    largeurBarreCharge(count: number): number {
+        const pct = this.pourcentageCharge(count);
+        if (count > 0 && pct < 5) return 5;
+        return pct;
+    }
+
+    couleurBarreCharge(cle: string): string {
+        switch (cle) {
+            case 'nonConformites':
+                return 'bg-amber-500';
+            case 'demandes':
+                return 'bg-violet-500';
+            case 'documents':
+                return 'bg-[#0084ca]';
+            case 'plansAction':
+                return 'bg-emerald-500';
+            default:
+                return 'bg-[#0084ca]';
+        }
+    }
+
+    couleurTexteCharge(cle: string): string {
+        switch (cle) {
+            case 'nonConformites':
+                return 'text-amber-600 dark:text-amber-400';
+            case 'demandes':
+                return 'text-violet-600 dark:text-violet-400';
+            case 'documents':
+                return 'text-[#0084ca] dark:text-sky-400';
+            case 'plansAction':
+                return 'text-emerald-600 dark:text-emerald-400';
+            default:
+                return 'text-[var(--heading-color)]';
+        }
+    }
+
+    filtrerBannette(cle: string, depuisBarre = false): void {
+        const cible = cle as Famille['cle'];
+        const suivant = (depuisBarre && this.filtreModuleActif === cible) ? 'all' : cible;
+        this.filtreModuleActif = suivant;
+        this.mesDecisions?.selectionnerOnglet(suivant);
+    }
+
+    ouvrirRaccourciPrincipal(): void {
+        if (this.canDeclareNc) {
+            this.router.navigate(['/non-conformite/create']);
+        } else if (this.canCreateDoc) {
+            this.router.navigate(['/gestion-documentaire/create']);
+        }
+    }
+
+    trackByCharge(_index: number, item: ElementVentilation): string {
+        return item.cle;
+    }
+
+    /** Déclenche un rafraîchissement manuel de l'ensemble des données de l'accueil. */
     actualiser(): void {
         this.isRefreshing = true;
         this.mesDecisions?.charger();
         this.indicateursComp?.charger();
-        // Délai minimum pour un retour tactile soigné de l'animation
         setTimeout(() => {
             this.isRefreshing = false;
         }, 600);
@@ -115,4 +177,3 @@ export class Dashboard {
 }
 
 export { Dashboard as DashboardComponent };
-

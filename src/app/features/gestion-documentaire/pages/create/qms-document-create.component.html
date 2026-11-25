@@ -1,437 +1,504 @@
 <p-toast></p-toast>
 
-<!-- Deux colonnes : la saisie à gauche, le fichier et les conseils à droite.
+<form [formGroup]="documentForm">
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+        <!-- Colonne gauche : Formulaire principal -->
+        <div class="xl:col-span-8 bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-5">
+            <!-- En-tête de la carte -->
+            <div class="flex items-center gap-3 pb-4 mb-5 border-b border-[#dddddd]/70 dark:border-surface-700">
+                <div class="w-11 h-11 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                    <i class="pi pi-plus-circle !text-xl"></i>
+                </div>
+                <div class="min-w-0">
+                    <h3 class="text-[16px] font-bold text-[var(--heading-color)] m-0">Nouveau Document QMS</h3>
+                    <p class="text-xs text-[var(--text-color-secondary)] m-0 mt-0.5 leading-snug">
+                        Renseignez les informations du document et importez le fichier correspondant.
+                    </p>
+                </div>
+            </div>
 
-     Les champs étaient posés en rangées de `flex` à deux moitiés, mais trois d'entre elles n'en
-     portaient qu'une : la périodicité, la référence officielle et le code du document occupaient une
-     demi-rangée chacun, laissant un vide à droite. Rien ne s'alignait d'une rangée à l'autre, et les
-     interlignes variaient selon qu'un champ était ou non enveloppé d'un `mt-2`. Chaque section est
-     désormais une grille de douze colonnes où un champ vaut six colonnes : les rangées sont pleines,
-     les colonnes alignées, et les blocs de champ tous bâtis de la même façon. -->
-<form [formGroup]="documentForm" class="p-fluid">
-  <div class="flex flex-col md:flex-row">
-    <div class="w-full md:w-2/3 md:pr-4">
-      <div class="p-4 bg-gray-50 rounded-xl border border-2 border-gray-100">
+            <div class="flex flex-col gap-6">
+                <!-- ============================================================ -->
+                <!-- 1. Identification du document                                -->
+                <!-- ============================================================ -->
+                <div>
+                    <div class="flex items-center gap-2 pb-2 mb-4 border-b border-[#dddddd]/60 dark:border-surface-700">
+                        <i class="pi pi-id-card text-[#0084ca] dark:text-sky-400 !text-sm"></i>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-[var(--heading-color)] m-0">
+                            Identification du document
+                        </h4>
+                    </div>
 
-        <div class="flex items-center gap-3">
-          <div class="flex items-center justify-center bg-blue-50 text-blue-500 rounded-full" style="width: 3.5rem; height: 3.5rem">
-            <i class="pi text-2xl pi-plus-circle"></i>
-          </div>
-          <div class="flex flex-col">
-            <span class="font-bold text-2xl text-900 mb-1">Nouveau Document QMS</span>
-            <span class="text-500 text-sm">Renseignez les informations du document et importez le fichier correspondant.</span>
-          </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Titre du document -->
+                        <div>
+                            <div class="flex items-center gap-1.5 mb-1.5">
+                                <label for="titre" class="text-sm font-semibold text-[var(--heading-color)] m-0">
+                                    Titre du document <span class="text-rose-500">*</span>
+                                </label>
+                                <button type="button"
+                                        class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-0 cursor-pointer inline-flex items-center"
+                                        (click)="aideTitre.toggle($event)"
+                                        aria-label="Aide sur le titre du document">
+                                    <i class="pi pi-question-circle !text-xs"></i>
+                                </button>
+                            </div>
+                            <p-popover #aideTitre>
+                                <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[300px]">
+                                    Veuillez saisir le titre du document que vous souhaitez créer. Ex : Procédure de validation.
+                                </div>
+                            </p-popover>
+                            <input pInputText id="titre" formControlName="titre" class="w-full"
+                                   placeholder="Ex : Procédure de validation" />
+                        </div>
+
+                        <!-- Type de document -->
+                        <div>
+                            <div class="flex items-center gap-1.5 mb-1.5">
+                                <label for="documentType" class="text-sm font-semibold text-[var(--heading-color)] m-0">
+                                    Type de document <span class="text-rose-500">*</span>
+                                </label>
+                                <button type="button"
+                                        class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-0 cursor-pointer inline-flex items-center"
+                                        (click)="aideType.toggle($event)"
+                                        aria-label="Aide sur le type de document">
+                                    <i class="pi pi-question-circle !text-xs"></i>
+                                </button>
+                            </div>
+                            <p-popover #aideType>
+                                <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[300px]">
+                                    Veuillez sélectionner le type de document que vous souhaitez créer.
+                                </div>
+                            </p-popover>
+                            <app-select-input
+                                formControlName="documentType"
+                                optionLabel="libelle"
+                                optionValue="code"
+                                placeholder="Sélectionner le type de document"
+                                [lazy]="true"
+                                [loadOptions]="qmsService.chargerOptionsTypes"></app-select-input>
+                        </div>
+
+                        <!-- Nom du Rédacteur -->
+                        <div>
+                            <div class="flex items-center gap-1.5 mb-1.5">
+                                <label for="redacteur" class="text-sm font-semibold text-[var(--heading-color)] m-0">
+                                    Nom du rédacteur <span class="text-rose-500">*</span>
+                                </label>
+                                <button type="button"
+                                        class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-0 cursor-pointer inline-flex items-center"
+                                        (click)="aideRedacteur.toggle($event)"
+                                        aria-label="Aide sur le rédacteur">
+                                    <i class="pi pi-question-circle !text-xs"></i>
+                                </button>
+                            </div>
+                            <p-popover #aideRedacteur>
+                                <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[300px]">
+                                    Veuillez saisir le nom du rédacteur du document que vous souhaitez créer. Ex : Jean Kaboré.
+                                </div>
+                            </p-popover>
+                            <input pInputText id="redacteur" formControlName="redacteur" class="w-full"
+                                   placeholder="Ex : Jean Kaboré" />
+                        </div>
+
+                        <!-- Code du document -->
+                        <div>
+                            <div class="flex items-center gap-1.5 mb-1.5">
+                                <label for="reference" class="text-sm font-semibold text-[var(--heading-color)] m-0">
+                                    Code du document
+                                </label>
+                                <button type="button"
+                                        class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-0 cursor-pointer inline-flex items-center"
+                                        (click)="aideCode.toggle($event)"
+                                        aria-label="Aide sur le code du document">
+                                    <i class="pi pi-question-circle !text-xs"></i>
+                                </button>
+                            </div>
+                            <p-popover #aideCode>
+                                <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[320px]">
+                                    Code selon votre propre convention de numérotation. Il s'ajoute au numéro
+                                    attribué automatiquement à l'enregistrement, il ne s'y substitue pas.
+                                </div>
+                            </p-popover>
+                            <input pInputText id="reference" formControlName="reference" class="w-full"
+                                   placeholder="Ex : PRO-QUAL-01" />
+                        </div>
+
+                        <!-- Périodicité de révision -->
+                        <div>
+                            <div class="flex items-center gap-1.5 mb-1.5">
+                                <label for="periodiciteMois" class="text-sm font-semibold text-[var(--heading-color)] m-0">
+                                    Périodicité de révision (mois) <span class="text-rose-500">*</span>
+                                </label>
+                                <button type="button"
+                                        class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-0 cursor-pointer inline-flex items-center"
+                                        (click)="aidePeriodicite.toggle($event)"
+                                        aria-label="Aide sur la périodicité de révision">
+                                    <i class="pi pi-question-circle !text-xs"></i>
+                                </button>
+                            </div>
+                            <p-popover #aidePeriodicite>
+                                <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[300px]">
+                                    Fréquence à laquelle le document devra être revu. Le système alerte à l'approche de
+                                    l'échéance. Ex : 12 mois pour une revue annuelle.
+                                </div>
+                            </p-popover>
+                            <p-inputnumber inputId="periodiciteMois" formControlName="periodiciteMois"
+                                           suffix=" mois" [min]="1" placeholder="12 mois"
+                                           class="w-full" styleClass="w-full" inputStyleClass="w-full" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- 2. Métadonnées complémentaires                               -->
+                <!-- ============================================================ -->
+                <div>
+                    <div class="flex items-center gap-2 pb-2 mb-4 border-b border-[#dddddd]/60 dark:border-surface-700">
+                        <i class="pi pi-tag text-[#0084ca] dark:text-sky-400 !text-sm"></i>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-[var(--heading-color)] m-0">
+                            Métadonnées complémentaires
+                        </h4>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Référence officielle -->
+                        <div>
+                            <div class="flex items-center gap-1.5 mb-1.5">
+                                <label for="referenceOfficielle" class="text-sm font-semibold text-[var(--heading-color)] m-0">
+                                    Référence officielle
+                                </label>
+                                <button type="button"
+                                        class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-0 cursor-pointer inline-flex items-center"
+                                        (click)="aideReferenceOfficielle.toggle($event)"
+                                        aria-label="Aide sur la référence officielle">
+                                    <i class="pi pi-question-circle !text-xs"></i>
+                                </button>
+                            </div>
+                            <p-popover #aideReferenceOfficielle>
+                                <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[300px]">
+                                    Norme ou texte dont le document relève (ex : ISO 9001). Utile aux audits, qui la recherchent.
+                                </div>
+                            </p-popover>
+                            <p-select
+                                inputId="referenceOfficielle"
+                                [options]="referencesList"
+                                formControlName="referenceOfficielle"
+                                optionLabel="label"
+                                optionValue="value"
+                                placeholder="Sélectionner la référence officielle"
+                                [filter]="true"
+                                [showClear]="true"
+                                appendTo="body"
+                                class="w-full"
+                                styleClass="w-full">
+                            </p-select>
+                        </div>
+
+                        <!-- Domaine d'application -->
+                        <div>
+                            <div class="flex items-center gap-1.5 mb-1.5">
+                                <label for="domaineId" class="text-sm font-semibold text-[var(--heading-color)] m-0">
+                                    Domaine d'application
+                                </label>
+                                <button type="button"
+                                        class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-0 cursor-pointer inline-flex items-center"
+                                        (click)="aideDomaine.toggle($event)"
+                                        aria-label="Aide sur le domaine d'application">
+                                    <i class="pi pi-question-circle !text-xs"></i>
+                                </button>
+                            </div>
+                            <p-popover #aideDomaine>
+                                <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[300px]">
+                                    Le champ d'activité que couvre ce document. Les domaines se paramètrent sous
+                                    Paramétrage Document.
+                                </div>
+                            </p-popover>
+                            <app-select-input formControlName="domaineId"
+                                optionLabel="libelle" optionValue="id"
+                                placeholder="Sélectionner le domaine d'application"
+                                [lazy]="true"
+                                [loadOptions]="domaineService.chargerOptions"
+                                (optionChange)="domaineChoisi = $event"></app-select-input>
+                        </div>
+
+                        <!-- Statut légal -->
+                        <div>
+                            <div class="flex items-center gap-1.5 mb-1.5">
+                                <label for="statutLegal" class="text-sm font-semibold text-[var(--heading-color)] m-0">
+                                    Statut légal
+                                </label>
+                                <button type="button"
+                                        class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-0 cursor-pointer inline-flex items-center"
+                                        (click)="aideStatutLegal.toggle($event)"
+                                        aria-label="Aide sur le statut légal">
+                                    <i class="pi pi-question-circle !text-xs"></i>
+                                </button>
+                            </div>
+                            <p-popover #aideStatutLegal>
+                                <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[300px]">
+                                    Ce qui rend le document opposable : obligation réglementaire, recommandation
+                                    normative, ou règle interne.
+                                </div>
+                            </p-popover>
+                            <p-select
+                                inputId="statutLegal"
+                                [options]="statutsList"
+                                formControlName="statutLegal"
+                                optionLabel="label"
+                                optionValue="value"
+                                placeholder="Sélectionner le statut"
+                                [filter]="true"
+                                [showClear]="true"
+                                appendTo="body"
+                                class="w-full"
+                                styleClass="w-full">
+                            </p-select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- 3. Options de diffusion                                      -->
+                <!-- ============================================================ -->
+                <div>
+                    <div class="flex items-center gap-2 pb-2 mb-4 border-b border-[#dddddd]/60 dark:border-surface-700">
+                        <i class="pi pi-shield text-[#0084ca] dark:text-sky-400 !text-sm"></i>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-[var(--heading-color)] m-0">
+                            Options de diffusion
+                        </h4>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Priorité -->
+                        <div>
+                            <label for="prioriteId" class="block text-sm font-semibold text-[var(--heading-color)] mb-1.5">
+                                Priorité
+                            </label>
+                            <app-select-input formControlName="prioriteId"
+                                optionLabel="libelle" optionValue="id"
+                                placeholder="Sélectionner la priorité"
+                                [lazy]="true"
+                                [loadOptions]="prioriteService.chargerOptions"
+                                (optionChange)="prioriteChoisie = $event"></app-select-input>
+                        </div>
+
+                        <!-- Niveau de confidentialité -->
+                        <div>
+                            <div class="flex items-center gap-1.5 mb-1.5">
+                                <label for="niveauConfidentialiteId" class="text-sm font-semibold text-[var(--heading-color)] m-0">
+                                    Niveau de confidentialité
+                                </label>
+                                <button type="button"
+                                        class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-0 cursor-pointer inline-flex items-center"
+                                        (click)="aideConfidentialite.toggle($event)"
+                                        aria-label="Aide sur le niveau de confidentialité">
+                                    <i class="pi pi-question-circle !text-xs"></i>
+                                </button>
+                            </div>
+                            <p-popover #aideConfidentialite>
+                                <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[340px]">
+                                    Chaque niveau désigne les rôles admis à consulter le document. La restriction
+                                    s'ajoute à celle de la structure : il faudra relever de votre structure
+                                    <em>et</em> détenir l'un de ces rôles. Sans niveau, le document reste visible
+                                    de toute la structure émettrice.
+                                </div>
+                            </p-popover>
+                            <app-select-input formControlName="niveauConfidentialiteId"
+                                optionLabel="libelle" optionValue="id"
+                                placeholder="Sélectionner le niveau"
+                                [lazy]="true"
+                                [loadOptions]="niveauConfidentialiteService.chargerOptions"
+                                (optionChange)="niveauChoisi = $event"></app-select-input>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Barre d'actions -->
+            <div class="flex flex-wrap items-center justify-between gap-2 mt-6 pt-4 border-t border-[#dddddd]/70 dark:border-surface-700">
+                <p-button label="Guide de saisie" icon="pi pi-book" severity="secondary" [outlined]="true" size="small"
+                          styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                          (onClick)="showGuideModal = true"></p-button>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <p-button label="Annuler" severity="secondary" [outlined]="true" size="small"
+                              styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                              (onClick)="goBack()"></p-button>
+
+                    <p-button siLicenceOuverte
+                              label="Enregistrer le brouillon"
+                              icon="pi pi-save"
+                              severity="secondary"
+                              [outlined]="true"
+                              size="small"
+                              styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                              [disabled]="documentForm.invalid || !selectedFile || loadingSave || loadingSubmit"
+                              [loading]="loadingSave"
+                              pTooltip="Le document reste modifiable et n'est transmis à personne."
+                              tooltipPosition="top"
+                              (onClick)="submitDocument(false)"></p-button>
+
+                    <p-button siLicenceOuverte
+                              label="Soumettre à la validation"
+                              icon="pi pi-send"
+                              severity="info"
+                              size="small"
+                              [disabled]="documentForm.invalid || !selectedFile || loadingSave || loadingSubmit"
+                              [loading]="loadingSubmit"
+                              pTooltip="Le document entre immédiatement dans le circuit de validation."
+                              tooltipPosition="top"
+                              (onClick)="submitDocument(true)"></p-button>
+                </div>
+            </div>
         </div>
 
-        <hr>
-
-        <div class="surface-section p-4 border-round shadow-1">
-
-          <!-- ============================================================ -->
-          <!-- 1. Identification du document                                -->
-          <!-- ============================================================ -->
-          <div class="flex items-center mb-4 gap-2">
-            <i class="pi pi-id-card text-blue-500"></i>
-            <h3 class="text-xl font-bold text-900 my-0">Identification du document</h3>
-          </div>
-
-          <div class="grid grid-cols-12 gap-x-4 gap-y-5 mb-8">
-
-            <div class="col-span-12 md:col-span-6">
-              <div class="flex items-center mb-2 gap-2">
-                <label for="titre" class="font-semibold m-0">Titre du document <span class="text-red-500">*</span></label>
-                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="aideTitre.toggle($event)"></i>
-              </div>
-              <p-popover #aideTitre>
-                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                  Veuillez saisir le titre du document que vous souhaitez créer. Ex: Procédure de validation
+        <!-- Colonne droite : Fichier + Conseils -->
+        <div class="xl:col-span-4 flex flex-col gap-5">
+            <!-- Fichier du document -->
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-4">
+                <div class="flex items-center justify-between gap-2 mb-3">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="w-8 h-8 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                            <i class="pi pi-paperclip !text-sm"></i>
+                        </span>
+                        <div class="min-w-0">
+                            <h3 class="text-sm font-bold text-[var(--heading-color)] m-0 leading-tight">Fichier du document</h3>
+                            <span class="text-[11px] text-[var(--text-color-secondary)]">PDF conseillé · 20 Mo max</span>
+                        </div>
+                    </div>
+                    <button type="button"
+                            class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-1 cursor-pointer inline-flex items-center"
+                            (click)="infoFichiers.toggle($event)"
+                            aria-label="Aide sur le fichier du document">
+                        <i class="pi pi-question-circle !text-xs"></i>
+                    </button>
                 </div>
-              </p-popover>
-              <p-floatlabel variant="on" class="w-full">
-                <input pInputText id="titre" formControlName="titre" class="w-full" />
-                <label for="titre">Titre du document</label>
-              </p-floatlabel>
+                <p-popover #infoFichiers>
+                    <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[300px]">
+                        Veuillez importer le fichier officiel du document (format PDF, Word, Excel ou PowerPoint, max. 20 Mo).
+                    </div>
+                </p-popover>
+
+                <app-file-upload
+                    [maxFiles]="1"
+                    [maxFileSizeMB]="20"
+                    [allowedExts]="['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']"
+                    [existingFiles]="[]"
+                    (fileUploaded)="handleFileUpload($event)">
+                </app-file-upload>
             </div>
 
-            <div class="col-span-12 md:col-span-6">
-              <div class="flex items-center mb-2 gap-2">
-                <label for="documentType" class="font-semibold m-0">Type de document <span class="text-red-500">*</span></label>
-                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="aideType.toggle($event)"></i>
-              </div>
-              <p-popover #aideType>
-                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                  Veuillez sélectionner le type de document que vous souhaitez créer.
+            <!-- Conseils de saisie -->
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-4">
+                <div class="flex items-center gap-2.5 mb-3 pb-2.5 border-b border-[#dddddd]/70 dark:border-surface-700">
+                    <span class="w-8 h-8 rounded-[5px] bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <i class="pi pi-lightbulb !text-sm"></i>
+                    </span>
+                    <h3 class="text-sm font-bold text-[var(--heading-color)] m-0">Conseils de saisie</h3>
                 </div>
-              </p-popover>
-              <app-select-input
-                formControlName="documentType"
-                optionLabel="libelle"
-                optionValue="code"
-                placeholder="Sélectionner le type de document"
-                [lazy]="true"
-                [loadOptions]="qmsService.chargerOptionsTypes"></app-select-input>
-            </div>
 
-            <!-- Le champ Processus Émetteur est auto-peuplé par l'utilisateur connecté, on le masque -->
-            <!-- <div class="col-span-12 md:col-span-6">
-              <div class="flex items-center mb-2 gap-2">
-                <label for="service" class="font-semibold m-0">Processus Émetteur <span class="text-red-500">*</span></label>
-                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="aideProcessusEmetteur.toggle($event)"></i>
-              </div>
-              <p-popover #aideProcessusEmetteur>
-                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                  La structure qui émet le document et répond de ses révisions. Elle est pré-remplie
-                  avec la vôtre.
+                <div class="flex flex-col gap-2.5 text-xs text-[var(--text-color-secondary)] leading-relaxed">
+                    <div class="flex items-start gap-2.5">
+                        <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                        <span>Privilégiez le format <strong class="text-[var(--heading-color)]">PDF</strong> pour garantir que la mise en page officielle ne soit pas modifiée à la lecture.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                        <span>Associez les bonnes <strong class="text-[var(--heading-color)]">références officielles</strong> (ex : ISO 9001) pour simplifier les prochains audits qualité.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                        <span>Ciblez le bon <strong class="text-[var(--heading-color)]">processus émetteur</strong> afin que le document soit classé au bon endroit dans le QMS.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                        <span>Définissez une <strong class="text-[var(--heading-color)]">périodicité de révision</strong> réaliste (ex : 12 ou 24 mois) pour maintenir sa conformité.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                        <span>Un <strong class="text-[var(--heading-color)]">niveau de confidentialité</strong> restreint le document aux rôles qu'il admet : vérifiez qu'il n'écarte pas ceux qui doivent le valider.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                        <span>La taille maximale du fichier est de <strong class="text-[var(--heading-color)]">20 Mo</strong> pour assurer un chargement fluide pour tous les collaborateurs.</span>
+                    </div>
                 </div>
-              </p-popover>
-              <app-select-input
-                formControlName="service"
-                optionLabel="libelleLong"
-                placeholder="Sélectionner le processus émetteur"
-                [lazy]="true"
-                [loadOptions]="structureService.chargerOptions"
-                [selectedOptions]="structureRetenue('service')"></app-select-input>
-            </div> -->
-
-            <div class="col-span-12 md:col-span-6">
-              <div class="flex items-center mb-2 gap-2">
-                <label for="redacteur" class="font-semibold m-0">Nom du Rédacteur <span class="text-red-500">*</span></label>
-                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="aideRedacteur.toggle($event)"></i>
-              </div>
-              <p-popover #aideRedacteur>
-                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                  Veuillez saisir le nom du rédacteur du document que vous souhaitez créer. Ex: Jean Kaboré
-                </div>
-              </p-popover>
-              <p-floatlabel variant="on" class="w-full">
-                <input pInputText id="redacteur" formControlName="redacteur" class="w-full" />
-                <label for="redacteur">Nom du Rédacteur</label>
-              </p-floatlabel>
             </div>
-
-            <!-- Le code suit la convention de numérotation de l'organisation : il s'ajoute au numéro
-                 attribué par le système, il ne le remplace pas. Placé ici, auprès de ce qui
-                 identifie le document, plutôt qu'égaré parmi les métadonnées. -->
-            <div class="col-span-12 md:col-span-6">
-              <div class="flex items-center mb-2 gap-2">
-                <label for="reference" class="font-semibold m-0">Code du document</label>
-                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="aideCode.toggle($event)"></i>
-              </div>
-              <p-popover #aideCode>
-                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 320px;">
-                  Code selon votre propre convention de numérotation. Il s'ajoute au numéro
-                  attribué automatiquement à l'enregistrement, il ne s'y substitue pas.
-                </div>
-              </p-popover>
-              <p-floatlabel variant="on" class="w-full">
-                <input pInputText id="reference" formControlName="reference" class="w-full" />
-                <label for="reference">Code</label>
-              </p-floatlabel>
-            </div>
-
-            <div class="col-span-12 md:col-span-6">
-              <div class="flex items-center mb-2 gap-2">
-                <label for="periodiciteMois" class="font-semibold m-0">Périodicité de révision (mois) <span class="text-red-500">*</span></label>
-                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="aidePeriodicite.toggle($event)"></i>
-              </div>
-              <p-popover #aidePeriodicite>
-                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                  Fréquence à laquelle le document devra être revu. Le système alerte à l'approche de
-                  l'échéance. Ex: 12 mois pour une revue annuelle.
-                </div>
-              </p-popover>
-              <p-floatlabel variant="on" class="w-full">
-                <p-inputnumber id="periodiciteMois" formControlName="periodiciteMois" suffix=" mois" [min]="1" class="w-full" />
-                <label for="periodiciteMois">Périodicité</label>
-              </p-floatlabel>
-            </div>
-          </div>
-
-          <!-- ============================================================ -->
-          <!-- 2. Métadonnées complémentaires                               -->
-          <!-- ============================================================ -->
-          <div class="flex items-center mb-4 gap-2">
-            <i class="pi pi-tag text-blue-500"></i>
-            <h3 class="text-xl font-bold text-900 my-0">Métadonnées complémentaires</h3>
-          </div>
-
-          <!-- Aucun de ces trois champs n'est exigé — ni par le formulaire, ni par le serveur.
-               L'astérisque rouge qu'ils portaient annonçait le contraire, et l'enregistrement
-               passait sans eux : le repère du champ obligatoire cessait d'en être un. -->
-          <div class="grid grid-cols-12 gap-x-4 gap-y-5 mb-8">
-
-            <div class="col-span-12 md:col-span-6">
-              <div class="flex items-center mb-2 gap-2">
-                <label for="referenceOfficielle" class="font-semibold m-0">Référence officielle</label>
-                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="aideReferenceOfficielle.toggle($event)"></i>
-              </div>
-              <p-popover #aideReferenceOfficielle>
-                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                  Norme ou texte dont le document relève (ex: ISO 9001). Utile aux audits, qui la
-                  recherchent.
-                </div>
-              </p-popover>
-              <p-floatlabel variant="on" class="w-full">
-                <p-select
-                  id="referenceOfficielle"
-                  [options]="referencesList"
-                  formControlName="referenceOfficielle"
-                  optionLabel="label"
-                  optionValue="value"
-                  [filter]="true"
-                  [showClear]="true"
-                  appendTo="body"
-                  class="w-full"
-                  styleClass="w-full">
-                </p-select>
-                <label for="referenceOfficielle">Sélectionner la référence officielle</label>
-              </p-floatlabel>
-            </div>
-
-            <div class="col-span-12 md:col-span-6">
-              <div class="flex items-center mb-2 gap-2">
-                <label for="domaineId" class="font-semibold m-0">Domaine d'application</label>
-                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="aideDomaine.toggle($event)"></i>
-              </div>
-              <p-popover #aideDomaine>
-                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                  Le champ d'activité que couvre ce document. Les domaines se paramètrent sous
-                  Paramétrage Document : la saisie libre faisait compter « RH » et
-                  « Ressources Humaines » comme deux domaines distincts dans les statistiques.
-                </div>
-              </p-popover>
-              <app-select-input formControlName="domaineId"
-                optionLabel="libelle" optionValue="id"
-                placeholder="Sélectionner le domaine d'application"
-                [lazy]="true"
-                [loadOptions]="domaineService.chargerOptions"
-                (optionChange)="domaineChoisi = $event"></app-select-input>
-            </div>
-
-            <div class="col-span-12 md:col-span-6">
-              <div class="flex items-center mb-2 gap-2">
-                <label for="statutLegal" class="font-semibold m-0">Statut légal</label>
-                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="aideStatutLegal.toggle($event)"></i>
-              </div>
-              <p-popover #aideStatutLegal>
-                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                  Ce qui rend le document opposable : obligation réglementaire, recommandation
-                  normative, ou règle interne.
-                </div>
-              </p-popover>
-              <p-floatlabel variant="on" class="w-full">
-                <p-select
-                  id="statutLegal"
-                  [options]="statutsList"
-                  formControlName="statutLegal"
-                  optionLabel="label"
-                  optionValue="value"
-                  [filter]="true"
-                  [showClear]="true"
-                  appendTo="body"
-                  class="w-full"
-                  styleClass="w-full">
-                </p-select>
-                <label for="statutLegal">Sélectionner le statut</label>
-              </p-floatlabel>
-            </div>
-          </div>
-
-          <!-- ============================================================ -->
-          <!-- 3. Options de diffusion                                      -->
-          <!-- ============================================================ -->
-          <div class="flex items-center mb-4 gap-2">
-            <i class="pi pi-shield text-blue-500"></i>
-            <h3 class="text-xl font-bold text-900 my-0">Options de diffusion</h3>
-          </div>
-
-          <!-- Priorité et niveau de confidentialité vont de pair : ce sont eux qui décident de qui
-               verra le document, et à quel degré d'urgence il se lit. Les deux référentiels se
-               paramètrent sous Paramétrage Document. -->
-          <div class="grid grid-cols-12 gap-x-4 gap-y-5">
-
-            <div class="col-span-12 md:col-span-6">
-              <div class="flex items-center mb-2 gap-2">
-                <label for="prioriteId" class="font-semibold m-0">Priorité</label>
-              </div>
-              <app-select-input formControlName="prioriteId"
-                optionLabel="libelle" optionValue="id"
-                placeholder="Sélectionner la priorité"
-                [lazy]="true"
-                [loadOptions]="prioriteService.chargerOptions"
-                (optionChange)="prioriteChoisie = $event"></app-select-input>
-            </div>
-
-            <div class="col-span-12 md:col-span-6">
-              <div class="flex items-center mb-2 gap-2">
-                <label for="niveauConfidentialiteId" class="font-semibold m-0">Niveau de confidentialité</label>
-                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="aideConfidentialite.toggle($event)"></i>
-              </div>
-              <p-popover #aideConfidentialite>
-                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 340px;">
-                  Chaque niveau désigne les rôles admis à consulter le document. La restriction
-                  s'ajoute à celle de la structure : il faudra relever de votre structure
-                  <em>et</em> détenir l'un de ces rôles. Sans niveau, le document reste visible
-                  de toute la structure émettrice.
-                </div>
-              </p-popover>
-              <app-select-input formControlName="niveauConfidentialiteId"
-                optionLabel="libelle" optionValue="id"
-                placeholder="Sélectionner le niveau"
-                [lazy]="true"
-                [loadOptions]="niveauConfidentialiteService.chargerOptions"
-                (optionChange)="niveauChoisi = $event"></app-select-input>
-            </div>
-          </div>
-
-          <!-- « Document confidentiel » et « Document externe » ont disparu : le premier disait
-               moins bien ce que dit le niveau de confidentialité — lequel désigne les rôles admis,
-               là où le booléen se contentait d'un oui ou d'un non que rien ne reliait à une
-               habilitation. Le serveur établit désormais la confidentialité à partir du niveau
-               choisi, si bien que deux réglages ne peuvent plus se contredire. -->
-
-          <div class="flex justify-between gap-2 mt-8 pt-4 border-t border-slate-200">
-            <p-button label="Voir guide de saisie" severity="secondary" (click)="showGuideModal = true" />
-            <div class="flex gap-2">
-              <p-button label="Annuler" variant="outlined" severity="contrast" (click)="goBack()" />
-              <!-- Deux issues au dépôt, et le rédacteur choisit. Enregistrer laisse le document
-                   en brouillon, qu'il pourra reprendre et compléter ; soumettre l'engage dans le
-                   circuit de validation dans la foulée. Les deux boutons existaient déjà, mais le
-                   serveur inscrivait l'étape dès le dépôt : aucun document ne restait brouillon,
-                   et « Enregistrer » soumettait comme l'autre. -->
-              <p-button siLicenceOuverte label="Enregistrer le brouillon" [outlined]="true" severity="warn" icon="pi pi-save"
-                [disabled]="documentForm.invalid || !selectedFile || loadingSave || loadingSubmit" [loading]="loadingSave"
-                pTooltip="Le document reste modifiable et n'est transmis à personne." tooltipPosition="top"
-                (click)="submitDocument(false)" />
-              <p-button siLicenceOuverte label="Soumettre à la validation" severity="info" icon="pi pi-send"
-                [disabled]="documentForm.invalid || !selectedFile || loadingSave || loadingSubmit" [loading]="loadingSubmit"
-                pTooltip="Le document entre immédiatement dans le circuit de validation." tooltipPosition="top"
-                (click)="submitDocument(true)" />
-            </div>
-          </div>
         </div>
-      </div>
     </div>
-
-    <div class="w-full md:w-1/3 md:pl-4">
-      <div class="p-4 bg-gray-50 rounded-xl border border-2 border-gray-100">
-        <div class="flex items-center mb-2 gap-2">
-          <h3 class="text-xl font-bold text-900 m-0">Fichier du document</h3>
-          <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoFichiers.toggle($event)"></i>
-        </div>
-        <p-popover #infoFichiers>
-          <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-            Veuillez importer le fichier officiel du document (Format PDF, Word, Excel ou PowerPoint, max. 20 Mo).
-          </div>
-        </p-popover>
-
-        <app-file-upload
-          styleClass="custom-nc-upload"
-          [maxFiles]="1"
-          [maxFileSizeMB]="20"
-          [allowedExts]="['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']"
-          [existingFiles]="[]"
-          (fileUploaded)="handleFileUpload($event)">
-        </app-file-upload>
-      </div>
-
-      <div class="p-4 bg-gray-50 rounded-xl mt-6 border border-2 border-gray-100">
-        <h3 class="text-xl font-bold text-900 mt-0 mb-4">Conseils de saisie</h3>
-        <div class="flex flex-col gap-3">
-          <div class="flex items-start gap-3">
-            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-            <span class="text-700 line-height-3">Privilégiez le format <strong>PDF</strong> pour garantir que la mise en page officielle ne soit pas modifiée à la lecture.</span>
-          </div>
-
-          <div class="flex items-start gap-3">
-            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-            <span class="text-700 line-height-3">Associez les bonnes <strong>références officielles</strong> (ex: ISO 9001) pour simplifier les prochains audits qualité.</span>
-          </div>
-
-          <div class="flex items-start gap-3">
-            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-            <span class="text-700 line-height-3">Ciblez le bon <strong>processus émetteur</strong> afin que le document soit classé au bon endroit dans le QMS.</span>
-          </div>
-
-          <div class="flex items-start gap-3">
-            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-            <span class="text-700 line-height-3">Définissez une <strong>périodicité de révision</strong> réaliste (ex: 12 ou 24 mois) pour maintenir sa conformité.</span>
-          </div>
-
-          <div class="flex items-start gap-3">
-            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-            <span class="text-700 line-height-3">Un <strong>niveau de confidentialité</strong> restreint le document aux rôles qu'il admet : vérifiez qu'il n'écarte pas ceux qui doivent le valider.</span>
-          </div>
-
-          <div class="flex items-start gap-3">
-            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-            <span class="text-700 line-height-3">La taille maximale du fichier est de <strong>20 Mo</strong> pour assurer un chargement fluide pour tous les collaborateurs.</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 </form>
 
 <!-- ========================================================================= -->
-<!-- MODAL: Guide Complet                                                      -->
+<!-- MODAL : Guide Complet                                                     -->
 <!-- ========================================================================= -->
-<p-dialog header="Guide de saisie d'un Document QMS" [(visible)]="showGuideModal" [modal]="true" [style]="{ width: '50rem' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }" [maximizable]="true">
+<p-dialog header="Guide de saisie d'un Document QMS"
+          [(visible)]="showGuideModal"
+          [modal]="true"
+          [style]="{ width: '48rem' }"
+          [breakpoints]="{ '960px': '75vw', '640px': '92vw' }"
+          [maximizable]="true">
 
-  <div class="p-3 bg-blue-50 border border-blue-100 border-round mb-4 flex items-center gap-3">
-    <i class="pi pi-info-circle text-2xl text-blue-500"></i>
-    <p class="text-sm text-blue-900 m-0 leading-relaxed">
-      Ce guide a pour but de vous accompagner dans la création d'un nouveau document Qualité.
-      Veuillez lire attentivement les indications ci-dessous pour assurer la conformité de vos enregistrements.
-    </p>
-  </div>
-
-  <div class="grid grid-cols-12 gap-4 px-2 pb-2">
-
-    <div class="col-span-12">
-      <h3 class="text-sm font-bold text-slate-800 border-bottom border-slate-200 pb-2 mb-2">1. Fichier du document</h3>
-      <p class="text-sm text-slate-600 m-0 line-height-3">
-        Les documents internes doivent obligatoirement être importés au format <strong>PDF</strong> pour assurer le filigranage automatique et la protection. Pour les documents externes, les autres formats (Word, Excel) sont acceptés.
-      </p>
+    <div class="rounded-[5px] border border-[#0ea5e9]/35 bg-[#0ea5e9]/10 dark:bg-[#0ea5e9]/15 p-3.5 mb-5 flex items-start gap-2.5">
+        <i class="pi pi-info-circle text-[#0ea5e9] !text-base mt-0.5 shrink-0"></i>
+        <p class="text-xs text-[#0369a1] dark:text-sky-300 m-0 leading-relaxed">
+            Ce guide a pour but de vous accompagner dans la création d'un nouveau document Qualité.
+            Veuillez lire attentivement les indications ci-dessous pour assurer la conformité de vos enregistrements.
+        </p>
     </div>
 
-    <div class="col-span-12">
-      <h3 class="text-sm font-bold text-slate-800 border-bottom border-slate-200 pb-2 mb-2">2. Type &amp; processus émetteur</h3>
-      <div class="flex flex-col gap-2 text-sm text-slate-600 line-height-3">
-        <div><strong>Type :</strong> classe le document (Ex: Procédure, Manuel, Instruction). C'est lui, et lui seul, qui détermine le circuit de validation que le document suivra.</div>
-        <div><strong>Processus émetteur :</strong> la structure propriétaire du document, responsable de ses révisions.</div>
-      </div>
+    <div class="flex flex-col gap-4">
+        <div>
+            <h4 class="text-sm font-bold text-[var(--heading-color)] border-b border-[#dddddd]/70 dark:border-surface-700 pb-1.5 mb-2 mt-0">
+                1. Fichier du document
+            </h4>
+            <p class="text-xs text-[var(--text-color-secondary)] m-0 leading-relaxed">
+                Les documents internes doivent obligatoirement être importés au format <strong class="text-[var(--heading-color)]">PDF</strong> pour assurer le filigranage automatique et la protection. Pour les documents externes, les autres formats (Word, Excel) sont acceptés.
+            </p>
+        </div>
+
+        <div>
+            <h4 class="text-sm font-bold text-[var(--heading-color)] border-b border-[#dddddd]/70 dark:border-surface-700 pb-1.5 mb-2 mt-0">
+                2. Type &amp; processus émetteur
+            </h4>
+            <div class="flex flex-col gap-1.5 text-xs text-[var(--text-color-secondary)] leading-relaxed">
+                <div><strong class="text-[var(--heading-color)]">Type :</strong> classe le document (ex : Procédure, Manuel, Instruction). C'est lui, et lui seul, qui détermine le circuit de validation que le document suivra.</div>
+                <div><strong class="text-[var(--heading-color)]">Processus émetteur :</strong> la structure propriétaire du document, responsable de ses révisions.</div>
+            </div>
+        </div>
+
+        <div>
+            <h4 class="text-sm font-bold text-[var(--heading-color)] border-b border-[#dddddd]/70 dark:border-surface-700 pb-1.5 mb-2 mt-0">
+                3. Périodicité de révision
+            </h4>
+            <p class="text-xs text-[var(--text-color-secondary)] m-0 leading-relaxed">
+                Indiquez en <strong class="text-[var(--heading-color)]">mois</strong> la fréquence à laquelle ce document doit être revu. Le système vous alertera automatiquement à l'approche de la date d'échéance (ex : 12 mois pour une revue annuelle).
+            </p>
+        </div>
+
+        <div>
+            <h4 class="text-sm font-bold text-[var(--heading-color)] border-b border-[#dddddd]/70 dark:border-surface-700 pb-1.5 mb-2 mt-0">
+                4. Champs facultatifs
+            </h4>
+            <div class="flex flex-col gap-1.5 text-xs text-[var(--text-color-secondary)] leading-relaxed">
+                <div><strong class="text-[var(--heading-color)]">Code du document :</strong> votre propre convention de numérotation. Il s'ajoute au numéro attribué à l'enregistrement, il ne s'y substitue pas.</div>
+                <div><strong class="text-[var(--heading-color)]">Référence officielle :</strong> la norme ou le texte dont le document relève (ex : ISO 9001, AFNOR) — c'est ce que recherche un auditeur.</div>
+                <div><strong class="text-[var(--heading-color)]">Domaine d'application et statut légal :</strong> le champ d'activité couvert, et ce qui rend le document opposable (obligation réglementaire, recommandation, règle interne).</div>
+            </div>
+        </div>
+
+        <div>
+            <h4 class="text-sm font-bold text-[var(--heading-color)] border-b border-[#dddddd]/70 dark:border-surface-700 pb-1.5 mb-2 mt-0">
+                5. Options de diffusion
+            </h4>
+            <div class="flex flex-col gap-1.5 text-xs text-[var(--text-color-secondary)] leading-relaxed">
+                <div><strong class="text-[var(--heading-color)]">Priorité :</strong> le degré d'urgence avec lequel le document doit être lu.</div>
+                <div><strong class="text-[var(--heading-color)]">Niveau de confidentialité :</strong> chaque niveau désigne les rôles admis à consulter le document, et la restriction s'ajoute à celle de la structure. Sans niveau, le document reste visible de toute la structure émettrice. Prenez garde à ne pas écarter les rôles qui doivent le valider : le circuit s'arrêterait faute de décideurs pouvant le voir.</div>
+            </div>
+        </div>
     </div>
 
-    <div class="col-span-12">
-      <h3 class="text-sm font-bold text-slate-800 border-bottom border-slate-200 pb-2 mb-2">3. Périodicité de révision</h3>
-      <p class="text-sm text-slate-600 m-0 line-height-3">
-        Indiquez en <strong>mois</strong> la fréquence à laquelle ce document doit être revu. Le système vous alertera automatiquement à l'approche de la date d'échéance. (Ex: 12 mois pour une revue annuelle).
-      </p>
-    </div>
-
-    <!-- Décrit les champs tels qu'ils existent : le guide annonçait un « organisme » que le
-         formulaire n'offre pas, et passait sous silence le code du document. -->
-    <div class="col-span-12">
-      <h3 class="text-sm font-bold text-slate-800 border-bottom border-slate-200 pb-2 mb-2">4. Champs facultatifs</h3>
-      <div class="flex flex-col gap-2 text-sm text-slate-600 line-height-3">
-        <div><strong>Code du document :</strong> votre propre convention de numérotation. Il s'ajoute au numéro attribué à l'enregistrement, il ne s'y substitue pas.</div>
-        <div><strong>Référence officielle :</strong> la norme ou le texte dont le document relève (ex: ISO 9001, AFNOR) — c'est ce que recherche un auditeur.</div>
-        <div><strong>Domaine d'application et statut légal :</strong> le champ d'activité couvert, et ce qui rend le document opposable (obligation réglementaire, recommandation, règle interne).</div>
-      </div>
-    </div>
-
-    <div class="col-span-12">
-      <h3 class="text-sm font-bold text-slate-800 border-bottom border-slate-200 pb-2 mb-2">5. Options de diffusion</h3>
-      <div class="flex flex-col gap-2 text-sm text-slate-600 line-height-3">
-        <div><strong>Priorité :</strong> le degré d'urgence avec lequel le document doit être lu.</div>
-        <div><strong>Niveau de confidentialité :</strong> chaque niveau désigne les rôles admis à consulter le document, et la restriction s'ajoute à celle de la structure. Sans niveau, le document reste visible de toute la structure émettrice. Prenez garde à ne pas écarter les rôles qui doivent le valider : le circuit s'arrêterait faute de décideurs pouvant le voir.</div>
-      </div>
-    </div>
-
-  </div>
-
-  <ng-template pTemplate="footer">
-    <button pButton label="J'ai compris" class="p-button-info" (click)="showGuideModal = false"></button>
-  </ng-template>
+    <ng-template pTemplate="footer">
+        <p-button label="J'ai compris" severity="info" size="small" (onClick)="showGuideModal = false"></p-button>
+    </ng-template>
 </p-dialog>

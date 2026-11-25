@@ -28,45 +28,47 @@ import { DomaineApplication } from '@features/gestion-documentaire/models/refere
     ],
     providers: [],
     template: `
-        <app-header-page 
-            [title]="pageLabel" 
-            [subtitle]="'Ajoutez ou modifiez les domaines d\\'application'"
-            [breadcrumbs]="breadcrumbs"
-            [buttonText]="'Nouveau domaine'" 
-            buttonIcon="pi pi-plus"
-            (actionClick)="crudGeneric.openNew()"
-        />
-        <div class="page-layout">
-            <app-crud-generic
-                #crudGeneric
-                [requireRqPassword]="true"
-                [deleteConfirmField]="'libelle'"
-                [showAddButton]="false"
-                detailLongDescription="Ce référentiel définit les domaines d'application documentaires de votre organisation. Chaque domaine circonscrit le périmètre métier (RH, Achats, Production, SI, etc.) auquel se rattachent vos documents qualité afin d'harmoniser la classification thématique et le suivi du fonds documentaire."
-                formLongDescription="Renseignez les informations requises pour configurer un domaine d'application. Définissez un libellé normalisé représentant une fonction ou un secteur clé, ainsi que son rang d'affichage dans les sélecteurs. Les champs avec astérisque sont obligatoires."
-                [dialogWidth]="'40rem'"
-                [showItemDescriptionOnTop]="false"
-                [loading]="loading"
-                [pageLabel]="pageLabel"
-                [tableCols]="tableCols"
-                [listeObject]="dataList"
-                [formGroup]="formGroup"
-                [formCols]="formCols"
-                [detailCols]="detailCols"
-                [isAffich]="true"
-                [closeDialog]="closeDialog"
-                [formHeader]="formHeader"
-                (newItemEvent)="onSave($event)"
-                (removeEvent)="onDelete($event)"
-                [isPagination]="true"
-                [totalElements]="totalElements"
-                [currentPage]="currentPage"
-                [pageSize]="pageSize"
-                (pageChangeEvent)="onPageChange($event)"
-                [consultation]="!peutEcrire"
-                [notModif]="!peutEcrire"
-                [notDelete]="!peutEcrire">
-            </app-crud-generic>
+        <div class="card-first overflow-x-clip border-none transition-colors duration-300">
+            <app-header-page
+                [title]="pageLabel"
+                [subtitle]="'Ajoutez ou modifiez les domaines d\\'application'"
+                [breadcrumbs]="breadcrumbs"
+                [buttonText]="'Nouveau domaine'"
+                buttonIcon="pi pi-plus"
+                (actionClick)="crudGeneric.openNew()"
+            />
+            <div class="page-layout">
+                <app-crud-generic
+                    #crudGeneric
+                    [requireRqPassword]="true"
+                    [deleteConfirmField]="'libelle'"
+                    [showAddButton]="false"
+                    detailLongDescription="Ce référentiel définit les domaines d'application documentaires de votre organisation. Chaque domaine circonscrit le périmètre métier (RH, Achats, Production, SI, etc.) auquel se rattachent vos documents qualité afin d'harmoniser la classification thématique et le suivi du fonds documentaire."
+                    formLongDescription="Renseignez les informations requises pour configurer un domaine d'application. Définissez un libellé normalisé représentant une fonction ou un secteur clé, ainsi que son rang d'affichage dans les sélecteurs. Les champs avec astérisque sont obligatoires."
+                    [dialogWidth]="'40rem'"
+                    [showItemDescriptionOnTop]="false"
+                    [loading]="loading"
+                    [pageLabel]="pageLabel"
+                    [tableCols]="tableCols"
+                    [listeObject]="dataList"
+                    [formGroup]="formGroup"
+                    [formCols]="formCols"
+                    [detailCols]="detailCols"
+                    [isAffich]="true"
+                    [closeDialog]="closeDialog"
+                    [formHeader]="formHeader"
+                    (newItemEvent)="onSave($event)"
+                    (removeEvent)="onDelete($event)"
+                    [isPagination]="true"
+                    [totalElements]="totalElements"
+                    [currentPage]="currentPage"
+                    [pageSize]="pageSize"
+                    (pageChangeEvent)="onPageChange($event)"
+                    [consultation]="!peutEcrire"
+                    [notModif]="!peutEcrire"
+                    [notDelete]="!peutEcrire">
+                </app-crud-generic>
+            </div>
         </div>
     `
 })
@@ -76,7 +78,7 @@ export class DomaineApplicationComponent extends BasePaginationComponent impleme
     peutEcrire = false;
 
     readonly pageLabel = "Domaines d'application";
-    readonly formHeader = 'Création et mise à jour d\'une domaine';
+    readonly formHeader = "Création et mise à jour d'un domaine";
 
     formGroup: UntypedFormGroup;
     formCols: FormGroupColumn[];

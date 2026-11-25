@@ -15,7 +15,8 @@ import { ToastModule } from 'primeng/toast';
 import { UntypedFormBuilder } from '@angular/forms';
 import { LoaderInterceptor } from './app/core/interceptors/loader.interceptor';
 import { LicenceInterceptor } from './app/core/interceptors/licence.interceptor';
-// Définition de votre thème bleu QualiSira
+
+
 const MyPreset = definePreset(Aura, {
     semantic: {
         primary: {
@@ -29,9 +30,89 @@ const MyPreset = definePreset(Aura, {
             700: '#162a45',
             800: '#122238',
             900: '#0e1a2a'
+        },
+        colorScheme: {
+            light: {
+                text: {
+                    color: '#1F2020',
+                    hoverColor: '#111827',
+                    mutedColor: '#707070',
+                    hoverMutedColor: '#4B5563'
+                },
+                content: {
+                    background: '#ffffff',
+                    borderColor: '#EAECF0'
+                }
+            }
+        }
+    },
+        components: {
+        button: {
+            root: {
+                borderRadius: '6px',
+                sm: {
+                    fontSize: '13px',
+                    paddingX: '10px',
+                    paddingY: '6px'
+                }
+            }
+        },
+        tabs: {
+            tablist: {
+                background: 'transparent',
+                borderColor: '{content.border.color}'
+            },
+            tab: {
+                background: 'transparent',
+                hoverBackground: 'transparent',
+                activeBackground: '{content.background}',
+                color: '{text.muted.color}',
+                hoverColor: '{text.color}',
+                activeColor: '#0084ca',
+                activeBorderColor: '#0084ca',
+                padding: '8px 16px',
+                fontWeight: '500'
+            },
+            activeBar: {
+                height: '2px',
+                bottom: '-1px',
+                background: '#0084ca'
+            }
+        },
+                card: {
+            root: {
+                borderRadius: '5px',
+                shadow: 'var(--card-shadow)'
+            }
+        },
+        message: {
+            root: {
+                borderRadius: '5px'
+            },
+            text: {
+                fontSize: '13px',
+                fontWeight: '500'
+            },
+            colorScheme: {
+                light: {
+                    info: {
+                        background: 'rgba(14, 165, 233, 0.08)',
+                        borderColor: 'rgba(14, 165, 233, 0.45)',
+                        color: '#0369a1'
+                    }
+                },
+                dark: {
+                    info: {
+                        background: 'rgba(14, 165, 233, 0.14)',
+                        borderColor: 'rgba(14, 165, 233, 0.45)',
+                        color: '#38bdf8'
+                    }
+                }
+            }
         }
     }
 });
+
 export const appConfig: ApplicationConfig = {
     providers: [
         ConfirmationService,

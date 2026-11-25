@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
+import { HeaderPage } from '@shared/header-page/header-page';
 import { AlertService } from '@shared/alert-message/alert-message.service';
 import { FileUploadComponent } from '@features/non-conformite/components/file-upload/file-upload.component';
 import { hasAnyPermission } from '@core/auth/auth-utils';
@@ -27,12 +28,14 @@ import { FaqService } from './faq.service';
 @Component({
     selector: 'app-faq-form',
     standalone: true,
-    imports: [CommonModule, FormsModule, NgPrimeModule, FileUploadComponent],
+    imports: [CommonModule, FormsModule, NgPrimeModule, HeaderPage, FileUploadComponent],
     templateUrl: './faq-form.component.html'
 })
 export class FaqFormComponent implements OnInit, OnDestroy {
 
     /** Bornes du serveur, reprises ici pour refuser avant l'aller-retour. */
+    readonly QUESTION_MAX = 300;
+    readonly REPONSE_MAX = 1500;
     private static readonly QUESTION_MAX = 300;
     private static readonly REPONSE_MAX = 1500;
 
@@ -41,6 +44,13 @@ export class FaqFormComponent implements OnInit, OnDestroy {
     /** Décider de ce qui paraît est un droit distinct de celui d'écrire. */
     peutPublier = false;
     enregistrement = false;
+
+    breadcrumbs = [
+        { label: 'Tableau de bord', routerLink: '/' },
+        { label: 'Configurations', routerLink: '/configurations' },
+        { label: 'Foire aux questions', routerLink: '/faq' },
+        { label: 'Nouvelle question', routerLink: '' }
+    ];
 
     /** Les fichiers choisis, en attente : une pièce ne s'attache qu'à une entrée qui existe. */
     private aDeposer: File[] = [];
@@ -65,6 +75,12 @@ export class FaqFormComponent implements OnInit, OnDestroy {
             return;
         }
         this.modification = true;
+        this.breadcrumbs = [
+            { label: 'Tableau de bord', routerLink: '/' },
+            { label: 'Configurations', routerLink: '/configurations' },
+            { label: 'Foire aux questions', routerLink: '/faq' },
+            { label: 'Modifier une question', routerLink: '' }
+        ];
         this.service.getById(id)
             .pipe(takeUntil(this.destroy$))
             .subscribe({

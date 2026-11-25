@@ -1,4 +1,4 @@
-<div class="relative overflow-hidden rounded-xl border p-3.5 sm:p-4 min-h-[120px] h-full flex flex-col justify-between transition-all duration-300 shadow-xs hover:shadow-md hover:-translate-y-0.5"
+<div class="relative overflow-hidden rounded-[5px] border p-3.5 sm:p-4 min-h-[120px] h-full flex flex-col justify-between transition-all duration-300 shadow-card hover:shadow-md hover:-translate-y-0.5"
      [ngClass]="[
         theme.cardBorder,
         theme.cardBg,
@@ -48,14 +48,14 @@
                          [ngClass]="[theme.iconBg, theme.iconColor]">
                         <i [class]="icon || 'pi pi-chart-line'" class="text-sm"></i>
                     </div>
-                    <span class="text-xs font-bold label-card text-surface-800 dark:text-surface-100">
+                    <span class="text-[12px] font-bold label-card text-surface-800 dark:text-surface-100">
                         {{ label || title }}
                     </span>
                 </div>
 
                 <!-- Badge de pourcentage repositionné en haut à droite -->
                 <span *ngIf="percentage !== undefined" 
-                      class="text-[11px] font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1 shrink-0 shadow-2xs"
+                      class="text-[12px] font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1 shrink-0 shadow-2xs"
                       [ngClass]="percentage >= 50 
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60' 
                           : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60'">
@@ -66,7 +66,7 @@
 
             <!-- Ligne 2 : Valeur imposante et Description alignée -->
             <div class="my-0.5">
-                <div class="text-3xl value-card font-bold text-surface-900 dark:text-surface-50 tracking-tight leading-none">
+                <div class="text-3xl value-card font-bold text-surface-900 dark:text-surface-50">
                     {{ value }}
                 </div>
                 <div *ngIf="description" class="text-[11px] description-card font-medium text-surface-500 dark:text-surface-400 mt-1">
@@ -85,7 +85,7 @@
                     </div>
                 </div>
                 <!-- Sous-texte de synthèse -->
-                <div *ngIf="subText" class="text-[10px] font-medium text-surface-400 dark:text-surface-500 mt-1 flex justify-between">
+                <div *ngIf="subText" class="text-[12px] font-medium text-surface-400 dark:text-surface-500 mt-1 flex justify-between">
                     <span class="subtext-card">{{ subText }}</span>
                 </div>
             </div>

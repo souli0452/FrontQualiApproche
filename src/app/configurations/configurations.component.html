@@ -1,26 +1,54 @@
-<app-header-page 
-    title="Configurations Globales" 
-    subtitle="Gestion des réglages généraux et circuits de validation de l'application"
-    [breadcrumbs]="breadcrumbs"
-/>
-<div class="card-first p-0 !overflow-visible border-none bg-surface-0 dark:bg-surface-900 transition-colors duration-300">
-    <!-- Navigation Hub (Topbar) -->
-    <div class="bg-surface-0 dark:bg-surface-900">
+<div class="card-first overflow-x-clip border-none premium-hub transition-colors duration-300">
+    <app-header-page
+        title="Configurations Globales"
+        subtitle="Gestion des réglages généraux et circuits de validation de l'application"
+        [breadcrumbs]="breadcrumbs"
+    />
+
+    <!-- Navigation Hub : onglets desktop (> 900px) -->
+    <div class="audit-tabs-desktop bg-transparent mb-5">
         <p-tabs [value]="activeTab" [scrollable]="true" (valueChange)="onTabChange($event)">
             <p-tablist>
-                <p-tab *ngFor="let tab of items" [value]="tab.routerLink">
-                    <a [routerLink]="tab.routerLink" routerLinkActive="text-primary font-semibold" class="flex items-center gap-2 text-inherit no-underline outline-none px-2 py-1">
+                <p-tab
+                    *ngFor="let tab of items; trackBy: trackByRouterLink"
+                    [value]="tab.routerLink"
+                    (click)="onTabClick(tab.routerLink)">
+                    <div class="flex items-center gap-2 text-inherit no-underline outline-none px-2 py-1 select-none">
                         <i [class]="tab.icon"></i>
                         <span class="whitespace-nowrap">{{ tab.label }}</span>
-                    </a>
+                    </div>
                 </p-tab>
             </p-tablist>
         </p-tabs>
     </div>
 
-    <!-- Contenu dynamique (Router Outlet) -->
-    <div class="bg-surface-50/50 dark:bg-surface-950/40 min-h-[500px]">
-        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl !overflow-visible">
+    <!-- Navigation Hub : liste déroulante mobile / tablette (<= 900px) -->
+    <div class="audit-tabs-mobile mb-5">
+        <p-select
+            [ngModel]="activeTab"
+            [options]="items"
+            optionLabel="label"
+            optionValue="routerLink"
+            styleClass="w-full"
+            (ngModelChange)="onTabChange($event)">
+            <ng-template pTemplate="selectedItem" let-selected>
+                <div *ngIf="selected" class="flex items-center gap-2">
+                    <i [class]="selected.icon + ' text-[#0084ca] dark:text-sky-400 !text-[14px]'"></i>
+                    <span class="font-medium">{{ selected.label }}</span>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="item" let-item>
+                <div class="flex items-center gap-2">
+                    <i [class]="item.icon + ' !text-[14px]'"></i>
+                    <span>{{ item.label }}</span>
+                </div>
+            </ng-template>
+        </p-select>
+    </div>
+
+    <!-- Zone de Contenu Dynamique -->
+    <div class="dark:bg-surface-950/40">
+        <div class="dark:bg-surface-900 rounded-xl !overflow-visible">
             <router-outlet></router-outlet>
         </div>
     </div>

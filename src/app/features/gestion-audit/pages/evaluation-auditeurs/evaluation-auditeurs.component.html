@@ -1,86 +1,245 @@
-<div class="p-6">
-    <p-toast></p-toast>
+<p-toast></p-toast>
 
-    <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
-        <div class="flex items-center gap-3">
+<div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card px-5 py-4 mb-5">
+    <!-- En-tête unifié -->
+    <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-5 border-b border-surface-200 dark:border-surface-700">
+        <div class="flex items-center gap-3 min-w-0">
             <p-button icon="pi pi-arrow-left" [rounded]="true" [text]="true" severity="secondary"
-                      [routerLink]="['/gestion-audit/programme', auditId]" pTooltip="Retour à l'audit"></p-button>
-            <div>
-                <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Évaluation de l'équipe d'audit</h2>
-                <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">
-                    <span class="font-mono font-semibold text-primary">{{ audit?.reference }}</span>
-                    · chaque membre de l'équipe est évalué sur les critères paramétrés ; les résultats alimentent la moyenne du portefeuille des auditeurs.
+                      [routerLink]="['/gestion-audit/programme', auditId]" pTooltip="Retour à l'audit" class="shrink-0"></p-button>
+            <div class="flex w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-800/40 items-center justify-center shrink-0">
+                <i class="pi pi-star text-[#0084ca] !text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h2 class="text-[16px] font-bold text-surface-900 dark:text-surface-50 m-0">Évaluation de l'équipe d'audit</h2>
+                    <span *ngIf="equipe.length"
+                          class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-200 border border-surface-200 dark:border-surface-700">
+                        {{ nbMembresValides }} / {{ equipe.length }} validé(s)
+                    </span>
+                </div>
+                <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mt-1">
+                    <span class="font-mono font-semibold text-[#0084ca]">{{ audit?.reference }}</span>
+                    · Chaque membre est évalué sur les critères paramétrés ; les résultats alimentent la moyenne du portefeuille des auditeurs.
                 </p>
             </div>
         </div>
-        <p-button icon="pi pi-users" label="Portefeuille des auditeurs" [outlined]="true" size="small" routerLink="/gestion-audit/auditeurs"></p-button>
+
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <p-button icon="pi pi-users" label="Portefeuille des auditeurs" severity="info" size="small"
+                      routerLink="/gestion-audit/auditeurs"></p-button>
+        </div>
     </div>
 
-    <div *ngIf="loading" class="space-y-3"><p-skeleton *ngFor="let i of [1,2]" height="14rem" borderRadius="12px"></p-skeleton></div>
+    <!-- Squelette -->
+    <div *ngIf="loading" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <p-skeleton *ngFor="let i of [1,2]" height="5.5rem" borderRadius="12px"></p-skeleton>
+        </div>
+        <p-skeleton height="24rem" borderRadius="12px"></p-skeleton>
+    </div>
 
     <ng-container *ngIf="!loading">
         <p-message *ngIf="audit && !evaluable" severity="info" styleClass="mb-4 w-full"
                    text="On évalue l'équipe d'un audit mené : cet audit n'a pas encore démarré."></p-message>
         <p-message *ngIf="!criteres.length || !niveaux.length" severity="warn" styleClass="mb-4 w-full"
                    text="Critères ou niveaux d'évaluation absents : définissez-les dans Configurations › Audit."></p-message>
-        <p-message *ngIf="!equipe.length" severity="warn" styleClass="mb-4 w-full" text="L'équipe de cet audit est vide."></p-message>
+        <p-message *ngIf="!equipe.length" severity="warn" styleClass="mb-4 w-full"
+                   text="L'équipe de cet audit est vide."></p-message>
 
-        <div *ngIf="criteres.length && niveaux.length" class="flex flex-col gap-4">
-            <div *ngFor="let a of equipe"
-                 class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
+        <ng-container *ngIf="criteres.length && niveaux.length && equipe.length">
+            <!-- Bandeau sélecteur d'équipe (3 par ligne, affiché dès qu'il y a plusieurs membres) -->
+            <div *ngIf="equipe.length > 1" class="mb-5">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold uppercase text-surface-500">
+                        Membres de l'équipe ({{ equipe.length }})
+                    </span>
+                    <span class="text-xs text-surface-400">Cliquez sur un membre pour afficher sa grille</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <button *ngFor="let m of equipe"
+                            type="button"
+                            (click)="selectionnerAuditeur(m)"
+                            class="w-full text-left border rounded-md p-3.5 transition-all cursor-pointer"
+                            [ngClass]="m.id === auditeurActif?.id
+                                ? 'border-[#0084ca] bg-blue-50/40 dark:bg-blue-950/20 shadow-xs'
+                                : 'border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 hover:border-surface-300 dark:hover:border-surface-600 ' + bordureStatut(m)">
+                        <div class="flex items-start justify-between gap-2 mb-2.5">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold shrink-0"
+                                     [ngClass]="m.id === auditeurActif?.id
+                                        ? 'bg-[#0084ca] text-white'
+                                        : 'bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-200'">
+                                    {{ initiales(m.nomComplet) }}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="font-semibold text-surface-900 dark:text-surface-50 truncate">{{ m.nomComplet }}</div>
+                                    <div class="text-xs text-surface-500 truncate">
+                                        {{ m.id === audit?.responsableEquipeId ? 'Responsable d\'équipe' : 'Membre de l\'équipe' }}
+                                    </div>
+                                </div>
+                            </div>
+                            <p-tag [value]="libelleStatut(m)" [severity]="severiteStatut(m)" [rounded]="true" class="shrink-0"></p-tag>
+                        </div>
 
-                <!-- En-tête de la carte auditeur -->
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                    <div>
-                        <div class="font-semibold text-surface-900 dark:text-surface-50">{{ a.nomComplet }}</div>
-                        <div class="text-xs text-surface-500">{{ a.id === audit?.responsableEquipeId ? 'Responsable d\'équipe' : 'Membre de l\'équipe' }}</div>
+                        <div class="flex items-center justify-between gap-2 text-xs text-surface-500 mb-1.5">
+                            <span>{{ nbNotesSaisies(m) }} / {{ criteres.length }} critère(s) noté(s)</span>
+                            <span *ngIf="aDesModifications(m)"
+                                  class="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold">
+                                <i class="pi pi-circle-fill !text-[8px]"></i> Non enregistré
+                            </span>
+                        </div>
+                        <div class="w-full h-1.5 rounded-full bg-surface-100 dark:bg-surface-800 overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-300"
+                                 [ngClass]="toutValide(m) ? 'bg-emerald-500' : 'bg-[#0084ca]'"
+                                 [style.width.%]="pourcentageSaisi(m)"></div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Carte d'évaluation du membre actif -->
+            <div *ngIf="auditeurActif as a"
+                 class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-md p-5 shadow-2xs"
+                 [ngClass]="bordureStatut(a)">
+
+                <!-- En-tête de la fiche auditeur -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-surface-100 dark:border-surface-800">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-11 h-11 rounded-xl bg-sky-500/10 text-[#0084ca] font-bold text-sm flex items-center justify-center shrink-0">
+                            {{ initiales(a.nomComplet) }}
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h6 class="font-semibold text-base text-surface-900 dark:text-surface-50 m-0">{{ a.nomComplet }}</h6>
+                                <p-tag [value]="libelleStatut(a)" [severity]="severiteStatut(a)" [rounded]="true"></p-tag>
+                            </div>
+                            <span class="text-xs text-surface-500">
+                                {{ a.id === audit?.responsableEquipeId ? 'Responsable d\'équipe' : 'Membre de l\'équipe' }}
+                            </span>
+                        </div>
                     </div>
+
                     <div class="flex flex-wrap items-center gap-2">
-                        <span *ngIf="niveauGlobal(a) as n; else nonEvalue"
-                              class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-semibold text-white"
-                              [style.background]="couleur(n)"
-                              pTooltip="Tous audits confondus, telle que le portefeuille des auditeurs l'affiche">
-                            Moyenne globale : {{ n.libelle }}
-                        </span>
-                        <ng-template #nonEvalue><p-tag value="Non évalué" severity="secondary" [rounded]="true"></p-tag></ng-template>
-                        <span *ngIf="niveauMoyen(a) as n" class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-semibold text-white"
-                              [style.background]="couleur(n)">Moyenne de cet audit : {{ n.libelle }}</span>
-                        <!-- Raccourci "Tout [meilleur niveau]" pour remplir rapidement les critères -->
-                        <p-button *ngIf="evaluable && !toutValide(a) && niveauTop"
-                                  [label]="'Tout ' + libelleNiveauTop"
-                                  icon="pi pi-check-circle" size="small" [outlined]="true" severity="success"
-                                  (onClick)="toutSatisfaisant(a)"></p-button>
+                        <p-button 
+                            *ngIf="evaluable && !toutValide(a) && niveauTop"
+                            [label]="'Tout « ' + libelleCourt(libelleNiveauTop) + ' »'"
+                            [pTooltip]="'Appliquer « ' + libelleNiveauTop + ' » à tous les critères modifiables'"
+                            icon="pi pi-check-circle" 
+                            size="small" 
+                            severity="success"
+                            (onClick)="toutSatisfaisant(a)"></p-button>
                     </div>
                 </div>
 
-                <!-- Une grille : critères en lignes, niveaux en colonnes (observation 27). La liste de boutons par critère
-                     rendait la page très longue. -->
-                <div class="overflow-x-auto">
+                <!-- 3 tuiles de synthèse (Progression, Moyenne de cet audit, Moyenne globale) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+                    <div class="rounded-lg bg-surface-50 dark:bg-surface-800/50 border border-surface-200/70 dark:border-surface-700 px-3.5 py-2.5">
+                        <div class="text-[12px] font-medium uppercase text-surface-500 mb-1">Progression de la grille</div>
+                        <div class="flex items-baseline justify-between gap-2 mb-1.5">
+                            <span class="font-semibold text-surface-900 dark:text-surface-50">
+                                {{ nbNotesSaisies(a) }} / {{ criteres.length }} critères
+                            </span>
+                            <span class="text-xs font-semibold text-[#0084ca]">{{ pourcentageSaisi(a) }} %</span>
+                        </div>
+                        <div class="w-full h-1.5 rounded-full bg-surface-200 dark:bg-surface-700 overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-300"
+                                 [ngClass]="toutValide(a) ? 'bg-emerald-500' : 'bg-[#0084ca]'"
+                                 [style.width.%]="pourcentageSaisi(a)"></div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-lg bg-surface-50 dark:bg-surface-800/50 border border-surface-200/70 dark:border-surface-700 px-3.5 py-2.5">
+                        <div class="text-[12px] font-medium uppercase text-surface-500 mb-1">Moyenne de cet audit</div>
+                        <ng-container *ngIf="niveauMoyen(a) as nm; else pasEncoreEnregistre">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="couleur(nm)"></span>
+                                <span class="font-semibold text-surface-900 dark:text-surface-50">{{ libelleCourt(nm.libelle) }}</span>
+                            </div>
+                            <div *ngIf="libelleDetail(nm.libelle)" class="text-xs text-surface-500 truncate mt-0.5">
+                                {{ libelleDetail(nm.libelle) }}
+                            </div>
+                        </ng-container>
+                        <ng-template #pasEncoreEnregistre>
+                            <span class="text-surface-400">En attente d'enregistrement</span>
+                        </ng-template>
+                    </div>
+
+                    <div class="rounded-lg bg-surface-50 dark:bg-surface-800/50 border border-surface-200/70 dark:border-surface-700 px-3.5 py-2.5"
+                         pTooltip="Tous audits confondus, telle que le portefeuille des auditeurs l'affiche" tooltipPosition="top">
+                        <div class="text-[12px] font-medium uppercase text-surface-500 mb-1">Moyenne globale (portefeuille)</div>
+                        <ng-container *ngIf="niveauGlobal(a) as ng; else nonEvalueGlobal">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="couleur(ng)"></span>
+                                <span class="font-semibold text-surface-900 dark:text-surface-50">{{ libelleCourt(ng.libelle) }}</span>
+                            </div>
+                            <div *ngIf="libelleDetail(ng.libelle)" class="text-surface-500 truncate mt-0.5">
+                                {{ libelleDetail(ng.libelle) }}
+                            </div>
+                        </ng-container>
+                        <ng-template #nonEvalueGlobal>
+                            <span class="text-xs text-surface-400">Non évalué</span>
+                        </ng-template>
+                    </div>
+                </div>
+
+                <!-- Grille d'évaluation -->
+                <div class="overflow-x-auto rounded-lg border border-surface-200 dark:border-surface-700">
                     <table class="w-full text-sm border-collapse">
                         <thead>
-                            <tr class="text-xs text-surface-500">
-                                <th scope="col" class="text-left font-semibold py-1.5 pr-3">Critère</th>
-                                <th *ngFor="let n of niveaux" scope="col" class="font-semibold py-1.5 px-1 text-center whitespace-nowrap">
-                                    <button type="button" [disabled]="!evaluable || toutValide(a)" (click)="choisirPartout(a, n)"
-                                            class="bg-transparent border-0 p-0 cursor-pointer text-inherit hover:text-primary disabled:cursor-default"
-                                            [pTooltip]="'Tout « ' + n.libelle + ' »'" tooltipPosition="top">
-                                        <span class="inline-block w-2 h-2 rounded-full mr-1 align-middle" [style.background]="couleur(n)"></span>{{ n.libelle }}
+                            <tr class="bg-surface-50 dark:bg-surface-800/70 border-b border-surface-200 dark:border-surface-700">
+                                <th scope="col" class="text-left text-xs font-semibold uppercase text-surface-500 py-3 px-4">
+                                    Critère d'évaluation
+                                </th>
+                                <th *ngFor="let n of niveaux" scope="col" class="py-2.5 px-2 text-center align-top w-36">
+                                    <button type="button"
+                                            [disabled]="!evaluable || toutValide(a)"
+                                            (click)="choisirPartout(a, n)"
+                                            class="bg-transparent border-0 px-2 py-1 rounded-md cursor-pointer text-inherit hover:bg-surface-200/60 dark:hover:bg-surface-700/60 disabled:cursor-default disabled:hover:bg-transparent transition-colors inline-flex flex-col items-center gap-0.5"
+                                            [pTooltip]="'Tout passer à « ' + n.libelle + ' »'" tooltipPosition="top">
+                                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-surface-700 dark:text-surface-200 whitespace-nowrap">
+                                            <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" [style.background]="couleur(n)"></span>
+                                            {{ libelleCourt(n.libelle) }}
+                                        </span>
+                                        <span *ngIf="libelleDetail(n.libelle)"
+                                              class="text-[10px] font-normal text-surface-400 leading-tight max-w-[8.5rem] truncate">
+                                            {{ libelleDetail(n.libelle) }}
+                                        </span>
                                     </button>
                                 </th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr *ngFor="let c of criteres" class="border-t border-surface-100 dark:border-surface-800">
-                                <td class="py-1.5 pr-3">
-                                    {{ c.libelle }} <span *ngIf="c.actif === false" class="text-xs text-surface-400">(retiré)</span>
-                                    <i *ngIf="estValidee(a.id, c.id)" class="pi pi-lock text-xs text-emerald-600 ml-1" pTooltip="Note validée"></i>
+                        <tbody class="divide-y divide-surface-100 dark:divide-surface-800">
+                            <tr *ngFor="let c of criteres; let idx = index"
+                                class="hover:bg-surface-50/80 dark:hover:bg-surface-800/40 transition-colors">
+                                <td class="py-2.5 px-4 text-surface-800 dark:text-surface-100">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-mono text-surface-400 w-5 shrink-0">{{ idx + 1 }}.</span>
+                                        <span>
+                                            {{ c.libelle }}
+                                            <span *ngIf="c.actif === false" class="text-xs text-surface-400 ml-1">(retiré)</span>
+                                        </span>
+                                        <i *ngIf="estValidee(a.id, c.id)"
+                                           class="pi pi-lock !text-xs text-emerald-600 ml-1 shrink-0"
+                                           pTooltip="Note validée et verrouillée"></i>
+                                    </div>
                                 </td>
-                                <td *ngFor="let n of niveaux" class="py-1.5 px-1 text-center">
-                                    <button type="button" [disabled]="verrouillee(a, c)" (click)="choisir(a, c, n)"
-                                            [attr.aria-label]="c.libelle + ' : ' + n.libelle" [attr.aria-pressed]="choix[cle(a.id, c.id)] === n.id"
-                                            class="w-6 h-6 rounded-full border-2 cursor-pointer disabled:cursor-not-allowed transition-colors"
-                                            [style.border-color]="couleur(n)"
-                                            [style.background]="choix[cle(a.id, c.id)] === n.id ? couleur(n) : 'transparent'"></button>
+                                <td *ngFor="let n of niveaux" class="py-2 px-2 text-center">
+                                    <button type="button"
+                                            [disabled]="verrouillee(a, c)"
+                                            (click)="choisir(a, c, n)"
+                                            [attr.aria-label]="c.libelle + ' : ' + n.libelle"
+                                            [attr.aria-pressed]="choix[cle(a.id, c.id)] === n.id"
+                                            class="w-7 h-7 rounded-full border-2 inline-flex items-center justify-center cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 transition-all hover:scale-110"
+                                            [ngClass]="choix[cle(a.id, c.id)] === n.id
+                                                ? 'shadow-sm scale-105'
+                                                : 'border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-900 hover:border-surface-400'"
+                                            [style.border-color]="choix[cle(a.id, c.id)] === n.id ? couleur(n) : null"
+                                            [style.background]="choix[cle(a.id, c.id)] === n.id ? couleur(n) : null">
+                                        <i *ngIf="choix[cle(a.id, c.id)] === n.id" class="pi pi-check !text-[10px] text-white"></i>
+                                        <span *ngIf="choix[cle(a.id, c.id)] !== n.id"
+                                              class="w-2 h-2 rounded-full opacity-40"
+                                              [style.background]="couleur(n)"></span>
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>
@@ -88,22 +247,38 @@
                 </div>
 
                 <!-- Commentaire -->
-                <div class="mb-3">
-                    <div class="text-sm font-semibold mb-1">Commentaire</div>
-                    <textarea pTextarea [(ngModel)]="commentaires[a.id!]" rows="2" [autoResize]="true" class="w-full"
+                <div class="mt-4 pt-4 border-t border-surface-100 dark:border-surface-800">
+                    <label [attr.for]="'commentaire-' + a.id" class="block text-sm font-semibold text-surface-800 dark:text-surface-100 mb-1.5">
+                        Commentaire qualitatif
+                    </label>
+                    <textarea [id]="'commentaire-' + a.id" pTextarea [(ngModel)]="commentaires[a.id!]"
+                              rows="2" [autoResize]="true" class="w-full"
+                              placeholder="Observations générales sur la posture, la rigueur ou les axes de progrès de l'auditeur..."
                               [disabled]="!evaluable || toutValide(a)"></textarea>
                 </div>
 
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <p-tag [value]="libelleStatut(a)" [severity]="severiteStatut(a)" [rounded]="true"></p-tag>
-                    <div class="flex gap-2" *ngIf="evaluable && !toutValide(a)">
-                        <p-button *ngIf="aDesBrouillons(a) && !aDesModifications(a)" label="Valider" icon="pi pi-check" size="small" severity="success" [outlined]="true"
+                <!-- Pied de carte : navigation entre membres + actions -->
+                <div class="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4 border-t border-surface-100 dark:border-surface-800">
+                    <div class="flex items-center gap-2">
+                        <ng-container *ngIf="equipe.length > 1">
+                            <p-button icon="pi pi-chevron-left" label="Précédent" size="small" severity="secondary" [outlined]="true"
+                                      [disabled]="indexActif <= 0" (onClick)="naviguerMembre(-1)"></p-button>
+                            <p-button icon="pi pi-chevron-right" iconPos="right" label="Suivant" size="small" severity="secondary" [outlined]="true"
+                                      [disabled]="indexActif >= equipe.length - 1" (onClick)="naviguerMembre(1)"></p-button>
+                        </ng-container>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2" *ngIf="evaluable && !toutValide(a)">
+                        <p-button *ngIf="aDesBrouillons(a) && !aDesModifications(a)"
+                                  label="Valider l'évaluation" icon="pi pi-check" size="small" severity="success"
+                                  pTooltip="Verrouille définitivement les notes enregistrées de cet auditeur"
                                   [loading]="enCours.has(a.id!)" (onClick)="validerAuditeur(a)"></p-button>
-                        <p-button label="Enregistrer l'évaluation" icon="pi pi-save" size="small"
-                                  [disabled]="!aDesModifications(a)" [loading]="enCours.has(a.id!)" (onClick)="enregistrer(a)"></p-button>
+                        <p-button label="Enregistrer l'évaluation" icon="pi pi-save" size="small" severity="info"
+                                  [disabled]="!aDesModifications(a)" [loading]="enCours.has(a.id!)"
+                                  (onClick)="enregistrer(a)"></p-button>
                     </div>
                 </div>
             </div>
-        </div>
+        </ng-container>
     </ng-container>
 </div>

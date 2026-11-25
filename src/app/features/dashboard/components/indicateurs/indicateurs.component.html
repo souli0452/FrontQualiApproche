@@ -1,407 +1,399 @@
 @if (indicateurs.length) {
-    <div class="grid grid-cols-12 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         @for (indicateur of indicateurs; track indicateur.cle) {
-            <div class="col-span-12 sm:col-span-6 xl:col-span-3">
-
+            <div class="h-full">
                 @if (indicateur.cle === 'enAttente') {
-                    <!-- Carte 1 : À traiter par vous (Style solid-blue first-card identique à vue-ensemble) -->
+                    <!-- Carte 1 : À traiter par vous (Carte signature #0084ca harmonisée rounded-[5px]) -->
                     <button type="button"
-                            class="relative overflow-hidden w-full text-left rounded-xl border border-[#0084ca] bg-[#0084ca] first-card p-3.5 sm:p-4
-                                   transition-all duration-300 shadow-xs hover:shadow-md hover:-translate-y-0.5 cursor-pointer group"
+                            class="relative overflow-hidden w-full h-full text-left rounded-[5px] border border-[#0077b6] bg-gradient-to-br from-[#0084ca] to-[#0369a1] p-4
+                                   transition-all duration-200 shadow-card hover:shadow-md hover:-translate-y-0.5 cursor-pointer group flex flex-col justify-between"
                             (click)="op.toggle($event)">
 
-                        <!-- Effet de lumière diffuse en arrière-plan (Glow) -->
-                        <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full blur-2xl pointer-events-none bg-white/10"></div>
-
-                        <!-- Grande icône en filigrane XXL en arrière-plan à droite -->
-                        <div class="absolute icone-filigrane right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-[0.25] select-none z-0">
-                            <i [class]="indicateur.icone" class="text-7xl text-white"></i>
-                        </div>
-
-                        <div class="relative z-10 flex flex-col justify-between h-full">
-                            <!-- En-tête : Label à gauche, badge à droite -->
-                            <div class="flex items-center justify-between gap-2">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 rounded-lg icone-box flex items-center justify-center shadow-2xs shrink-0 text-white">
-                                        <i [class]="indicateur.icone" class="text-sm"></i>
-                                    </div>
-                                    <span class="text-xs font-bold label-card tracking-wide text-white">
-                                        {{ indicateur.libelle }}
-                                    </span>
-                                </div>
-
-                                @if (indicateur.valeur !== null) {
-                                    @if (indicateur.valeur > 0) {
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/20 text-white border border-white/30 backdrop-blur-xs">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-300 animate-pulse"></span>
-                                            Action requise
-                                        </span>
-                                    } @else {
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/20 text-white border border-white/30 backdrop-blur-xs">
-                                            ✓ À jour
-                                        </span>
-                                    }
-                                }
+                    <div class="relative z-10 flex flex-col justify-between h-full w-full">
+                        <!-- En-tête -->
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="w-8 h-8 rounded-[5px] bg-white/15 border border-white/20 flex items-center justify-center shrink-0 text-white">
+                                    <i [class]="indicateur.icone + ' !text-sm'"></i>
+                                </span>
+                                <span class="text-xs font-bold tracking-wide text-white/95 truncate">
+                                    {{ indicateur.libelle }}
+                                </span>
                             </div>
 
-                            <!-- Valeur et Description -->
-                            <div class="my-2">
-                                <div class="text-3xl value-card font-bold text-white tracking-tight leading-none">
+                            @if (indicateur.valeur !== null) {
+                                @if (indicateur.valeur > 0) {
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-semibold bg-white/15 text-white border border-white/25 shrink-0">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-300 animate-pulse"></span>
+                                        Action requise
+                                    </span>
+                                } @else {
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-semibold bg-white/15 text-white border border-white/25 shrink-0">
+                                        ✓ À jour
+                                    </span>
+                                }
+                            }
+                        </div>
+
+                        <!-- Valeur & Mini barre de répartition -->
+                        <div class="my-3">
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-3xl font-bold text-white tracking-tight leading-none tabular-nums">
                                     @if (indicateur.valeur === null) {
                                         <span class="text-white/60">—</span>
                                     } @else {
                                         {{ indicateur.valeur }}
                                     }
-                                </div>
-                                <div class="text-[11px] description-card font-medium text-white/80 mt-1">
-                                    {{ indicateur.precision }}
-                                </div>
+                                </span>
+                                <span class="text-xs text-white/75">{{ indicateur.precision }}</span>
                             </div>
 
-                            <!-- Pied de carte : Déclencheur du popover -->
-                            <div class="flex items-center justify-between text-[11px] text-white/90 font-semibold pt-2 border-t border-white/20">
-                                <span>Ventilation par module</span>
-                                <i class="pi pi-chevron-down text-[9px] group-hover:translate-y-0.5 transition-transform text-white"></i>
+                            <div class="mt-3 h-1.5 w-full rounded-full bg-white/20 overflow-hidden flex gap-0.5">
+                                @for (seg of segmentsRepartition; track seg.cle) {
+                                    <div class="h-full transition-all duration-300"
+                                         [style.width.%]="seg.pct"
+                                         [style.backgroundColor]="seg.color"
+                                         [title]="seg.libelle + ' : ' + seg.count"></div>
+                                }
                             </div>
                         </div>
-                    </button>
 
-                    <!-- Popover de ventilation par module qualité -->
-                    <p-popover #op styleClass="shadow-2xl border border-surface-200 dark:border-surface-700 rounded-2xl overflow-hidden" [style]="{ width: '380px' }">
-                        <div class="p-3 bg-surface-50 dark:bg-surface-800/60 border-b border-surface-200 dark:border-surface-700 flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <div class="w-7 h-7 rounded-lg bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xs">
-                                    <i class="pi pi-inbox"></i>
-                                </div>
-                                <div>
-                                    <span class="font-bold text-xs text-surface-900 dark:text-surface-50 block leading-tight">Dossiers en attente de décision</span>
-                                    <span class="text-[10px] text-surface-500 dark:text-surface-400 block">Répartition par module qualité</span>
-                                </div>
-                            </div>
-                            <p-tag [value]="(enAttente ?? 0).toString()"
-                                   [severity]="(enAttente ?? 0) > 0 ? 'warn' : 'success'"
-                                   [rounded]="true">
-                            </p-tag>
+                        <!-- Pied de carte -->
+                        <div class="flex items-center justify-between gap-2 text-[11px] text-white/85 pt-2 border-t border-white/15 font-medium">
+                            <span class="truncate">{{ resumeRepartition }}</span>
+                            <span class="inline-flex items-center gap-1 shrink-0 opacity-90">
+                                Détail
+                                <i class="pi pi-chevron-down !text-[10px] group-hover:translate-y-0.5 transition-transform"></i>
+                            </span>
                         </div>
+                    </div>
+                </button>
 
-                        <div class="p-2 flex flex-col gap-1">
-                            @for (item of repartition; track item.cle) {
-                                <div class="flex items-center justify-between p-2.5 rounded-xl transition-colors hover:bg-surface-50 dark:hover:bg-surface-800/70"
-                                     [class.opacity-60]="item.count === 0">
-                                    <div class="flex items-center gap-2.5 min-w-0">
-                                        <span class="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
-                                              [ngClass]="item.count > 0 ? 'bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400' : 'bg-surface-100 dark:bg-surface-800 text-surface-400'">
-                                            <i [class]="item.icone"></i>
+                <!-- Popover de ventilation par module qualité -->
+                <p-popover #op styleClass="shadow-xl border border-[#dddddd] dark:border-surface-700 rounded-[5px] overflow-hidden" [style]="{ width: '360px' }">
+                    <div class="p-3 bg-surface-50 dark:bg-surface-800/60 border-b border-[#dddddd] dark:border-surface-700 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center">
+                                <i class="pi pi-inbox !text-xs"></i>
+                            </span>
+                            <div>
+                                <span class="font-bold text-xs text-[var(--heading-color)] block leading-tight">Dossiers en attente de décision</span>
+                                <span class="text-[11px] text-[var(--text-color-secondary)] block">Cliquez pour filtrer la bannette</span>
+                            </div>
+                        </div>
+                        <p-tag [value]="(enAttente ?? 0).toString()"
+                               [severity]="(enAttente ?? 0) > 0 ? 'warn' : 'success'">
+                        </p-tag>
+                    </div>
+
+                    <div class="p-2 flex flex-col gap-1">
+                        @for (item of repartition; track item.cle) {
+                            <div class="flex items-center justify-between p-2 rounded-[5px] transition-colors hover:bg-surface-50 dark:hover:bg-surface-800/70"
+                                 [class.opacity-55]="item.count === 0">
+                                <button type="button"
+                                        class="flex items-center gap-2.5 min-w-0 flex-1 text-left bg-transparent border-0 p-0 cursor-pointer"
+                                        (click)="filtrerOuNaviguer(item.cle, item.route, op)">
+                                    <span class="w-8 h-8 rounded-[5px] flex items-center justify-center shrink-0"
+                                          [ngClass]="item.count > 0 ? 'bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400' : 'bg-surface-100 dark:bg-surface-800 text-[var(--text-color-secondary)]'">
+                                        <i [class]="item.icone + ' !text-sm'"></i>
+                                    </span>
+                                    <div class="min-w-0">
+                                        <span class="font-semibold text-xs text-[var(--heading-color)] block truncate">{{ item.libelleCourt }}</span>
+                                        <span class="text-[11px] text-[var(--text-color-secondary)] block">
+                                            @if (item.count === 0) {
+                                                Aucun dossier en attente
+                                            } @else if (item.count === 1) {
+                                                1 dossier à traiter
+                                            } @else {
+                                                {{ item.count }} dossiers à traiter
+                                            }
                                         </span>
-                                        <div class="min-w-0">
-                                            <span class="font-semibold text-xs text-surface-800 dark:text-surface-100 block truncate">{{ item.libelleCourt }}</span>
-                                            <span class="text-[11px] text-surface-500 block">
-                                                @if (item.count === 0) {
-                                                    Aucun dossier en attente
-                                                } @else if (item.count === 1) {
-                                                    1 dossier à traiter
-                                                } @else {
-                                                    {{ item.count }} dossiers à traiter
-                                                }
-                                            </span>
-                                        </div>
                                     </div>
+                                </button>
 
-                                    <div class="flex items-center gap-2 shrink-0">
-                                        @if (item.count > 0) {
-                                            <p-button icon="pi pi-arrow-right"
-                                                      size="small"
-                                                      [rounded]="true"
-                                                      severity="secondary"
-                                                      [text]="true"
-                                                      pTooltip="Accéder à la liste"
-                                                      tooltipPosition="left"
-                                                      styleClass="!w-7 !h-7"
-                                                      (onClick)="ouvrirRoute(item.route, op)">
-                                            </p-button>
-                                        } @else {
-                                            <span class="text-xs text-surface-300 dark:text-surface-600 px-2">—</span>
-                                        }
-                                    </div>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    @if (item.count > 0) {
+                                        <p-button icon="pi pi-arrow-right"
+                                                  size="small"
+                                                  [rounded]="true"
+                                                  severity="secondary"
+                                                  [text]="true"
+                                                  pTooltip="Ouvrir le module"
+                                                  tooltipPosition="left"
+                                                  styleClass="!w-7 !h-7"
+                                                  (onClick)="ouvrirRoute(item.route, op)">
+                                        </p-button>
+                                    } @else {
+                                        <span class="text-xs text-[var(--text-color-secondary)] px-2">—</span>
+                                    }
                                 </div>
-                            }
-                        </div>
-
-                        @if ((enAttente ?? 0) === 0) {
-                            <div class="p-3 text-center text-xs text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-2 border-t border-surface-100 dark:border-surface-800 bg-emerald-50/30 dark:bg-emerald-950/20">
-                                <i class="pi pi-check-circle"></i>
-                                <span>Toutes vos bannettes sont à jour !</span>
                             </div>
                         }
-                    </p-popover>
+                    </div>
 
-                } @else if (indicateur.cle === 'retards') {
-                    <!-- Carte 2 : Retards critiques (Consolidation transversale avec popover interactif) -->
-                    <button type="button"
-                            class="relative overflow-hidden w-full text-left rounded-xl border p-3.5 sm:p-4 min-h-[120px]
-                                   bg-gradient-to-tr from-white via-surface-0 to-surface-0/90 dark:from-rose-500/[0.08] dark:via-surface-900 dark:to-surface-900/90
-                                   transition-all duration-300 shadow-xs hover:shadow-md hover:-translate-y-0.5 cursor-pointer group"
-                            [ngClass]="(indicateur.valeur ?? 0) > 0 
-                                ? 'border-rose-200 dark:border-rose-800/40 hover:border-rose-400 dark:hover:border-rose-600' 
-                                : 'border-surface-200 dark:border-surface-700 hover:border-surface-300 dark:hover:border-surface-600'"
-                            (click)="opRetards.toggle($event)">
+                    @if ((enAttente ?? 0) === 0) {
+                        <div class="p-3 text-center text-xs text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-2 border-t border-[#dddddd]/70 dark:border-surface-700 bg-emerald-500/5">
+                            <i class="pi pi-check-circle !text-xs"></i>
+                            <span>Toutes vos bannettes sont à jour !</span>
+                        </div>
+                    }
+                </p-popover>
 
-                        <!-- Effet de lumière diffuse en arrière-plan (Glow) -->
-                        <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full blur-2xl pointer-events-none"
-                             [ngClass]="(indicateur.valeur ?? 0) > 0 ? 'bg-rose-500/15 dark:bg-rose-500/20' : 'bg-emerald-500/10 dark:bg-emerald-500/15'">
+            } @else if (indicateur.cle === 'retards') {
+                <!-- Carte 2 : Retards critiques -->
+                <button type="button"
+                        class="relative overflow-hidden w-full h-full text-left rounded-[5px] border bg-[var(--surface-card)] p-4
+                               transition-all duration-200 shadow-card hover:shadow-md hover:-translate-y-0.5 cursor-pointer group flex flex-col justify-between"
+                        [ngClass]="(indicateur.valeur ?? 0) > 0
+                            ? 'border-rose-300 dark:border-rose-700/60 hover:border-rose-400'
+                            : 'border-[#dddddd] dark:border-surface-700 hover:border-[#0ea5e9]/45'"
+                        (click)="opRetards.toggle($event)">
+
+                    <div class="flex items-center justify-between gap-2 w-full">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="w-8 h-8 rounded-[5px] flex items-center justify-center shrink-0 border"
+                                  [ngClass]="(indicateur.valeur ?? 0) > 0
+                                      ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25'
+                                      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25'">
+                                <i [class]="indicateur.icone + ' !text-sm'"></i>
+                            </span>
+                            <span class="text-xs font-bold text-[var(--heading-color)] truncate">
+                                {{ indicateur.libelle }}
+                            </span>
                         </div>
 
-                        <!-- Grande icône en filigrane XXL en arrière-plan à droite -->
-                        <div class="absolute icone-filigrane right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-[0.14] dark:opacity-[0.18] select-none z-0">
-                            <i [class]="indicateur.icone" class="text-7xl"
-                               [ngClass]="(indicateur.valeur ?? 0) > 0 ? 'text-rose-500 dark:text-rose-400' : 'text-emerald-500 dark:text-emerald-400'"></i>
-                        </div>
-
-                        <div class="relative z-10 flex flex-col justify-between h-full">
-                            <!-- En-tête : Label à gauche, badge statut à droite -->
-                            <div class="flex items-center justify-between gap-2">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 rounded-lg icone-box flex items-center justify-center shadow-2xs shrink-0"
-                                         [ngClass]="(indicateur.valeur ?? 0) > 0 
-                                             ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400' 
-                                             : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'">
-                                        <i [class]="indicateur.icone" class="text-sm"></i>
-                                    </div>
-                                    <span class="text-xs font-bold label-card tracking-wide text-surface-800 dark:text-surface-100">
-                                        {{ indicateur.libelle }}
-                                    </span>
-                                </div>
-
-                                @if (indicateur.valeur !== null) {
-                                    @if (indicateur.valeur > 0) {
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60 shadow-2xs">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
-                                            Dépassement
-                                        </span>
-                                    } @else {
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60 shadow-2xs">
-                                            ✓ Aucune dérive
-                                        </span>
-                                    }
-                                }
-                            </div>
-
-                            <!-- Valeur et Description -->
-                            <div class="my-2">
-                                <div class="text-3xl value-card font-bold tracking-tight leading-none"
-                                     [ngClass]="(indicateur.valeur ?? 0) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-surface-900 dark:text-surface-50'">
-                                    @if (indicateur.valeur === null) {
-                                        <span class="text-surface-300 dark:text-surface-600">—</span>
-                                    } @else {
-                                        {{ indicateur.valeur }}
-                                    }
-                                </div>
-                                <div class="text-[11px] description-card font-medium text-surface-500 dark:text-surface-400 mt-1">
-                                    {{ indicateur.precision }}
-                                </div>
-                            </div>
-
-                            <!-- Pied de carte : Déclencheur du popover -->
-                            <div class="flex items-center justify-between text-[11px] text-surface-500 dark:text-surface-400 font-semibold pt-2 border-t border-surface-200/60 dark:border-surface-700/60">
-                                <span>Ventilation des retards</span>
-                                <i class="pi pi-chevron-down text-[9px] group-hover:translate-y-0.5 transition-transform text-surface-400"></i>
-                            </div>
-                        </div>
-                    </button>
-
-                    <!-- Popover de ventilation des retards -->
-                    <p-popover #opRetards styleClass="shadow-2xl border border-surface-200 dark:border-surface-700 rounded-2xl overflow-hidden" [style]="{ width: '380px' }">
-                        <div class="p-3 bg-surface-50 dark:bg-surface-800/60 border-b border-surface-200 dark:border-surface-700 flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <div class="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xs">
-                                    <i class="pi pi-exclamation-triangle"></i>
-                                </div>
-                                <div>
-                                    <span class="font-bold text-xs text-surface-900 dark:text-surface-50 block leading-tight">Retards critiques constatés</span>
-                                    <span class="text-[10px] text-surface-500 dark:text-surface-400 block">Actions et révisions échues</span>
-                                </div>
-                            </div>
-                            <p-tag [value]="(totalRetards ?? 0).toString()"
-                                   [severity]="(totalRetards ?? 0) > 0 ? 'danger' : 'success'"
-                                   [rounded]="true">
-                            </p-tag>
-                        </div>
-
-                        <div class="p-2 flex flex-col gap-1">
-                            @for (item of repartitionRetards; track item.titre) {
-                                <div class="flex items-center justify-between p-2.5 rounded-xl transition-colors hover:bg-surface-50 dark:hover:bg-surface-800/70"
-                                     [class.opacity-60]="item.count === 0">
-                                    <div class="flex items-center gap-2.5 min-w-0">
-                                        <span class="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
-                                              [ngClass]="item.count > 0 ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400' : 'bg-surface-100 dark:bg-surface-800 text-surface-400'">
-                                            <i [class]="item.icone"></i>
-                                        </span>
-                                        <div class="min-w-0">
-                                            <span class="font-semibold text-xs text-surface-800 dark:text-surface-100 block truncate">{{ item.titre }}</span>
-                                            <span class="text-[11px] text-surface-500 block">
-                                                @if (item.count === 0) {
-                                                    Aucun retard
-                                                } @else if (item.count === 1) {
-                                                    1 élément en retard
-                                                } @else {
-                                                    {{ item.count }} éléments en retard
-                                                }
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex items-center gap-2 shrink-0">
-                                        @if (item.count > 0) {
-                                            <p-button icon="pi pi-arrow-right"
-                                                      size="small"
-                                                      [rounded]="true"
-                                                      severity="danger"
-                                                      [text]="true"
-                                                      pTooltip="Traiter les retards"
-                                                      tooltipPosition="left"
-                                                      styleClass="!w-7 !h-7"
-                                                      (onClick)="ouvrirRoute(item.route, opRetards)">
-                                            </p-button>
-                                        } @else {
-                                            <span class="text-xs text-surface-300 dark:text-surface-600 px-2">—</span>
-                                        }
-                                    </div>
-                                </div>
+                        @if (indicateur.valeur !== null) {
+                            @if (indicateur.valeur > 0) {
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-300 border border-rose-500/30 shrink-0">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                                    Dépassement
+                                </span>
+                            } @else {
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/25 shrink-0">
+                                    ✓ Aucune dérive
+                                </span>
                             }
+                        }
+                    </div>
+
+                    <div class="my-3 w-full">
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-3xl font-bold tracking-tight leading-none tabular-nums"
+                                  [ngClass]="(indicateur.valeur ?? 0) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-[var(--heading-color)]'">
+                                @if (indicateur.valeur === null) {
+                                    <span class="text-[var(--text-color-secondary)]">—</span>
+                                } @else {
+                                    {{ indicateur.valeur }}
+                                }
+                            </span>
+                            <span class="text-xs text-[var(--text-color-secondary)]">{{ indicateur.precision }}</span>
                         </div>
 
-                        @if ((totalRetards ?? 0) === 0) {
-                            <div class="p-3 text-center text-xs text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-2 border-t border-surface-100 dark:border-surface-800 bg-emerald-50/30 dark:bg-emerald-950/20">
-                                <i class="pi pi-check-circle"></i>
-                                <span>Toutes les échéances sont respectées !</span>
+                        <div class="mt-3 h-1.5 w-full rounded-full bg-surface-100 dark:bg-surface-800 overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-300"
+                                 [ngClass]="(indicateur.valeur ?? 0) > 0 ? 'bg-rose-500' : 'bg-emerald-500'"
+                                 [style.width.%]="largeurBarreRetards"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-2 text-[11px] text-[var(--text-color-secondary)] font-medium pt-2 border-t border-[#dddddd]/60 dark:border-surface-700 w-full">
+                        <span class="truncate">{{ resumeRetards }}</span>
+                        <span class="text-[#0084ca] dark:text-sky-400 inline-flex items-center gap-1 shrink-0 font-semibold">
+                            Détail
+                            <i class="pi pi-chevron-down !text-[10px] group-hover:translate-y-0.5 transition-transform"></i>
+                        </span>
+                    </div>
+                </button>
+
+                <!-- Popover de ventilation des retards -->
+                <p-popover #opRetards styleClass="shadow-xl border border-[#dddddd] dark:border-surface-700 rounded-[5px] overflow-hidden" [style]="{ width: '360px' }">
+                    <div class="p-3 bg-surface-50 dark:bg-surface-800/60 border-b border-[#dddddd] dark:border-surface-700 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-[5px] flex items-center justify-center"
+                                  [ngClass]="(totalRetards ?? 0) > 0 ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'">
+                                <i class="pi pi-exclamation-triangle !text-xs"></i>
+                            </span>
+                            <div>
+                                <span class="font-bold text-xs text-[var(--heading-color)] block leading-tight">Retards critiques constatés</span>
+                                <span class="text-[11px] text-[var(--text-color-secondary)] block">Actions et révisions échues</span>
+                            </div>
+                        </div>
+                        <p-tag [value]="(totalRetards ?? 0).toString()"
+                               [severity]="(totalRetards ?? 0) > 0 ? 'danger' : 'success'">
+                        </p-tag>
+                    </div>
+
+                    <div class="p-2 flex flex-col gap-1">
+                        @for (item of repartitionRetards; track item.titre) {
+                            <div class="flex items-center justify-between p-2 rounded-[5px] transition-colors hover:bg-surface-50 dark:hover:bg-surface-800/70"
+                                 [class.opacity-55]="item.count === 0">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <span class="w-8 h-8 rounded-[5px] flex items-center justify-center shrink-0"
+                                          [ngClass]="item.count > 0 ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400' : 'bg-surface-100 dark:bg-surface-800 text-[var(--text-color-secondary)]'">
+                                        <i [class]="item.icone + ' !text-sm'"></i>
+                                    </span>
+                                    <div class="min-w-0">
+                                        <span class="font-semibold text-xs text-[var(--heading-color)] block truncate">{{ item.titre }}</span>
+                                        <span class="text-[11px] text-[var(--text-color-secondary)] block">
+                                            @if (item.count === 0) {
+                                                Aucun retard
+                                            } @else if (item.count === 1) {
+                                                1 élément en retard
+                                            } @else {
+                                                {{ item.count }} éléments en retard
+                                            }
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-1 shrink-0">
+                                    @if (item.count > 0) {
+                                        <p-button icon="pi pi-arrow-right"
+                                                  size="small"
+                                                  [rounded]="true"
+                                                  severity="danger"
+                                                  [text]="true"
+                                                  pTooltip="Traiter les retards"
+                                                  tooltipPosition="left"
+                                                  styleClass="!w-7 !h-7"
+                                                  (onClick)="ouvrirRoute(item.route, opRetards)">
+                                        </p-button>
+                                    } @else {
+                                        <span class="text-xs text-[var(--text-color-secondary)] px-2">—</span>
+                                    }
+                                </div>
                             </div>
                         }
-                    </p-popover>
+                    </div>
 
-                } @else if (indicateur.cle === 'proche') {
-                    <!-- Carte 3 : Échéance sous 7 jours (Anticipation / Ambre) -->
-                    <button type="button"
-                            class="relative overflow-hidden w-full text-left rounded-xl border p-3.5 sm:p-4 min-h-[120px]
-                                   border-amber-200 dark:border-amber-800/40 hover:border-amber-400 dark:hover:border-amber-600
-                                   bg-gradient-to-tr from-white via-surface-0 to-surface-0/90 dark:from-amber-500/[0.08] dark:via-surface-900 dark:to-surface-900/90
-                                   transition-all duration-300 shadow-xs hover:shadow-md hover:-translate-y-0.5 cursor-pointer group"
-                            (click)="ouvrir(indicateur)">
+                    @if ((totalRetards ?? 0) === 0) {
+                        <div class="p-3 text-center text-xs text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-2 border-t border-[#dddddd]/70 dark:border-surface-700 bg-emerald-500/5">
+                            <i class="pi pi-check-circle !text-xs"></i>
+                            <span>Toutes les échéances sont respectées !</span>
+                        </div>
+                    }
+                </p-popover>
 
-                        <!-- Glow -->
-                        <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full blur-2xl pointer-events-none bg-amber-500/15 dark:bg-amber-500/20"></div>
+            } @else if (indicateur.cle === 'proche') {
+                <!-- Carte 3 : Échéance sous 7 jours -->
+                <button type="button"
+                        class="relative overflow-hidden w-full h-full text-left rounded-[5px] border bg-[var(--surface-card)] p-4
+                               transition-all duration-200 shadow-card hover:shadow-md hover:-translate-y-0.5 cursor-pointer group flex flex-col justify-between"
+                        [ngClass]="(indicateur.valeur ?? 0) > 0
+                            ? 'border-amber-300 dark:border-amber-700/60 hover:border-amber-400'
+                            : 'border-[#dddddd] dark:border-surface-700 hover:border-[#0ea5e9]/45'"
+                        (click)="ouvrir(indicateur)">
 
-                        <!-- Filigrane XXL -->
-                        <div class="absolute icone-filigrane right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-[0.14] dark:opacity-[0.18] select-none z-0">
-                            <i [class]="indicateur.icone" class="text-7xl text-amber-500 dark:text-amber-400"></i>
+                    <div class="flex items-center justify-between gap-2 w-full">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="w-8 h-8 rounded-[5px] flex items-center justify-center shrink-0 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+                                <i [class]="indicateur.icone + ' !text-sm'"></i>
+                            </span>
+                            <span class="text-xs font-bold text-[var(--heading-color)] truncate">
+                                {{ indicateur.libelle }}
+                            </span>
                         </div>
 
-                        <div class="relative z-10 flex flex-col justify-between h-full">
-                            <!-- En-tête -->
-                            <div class="flex items-center justify-between gap-2">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 rounded-lg icone-box flex items-center justify-center shadow-2xs shrink-0 bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
-                                        <i [class]="indicateur.icone" class="text-sm"></i>
-                                    </div>
-                                    <span class="text-xs font-bold label-card tracking-wide text-surface-800 dark:text-surface-100">
-                                        {{ indicateur.libelle }}
-                                    </span>
-                                </div>
+                        @if (indicateur.valeur !== null) {
+                            @if (indicateur.valeur > 0) {
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[11px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 shrink-0">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                    À anticiper
+                                </span>
+                            } @else {
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-semibold bg-surface-100 dark:bg-surface-800 text-[var(--text-color-secondary)] border border-[#dddddd] dark:border-surface-700 shrink-0">
+                                    ✓ Aucune
+                                </span>
+                            }
+                        }
+                    </div>
 
-                                @if (indicateur.valeur !== null) {
-                                    @if (indicateur.valeur > 0) {
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60 shadow-2xs">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                                            À anticiper
-                                        </span>
-                                    } @else {
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-surface-100 text-surface-600 border border-surface-200 dark:bg-surface-800 dark:text-surface-300 dark:border-surface-700 shadow-2xs">
-                                            ✓ Aucune
-                                        </span>
-                                    }
+                    <div class="my-3 w-full">
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-3xl font-bold tracking-tight leading-none tabular-nums"
+                                  [ngClass]="(indicateur.valeur ?? 0) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-[var(--heading-color)]'">
+                                @if (indicateur.valeur === null) {
+                                    <span class="text-[var(--text-color-secondary)]">—</span>
+                                } @else {
+                                    {{ indicateur.valeur }}
                                 }
-                            </div>
-
-                            <!-- Valeur et Description -->
-                            <div class="my-2">
-                                <div class="text-3xl value-card font-bold tracking-tight leading-none text-amber-600 dark:text-amber-400">
-                                    @if (indicateur.valeur === null) {
-                                        <span class="text-surface-300 dark:text-surface-600">—</span>
-                                    } @else {
-                                        {{ indicateur.valeur }}
-                                    }
-                                </div>
-                                <div class="text-[11px] description-card font-medium text-surface-500 dark:text-surface-400 mt-1">
-                                    {{ indicateur.precision }}
-                                </div>
-                            </div>
-
-                            <!-- Pied de carte -->
-                            <div class="flex items-center justify-between text-[11px] text-amber-700 dark:text-amber-400 font-semibold pt-2 border-t border-surface-200/60 dark:border-surface-700/60">
-                                <span>Voir les actions</span>
-                                <i class="pi pi-arrow-right text-[10px] group-hover:translate-x-0.5 transition-transform"></i>
-                            </div>
-                        </div>
-                    </button>
-
-                } @else {
-                    <!-- Carte 4 : Référentiel en vigueur (Maîtrise documentaire / Émeraude) -->
-                    <button type="button"
-                            class="relative overflow-hidden w-full text-left rounded-xl border p-3.5 sm:p-4 min-h-[120px]
-                                   border-emerald-200/80 dark:border-emerald-800/40 hover:border-emerald-400 dark:hover:border-emerald-600
-                                   bg-gradient-to-tr from-white via-surface-0 to-surface-0/90 dark:from-emerald-500/[0.08] dark:via-surface-900 dark:to-surface-900/90
-                                   transition-all duration-300 shadow-xs hover:shadow-md hover:-translate-y-0.5 cursor-pointer group"
-                            (click)="ouvrir(indicateur)">
-
-                        <!-- Glow -->
-                        <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full blur-2xl pointer-events-none bg-emerald-500/15 dark:bg-emerald-500/20"></div>
-
-                        <!-- Filigrane XXL -->
-                        <div class="absolute icone-filigrane right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-[0.14] dark:opacity-[0.18] select-none z-0">
-                            <i [class]="indicateur.icone" class="text-7xl text-emerald-600 dark:text-emerald-400"></i>
+                            </span>
+                            <span class="text-xs text-[var(--text-color-secondary)]">{{ indicateur.precision }}</span>
                         </div>
 
-                        <div class="relative z-10 flex flex-col justify-between h-full">
-                            <!-- En-tête -->
-                            <div class="flex items-center justify-between gap-2">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 rounded-lg icone-box flex items-center justify-center shadow-2xs shrink-0 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
-                                        <i [class]="indicateur.icone" class="text-sm"></i>
-                                    </div>
-                                    <span class="text-xs font-bold label-card tracking-wide text-surface-800 dark:text-surface-100">
-                                        {{ indicateur.libelle }}
-                                    </span>
-                                </div>
+                        <div class="mt-3 h-1.5 w-full rounded-full bg-surface-100 dark:bg-surface-800 overflow-hidden">
+                            <div class="h-full bg-amber-500 rounded-full transition-all duration-300"
+                                 [style.width.%]="(indicateur.valeur ?? 0) > 0 ? 45 : 0"></div>
+                        </div>
+                    </div>
 
-                                @if (indicateur.valeur !== null) {
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60 shadow-2xs">
-                                        ✓ En vigueur
-                                    </span>
+                    <div class="flex items-center justify-between gap-2 text-[11px] text-[var(--text-color-secondary)] font-medium pt-2 border-t border-[#dddddd]/60 dark:border-surface-700 w-full">
+                        <span>Anticipation hebdomadaire</span>
+                        <span class="text-[#0084ca] dark:text-sky-400 inline-flex items-center gap-1 font-semibold">
+                            Voir actions
+                            <i class="pi pi-arrow-right !text-[10px] group-hover:translate-x-0.5 transition-transform"></i>
+                        </span>
+                    </div>
+                </button>
+
+            } @else {
+                <!-- Carte 4 : Référentiel en vigueur -->
+                <button type="button"
+                        class="relative overflow-hidden w-full h-full text-left rounded-[5px] border border-[#dddddd] dark:border-surface-700 hover:border-[#0ea5e9]/45 bg-[var(--surface-card)] p-4
+                               transition-all duration-200 shadow-card hover:shadow-md hover:-translate-y-0.5 cursor-pointer group flex flex-col justify-between"
+                        (click)="ouvrir(indicateur)">
+
+                    <div class="flex items-center justify-between gap-2 w-full">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="w-8 h-8 rounded-[5px] flex items-center justify-center shrink-0 bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 border border-[#0ea5e9]/30">
+                                <i [class]="indicateur.icone + ' !text-sm'"></i>
+                            </span>
+                            <span class="text-xs font-bold text-[var(--heading-color)] truncate">
+                                {{ indicateur.libelle }}
+                            </span>
+                        </div>
+
+                        @if (indicateur.valeur !== null) {
+                            @if ((revisionEnRetard ?? 0) > 0) {
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 shrink-0">
+                                    {{ revisionEnRetard }} à réviser
+                                </span>
+                            } @else {
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/25 shrink-0">
+                                    ✓ À jour
+                                </span>
+                            }
+                        }
+                    </div>
+
+                    <div class="my-3 w-full">
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-3xl font-bold tracking-tight leading-none tabular-nums text-[var(--heading-color)]">
+                                @if (indicateur.valeur === null) {
+                                    <span class="text-[var(--text-color-secondary)]">—</span>
+                                } @else {
+                                    {{ indicateur.valeur }}
                                 }
-                            </div>
-
-                            <!-- Valeur et Description -->
-                            <div class="my-2">
-                                <div class="text-3xl value-card font-bold tracking-tight leading-none text-emerald-600 dark:text-emerald-400">
-                                    @if (indicateur.valeur === null) {
-                                        <span class="text-surface-300 dark:text-surface-600">—</span>
-                                    } @else {
-                                        {{ indicateur.valeur }}
-                                    }
-                                </div>
-                                <div class="text-[11px] description-card font-medium text-surface-500 dark:text-surface-400 mt-1">
-                                    {{ indicateur.precision }}
-                                </div>
-                            </div>
-
-                            <!-- Pied de carte -->
-                            <div class="flex items-center justify-between text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold pt-2 border-t border-surface-200/60 dark:border-surface-700/60">
-                                <span>Consulter le fonds</span>
-                                <i class="pi pi-arrow-right text-[10px] group-hover:translate-x-0.5 transition-transform"></i>
-                            </div>
+                            </span>
+                            <span class="text-xs text-[var(--text-color-secondary)]">{{ indicateur.precision }}</span>
                         </div>
-                    </button>
+
+                        <div class="mt-3 h-1.5 w-full rounded-full bg-surface-100 dark:bg-surface-800 overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-300"
+                                 [ngClass]="(revisionEnRetard ?? 0) > 0 ? 'bg-amber-500' : 'bg-emerald-500'"
+                                 [style.width.%]="(indicateur.valeur ?? 0) > 0 ? 100 : 0"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-2 text-[11px] text-[var(--text-color-secondary)] font-medium pt-2 border-t border-[#dddddd]/60 dark:border-surface-700 w-full">
+                        <span>Patrimoine documentaire actif</span>
+                        <span class="text-[#0084ca] dark:text-sky-400 inline-flex items-center gap-1 font-semibold">
+                            Consulter
+                            <i class="pi pi-arrow-right !text-[10px] group-hover:translate-x-0.5 transition-transform"></i>
+                        </span>
+                    </div>
+                </button>
                 }
-
             </div>
         }
     </div>

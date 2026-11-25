@@ -10,7 +10,6 @@ import { USER_PROFILE_KEY, USER_STRUCTURE_KEY } from '../../../../utils/global/g
 import { ApiItemResponse } from '../../../../models/response.model';
 import { AuthService } from '@core/auth/auth.service';
 import { MotDePasseTemporaireService } from '@core/auth/mot-de-passe-temporaire.service';
-import { isUserInRoles } from '@core/auth/auth-utils';
 import { AuthData, LoginRequest } from '@features/auth/models/auth.model';
 import { StructureService } from '@features/organigramme/services/structure.service';
 
@@ -59,32 +58,13 @@ export class LoginComponent implements OnInit{
     ngOnInit() {
         this.authService.getMe().subscribe({
             next: (response) => {
-                // response.data contient l'objet complet avec { user, permissions, ... }
+                // Une session déjà ouverte : on honore returnUrl s'il existe, sinon le tableau de bord.
                 if (response) {
-                    // Une session déjà ouverte et une adresse demandée : c'est elle qu'on sert,
-                    // avant toute redirection par rôle — sinon le dossier visé serait perdu au
-                    // profit de l'écran d'accueil.
-                    if (this.route.snapshot.queryParamMap.get('returnUrl')) {
-                        this.navigateAfterLogin();
-                        return;
-                    }
-                    // On vérifie directement le rôle sans passer connectedUser car la fonction lit en mémoire
-                    if (isUserInRoles(['SUPER_ADMIN'])) {
-
-                        this.router.navigate(['/configurations']).catch(err => {
-                            console.error('Erreur de navigation :', err);
-                        });
-
-                        // this.router.navigate(['/configurations']);
-                    } else {
-                        this.router.navigate(['/non-conformite/vue-ensemble']);
-                    }
+                    this.navigateAfterLogin();
                 }
             },
-            error: (err) => {
+            error: () => {
                 // Aucune session active, ou cookie expiré : l'écran de connexion reste affiché.
-                // Optionnel : redirection vers le login si la session a expiré
-                // this.router.navigate(['/login']);
             }
         });
     }
@@ -192,12 +172,12 @@ export class LoginComponent implements OnInit{
     }
 
     /**
-     * Après connexion, l'écran demandé avant elle — à défaut la vue d'ensemble, comme toujours.
+     * Après connexion, l'écran demandé avant elle — à défaut le tableau de bord d'accueil (`/`).
      *
      * <p>Le garde renvoie vers la connexion en emportant l'adresse visée : sans ce retour, un lien
      * de courriel d'étape ou le QR code d'une fiche imprimée menaient au dossier <b>seulement</b>
-     * si la session était déjà ouverte ; sinon on atterrissait sur la vue d'ensemble, et le
-     * dossier visé était perdu.</p>
+     * si la session était déjà ouverte ; sinon on atterrissait sur l'accueil, et le dossier visé
+     * était perdu.</p>
      *
      * <p>Seul un chemin interne est suivi : une adresse absolue, même écrite dans la barre du
      * navigateur, ferait de l'écran de connexion un tremplin vers un autre site.</p>
@@ -207,12 +187,12 @@ export class LoginComponent implements OnInit{
         if (demandee && demandee.startsWith('/') && !demandee.startsWith('//')) {
             this.router.navigateByUrl(demandee).then((abouti) => {
                 if (!abouti) {
-                    this.router.navigate(['/non-conformite/vue-ensemble']);
+                    this.router.navigate(['/']);
                 }
             });
             return;
         }
-        this.router.navigate(['/non-conformite/vue-ensemble']);
+        this.router.navigate(['/']);
     }
 
     initiatePasswordReset(): void {

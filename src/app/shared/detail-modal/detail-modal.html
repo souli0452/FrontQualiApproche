@@ -12,8 +12,8 @@
     <ng-template pTemplate="header">
         <div class="flex items-center gap-4">
             <!-- Icône avec background -->
-            <div [class]="'flex items-center justify-center w-12 h-12 rounded-xl shrink-0 ' + iconBgClass">
-                <i [class]="icon + ' ' + iconColorClass + ' text-xl'"></i>
+            <div [class]="'flex items-center justify-center w-11 h-11 rounded-[5px] shrink-0 ' + iconBgClass">
+                <i [class]="icon + ' ' + iconColorClass + ' !text-xl'"></i>
             </div>
             <!-- Titre et sous-titre -->
             <div>
@@ -25,14 +25,17 @@
 
     <div class="flex flex-col gap-6 mt-2">
         <!-- Grande description (optionnelle) et Description dynamique -->
-        <div *ngIf="longDescription || itemDescription" class="bg-sky-50 dark:bg-sky-800/50 p-4 rounded-lg border-l-4 border-l-sky-500">
-            <p *ngIf="longDescription" class="text-sm text-slate-600 dark:text-surface-300 m-0 leading-relaxed whitespace-normal break-words">
-                {{ longDescription }}
-            </p>
-            <hr *ngIf="longDescription && itemDescription" class="border-t border-sky-200 dark:border-sky-700/50 my-3 opacity-50">
-            <div *ngIf="itemDescription" class="text-sm text-slate-700 dark:text-surface-200 m-0 leading-relaxed whitespace-normal break-words">
-                <span class="font-semibold block mb-1">Description :</span>
-                <span [innerHTML]="itemDescription"></span>
+        <div *ngIf="longDescription || itemDescription" class="rounded-[5px] border border-[#0ea5e9]/35 bg-[#0ea5e9]/10 dark:bg-[#0ea5e9]/15 px-4 py-3 flex items-start gap-2.5">
+            <i class="pi pi-info-circle text-[#0ea5e9] !text-sm mt-0.5 shrink-0"></i>
+            <div class="flex-1 min-w-0">
+                <p *ngIf="longDescription" class="text-[13px] text-[#0369a1] dark:text-sky-300 m-0 leading-relaxed whitespace-normal break-words">
+                    {{ longDescription }}
+                </p>
+                <hr *ngIf="longDescription && itemDescription" class="border-t border-[#0ea5e9]/25 my-2.5">
+                <div *ngIf="itemDescription" class="text-[13px] text-[var(--heading-color)] m-0 leading-relaxed whitespace-normal break-words">
+                    <span class="font-semibold block mb-1">Description :</span>
+                    <span [innerHTML]="itemDescription"></span>
+                </div>
             </div>
         </div>
 

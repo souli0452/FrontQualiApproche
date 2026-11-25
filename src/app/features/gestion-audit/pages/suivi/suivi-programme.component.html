@@ -1,178 +1,324 @@
-<div class="p-6">
-    <p-toast></p-toast>
+<p-toast></p-toast>
 
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div>
-            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Suivi du programme d'audit</h2>
-            <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">Réalisation du programme, comparaison des évaluations et écarts transmis au module Non-conformités</p>
+<!-- Sous-onglets transparents (alignés sur Constatations & Plan d'audit) -->
+<div class="audit-tabs-desktop bg-transparent mb-4">
+    <p-tabs [value]="onglet" [scrollable]="true" (valueChange)="onglet = $any($event)">
+        <p-tablist>
+            <p-tab *ngFor="let o of onglets; trackBy: trackByOnglet" [value]="o.value">
+                <div class="flex items-center gap-2 select-none">
+                    <i [class]="o.icone"></i>
+                    <span class="whitespace-nowrap">{{ o.label }}</span>
+                    <p-badge *ngIf="o.badge" [value]="o.badge" severity="danger"></p-badge>
+                </div>
+            </p-tab>
+        </p-tablist>
+    </p-tabs>
+</div>
+
+<div class="audit-tabs-mobile mb-4">
+    <p-select
+        [(ngModel)]="onglet"
+        [options]="onglets"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full">
+        <ng-template pTemplate="selectedItem" let-selected>
+            <div *ngIf="selected" class="flex items-center gap-2">
+                <i [class]="selected.icone + ' text-[#0084ca] dark:text-sky-400 !text-[14px]'"></i>
+                <span class="font-medium">{{ selected.label }}</span>
+                <p-badge *ngIf="selected.badge" [value]="selected.badge" severity="danger" styleClass="ml-auto"></p-badge>
+            </div>
+        </ng-template>
+        <ng-template pTemplate="item" let-item>
+            <div class="flex items-center justify-between gap-2 w-full">
+                <div class="flex items-center gap-2">
+                    <i [class]="item.icone + ' !text-[14px]'"></i>
+                    <span>{{ item.label }}</span>
+                </div>
+                <p-badge *ngIf="item.badge" [value]="item.badge" severity="danger"></p-badge>
+            </div>
+        </ng-template>
+    </p-select>
+</div>
+
+<!-- D16 — Suivi du programme -->
+<ng-container *ngIf="onglet === 'programme'">
+    <!-- Barre de contexte + sélecteur d'année (alignée sur Vue d'ensemble) -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-[#dddddd]/80 dark:border-surface-700">
+        <div class="flex flex-wrap items-center gap-2.5">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#0ea5e9]/10 text-[#0369a1] dark:text-sky-300 border border-[#0ea5e9]/30">
+                <i class="pi pi-calendar !text-xs"></i>
+                <span>Programme {{ annee }}</span>
+            </span>
+            <span class="text-xs text-[var(--text-color-secondary)]">
+                Réalisation du programme, retards constatés et maturité consolidée.
+            </span>
+        </div>
+        <div class="w-32">
+            <app-select-input [(ngModel)]="annee" [options]="anneeOptions" optionLabel="label" optionValue="value"
+                              [showClear]="false" (selectionChange)="chargerProgramme()" />
         </div>
     </div>
 
-    <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl mb-4 overflow-hidden">
-        <p-tabs [value]="onglet" [scrollable]="true" (valueChange)="onglet = $any($event)">
-            <p-tablist>
-                <p-tab *ngFor="let o of onglets" [value]="o.value">
-                    <div class="flex items-center gap-2 px-2 py-1 select-none">
-                        <i [class]="o.icone"></i><span class="whitespace-nowrap">{{ o.label }}</span>
-                    </div>
-                </p-tab>
-            </p-tablist>
-        </p-tabs>
+    <!-- 3 cartes KPI partagées (<app-kpi-card>) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+        <app-kpi-card
+            *ngFor="let k of kpisProgramme; trackBy: trackByKpi"
+            [label]="k.label"
+            [value]="k.valeur"
+            [icon]="k.icone"
+            [color]="k.color"
+            [subText]="k.subText"
+            [percentage]="k.percentage"
+            [meterData]="k.meterData"
+            [meterMax]="k.meterMax"
+            [loading]="chargementIndicateurs"
+            [clickable]="true"
+            (cardClick)="k.action()">
+        </app-kpi-card>
     </div>
 
-    <!-- D16 — Suivi du programme -->
-    <ng-container *ngIf="onglet === 'programme'">
-        <div class="flex justify-end mb-3">
-            <div class="w-32">
-                <app-select-input [(ngModel)]="annee" [options]="anneeOptions" optionLabel="label" optionValue="value"
-                                  [showClear]="false" (selectionChange)="chargerProgramme()" />
+    <!-- Tableau des audits de l'année -->
+    <app-tableau-affichage
+        [title]="'Audits du programme ' + annee"
+        titleIcon="pi pi-list-check"
+        subtitle="Cliquez sur une ligne pour ouvrir la fiche complète de l'audit"
+        [badgeCount]="totalProgramme"
+        [tableCols]="colonnesProgramme"
+        [minWidth]="'40rem'"
+        [listeObject]="auditsAnnee"
+        [loading]="chargementProgramme"
+        [loadingRows]="tailleProgramme"
+        [lazy]="true"
+        [totalElements]="totalProgramme"
+        [pageSize]="tailleProgramme"
+        [currentPage]="pageProgramme"
+        [clickableRows]="true"
+        [showTopBar]="true"
+        [showSearch]="false"
+        recordName="audits"
+        [cellTemplates]="cellulesProgramme"
+        [getActionMenuItems]="getActionMenuProgramme"
+        (rowClick)="ouvrirAudit($event)"
+        (pageChangeEvent)="onPageProgramme($event)">
+        <a header-actions routerLink="/gestion-audit/programme" [queryParams]="{ annee: annee }"
+           class="inline-flex items-center gap-1 text-xs font-semibold text-[#0084ca] dark:text-sky-400 hover:underline no-underline">
+            <span>Voir le programme</span>
+            <i class="pi pi-arrow-up-right !text-[10px]"></i>
+        </a>
+    </app-tableau-affichage>
+</ng-container>
+
+<!-- D17 — Historique et comparaison des évaluations -->
+<ng-container *ngIf="onglet === 'comparaison'">
+    <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-4 mb-5">
+        <div class="flex items-center gap-2.5 mb-3">
+            <div class="w-9 h-9 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                <i class="pi pi-arrow-right-arrow-left !text-sm"></i>
+            </div>
+            <div>
+                <h3 class="text-[14px] font-bold text-[var(--heading-color)] m-0">Comparer deux périodes d'évaluation</h3>
+                <p class="text-xs text-[var(--text-color-secondary)] m-0">Évolution des scores de maturité RQAP-BF et des écarts par chapitre ISO</p>
             </div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
-                <div class="text-xs font-semibold uppercase tracking-wide text-surface-500">Taux de réalisation</div>
-                <div class="text-2xl font-bold mt-2">{{ tableau.tauxRealisation != null ? (tableau.tauxRealisation | number: '1.0-0') + ' %' : '—' }}</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+            <div>
+                <app-audit-libelle texte="Période 1 (référence)" />
+                <app-select-input [(ngModel)]="periode1" [options]="periodes" optionLabel="label" optionValue="value" [showClear]="false" (selectionChange)="comparer()" />
             </div>
-            <a routerLink="/gestion-audit/programme" [queryParams]="{ enRetard: true, annee: annee }"
-               class="block no-underline bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 hover:border-primary transition-colors">
-                <div class="text-xs font-semibold uppercase tracking-wide text-surface-500">Audits en retard</div>
-                <div class="text-2xl font-bold mt-2 text-red-600 dark:text-red-400">{{ tableau.auditsEnRetard ?? 0 }}</div>
-            </a>
-            <button type="button" (click)="onglet = 'comparaison'"
-                    class="text-left bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 hover:border-primary transition-colors cursor-pointer">
-                <div class="text-xs font-semibold uppercase tracking-wide text-surface-500">Score de maturité moyen</div>
-                <div class="text-2xl font-bold mt-2 text-surface-900 dark:text-surface-50">{{ tableau.scoreMaturiteMoyen != null ? (tableau.scoreMaturiteMoyen | number: '1.0-0') + ' %' : '—' }}</div>
-            </button>
+            <div>
+                <app-audit-libelle texte="Période 2 (comparée)" />
+                <app-select-input [(ngModel)]="periode2" [options]="periodes" optionLabel="label" optionValue="value" [showClear]="false" (selectionChange)="comparer()" />
+            </div>
         </div>
+    </div>
 
-        <app-tableau-affichage
-            [tableCols]="colonnesProgramme"
-            [listeObject]="auditsAnnee"
-            [loading]="chargementProgramme"
-            [lazy]="true"
-            [totalElements]="totalProgramme"
-            [pageSize]="tailleProgramme"
-            [currentPage]="pageProgramme"
-            [rowsPerPageOptions]="[10, 25, 50]"
-            [clickableRows]="true"
-            [showTopBar]="false"
-            recordName="audits"
-            [cellTemplates]="cellulesProgramme"
-            (rowClick)="ouvrirAudit($event)"
-            (pageChangeEvent)="onPageProgramme($event)">
-        </app-tableau-affichage>
-    </ng-container>
+    <div *ngIf="comparant" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <p-skeleton height="20rem" borderRadius="5px"></p-skeleton>
+        <p-skeleton height="20rem" borderRadius="5px"></p-skeleton>
+    </div>
 
-    <!-- D17 — Historique et comparaison des évaluations -->
-    <ng-container *ngIf="onglet === 'comparaison'">
-        <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 mb-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
-                <div>
-                    <app-audit-libelle texte="Période 1" />
-                    <app-select-input [(ngModel)]="periode1" [options]="periodes" optionLabel="label" optionValue="value" [showClear]="false" (selectionChange)="comparer()" />
+    <div *ngIf="comparaison && !comparant" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <!-- Carte Radar comparatif -->
+        <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-5 flex flex-col">
+            <h3 class="text-base font-bold text-[var(--heading-color)] m-0 mb-1">Scores par domaine (%)</h3>
+            <div class="flex flex-wrap items-center gap-2 mb-4 text-xs">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[5px] bg-surface-100 dark:bg-surface-800 text-[var(--text-color-secondary)] border border-[#dddddd]/80 dark:border-surface-700">
+                    <span class="w-2 h-2 rounded-full bg-surface-400"></span>
+                    <span>{{ libellePeriode(periode1) }} :</span>
+                    <strong class="text-[var(--heading-color)]">{{ comparaison.periode1?.scoreMoyen != null ? (comparaison.periode1?.scoreMoyen | number: '1.0-0') + ' %' : '—' }}</strong>
+                    <span>({{ comparaison.periode1?.evaluations ?? 0 }})</span>
+                </span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[5px] bg-[#0ea5e9]/10 text-[#0369a1] dark:text-sky-300 border border-[#0ea5e9]/30">
+                    <span class="w-2 h-2 rounded-full bg-[#0084ca]"></span>
+                    <span>{{ libellePeriode(periode2) }} :</span>
+                    <strong>{{ comparaison.periode2?.scoreMoyen != null ? (comparaison.periode2?.scoreMoyen | number: '1.0-0') + ' %' : '—' }}</strong>
+                    <span>({{ comparaison.periode2?.evaluations ?? 0 }})</span>
+                </span>
+            </div>
+
+            <div *ngIf="!domainesComparaison.length" class="flex-1 flex flex-col items-center justify-center text-center py-8 px-4">
+                <div class="w-12 h-12 rounded-[5px] bg-[#0ea5e9]/10 text-[#0ea5e9] flex items-center justify-center mb-3">
+                    <i class="pi pi-compass !text-2xl"></i>
                 </div>
-                <div>
-                    <app-audit-libelle texte="Période 2" />
-                    <app-select-input [(ngModel)]="periode2" [options]="periodes" optionLabel="label" optionValue="value" [showClear]="false" (selectionChange)="comparer()" />
-                </div>
-            </div>
-        </div>
-
-        <p-skeleton *ngIf="comparant" height="12rem"></p-skeleton>
-        <div *ngIf="comparaison && !comparant" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
-                <h3 class="text-base font-bold m-0 mb-1">Scores par domaine</h3>
-                <p class="text-xs text-surface-500 m-0 mb-3">
-                    {{ libellePeriode(periode1) }} : {{ comparaison.periode1?.scoreMoyen != null ? (comparaison.periode1?.scoreMoyen | number: '1.0-0') + ' %' : '—' }}
-                    ({{ comparaison.periode1?.evaluations ?? 0 }} évaluation(s)) ·
-                    {{ libellePeriode(periode2) }} : {{ comparaison.periode2?.scoreMoyen != null ? (comparaison.periode2?.scoreMoyen | number: '1.0-0') + ' %' : '—' }}
-                    ({{ comparaison.periode2?.evaluations ?? 0 }} évaluation(s))
+                <div class="text-sm font-semibold text-[var(--heading-color)]">Aucune évaluation validée sur ces périodes</div>
+                <p class="text-xs text-[var(--text-color-secondary)] max-w-xs m-0 mt-1">
+                    Sélectionnez une autre période ou publiez une évaluation RQAP-BF pour afficher le radar comparatif.
                 </p>
-                <p *ngIf="!domaines().length" class="text-sm text-surface-400 text-center m-0 py-8">Aucune évaluation validée sur ces périodes.</p>
-                <p-chart *ngIf="domaines().length" type="radar" [data]="radar" [options]="optionsRadar" height="260px"></p-chart>
             </div>
-            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
+
+            <p-chart *ngIf="domainesComparaison.length" type="radar" [data]="radar" [options]="optionsRadar" height="270px"></p-chart>
+        </div>
+
+        <!-- Carte Tableau des écarts par chapitre ISO -->
+        <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card overflow-hidden flex flex-col">
+            <div class="px-5 py-4 border-b border-[#dddddd]/80 dark:border-surface-700">
+                <h3 class="text-base font-bold text-[var(--heading-color)] m-0 mb-0.5">Écarts par chapitre ISO</h3>
+                <p class="text-xs text-[var(--text-color-secondary)] m-0">Comparaison du nombre d'écarts relevés entre les deux périodes</p>
+            </div>
+            <div class="overflow-x-auto flex-1">
                 <table class="w-full border-collapse text-sm">
                     <thead>
-                        <tr class="bg-surface-50 dark:bg-surface-800">
-                            <th scope="col" class="text-left px-4 py-2 text-xs font-semibold text-surface-500">Chapitre ISO</th>
-                            <th scope="col" class="text-right px-4 py-2 text-xs font-semibold text-surface-500">Écarts ({{ libellePeriode(periode1) }})</th>
-                            <th scope="col" class="text-right px-4 py-2 text-xs font-semibold text-surface-500">Écarts ({{ libellePeriode(periode2) }})</th>
-                            <th scope="col" class="text-left px-4 py-2 text-xs font-semibold text-surface-500">Évolution</th>
+                        <tr class="bg-surface-50 dark:bg-surface-800/70 border-b border-[#dddddd]/80 dark:border-surface-700">
+                            <th scope="col" class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-[var(--text-color-secondary)]">Chapitre ISO</th>
+                            <th scope="col" class="text-right px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-[var(--text-color-secondary)]">{{ libellePeriode(periode1) }}</th>
+                            <th scope="col" class="text-right px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-[var(--text-color-secondary)]">{{ libellePeriode(periode2) }}</th>
+                            <th scope="col" class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-[var(--text-color-secondary)]">Évolution</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr *ngIf="!comparaison.ecartsParChapitre?.length"><td colspan="4" class="px-4 py-6 text-center text-surface-400">Aucun écart sur ces périodes.</td></tr>
-                        <tr *ngFor="let e of comparaison.ecartsParChapitre" class="border-t border-surface-100 dark:border-surface-800">
-                            <td class="px-4 py-2">{{ e.chapitre }}</td>
-                            <td class="px-4 py-2 text-right">{{ e.periode1 }}</td>
-                            <td class="px-4 py-2 text-right">{{ e.periode2 }}</td>
-                            <td class="px-4 py-2"><p-tag [value]="evolutionLabel(e.evolution)" [severity]="evolutionSeverite(e.evolution)" [rounded]="true"></p-tag></td>
+                    <tbody class="divide-y divide-[#dddddd]/60 dark:divide-surface-700">
+                        <tr *ngIf="!comparaison.ecartsParChapitre?.length">
+                            <td colspan="4" class="px-4 py-10 text-center text-xs text-[var(--text-color-secondary)]">
+                                Aucun écart enregistré sur ces deux périodes.
+                            </td>
+                        </tr>
+                        <tr *ngFor="let e of comparaison.ecartsParChapitre" class="hover:bg-surface-50/70 dark:hover:bg-surface-800/40 transition-colors">
+                            <td class="px-4 py-2.5 font-medium text-[var(--heading-color)]">{{ e.chapitre }}</td>
+                            <td class="px-4 py-2.5 text-right font-mono text-xs text-[var(--text-color-secondary)]">{{ e.periode1 }}</td>
+                            <td class="px-4 py-2.5 text-right font-mono text-xs font-semibold text-[var(--heading-color)]">{{ e.periode2 }}</td>
+                            <td class="px-4 py-2.5">
+                                <p-tag [value]="evolutionLabel(e.evolution)" [severity]="evolutionSeverite(e.evolution)" [rounded]="true"></p-tag>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
-    </ng-container>
+    </div>
+</ng-container>
 
-    <!-- D18 — Écarts RQAP-BF transmis au module Non-conformités -->
-    <ng-container *ngIf="onglet === 'ecarts'">
-        <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
-            <p class="text-xs text-surface-500 m-0 max-w-2xl">Le module Audit ne gère pas les plans d'actions : chaque critère publié dont le constat retenu est « NC » (niveaux Non conforme, À améliorer ou Acceptable de la grille officielle) ouvre une non-conformité dans le module Non-conformités, où se gèrent traitement, pilotage et délais.</p>
-            <div class="w-72">
-                <app-select-input [(ngModel)]="auditFiltre" [options]="audits" optionLabel="reference" optionValue="id" [filter]="true"
-                                  placeholder="Tous les audits" (selectionChange)="chargerEcarts()" />
+<!-- D18 — Écarts RQAP-BF transmis au module Non-conformités -->
+<ng-container *ngIf="onglet === 'ecarts'">
+    <!-- Explication directe du badge rouge sur Suivi du programme -->
+    <div *ngIf="ecartsEnAttente > 0"
+         class="mb-4 rounded-[5px] border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 flex items-start gap-3">
+        <i class="pi pi-clock text-amber-600 dark:text-amber-400 !text-[16px] mt-0.5 shrink-0"></i>
+        <div class="text-[13px] text-amber-900 dark:text-amber-200 leading-snug">
+            <div class="font-bold">
+                {{ ecartsEnAttente }} écart(s) RQAP-BF en attente de transmission vers le module Non-conformités
+            </div>
+            <div class="text-xs opacity-90 mt-0.5">
+                Lors d'une publication massive, les dossiers sont transmis par lots de 25. Ouvrez la fiche d'un audit concerné pour relancer la transmission des lots restants.
             </div>
         </div>
-        <!-- Sans écart, on renvoie là où les résultats se prévisualisent et se publient (C13P) : l'évaluation RQAP-BF de l'audit. -->
-        <p *ngIf="!chargementEcarts && !ecarts.length" class="text-sm text-surface-400 text-center m-0 py-8 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl">
-            Aucun écart publié pour le moment —
+    </div>
+
+    <!-- Barre de contexte + filtre par audit -->
+    <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-4 mb-4 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-start gap-3 max-w-2xl">
+            <div class="w-9 h-9 rounded-[5px] bg-[#0ea5e9]/10 text-[#0ea5e9] flex items-center justify-center shrink-0 mt-0.5">
+                <i class="pi pi-info-circle !text-base"></i>
+            </div>
+            <p class="text-xs text-[var(--text-color-secondary)] m-0 leading-relaxed">
+                Le module Audit ne gère pas les plans d'actions : chaque critère publié dont le constat retenu est « NC »
+                (selon les niveaux paramétrés dans <strong class="text-[var(--heading-color)]">Écarts RQAP-BF</strong> — par défaut « Non conforme » et « À améliorer »)
+                ouvre une non-conformité dans le module <strong class="text-[var(--heading-color)]">Non-conformités</strong>, où se gèrent traitement, pilotage et délais.
+            </p>
+        </div>
+        <div class="w-full sm:w-72 shrink-0">
+            <app-select-input [(ngModel)]="auditFiltre" [options]="audits" optionLabel="reference" optionValue="id" [filter]="true"
+                              placeholder="Filtrer par audit : tous" (selectionChange)="chargerEcarts()" />
+        </div>
+    </div>
+
+    <!-- État vide harmonisé -->
+    <div *ngIf="!chargementEcarts && !ecarts.length"
+         class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card py-10 px-4 flex flex-col items-center text-center">
+        <div class="w-12 h-12 rounded-[5px] bg-[#0ea5e9]/10 text-[#0ea5e9] flex items-center justify-center mb-3">
+            <i class="pi pi-check-circle !text-2xl"></i>
+        </div>
+        <div class="text-sm font-semibold text-[var(--heading-color)]">Aucun écart publié pour le moment</div>
+        <p class="text-xs text-[var(--text-color-secondary)] max-w-md m-0 mt-1">
             <ng-container *ngIf="auditFiltre; else sansAuditFiltre">
-                <a [routerLink]="['/gestion-audit/programme', auditFiltre, 'evaluation-rqapbf']" class="text-primary">prévisualiser et publier les résultats de {{ referenceFiltre }}</a>.
+                Vous pouvez
+                <a [routerLink]="['/gestion-audit/programme', auditFiltre, 'evaluation-rqapbf']"
+                   class="font-semibold text-[#0084ca] dark:text-sky-400 hover:underline">
+                    prévisualiser et publier les résultats de {{ referenceFiltre }}
+                </a>.
             </ng-container>
-            <ng-template #sansAuditFiltre>voir l'évaluation RQAP-BF de l'audit pour prévisualiser et publier les résultats.</ng-template>
+            <ng-template #sansAuditFiltre>
+                Ouvrez l'évaluation RQAP-BF d'un audit pour prévisualiser et publier ses résultats.
+            </ng-template>
         </p>
-        <app-tableau-affichage *ngIf="chargementEcarts || ecarts.length"
-            [tableCols]="colonnesEcarts"
-            [listeObject]="ecarts"
-            [loading]="chargementEcarts"
-            [lazy]="true"
-            [totalElements]="totalEcarts"
-            [pageSize]="tailleEcarts"
-            [currentPage]="pageEcarts"
-            [rowsPerPageOptions]="[10, 25, 50]"
-            [showTopBar]="false"
-            [consultation]="true"
-            recordName="écarts"
-            [cellTemplates]="cellulesEcarts"
-            (pageChangeEvent)="onPageEcarts($event)">
-        </app-tableau-affichage>
-    </ng-container>
-</div>
+    </div>
+
+    <!-- Tableau des écarts -->
+    <app-tableau-affichage *ngIf="chargementEcarts || ecarts.length"
+        title="Écarts RQAP-BF publiés"
+        titleIcon="pi pi-exclamation-triangle"
+        subtitle="Suivi de la transmission automatique des critères NC vers le module Non-conformités"
+        [badgeCount]="totalEcarts"
+        [tableCols]="colonnesEcarts"
+        [minWidth]="'42rem'"
+        [listeObject]="ecarts"
+        [loading]="chargementEcarts"
+        [loadingRows]="tailleEcarts"
+        [lazy]="true"
+        [totalElements]="totalEcarts"
+        [pageSize]="tailleEcarts"
+        [currentPage]="pageEcarts"
+        [showTopBar]="true"
+        [showSearch]="false"
+        [consultation]="true"
+        recordName="écarts"
+        [cellTemplates]="cellulesEcarts"
+        (pageChangeEvent)="onPageEcarts($event)">
+    </app-tableau-affichage>
+</ng-container>
 
 <!-- D16 : cellules -->
 <ng-template #auditAnneeTpl let-a>
-    <span class="font-mono text-xs font-semibold text-primary">{{ a.reference }}</span>
-    <span class="block text-xs text-surface-500">{{ libelles.processus(a.processusId) }}</span>
+    <div class="min-w-0">
+        <span class="font-mono text-[13px] font-semibold text-[#0084ca] dark:text-sky-400">{{ a.reference }}</span>
+        <span class="block text-xs text-[var(--text-color-secondary)] truncate mt-0.5">{{ libelles.processus(a.processusId) }}</span>
+    </div>
 </ng-template>
 <ng-template #responsableTpl let-a>
-    <span class="text-sm">{{ libelles.auditeur(a.responsableEquipeId) }}</span>
+    <span class="text-sm text-[var(--heading-color)]">{{ libelles.auditeur(a.responsableEquipeId) }}</span>
 </ng-template>
 <ng-template #statutAuditTpl let-a>
     <p-tag [value]="statutLabel(a.statut)" [severity]="statutSeverite(a.statut)" [rounded]="true"></p-tag>
 </ng-template>
 <ng-template #retardTpl let-a>
     <p-tag *ngIf="a.enRetard; else sansRetard" [value]="(a.joursDeRetard ?? 0) + ' jour(s)'" severity="danger" [rounded]="true"></p-tag>
-    <ng-template #sansRetard><span class="text-surface-400">—</span></ng-template>
+    <ng-template #sansRetard><span class="text-[var(--text-color-secondary)]">—</span></ng-template>
 </ng-template>
 
 <!-- D18 : cellules -->
 <ng-template #ecartAuditTpl let-e>
-    <a [routerLink]="['/gestion-audit/programme', e.auditId]" class="font-mono text-xs font-semibold text-primary">{{ e.auditReference }}</a>
+    <a [routerLink]="['/gestion-audit/programme', e.auditId]"
+       class="font-mono text-xs font-semibold text-[#0084ca] dark:text-sky-400 hover:underline no-underline whitespace-nowrap">
+        {{ e.auditReference }}
+    </a>
 </ng-template>
 <ng-template #critereTpl let-e>
-    <div class="text-sm"><span class="font-mono text-xs mr-1">{{ e.noeudCode }}</span>{{ e.noeudLibelle }}</div>
-    <div *ngIf="e.preuve || e.commentaire" class="text-xs text-surface-500 mt-1">{{ e.preuve }}<span *ngIf="e.commentaire"> — {{ e.commentaire }}</span></div>
+    <div class="text-sm text-[var(--heading-color)]">
+        <span class="font-mono text-xs font-semibold text-[#0084ca] dark:text-sky-400 mr-1.5">{{ e.noeudCode }}</span>
+        <span>{{ e.noeudLibelle }}</span>
+    </div>
+    <div *ngIf="e.preuve || e.commentaire" class="text-xs text-[var(--text-color-secondary)] mt-1">
+        {{ e.preuve }}<span *ngIf="e.commentaire"> — {{ e.commentaire }}</span>
+    </div>
 </ng-template>
 <ng-template #niveauTpl let-e>
     <div class="flex items-center gap-1 flex-wrap">
@@ -182,6 +328,13 @@
 </ng-template>
 <ng-template #transmissionTpl let-e>
     <a *ngIf="e.nonConformiteId" [routerLink]="['/non-conformite/traitement']" [queryParams]="{ ncId: e.nonConformiteId }"
-       class="text-xs font-semibold text-primary whitespace-nowrap">Ouvrir la fiche complète ↗</a>
-    <span *ngIf="!e.nonConformiteId && e.transmissionEnAttente" class="text-xs text-amber-600 whitespace-nowrap"><i class="pi pi-clock text-xs"></i> Transmission en attente</span>
+       class="inline-flex items-center gap-1 text-xs font-semibold text-[#0084ca] dark:text-sky-400 hover:underline no-underline whitespace-nowrap">
+        <span>Ouvrir la NC</span>
+        <i class="pi pi-arrow-up-right !text-[10px]"></i>
+    </a>
+    <span *ngIf="!e.nonConformiteId && e.transmissionEnAttente"
+          class="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400 whitespace-nowrap">
+        <i class="pi pi-clock !text-xs"></i>
+        <span>Transmission en attente</span>
+    </span>
 </ng-template>

@@ -1,188 +1,331 @@
-<div class="p-6">
-    <p-toast></p-toast>
-    <p-confirmpopup></p-confirmpopup>
-
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <div>
-            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Paramétrage des checklists d'audit</h2>
-            <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">Chaque point de contrôle est associé à un auditeur vérificateur, responsable de la saisie du constat.</p>
+<p-toast></p-toast>
+<p-confirmdialog
+    #cd
+    key="checklist-action"
+    appendTo="body"
+    maskStyleClass="backdrop-blur-sm"
+    [closable]="false"
+    [draggable]="false"
+    [style]="{ width: '440px', maxWidth: '92vw' }"
+    styleClass="border-none bg-transparent shadow-none">
+    <ng-template pTemplate="headless" let-message>
+        <div class="p-6 bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-2xl flex flex-col items-center text-center whitespace-normal">
+            <div class="w-14 h-14 rounded-full flex items-center justify-center mb-3.5 ring-8" [ngClass]="confirmationBadgeClasses">
+                <i class="pi !text-2xl" [ngClass]="message.icon || 'pi-question-circle'"></i>
+            </div>
+            <h3 class="text-[17px] font-bold text-[var(--heading-color)] m-0 mb-1.5">
+                {{ message.header || 'Confirmation' }}
+            </h3>
+            <p class="text-[13px] text-[var(--text-color-secondary)] m-0 leading-relaxed px-1">
+                {{ message.message }}
+            </p>
+            <div class="w-full border-t border-[#dddddd]/70 dark:border-surface-700 my-4"></div>
+            <div class="flex items-center justify-center gap-3 w-full">
+                <button type="button" pButton
+                        [label]="message.rejectLabel || 'Retour'"
+                        class="p-button-outlined p-button-secondary p-button-sm flex-1 justify-center rounded-[5px]"
+                        (click)="cd.onReject()">
+                </button>
+                <button type="button" pButton
+                        [label]="message.acceptLabel || 'Confirmer'"
+                        [icon]="message.acceptIcon || 'pi pi-check'"
+                        [ngClass]="confirmationAcceptClasses"
+                        (click)="cd.onAccept()">
+                </button>
+            </div>
         </div>
-        <p-selectbutton [options]="filtres" [(ngModel)]="filtreStatut" optionLabel="label" optionValue="value" (onChange)="filtrer()"></p-selectbutton>
+    </ng-template>
+</p-confirmdialog>
+
+<!-- Barre de contexte + filtre de statut segmenté -->
+<div class="flex flex-wrap items-center justify-between gap-3 mb-5 pb-3 border-b border-[#dddddd]/80 dark:border-surface-700">
+    <div>
+        <div class="flex flex-wrap items-center gap-2">
+            <h2 class="text-[16px] font-bold text-[var(--heading-color)] m-0">Paramétrage des checklists d'audit</h2>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#0084ca]/10 text-[#0084ca] dark:text-sky-300">
+                {{ totalElements }}
+            </span>
+        </div>
+        <p class="text-xs text-[var(--text-color-secondary)] m-0 mt-1">
+            Chaque point de contrôle est associé à un auditeur vérificateur, responsable de la saisie du constat.
+        </p>
     </div>
 
-    <div *ngIf="loading" class="flex gap-5">
-        <p-skeleton width="16rem" height="20rem" borderRadius="12px"></p-skeleton>
-        <p-skeleton height="20rem" borderRadius="12px" styleClass="flex-1"></p-skeleton>
+    <div class="inline-flex flex-wrap items-center p-0.5 rounded-[5px] border border-[#dddddd] dark:border-surface-700 bg-surface-50 dark:bg-surface-800 shrink-0">
+        <button *ngFor="let f of filtres"
+                type="button"
+                (click)="choisirFiltre(f.value)"
+                class="px-3 py-1.5 rounded-[4px] text-xs transition-colors cursor-pointer border-0"
+                [ngClass]="filtreStatut === f.value
+                    ? 'bg-[#0084ca] text-white font-semibold'
+                    : 'bg-transparent text-[var(--text-color-secondary)] hover:text-[var(--heading-color)] font-medium'">
+            {{ f.label }}
+        </button>
     </div>
+</div>
 
-    <div *ngIf="!loading" class="flex flex-col md:flex-row items-start gap-5">
+<!-- Squelettes de chargement -->
+<div *ngIf="loading" class="flex flex-col md:flex-row gap-5">
+    <p-skeleton width="18rem" height="22rem" borderRadius="5px"></p-skeleton>
+    <p-skeleton height="22rem" borderRadius="5px" styleClass="flex-1"></p-skeleton>
+</div>
 
-        <!-- Les checklists -->
-        <aside class="w-full md:w-64 shrink-0 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-2">
-            <p *ngIf="!checklists.length" class="text-sm text-surface-400 text-center m-0 py-4">Aucune checklist.</p>
-            <button *ngFor="let cl of checklists" type="button" (click)="choisir(cl)"
-                    class="w-full text-left px-3 py-2 rounded-lg mb-1 transition-colors border-0 cursor-pointer"
+<div *ngIf="!loading" class="flex flex-col md:flex-row items-start gap-5">
+
+    <!-- Colonne gauche : liste des checklists -->
+    <aside class="w-full md:w-72 shrink-0 bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card overflow-hidden">
+        <div class="px-3.5 py-2.5 bg-surface-50/80 dark:bg-surface-800/50 border-b border-[#dddddd]/80 dark:border-surface-700 flex items-center justify-between">
+            <span class="text-[11px] font-bold uppercase tracking-wide text-[var(--heading-color)]">Checklists</span>
+            <span class="text-[11px] font-semibold text-[#0084ca] dark:text-sky-400">{{ totalElements }}</span>
+        </div>
+
+        <div class="p-2">
+            <p *ngIf="!checklists.length" class="text-xs text-[var(--text-color-secondary)] text-center m-0 py-6">
+                Aucune checklist pour ce filtre.
+            </p>
+            <button *ngFor="let cl of checklists; trackBy: trackById"
+                    type="button"
+                    (click)="choisir(cl)"
+                    class="w-full text-left px-3 py-2.5 rounded-[5px] mb-1 last:mb-0 transition-colors cursor-pointer border"
                     [ngClass]="cl.id === active?.id
-                        ? 'bg-primary-50 dark:bg-primary-950/40 text-primary font-semibold'
-                        : 'bg-transparent text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800'">
-                <span class="block text-sm truncate">{{ cl.nom }}</span>
-                <span class="flex items-center gap-2 mt-0.5">
-                    <span class="text-xs text-surface-500">{{ cl.points?.length ?? 0 }} point(s)</span>
-                    <p-tag *ngIf="cl.statut !== 'PUBLIEE'" [value]="libelleStatut(cl.statut)" [severity]="severiteStatut(cl.statut)" styleClass="text-[10px] px-1.5 py-0"></p-tag>
+                        ? 'bg-[#0ea5e9]/10 dark:bg-[#0ea5e9]/15 border-[#0ea5e9]/35 text-[#0084ca] dark:text-sky-300 font-semibold'
+                        : 'bg-transparent border-transparent text-[var(--heading-color)] hover:bg-surface-50 dark:hover:bg-surface-800/60'">
+                <span class="block text-[13px] truncate" [title]="cl.nom">{{ cl.nom }}</span>
+                <span class="flex items-center justify-between gap-2 mt-1">
+                    <span class="text-[11px] text-[var(--text-color-secondary)] font-normal">
+                        {{ cl.points?.length ?? 0 }} point(s)
+                    </span>
+                    <p-tag *ngIf="cl.statut !== 'PUBLIEE'"
+                           [value]="libelleStatut(cl.statut)"
+                           [severity]="severiteStatut(cl.statut)"
+                           styleClass="text-[10px] px-1.5 py-0"></p-tag>
                 </span>
             </button>
 
-            <p-paginator *ngIf="totalElements > pageSize" [rows]="pageSize" [totalRecords]="totalElements" [first]="currentPage * pageSize"
-                         [showFirstLastIcon]="false" [pageLinkSize]="3" (onPageChange)="onPageChange($event)" styleClass="text-xs"></p-paginator>
+            <p-paginator *ngIf="totalElements > pageSize"
+                         [rows]="pageSize"
+                         [totalRecords]="totalElements"
+                         [first]="currentPage * pageSize"
+                         [showFirstLastIcon]="false"
+                         [pageLinkSize]="3"
+                         (onPageChange)="onPageChange($event)"
+                         styleClass="text-xs mt-1"></p-paginator>
+        </div>
 
-            <div class="border-t border-surface-100 dark:border-surface-800 mt-1 pt-2">
-                <ng-container *ngIf="ajoutChecklist; else boutonNouvelle">
-                    <input pInputText [(ngModel)]="nomNouvelle" placeholder="Nom de la checklist" class="w-full mb-2" (keyup.enter)="creerChecklist()" />
-                    <div class="flex gap-2">
-                        <p-button label="Annuler" severity="secondary" [outlined]="true" size="small" styleClass="flex-1" (onClick)="ajoutChecklist = false"></p-button>
-                        <p-button label="Créer" size="small" styleClass="flex-1" [loading]="saving" [disabled]="!nomNouvelle.trim()" (onClick)="creerChecklist()"></p-button>
-                    </div>
-                </ng-container>
-                <ng-template #boutonNouvelle>
-                    <p-button icon="pi pi-plus" label="Nouvelle checklist" [text]="true" size="small" styleClass="w-full" (onClick)="ajoutChecklist = true; nomNouvelle = ''"></p-button>
-                </ng-template>
+        <div class="p-2.5 border-t border-[#dddddd]/70 dark:border-surface-700 bg-surface-50/40 dark:bg-surface-800/30">
+            <ng-container *ngIf="ajoutChecklist; else boutonNouvelle">
+                <input pInputText
+                       [(ngModel)]="nomNouvelle"
+                       placeholder="Nom de la checklist…"
+                       class="w-full mb-2 !text-xs"
+                       (keyup.enter)="creerChecklist()" />
+                <div class="flex gap-2">
+                    <p-button label="Annuler" severity="secondary" [outlined]="true" size="small"
+                              styleClass="flex-1 !bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                              (onClick)="ajoutChecklist = false"></p-button>
+                    <p-button label="Créer" severity="info" size="small" styleClass="flex-1"
+                              [loading]="saving" [disabled]="!nomNouvelle.trim()" (onClick)="creerChecklist()"></p-button>
+                </div>
+            </ng-container>
+            <ng-template #boutonNouvelle>
+                <p-button icon="pi pi-plus" label="Nouvelle checklist" severity="secondary" [outlined]="true" size="small"
+                          styleClass="w-full !bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                          (onClick)="ajoutChecklist = true; nomNouvelle = ''"></p-button>
+            </ng-template>
+        </div>
+    </aside>
+
+    <!-- Colonne droite : fiche et points de contrôle -->
+    <section class="flex-1 min-w-0 w-full">
+        <div *ngIf="!active"
+             class="flex flex-col items-center justify-center py-16 px-4 bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card text-center">
+            <div class="w-12 h-12 rounded-[5px] bg-[#0ea5e9]/10 text-[#0ea5e9] flex items-center justify-center mb-3">
+                <i class="pi pi-list-check !text-2xl"></i>
             </div>
-        </aside>
+            <div class="text-sm font-semibold text-[var(--heading-color)]">Aucune checklist sélectionnée</div>
+            <p class="text-xs text-[var(--text-color-secondary)] m-0 mt-1">
+                Choisissez une checklist dans la liste de gauche ou créez-en une nouvelle.
+            </p>
+        </div>
 
-        <!-- Les points de contrôle de la checklist choisie -->
-        <section class="flex-1 min-w-0 w-full">
-            <div *ngIf="!active" class="flex flex-col items-center justify-center py-20 bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl">
-                <i class="pi pi-list-check text-5xl text-surface-300 dark:text-surface-600 mb-4"></i>
-                <p class="text-sm text-surface-500 m-0">Choisissez ou créez une checklist.</p>
-            </div>
-
-            <ng-container *ngIf="active">
-                <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 mb-4">
-                    <div *ngIf="!renommage" class="flex flex-wrap items-center justify-between gap-3">
+        <ng-container *ngIf="active">
+            <!-- Carte en-tête de la checklist active -->
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-4 mb-4">
+                <div *ngIf="!renommage" class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                            <i class="pi pi-list-check !text-lg"></i>
+                        </div>
                         <div class="min-w-0">
-                            <div class="flex items-center gap-2">
-                                <h3 class="text-base font-bold m-0 truncate">{{ active.nom }}</h3>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h3 class="text-[15px] font-bold text-[var(--heading-color)] m-0 truncate">{{ active.nom }}</h3>
                                 <p-tag [value]="libelleStatut(active.statut)" [severity]="severiteStatut(active.statut)" [rounded]="true"></p-tag>
                             </div>
-                            <p class="text-xs text-surface-500 m-0 mt-0.5">
+                            <p class="text-xs text-[var(--text-color-secondary)] m-0 mt-0.5">
                                 <span *ngIf="active.chapitreISO">Chapitre {{ active.chapitreISO }} · </span>{{ active.points?.length ?? 0 }} point(s) de contrôle
                             </p>
                         </div>
-                        <!-- Des actions nommées : des icônes seules ne se comprenaient pas (observation 33). -->
-                        <div class="flex flex-wrap gap-1 shrink-0">
-                            <p-button *ngIf="modifiable" icon="pi pi-pencil" label="Renommer" [text]="true" severity="secondary" size="small" (onClick)="ouvrirRenommage()"></p-button>
-                            <p-button icon="pi pi-copy" label="Dupliquer" [text]="true" severity="secondary" size="small" (onClick)="dupliquer(active)"></p-button>
-                            <p-button *ngIf="active.statut === 'PUBLIEE'" icon="pi pi-inbox" label="Archiver" [text]="true" severity="warn" size="small" (onClick)="archiver(active)"></p-button>
-                            <p-button *ngIf="modifiable" icon="pi pi-trash" label="Supprimer" [text]="true" severity="danger" size="small" (onClick)="supprimer($event, active)"></p-button>
-                            <span *ngIf="modifiable" [pTooltip]="active.points?.length ? '' : 'Ajoutez au moins un point de contrôle avant de publier.'">
-                                <p-button icon="pi pi-send" label="Publier" size="small" severity="success"
-                                          [disabled]="!active.points?.length" (onClick)="publier($event, active)"></p-button>
-                            </span>
-                        </div>
                     </div>
-                    <div *ngIf="renommage" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
-                        <div>
-                            <app-audit-libelle texte="Nom" [requis]="true" />
-                            <input pInputText [(ngModel)]="brouillonNom" class="w-full" />
-                        </div>
+
+                    <!-- Actions nommées (observation 33) -->
+                    <div class="flex flex-wrap items-center gap-2 shrink-0">
+                        <p-button *ngIf="modifiable" icon="pi pi-pencil" label="Renommer" [outlined]="true" severity="secondary" size="small"
+                                  styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                                  (onClick)="ouvrirRenommage()"></p-button>
+                        <p-button icon="pi pi-copy" label="Dupliquer" [outlined]="true" severity="secondary" size="small"
+                                  styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                                  (onClick)="dupliquer(active)"></p-button>
+                        <p-button *ngIf="active.statut === 'PUBLIEE'" icon="pi pi-inbox" label="Archiver" [outlined]="true" severity="warn" size="small"
+                                  (onClick)="archiver(active)"></p-button>
+                        <p-button *ngIf="modifiable" icon="pi pi-trash" label="Supprimer" [outlined]="true" severity="danger" size="small"
+                                  (onClick)="supprimer(active)"></p-button>
+                        <span *ngIf="modifiable" [pTooltip]="active.points?.length ? '' : 'Ajoutez au moins un point de contrôle avant de publier.'">
+                            <p-button icon="pi pi-send" label="Publier" size="small" severity="success"
+                                      [disabled]="!active.points?.length" (onClick)="publier(active)"></p-button>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Formulaire de renommage -->
+                <div *ngIf="renommage" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                    <div>
+                        <app-audit-libelle texte="Nom" [requis]="true" />
+                        <input pInputText [(ngModel)]="brouillonNom" class="w-full" />
+                    </div>
+                    <div>
+                        <app-audit-libelle texte="Chapitre ISO" />
+                        <input pInputText [(ngModel)]="brouillonChapitre" class="w-full" placeholder="Ex : §8" />
+                    </div>
+                    <div class="md:col-span-2 flex justify-end gap-2">
+                        <p-button label="Annuler" severity="secondary" [outlined]="true" size="small"
+                                  styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                                  (onClick)="renommage = false"></p-button>
+                        <p-button label="Enregistrer" icon="pi pi-save" severity="info" size="small"
+                                  [loading]="saving" [disabled]="!brouillonNom.trim()" (onClick)="renommer()"></p-button>
+                    </div>
+                </div>
+            </div>
+
+            <p-message *ngIf="!modifiable" severity="info" styleClass="mb-4 w-full"
+                       text="Checklist publiée ou archivée : elle ne se modifie plus. Dupliquez-la pour la faire évoluer."></p-message>
+
+            <!-- Tableau des points de contrôle -->
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-[#0084ca]/[0.07] dark:bg-surface-800/80 border-b border-[#dddddd]/80 dark:border-surface-700">
+                                <th scope="col" class="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-[var(--heading-color)] w-28">Chapitre ISO</th>
+                                <th scope="col" class="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-[var(--heading-color)]">Point de contrôle</th>
+                                <th scope="col" class="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-[var(--heading-color)]">Preuve attendue</th>
+                                <th scope="col" class="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-[var(--heading-color)] w-56">Auditeur assigné</th>
+                                <th scope="col" class="w-12" *ngIf="modifiable"><span class="sr-only">Actions</span></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#dddddd]/60 dark:divide-surface-700">
+                            <tr *ngIf="!active.points?.length">
+                                <td [attr.colspan]="modifiable ? 5 : 4" class="text-center text-xs text-[var(--text-color-secondary)] py-10">
+                                    Aucun point de contrôle défini dans cette checklist.
+                                </td>
+                            </tr>
+                            <tr *ngFor="let p of active.points; let i = index; trackBy: trackByIndex"
+                                class="align-middle hover:bg-surface-50/70 dark:hover:bg-surface-800/40 transition-colors">
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <span *ngIf="p.chapitreISO; else tiretChapitre"
+                                          class="inline-flex items-center px-2 py-0.5 rounded-[4px] bg-surface-100 dark:bg-surface-800 font-mono text-xs font-semibold text-[#0084ca] dark:text-sky-400">
+                                        {{ p.chapitreISO }}
+                                    </span>
+                                    <ng-template #tiretChapitre><span class="text-[var(--text-color-secondary)]">—</span></ng-template>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="block font-medium text-[var(--heading-color)]">{{ p.libelle }}</span>
+                                    <span *ngIf="p.question" class="block text-xs text-[var(--text-color-secondary)] mt-0.5 leading-relaxed">{{ p.question }}</span>
+                                </td>
+                                <td class="px-4 py-3 text-xs text-[var(--text-color-secondary)] leading-relaxed">
+                                    {{ p.preuveAttendue || '—' }}
+                                </td>
+                                <td class="px-4 py-2.5">
+                                    <ng-container *ngIf="modifiable; else auditeurLecture">
+                                        <app-select-input [ngModel]="p.auditeurAssigneId"
+                                                          (ngModelChange)="assigner(i, $event)"
+                                                          [options]="auditeurs"
+                                                          optionLabel="nomComplet"
+                                                          optionValue="id"
+                                                          [filter]="true"
+                                                          placeholder="— Non assigné —" />
+                                    </ng-container>
+                                    <ng-template #auditeurLecture>
+                                        <span *ngIf="nomAuditeur(p.auditeurAssigneId) as nom; else nonAssigne"
+                                              class="inline-flex items-center gap-2 px-2.5 py-1 rounded-[5px] bg-surface-50 dark:bg-surface-800 border border-[#dddddd]/80 dark:border-surface-700 text-xs font-medium text-[var(--heading-color)] max-w-full">
+                                            <span class="w-5 h-5 rounded-full bg-[#0084ca]/15 text-[#0084ca] dark:text-sky-300 font-bold text-[10px] inline-flex items-center justify-center shrink-0">
+                                                {{ initialesAuditeur(p.auditeurAssigneId) }}
+                                            </span>
+                                            <span class="truncate">{{ nom }}</span>
+                                        </span>
+                                        <ng-template #nonAssigne>
+                                            <span class="text-xs text-[var(--text-color-secondary)] italic">Non assigné</span>
+                                        </ng-template>
+                                    </ng-template>
+                                </td>
+                                <td *ngIf="modifiable" class="px-2 py-2 text-right">
+                                    <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" size="small"
+                                              pTooltip="Retirer ce point" (onClick)="retirerPoint(i)"></p-button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Ajout / Import de points (mode brouillon uniquement) -->
+            <div *ngIf="modifiable" class="mt-4">
+                <div *ngIf="nouveauPoint; else boutonPoint"
+                     class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wide text-[var(--heading-color)] m-0 mb-3">Nouveau point de contrôle</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                         <div>
                             <app-audit-libelle texte="Chapitre ISO" />
-                            <input pInputText [(ngModel)]="brouillonChapitre" class="w-full" placeholder="Ex : §8" />
+                            <input pInputText [(ngModel)]="nouveauPoint.chapitreISO" class="w-full" placeholder="Ex : 8.3" />
                         </div>
-                        <div class="md:col-span-2 flex justify-end gap-2">
-                            <p-button label="Annuler" severity="secondary" [outlined]="true" size="small" (onClick)="renommage = false"></p-button>
-                            <p-button label="Enregistrer" icon="pi pi-save" size="small" [loading]="saving" [disabled]="!brouillonNom.trim()" (onClick)="renommer()"></p-button>
+                        <div>
+                            <app-audit-libelle texte="Auditeur assigné" aide="Choisi dans le vivier : il saisira le constat de ce point pendant l'audit." />
+                            <app-select-input [(ngModel)]="nouveauPoint.auditeurAssigneId" [options]="auditeurs" optionLabel="nomComplet" optionValue="id"
+                                              [filter]="true" placeholder="— Non assigné —" />
                         </div>
-                    </div>
-                </div>
-
-                <p-message *ngIf="!modifiable" severity="info" styleClass="mb-4 w-full"
-                           text="Checklist publiée ou archivée : elle ne se modifie plus. Dupliquez-la pour la faire évoluer."></p-message>
-
-                <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full border-collapse text-sm">
-                            <thead>
-                                <tr class="bg-surface-50 dark:bg-surface-800">
-                                    <th scope="col" class="text-left px-3 py-2 text-xs font-semibold text-surface-500 w-28">Chapitre ISO</th>
-                                    <th scope="col" class="text-left px-3 py-2 text-xs font-semibold text-surface-500">Point de contrôle</th>
-                                    <th scope="col" class="text-left px-3 py-2 text-xs font-semibold text-surface-500">Preuve attendue</th>
-                                    <th scope="col" class="text-left px-3 py-2 text-xs font-semibold text-surface-500 w-56">Auditeur assigné</th>
-                                    <th scope="col" class="w-10" *ngIf="modifiable"><span class="sr-only">Actions</span></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr *ngIf="!active.points?.length">
-                                    <td [attr.colspan]="modifiable ? 5 : 4" class="text-center text-surface-400 py-6">Aucun point de contrôle.</td>
-                                </tr>
-                                <tr *ngFor="let p of active.points; let i = index; trackBy: trackByIndex" class="border-t border-surface-100 dark:border-surface-800 align-middle">
-                                    <td class="px-3 py-2 font-mono text-xs">{{ p.chapitreISO || '—' }}</td>
-                                    <td class="px-3 py-2">
-                                        <span class="block">{{ p.libelle }}</span>
-                                        <span *ngIf="p.question" class="block text-xs text-surface-500 mt-0.5">{{ p.question }}</span>
-                                    </td>
-                                    <td class="px-3 py-2 text-surface-600 dark:text-surface-300">{{ p.preuveAttendue || '—' }}</td>
-                                    <td class="px-3 py-1">
-                                        <app-select-input [ngModel]="p.auditeurAssigneId" (ngModelChange)="assigner(i, $event)" [options]="auditeurs"
-                                                          optionLabel="nomComplet" optionValue="id" [filter]="true" placeholder="— Non assigné —"
-                                                          [disabled]="!modifiable" />
-                                    </td>
-                                    <td *ngIf="modifiable" class="px-2 py-1">
-                                        <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" size="small" pTooltip="Retirer ce point" (onClick)="retirerPoint($event, i)"></p-button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div *ngIf="modifiable" class="mt-4">
-                    <div *ngIf="nouveauPoint; else boutonPoint"
-                         class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
-                        <h4 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-3">Nouveau point de contrôle</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
-                            <div>
-                                <app-audit-libelle texte="Chapitre ISO" />
-                                <input pInputText [(ngModel)]="nouveauPoint.chapitreISO" class="w-full" placeholder="Ex : 8.3" />
-                            </div>
-                            <div>
-                                <app-audit-libelle texte="Auditeur assigné" aide="Choisi dans le vivier : il saisira le constat de ce point pendant l'audit." />
-                                <app-select-input [(ngModel)]="nouveauPoint.auditeurAssigneId" [options]="auditeurs" optionLabel="nomComplet" optionValue="id"
-                                                  [filter]="true" placeholder="— Non assigné —" />
-                            </div>
-                            <div class="md:col-span-2">
-                                <app-audit-libelle texte="Point de contrôle" [requis]="true" />
-                                <input pInputText [(ngModel)]="nouveauPoint.libelle" class="w-full" placeholder="Ce qui doit être vérifié" />
-                            </div>
-                            <div>
-                                <app-audit-libelle texte="Question" />
-                                <input pInputText [(ngModel)]="nouveauPoint.question" class="w-full" placeholder="La question posée à l'audité" />
-                            </div>
-                            <div>
-                                <app-audit-libelle texte="Preuve attendue" />
-                                <input pInputText [(ngModel)]="nouveauPoint.preuveAttendue" class="w-full" placeholder="Ex : comptes rendus, registres…" />
-                            </div>
+                        <div class="md:col-span-2">
+                            <app-audit-libelle texte="Point de contrôle" [requis]="true" />
+                            <input pInputText [(ngModel)]="nouveauPoint.libelle" class="w-full" placeholder="Ce qui doit être vérifié" />
                         </div>
-                        <div class="flex justify-end gap-2 mt-4">
-                            <p-button label="Annuler" severity="secondary" [outlined]="true" size="small" (onClick)="nouveauPoint = null"></p-button>
-                            <p-button label="Enregistrer le point" icon="pi pi-save" size="small" [loading]="saving"
-                                      [disabled]="!nouveauPoint.libelle?.trim()" (onClick)="ajouterPoint()"></p-button>
+                        <div>
+                            <app-audit-libelle texte="Question" />
+                            <input pInputText [(ngModel)]="nouveauPoint.question" class="w-full" placeholder="La question posée à l'audité" />
+                        </div>
+                        <div>
+                            <app-audit-libelle texte="Preuve attendue" />
+                            <input pInputText [(ngModel)]="nouveauPoint.preuveAttendue" class="w-full" placeholder="Ex : comptes rendus, registres…" />
                         </div>
                     </div>
-                    <ng-template #boutonPoint>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <p-button icon="pi pi-plus" label="Ajouter un point de contrôle" [outlined]="true" size="small" (onClick)="ouvrirNouveauPoint()"></p-button>
-                            <!-- Les grilles existent souvent sous Excel : elles s'importent, puis se relisent ici. -->
-                            <label class="p-button p-button-outlined p-button-secondary p-button-sm cursor-pointer !py-1">
-                                <i class="pi" [ngClass]="importEnCours ? 'pi-spin pi-spinner' : 'pi-file-import'"></i>
-                                <span class="ml-2">Importer depuis Excel / CSV</span>
-                                <input type="file" class="hidden" accept=".xlsx,.xls,.csv" (change)="importer($event)" [disabled]="importEnCours" />
-                            </label>
-                            <p-button icon="pi pi-download" label="Modèle Excel" [text]="true" size="small" (onClick)="telechargerModele()"></p-button>
-                        </div>
-                    </ng-template>
+                    <div class="flex justify-end gap-2 mt-4">
+                        <p-button label="Annuler" severity="secondary" [outlined]="true" size="small"
+                                  styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                                  (onClick)="nouveauPoint = null"></p-button>
+                        <p-button label="Enregistrer le point" icon="pi pi-save" severity="info" size="small"
+                                  [loading]="saving" [disabled]="!nouveauPoint.libelle?.trim()" (onClick)="ajouterPoint()"></p-button>
+                    </div>
                 </div>
-            </ng-container>
-        </section>
-    </div>
+                <ng-template #boutonPoint>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <p-button icon="pi pi-plus" label="Ajouter un point de contrôle" severity="info" size="small" (onClick)="ouvrirNouveauPoint()"></p-button>
+                        <!-- Les grilles existent souvent sous Excel : elles s'importent, puis se relisent ici. -->
+                        <label class="p-button p-button-outlined p-button-secondary p-button-sm cursor-pointer !py-1.5 !bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700">
+                            <i class="pi !text-xs" [ngClass]="importEnCours ? 'pi-spin pi-spinner' : 'pi-file-import'"></i>
+                            <span class="ml-2">Importer depuis Excel / CSV</span>
+                            <input type="file" class="hidden" accept=".xlsx,.xls,.csv" (change)="importer($event)" [disabled]="importEnCours" />
+                        </label>
+                        <p-button icon="pi pi-download" label="Modèle Excel" [text]="true" severity="secondary" size="small" (onClick)="telechargerModele()"></p-button>
+                    </div>
+                </ng-template>
+            </div>
+        </ng-container>
+    </section>
 </div>

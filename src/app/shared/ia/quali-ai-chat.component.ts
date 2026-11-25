@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewChecked, Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -7,14 +7,36 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TextareaModule } from 'primeng/textarea';
+import { TooltipModule } from 'primeng/tooltip';
 import { IaService } from './ia.service';
-import { ElementReponse, MessageConversation, QuestionPredefinie } from './ia.models';
+import { CodeQuestion, ElementReponse, MessageConversation, QuestionPredefinie } from './ia.models';
 
 /** Clé du fil en cours, pour le retrouver après un rechargement de page. */
 const CLE_FIL = 'quali-ai-conversation';
 
 /** En deçà de ce nombre de messages restants, l'écran prévient que le fil touche à sa fin. */
 const SEUIL_ALERTE_LONGUEUR = 4;
+
+const ICONES_QUESTIONS: Partial<Record<CodeQuestion, string>> = {
+    CE_QUI_M_ATTEND: 'pi-clock',
+    MES_PLANS_ACTION: 'pi-check-square',
+    DOCUMENTS_A_VISER: 'pi-file-check',
+    DEMANDES_A_INSTRUIRE: 'pi-inbox',
+    CHIFFRES_DE_L_ORGANISATION: 'pi-chart-bar',
+    CHIFFRES_DE_MA_STRUCTURE: 'pi-chart-bar',
+    MES_CHIFFRES: 'pi-chart-bar'
+};
+
+interface ExempleMethode {
+    titre: string;
+    categorie: string;
+}
+
+const EXEMPLES_METHODE: ExempleMethode[] = [
+    { titre: 'Quelle différence entre une correction et une action corrective ?', categorie: 'Vocabulaire ISO 9001' },
+    { titre: "Comment formuler un constat d'audit ?", categorie: 'Rédaction audit' },
+    { titre: 'Par où commencer une analyse de causes ?', categorie: 'Méthode 5M / 5 Pourquoi' }
+];
 
 /**
  * Où conduit chaque type de ressource, et sous quel paramètre.
@@ -53,18 +75,35 @@ const DESTINATIONS: Record<string, { route: string; parametre: string }> = {
 @Component({
     selector: 'app-quali-ai-chat',
     standalone: true,
-    imports: [CommonModule, FormsModule, ButtonModule, MessageModule, SkeletonModule, TextareaModule],
+    imports: [CommonModule, FormsModule, ButtonModule, MessageModule, SkeletonModule, TextareaModule, TooltipModule],
     templateUrl: './quali-ai-chat.component.html',
     // L'hôte doit lui-même s'étirer et accepter de rétrécir : posé dans un tiroir, un composant
     // de hauteur libre laisse le fil grandir jusqu'à chasser la zone de saisie hors de l'écran.
-    styles: [`:host { display: block; height: 100%; min-height: 0; }`]
+    styles: [`
+        :host { display: block; height: 100%; min-height: 0; }
+        .qa-ai-emblem {
+            background: linear-gradient(135deg, #0084ca 0%, #2563eb 100%);
+        }
+        .qa-user-bubble {
+            background: linear-gradient(135deg, #0084ca 0%, #0284c7 100%);
+        }
+        @keyframes qaPulseDot {
+            0%, 80%, 100% { transform: scale(0.75); opacity: 0.35; }
+            40% { transform: scale(1.1); opacity: 1; }
+        }
+        .qa-dot { animation: qaPulseDot 1.2s infinite ease-in-out; }
+        .qa-dot-2 { animation-delay: 0.18s; }
+        .qa-dot-3 { animation-delay: 0.36s; }
+    `]
 })
-export class QualiAiChatComponent implements OnInit, AfterViewChecked {
+export class QualiAiChatComponent implements OnInit, AfterViewChecked, OnDestroy {
 
     @ViewChild('fil') private filElement?: ElementRef<HTMLElement>;
 
     /** Émis quand on quitte le fil pour un dossier : le tiroir doit se refermer derrière. */
     @Output() navigue = new EventEmitter<void>();
+
+    readonly exemplesMethode = EXEMPLES_METHODE;
 
     messages: MessageConversation[] = [];
 
@@ -75,9 +114,12 @@ export class QualiAiChatComponent implements OnInit, AfterViewChecked {
     erreur = '';
     avertissement = '';
     messagesRestants = Number.MAX_SAFE_INTEGER;
+    raccourcisDeplies = false;
+    copieIndex: number | null = null;
 
     private conversationId: string | null = null;
     private doitDefiler = false;
+    private copieTimer: ReturnType<typeof setTimeout> | null = null;
 
     constructor(
         private iaService: IaService,
@@ -110,6 +152,50 @@ export class QualiAiChatComponent implements OnInit, AfterViewChecked {
     /** Le fil touche-t-il à sa fin ? L'écran le dit avant que le serveur ne refuse. */
     get filPresqueComplet(): boolean {
         return this.messagesRestants <= SEUIL_ALERTE_LONGUEUR;
+    }
+
+    get questionsDossiers(): QuestionPredefinie[] {
+        return this.questions.filter((q) => !this.estQuestionIndicateur(q.code));
+    }
+
+    get questionsIndicateurs(): QuestionPredefinie[] {
+        return this.questions.filter((q) => this.estQuestionIndicateur(q.code));
+    }
+
+    ngOnDestroy(): void {
+        if (this.copieTimer) {
+            clearTimeout(this.copieTimer);
+        }
+    }
+
+    estQuestionIndicateur(code: CodeQuestion): boolean {
+        return code.startsWith('CHIFFRES') || code === 'MES_CHIFFRES';
+    }
+
+    iconeDeQuestion(code: CodeQuestion): string {
+        return ICONES_QUESTIONS[code] ?? 'pi-sparkles';
+    }
+
+    poserExemple(texte: string): void {
+        if (this.chargement) {
+            return;
+        }
+        this.saisie = texte;
+        this.envoyer();
+    }
+
+    copierReponse(contenu: string, index: number): void {
+        if (!contenu || typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+            return;
+        }
+        navigator.clipboard.writeText(contenu).catch(() => undefined);
+        this.copieIndex = index;
+        if (this.copieTimer) {
+            clearTimeout(this.copieTimer);
+        }
+        this.copieTimer = setTimeout(() => {
+            this.copieIndex = null;
+        }, 1600);
     }
 
     envoyer(): void {
@@ -198,6 +284,9 @@ export class QualiAiChatComponent implements OnInit, AfterViewChecked {
         this.conversationId = null;
         this.messages = [];
         this.erreur = '';
+        this.avertissement = '';
+        this.raccourcisDeplies = false;
+        this.copieIndex = null;
         this.messagesRestants = Number.MAX_SAFE_INTEGER;
         this.oublierLeFil();
     }

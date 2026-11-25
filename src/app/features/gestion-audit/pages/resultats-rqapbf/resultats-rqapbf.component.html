@@ -16,7 +16,10 @@
         <p-button icon="pi pi-pencil" label="Reprendre la notation" size="small" [outlined]="true" [routerLink]="['/gestion-audit/programme', auditId, 'evaluation-rqapbf']"></p-button>
     </div>
 
-    <div *ngIf="loading" class="space-y-3"><p-skeleton height="200px"></p-skeleton><p-skeleton height="240px"></p-skeleton></div>
+    <div *ngIf="loading" class="flex flex-col gap-3">
+        <p-skeleton height="200px" borderRadius="5px"></p-skeleton>
+        <p-skeleton height="240px" borderRadius="5px"></p-skeleton>
+    </div>
 
     <div *ngIf="!loading && !evaluation" class="flex flex-col items-center py-16 gap-3">
         <i class="pi pi-chart-bar text-5xl text-surface-300"></i>

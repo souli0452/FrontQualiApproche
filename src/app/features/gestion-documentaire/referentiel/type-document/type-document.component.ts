@@ -28,44 +28,46 @@ import { QmsDocumentService } from '@features/gestion-documentaire/services/docu
     ],
     providers: [],
     template: `
-        <app-header-page 
-            [title]="pageLabel" 
-            [subtitle]="'Ajoutez ou modifiez les types de documents'"
-            [breadcrumbs]="breadcrumbs"
-            [buttonText]="'Nouveau type de document'" 
-            buttonIcon="pi pi-plus"
-            (actionClick)="crudGeneric.openNew()"
-        />
-        <div class="page-layout">
-            <app-crud-generic #crudGeneric
-                [requireRqPassword]="true"
-                [deleteConfirmField]="'code'"
-                [showAddButton]="false"
-                [dialogWidth]="'40rem'"
-                [loading]="loading"
-                [pageLabel]="pageLabel"
-                [formLongDescription]="'Remplissez ce formulaire pour configurer un type de document qualité. Définissez un code normalisé unique (ex: PRO, INS, ENR) ainsi que le dossier de classement dans la GED. Les champs avec astérisque sont obligatoires.'"
-                [detailLongDescription]="'Consultez les spécifications de ce type de document. Les types structurent la pyramide documentaire du SMQ, harmonisent la codification et assurent le classement automatique des fichiers dans la GED.'"
-                [tableCols]="tableCols"
-                [listeObject]="dataList"
-                [formGroup]="formGroup"
-                [formCols]="formCols"
-                [dropdownList]="dropdownList"
-                [isAffich]="true"
-                [closeDialog]="closeDialog"
-                [formHeader]="formHeader"
-                (newItemEvent)="onSave($event)"
-                (removeEvent)="onDelete($event)"
-                [totalElements]="totalElements"
-                [isPagination]="true"
-                [currentPage]="currentPage"
-                [pageSize]="pageSize"
-                (pageChangeEvent)="onPageChange($event)"
-                [consultation]="!hasWritePermission()"
-                [notModif]="!hasWritePermission()"
-                [notDelete]="!hasDeletePermission()"
-                >
-            </app-crud-generic>
+        <div class="card-first overflow-x-clip border-none transition-colors duration-300">
+            <app-header-page
+                [title]="pageLabel"
+                [subtitle]="'Ajoutez ou modifiez les types de documents'"
+                [breadcrumbs]="breadcrumbs"
+                [buttonText]="'Nouveau type de document'"
+                buttonIcon="pi pi-plus"
+                (actionClick)="crudGeneric.openNew()"
+            />
+            <div class="page-layout">
+                <app-crud-generic #crudGeneric
+                    [requireRqPassword]="true"
+                    [deleteConfirmField]="'code'"
+                    [showAddButton]="false"
+                    [dialogWidth]="'40rem'"
+                    [loading]="loading"
+                    [pageLabel]="pageLabel"
+                    [formLongDescription]="'Remplissez ce formulaire pour configurer un type de document qualité. Définissez un code normalisé unique (ex: PRO, INS, ENR) ainsi que le dossier de classement dans la GED. Les champs avec astérisque sont obligatoires.'"
+                    [detailLongDescription]="'Consultez les spécifications de ce type de document. Les types structurent la pyramide documentaire du SMQ, harmonisent la codification et assurent le classement automatique des fichiers dans la GED.'"
+                    [tableCols]="tableCols"
+                    [listeObject]="dataList"
+                    [formGroup]="formGroup"
+                    [formCols]="formCols"
+                    [dropdownList]="dropdownList"
+                    [isAffich]="true"
+                    [closeDialog]="closeDialog"
+                    [formHeader]="formHeader"
+                    (newItemEvent)="onSave($event)"
+                    (removeEvent)="onDelete($event)"
+                    [totalElements]="totalElements"
+                    [isPagination]="true"
+                    [currentPage]="currentPage"
+                    [pageSize]="pageSize"
+                    (pageChangeEvent)="onPageChange($event)"
+                    [consultation]="!hasWritePermission()"
+                    [notModif]="!hasWritePermission()"
+                    [notDelete]="!hasDeletePermission()"
+                    >
+                </app-crud-generic>
+            </div>
         </div>
     `
 })

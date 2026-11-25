@@ -47,15 +47,17 @@
    ========================================================================== */
 body {
     font-family: 'Golos Text', sans-serif;
-    font-weight: normal;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* Harmonisation de la graisse des titres et légendes */
-.font-bold,
+/* Harmonisation de la graisse des titres et légendes (vrai Bold 700 de Golos Text) */
 .p-dialog-title,
 .p-fieldset-legend-label,
 .p-step-title {
-    font-weight: 800;
+    font-weight: 700;
 }
 
 /* Formatage typographique des libellés d'étapes (Stepper) */
@@ -558,13 +560,35 @@ p-button .p-button-info {
     transform: translateY(-50%) !important;
 }
 
-/* États actif et survol des onglets PrimeNG v19 */
+/* États actif et survol des onglets PrimeNG v19 (style CRMS épuré) */
+.p-tablist-tab-list {
+    background: transparent !important;
+}
+
+/* Masque la barre flottante JS de PrimeNG (se décale quand les badges chargent après coup) :
+   le trait actif est porté directement en CSS par .p-tab-active */
+.p-tablist-active-bar {
+    display: none !important;
+}
+
+.p-tab {
+    font-size: 14px !important;
+    border-radius: 6px 6px 0 0 !important;
+    .pi {
+        font-size: 12px !important;
+    }
+}
+
 .p-tab-active {
-    background: rgb(33 150 243 / 10%) !important;
+    background: var(--surface-card) !important;
+    color: var(--secondary-color) !important;
+    border-bottom: 2px solid var(--secondary-color) !important;
+    font-weight: 600 !important;
 }
 
 .p-tab:not(.p-tab-active):not(.p-disabled):hover {
-    background: rgb(33 150 243 / 5%) !important;
+    background: transparent !important;
+    color: var(--heading-color) !important;
 }
 
 
@@ -881,66 +905,94 @@ app-traitement-table app-nc-filter-bar > div {
 
 
 .chat-textarea {
-    border-radius: 20px 20px 0 0 !important;
-    padding: 10px !important;
+    border-radius: 14px 14px 0 0 !important;
+    padding: 6px 8px !important;
     background: transparent !important;
     border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
 
     &::placeholder {
-        font-size: 12px !important;
-        // color: black !important;
+        font-size: 12.5px !important;
+        color: #94a3b8 !important;
     }
 }
 
-.chat-bar{
-    background: rgb(0 0 0 / 3%) !important;
-    border-radius: 20px !important;
-    padding: 5px;
-    border: 1px solid rgb(0 0 0 / 4%);
+.chat-bar {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
-        .p-button{
-            height: 30px !important;
-            width: 30px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            border-radius: 50px !important;
-        }
+    &:focus-within {
+        border-color: #0084ca;
+        box-shadow: 0 0 0 3px rgba(0, 132, 202, 0.14);
+    }
+
+    .p-button {
+        height: 32px !important;
+        width: 32px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 10px !important;
+    }
 }
+
 .app-dark .chat-textarea {
+    color: #f1f5f9 !important;
 
     &::placeholder {
-        font-size: 12px !important;
-        color: white !important;
+        font-size: 12.5px !important;
+        color: rgba(148, 163, 184, 0.75) !important;
     }
 }
+
 .app-dark .chat-bar {
-    background: #ffffff0a !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: #334155 !important;
 
-    &::placeholder {
-        font-size: 11px !important;
-        color: rgba(255, 255, 255, 0.45) !important;
+    &:focus-within {
+        border-color: #0ea5e9 !important;
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.16);
     }
 }
 
-.chat-textarea.p-textarea{
-    font-size: 14px !important;
-    // border-bottom: 1px solid #0000000f !important;
+.chat-textarea.p-textarea {
+    font-size: 13.5px !important;
+    line-height: 1.45 !important;
 }
 
 .btn-send-active {
-    background-color: #0ea5e9 !important; /* bg-sky-500 */
+    background: linear-gradient(135deg, #0084ca 0%, #0284c7 100%) !important;
     color: #ffffff !important;
-    border-color: #0ea5e9 !important;
+    border-color: transparent !important;
+    box-shadow: 0 3px 10px -2px rgba(0, 132, 202, 0.45);
 
     .p-button-icon {
         color: #ffffff !important;
     }
 
     &:hover {
-        background-color: #0284c7 !important; /* bg-sky-600 */
-        border-color: #0284c7 !important;
+        background: linear-gradient(135deg, #0073b1 0%, #0369a1 100%) !important;
+        border-color: transparent !important;
     }
+}
+
+.qa-scroll-thin::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+.qa-scroll-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+.qa-scroll-thin::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 9999px;
+}
+.qa-scroll-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.55);
 }
 
 
@@ -1002,5 +1054,35 @@ app-traitement-table app-nc-filter-bar > div {
             box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05) !important;
             z-index: 10 !important;
         }
+    }
+}
+
+
+/* Fix p-message : vraie bordure interne (l'outline PrimeNG était coupé à gauche/droite par overflow-x-clip) */
+.p-message {
+    outline: none !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-radius: 5px !important;
+}
+.p-message.p-message-info { border-color: var(--p-message-info-border-color) !important; }
+.p-message.p-message-warn { border-color: var(--p-message-warn-border-color) !important; }
+.p-message.p-message-success { border-color: var(--p-message-success-border-color) !important; }
+.p-message.p-message-error { border-color: var(--p-message-error-border-color) !important; }
+.p-message.p-message-secondary { border-color: var(--p-message-secondary-border-color) !important; }
+
+/* Onglets Audit responsives : bascule en <p-select> sous 900px (Obs. 02) */
+.audit-tabs-desktop {
+    display: block;
+}
+.audit-tabs-mobile {
+    display: none;
+}
+@media (max-width: 900px) {
+    .audit-tabs-desktop {
+        display: none;
+    }
+    .audit-tabs-mobile {
+        display: block;
     }
 }

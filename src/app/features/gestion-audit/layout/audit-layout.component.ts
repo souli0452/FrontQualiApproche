@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { NgPrimeModule } from '@prime-ng';
 import { MenuItem } from 'primeng/api';
@@ -7,36 +8,37 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { AuditGestionService } from '../services/audit.service';
 import { NotificationsAuditResume } from '../models/audit.model';
+import { HeaderPage } from '@shared/header-page/header-page';
 
 @Component({
     selector: 'app-audit-layout',
     standalone: true,
-    imports: [CommonModule, NgPrimeModule, RouterModule],
+    imports: [CommonModule, FormsModule, NgPrimeModule, RouterModule, HeaderPage],
     templateUrl: './audit-layout.component.html',
     styleUrl: './audit-layout.component.scss'
 })
 export class AuditLayoutComponent implements OnInit, OnDestroy {
     items: MenuItem[] = [];
-    activeTab: string = '';
+    currentUrl: string = '';
 
     private destroy$ = new Subject<void>();
     private routerSubscription: any;
 
     breadcrumbs = [
         { label: 'Tableau de bord', routerLink: '/' },
-        { label: 'Gestion des audits', routerLink: '/gestion-audit' }
+        { label: 'Gestion des Audits', routerLink: '/gestion-audit' }
     ];
 
     constructor(private router: Router, private auditService: AuditGestionService) {
         this.routerSubscription = this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd) {
-                this.activeTab = event.urlAfterRedirects.split('?')[0];
+                this.currentUrl = event.urlAfterRedirects.split('?')[0];
             }
         });
     }
 
     ngOnInit(): void {
-        this.activeTab = this.router.url.split('?')[0];
+        this.currentUrl = this.router.url.split('?')[0];
         this.buildMenu();
         // Les compteurs des onglets, comme dans le module Non-conformités : relus après chaque geste.
         this.auditService.notificationsAudit$.pipe(takeUntil(this.destroy$)).subscribe(r => this.buildMenu(r));
@@ -48,11 +50,11 @@ export class AuditLayoutComponent implements OnInit, OnDestroy {
      * bouton « Planifier un audit » se répétait sur chaque page (recette du 17 oct. 2026, observation 1).
      */
     get estAccueil(): boolean {
-        return this.activeTab === '/gestion-audit/vue-ensemble' || this.activeTab === '/gestion-audit';
+        return this.currentUrl === '/gestion-audit/vue-ensemble' || this.currentUrl === '/gestion-audit';
     }
 
     get boutonPlanifier(): boolean {
-        return this.estAccueil || this.activeTab === '/gestion-audit/programme';
+        return this.estAccueil || this.currentUrl === '/gestion-audit/programme';
     }
 
     buildMenu(r?: NotificationsAuditResume): void {
@@ -111,8 +113,15 @@ export class AuditLayoutComponent implements OnInit, OnDestroy {
         }
     }
 
-    get libelleOngletActif(): string {
-        return this.items.find(i => this.activeTab.startsWith(i.routerLink as string))?.label ?? '';
+    onTabClick(url: any): void {
+        if (url && typeof url === 'string' && url === this.activeTab && this.currentUrl !== url) {
+            this.router.navigate([url]);
+        }
+    }
+
+    get activeTab(): string {
+        const match = this.items.find(i => typeof i.routerLink === 'string' && this.currentUrl.startsWith(i.routerLink));
+        return (match?.routerLink as string) ?? this.currentUrl;
     }
 
     trackByRouterLink(_index: number, item: MenuItem): string {

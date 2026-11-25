@@ -12,8 +12,8 @@
     <ng-template pTemplate="header">
         <div class="flex items-center gap-4">
             <!-- Icône avec background -->
-            <div [class]="'flex items-center justify-center w-12 h-12 rounded-xl shrink-0 ' + iconBgClass">
-                <i [class]="icon + ' ' + iconColorClass + ' text-xl'"></i>
+            <div [class]="'flex items-center justify-center w-11 h-11 rounded-[5px] shrink-0 ' + iconBgClass">
+                <i [class]="icon + ' ' + iconColorClass + ' !text-xl'"></i>
             </div>
             <!-- Titre et description courte -->
             <div>
@@ -25,8 +25,9 @@
 
     <div class="flex flex-col gap-6 mt-2">
         <!-- Grande description (optionnelle) -->
-        <div *ngIf="longDescription" class="bg-sky-50 dark:bg-sky-800/50 p-4 rounded-lg border-l-4 border-l-sky-500">
-            <p class="text-sm text-slate-600 dark:text-surface-300 m-0 leading-relaxed whitespace-normal break-words">{{ longDescription }}</p>
+        <div *ngIf="longDescription" class="rounded-[5px] border border-[#0ea5e9]/35 bg-[#0ea5e9]/10 dark:bg-[#0ea5e9]/15 px-4 py-3 flex items-start gap-2.5">
+            <i class="pi pi-info-circle text-[#0ea5e9] !text-sm mt-0.5 shrink-0"></i>
+            <p class="text-[13px] text-[#0369a1] dark:text-sky-300 m-0 leading-relaxed whitespace-normal break-words">{{ longDescription }}</p>
         </div>
 
         <!-- Contenu dynamique (champs de formulaire) -->

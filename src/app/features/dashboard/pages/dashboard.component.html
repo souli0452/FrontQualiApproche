@@ -1,50 +1,42 @@
-<div class="card-first overflow-hidden border-none premium-hub transition-colors duration-300">
+<div class="card-first overflow-x-clip border-none transition-colors duration-300 flex flex-col gap-5">
 
-    <!-- En-tête stylisé : Salutation, statut contextuel, date et actualisation -->
-    <div class="pb-6 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-surface-200 dark:border-surface-800">
-        
-        <!-- Bloc Gauche : Salutation & Statut -->
-        <div class="flex items-start gap-3.5">
-            <div class="w-11 h-11 rounded-xl bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 flex items-center justify-center shrink-0 border border-primary-100 dark:border-primary-800/40 shadow-xs">
-                <i class="pi pi-user text-xl"></i>
+    <!-- 1. En-tête de bienvenue & contexte -->
+    <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card px-5 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div class="flex items-center gap-3.5 min-w-0">
+            <div class="w-11 h-11 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 border border-[#0ea5e9]/35 flex items-center justify-center shrink-0 font-bold text-sm">
+                {{ initiales }}
             </div>
-            <div>
-                <div class="flex items-center gap-2.5 flex-wrap">
-                    <h1 class="text-2xl font-bold m-0 text-surface-900 dark:text-surface-50 tracking-tight">
+            <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h1 class="text-xl font-bold m-0 text-[var(--heading-color)] tracking-tight">
                         Bonjour {{ nom }}
                     </h1>
                     @if (structure) {
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 border border-surface-200 dark:border-surface-700">
-                            <i class="pi pi-building text-[10px] text-surface-400"></i>
+                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-xs font-semibold bg-surface-100 dark:bg-surface-800 text-[var(--heading-color)] border border-[#dddddd] dark:border-surface-700">
+                            <i class="pi pi-building !text-[10px] text-[var(--text-color-secondary)]"></i>
                             {{ structure }}
                         </span>
                     }
                 </div>
-                <div class="flex items-center gap-2 mt-1.5 text-sm">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-xs text-[var(--text-color-secondary)]">
                     @if (etat?.chargement) {
-                        <span class="relative flex h-2.5 w-2.5">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary-500"></span>
+                        <span class="relative flex h-2 w-2 shrink-0">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0ea5e9] opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-[#0084ca]"></span>
                         </span>
                     } @else if ((etat?.total ?? 0) > 0) {
-                        <span class="inline-block h-2.5 w-2.5 rounded-full bg-amber-500 ring-4 ring-amber-100 dark:ring-amber-950/50"></span>
+                        <span class="inline-block h-2 w-2 rounded-full bg-amber-500 shrink-0"></span>
                     } @else {
-                        <span class="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100 dark:ring-emerald-950/50"></span>
+                        <span class="inline-block h-2 w-2 rounded-full bg-emerald-500 shrink-0"></span>
                     }
-                    <span class="text-surface-600 dark:text-surface-400 font-medium">
-                        {{ synthese }}
-                    </span>
+                    <span class="font-medium text-[var(--heading-color)]">{{ synthese }}</span>
+                    <span class="opacity-40">•</span>
+                    <span>{{ dateDuJour }}</span>
                 </div>
             </div>
         </div>
 
-        <!-- Bloc Droit : Date du jour & Bouton Actualiser -->
-        <div class="flex items-center gap-3 self-end md:self-center">
-            <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-50 dark:bg-surface-800/80 text-surface-600 dark:text-surface-300 text-xs font-medium border border-surface-200/80 dark:border-surface-700/80 shadow-2xs">
-                <i class="pi pi-calendar text-surface-400 text-sm"></i>
-                <span>{{ dateDuJour }}</span>
-            </div>
-
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
             <p-button
                 icon="pi pi-refresh"
                 [loading]="isRefreshing"
@@ -52,30 +44,100 @@
                 severity="secondary"
                 [outlined]="true"
                 size="small"
-                styleClass="rounded-xl border-surface-200 dark:border-surface-700 shadow-2xs hover:bg-surface-50 dark:hover:bg-surface-800 text-xs font-semibold px-3 py-2"
+                styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700 !font-semibold !text-xs"
                 (onClick)="actualiser()"
                 pTooltip="Rafraîchir les données"
                 tooltipPosition="bottom">
             </p-button>
+
+            @if (canDeclareNc) {
+                <p-button
+                    siLicenceOuverte
+                    icon="pi pi-plus"
+                    label="Déclarer une NC"
+                    severity="info"
+                    size="small"
+                    styleClass="!font-semibold !text-xs"
+                    (onClick)="ouvrirRaccourciPrincipal()">
+                </p-button>
+            } @else if (canCreateDoc) {
+                <p-button
+                    siLicenceOuverte
+                    icon="pi pi-plus"
+                    label="Nouveau Document"
+                    severity="info"
+                    size="small"
+                    styleClass="!font-semibold !text-xs"
+                    (onClick)="ouvrirRaccourciPrincipal()">
+                </p-button>
+            }
         </div>
     </div>
 
-            <!-- Indicateurs : ce qui attend et ce qui est en retard, nourris par les listes que la
-                 section suivante charge — un seul appel par source, deux nombres qui ne peuvent
-                 donc pas différer. -->
-            <app-indicateurs
-                [enAttente]="connu ? etat!.total : null"
-                [plansEnRetard]="connu ? etat!.plansEnRetard : null"
-                [plansEcheanceProche]="connu ? etat!.plansEcheanceProche : null"
-                [suitDesActions]="!!etat?.suitDesActions"
-                [repartition]="etat?.repartition || []"></app-indicateurs>
+    <!-- 2. Indicateurs clés (4 tuiles harmonisées rounded-[5px]) -->
+    <app-indicateurs
+        [enAttente]="connu ? etat!.total : null"
+        [plansEnRetard]="connu ? etat!.plansEnRetard : null"
+        [plansEcheanceProche]="connu ? etat!.plansEcheanceProche : null"
+        [suitDesActions]="!!etat?.suitDesActions"
+        [repartition]="etat?.repartition || []"
+        (filtrerFamille)="filtrerBannette($event)">
+    </app-indicateurs>
 
-            <!-- Ce qu'on attend de vous. Rien ne s'affiche si aucun module suivi par un circuit
-                 n'est accessible : l'accueil se réduit alors aux actions rapides. -->
-            <app-mes-decisions (etat)="etat = $event"></app-mes-decisions>
-
-            <div>
-                <h2 class="text-base font-semibold mb-3">Que souhaitez-vous faire ?</h2>
-                <app-actions-rapides></app-actions-rapides>
-            </div>
+    <!-- 3. Centre de pilotage 2 colonnes (Bannette unifiée 8 cols + Charge & Actions rapides 4 cols) -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+        <div [ngClass]="aDesDecisionsSuivies ? 'xl:col-span-8 min-w-0' : 'cacher'">
+            <app-mes-decisions
+                (etat)="etat = $event"
+                (ongletChange)="filtreModuleActif = $event">
+            </app-mes-decisions>
         </div>
+
+        <div class="flex flex-col gap-5 min-w-0"
+             [ngClass]="aDesDecisionsSuivies ? 'xl:col-span-4' : 'xl:col-span-12'">
+            @if (aDesDecisionsSuivies && etat?.repartition?.length) {
+                <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-4">
+                    <div class="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-[#dddddd]/70 dark:border-surface-700">
+                        <div class="flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                                <i class="pi pi-chart-bar !text-xs"></i>
+                            </span>
+                            <h3 class="text-sm font-bold text-[var(--heading-color)] m-0">Charge par module</h3>
+                        </div>
+                        <span class="text-xs font-mono font-semibold text-[var(--text-color-secondary)]">
+                            {{ etat?.total ?? 0 }} au total
+                        </span>
+                    </div>
+
+                    <div class="flex flex-col gap-3">
+                        @for (item of etat!.repartition; track trackByCharge($index, item)) {
+                            <button type="button"
+                                    (click)="filtrerBannette(item.cle, true)"
+                                    class="w-full text-left group cursor-pointer bg-transparent border-0 p-1 -m-1 rounded-[4px] transition-colors hover:bg-surface-50 dark:hover:bg-surface-800/50"
+                                    [ngClass]="filtreModuleActif === item.cle ? 'ring-1 ring-[#0ea5e9]/45 bg-[#0ea5e9]/5' : ''">
+                                <div class="flex items-center justify-between text-xs mb-1 gap-2">
+                                    <span class="font-semibold text-[var(--heading-color)] group-hover:text-[#0084ca] dark:group-hover:text-sky-400 truncate">
+                                        {{ item.libelleCourt }}
+                                    </span>
+                                    <span class="font-mono font-bold tabular-nums shrink-0" [ngClass]="couleurTexteCharge(item.cle)">
+                                        {{ item.count }}
+                                        <span class="font-normal text-[var(--text-color-secondary)]">
+                                            ({{ pourcentageCharge(item.count) }} %)
+                                        </span>
+                                    </span>
+                                </div>
+                                <div class="h-1.5 w-full rounded-full bg-surface-100 dark:bg-surface-800 overflow-hidden">
+                                    <div class="h-full rounded-full transition-all duration-300"
+                                         [ngClass]="couleurBarreCharge(item.cle)"
+                                         [style.width.%]="largeurBarreCharge(item.count)"></div>
+                                </div>
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            <app-actions-rapides></app-actions-rapides>
+        </div>
+    </div>
+</div>

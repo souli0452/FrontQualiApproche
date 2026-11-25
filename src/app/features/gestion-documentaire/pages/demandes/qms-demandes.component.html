@@ -1,7 +1,7 @@
 <p-toast></p-toast>
 
 <!-- Liste des demandes -->
-<div *ngIf="vue === 'liste'" class="p-4">
+<div *ngIf="vue === 'liste'">
     <app-tableau-affichage
         [tableCols]="colonnes"
         [listeObject]="demandes"
@@ -9,13 +9,14 @@
         [totalElements]="demandes.length"
         [pageSize]="pageSize"
         [currentPage]="currentPage"
-        [rowsPerPageOptions]="[5, 10, 20, 50]"
         [isPagination]="true"
         [clickableRows]="true"
         [showSearch]="true"
-        searchPosition="left"
-        [placeholderRecherche]="'Rechercher...'"
+        [placeholderRecherche]="'Rechercher une demande...'"
         [filterFields]="filterFields"
+        title="Demandes de changement"
+        subtitle="Suivi et instruction des demandes de modification ou de suppression de documents qualité"
+        [badgeCount]="demandes.length"
         recordName="demandes"
         [showAddButton]="true"
         addButtonLabel="Nouvelle demande"
@@ -27,13 +28,15 @@
 
         <!-- Header Actions (Actualiser) -->
         <div header-actions class="flex items-center gap-1.5">
-            <button pButton pRipple 
-                    icon="pi pi-refresh" 
-                    class="p-button-text p-button-rounded p-button-secondary p-button-sm" 
-                    pTooltip="Actualiser" 
-                    tooltipPosition="bottom"
-                    (click)="charger()">
-            </button>
+            <p-button icon="pi pi-refresh"
+                      severity="secondary"
+                      [text]="true"
+                      [rounded]="true"
+                      size="small"
+                      pTooltip="Actualiser"
+                      tooltipPosition="bottom"
+                      (onClick)="charger()">
+            </p-button>
         </div>
     </app-tableau-affichage>
 </div>
@@ -45,10 +48,10 @@
              alt="icon"
              class="w-7 h-7 object-contain shrink-0" />
         <div class="min-w-0 flex flex-col text-left">
-            <span *ngIf="row.documentNumber" class="text-xs text-slate-400 dark:text-slate-500 font-mono">
+            <span *ngIf="row.documentNumber" class="text-xs text-[var(--text-color-secondary)] font-mono">
                 {{ row.documentNumber }}
             </span>
-            <span class="font-semibold text-slate-800 dark:text-slate-100 truncate text-sm" [title]="row.documentTitre || row.documentNumber">
+            <span class="font-semibold text-[var(--heading-color)] truncate text-sm" [title]="row.documentTitre || row.documentNumber">
                 {{ row.documentTitre || row.documentNumber }}
             </span>
         </div>
@@ -56,93 +59,100 @@
 </ng-template>
 
 <ng-template #natureTpl let-row>
-    <span class="px-2.5 py-1 rounded-full text-xs font-semibold inline-block"
-          [ngClass]="row.type === 'SUPPRESSION' 
-              ? 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
-              : 'bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800'">
+    <span class="px-2 py-0.5 rounded-[4px] text-xs font-semibold inline-block border"
+          [ngClass]="row.type === 'SUPPRESSION'
+              ? 'bg-rose-500/10 text-rose-700 border-rose-500/30 dark:text-rose-300'
+              : 'bg-[#0ea5e9]/10 text-[#0084ca] border-[#0ea5e9]/35 dark:text-sky-300'">
         {{ row.typeLibelle }}
     </span>
 </ng-template>
 
 <ng-template #etatTpl let-row>
-    <span class="px-2.5 py-1 rounded-full text-xs font-semibold inline-block"
+    <span class="px-2 py-0.5 rounded-[4px] text-xs font-semibold inline-block border"
           [ngClass]="{
-              'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800': row.etat === 'EXECUTEE',
-              'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800': row.etat === 'ACCEPTEE',
-              'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800': row.etat === 'EN_COURS',
-              'bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700': row.etat === 'REFUSEE'
+              'bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-300': row.etat === 'EXECUTEE',
+              'bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-300': row.etat === 'ACCEPTEE',
+              'bg-[#0ea5e9]/10 text-[#0084ca] border-[#0ea5e9]/35 dark:text-sky-300': row.etat === 'EN_COURS',
+              'bg-surface-100 text-[var(--text-color-secondary)] border-[#dddddd] dark:bg-surface-800 dark:border-surface-700': row.etat === 'REFUSEE'
           }">
         {{ row.etatLibelle }}
     </span>
 </ng-template>
 
-<!-- ------------------------------------------------------------------ fiche d'une demande -->
+<!-- Fiche d'une demande -->
 <app-qms-demande-detail *ngIf="vue === 'detail' && demandeSelectionnee"
-  [demande]="demandeSelectionnee"
-  [workflowState]="etatCircuit"
-  [historique]="historique"
-  [loading]="loading"
-  [canDeposerRemplacant]="peutDeposerRemplacant"
-  [etatIndisponible]="etatIndisponible"
-  [pieceEnCours]="pieceEnCours"
-  (close)="fermerDetail()"
-  (executeAction)="ouvrirDecision($event)"
-  (deposerRemplacant)="ouvrirDepotRemplacant($event)"
-  (consulterPieceJointe)="consulterPieceJointe($event)">
+    [demande]="demandeSelectionnee"
+    [workflowState]="etatCircuit"
+    [historique]="historique"
+    [loading]="loading"
+    [canDeposerRemplacant]="peutDeposerRemplacant"
+    [etatIndisponible]="etatIndisponible"
+    [pieceEnCours]="pieceEnCours"
+    (close)="fermerDetail()"
+    (executeAction)="ouvrirDecision($event)"
+    (deposerRemplacant)="ouvrirDepotRemplacant($event)"
+    (consulterPieceJointe)="consulterPieceJointe($event)">
 </app-qms-demande-detail>
 
-<!-- Décision de circuit : le même dialogue que pour un document, qui recueille l'observation
-     avant de transmettre. -->
+<!-- Décision de circuit -->
 <app-workflow-decision-dialog
-  [reference]="documentDeLaDecision"
-  [action]="actionChoisie"
-  [loading]="enregistrement"
-  [stepFields]="etatCircuit?.currentStepFields"
-  [deposerFichier]="deposerFichierDEtape"
-  [visible]="dialogueDecisionOuvert"
-  (visibleChange)="dialogueDecisionOuvert = $event"
-  (confirm)="soumettreDecision($event)">
+    [reference]="documentDeLaDecision"
+    [action]="actionChoisie"
+    [loading]="enregistrement"
+    [stepFields]="etatCircuit?.currentStepFields"
+    [deposerFichier]="deposerFichierDEtape"
+    [visible]="dialogueDecisionOuvert"
+    (visibleChange)="dialogueDecisionOuvert = $event"
+    (confirm)="soumettreDecision($event)">
 </app-workflow-decision-dialog>
 
-<!-- ------------------------------------------------------------------ dépôt du remplaçant -->
-<p-dialog [(visible)]="dialogueRemplacantOuvert" [modal]="true" [style]="{ width: '40rem' }"
-          [draggable]="false" header="Déposer le document remplaçant">
-    <div class="flex flex-col gap-4 mt-2" *ngIf="demandeEnCours">
-        <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-sm">
-            <div class="font-semibold text-slate-800">{{ demandeEnCours.documentNumber }}</div>
-            <div class="text-slate-500 mt-1">{{ demandeEnCours.objectif }}</div>
+<!-- Dépôt du document remplaçant -->
+<p-dialog [(visible)]="dialogueRemplacantOuvert"
+          [modal]="true"
+          [style]="{ width: '38rem' }"
+          [breakpoints]="{ '640px': '92vw' }"
+          [draggable]="false"
+          header="Déposer le document remplaçant">
+    <div class="flex flex-col gap-4 mt-1" *ngIf="demandeEnCours">
+        <div class="p-3 rounded-[5px] bg-surface-50 dark:bg-surface-800/60 border border-[#dddddd] dark:border-surface-700 text-xs">
+            <div class="font-mono font-bold text-[var(--heading-color)]">{{ demandeEnCours.documentNumber }}</div>
+            <div class="text-[var(--text-color-secondary)] mt-1 leading-relaxed">{{ demandeEnCours.objectif }}</div>
         </div>
 
-        <div class="flex flex-col gap-1">
-            <label for="remplacant" class="text-sm font-bold text-slate-700">
-                Fichier <span class="text-red-500">*</span>
+        <div class="flex flex-col gap-1.5">
+            <label for="remplacant" class="text-sm font-semibold text-[var(--heading-color)]">
+                Fichier <span class="text-rose-500">*</span>
             </label>
             <input type="file" id="remplacant" (change)="onFichierRemplacant($event)"
-                   class="text-sm text-slate-600" />
-            <small class="text-slate-500" *ngIf="fichierRemplacant">{{ fichierRemplacant.name }}</small>
+                   class="text-xs text-[var(--text-color-secondary)] file:mr-3 file:py-1.5 file:px-3 file:rounded-[5px] file:border file:border-[#dddddd] dark:file:border-surface-700 file:bg-[var(--surface-card)] file:text-[var(--heading-color)] file:font-semibold file:cursor-pointer" />
+            <small class="text-[var(--text-color-secondary)]" *ngIf="fichierRemplacant">{{ fichierRemplacant.name }}</small>
         </div>
 
-        <div class="flex flex-col gap-1">
-            <label for="commentaireRemplacant" class="text-sm font-bold text-slate-700">Commentaire</label>
+        <div class="flex flex-col gap-1.5">
+            <label for="commentaireRemplacant" class="text-sm font-semibold text-[var(--heading-color)]">Commentaire</label>
             <textarea pTextarea id="commentaireRemplacant" [(ngModel)]="commentaireRemplacant" rows="3"
                       class="w-full" placeholder="Ce que change cette version…"></textarea>
         </div>
 
-        <div class="text-xs text-amber-800 p-3 rounded-lg bg-amber-50 border border-amber-100">
-            <i class="pi pi-info-circle mr-1"></i>
-            Le dépôt publie une <strong>version majeure</strong> : le changement a été instruit et
-            décidé, ce n'est pas une retouche.
+        <div class="rounded-[5px] border border-amber-500/35 bg-amber-500/10 dark:bg-amber-500/15 p-3 flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
+            <i class="pi pi-info-circle text-amber-600 dark:text-amber-400 !text-sm mt-0.5 shrink-0"></i>
+            <span>
+                Le dépôt publie une <strong>version majeure</strong> : le changement a été instruit et décidé, ce n'est pas une retouche.
+            </span>
         </div>
     </div>
 
     <ng-template pTemplate="footer">
-        <p-button label="Annuler" icon="pi pi-times" severity="secondary" [text]="true"
-                  (onClick)="dialogueRemplacantOuvert = false"></p-button>
-        <p-button label="Déposer" icon="pi pi-upload" [disabled]="!fichierRemplacant"
-                  [loading]="enregistrement" (onClick)="deposerRemplacant()"></p-button>
+        <div class="flex items-center justify-end gap-2">
+            <p-button label="Annuler" severity="secondary" [outlined]="true" size="small"
+                      styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                      (onClick)="dialogueRemplacantOuvert = false"></p-button>
+            <p-button label="Déposer" icon="pi pi-upload" severity="info" size="small"
+                      [disabled]="!fichierRemplacant"
+                      [loading]="enregistrement" (onClick)="deposerRemplacant()"></p-button>
+        </div>
     </ng-template>
 </p-dialog>
 
-<!-- Volet d'aperçu de la pièce jointe : elle se lit ici, et ne s'enregistre que si on le
-     demande depuis son en-tête. -->
+<!-- Volet d'aperçu de la pièce jointe -->
 <app-lightbox #lightbox></app-lightbox>

@@ -28,45 +28,47 @@ import { AppRoleService } from '@features/gestion-utilisateurs/services/role.ser
     ],
     providers: [],
     template: `
-        <app-header-page 
-            [title]="pageLabel" 
-            [subtitle]="'Ajoutez ou modifiez les niveaux de confidentialite des documents'"
-            [breadcrumbs]="breadcrumbs"
-            [buttonText]="'Niveau de confidentialite'" 
-            buttonIcon="pi pi-plus"
-            (actionClick)="crudGeneric.openNew()"
-        />
-        <div class="page-layout">
-            <app-crud-generic
-                #crudGeneric
-                [requireRqPassword]="true"
-                [deleteConfirmField]="'libelle'"
-                [showAddButton]="false"
-                formLongDescription="Définissez les paramètres de sécurité et d’accès pour ce niveau de confidentialité. Indiquez un libellé clair, un rang d'exposition (du moins sensible au plus critique) et sélectionnez les rôles habilités à consulter ces documents au sein de leur structure. Si aucun rôle n'est sélectionné, l'accès reste ouvert par défaut aux membres de la structure. Les champs marqués d'un astérisque sont obligatoires."
-                detailLongDescription="Consultez les caractéristiques et les règles d'habilitation associées à ce niveau de confidentialité. Ce référentiel encadre la diffusion des informations sensibles au sein de votre organisation en limitant la consultation des documents aux seuls profils autorisés, garantissant ainsi la conformité de votre système de management documentaire."
-                [addButtonLabel]="'Nouveau niveau'"
-                [dialogWidth]="'40rem'"
-                [loading]="loading"
-                [pageLabel]="pageLabel"
-                [tableCols]="tableCols"
-                [listeObject]="dataList"
-                [formGroup]="formGroup"
-                [formCols]="formCols"
-                [multiSelectList]="multiSelectList"
-                [isAffich]="true"
-                [closeDialog]="closeDialog"
-                [formHeader]="formHeader"
-                (newItemEvent)="onSave($event)"
-                (removeEvent)="onDelete($event)"
-                [isPagination]="true"
-                [totalElements]="totalElements"
-                [currentPage]="currentPage"
-                [pageSize]="pageSize"
-                (pageChangeEvent)="onPageChange($event)"
-                [consultation]="!peutEcrire"
-                [notModif]="!peutEcrire"
-                [notDelete]="!peutEcrire">
-            </app-crud-generic>
+        <div class="card-first overflow-x-clip border-none transition-colors duration-300">
+            <app-header-page
+                [title]="pageLabel"
+                [subtitle]="'Ajoutez ou modifiez les niveaux de confidentialité des documents'"
+                [breadcrumbs]="breadcrumbs"
+                [buttonText]="'Nouveau niveau'"
+                buttonIcon="pi pi-plus"
+                (actionClick)="crudGeneric.openNew()"
+            />
+            <div class="page-layout">
+                <app-crud-generic
+                    #crudGeneric
+                    [requireRqPassword]="true"
+                    [deleteConfirmField]="'libelle'"
+                    [showAddButton]="false"
+                    formLongDescription="Définissez les paramètres de sécurité et d’accès pour ce niveau de confidentialité. Indiquez un libellé clair, un rang d'exposition (du moins sensible au plus critique) et sélectionnez les rôles habilités à consulter ces documents au sein de leur structure. Si aucun rôle n'est sélectionné, l'accès reste ouvert par défaut aux membres de la structure. Les champs marqués d'un astérisque sont obligatoires."
+                    detailLongDescription="Consultez les caractéristiques et les règles d'habilitation associées à ce niveau de confidentialité. Ce référentiel encadre la diffusion des informations sensibles au sein de votre organisation en limitant la consultation des documents aux seuls profils autorisés, garantissant ainsi la conformité de votre système de management documentaire."
+                    [addButtonLabel]="'Nouveau niveau'"
+                    [dialogWidth]="'40rem'"
+                    [loading]="loading"
+                    [pageLabel]="pageLabel"
+                    [tableCols]="tableCols"
+                    [listeObject]="dataList"
+                    [formGroup]="formGroup"
+                    [formCols]="formCols"
+                    [multiSelectList]="multiSelectList"
+                    [isAffich]="true"
+                    [closeDialog]="closeDialog"
+                    [formHeader]="formHeader"
+                    (newItemEvent)="onSave($event)"
+                    (removeEvent)="onDelete($event)"
+                    [isPagination]="true"
+                    [totalElements]="totalElements"
+                    [currentPage]="currentPage"
+                    [pageSize]="pageSize"
+                    (pageChangeEvent)="onPageChange($event)"
+                    [consultation]="!peutEcrire"
+                    [notModif]="!peutEcrire"
+                    [notDelete]="!peutEcrire">
+                </app-crud-generic>
+            </div>
         </div>
     `
 })

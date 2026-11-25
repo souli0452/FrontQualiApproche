@@ -1,46 +1,115 @@
-<div class="p-6">
-    <p-toast></p-toast>
-    <p-confirmpopup></p-confirmpopup>
+<p-toast></p-toast>
+<p-confirmdialog
+    #cd
+    key="plan-action"
+    appendTo="body"
+    maskStyleClass="backdrop-blur-sm"
+    [closable]="false"
+    [draggable]="false"
+    [style]="{ width: '460px', maxWidth: '92vw' }"
+    styleClass="border-none bg-transparent shadow-none">
+    <ng-template pTemplate="headless" let-message>
+        <div class="p-6 bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-2xl flex flex-col items-center text-center whitespace-normal">
 
-    <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
-        <div class="flex items-center gap-3">
-            <p-button icon="pi pi-arrow-left" [rounded]="true" [text]="true" severity="secondary"
-                      [routerLink]="['/gestion-audit/programme', auditId]" pTooltip="Retour à l'audit"></p-button>
-            <div>
-                <div class="flex items-center gap-2">
-                    <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">{{ externe ? 'Plan d\'audit externe' : 'Plan d\'audit' }}</h2>
-                    <p-tag *ngIf="plan" [value]="libelleStatut" [severity]="severiteStatut" [rounded]="true"></p-tag>
+            <!-- Badge circulaire coloré -->
+            <div class="w-14 h-14 rounded-full flex items-center justify-center mb-3.5 ring-8" [ngClass]="confirmationBadgeClasses">
+                <i class="pi !text-2xl" [ngClass]="message.icon || 'pi-question-circle'"></i>
+            </div>
+
+            <!-- Titre -->
+            <h3 class="text-[17px] font-bold text-[var(--heading-color)] m-0 mb-1.5">
+                {{ message.header || 'Confirmation' }}
+            </h3>
+
+            <!-- Message principal -->
+            <p class="text-[13px] text-[var(--text-color-secondary)] m-0 leading-relaxed px-1">
+                {{ message.message }}
+            </p>
+
+            <!-- Encart uniforme rounded-[5px] (destinataires ou alerte bloquante) -->
+            <div *ngIf="confirmationMeta.encart as encart"
+                 class="w-full text-left rounded-[5px] border px-3.5 py-3 mt-4"
+                 [ngClass]="confirmationEncartClasses">
+                <div class="flex items-center gap-2 text-[12px] font-bold mb-1.5">
+                    <i class="pi !text-[13px] shrink-0" [ngClass]="encart.icone"></i>
+                    <span>{{ encart.titre }}</span>
                 </div>
-                <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">
-                    <span class="font-mono font-semibold text-primary">{{ audit?.reference }}</span>
-                    — {{ libelles.processus(audit?.processusId) }}
-                    <span *ngIf="plan?.reference"> · plan {{ plan?.reference }}</span>
-                    · {{ audit?.dateDebutPrevue | date: 'dd/MM/yyyy' }} → {{ audit?.dateFinPrevue | date: 'dd/MM/yyyy' }}
+                <ul class="m-0 pl-4 space-y-1 text-[12px] leading-snug">
+                    <li *ngFor="let ligne of encart.lignes">{{ ligne }}</li>
+                </ul>
+            </div>
+
+            <!-- Séparateur -->
+            <div class="w-full border-t border-[#dddddd]/70 dark:border-surface-700 my-4"></div>
+
+            <!-- Boutons d'actions -->
+            <div class="flex items-center justify-center gap-3 w-full">
+                <button type="button" pButton
+                        [label]="message.rejectLabel || 'Retour'"
+                        class="p-button-outlined p-button-secondary p-button-sm flex-1 justify-center rounded-[6px]"
+                        (click)="cd.onReject()">
+                </button>
+                <button *ngIf="!confirmationMeta.bloquant"
+                        type="button" pButton
+                        [label]="message.acceptLabel || 'Confirmer'"
+                        [icon]="message.acceptIcon || 'pi pi-check'"
+                        [ngClass]="confirmationAcceptClasses"
+                        (click)="cd.onAccept()">
+                </button>
+            </div>
+        </div>
+    </ng-template>
+</p-confirmdialog>
+
+    <!-- En-tête unifié -->
+    <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-5 border-b border-surface-200 dark:border-surface-700">
+        <div class="flex items-center gap-3 min-w-0">
+            <p-button icon="pi pi-arrow-left" [rounded]="true" [text]="true" severity="secondary"
+                      [routerLink]="['/gestion-audit/programme', auditId]" pTooltip="Retour à l'audit" class="shrink-0"></p-button>
+            <div class="flex w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-800/40 items-center justify-center shrink-0">
+                <i class="pi pi-calendar text-[#0084ca] !text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h2 class="text-[16px] font-bold text-surface-900 dark:text-surface-50 m-0">
+                        {{ externe ? "Plan d'audit externe" : "Plan d'audit" }}
+                    </h2>
+                    <p-tag *ngIf="plan" [value]="libelleStatut" [severity]="severiteStatut" [rounded]="true"></p-tag>
+                    <span *ngIf="plan?.reference"
+                          class="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-200 border border-surface-200 dark:border-surface-700">
+                        {{ plan?.reference }}
+                    </span>
+                </div>
+                <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mt-1">
+                    <span class="font-mono font-semibold text-[#0084ca]">{{ audit?.reference }}</span>
+                    <span> · {{ libelles.processus(audit?.processusId) }}</span>
+                    <span> · {{ audit?.dateDebutPrevue | date: 'dd/MM/yyyy' }} → {{ audit?.dateFinPrevue | date: 'dd/MM/yyyy' }}</span>
+                    <span *ngIf="(plan?.version ?? 0) > 1"> · Version {{ plan?.version }}</span>
                 </p>
             </div>
         </div>
-        <div class="flex flex-wrap items-center gap-2" *ngIf="plan && !externe">
-            <p-tabs [value]="vue" (valueChange)="vue = $any($event)">
-                <p-tablist>
-                    <p-tab *ngFor="let o of vues" [value]="o.value">
-                        <div class="flex items-center gap-2 px-2 py-1 select-none">
-                            <i [class]="o.icone"></i><span class="whitespace-nowrap">{{ o.label }}</span>
-                        </div>
-                    </p-tab>
-                </p-tablist>
-            </p-tabs>
+
+        <div class="flex flex-wrap items-center gap-2 shrink-0" *ngIf="plan && !externe">
             <ng-container *ngIf="!nouveau && !plan.fichierCharge">
-                <p-button icon="pi pi-file-pdf" label="Télécharger en PDF" severity="danger" size="small" (onClick)="exporter('PDF')"></p-button>
-                <p-button icon="pi pi-file-word" label="Télécharger en Word" severity="info" size="small" (onClick)="exporter('WORD')"></p-button>
+                <p-button icon="pi pi-eye" label="Voir le PDF" severity="info" size="small"
+                          [loading]="apercuEnCours" (onClick)="voirPdf()"></p-button>
+                <p-button icon="pi pi-file-pdf" label="Télécharger PDF" severity="info" size="small"
+                          (onClick)="exporter('PDF')"></p-button>
+                <p-button icon="pi pi-file-word" label="Word" severity="info" size="small"
+                          (onClick)="exporter('WORD')"></p-button>
             </ng-container>
-            <!-- Un plan reçu ne se charge que sur un audit externe (B7X) ; ici, un fichier chargé avant reste lisible. -->
-            <p-button *ngIf="plan.fichierCharge" icon="pi pi-download" label="Plan chargé" [outlined]="true" severity="secondary" size="small" (onClick)="telechargerFichier()"></p-button>
+            <ng-container *ngIf="plan.fichierCharge">
+                <p-button icon="pi pi-eye" label="Voir le plan" severity="info" size="small"
+                          [loading]="apercuEnCours" (onClick)="voirFichier()"></p-button>
+                <p-button icon="pi pi-download" label="Télécharger" severity="info" size="small"
+                          (onClick)="telechargerFichier()"></p-button>
+            </ng-container>
         </div>
     </div>
 
-    <div *ngIf="loading" class="space-y-3">
-        <p-skeleton height="140px" borderRadius="12px"></p-skeleton>
-        <p-skeleton height="240px" borderRadius="12px"></p-skeleton>
+    <div *ngIf="loading" class="flex flex-col gap-4">
+        <p-skeleton height="8rem" borderRadius="5px"></p-skeleton>
+        <p-skeleton height="18rem" borderRadius="5px"></p-skeleton>
     </div>
 
     <!-- B7X : plan d'un audit externe, transmis par l'organisme puis chargé -->
@@ -49,24 +118,35 @@
             Pour un audit externe, le plan n'est pas élaboré dans l'application : il est transmis par l'organisme auditeur, puis chargé ici.
             Il est alors consultable par l'équipe d'audit, sans ressaisie.
         </p>
-        <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 mb-4">
-            <h3 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-3">Informations communiquées par l'organisme auditeur</h3>
+
+        <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-4 mb-4 shadow-card">
+            <div class="flex items-center gap-2.5 mb-3">
+                <div class="w-9 h-9 rounded-lg bg-sky-500/10 text-[#0084ca] flex items-center justify-center shrink-0">
+                    <i class="pi pi-building !text-base"></i>
+                </div>
+                <div>
+                    <h6 class="font-semibold text-surface-900 dark:text-surface-50 m-0">Informations communiquées par l'organisme auditeur</h6>
+                    <span class="text-xs text-surface-500">Organisme, période et périmètre externe</span>
+                </div>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 <div>
                     <div class="text-xs text-surface-500 mb-0.5">Organisme</div>
-                    <div>{{ audit?.organismeExterne || '—' }}</div>
+                    <div class="font-medium text-surface-900 dark:text-surface-50">{{ audit?.organismeExterne || '—' }}</div>
                 </div>
                 <div>
                     <div class="text-xs text-surface-500 mb-0.5">Dates d'audit</div>
-                    <div>{{ audit?.dateDebutPrevue | date: 'dd/MM/yyyy' }} → {{ audit?.dateFinPrevue | date: 'dd/MM/yyyy' }}</div>
+                    <div class="font-medium text-surface-900 dark:text-surface-50">
+                        {{ audit?.dateDebutPrevue | date: 'dd/MM/yyyy' }} → {{ audit?.dateFinPrevue | date: 'dd/MM/yyyy' }}
+                    </div>
                 </div>
                 <div class="md:col-span-2">
                     <div class="text-xs text-surface-500 mb-0.5">Objectifs</div>
-                    <div class="whitespace-pre-line">{{ audit?.objectifsAudit || '—' }}</div>
+                    <div class="whitespace-pre-line text-surface-700 dark:text-surface-200">{{ audit?.objectifsAudit || '—' }}</div>
                 </div>
                 <div class="md:col-span-2">
                     <div class="text-xs text-surface-500 mb-1">Sites concernés</div>
-                    <div class="flex flex-wrap gap-1">
+                    <div class="flex flex-wrap gap-1.5">
                         <p-tag *ngFor="let s of sitesAudit" [value]="s" severity="secondary"></p-tag>
                         <span *ngIf="!sitesAudit.length" class="text-surface-400">—</span>
                     </div>
@@ -75,29 +155,38 @@
         </div>
 
         <ng-container *ngIf="plan.fichierCharge; else depotPlan">
-            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 mb-3 flex items-center justify-between gap-3">
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-4 mb-3 flex flex-wrap items-center justify-between gap-3 shadow-card">
                 <div class="flex items-center gap-3">
-                    <i class="pi pi-file-check text-2xl text-primary"></i>
+                    <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                        <i class="pi pi-file-check !text-lg"></i>
+                    </div>
                     <div>
-                        <div class="font-semibold text-sm">Plan d'audit chargé</div>
-                        <div *ngIf="plan.nomFichierCharge" class="text-sm"><i class="pi pi-paperclip text-xs mr-1"></i>{{ plan.nomFichierCharge }}</div>
-                        <div class="text-xs text-surface-500">Consultable par l'équipe d'audit</div>
+                        <div class="font-semibold text-sm text-surface-900 dark:text-surface-50">Plan d'audit chargé</div>
+                        <div *ngIf="plan.nomFichierCharge" class="text-xs font-mono text-surface-700 dark:text-surface-300 mt-0.5">
+                            <i class="pi pi-paperclip !text-[11px] mr-1"></i>{{ plan.nomFichierCharge }}
+                        </div>
+                        <div class="text-xs text-surface-500 mt-0.5">Consultable par l'équipe d'audit</div>
                     </div>
                 </div>
-                <p-button icon="pi pi-download" label="Télécharger" [outlined]="true" size="small" (onClick)="telechargerFichier()"></p-button>
+                <div class="flex flex-wrap items-center gap-2">
+                    <p-button icon="pi pi-eye" label="Voir" severity="info" size="small"
+                              [loading]="apercuEnCours" (onClick)="voirFichier()"></p-button>
+                    <p-button icon="pi pi-download" label="Télécharger" severity="info" size="small"
+                              (onClick)="telechargerFichier()"></p-button>
+                </div>
             </div>
-            <p-message severity="success" styleClass="w-full mb-3" text="Le plan d'audit a été chargé : c'est lui qui fait foi, sans ressaisie."></p-message>
+            <p-message severity="success" styleClass="w-full mb-4" text="Le plan d'audit a été chargé : c'est lui qui fait foi, sans ressaisie."></p-message>
             <div class="flex justify-end">
-                <p-button label="Voir le rapport d'audit externe" icon="pi pi-arrow-right" iconPos="right" size="small"
+                <p-button label="Voir le rapport d'audit externe" icon="pi pi-arrow-right" iconPos="right" severity="info" size="small"
                           [routerLink]="['/gestion-audit/programme', auditId, 'rapport']"></p-button>
             </div>
         </ng-container>
         <ng-template #depotPlan>
-            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
-                <h3 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-3">Charger le plan d'audit reçu</h3>
-                <label class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-surface-300 dark:border-surface-600 rounded-xl py-8 cursor-pointer hover:border-primary transition-colors"
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-5 shadow-card">
+                <h6 class="font-semibold text-surface-900 dark:text-surface-50 m-0 mb-3">Charger le plan d'audit reçu</h6>
+                <label class="flex flex-col items-center justify-center gap-2 bg-surface-50 dark:bg-surface-800 border-2 border-dashed border-[#dddddd] dark:border-surface-600 rounded-[5px] py-8 cursor-pointer hover:border-[#0084ca] transition-colors"
                        [class.pointer-events-none]="auditTermine">
-                    <i class="pi pi-upload text-3xl text-surface-400"></i>
+                    <i class="pi pi-upload !text-3xl text-surface-400"></i>
                     <span class="text-sm text-surface-600 dark:text-surface-300">Déposez le fichier reçu de l'organisme (PDF ou Word)</span>
                     <span class="p-button p-button-sm p-button-outlined">Parcourir…</span>
                     <input type="file" class="hidden" accept=".pdf,.doc,.docx,.odt" (change)="chargerFichier($event)" [disabled]="auditTermine" />
@@ -106,7 +195,21 @@
         </ng-template>
     </ng-container>
 
+    <!-- Plan interne : onglets Élaboration / Aperçu -->
     <ng-container *ngIf="!loading && plan && !externe">
+        <div class="mb-5">
+            <p-tabs [value]="vue" (valueChange)="vue = $any($event)">
+                <p-tablist>
+                    <p-tab *ngFor="let o of vues" [value]="o.value">
+                        <div class="flex items-center gap-2 px-2 py-1 select-none">
+                            <i [class]="o.icone + ' !text-sm'"></i>
+                            <span class="whitespace-nowrap">{{ o.label }}</span>
+                        </div>
+                    </p-tab>
+                </p-tablist>
+            </p-tabs>
+        </div>
+
         <p-message *ngIf="nouveau" severity="info" styleClass="mb-4 w-full"
                    text="Ce plan n'est pas encore enregistré : il reprend les objectifs, la portée et les critères de l'audit."></p-message>
         <p-message *ngIf="plan.fichierCharge" severity="success" styleClass="mb-4 w-full"
@@ -114,8 +217,16 @@
 
         <!-- B7 : élaboration -->
         <div *ngIf="vue === 'elaboration'" class="flex flex-col gap-4">
-            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
-                <h3 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-3">Cadre de l'audit</h3>
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-4 shadow-card">
+                <div class="flex items-center gap-2.5 mb-3">
+                    <div class="w-9 h-9 rounded-lg bg-sky-500/10 text-[#0084ca] flex items-center justify-center shrink-0">
+                        <i class="pi pi-bullseye !text-base"></i>
+                    </div>
+                    <div>
+                        <h6 class="font-semibold text-surface-900 dark:text-surface-50 m-0">Cadre de l'audit</h6>
+                        <span class="text-xs text-surface-500">Objectifs, portée, critères et méthodes d'investigation</span>
+                    </div>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                     <div>
                         <app-audit-libelle texte="Objectifs de l'audit" />
@@ -131,8 +242,8 @@
                     </div>
                     <div class="md:col-span-2">
                         <app-audit-libelle texte="Méthodes d'audit" />
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-                            <label *ngFor="let m of methodes" class="flex items-center gap-2 text-sm cursor-pointer">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 mt-1">
+                            <label *ngFor="let m of methodes" class="flex items-center gap-2 text-sm text-surface-700 dark:text-surface-200 cursor-pointer">
                                 <p-checkbox [binary]="true" [ngModel]="plan.methodesAudit?.includes(m)" (onChange)="basculerMethode(m)" [disabled]="!modifiable"></p-checkbox>
                                 {{ m }}
                             </label>
@@ -141,50 +252,71 @@
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
-                <div class="flex items-center justify-between gap-3">
-                    <div>
-                        <h3 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-1">Équipe d'audit</h3>
-                        <p class="text-sm m-0">Responsable : {{ libelles.auditeur(audit?.responsableEquipeId) }}
-                            <span *ngIf="audit?.membreEquipeIds?.length"> · Auditeur(s) associé(s) : {{ nomsMembres }}</span></p>
-                        <p class="text-xs text-surface-400 m-0 mt-0.5">Reprise de la fiche de planification.</p>
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-4 shadow-card">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                            <i class="pi pi-users !text-base"></i>
+                        </div>
+                        <div>
+                            <h6 class="font-semibold text-surface-900 dark:text-surface-50 m-0">Équipe d'audit</h6>
+                            <p class="text-sm text-surface-700 dark:text-surface-200 m-0 mt-0.5">
+                                <span class="text-surface-500">Responsable :</span>
+                                <span class="font-semibold"> {{ libelles.auditeur(audit?.responsableEquipeId) }}</span>
+                                <span *ngIf="audit?.membreEquipeIds?.length">
+                                    · <span class="text-surface-500">Auditeur(s) associé(s) :</span> {{ nomsMembres }}
+                                </span>
+                            </p>
+                            <span class="text-xs text-surface-400">Reprise de la fiche de planification.</span>
+                        </div>
                     </div>
-                    <p-button *ngIf="equipeModifiable" label="Modifier l'équipe" icon="pi pi-users" [outlined]="true" size="small"
+                    <p-button *ngIf="equipeModifiable" label="Modifier l'équipe" icon="pi pi-users" severity="info" size="small"
                               [routerLink]="['/gestion-audit/programme/edit', auditId]"></p-button>
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
-                <div class="flex items-center justify-between p-4 pb-3">
-                    <h3 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0">Programme détaillé et horaires</h3>
-                    <p-button *ngIf="modifiable && !activiteEnEdition" icon="pi pi-plus" label="Ajouter une activité" size="small" [outlined]="true" (onClick)="ouvrirActivite()"></p-button>
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] overflow-hidden shadow-card">
+                <div class="flex flex-wrap items-center justify-between gap-3 p-4 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                            <i class="pi pi-clock !text-base"></i>
+                        </div>
+                        <div>
+                            <h6 class="font-semibold text-surface-900 dark:text-surface-50 m-0">Programme détaillé et horaires</h6>
+                            <span class="text-xs text-surface-500">{{ plan.activites?.length ?? 0 }} activité(s) planifiée(s)</span>
+                        </div>
+                    </div>
+                    <p-button *ngIf="modifiable && !activiteEnEdition" icon="pi pi-plus" label="Ajouter une activité"
+                              severity="info" size="small" (onClick)="ouvrirActivite()"></p-button>
                 </div>
-                <p *ngIf="!equipe.length && modifiable" class="text-xs text-amber-600 m-0 px-4 pb-3">L'équipe de l'audit est vide : désignez-la sur la fiche de l'audit pour affecter les activités.</p>
-                <div class="overflow-x-auto">
+                <p *ngIf="!equipe.length && modifiable" class="text-xs text-amber-600 m-0 px-4 pb-3">
+                    L'équipe de l'audit est vide : désignez-la sur la fiche de l'audit pour affecter les activités.
+                </p>
+                <div class="overflow-x-auto border-t border-surface-100 dark:border-surface-800">
                     <table class="w-full border-collapse text-sm">
                         <thead>
                             <tr class="bg-surface-50 dark:bg-surface-800">
-                                <th scope="col" class="text-left px-3 py-2 text-xs font-semibold text-surface-500 w-32">Horaire</th>
-                                <th scope="col" class="text-left px-3 py-2 text-xs font-semibold text-surface-500">Activité</th>
-                                <th scope="col" class="text-left px-3 py-2 text-xs font-semibold text-surface-500">Processus audité</th>
-                                <th scope="col" class="text-left px-3 py-2 text-xs font-semibold text-surface-500">Auditeur</th>
-                                <th scope="col" class="text-left px-3 py-2 text-xs font-semibold text-surface-500">Personnes auditées</th>
-                                <th scope="col" class="w-20" *ngIf="modifiable"><span class="sr-only">Actions</span></th>
+                                <th scope="col" class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-surface-500 w-36">Horaire</th>
+                                <th scope="col" class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-surface-500">Activité</th>
+                                <th scope="col" class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-surface-500">Processus audité</th>
+                                <th scope="col" class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-surface-500">Auditeur</th>
+                                <th scope="col" class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-surface-500">Personnes auditées</th>
+                                <th scope="col" class="w-24" *ngIf="modifiable"><span class="sr-only">Actions</span></th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-surface-100 dark:divide-surface-800">
                             <tr *ngIf="!plan.activites?.length">
-                                <td [attr.colspan]="modifiable ? 6 : 5" class="text-center text-surface-400 py-6">Aucune activité planifiée.</td>
+                                <td [attr.colspan]="modifiable ? 6 : 5" class="text-center text-surface-400 py-8">Aucune activité planifiée.</td>
                             </tr>
                             <tr *ngFor="let a of plan.activites; let i = index; trackBy: trackByIndex"
-                                class="border-t border-surface-100 dark:border-surface-800 align-top"
-                                [ngClass]="{ 'bg-primary-50 dark:bg-primary-950/30': activiteEnEdition?.index === i }">
-                                <td class="px-3 py-2 font-mono text-xs whitespace-nowrap">{{ horaire(a) }}</td>
-                                <td class="px-3 py-2">{{ a.libelleActivite }}</td>
-                                <td class="px-3 py-2 text-surface-600 dark:text-surface-300">{{ a.processusConcerne || '—' }}</td>
-                                <td class="px-3 py-2 text-surface-600 dark:text-surface-300">{{ a.auditeur || '—' }}</td>
-                                <td class="px-3 py-2 text-surface-600 dark:text-surface-300">{{ a.personnesAuditees || '—' }}</td>
-                                <td *ngIf="modifiable" class="px-2 py-1 whitespace-nowrap">
+                                class="align-top hover:bg-surface-50/70 dark:hover:bg-surface-800/40 transition-colors"
+                                [ngClass]="{ 'bg-blue-50/60 dark:bg-blue-950/30': activiteEnEdition?.index === i }">
+                                <td class="px-4 py-2.5 font-mono text-xs text-surface-700 dark:text-surface-200 whitespace-nowrap">{{ horaire(a) }}</td>
+                                <td class="px-4 py-2.5 font-medium text-surface-900 dark:text-surface-50">{{ a.libelleActivite }}</td>
+                                <td class="px-4 py-2.5 text-surface-600 dark:text-surface-300">{{ a.processusConcerne || '—' }}</td>
+                                <td class="px-4 py-2.5 text-surface-600 dark:text-surface-300">{{ a.auditeur || '—' }}</td>
+                                <td class="px-4 py-2.5 text-surface-600 dark:text-surface-300">{{ a.personnesAuditees || '—' }}</td>
+                                <td *ngIf="modifiable" class="px-2 py-1.5 whitespace-nowrap text-right">
                                     <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="secondary" size="small" pTooltip="Modifier" (onClick)="ouvrirActivite(i)"></p-button>
                                     <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" size="small" pTooltip="Retirer" (onClick)="retirerActivite(i)"></p-button>
                                 </td>
@@ -194,7 +326,9 @@
                 </div>
 
                 <div *ngIf="activiteEnEdition" class="border-t border-surface-200 dark:border-surface-700 p-4 bg-surface-50/60 dark:bg-surface-800/30">
-                    <h4 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-3">{{ activiteEnEdition.index === null ? 'Nouvelle activité' : 'Modifier l\'activité' }}</h4>
+                    <h6 class="font-semibold text-surface-900 dark:text-surface-50 m-0 mb-3">
+                        {{ activiteEnEdition.index === null ? 'Nouvelle activité' : "Modifier l'activité" }}
+                    </h6>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                         <div class="md:col-span-2">
                             <app-audit-libelle texte="Jour" aide="Dans la période de l'audit." />
@@ -219,27 +353,40 @@
                                               [filter]="true" placeholder="Choisir un processus" />
                         </div>
                         <div>
-                            <app-audit-libelle texte="Auditeur" aide="Choisi dans l'équipe de l'audit." />
+                            <app-audit-libelle texte="Auditeur" [requis]="true" aide="Obligatoire : choisi dans l'équipe de l'audit." />
                             <app-select-input [(ngModel)]="activiteEnEdition.activite.auditeur" [options]="equipe" optionLabel="nom" optionValue="nom"
                                               placeholder="Membre de l'équipe" />
                         </div>
                         <div class="md:col-span-2">
-                            <app-audit-libelle texte="Personnes auditées" aide="Choisies dans l'annuaire des utilisateurs." />
+                            <app-audit-libelle texte="Personnes auditées" [requis]="true" aide="Obligatoire : choisies dans l'annuaire des utilisateurs." />
                             <app-multiselect-input [(ngModel)]="activiteEnEdition.personnes" [options]="personnes" optionLabel="nomComplet" optionValue="nomComplet"
                                                    display="chip" placeholder="Choisir dans l'annuaire" />
                         </div>
                     </div>
                     <small *ngIf="erreurCreneau" class="p-error block mt-2">{{ erreurCreneau }}</small>
+                    <small *ngIf="!erreurCreneau && !activiteComplete" class="text-[12px] text-[var(--text-color-secondary)] block mt-2">
+                        Renseignez l'activité, l'auditeur et au moins une personne auditée pour ajouter ce créneau.
+                    </small>
                     <div class="flex justify-end gap-2 mt-4">
-                        <p-button label="Annuler" severity="secondary" [outlined]="true" size="small" (onClick)="activiteEnEdition = null"></p-button>
-                        <p-button [label]="activiteEnEdition.index === null ? 'Ajouter l\'activité' : 'Appliquer'" icon="pi pi-check" size="small"
-                                  [disabled]="!activiteEnEdition.activite.libelleActivite?.trim() || !!erreurCreneau" (onClick)="appliquerActivite()"></p-button>
+                        <p-button label="Annuler" severity="secondary" [outlined]="true" size="small"
+                                  styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                                  (onClick)="activiteEnEdition = null"></p-button>
+                        <p-button [label]="activiteEnEdition.index === null ? 'Ajouter l\'activité' : 'Appliquer'" icon="pi pi-check" severity="info" size="small"
+                                  [disabled]="!activiteComplete" (onClick)="appliquerActivite()"></p-button>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
-                <h3 class="text-sm font-bold uppercase tracking-wide text-surface-500 m-0 mb-3">Logistique</h3>
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-4 shadow-card">
+                <div class="flex items-center gap-2.5 mb-3">
+                    <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                        <i class="pi pi-map-marker !text-base"></i>
+                    </div>
+                    <div>
+                        <h6 class="font-semibold text-surface-900 dark:text-surface-50 m-0">Logistique</h6>
+                        <span class="text-xs text-surface-500">Site, langue et moyens matériels requis</span>
+                    </div>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                     <div>
                         <app-audit-libelle texte="Lieu" aide="Choisi parmi les sites paramétrés ; ceux de l'audit en tête." />
@@ -258,78 +405,275 @@
                 </div>
             </div>
 
-            <div class="flex justify-end gap-2">
-                <p-button *ngIf="modifiable" icon="pi pi-save" label="Enregistrer en brouillon" [outlined]="true" size="small" [loading]="saving" (onClick)="sauvegarder()"></p-button>
-                <p-button label="Aperçu et diffusion" icon="pi pi-arrow-right" iconPos="right" size="small" (onClick)="vue = 'apercu'"></p-button>
+            <div class="flex flex-wrap justify-end gap-2 pt-2">
+                <p-button *ngIf="modifiable" icon="pi pi-save" label="Enregistrer en brouillon" severity="secondary" [outlined]="true" size="small"
+                          [loading]="saving" (onClick)="sauvegarder()"></p-button>
+                <p-button label="Aperçu et diffusion" icon="pi pi-arrow-right" iconPos="right" severity="info" size="small"
+                          (onClick)="vue = 'apercu'"></p-button>
             </div>
         </div>
 
-        <!-- B8 : aperçu et diffusion -->
+        <!-- B8 : aperçu et diffusion (style Command Center cohérent avec le Rapport d'audit) -->
         <ng-container *ngIf="vue === 'apercu'">
-            <article class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-8 space-y-5 text-sm leading-relaxed">
-                <header class="text-center border-b-2 border-primary pb-4">
-                    <div class="text-xs tracking-wide text-surface-500">PLAN D'AUDIT</div>
-                    <div class="text-lg font-bold text-primary mt-1">{{ audit?.reference }} — {{ libelles.processus(audit?.processusId) }}</div>
-                    <div class="text-xs text-surface-500 mt-1"><span *ngIf="plan.reference">Réf. {{ plan.reference }} · </span>{{ audit?.dateDebutPrevue | date: 'dd/MM/yyyy' }} → {{ audit?.dateFinPrevue | date: 'dd/MM/yyyy' }}</div>
+            <article class="space-y-4 text-sm leading-relaxed">
+                <!-- Cartouche supérieur + 4 mini-tuiles -->
+                <header class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-5 shadow-card space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-3.5 min-w-0">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                                 [ngClass]="plan.statut === 'PARTAGE'
+                                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                                    : (plan.statut === 'VALIDE'
+                                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                        : 'bg-sky-500/15 text-[#0084ca] dark:text-sky-400')">
+                                <i class="pi !text-xl"
+                                   [ngClass]="plan.statut === 'PARTAGE' ? 'pi-check-circle' : (plan.statut === 'VALIDE' ? 'pi-lock' : 'pi-pencil')"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-[16px] font-bold text-surface-900 dark:text-surface-50">
+                                        {{ audit?.reference }} — {{ libelles.processus(audit?.processusId) }}
+                                    </span>
+                                    <p-tag [value]="libelleStatut" [severity]="severiteStatut" [rounded]="true"></p-tag>
+                                </div>
+                                <p class="text-xs text-surface-500 dark:text-surface-400 m-0 mt-1">
+                                    Plan officiel d'audit · {{ audit?.typeAuditLibelle }} · {{ audit?.dateDebutPrevue | date: 'dd/MM/yyyy' }} → {{ audit?.dateFinPrevue | date: 'dd/MM/yyyy' }}
+                                </p>
+                            </div>
+                        </div>
+                        <span *ngIf="plan.reference"
+                              class="font-mono text-xs font-semibold px-2.5 py-1 rounded-lg bg-sky-500/10 text-[#0084ca] dark:text-sky-300 shrink-0">
+                            {{ plan.reference }}
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div class="rounded-lg border border-surface-200/80 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/40 p-3">
+                            <div class="flex items-center gap-1.5 text-xs font-semibold text-surface-600 dark:text-surface-300">
+                                <span class="w-2 h-2 rounded-full bg-[#0084ca]"></span>
+                                <span>Période prévue</span>
+                            </div>
+                            <div class="text-base font-semibold text-surface-900 dark:text-surface-50 mt-1">
+                                {{ audit?.dateDebutPrevue | date: 'dd/MM' }} → {{ audit?.dateFinPrevue | date: 'dd/MM/yyyy' }}
+                            </div>
+                            <div class="text-xs text-surface-500 mt-0.5">
+                                {{ plan.version ? 'Version ' + plan.version : 'Version initiale' }}
+                            </div>
+                        </div>
+
+                        <div class="rounded-lg border border-surface-200/80 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/40 p-3">
+                            <div class="flex items-center gap-1.5 text-xs font-semibold text-surface-600 dark:text-surface-300">
+                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                <span>Activités planifiées</span>
+                            </div>
+                            <div class="text-[16px] font-bold text-surface-900 dark:text-surface-50 mt-1">{{ plan.activites?.length ?? 0 }}</div>
+                            <div class="text-xs font-medium mt-0.5"
+                                 [ngClass]="(plan.activites?.length ?? 0) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-surface-400'">
+                                {{ (plan.activites?.length ?? 0) > 0 ? 'Séquences au programme' : 'Aucune activité saisie' }}
+                            </div>
+                        </div>
+
+                        <div class="rounded-lg border border-surface-200/80 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/40 p-3">
+                            <div class="flex items-center gap-1.5 text-xs font-semibold text-surface-600 dark:text-surface-300">
+                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                <span>Méthodes retenues</span>
+                            </div>
+                            <div class="text-xl font-semibold text-surface-900 dark:text-surface-50 mt-1">{{ plan.methodesAudit?.length ?? 0 }}</div>
+                            <div class="text-xs text-indigo-600 dark:text-indigo-400 font-medium mt-0.5 truncate">
+                                {{ plan.methodesAudit?.length ? plan.methodesAudit![0] : 'Non précisées' }}
+                            </div>
+                        </div>
+
+                        <div class="rounded-lg border border-surface-200/80 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/40 p-3">
+                            <div class="flex items-center gap-1.5 text-xs font-semibold text-surface-600 dark:text-surface-300">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                <span>Équipe d'audit</span>
+                            </div>
+                            <div class="text-[16px] font-bold text-surface-900 dark:text-surface-50 mt-1">{{ nbMembresEquipe }}</div>
+                            <div class="text-xs font-medium text-[#0084ca] dark:text-sky-400 mt-0.5 truncate"
+                                 [title]="libelles.auditeur(audit?.responsableEquipeId)">
+                                Pilote : {{ libelles.auditeur(audit?.responsableEquipeId) }}
+                            </div>
+                        </div>
+                    </div>
                 </header>
-                <section>
-                    <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">1. Objectifs de l'audit</h3>
-                    <p class="m-0 whitespace-pre-line">{{ plan.objectifs || '—' }}</p>
+
+                <!-- Sections 1 à 3 : 3 cartes par ligne -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <section class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-4 flex flex-col gap-2.5 shadow-card">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-lg bg-sky-500/10 text-[#0084ca] flex items-center justify-center shrink-0">
+                                <i class="pi pi-bullseye !text-base"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h6 class="font-semibold text-surface-900 dark:text-surface-50 m-0">1. Objectifs de l'audit</h6>
+                                <span class="text-xs text-surface-500">Finalité de la mission</span>
+                            </div>
+                        </div>
+                        <p class="m-0 whitespace-pre-line text-surface-600 dark:text-surface-300">{{ plan.objectifs || '—' }}</p>
+                    </section>
+
+                    <section class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-4 flex flex-col gap-2.5 shadow-card">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
+                                <i class="pi pi-th-large !text-base"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h6 class="font-semibold text-surface-900 dark:text-surface-50 m-0">2. Portée de l'audit</h6>
+                                <span class="text-xs text-surface-500">Périmètre couvert</span>
+                            </div>
+                        </div>
+                        <p class="m-0 whitespace-pre-line text-surface-600 dark:text-surface-300">{{ plan.portee || '—' }}</p>
+                    </section>
+
+                    <section class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-4 flex flex-col gap-2.5 shadow-card">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                                <i class="pi pi-book !text-base"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h6 class="font-semibold text-surface-900 dark:text-surface-50 m-0">3. Critères d'audit</h6>
+                                <span class="text-xs text-surface-500">Exigences de référence</span>
+                            </div>
+                        </div>
+                        <p class="m-0 whitespace-pre-line text-surface-600 dark:text-surface-300">{{ plan.criteres || '—' }}</p>
+                    </section>
+                </div>
+
+                <!-- Sections 4 et 5 : 2 cartes côte à côte -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <section class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-4 flex flex-col gap-2.5 shadow-card">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                                <i class="pi pi-sliders-h !text-base"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h6 class="font-semibold text-surface-900 dark:text-surface-50 m-0">4. Méthodes d'audit</h6>
+                                <span class="text-xs text-surface-500">Techniques d'investigation retenues</span>
+                            </div>
+                        </div>
+                        <div *ngIf="plan.methodesAudit?.length; else aucuneMethode" class="flex flex-wrap gap-1.5">
+                            <span *ngFor="let m of plan.methodesAudit"
+                                  class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/50">
+                                <i class="pi pi-check !text-[10px]"></i>{{ m }}
+                            </span>
+                        </div>
+                        <ng-template #aucuneMethode>
+                            <p class="m-0 text-surface-400">Aucune méthode précisée.</p>
+                        </ng-template>
+                    </section>
+
+                    <section class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-4 flex flex-col gap-2.5 shadow-card">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-lg bg-sky-500/10 text-[#0084ca] flex items-center justify-center shrink-0">
+                                <i class="pi pi-users !text-base"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h6 class="font-semibold text-surface-900 dark:text-surface-50 m-0">5. Équipe d'audit</h6>
+                                <span class="text-xs text-surface-500">Responsable et auditeurs associés</span>
+                            </div>
+                        </div>
+                        <div class="space-y-1 text-surface-600 dark:text-surface-300">
+                            <div>
+                                <span class="text-surface-500">Responsable : </span>
+                                <span class="font-semibold text-surface-900 dark:text-surface-50">{{ libelles.auditeur(audit?.responsableEquipeId) }}</span>
+                            </div>
+                            <div *ngIf="audit?.membreEquipeIds?.length">
+                                <span class="text-surface-500">Auditeur(s) associé(s) : </span>
+                                <span>{{ nomsMembres }}</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Section 6 : Programme détaillé et horaires -->
+                <section class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-4 shadow-card">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                                <i class="pi pi-clock !text-base"></i>
+                            </div>
+                            <div>
+                                <h6 class="font-semibold text-surface-900 dark:text-surface-50 m-0">6. Programme détaillé et horaires</h6>
+                                <span class="text-xs text-surface-500">Déroulé chronologique des séquences d'audit</span>
+                            </div>
+                        </div>
+                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300">
+                            {{ plan.activites?.length ?? 0 }} activité(s)
+                        </span>
+                    </div>
+
+                    <div *ngIf="!plan.activites?.length"
+                         class="rounded-lg border border-dashed border-surface-200 dark:border-surface-700 py-6 text-center text-xs text-surface-400">
+                        Aucune activité planifiée dans ce plan d'audit.
+                    </div>
+
+                    <div *ngIf="plan.activites?.length" class="overflow-x-auto rounded-lg border border-surface-200 dark:border-surface-700">
+                        <table class="w-full border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-surface-50 dark:bg-surface-800 border-b border-surface-200 dark:border-surface-700">
+                                    <th scope="col" class="text-left px-3 py-2.5 font-semibold uppercase tracking-wide text-surface-500">Horaire</th>
+                                    <th scope="col" class="text-left px-3 py-2.5 font-semibold uppercase tracking-wide text-surface-500">Activité</th>
+                                    <th scope="col" class="text-left px-3 py-2.5 font-semibold uppercase tracking-wide text-surface-500">Processus audité</th>
+                                    <th scope="col" class="text-left px-3 py-2.5 font-semibold uppercase tracking-wide text-surface-500">Auditeur</th>
+                                    <th scope="col" class="text-left px-3 py-2.5 font-semibold uppercase tracking-wide text-surface-500">Personnes auditées</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-surface-100 dark:divide-surface-800">
+                                <tr *ngFor="let a of plan.activites" class="align-top hover:bg-surface-50/70 dark:hover:bg-surface-800/40">
+                                    <td class="px-3 py-2.5 font-mono text-surface-700 dark:text-surface-200 whitespace-nowrap">{{ horaire(a) }}</td>
+                                    <td class="px-3 py-2.5 font-medium text-surface-900 dark:text-surface-50">{{ a.libelleActivite }}</td>
+                                    <td class="px-3 py-2.5 text-surface-600 dark:text-surface-300">{{ a.processusConcerne || '—' }}</td>
+                                    <td class="px-3 py-2.5 text-surface-600 dark:text-surface-300">{{ a.auditeur || '—' }}</td>
+                                    <td class="px-3 py-2.5 text-surface-600 dark:text-surface-300">{{ a.personnesAuditees || '—' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </section>
-                <section>
-                    <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">2. Portée de l'audit</h3>
-                    <p class="m-0 whitespace-pre-line">{{ plan.portee || '—' }}</p>
-                </section>
-                <section>
-                    <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">3. Critères d'audit</h3>
-                    <p class="m-0 whitespace-pre-line">{{ plan.criteres || '—' }}</p>
-                </section>
-                <section>
-                    <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">4. Méthodes d'audit</h3>
-                    <p class="m-0">{{ plan.methodesAudit?.length ? plan.methodesAudit!.join(' · ') : '—' }}</p>
-                </section>
-                <section>
-                    <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">5. Équipe d'audit</h3>
-                    <p class="m-0">Responsable : {{ libelles.auditeur(audit?.responsableEquipeId) }}<span *ngIf="audit?.membreEquipeIds?.length"> · Auditeur(s) associé(s) : {{ nomsMembres }}</span></p>
-                </section>
-                <section>
-                    <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">6. Programme détaillé et horaires</h3>
-                    <p *ngIf="!plan.activites?.length" class="m-0 text-surface-500">Aucune activité planifiée.</p>
-                    <table *ngIf="plan.activites?.length" class="w-full border-collapse text-xs">
-                        <thead><tr class="bg-surface-50 dark:bg-surface-800">
-                            <th scope="col" class="text-left px-2 py-1.5">Horaire</th>
-                            <th scope="col" class="text-left px-2 py-1.5">Activité</th>
-                            <th scope="col" class="text-left px-2 py-1.5">Processus audité</th>
-                            <th scope="col" class="text-left px-2 py-1.5">Auditeur</th>
-                            <th scope="col" class="text-left px-2 py-1.5">Personnes auditées</th>
-                        </tr></thead>
-                        <tbody>
-                            <tr *ngFor="let a of plan.activites" class="border-b border-surface-100 dark:border-surface-800 align-top">
-                                <td class="px-2 py-1.5 whitespace-nowrap">{{ horaire(a) }}</td>
-                                <td class="px-2 py-1.5">{{ a.libelleActivite }}</td>
-                                <td class="px-2 py-1.5">{{ a.processusConcerne || '—' }}</td>
-                                <td class="px-2 py-1.5">{{ a.auditeur || '—' }}</td>
-                                <td class="px-2 py-1.5">{{ a.personnesAuditees || '—' }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </section>
-                <section>
-                    <h3 class="font-bold text-primary border-b border-surface-200 pb-1 mb-2">7. Logistique</h3>
-                    <p class="m-0">Lieu : {{ plan.lieu || '—' }} · Langue : {{ plan.langue || '—' }} · Moyens : {{ plan.moyensNecessaires || '—' }}</p>
+
+                <!-- Section 7 : Logistique -->
+                <section class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-4 shadow-card">
+                    <div class="flex items-center gap-2.5 mb-3">
+                        <div class="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                            <i class="pi pi-map-marker !text-base"></i>
+                        </div>
+                        <div>
+                            <h6 class="font-semibold text-surface-900 dark:text-surface-50 m-0">7. Logistique</h6>
+                            <span class="text-xs text-surface-500">Conditions matérielles et organisationnelles</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="rounded-lg bg-surface-50 dark:bg-surface-800/40 border border-surface-200/70 dark:border-surface-700 px-3 py-2">
+                            <div class="text-[11px] uppercase tracking-wide text-surface-500">Lieu</div>
+                            <div class="font-medium text-surface-900 dark:text-surface-50 mt-0.5">{{ plan.lieu || '—' }}</div>
+                        </div>
+                        <div class="rounded-lg bg-surface-50 dark:bg-surface-800/40 border border-surface-200/70 dark:border-surface-700 px-3 py-2">
+                            <div class="text-[11px] uppercase tracking-wide text-surface-500">Langue</div>
+                            <div class="font-medium text-surface-900 dark:text-surface-50 mt-0.5">{{ plan.langue || '—' }}</div>
+                        </div>
+                        <div class="rounded-lg bg-surface-50 dark:bg-surface-800/40 border border-surface-200/70 dark:border-surface-700 px-3 py-2">
+                            <div class="text-[11px] uppercase tracking-wide text-surface-500">Moyens nécessaires</div>
+                            <div class="font-medium text-surface-900 dark:text-surface-50 mt-0.5">{{ plan.moyensNecessaires || '—' }}</div>
+                        </div>
+                    </div>
                 </section>
             </article>
 
             <p-message *ngIf="plan.statut === 'PARTAGE'" severity="success" styleClass="w-full mt-4"
                        [text]="'Plan d\'audit partagé avec l\'audité' + (plan.datePartage ? ' le ' + (plan.datePartage | date: 'dd/MM/yyyy à HH:mm') : '') + '.'"></p-message>
-            <div class="flex justify-end gap-2 mt-4" *ngIf="!auditTermine && plan.statut !== 'PARTAGE'">
+
+            <div class="flex flex-wrap justify-end items-center gap-2 mt-4" *ngIf="!auditTermine">
                 <p-message *ngIf="nouveau" severity="warn" styleClass="mr-auto" text="Enregistrez le plan avant de le valider."></p-message>
-                <!-- Obs. 18 : un plan ne se valide que si l'audit est au moins EN_PREPARATION -->
-                <p-button *ngIf="!nouveau && plan.statut === 'BROUILLON' && audit?.statut !== 'PLANIFIE'" icon="pi pi-check" label="Valider le plan" severity="success" size="small" (onClick)="valider($event)"></p-button>
-                <p-button *ngIf="plan.statut === 'VALIDE'" icon="pi pi-share-alt" label="Partager avec l'audité" size="small" (onClick)="partager($event)"></p-button>
-                <p-button *ngIf="!nouveau && (plan.statut === 'VALIDE' || plan.statut === 'PARTAGE') && !auditTermine" icon="pi pi-pencil" label="Réviser le plan"
-                          size="small" severity="secondary" [outlined]="true" (onClick)="reviser($event)"></p-button>
+                <p-button *ngIf="!nouveau && plan.statut === 'BROUILLON' && audit?.statut !== 'PLANIFIE'"
+                          icon="pi pi-check" label="Valider le plan" severity="success" size="small" (onClick)="valider($event)"></p-button>
+                <p-button *ngIf="plan.statut === 'VALIDE'"
+                          icon="pi pi-share-alt" label="Partager avec l'audité" severity="info" size="small" (onClick)="partager($event)"></p-button>
+                <p-button *ngIf="!nouveau && (plan.statut === 'VALIDE' || plan.statut === 'PARTAGE')"
+                          icon="pi pi-pencil" label="Réviser le plan" size="small" severity="secondary" [outlined]="true"
+                          (onClick)="reviser($event)"></p-button>
             </div>
         </ng-container>
     </ng-container>
-</div>
+
+<app-lightbox #lightbox></app-lightbox>

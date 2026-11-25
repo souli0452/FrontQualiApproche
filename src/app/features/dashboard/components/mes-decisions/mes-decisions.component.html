@@ -1,71 +1,200 @@
-@if (famillesAAfficher.length) {
-            <div class="flex flex-col gap-4">
-                @for (famille of famillesAAfficher; track famille.cle) {
-                    <div class="rounded-xl border border-surface-200 bg-surface-0 overflow-hidden">
-                        <div class="flex items-center gap-2 px-4 py-3 border-b border-surface-200">
-                            <i [class]="famille.icone" class="text-primary"></i>
-                            <span class="font-semibold">{{ famille.titre }}</span>
-                            @if (!famille.chargement) {
-                                <p-tag [value]="famille.lignes.length.toString()"
-                                       [severity]="famille.lignes.length ? 'warn' : 'secondary'"
-                                       [rounded]="true"></p-tag>
-                            }
-                            <p-button label="Tout voir" icon="pi pi-arrow-right" iconPos="right"
-                                      severity="secondary" [text]="true" size="small"
-                                      styleClass="ml-auto"
-                                      (onClick)="ouvrir(famille.route)"></p-button>
+@if (famillesVisibles.length) {
+    <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card overflow-hidden">
+        <!-- En-tête de la bannette -->
+        <div class="px-5 pt-4 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#dddddd]/70 dark:border-surface-700">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <span class="w-8 h-8 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                    <i class="pi pi-check-square !text-sm"></i>
+                </span>
+                <div class="min-w-0">
+                    <h2 class="text-sm font-bold text-[var(--heading-color)] m-0 leading-tight">
+                        Vos décisions en attente
+                    </h2>
+                    <p class="text-xs text-[var(--text-color-secondary)] m-0 mt-0.5 leading-snug">
+                        Traitez vos dossiers directement depuis l'accueil ou ouvrez la fiche complète
+                    </p>
+                </div>
+            </div>
+
+            <!-- Recherche instantanée -->
+            <div class="relative w-full sm:w-64 shrink-0">
+                <i class="pi pi-search !text-xs text-[var(--text-color-secondary)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input pInputText
+                       type="text"
+                       [(ngModel)]="termeRecherche"
+                       placeholder="Référence, titre, étape…"
+                       class="w-full !pl-8 !pr-7 !py-1.5 !text-xs" />
+                @if (termeRecherche) {
+                    <button type="button"
+                            (click)="termeRecherche = ''"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-0 p-0.5 text-[var(--text-color-secondary)] hover:text-[var(--heading-color)] cursor-pointer"
+                            aria-label="Effacer la recherche">
+                        <i class="pi pi-times !text-[10px]"></i>
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- Onglets de filtrage par famille -->
+        <div class="px-4 sm:px-5 flex items-center justify-between gap-2 border-b border-[#dddddd] dark:border-surface-700 overflow-x-auto">
+            <div class="flex items-center gap-1">
+                <button type="button"
+                        (click)="selectionnerOnglet('all')"
+                        class="px-3 py-2.5 text-xs flex items-center gap-2 whitespace-nowrap cursor-pointer bg-transparent border-0 border-b-2 transition-colors"
+                        [ngClass]="ongletActif === 'all'
+                            ? 'border-[#0084ca] text-[#0084ca] dark:text-sky-400 font-bold'
+                            : 'border-transparent text-[var(--text-color-secondary)] hover:text-[var(--heading-color)] font-medium'">
+                    <span>Tout</span>
+                    <span class="px-1.5 py-0.5 rounded-[4px] text-[11px] font-bold tabular-nums"
+                          [ngClass]="ongletActif === 'all'
+                              ? 'bg-[#0ea5e9]/15 text-[#0084ca] dark:text-sky-300'
+                              : 'bg-surface-100 dark:bg-surface-800 text-[var(--text-color-secondary)]'">
+                        {{ total }}
+                    </span>
+                </button>
+
+                @for (famille of famillesVisibles; track famille.cle) {
+                    <button type="button"
+                            (click)="selectionnerOnglet(famille.cle)"
+                            class="px-3 py-2.5 text-xs flex items-center gap-2 whitespace-nowrap cursor-pointer bg-transparent border-0 border-b-2 transition-colors"
+                            [ngClass]="ongletActif === famille.cle
+                                ? 'border-[#0084ca] text-[#0084ca] dark:text-sky-400 font-bold'
+                                : 'border-transparent text-[var(--text-color-secondary)] hover:text-[var(--heading-color)] font-medium'">
+                        <span>{{ famille.badgeCourt }}</span>
+                        @if (famille.chargement) {
+                            <span class="w-4 h-4 rounded-[4px] bg-surface-100 dark:bg-surface-800 animate-pulse inline-block"></span>
+                        } @else {
+                            <span class="px-1.5 py-0.5 rounded-[4px] text-[11px] font-semibold tabular-nums"
+                                  [ngClass]="badgeOngletClasse(famille)">
+                                {{ famille.lignes.length }}
+                            </span>
+                        }
+                    </button>
+                }
+            </div>
+
+            @if (cibleVoirTout; as cible) {
+                <button type="button"
+                        (click)="ouvrir(cible.route)"
+                        class="text-xs font-semibold text-[#0084ca] dark:text-sky-400 hover:underline whitespace-nowrap bg-transparent border-0 cursor-pointer py-2 px-1 shrink-0 inline-flex items-center gap-1">
+                    <span>Tout voir</span>
+                    <i class="pi pi-arrow-right !text-[10px]"></i>
+                </button>
+            }
+        </div>
+
+        <!-- Corps de la bannette -->
+        @if (chargement && lignesAffichees.length === 0) {
+            <div class="p-5 flex flex-col gap-3">
+                <p-skeleton height="3.25rem"></p-skeleton>
+                <p-skeleton height="3.25rem"></p-skeleton>
+                <p-skeleton height="3.25rem"></p-skeleton>
+            </div>
+        } @else if (lignesAffichees.length === 0) {
+            <div class="py-12 px-5 text-center flex flex-col items-center gap-2">
+                <span class="w-11 h-11 rounded-[5px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-1">
+                    <i class="pi !text-xl" [ngClass]="termeRecherche ? 'pi-search' : 'pi-check-circle'"></i>
+                </span>
+                @if (termeRecherche) {
+                    <div class="text-sm font-bold text-[var(--heading-color)]">
+                        Aucun dossier trouvé pour « {{ termeRecherche }} »
+                    </div>
+                    <p class="text-xs text-[var(--text-color-secondary)] m-0">
+                        Essayez un autre mot-clé ou réinitialisez les filtres.
+                    </p>
+                    <p-button label="Réinitialiser" icon="pi pi-refresh" severity="secondary" [outlined]="true" size="small"
+                              styleClass="mt-2 !bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                              (onClick)="reinitialiserFiltres()"></p-button>
+                } @else {
+                    <div class="text-sm font-bold text-[var(--heading-color)]">
+                        {{ ongletActif === 'all' ? 'Aucun dossier en attente' : 'Aucun dossier dans cette catégorie' }}
+                    </div>
+                    <p class="text-xs text-[var(--text-color-secondary)] m-0">
+                        Toutes vos décisions requises sur ce périmètre sont à jour.
+                    </p>
+                }
+            </div>
+        } @else {
+            <ul class="list-none m-0 p-0 divide-y divide-[#dddddd]/60 dark:divide-surface-700/70">
+                @for (ligne of lignesAffichees; track ligne.familleCle + '-' + ligne.id) {
+                    <li class="px-5 py-3.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 hover:bg-surface-50/80 dark:hover:bg-surface-800/40 transition-colors">
+                        <div class="flex items-start gap-3 min-w-0 flex-1">
+                            <span class="w-9 h-9 rounded-[5px] border flex items-center justify-center shrink-0 mt-0.5"
+                                  [ngClass]="iconeBoiteClasse(ligne.familleCle)">
+                                <i [class]="ligne.familleIcone + ' !text-sm'"></i>
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-x-2 gap-y-1 flex-wrap">
+                                    @if (ligne.reference) {
+                                        <span class="font-mono text-[11px] font-semibold text-[var(--text-color-secondary)] whitespace-nowrap">
+                                            {{ ligne.reference }}
+                                        </span>
+                                    }
+                                    @if (ligne.state?.currentStateName) {
+                                        <span class="px-1.5 py-0.5 rounded-[4px] text-[10px] font-semibold bg-surface-100 dark:bg-surface-800 text-[var(--heading-color)] border border-[#dddddd] dark:border-surface-700 whitespace-nowrap">
+                                            {{ ligne.state?.currentStateName }}
+                                        </span>
+                                    }
+                                </div>
+
+                                <div class="text-xs sm:text-[13px] font-semibold text-[var(--heading-color)] mt-0.5 truncate"
+                                     [title]="ligne.titre">
+                                    {{ ligne.titre }}
+                                </div>
+
+                                @if (ongletActif === 'all' || ligne.detail) {
+                                    <div class="text-[11px] text-[var(--text-color-secondary)] mt-0.5 truncate">
+                                        @if (ongletActif === 'all') {
+                                            <span class="font-medium">{{ ligne.familleCourt }}</span>
+                                        }
+                                        @if (ongletActif === 'all' && ligne.detail) {
+                                            <span class="mx-1">·</span>
+                                        }
+                                        @if (ligne.detail) {
+                                            <span>{{ ligne.detail }}</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
                         </div>
 
-                        @if (famille.chargement) {
-                            <div class="p-4 flex flex-col gap-2">
-                                <p-skeleton height="2rem"></p-skeleton>
-                                <p-skeleton height="2rem" width="70%"></p-skeleton>
-                            </div>
-                        } @else {
-                            <ul class="list-none m-0 p-0 divide-y divide-surface-200">
-                                @for (ligne of famille.lignes.slice(0, lignesMontrees); track ligne.id) {
-                                    <li class="px-4 py-3 flex flex-col gap-2 lg:flex-row lg:items-center
-                                               lg:justify-between">
-                                        <div class="min-w-0">
-                                            <div class="flex items-center gap-2 flex-wrap">
-                                                @if (ligne.reference) {
-                                                    <span class="font-mono text-xs text-surface-500">
-                                                        {{ ligne.reference }}
-                                                    </span>
-                                                }
-                                                <span class="font-medium truncate">{{ ligne.titre }}</span>
-                                            </div>
-                                            @if (ligne.detail) {
-                                                <div class="text-xs text-surface-500 mt-0.5">{{ ligne.detail }}</div>
-                                            }
-                                        </div>
+                        <div class="flex items-center gap-1.5 flex-wrap lg:justify-end shrink-0 pl-12 lg:pl-0">
+                            <app-workflow-actions
+                                [compact]="true"
+                                [resourceId]="ligne.id"
+                                [reference]="ligne.reference"
+                                [state]="ligne.state"
+                                [deposerFichier]="ligne.deposerFichier"
+                                (executed)="charger()"></app-workflow-actions>
 
-                                        <div class="flex items-center gap-2 flex-wrap lg:justify-end">
-                                            <!-- Décider sans quitter l'accueil : ce sont les actions
-                                                 que le serveur déclare ouvertes sur ce dossier. -->
-                                            <app-workflow-actions
-                                                [resourceId]="ligne.id"
-                                                [reference]="ligne.reference"
-                                                [state]="ligne.state"
-                                                [deposerFichier]="ligne.deposerFichier"
-                                                (executed)="charger()"></app-workflow-actions>
-                                            <p-button icon="pi pi-external-link" severity="secondary"
-                                                      [text]="true" [rounded]="true" size="small"
-                                                      pTooltip="Ouvrir le dossier"
-                                                      (onClick)="ouvrir(ligne.route, ligne.parametres)"></p-button>
-                                        </div>
-                                    </li>
-                                }
-                            </ul>
+                            <p-button icon="pi pi-external-link"
+                                      severity="secondary"
+                                      [outlined]="true"
+                                      size="small"
+                                      styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700 !w-8 !h-8 !px-0"
+                                      pTooltip="Ouvrir la fiche complète"
+                                      tooltipPosition="top"
+                                      (onClick)="ouvrir(ligne.route, ligne.parametres)"></p-button>
+                        </div>
+                    </li>
+                }
+            </ul>
 
-                            @if (famille.lignes.length > lignesMontrees) {
-                                <div class="px-4 py-2 border-t border-surface-200 text-xs text-surface-500">
-                                    {{ famille.lignes.length - lignesMontrees }} autre(s) dossier(s)
-                                    dans l'écran du module.
-                                </div>
-                            }
-                        }
-                    </div>
+            <!-- Pied de bannette -->
+            <div class="px-5 py-3 flex flex-wrap items-center justify-between gap-2 text-xs bg-surface-50/70 dark:bg-surface-800/40 border-t border-[#dddddd]/70 dark:border-surface-700 text-[var(--text-color-secondary)]">
+                <span>
+                    Affichage de <strong class="text-[var(--heading-color)]">{{ lignesAffichees.length }}</strong>
+                    dossier(s) prioritaires sur <strong class="text-[var(--heading-color)]">{{ totalPourOngletActif }}</strong>
+                </span>
+                @if (cibleVoirTout; as cible) {
+                    <button type="button"
+                            (click)="ouvrir(cible.route)"
+                            class="font-semibold text-[#0084ca] dark:text-sky-400 hover:underline bg-transparent border-0 cursor-pointer p-0 inline-flex items-center gap-1">
+                        <span>Ouvrir tous les dossiers dans le module</span>
+                        <i class="pi pi-arrow-right !text-[10px]"></i>
+                    </button>
                 }
             </div>
         }
+    </div>
+}

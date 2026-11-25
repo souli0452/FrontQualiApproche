@@ -17,7 +17,7 @@ import { AuditeurFiche, NiveauEvaluationAuditeur, couleurDuNiveau } from '../../
 /**
  * Portefeuille des auditeurs (écran A4 de la maquette) : une ligne par auditeur dans le tableau
  * commun, qui s'ouvre en fenêtre sur son activité et son évaluation ; la fiche s'inscrit et se
- * modifie dans une carte au-dessus du tableau.
+ * modifie dans une fenêtre au-dessus du tableau.
  *
  * <p>Un auditeur désigne un utilisateur de l'annuaire. Structure d'appartenance et processus
  * gérés désignent des structures : le serveur s'en sert pour signaler un conflit d'intérêts.</p>
@@ -44,9 +44,13 @@ export class AuditAuditeursComponent implements OnInit, OnDestroy {
     utilisateurs: UtilisateurAnnuaire[] = [];
     structures: Structure[] = [];
     niveaux: NiveauEvaluationAuditeur[] = [];
+    niveauOptions: { label: string; value: string }[] = [{ label: 'Non évalué', value: 'NON_EVALUE' }];
+    certificationOptions: { label: string; value: string }[] = [];
+    utilisateursProposes: UtilisateurAnnuaire[] = [];
     loading = true;
     saving = false;
     recherche = '';
+    filtresOuverts = false;
     /** Une page a déjà été demandée : le tableau, en mode différé, redemande la première à l'ouverture. */
     private pageDemandee = false;
     /** L'auditeur ouvert en fenêtre. */
@@ -62,12 +66,11 @@ export class AuditAuditeursComponent implements OnInit, OnDestroy {
     cellTemplates: { [field: string]: TemplateRef<any> } = {};
 
     readonly tableCols: TableColumn[] = [
-        { field: 'nomComplet', header: 'Auditeur', type: 'custom', width: '24%', sort: false },
-        { field: 'domainesHabilites', header: 'Domaines habilités', type: 'custom', width: '22%', sort: false },
-        { field: 'certifications', header: 'Certification', type: 'custom', width: '18%', sort: false },
-        { field: 'disponibilite', header: 'Disponibilité', type: 'custom', width: '12%', sort: false },
-        { field: 'statut', header: 'Statut', type: 'custom', width: '10%', sort: false },
-        { field: 'scoreEvaluationMoyen', header: 'Évaluation', type: 'custom', width: '14%', sort: false }
+        { field: 'nomComplet', header: 'Auditeur', type: 'custom', width: '26%', sort: false },
+        { field: 'domainesHabilites', header: 'Domaines habilités', type: 'custom', width: '24%', sort: false },
+        { field: 'certifications', header: 'Certification', type: 'custom', width: '22%', sort: false },
+        { field: 'disponibilite', header: 'Disponibilité', type: 'custom', width: '16%', sort: false },
+        { field: 'statut', header: 'Statut', type: 'custom', width: '12%', sort: false }
     ];
     /** La fiche en cours de saisie : vide à l'inscription, l'auditeur à la modification. */
     enEdition: AuditeurFiche | null = null;
@@ -129,6 +132,8 @@ export class AuditAuditeursComponent implements OnInit, OnDestroy {
                 this.structures = structures;
                 this.niveaux = niveaux;
                 this.libelleStructure = new Map(structures.map(s => [s.id!, s.libelleLong || s.libelleCourt || '—']));
+                this.majOptionsNiveaux();
+                this.majUtilisateursProposes();
             },
             error: err => this.erreur(err, 'L\'annuaire, les structures ou les niveaux d\'évaluation n\'ont pas pu être chargés.')
         });
@@ -145,8 +150,16 @@ export class AuditAuditeursComponent implements OnInit, OnDestroy {
         this.loading = true;
         this.referentiel.invalidate();
         this.referentiel.auditeurs().pipe(takeUntil(this.destroy$)).subscribe({
-            next: v => (this.vivier = v),
-            error: () => (this.vivier = [])
+            next: v => {
+                this.vivier = v;
+                this.majOptionsCertifications();
+                this.majUtilisateursProposes();
+            },
+            error: () => {
+                this.vivier = [];
+                this.majOptionsCertifications();
+                this.majUtilisateursProposes();
+            }
         });
         const cibles = this.utilisateursCherches();
         if (cibles && !cibles.length) {
@@ -176,6 +189,33 @@ export class AuditAuditeursComponent implements OnInit, OnDestroy {
             });
     }
 
+    private majOptionsNiveaux(): void {
+        this.niveauOptions = [
+            { label: 'Non évalué', value: 'NON_EVALUE' },
+            ...this.niveaux.map(n => ({ label: n.libelle ?? '—', value: n.id! }))
+        ];
+    }
+
+    private majOptionsCertifications(): void {
+        const vues = new Map<string, string>();
+        this.vivier.forEach(a => (a.certifications ?? []).forEach(c => {
+            const cle = c.trim().toLowerCase();
+            if (cle && !vues.has(cle)) vues.set(cle, c.trim());
+        }));
+        this.certificationOptions = [...vues.values()]
+            .sort((a, b) => a.localeCompare(b, 'fr'))
+            .map(c => ({ label: c, value: c }));
+    }
+
+    private majUtilisateursProposes(): void {
+        if (this.enEdition?.id) {
+            this.utilisateursProposes = this.utilisateurs;
+            return;
+        }
+        const inscrits = new Set(this.vivier.map(a => a.utilisateurId));
+        this.utilisateursProposes = this.utilisateurs.filter(u => !inscrits.has(u.id));
+    }
+
     rechercher(texte: string): void {
         this.recherche = (texte ?? '').trim();
         this.recherche$.next(this.recherche);
@@ -200,29 +240,11 @@ export class AuditAuditeursComponent implements OnInit, OnDestroy {
     getActionMenuItems = (a: AuditeurFiche): MenuItem[] => [
         { label: 'Voir le détail', icon: 'pi pi-eye', command: () => this.ouvrirDetail(a) },
         { label: 'Modifier la fiche', icon: 'pi pi-pencil', command: () => this.ouvrirEdition(a) },
-        { label: 'Retirer du vivier', icon: 'pi pi-trash', command: () => this.supprimer(a) }
+        { label: 'Retirer du vivier', icon: 'pi pi-trash', styleClass: 'text-red-500', command: () => this.supprimer(a) }
     ];
 
-    /** Les niveaux de l'échelle, et « Non évalué », pour filtrer par évaluation moyenne. */
-    get niveauOptions(): { label: string; value: string }[] {
-        return [
-            { label: 'Non évalué', value: 'NON_EVALUE' },
-            ...this.niveaux.map(n => ({ label: n.libelle ?? '—', value: n.id! }))
-        ];
-    }
-
-    /** Les certifications que portent les auditeurs du vivier, chacune une fois. */
-    get certificationOptions(): { label: string; value: string }[] {
-        const vues = new Map<string, string>();
-        this.vivier.forEach(a => (a.certifications ?? []).forEach(c => {
-            const cle = c.trim().toLowerCase();
-            if (cle && !vues.has(cle)) vues.set(cle, c.trim());
-        }));
-        return [...vues.values()].sort((a, b) => a.localeCompare(b, 'fr')).map(c => ({ label: c, value: c }));
-    }
-
-    get filtresActifs(): boolean {
-        return Object.values(this.filtres).some(v => !!v);
+    get nbFiltresActifs(): number {
+        return Object.values(this.filtres).filter(Boolean).length;
     }
 
     filtrer(): void {
@@ -269,15 +291,6 @@ export class AuditAuditeursComponent implements OnInit, OnDestroy {
             .map(u => u.id);
     }
 
-    /** À l'inscription, seuls les utilisateurs qui ne sont pas déjà au vivier. */
-    get utilisateursProposes(): UtilisateurAnnuaire[] {
-        if (this.enEdition?.id) {
-            return this.utilisateurs;
-        }
-        const inscrits = new Set(this.vivier.map(a => a.utilisateurId));
-        return this.utilisateurs.filter(u => !inscrits.has(u.id));
-    }
-
     /**
      * Le niveau le plus proche de la moyenne reçue : le serveur fait la moyenne des ordres des
      * niveaux attribués, on la ramène au libellé du niveau paramétré.
@@ -316,6 +329,7 @@ export class AuditAuditeursComponent implements OnInit, OnDestroy {
 
     ouvrirAjout(): void {
         this.enEdition = {};
+        this.majUtilisateursProposes();
         this.formulaire.reset({ statut: 'ACTIF', processusGeres: [], domainesHabilites: [], certifications: [] });
         this.formulaire.get('utilisateurId')?.enable();
     }
@@ -323,6 +337,7 @@ export class AuditAuditeursComponent implements OnInit, OnDestroy {
     ouvrirEdition(a: AuditeurFiche): void {
         this.detailOuvert = false;
         this.enEdition = a;
+        this.majUtilisateursProposes();
         this.formulaire.reset({
             ...a,
             processusGeres: a.processusGeres ?? [],
@@ -359,13 +374,13 @@ export class AuditAuditeursComponent implements OnInit, OnDestroy {
     supprimer(a: AuditeurFiche): void {
         this.detailOuvert = false;
         this.confirmationService.confirm({
-            rejectButtonProps: { severity: 'secondary', outlined: true },
+            key: 'auditeur-action',
             header: 'Retirer du vivier',
-            message: `Retirer « ${a.nomComplet} » du vivier ? Un auditeur déjà affecté se passe plutôt en inactif, pour garder son historique.`,
-            icon: 'pi pi-trash',
+            message: `Retirer « ${a.nomComplet} » du vivier ? Un auditeur déjà affecté se passe plutôt en inactif pour conserver son historique.`,
+            icon: 'pi-trash',
             acceptLabel: 'Retirer',
-            rejectLabel: 'Retour',
-            acceptButtonStyleClass: 'p-button-danger',
+            acceptIcon: 'pi pi-trash',
+            rejectLabel: 'Annuler',
             accept: () => {
                 this.auditService.supprimerAuditeur(a.id!).pipe(takeUntil(this.destroy$)).subscribe({
                     next: () => {

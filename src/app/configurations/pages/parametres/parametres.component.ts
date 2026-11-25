@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
+import { TableauAffichageComponent } from '@shared/tableau-affichage/tableau-affichage';
+import { TableColumn } from '../../../models/generique.model';
 import { NatureParametre, Parametre, ParametreService } from '../../services/parametre.service';
 import { showToast, StatusEnum } from '../../../utils/global/global-utils';
 import { hasAnyPermission } from '@core/auth/auth-utils';
@@ -24,7 +26,7 @@ interface Nature {
 @Component({
     selector: 'app-parametres',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, LicenceOuverteDirective],
+    imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, TableauAffichageComponent, LicenceOuverteDirective],
     providers: [MessageService],
     templateUrl: './parametres.component.html'
 })
@@ -49,11 +51,21 @@ export class ParametresComponent implements OnInit, OnDestroy {
     chargement = true;
     enregistrement = false;
     peutEcrire = false;
+    currentPage = 0;
+    pageSize = 10;
+
+    tableCols: TableColumn[] = [];
+    cellTemplates: { [field: string]: TemplateRef<any> } = {};
+    @ViewChild('reglageTpl', { static: true }) reglageTpl!: TemplateRef<any>;
+    @ViewChild('valeurTpl', { static: true }) valeurTpl!: TemplateRef<any>;
+    @ViewChild('natureTpl', { static: true }) natureTpl!: TemplateRef<any>;
+    @ViewChild('actionTpl', { static: true }) actionTpl!: TemplateRef<any>;
 
     dialogueOuvert = false;
     reglageEnCours: Parametre | null = null;
     formulaire: FormGroup;
 
+    private readonly search$ = new Subject<string>();
     private readonly destroy$ = new Subject<boolean>();
 
     constructor(
@@ -72,6 +84,25 @@ export class ParametresComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.peutEcrire = hasAnyPermission(['config-global-write', 'CONFIG_GLOBAL_MANAGE']);
+        this.tableCols = [
+            { field: 'libelle', header: 'Réglage', type: 'custom', width: this.peutEcrire ? '42%' : '48%', sort: false },
+            { field: 'valeur', header: 'Valeur', type: 'custom', width: this.peutEcrire ? '28%' : '34%', sort: false },
+            { field: 'type', header: 'Nature', type: 'custom', width: this.peutEcrire ? '16%' : '18%', sort: false },
+            ...(this.peutEcrire ? [{ field: 'action', header: 'Action', type: 'custom' as const, width: '14%', align: 'right' as const, sort: false }] : [])
+        ];
+        this.cellTemplates = {
+            libelle: this.reglageTpl,
+            valeur: this.valeurTpl,
+            type: this.natureTpl,
+            action: this.actionTpl
+        };
+
+        this.search$.pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(term => {
+            this.recherche = term;
+            this.currentPage = 0;
+            this.charger();
+        });
+
         this.charger();
     }
 
@@ -93,6 +124,21 @@ export class ParametresComponent implements OnInit, OnDestroy {
                     this.messageService, error);
             }
         });
+    }
+
+    onSearch(term: string): void {
+        this.search$.next((term ?? '').trim());
+    }
+
+    onPageChange(event: { page: number; size: number }): void {
+        this.currentPage = event.page ?? 0;
+        this.pageSize = event.size ?? this.pageSize;
+    }
+
+    onRowClick(reglage: Parametre): void {
+        if (this.peutEcrire) {
+            this.ouvrirModification(reglage);
+        }
     }
 
     // ------------------------------------------------------------------ dialogue

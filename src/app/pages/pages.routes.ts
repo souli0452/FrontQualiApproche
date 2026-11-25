@@ -525,7 +525,7 @@ export default [
     { path: 'configuration-workflow/non-conformite/detail/:id', redirectTo: '/configurations/circuits', pathMatch: 'full' },
     { path: 'configuration-workflow/document', redirectTo: '/configurations/circuits', pathMatch: 'full' },
     { path: 'configuration-workflow/document/detail/:id', redirectTo: '/configurations/circuits', pathMatch: 'full' },
-
+    { path: 'audit/:id', redirectTo: '/gestion-audit/programme/:id', pathMatch: 'full' },
     {
         path: 'gestion-audit',
         loadChildren: () => import('../features/gestion-audit/audit.routes').then(m => m.AUDIT_ROUTES),

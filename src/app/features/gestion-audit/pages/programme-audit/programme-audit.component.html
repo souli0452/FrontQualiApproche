@@ -1,90 +1,401 @@
-<div class="p-6">
-    <p-toast></p-toast>
-
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div>
-            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-50 m-0">Programme annuel d'audit</h2>
-            <p class="text-sm text-surface-500 dark:text-surface-400 m-0 mt-1">Colonnes alignées sur ISO 19011 — cliquez une ligne pour sa fiche résumée (sites, objectif, critères, équipe, risque et actions de maîtrise.</p>
-        </div>
-        <!-- « Planifier un audit » est dans l'en-tête du module : le second bouton faisait doublon (observation 32). -->
-        <div class="flex flex-wrap gap-2">
-            <p-button icon="pi pi-file-excel" label="Exporter" [outlined]="true" severity="secondary" size="small" [loading]="exportEnCours" (onClick)="exporter()"></p-button>
-        </div>
-    </div>
-
-    <!-- Filtres : tous choisis dans des listes -->
-    <div class="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-3 mb-4">
-        <div class="flex flex-wrap items-center gap-2" [class.mb-3]="filtresOuverts">
-            <p-iconfield class="flex-1 min-w-[14rem]">
-                <p-inputicon styleClass="pi pi-search" />
-                <input pInputText type="text" class="w-full" placeholder="Rechercher par référence, objectifs…"
-                       [(ngModel)]="searchText" (ngModelChange)="onSearch($event)" />
-            </p-iconfield>
-            <p-button [icon]="filtresOuverts ? 'pi pi-chevron-up' : 'pi pi-filter'" size="small" [outlined]="true" severity="secondary"
-                      [label]="'Filtres' + (filtresActifs ? ' (' + filtresActifs + ')' : '')" (onClick)="filtresOuverts = !filtresOuverts"></p-button>
-        </div>
-        <ng-container *ngIf="filtresOuverts">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <app-multiselect-input [(ngModel)]="filtres.statuts" [options]="statutOptions" optionLabel="label" optionValue="value"
-                                   [filter]="false" placeholder="Statut : tous" (selectionChange)="recharger()" />
-            <app-select-input [(ngModel)]="filtres.typeAuditId" [options]="typesAudit" optionLabel="libelle" optionValue="id"
-                              [filter]="true" placeholder="Type d'audit : tous" (selectionChange)="recharger()" />
-            <app-select-input [(ngModel)]="filtres.domaineId" [options]="domaines" optionLabel="libelle" optionValue="id"
-                              [filter]="true" placeholder="Domaine RQAP-BF : tous" (selectionChange)="recharger()" />
-            <app-select-input [(ngModel)]="filtres.niveauRisque" [options]="niveauRisqueOptions" optionLabel="label" optionValue="value"
-                              placeholder="Niveau de risque : tous" (selectionChange)="recharger()" />
-            <app-select-input [(ngModel)]="filtres.responsableId" [options]="auditeurs" optionLabel="nomComplet" optionValue="id"
-                              [filter]="true" placeholder="Responsable d'équipe : tous" (selectionChange)="recharger()" />
-            <app-select-input [(ngModel)]="filtres.annee" [options]="anneeOptions" optionLabel="label" optionValue="value"
-                              placeholder="Année : toutes" (selectionChange)="recharger()" />
-        </div>
-        <div class="flex flex-wrap items-center gap-4 mt-3">
-            <div class="flex items-center gap-2">
-                <p-checkbox [(ngModel)]="filtres.mesAudits" [binary]="true" inputId="mesAudits" (onChange)="recharger()"></p-checkbox>
-                <label for="mesAudits" class="text-sm text-surface-700 dark:text-surface-300">Mes audits</label>
-            </div>
-            <div class="flex items-center gap-2">
-                <p-checkbox [(ngModel)]="filtres.enRetard" [binary]="true" inputId="enRetard" (onChange)="recharger()"></p-checkbox>
-                <label for="enRetard" class="text-sm text-surface-700 dark:text-surface-300">En retard</label>
-            </div>
-            <p-button icon="pi pi-filter-slash" label="Réinitialiser" [text]="true" severity="secondary" size="small" styleClass="ml-auto" (onClick)="reinitialiserFiltres()"></p-button>
-        </div>
-        </ng-container>
-    </div>
-
+<p-toast></p-toast>
     <p-message *ngIf="erreurChargement" severity="error" styleClass="mb-4 w-full" [text]="erreurChargement"></p-message>
 
+    <!-- Actions partagées entre la vue Tableau et la vue Calendrier -->
+    <ng-template #actionsBarreTpl>
+        <div class="inline-flex items-center p-0.5 rounded-[5px] border border-[#dddddd] dark:border-surface-700 bg-surface-50 dark:bg-surface-800 shrink-0">
+            <button type="button"
+                    (click)="basculerMode('tableau')"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-xs transition-colors cursor-pointer border-0"
+                    [ngClass]="modeAffichage === 'tableau'
+                        ? 'bg-[#0084ca] text-white font-semibold'
+                        : 'bg-transparent text-[var(--text-color-secondary)] hover:text-[var(--heading-color)] font-medium'">
+                <i class="pi pi-table !text-[12px]"></i>
+                <span>Tableau</span>
+            </button>
+            <button type="button"
+                    (click)="basculerMode('calendrier')"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-xs transition-colors cursor-pointer border-0"
+                    [ngClass]="modeAffichage === 'calendrier'
+                        ? 'bg-[#0084ca] text-white font-semibold'
+                        : 'bg-transparent text-[var(--text-color-secondary)] hover:text-[var(--heading-color)] font-medium'">
+                <i class="pi pi-calendar !text-[12px]"></i>
+                <span>Calendrier</span>
+            </button>
+        </div>
+
+        <p-button
+            [icon]="filtresOuverts ? 'pi pi-chevron-up' : 'pi pi-filter'"
+            size="small"
+            [outlined]="true"
+            [severity]="filtresActifs ? 'info' : 'secondary'"
+            [label]="'Filtres' + (filtresActifs ? ' (' + filtresActifs + ')' : '')"
+            (onClick)="filtresOuverts = !filtresOuverts">
+        </p-button>
+        <p-button
+            *ngIf="filtresActifs"
+            icon="pi pi-filter-slash"
+            label="Effacer"
+            [text]="true"
+            severity="secondary"
+            size="small"
+            (onClick)="reinitialiserFiltres()">
+        </p-button>
+        <p-button
+            icon="pi pi-file-excel"
+            label="Exporter"
+            [outlined]="true"
+            severity="secondary"
+            size="small"
+            [loading]="exportEnCours"
+            (onClick)="exporter()">
+        </p-button>
+    </ng-template>
+
+    <!-- Panneau de filtres partagé entre la vue Tableau et la vue Calendrier -->
+    <ng-template #filtresPanelTpl>
+        <div class="pt-3 mt-1 border-t border-[#dddddd]/70 dark:border-surface-700">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                <app-multiselect-input [(ngModel)]="filtres.statuts" [options]="statutOptions" optionLabel="label" optionValue="value"
+                                       [filter]="false" placeholder="Statut : tous" (selectionChange)="recharger()" />
+                <app-select-input [(ngModel)]="filtres.typeAuditId" [options]="typesAudit" optionLabel="libelle" optionValue="id"
+                                  [filter]="true" placeholder="Type d'audit : tous" (selectionChange)="recharger()" />
+                <app-select-input [(ngModel)]="filtres.domaineId" [options]="domaines" optionLabel="libelle" optionValue="id"
+                                  [filter]="true" placeholder="Domaine RQAP-BF : tous" (selectionChange)="recharger()" />
+                <app-select-input [(ngModel)]="filtres.niveauRisque" [options]="niveauRisqueOptions" optionLabel="label" optionValue="value"
+                                  placeholder="Niveau de risque : tous" (selectionChange)="recharger()" />
+                <app-select-input [(ngModel)]="filtres.responsableId" [options]="auditeurs" optionLabel="nomComplet" optionValue="id"
+                                  [filter]="true" placeholder="Responsable : tous" (selectionChange)="recharger()" />
+                <app-select-input [(ngModel)]="filtres.annee" [options]="anneeOptions" optionLabel="label" optionValue="value"
+                                  placeholder="Année : toutes" (selectionChange)="recharger()" />
+            </div>
+            <div class="flex flex-wrap items-center gap-4 mt-3">
+                <div class="flex items-center gap-2">
+                    <p-checkbox [(ngModel)]="filtres.mesAudits" [binary]="true" inputId="mesAudits" (onChange)="recharger()"></p-checkbox>
+                    <label for="mesAudits" class="text-sm text-surface-700 dark:text-surface-300">Mes audits</label>
+                </div>
+                <div class="flex items-center gap-2">
+                    <p-checkbox [(ngModel)]="filtres.enRetard" [binary]="true" inputId="enRetard" (onChange)="recharger()"></p-checkbox>
+                    <label for="enRetard" class="text-sm text-surface-700 dark:text-surface-300">En retard</label>
+                </div>
+                <p-button icon="pi pi-filter-slash" label="Réinitialiser" [text]="true" severity="secondary" size="small" styleClass="ml-auto" (onClick)="reinitialiserFiltres()"></p-button>
+            </div>
+        </div>
+    </ng-template>
+
+    <!-- Vue Tableau -->
     <app-tableau-affichage
+        *ngIf="modeAffichage === 'tableau'"
+        title="Programme annuel d'audit"
+        titleIcon="pi pi-calendar"
+        subtitle="Colonnes alignées sur ISO 19011 — cliquez une ligne pour ouvrir sa fiche résumée"
+        [badgeCount]="totalElements"
         [tableCols]="tableCols"
+        [minWidth]="'40rem'"
         [listeObject]="audits"
         [loading]="loading"
         [lazy]="true"
         [totalElements]="totalElements"
         [pageSize]="pageSize"
         [currentPage]="currentPage"
-        [rowsPerPageOptions]="[10, 25, 50]"
         [clickableRows]="true"
-        [showTopBar]="false"
+        [showTopBar]="true"
+        [showSearch]="true"
+        [searchValue]="searchText"
+        placeholderRecherche="Rechercher par référence, objectifs…"
+        [hasFilters]="filtresOuverts"
         recordName="audits"
         [cellTemplates]="cellTemplates"
         [getActionMenuItems]="getActionMenuItems"
+        (searchValueChange)="onSearch($event)"
         (rowClick)="ouvrirResume($event)"
         (pageChangeEvent)="onPageChange($event)">
+
+        <div header-actions class="flex flex-wrap items-center gap-2">
+            <ng-container *ngTemplateOutlet="actionsBarreTpl"></ng-container>
+        </div>
+
+        <div filters>
+            <ng-container *ngTemplateOutlet="filtresPanelTpl"></ng-container>
+        </div>
     </app-tableau-affichage>
-</div>
+
+    <!-- Vue Calendrier (Obs. 32 : Année 12 mois + Mois détaillé) -->
+    <div *ngIf="modeAffichage === 'calendrier'"
+         class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card overflow-hidden">
+
+        <!-- En-tête aligné sur le tableau -->
+        <div class="p-4 border-b border-[#dddddd]/80 dark:border-surface-700 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-[5px] bg-[#0084ca]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                        <i class="pi pi-calendar !text-lg"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h3 class="text-[16px] font-bold text-[var(--heading-color)] m-0">Programme annuel d'audit</h3>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#0084ca]/10 text-[#0084ca] dark:text-sky-300">
+                                {{ totalCalendrier }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-[var(--text-color-secondary)] m-0 mt-0.5">
+                            Vue calendrier ISO 19011 — cliquez sur un audit pour ouvrir sa fiche résumée
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="relative w-full sm:w-60">
+                        <i class="pi pi-search !text-xs text-[var(--text-color-secondary)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <input pInputText
+                               [ngModel]="searchText"
+                               (ngModelChange)="onSearch($event)"
+                               placeholder="Rechercher par référence, objectifs…"
+                               class="w-full !pl-8 !py-1.5 !text-xs" />
+                    </div>
+                    <ng-container *ngTemplateOutlet="actionsBarreTpl"></ng-container>
+                </div>
+            </div>
+
+            <ng-container *ngIf="filtresOuverts">
+                <ng-container *ngTemplateOutlet="filtresPanelTpl"></ng-container>
+            </ng-container>
+        </div>
+
+        <!-- Barre de navigation du calendrier -->
+        <div class="px-4 py-3 bg-surface-50/70 dark:bg-surface-800/40 border-b border-[#dddddd]/80 dark:border-surface-700 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <p-button icon="pi pi-chevron-left" severity="secondary" [outlined]="true" size="small"
+                          styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                          ariaLabel="Période précédente" (onClick)="naviguerCalendrier(-1)"></p-button>
+                <span class="text-[15px] font-bold text-[var(--heading-color)] min-w-[10rem] text-center select-none">
+                    {{ titrePeriodeCalendrier }}
+                </span>
+                <p-button icon="pi pi-chevron-right" severity="secondary" [outlined]="true" size="small"
+                          styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                          ariaLabel="Période suivante" (onClick)="naviguerCalendrier(1)"></p-button>
+                <p-button label="Aujourd'hui" severity="secondary" [outlined]="true" size="small"
+                          styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                          (onClick)="allerAujourdhui()"></p-button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <span class="text-xs text-[var(--text-color-secondary)]">
+                    <ng-container *ngIf="echelleCalendrier === 'annee'">
+                        <strong>{{ nbAuditsAnneeCalendrier }}</strong> audit(s) planifié(s) en {{ calendrierAnnee }}
+                    </ng-container>
+                    <ng-container *ngIf="echelleCalendrier === 'mois'">
+                        <strong>{{ auditsDuMois.length }}</strong> audit(s) sur {{ nomsMois[calendrierMois] }} {{ calendrierAnnee }}
+                    </ng-container>
+                </span>
+
+                <div class="inline-flex items-center p-0.5 rounded-[5px] border border-[#dddddd] dark:border-surface-700 bg-[var(--surface-card)]">
+                    <button type="button"
+                            (click)="changerEchelle('annee')"
+                            class="px-2.5 py-1 rounded-[4px] text-xs transition-colors cursor-pointer border-0"
+                            [ngClass]="echelleCalendrier === 'annee'
+                                ? 'bg-[#0084ca] text-white font-semibold'
+                                : 'bg-transparent text-[var(--text-color-secondary)] hover:text-[var(--heading-color)] font-medium'">
+                        Année (12 mois)
+                    </button>
+                    <button type="button"
+                            (click)="changerEchelle('mois')"
+                            class="px-2.5 py-1 rounded-[4px] text-xs transition-colors cursor-pointer border-0"
+                            [ngClass]="echelleCalendrier === 'mois'
+                                ? 'bg-[#0084ca] text-white font-semibold'
+                                : 'bg-transparent text-[var(--text-color-secondary)] hover:text-[var(--heading-color)] font-medium'">
+                        Mois
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chargement -->
+        <div *ngIf="loadingCalendrier" class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <p-skeleton *ngFor="let i of [1,2,3,4,5,6,7,8]" height="9rem" borderRadius="5px"></p-skeleton>
+        </div>
+
+        <!-- Contenu calendrier -->
+        <div *ngIf="!loadingCalendrier" class="p-4 space-y-4">
+            <!-- ÉCHELLE 1 : Vue Annuelle (12 mois) -->
+            <div *ngIf="echelleCalendrier === 'annee'"
+                 class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                <div *ngFor="let m of moisAnnee; trackBy: trackByMois"
+                     class="bg-[var(--surface-card)] border rounded-[5px] flex flex-col min-h-[155px] overflow-hidden transition-colors"
+                     [ngClass]="m.courant
+                        ? 'border-[#0084ca] dark:border-sky-500'
+                        : 'border-[#dddddd] dark:border-surface-700'">
+                    <button type="button"
+                            (click)="ouvrirMois(m.moisIndex)"
+                            class="w-full px-3 py-2 flex items-center justify-between gap-2 text-left border-0 border-b border-[#dddddd]/70 dark:border-surface-700 cursor-pointer transition-colors"
+                            [ngClass]="m.courant
+                                ? 'bg-[#0084ca]/10 dark:bg-[#0084ca]/20 text-[#0084ca] dark:text-sky-300'
+                                : 'bg-surface-50/80 dark:bg-surface-800/50 text-[var(--heading-color)] hover:bg-surface-100 dark:hover:bg-surface-800'">
+                        <span class="text-xs font-bold uppercase tracking-wide">{{ m.nom }}</span>
+                        <span class="inline-flex items-center gap-1 text-[11px] font-semibold">
+                            <span *ngIf="m.audits.length"
+                                  class="px-1.5 py-0.5 rounded-full bg-[#0084ca]/15 text-[#0084ca] dark:text-sky-300">
+                                {{ m.audits.length }}
+                            </span>
+                            <i class="pi pi-arrow-up-right !text-[10px] opacity-60"></i>
+                        </span>
+                    </button>
+
+                    <div class="p-2.5 flex-1 flex flex-col gap-1.5">
+                        <div *ngIf="!m.audits.length"
+                             class="flex-1 flex items-center justify-center text-[11px] text-[var(--text-color-secondary)] opacity-60 py-4">
+                            Aucun audit
+                        </div>
+                        <button *ngFor="let a of m.audits; trackBy: trackByAuditId"
+                                type="button"
+                                (click)="ouvrirResume(a)"
+                                [title]="tooltipAudit(a)"
+                                class="w-full text-left rounded-[5px] border px-2.5 py-1.5 transition-colors cursor-pointer"
+                                [ngClass]="styleAuditCalendrier(a)">
+                            <div class="flex items-center justify-between gap-1.5">
+                                <span class="inline-flex items-center gap-1.5 min-w-0">
+                                    <span class="w-2 h-2 rounded-full shrink-0" [ngClass]="pointStatutCalendrier(a)"></span>
+                                    <span class="font-mono text-[11px] font-bold truncate">{{ a.reference ?? '—' }}</span>
+                                </span>
+                                <span class="text-[10px] font-medium opacity-85 shrink-0 whitespace-nowrap">
+                                    {{ a.dateDebutPrevue | date: 'dd/MM' }}<span *ngIf="a.dateFinPrevue && a.dateFinPrevue !== a.dateDebutPrevue">–{{ a.dateFinPrevue | date: 'dd/MM' }}</span>
+                                </span>
+                            </div>
+                            <div class="text-[11px] font-medium truncate mt-0.5">
+                                {{ libelles.processus(a.processusId) }}
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ÉCHELLE 2 : Vue Mensuelle (grille Lun → Dim) -->
+            <ng-container *ngIf="echelleCalendrier === 'mois'">
+                <div class="overflow-x-auto">
+                    <div class="min-w-[44rem] border border-[#dddddd] dark:border-surface-700 rounded-[5px] overflow-hidden">
+                        <div class="grid grid-cols-7 bg-surface-50 dark:bg-surface-800/70 border-b border-[#dddddd] dark:border-surface-700">
+                            <div *ngFor="let j of joursSemaine"
+                                 class="px-2.5 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-[var(--text-color-secondary)] border-r border-[#dddddd]/60 dark:border-surface-700 last:border-r-0">
+                                {{ j }}
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-7">
+                            <div *ngFor="let cell of joursMois; trackBy: trackByJour"
+                                 class="min-h-[104px] p-1.5 border-r border-b border-[#dddddd]/70 dark:border-surface-700/80 flex flex-col gap-1 transition-colors"
+                                 [ngClass]="{
+                                     'bg-surface-50/70 dark:bg-surface-900/50 opacity-55': cell.horsMois,
+                                     'bg-[#0ea5e9]/5 dark:bg-[#0ea5e9]/10': cell.aujourdhui && !cell.horsMois,
+                                     'bg-[var(--surface-card)]': !cell.horsMois && !cell.aujourdhui
+                                 }">
+                                <div class="flex items-center justify-between">
+                                    <span class="inline-flex items-center justify-center text-[11px] font-semibold w-6 h-6 rounded-full"
+                                          [ngClass]="cell.aujourdhui
+                                              ? 'bg-[#0084ca] text-white'
+                                              : 'text-[var(--heading-color)]'">
+                                        {{ cell.jour }}
+                                    </span>
+                                    <span *ngIf="cell.audits.length > 3"
+                                          class="text-[10px] font-semibold text-[var(--text-color-secondary)]">
+                                        +{{ cell.audits.length - 3 }}
+                                    </span>
+                                </div>
+
+                                <div class="flex flex-col gap-1">
+                                    <button *ngFor="let a of cell.audits | slice: 0:3; trackBy: trackByAuditId"
+                                            type="button"
+                                            (click)="ouvrirResume(a)"
+                                            [title]="tooltipAudit(a)"
+                                            class="w-full text-left px-1.5 py-1 rounded-[4px] border text-[11px] leading-tight truncate cursor-pointer transition-colors"
+                                            [ngClass]="styleAuditCalendrier(a)">
+                                        <span class="font-mono font-bold">{{ a.reference ?? '—' }}</span>
+                                        <span class="opacity-85"> · {{ libelles.processus(a.processusId) }}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Récapitulatif chronologique du mois sélectionné -->
+                <div class="border border-[#dddddd] dark:border-surface-700 rounded-[5px] p-3.5 bg-surface-50/50 dark:bg-surface-800/30">
+                    <div class="flex items-center justify-between gap-2 mb-2.5">
+                        <span class="text-xs font-bold uppercase tracking-wide text-[var(--heading-color)]">
+                            Audits de {{ nomsMois[calendrierMois] }} {{ calendrierAnnee }} ({{ auditsDuMois.length }})
+                        </span>
+                        <button type="button"
+                                (click)="changerEchelle('annee')"
+                                class="text-xs font-medium text-[#0084ca] dark:text-sky-400 hover:underline bg-transparent border-0 cursor-pointer p-0">
+                            Retour à la vue 12 mois
+                        </button>
+                    </div>
+                    <p *ngIf="!auditsDuMois.length" class="text-xs text-[var(--text-color-secondary)] m-0">
+                        Aucun audit planifié sur ce mois.
+                    </p>
+                    <div *ngIf="auditsDuMois.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                        <button *ngFor="let a of auditsDuMois; trackBy: trackByAuditId"
+                                type="button"
+                                (click)="ouvrirResume(a)"
+                                class="w-full text-left bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] px-3 py-2 hover:border-[#0084ca] dark:hover:border-sky-500 transition-colors cursor-pointer">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="font-mono text-xs font-bold text-[#0084ca] dark:text-sky-400">{{ a.reference ?? '—' }}</span>
+                                <p-tag [value]="getStatutLabel(a.statut)" [severity]="getStatutSeverity(a.statut)" [rounded]="true"></p-tag>
+                            </div>
+                            <div class="text-xs font-medium text-[var(--heading-color)] truncate mt-1">
+                                {{ libelles.processus(a.processusId) }}
+                            </div>
+                            <div class="text-[11px] text-[var(--text-color-secondary)] mt-1">
+                                <i class="pi pi-calendar !text-[10px] mr-1"></i>
+                                {{ a.dateDebutPrevue | date: 'dd/MM/yyyy' }}<span *ngIf="a.dateFinPrevue"> → {{ a.dateFinPrevue | date: 'dd/MM/yyyy' }}</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </ng-container>
+
+            <!-- Audits sans date prévue (le cas échéant) -->
+            <div *ngIf="auditsSansDate.length"
+                 class="rounded-[5px] border border-amber-300 dark:border-amber-700 bg-amber-50/70 dark:bg-amber-950/25 px-3.5 py-2.5">
+                <div class="text-xs font-bold text-amber-800 dark:text-amber-200 mb-1.5">
+                    <i class="pi pi-exclamation-circle !text-xs mr-1"></i>
+                    {{ auditsSansDate.length }} audit(s) sans date prévue
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                    <button *ngFor="let a of auditsSansDate; trackBy: trackByAuditId"
+                            type="button"
+                            (click)="ouvrirResume(a)"
+                            class="px-2.5 py-1 rounded-[5px] text-xs font-medium bg-[var(--surface-card)] border border-amber-300 dark:border-amber-700 text-[var(--heading-color)] hover:border-[#0084ca] cursor-pointer">
+                        <span class="font-mono font-bold text-[#0084ca] dark:text-sky-400">{{ a.reference ?? '—' }}</span>
+                        · {{ libelles.processus(a.processusId) }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Légende des statuts -->
+            <div class="pt-3 border-t border-[#dddddd]/70 dark:border-surface-700 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[var(--text-color-secondary)]">
+                <span class="font-semibold text-[var(--heading-color)]">Légende :</span>
+                <span *ngFor="let l of legendeCalendrier" class="inline-flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full" [ngClass]="l.point"></span>
+                    <span>{{ l.label }}</span>
+                </span>
+            </div>
+        </div>
+    </div>
 
 <ng-template #auditTpl let-audit>
     <div class="min-w-0">
-        <div class="flex items-center gap-2">
-            <span class="font-mono text-sm font-semibold text-primary">{{ audit.reference ?? '—' }}</span>
+        <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="font-mono text-[13px] font-semibold text-[#0084ca] dark:text-sky-400">{{ audit.reference ?? '—' }}</span>
             <p-tag *ngIf="audit.typeAuditLibelle" [value]="audit.typeAuditLibelle" [severity]="audit.circuitExterne ? 'warn' : 'info'"></p-tag>
         </div>
-        <div class="text-xs text-surface-500 truncate mt-0.5">{{ libelles.processus(audit.processusId) }}</div>
+        <div class="text-xs text-[var(--text-color-secondary)] truncate mt-0.5" [title]="libelles.processus(audit.processusId)">
+            {{ libelles.processus(audit.processusId) }}
+        </div>
     </div>
 </ng-template>
 
 <ng-template #datesTpl let-audit>
-    <span class="text-sm whitespace-nowrap">
+    <span class="text-xs text-[var(--text-color-secondary)] whitespace-nowrap font-medium">
         {{ audit.dateDebutPrevue ? (audit.dateDebutPrevue | date: 'dd/MM/yyyy') : '—' }}<span *ngIf="audit.dateFinPrevue"> → {{ audit.dateFinPrevue | date: 'dd/MM/yyyy' }}</span>
     </span>
 </ng-template>
@@ -109,98 +420,147 @@
 
 <ng-template #tiret><span class="text-surface-400">—</span></ng-template>
 
-<!-- La fiche résumée d'une ligne : ce que la ligne dépliait auparavant, en fenêtre -->
-<p-dialog [(visible)]="resumeOuvert" [modal]="true" [dismissableMask]="true" [draggable]="false" [resizable]="false" [maximizable]="true"
-          [style]="{ width: '72rem' }" [breakpoints]="{ '1200px': '90vw', '640px': '100vw' }"
-          [header]="resume ? (resume.reference ?? 'Audit') + ' — ' + libelles.processus(resume.processusId) : ''">
+<!-- La fiche résumée d'une ligne : alignée sur le design des dialogues Non-Conformité -->
+<p-dialog
+    [(visible)]="resumeOuvert"
+    [modal]="true"
+    maskStyleClass="backdrop-blur-sm"
+    [dismissableMask]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [maximizable]="true"
+    [style]="{ width: '64rem', maxWidth: '95vw' }"
+    [breakpoints]="{ '1200px': '92vw', '640px': '100vw' }">
+
+    <ng-template pTemplate="header">
+        <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center bg-blue-50 dark:bg-blue-900 rounded-full shadow-sm shrink-0" style="width: 3.5rem; height: 3.5rem">
+                <i class="pi pi-calendar text-blue-500 text-2xl"></i>
+            </div>
+            <div class="flex flex-col">
+                <span class="font-bold text-xl text-surface-900 dark:text-surface-0 mb-0.5">
+                    {{ resume ? (resume.reference ?? 'Audit') + ' — ' + libelles.processus(resume.processusId) : "Fiche résumée de l'audit" }}
+                </span>
+                <span class="text-sm text-surface-500 dark:text-surface-400 font-medium">
+                    Synthèse de l'audit : équipe, périmètre, objectifs et maîtrise des risques
+                </span>
+            </div>
+        </div>
+    </ng-template>
+
     <ng-container *ngIf="resume as audit">
-        <div class="flex items-center gap-2 flex-wrap mb-3">
+        <!-- Bandeau statuts + période -->
+        <div class="flex items-center gap-2 flex-wrap mb-4 pb-3 border-b border-surface-200 dark:border-surface-700">
             <p-tag *ngIf="audit.typeAuditLibelle" [value]="audit.typeAuditLibelle" [severity]="audit.circuitExterne ? 'warn' : 'info'"></p-tag>
             <p-tag *ngIf="audit.statut" [value]="getStatutLabel(audit.statut)" [severity]="getStatutSeverity(audit.statut)" [rounded]="true"></p-tag>
             <p-tag *ngIf="audit.enRetard && audit.statut !== 'EN_RETARD'" severity="danger" [rounded]="true" [value]="'+' + (audit.joursDeRetard ?? 0) + ' j de retard'"></p-tag>
-            <span class="text-sm text-surface-600 dark:text-surface-300 ml-auto">
+            <span class="inline-flex items-center gap-1.5 text-sm font-medium text-surface-600 dark:text-surface-300 ml-auto">
+                <i class="pi pi-clock text-primary text-xs"></i>
                 {{ audit.dateDebutPrevue ? (audit.dateDebutPrevue | date: 'dd/MM/yyyy') : '—' }}<span *ngIf="audit.dateFinPrevue"> → {{ audit.dateFinPrevue | date: 'dd/MM/yyyy' }}</span>
             </span>
         </div>
 
-        <!-- Les champs courts sur trois colonnes, les textes longs sur deux, pour que tout s'aligne -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
-            <div>
-                <div class="text-xs text-surface-500 mb-0.5">Processus / entité auditée</div>
-                <div class="font-medium">{{ libelles.processus(audit.processusId) }}</div>
-            </div>
-            <div>
-                <div class="text-xs text-surface-500 mb-0.5">Responsable de l'équipe</div>
-                <div class="font-medium">{{ libelles.auditeur(audit.responsableEquipeId) }}</div>
-            </div>
-            <div>
-                <div class="text-xs text-surface-500 mb-0.5">Score de maturité</div>
-                <div class="font-semibold">{{ audit.scoreMaturite != null ? (audit.scoreMaturite | number: '1.0-0') + ' %' : '—' }}</div>
-            </div>
-            <div class="md:col-span-2">
-                <div class="text-xs text-surface-500 mb-1">Sites concernés</div>
-                <div class="flex flex-wrap gap-1">
-                    <p-tag *ngFor="let s of nomsSites(audit)" [value]="s" severity="secondary"></p-tag>
-                    <span *ngIf="!audit.siteIds?.length" class="text-surface-400">—</span>
+        <!-- Bloc synthèse structuré (style plan-action-dialog) -->
+        <div class="bg-surface-50 dark:bg-surface-900 p-4 rounded-xl border border-surface-200 dark:border-surface-700 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm mb-3">
+                <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 shadow-xs">
+                    <span class="text-xs text-surface-500 dark:text-surface-400 block mb-1">Processus / entité auditée</span>
+                    <div class="font-semibold text-surface-900 dark:text-surface-0">{{ libelles.processus(audit.processusId) }}</div>
+                </div>
+                <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 shadow-xs">
+                    <span class="text-xs text-surface-500 dark:text-surface-400 block mb-1">Responsable de l'équipe</span>
+                    <div class="flex items-center gap-2 font-semibold text-surface-900 dark:text-surface-0">
+                        <i class="pi pi-user text-primary text-xs"></i>
+                        <span>{{ libelles.auditeur(audit.responsableEquipeId) }}</span>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 shadow-xs">
+                    <span class="text-xs text-surface-500 dark:text-surface-400 block mb-1">Score de maturité</span>
+                    <div class="font-bold text-lg text-surface-900 dark:text-surface-0">
+                        {{ audit.scoreMaturite != null ? (audit.scoreMaturite | number: '1.0-0') + ' %' : '—' }}
+                    </div>
                 </div>
             </div>
-            <div>
-                <div class="text-xs text-surface-500 mb-0.5">Auditeurs associés</div>
-                <div>{{ nomsMembres(audit) }}</div>
-            </div>
-            <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                <div class="bg-surface-50 dark:bg-surface-800/40 rounded-lg p-3">
-                    <div class="text-xs text-surface-500 mb-0.5">Objectif de l'audit</div>
-                    <div class="whitespace-pre-line">{{ audit.objectifsAudit || '—' }}</div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                <div class="md:col-span-2 bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 shadow-xs">
+                    <span class="text-xs text-surface-500 dark:text-surface-400 block mb-1.5">Sites concernés</span>
+                    <div class="flex flex-wrap gap-1.5">
+                        <p-tag *ngFor="let s of nomsSites(audit)" [value]="s" severity="secondary"></p-tag>
+                        <span *ngIf="!audit.siteIds?.length" class="text-surface-400">—</span>
+                    </div>
                 </div>
-                <div class="bg-surface-50 dark:bg-surface-800/40 rounded-lg p-3">
-                    <div class="text-xs text-surface-500 mb-0.5">Critères d'audit</div>
-                    <div class="whitespace-pre-line">{{ audit.criteresAudit || '—' }}</div>
+                <div class="bg-white dark:bg-surface-800 p-3 rounded-lg border border-surface-100 dark:border-surface-700 shadow-xs">
+                    <span class="text-xs text-surface-500 dark:text-surface-400 block mb-1">Auditeurs associés</span>
+                    <div class="text-surface-800 dark:text-surface-200">{{ nomsMembres(audit) }}</div>
                 </div>
             </div>
         </div>
 
-        <p-message *ngIf="audit.circuitExterne" severity="info" styleClass="w-full mt-3"
+        <!-- Objectif & Critères -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+            <div class="bg-surface-50 dark:bg-surface-800/40 border border-surface-200 dark:border-surface-700 rounded-xl p-3.5">
+                <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-surface-500 mb-1.5">
+                    <i class="pi pi-bullseye text-primary"></i>
+                    <span>Objectif de l'audit</span>
+                </div>
+                <div class="whitespace-pre-line text-surface-800 dark:text-surface-200">{{ audit.objectifsAudit || '—' }}</div>
+            </div>
+            <div class="bg-surface-50 dark:bg-surface-800/40 border border-surface-200 dark:border-surface-700 rounded-xl p-3.5">
+                <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-surface-500 mb-1.5">
+                    <i class="pi pi-list-check text-primary"></i>
+                    <span>Critères d'audit</span>
+                </div>
+                <div class="whitespace-pre-line text-surface-800 dark:text-surface-200">{{ audit.criteresAudit || '—' }}</div>
+            </div>
+        </div>
+
+        <p-message *ngIf="audit.circuitExterne" severity="info" styleClass="w-full mb-4"
                    [text]="'Audit externe' + (audit.organismeExterne ? ' (' + audit.organismeExterne + ')' : '') + ' : la date et les objectifs sont ceux communiqués par l\'organisme.'"></p-message>
 
-        <div class="mt-4 text-sm">
-            <div class="text-xs text-surface-500 mb-0.5">Niveau et description du risque</div>
-            <div class="flex items-start gap-2">
-                <p-tag *ngIf="audit.niveauRisque" [value]="risqueLabel(audit.niveauRisque)" [severity]="risqueSeverite(audit.niveauRisque)" [rounded]="true"></p-tag>
-                <span>{{ audit.descriptionRisque || '—' }}</span>
+        <!-- Risques & Actions de maîtrise -->
+        <div class="bg-surface-50 dark:bg-surface-900 p-4 rounded-xl border border-surface-200 dark:border-surface-700 text-sm">
+            <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+                <div class="flex items-center gap-2 font-bold text-surface-800 dark:text-surface-100">
+                    <i class="pi pi-shield text-primary"></i>
+                    <span>Risque et actions de maîtrise</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <p-tag *ngIf="audit.niveauRisque" [value]="risqueLabel(audit.niveauRisque)" [severity]="risqueSeverite(audit.niveauRisque)" [rounded]="true"></p-tag>
+                    <span class="text-xs text-surface-600 dark:text-surface-300">{{ audit.descriptionRisque || 'Aucune description de risque' }}</span>
+                </div>
+            </div>
+
+            <p *ngIf="!audit.actionsMaitriseRisques?.length" class="text-surface-400 m-0 text-xs">Aucune action de maîtrise prévue.</p>
+            <div *ngIf="audit.actionsMaitriseRisques?.length" class="bg-white dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700 overflow-hidden">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-surface-50 dark:bg-surface-800/60 text-xs text-surface-500">
+                            <th scope="col" class="text-left font-semibold py-2 px-3">Action</th>
+                            <th scope="col" class="text-left font-semibold py-2 px-3">Responsable</th>
+                            <th scope="col" class="text-left font-semibold py-2 px-3">Délai</th>
+                            <th scope="col" class="text-left font-semibold py-2 px-3">Efficacité</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let a of audit.actionsMaitriseRisques" class="border-t border-surface-100 dark:border-surface-700">
+                            <td class="py-2 px-3 font-medium">{{ a.libelle }}</td>
+                            <td class="py-2 px-3">{{ a.responsable || '—' }}</td>
+                            <td class="py-2 px-3 whitespace-nowrap">{{ a.delai ? (a.delai | date: 'dd/MM/yyyy') : '—' }}</td>
+                            <td class="py-2 px-3"><p-tag [value]="efficaciteLabel(a.efficacite)" [severity]="efficaciteSeverite(a.efficacite)" [rounded]="true"></p-tag></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-
-        <div class="mt-4 text-sm">
-            <div class="text-xs font-semibold text-surface-700 dark:text-surface-200 mb-1">Actions de maîtrise des risques</div>
-            <p *ngIf="!audit.actionsMaitriseRisques?.length" class="text-surface-400 m-0">Aucune action prévue.</p>
-            <table *ngIf="audit.actionsMaitriseRisques?.length" class="w-full border-collapse">
-                <thead>
-                    <tr class="text-xs text-surface-500">
-                        <th scope="col" class="text-left font-semibold py-1 pr-3">Action</th>
-                        <th scope="col" class="text-left font-semibold py-1 pr-3">Responsable</th>
-                        <th scope="col" class="text-left font-semibold py-1 pr-3">Délai</th>
-                        <th scope="col" class="text-left font-semibold py-1">Efficacité</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let a of audit.actionsMaitriseRisques" class="border-t border-surface-100 dark:border-surface-800">
-                        <td class="py-1 pr-3">{{ a.libelle }}</td>
-                        <td class="py-1 pr-3">{{ a.responsable || '—' }}</td>
-                        <td class="py-1 pr-3 whitespace-nowrap">{{ a.delai ? (a.delai | date: 'dd/MM/yyyy') : '—' }}</td>
-                        <td class="py-1"><p-tag [value]="efficaciteLabel(a.efficacite)" [severity]="efficaciteSeverite(a.efficacite)" [rounded]="true"></p-tag></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
     </ng-container>
+
     <ng-template pTemplate="footer">
-        <div *ngIf="resume as audit" class="flex flex-wrap justify-end gap-2">
+        <div *ngIf="resume as audit" class="flex flex-wrap justify-end gap-2 pt-2">
             <p-button [icon]="audit.circuitExterne ? 'pi pi-upload' : 'pi pi-file-edit'"
                       [label]="audit.circuitExterne ? 'Charger le plan d\'audit reçu' : 'Élaborer le plan d\'audit'"
-                      [outlined]="true" size="small" (onClick)="allerAuPlan(audit)"></p-button>
-            <p-button icon="pi pi-external-link" label="Ouvrir la fiche complète" size="small" (onClick)="ouvrirDetail(audit)"></p-button>
+                      [outlined]="true" severity="secondary" size="small" (onClick)="allerAuPlan(audit)"></p-button>
+            <p-button icon="pi pi-external-link" label="Ouvrir la fiche complète" severity="info" size="small" (onClick)="ouvrirDetail(audit)"></p-button>
         </div>
     </ng-template>
 </p-dialog>

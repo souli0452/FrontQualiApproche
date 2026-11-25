@@ -1,152 +1,23 @@
-/* ===================================================
-   QMS Document Create - Simple form + Editor Dialog
-   =================================================== */
-::ng-deep .custom-nc-upload {
-    /* Vos styles personnalisés (hauteur, fond gris, bouton personnalisé, etc.) */
-    background-color: var(--surface-ground) !important;
-    border: 2px dashed var(--surface-border) !important;
-}
+:host {
+    display: block;
 
-::ng-deep  .uploader-container {
-    height: 60% !important;
-    padding: 10px !important;
-    display: flex;
-    justify-content: center;
-
-    .file-list{
-        width: 100% !important;
-        display: flex;
-        justify-content: center;
+    h3,
+    h4 {
+        margin: 0;
     }
-}
 
-::ng-deep .text-content {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    align-items: center !important;
-    width: max-content !important;
-    opacity: .4 !important;
-}
-.qms-container {
-  .card {
-    border-radius: 8px;
-  }
-}
+    ::ng-deep {
+        .p-inputtext,
+        .p-select,
+        .p-inputnumber-input {
+            box-shadow: none !important;
+        }
 
-/* --- Mode Cards --- */
-.mode-option {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 16px 12px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: #f8fafc;
-  gap: 4px;
-  color: #64748b;
-
-  &:hover {
-    border-color: var(--primary-color);
-    background: #f5f3ff;
-    color: var(--primary-color);
-  }
-
-  &.mode-active {
-    border-color: var(--primary-color);
-    background: #eef2ff;
-    color: var(--primary-color);
-
-    i { color: var(--primary-color); }
-    span:first-of-type { color: var(--primary-color); font-weight: 700; }
-  }
-
-  i { font-size: 22px; color: #94a3b8; transition: color 0.2s; }
-  span { text-align: center; line-height: 1.3; }
-}
-
-/* --- Editor Preview Zone --- */
-.editor-preview-zone {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #fafafa;
-  min-height: 120px;
-  display: flex;
-  flex-direction: column;
-}
-
-.editor-preview-content {
-  flex: 1;
-  padding: 16px 20px;
-  font-size: 13px;
-  color: #475569;
-  line-height: 1.6;
-  border-bottom: 1px solid #e2e8f0;
-  max-height: 120px;
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
-}
-
-.editor-empty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  color: #94a3b8;
-}
-
-.editor-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: #fff;
-  border-top: 1px solid #f1f5f9;
-}
-
-/* --- Editor Dialog --- */
-::ng-deep .editor-dialog {
-  .p-dialog {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .p-dialog-content {
-    flex: 1;
-    overflow: hidden;
-    padding: 0 !important;
-    display: flex;
-    flex-direction: column;
-  }
-}
-
-.tinymce-dialog-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  height: calc(90vh - 130px);
-
-  textarea {
-    display: none;
-  }
-
-  // TinyMCE pleine hauteur
-  ::ng-deep .tox.tox-tinymce {
-    flex: 1 !important;
-    height: 100% !important;
-    border: none !important;
-    border-radius: 0 !important;
-  }
-
-  ::ng-deep .tox-editor-container {
-    height: 100%;
-  }
+        .p-inputtext:enabled:focus,
+        .p-select:not(.p-disabled).p-focus,
+        .p-inputnumber-input:enabled:focus {
+            box-shadow: none !important;
+            outline: none !important;
+        }
+    }
 }

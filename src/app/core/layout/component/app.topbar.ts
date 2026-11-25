@@ -1,13 +1,12 @@
-import { Component, HostListener, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { Router, RouterModule, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { LayoutService } from '../service/layout.service';
 import { MenuItem, MessageService } from 'primeng/api';
 import { Title } from '@angular/platform-browser';
-import { filter, map, takeUntil } from 'rxjs/operators';
+import { filter, takeUntil } from 'rxjs/operators';
 import { FormsModule, ReactiveFormsModule, UntypedFormBuilder} from '@angular/forms';
 import { NgPrimeModule } from '../../../../prime-ng.module';
-import { Popover } from 'primeng/popover';
 import { Subject } from 'rxjs';
 import { NonConformiteService } from '@features/non-conformite/services/non-conformite.service';
 import { AuditGestionService } from '@features/gestion-audit/services/audit.service';
@@ -72,21 +71,35 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
                 </button>
 
                 <!-- Assistant IA : caché à qui ne peut pas s'en servir — permission et module. -->
-                <button *ngIf="assistantIaDisponible" type="button" pTooltip="Assistant qualité IA" tooltipPosition="bottom" (click)="assistantIaVisible = true" class="px-3 py-2 p-button-secondary rounded-full transition-colors hover:bg-surface-100 dark:hover:bg-surface-800">
-                    <i class="pi pi-sparkles" style="font-size: 1.2rem"></i>
+                <button *ngIf="assistantIaDisponible"
+                        type="button"
+                        pTooltip="Assistant qualité IA"
+                        tooltipPosition="bottom"
+                        (click)="assistantIaVisible = true; notificationVisible = false"
+                        class="qa-ai-trigger relative w-10 h-10 flex items-center justify-center rounded-full cursor-pointer transition-all duration-200"
+                        [class.is-open]="assistantIaVisible">
+                    <i class="pi pi-sparkles !text-[1.1rem]"></i>
                 </button>
 
                 <!-- Bouton de Notifications -->
-                <button type="button" pTooltip="Notifications" tooltipPosition="bottom" (click)="notificationPopover.toggle($event)" class="relative px-3 py-2 p-button-secondary rounded-full transition-colors hover:bg-surface-100 dark:hover:bg-surface-800">
-                    <i class="pi pi-bell" style="font-size: 1.2rem"></i>
-                    
-                    <!-- Le badge rouge qui clignote uniquement si notificationCount > 0 -->
-                    <span *ngIf="notificationCount > 0" class="absolute top-0 right-0 flex h-4 w-4 items-center justify-center">
-                        <!-- L'effet radar (ping) derrière le badge -->
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <!-- Le badge rouge au premier plan -->
-                        <span class="relative inline-flex rounded-full p-2 h-5 w-5 bg-red-500 font-medium text-white text-[10px] items-center justify-center border border-white dark:border-surface-900">
-                            {{ notificationCount }}
+                <button type="button"
+                        pTooltip="Notifications"
+                        tooltipPosition="bottom"
+                        (click)="toggleNotifications($event)"
+                        class="relative w-10 h-10 flex items-center justify-center p-button-secondary rounded-full transition-colors hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer"
+                        [ngClass]="{
+                            'bg-[#0084ca]/12 text-[#0084ca] dark:text-sky-400': notificationVisible,
+                            'mr-3': notificationCount >= 100,
+                            'mr-1': notificationCount > 0 && notificationCount < 100
+                        }">
+                    <i class="pi pi-bell !text-[1.15rem]"></i>
+
+                    <!-- Badge pilule auto-extensible : ancré en haut à droite pour s'étendre vers l'extérieur sans couvrir la cloche -->
+                    <span *ngIf="notificationCount > 0"
+                          class="absolute -top-1 left-[22px] inline-flex items-center justify-center pointer-events-none">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-70"></span>
+                        <span class="relative inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-red-500 font-bold text-white text-[10px] leading-none whitespace-nowrap border-2 border-white dark:border-surface-900 shadow-sm tabular-nums">
+                            {{ notificationCount > 999 ? '999+' : notificationCount }}
                         </span>
                     </span>
                 </button>
@@ -142,43 +155,116 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
                 </ng-container>
             </ng-template>
         </p-menu>
-        <p-popover #notificationPopover>
-            <ng-template pTemplate="header">
-                    <div class="inline-flex align-items-center justify-content-center gap-2">
-                        <span class="layout-topbar-title">
-                            <span>Notifications</span>
-                        </span>                      
+        <!-- Panneau de notifications fixe avec effet glassmorphism (reste fixe au scroll jusqu'à fermeture) -->
+        <div *ngIf="notificationVisible"
+             class="notif-glass-panel"
+             (click)="$event.stopPropagation()">
+            <!-- En-tête fixe compact -->
+            <div class="notif-glass-bar px-4 py-3 border-b border-white/35 dark:border-white/10 flex items-center justify-between gap-2 shrink-0">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-8 h-8 rounded-[8px] bg-[#0084ca]/15 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                        <i class="pi pi-bell !text-sm"></i>
                     </div>
-                </ng-template>    
-                <div class="flex flex-col gap-3 mt-4">
-                    
-                    <div *ngFor="let notif of notifications" (click)="ouvrirNotification(notif)"
-                        class="flex items-start gap-3 p-3 rounded-xl hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors cursor-pointer border border-transparent"
-                        [ngClass]="{'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30': !notif.read}">
-                        
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" [ngClass]="notif.colorClass">
-                            <i [class]="notif.icon"></i>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-bold text-surface-900 dark:text-surface-0">Notifications</span>
+                            <span *ngIf="notificationCount > 0"
+                                  class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#0084ca] text-white tabular-nums">
+                                {{ notificationCount }}
+                            </span>
                         </div>
-                        
-                        <!-- Contenu -->
-                        <div class="flex flex-col flex-1">
-                            <span class="font-medium text-sm mb-2 text-surface-900 dark:text-surface-0">{{ notif.title }}</span>
-                            <p class="text-xs line-height text-surface-600 dark:text-surface-400 mt-1 leading-normal">{{ notif.detail }}</p>
-                            <span class="text-[10px] text-surface-500 mt-2 font-medium">{{ notif.time }}</span>
-                        </div>
-                        
-                        <!-- Point indicateur Non-lu -->
-                        <div *ngIf="!notif.read" class="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
-                    </div>
-
-                    <!-- Sans cela, la cloche s'ouvrait sur un panneau vide, qui se lit comme une
-                         panne plutôt que comme une absence de travail en attente. -->
-                    <div *ngIf="!notifications.length" class="flex flex-col items-center gap-2 py-6 text-surface-400">
-                        <i class="pi pi-check-circle text-2xl"></i>
-                        <span class="text-sm">Rien n'attend votre intervention.</span>
+                        <span class="block text-[11px] text-surface-600 dark:text-surface-300 truncate">
+                            {{ notifications.length ? notifications.length + ' alerte(s) en attente' : 'Aucune action en attente' }}
+                        </span>
                     </div>
                 </div>
-        </p-popover>
+
+                <div class="flex items-center gap-1 shrink-0">
+                    <button type="button"
+                            pTooltip="Rafraîchir"
+                            tooltipPosition="bottom"
+                            (click)="rafraichirToutesNotifications()"
+                            class="w-7 h-7 rounded-[6px] flex items-center justify-center bg-transparent border-0 text-surface-600 dark:text-surface-300 hover:bg-white/50 dark:hover:bg-white/10 transition-colors cursor-pointer">
+                        <i class="pi pi-refresh !text-xs" [ngClass]="{ 'pi-spin': rafraichissementNotifs }"></i>
+                    </button>
+                    <button type="button"
+                            pTooltip="Fermer"
+                            tooltipPosition="bottom"
+                            (click)="fermerNotifications()"
+                            class="w-7 h-7 rounded-[6px] flex items-center justify-center bg-transparent border-0 text-surface-600 dark:text-surface-300 hover:bg-white/50 dark:hover:bg-white/10 transition-colors cursor-pointer">
+                        <i class="pi pi-times !text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Liste scrollable interne -->
+            <div class="notif-scroll flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+                <button *ngFor="let notif of notifications"
+                        type="button"
+                        (click)="ouvrirNotification(notif)"
+                        class="notif-glass-card group w-full text-left rounded-[10px] p-3 flex items-start gap-3 cursor-pointer">
+                    <div class="w-9 h-9 rounded-[8px] flex items-center justify-center shrink-0 mt-0.5" [ngClass]="notif.colorClass">
+                        <i [class]="notif.icon + ' !text-[15px]'"></i>
+                    </div>
+
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-bold text-[13px] text-surface-900 dark:text-surface-0 truncate">{{ notif.title }}</span>
+                            <span *ngIf="notif.count"
+                                  class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 tabular-nums"
+                                  [ngClass]="notif.urgent
+                                      ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300'
+                                      : (notif.tone === 'sky'
+                                          ? 'bg-[#0ea5e9]/15 text-[#0369a1] dark:text-sky-300'
+                                          : 'bg-amber-500/15 text-amber-800 dark:text-amber-300')">
+                                {{ notif.count }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-surface-600 dark:text-surface-300 m-0 mt-0.5 leading-snug">
+                            {{ notif.detail }}
+                        </p>
+                        <div class="flex items-center justify-between gap-2 mt-2">
+                            <div class="flex items-center gap-1.5">
+                                <span *ngIf="notif.module"
+                                      class="px-1.5 py-0.5 rounded-[4px] text-[10px] font-semibold bg-surface-900/5 dark:bg-white/10 text-surface-600 dark:text-surface-300">
+                                    {{ notif.module }}
+                                </span>
+                                <span class="px-1.5 py-0.5 rounded-[4px] text-[10px] font-semibold"
+                                      [ngClass]="notif.urgent
+                                          ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300'
+                                          : 'bg-[#0ea5e9]/15 text-[#0369a1] dark:text-sky-300'">
+                                    {{ notif.time }}
+                                </span>
+                            </div>
+                            <span class="text-[11px] font-semibold text-[#0084ca] dark:text-sky-400 opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-0.5">
+                                <span>Ouvrir</span>
+                                <i class="pi pi-arrow-up-right !text-[9px]"></i>
+                            </span>
+                        </div>
+                    </div>
+                </button>
+
+                <!-- État vide soigné -->
+                <div *ngIf="!notifications.length"
+                     class="notif-glass-card rounded-[10px] py-8 px-4 flex flex-col items-center text-center gap-2">
+                    <div class="w-10 h-10 rounded-[8px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                        <i class="pi pi-check-circle !text-xl"></i>
+                    </div>
+                    <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">Tout est à jour</span>
+                    <span class="text-xs text-surface-600 dark:text-surface-300">Rien n'attend votre intervention pour le moment.</span>
+                </div>
+            </div>
+
+            <!-- Pied discret -->
+            <div class="notif-glass-bar px-4 py-2 border-t border-white/35 dark:border-white/10 flex items-center justify-between text-[11px] text-surface-600 dark:text-surface-300 shrink-0">
+                <span>Cliquez sur une alerte pour l'ouvrir</span>
+                <button type="button"
+                        (click)="fermerNotifications()"
+                        class="font-semibold text-[#0084ca] dark:text-sky-400 hover:underline bg-transparent border-0 p-0 cursor-pointer">
+                    Fermer
+                </button>
+            </div>
+        </div>
         <!-- Tiroir de l'aide. Monté à l'ouverture seulement : les réponses se relisent auprès
              du serveur au ngOnInit, et les charger au démarrage de l'application le ferait pour
              rien — la plupart des sessions ne l'ouvrent jamais. -->
@@ -193,11 +279,23 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
         </p-drawer>
 
         <!-- Drawer de l'assistant qualité IA -->
-        <p-drawer [modal]="true" [(visible)]="assistantIaVisible" position="right" [style]="{width: '480px'}" styleClass="quali-ai-drawer">
+        <p-drawer [modal]="true" [(visible)]="assistantIaVisible" position="right" [style]="{ width: '490px', maxWidth: '100vw' }" styleClass="quali-ai-drawer quali-ai-assistant-drawer">
             <ng-template pTemplate="header">
-                <div class="inline-flex items-center gap-2">
-                    <i class="pi pi-sparkles text-primary"></i>
-                    <span class="layout-topbar-title"><span>Assistant qualité</span></span>
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="qa-drawer-emblem w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-white shadow-sm">
+                        <i class="pi pi-sparkles !text-base"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[14px] font-bold text-surface-900 dark:text-surface-0 leading-tight truncate">Assistant qualité</span>
+                            <span class="px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-sky-500/12 text-[#0084ca] dark:text-sky-300 border border-sky-500/20">
+                                IA
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-surface-500 dark:text-surface-400 m-0 mt-0.5 truncate">
+                            Aide QMS &amp; consultation de vos dossiers
+                        </p>
+                    </div>
                 </div>
             </ng-template>
             <!-- Monté à l'ouverture seulement : le fil se relit auprès du serveur au ngOnInit,
@@ -210,6 +308,40 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
     </div>
     `,
     styles: [`
+        /* Déclencheur Assistant IA dans la barre supérieure */
+        .qa-ai-trigger {
+            background: linear-gradient(135deg, rgba(0, 132, 202, 0.10) 0%, rgba(79, 70, 229, 0.10) 100%);
+            border: 1px solid rgba(0, 132, 202, 0.25);
+            color: #0369a1;
+        }
+        .qa-ai-trigger:hover {
+            background: linear-gradient(135deg, rgba(0, 132, 202, 0.17) 0%, rgba(79, 70, 229, 0.17) 100%);
+            border-color: rgba(0, 132, 202, 0.50);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px -2px rgba(0, 132, 202, 0.22);
+        }
+        .qa-ai-trigger.is-open {
+            background: linear-gradient(135deg, #0084ca 0%, #2563eb 100%);
+            border-color: transparent;
+            color: #ffffff;
+            box-shadow: 0 6px 16px -4px rgba(0, 132, 202, 0.45);
+        }
+        :host-context(.app-dark) .qa-ai-trigger,
+        :host-context(.dark) .qa-ai-trigger {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%);
+            border-color: rgba(56, 189, 248, 0.30);
+            color: #38bdf8;
+        }
+        :host-context(.app-dark) .qa-ai-trigger.is-open,
+        :host-context(.dark) .qa-ai-trigger.is-open {
+            color: #ffffff;
+        }
+
+        .qa-drawer-emblem {
+            background: linear-gradient(135deg, #0084ca 0%, #2563eb 100%);
+            box-shadow: 0 4px 12px -2px rgba(0, 132, 202, 0.40);
+        }
+
         /* Le tiroir de l'assistant : sa zone de contenu porte la hauteur sur laquelle le fil
            s'appuie pour défiler. Sans elle, PrimeNG la laisse libre et le fil s'allonge
            indéfiniment — la zone de saisie finit sous le bord de l'écran. */
@@ -218,6 +350,36 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
             min-height: 0;
             display: flex;
             flex-direction: column;
+        }
+
+        ::ng-deep .quali-ai-assistant-drawer {
+            border-left: 1px solid #e2e8f0 !important;
+            box-shadow: -14px 0 42px -12px rgba(15, 23, 42, 0.16) !important;
+        }
+        ::ng-deep .quali-ai-assistant-drawer .p-drawer-header {
+            padding: 0.875rem 1.15rem !important;
+            background: linear-gradient(135deg, #f8fbff 0%, #f0f7ff 58%, #f5f3ff 100%) !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+        ::ng-deep .quali-ai-assistant-drawer .p-drawer-content {
+            padding: 0 !important;
+        }
+        :host-context(.app-dark) ::ng-deep .quali-ai-assistant-drawer,
+        :host-context(.dark) ::ng-deep .quali-ai-assistant-drawer {
+            border-left-color: #2a3954 !important;
+            box-shadow: -16px 0 46px rgba(0, 0, 0, 0.50) !important;
+        }
+        :host-context(.app-dark) ::ng-deep .quali-ai-assistant-drawer .p-drawer-header,
+        :host-context(.dark) ::ng-deep .quali-ai-assistant-drawer .p-drawer-header {
+            background: linear-gradient(135deg, #132038 0%, #162441 60%, #1d1f42 100%) !important;
+            border-bottom-color: #2a3954 !important;
+        }
+        @media (min-width: 540px) {
+            ::ng-deep .quali-ai-assistant-drawer {
+                border-top-left-radius: 16px !important;
+                border-bottom-left-radius: 16px !important;
+                overflow: hidden !important;
+            }
         }
 
         ::ng-deep .custom-bottom-drawer {
@@ -232,12 +394,91 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
             overflow: hidden !important;
         }
 
-        .line-height {
-            margin: 0 !important;
-            line-height: 0px !important;
+        /* Panneau de notifications fixe — effet glassmorphism (css.glass) */
+        .notif-glass-panel {
+            position: fixed;
+            top: 4.5rem;
+            right: 1.5rem;
+            z-index: 1000;
+            width: 400px;
+            max-width: calc(100vw - 1.5rem);
+            max-height: calc(100vh - 5.5rem);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: notifDropIn 0.16s ease-out;
+        }
+
+        .notif-glass-bar {
+            background: rgba(255, 255, 255, 0.52);
+        }
+
+        .notif-glass-card {
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(255, 255, 255, 0.78);
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+            transition: background-color 0.18s ease, border-color 0.18s ease;
+        }
+
+        .notif-glass-card:hover {
+            background: rgba(255, 255, 255, 0.96);
+            border-color: rgba(0, 132, 202, 0.45);
+        }
+
+        :host-context(.app-dark) .notif-glass-panel,
+        :host-context(.dark) .notif-glass-panel {
+            background: rgba(15, 23, 42, 0.42);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+        }
+
+        :host-context(.app-dark) .notif-glass-bar,
+        :host-context(.dark) .notif-glass-bar {
+            background: rgba(15, 23, 42, 0.58);
+        }
+
+        :host-context(.app-dark) .notif-glass-card,
+        :host-context(.dark) .notif-glass-card {
+            background: rgba(30, 41, 59, 0.78);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+        }
+
+        :host-context(.app-dark) .notif-glass-card:hover,
+        :host-context(.dark) .notif-glass-card:hover {
+            background: rgba(30, 41, 59, 0.94);
+            border-color: rgba(14, 165, 233, 0.55);
+        }
+
+        .notif-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .notif-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .notif-scroll::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.35);
+            border-radius: 9999px;
+        }
+
+        @keyframes notifDropIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @media screen and (max-width: 600px) {
+            .notif-glass-panel {
+                right: 0.75rem;
+                left: 0.75rem;
+                width: auto;
+                max-width: none;
+            }
             ::ng-deep .custom-bottom-drawer {
                 max-width: 100% !important;
                 border-radius: 0 !important;
@@ -271,12 +512,13 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
         }
     `]
 })
-export class AppTopbar implements OnInit {
+export class AppTopbar implements OnInit, OnDestroy {
     items!: MenuItem[];
     user: any;
     menuOpen: boolean = false;
     pageTitle: string = '';
     searchQuery: string = '';
+    rafraichissementNotifs = false;
 
     hasAnyPermission = hasAnyPermission;
     destroy$: Subject<boolean> = new Subject<boolean>();
@@ -287,6 +529,20 @@ export class AppTopbar implements OnInit {
     @HostListener('window:scroll', [])
     onWindowScroll() {
         this.isScrolled = window.scrollY > 10;
+    }
+
+    @HostListener('document:click')
+    onDocumentClick() {
+        if (this.notificationVisible) {
+            this.notificationVisible = false;
+        }
+    }
+
+    @HostListener('document:keydown.escape')
+    onEscape() {
+        if (this.notificationVisible) {
+            this.notificationVisible = false;
+        }
     }
 
     /**
@@ -301,8 +557,28 @@ export class AppTopbar implements OnInit {
         return { restants: Math.max(0, etat.joursRestants) };
     }
 
+    toggleNotifications(event: Event): void {
+        event.stopPropagation();
+        this.notificationVisible = !this.notificationVisible;
+    }
 
-    @ViewChild('notificationPopover') notificationPopover!: Popover; 
+    fermerNotifications(): void {
+        this.notificationVisible = false;
+    }
+
+    rafraichirToutesNotifications(): void {
+        this.rafraichissementNotifs = true;
+        this.nonConformiteService.rafraichirNotifications();
+        this.chargerNotificationsCloche();
+        if (hasAnyPermission(['audit-read', 'audit-write', 'audit-conduct', 'audit-validate'])) {
+            this.auditService.rafraichirNotifications();
+            this.chargerNotificationsAudit();
+        }
+        if (hasAnyPermission(['document-read', 'document-write', 'DOC_READ'])) {
+            this.aTraiterDocumentaire.rafraichir().pipe(takeUntil(this.destroy$)).subscribe();
+        }
+        setTimeout(() => (this.rafraichissementNotifs = false), 500);
+    }
 
     /**
      * Le tiroir de l'aide est-il ouvert ?
@@ -371,10 +647,12 @@ export class AppTopbar implements OnInit {
         this.user = currentUserState.value as AuthData
         this.updateTitle();
 
-        // Écouter les changements de route pour mettre à jour le titre
+        // Écouter les changements de route pour mettre à jour le titre et fermer les notifications
         this.router.events.pipe(
-            filter(event => event instanceof NavigationEnd)
+            filter(event => event instanceof NavigationEnd),
+            takeUntil(this.destroy$)
         ).subscribe(() => {
+            this.notificationVisible = false;
             this.updateTitle();
         });
 
@@ -524,11 +802,27 @@ export class AppTopbar implements OnInit {
                 break;
         }
 
+        const module = route.startsWith('/gestion-audit')
+            ? 'Audit'
+            : route.startsWith('/gestion-documentaire')
+                ? 'GED'
+                : 'NC';
+        const urgent = n.gravite === 'URGENT';
+        const tone = urgent || colorClass.includes('red')
+            ? 'rose'
+            : colorClass.includes('blue') || colorClass.includes('purple')
+                ? 'sky'
+                : 'amber';
+
         return {
             id: n.id, // 👈 Indispensable pour que notification.id soit défini lors du clic !
             title: n.titre,
             detail: n.detail,
-            time: n.gravite === 'URGENT' ? 'Urgent' : 'À traiter',
+            count: n.nombre || 1,
+            module,
+            urgent,
+            tone,
+            time: urgent ? 'Urgent' : 'À traiter',
             icon: icon,
             colorClass: colorClass,
             read: false,
@@ -559,9 +853,13 @@ export class AppTopbar implements OnInit {
                     this.notificationsDocumentaire.push({
                         title: 'Documents à traiter',
                         detail: `${etat.documents.length} document(s) attendent votre décision.`,
+                        count: etat.documents.length,
+                        module: 'GED',
+                        urgent: false,
+                        tone: 'amber',
                         time: 'À traiter',
                         icon: 'pi pi-inbox',
-                        colorClass: 'bg-orange-100 text-orange-600',
+                        colorClass: 'bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-300',
                         read: false,
                         // La notification mène là où l'on peut agir : la vue d'ensemble porte les
                         // dossiers et leurs boutons. Annoncer sans y conduire obligeait à chercher.
@@ -572,9 +870,13 @@ export class AppTopbar implements OnInit {
                     this.notificationsDocumentaire.push({
                         title: 'Demandes sur documents',
                         detail: `${etat.demandes.length} demande(s) de modification ou de suppression à instruire.`,
+                        count: etat.demandes.length,
+                        module: 'GED',
+                        urgent: true,
+                        tone: 'rose',
                         time: 'Urgent',
                         icon: 'pi pi-file-edit',
-                        colorClass: 'bg-red-100 text-red-600',
+                        colorClass: 'bg-red-100 text-red-600 dark:bg-rose-500/20 dark:text-rose-300',
                         read: false,
                         route: '/gestion-documentaire/vue-ensemble'
                     });
@@ -597,7 +899,7 @@ export class AppTopbar implements OnInit {
         }
 
         if (notification?.route) {
-            this.notificationPopover?.hide();
+            this.notificationVisible = false;
             this.router.navigate([notification.route]);
         }
     }
@@ -649,6 +951,11 @@ export class AppTopbar implements OnInit {
             this.router.navigate(['/recherche'], { queryParams: { q: this.searchQuery } });
             this.searchQuery = ''; // Optionnel : vider la recherche
         }
+    }
+
+    ngOnDestroy(): void {
+        this.destroy$.next(true);
+        this.destroy$.complete();
     }
 
 }

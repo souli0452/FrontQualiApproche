@@ -18,6 +18,8 @@
 
             <div class="col-sm-12">
                 <app-tableau-affichage
+                    [title]="pageLabel"
+                    [badgeCount]="totalElements || (listeObject ? listeObject.length : 0)"
                     [tableCols]="tableCols"
                     [listeObject]="listeObject"
                     [loading]="loading"

@@ -1,128 +1,239 @@
 <div class="flex flex-col h-full min-h-0">
 
-    <!-- Les questions que l'assistant sait poser à l'API métier. En tête et hors de la zone
-         défilante : elles ne doivent pas remonter avec le fil, sans quoi elles disparaissent dès
-         le deuxième échange — au moment précis où l'on cherche quoi demander d'autre.
-         C'est l'application qui choisit l'appel derrière chacune, jamais le modèle. -->
-    <div *ngIf="questions.length"
-         class="shrink-0 pb-3 mb-3 border-b border-surface-200 dark:border-surface-700">
-        <div class="text-xs text-surface-400 mb-2">Puisez dans vos dossiers</div>
-        <div class="flex flex-wrap gap-2">
+    <!-- Ruban compact actif en cours de discussion : libère la hauteur pour le fil tout en
+         laissant « Puisez dans vos dossiers » et « Nouveau fil » accessibles en un clic. -->
+    <div *ngIf="messages.length > 0 || chargement"
+         class="shrink-0 px-4 py-2.5 border-b border-surface-200 dark:border-surface-800 bg-surface-50/80 dark:bg-surface-900/60 flex flex-col gap-2">
+        <div class="flex items-center justify-between gap-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-surface-500 dark:text-surface-400 inline-flex items-center gap-1.5">
+                <i class="pi pi-database text-[#0084ca] !text-[11px]"></i>
+                <span>{{ questions.length ? 'Vos dossiers en direct' : 'Fil de discussion' }}</span>
+            </span>
+            <div class="flex items-center gap-2">
+                <button *ngIf="questions.length"
+                        type="button"
+                        (click)="raccourcisDeplies = !raccourcisDeplies"
+                        class="text-[11px] font-semibold text-[#0084ca] dark:text-sky-400 hover:underline bg-transparent border-0 p-0 cursor-pointer">
+                    {{ raccourcisDeplies ? 'Réduire ▴' : 'Tout voir ▾' }}
+                </button>
+                <button type="button"
+                        pTooltip="Démarrer une nouvelle conversation"
+                        tooltipPosition="left"
+                        [disabled]="chargement"
+                        (click)="nouveauFil()"
+                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 text-surface-700 dark:text-surface-200 hover:border-[#0084ca] hover:text-[#0084ca] transition-colors cursor-pointer disabled:opacity-45">
+                    <i class="pi pi-plus !text-[10px]"></i>
+                    <span>Nouveau</span>
+                </button>
+            </div>
+        </div>
+
+        <div *ngIf="questions.length"
+             class="flex items-center gap-1.5 pb-0.5 qa-scroll-thin"
+             [ngClass]="raccourcisDeplies ? 'flex-wrap' : 'overflow-x-auto'">
             <button *ngFor="let question of questions" type="button"
-                    class="text-xs px-3 py-1.5 rounded-full border border-surface-200 dark:border-surface-700
-                           text-surface-700 dark:text-surface-0 hover:bg-primary-50 hover:border-primary-200
-                           transition-colors disabled:opacity-50"
+                    class="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border border-surface-200 dark:border-surface-700
+                           bg-white dark:bg-surface-800 text-surface-700 dark:text-surface-100 hover:border-[#0084ca] hover:text-[#0084ca] dark:hover:text-sky-300
+                           transition-colors cursor-pointer disabled:opacity-50"
                     [disabled]="chargement"
                     [title]="question.description"
                     (click)="poser(question)">
-                {{ question.libelle }}
+                <i class="pi !text-[11px]"
+                   [ngClass]="iconeDeQuestion(question.code) + (estQuestionIndicateur(question.code) ? ' text-indigo-500' : ' text-[#0084ca]')"></i>
+                <span>{{ question.libelle }}</span>
             </button>
         </div>
     </div>
 
-    <!-- Le fil. Vide, il dit ce qu'on peut lui demander : une zone de saisie muette
-         n'appelle aucune question, et c'est le premier message qui coûte le plus. -->
-    <!-- « min-h-0 » n'est pas décoratif : un élément de flex a min-height:auto par défaut, donc il
-         refuse de rétrécir sous la hauteur de son contenu. Sans lui, le fil pousse la zone de
-         saisie hors du tiroir au lieu de défiler, et les messages disparaissent par le bas. -->
-    <div #fil class="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-3">
+    <!-- Le fil. « min-h-0 » permet à la zone de défiler sans pousser le composeur hors de l'écran. -->
+    <div #fil class="flex-1 min-h-0 overflow-y-auto qa-scroll-thin px-4 py-4 flex flex-col gap-3.5">
 
-        <div *ngIf="messages.length === 0 && !chargement" class="text-surface-500 text-sm line-height-3 mt-2">
-            <p class="mt-0 mb-3">
-                Posez une question de méthode ou de vocabulaire qualité. Par exemple :
-            </p>
-            <ul class="pl-4 my-0 flex flex-col gap-2">
-                <li>Quelle différence entre une correction et une action corrective ?</li>
-                <li>Comment formuler un constat d'audit ?</li>
-                <li>Par où commencer une analyse de causes ?</li>
-            </ul>
-            <p class="mt-4 mb-0 text-surface-400">
-                L'assistant ne consulte pas vos dossiers : il aide à réfléchir et à rédiger.
-            </p>
+        <!-- État d'accueil structuré (lorsque le fil est vide) -->
+        <div *ngIf="messages.length === 0 && !chargement" class="flex flex-col gap-4">
+
+            <!-- Carte d'accroche compacte -->
+            <div class="rounded-xl p-3.5 border border-sky-200/80 dark:border-sky-800/40 bg-gradient-to-br from-sky-50/90 via-blue-50/50 to-indigo-50/70 dark:from-sky-950/35 dark:via-slate-900 dark:to-indigo-950/30 flex items-start gap-3">
+                <div class="w-8 h-8 rounded-lg bg-[#0084ca]/12 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                    <i class="pi pi-lightbulb !text-sm"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-xs font-bold text-surface-900 dark:text-surface-0">
+                        Que souhaitez-vous faire ?
+                    </div>
+                    <p class="text-xs text-surface-600 dark:text-surface-300 m-0 mt-1 leading-relaxed">
+                        Consultez directement <strong>vos données QualiSira</strong> ci-dessous ou posez une question de <strong>méthode et rédaction qualité</strong>.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Raccourcis « Puisez dans vos dossiers » (groupés Actions vs Indicateurs) -->
+            <div *ngIf="questions.length" class="flex flex-col gap-2.5">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-surface-500 dark:text-surface-400 inline-flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span>Puisez dans vos dossiers (données réelles)</span>
+                </span>
+
+                <div *ngIf="questionsDossiers.length" class="flex flex-wrap gap-1.5">
+                    <button *ngFor="let question of questionsDossiers" type="button"
+                            class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-surface-200 dark:border-surface-700
+                                   bg-white dark:bg-surface-800/80 text-surface-700 dark:text-surface-100 hover:border-[#0084ca] hover:bg-sky-50/60 dark:hover:bg-sky-950/30 hover:text-[#0084ca] dark:hover:text-sky-300
+                                   transition-all cursor-pointer disabled:opacity-50"
+                            [disabled]="chargement"
+                            [title]="question.description"
+                            (click)="poser(question)">
+                        <i class="pi text-[#0084ca] !text-xs" [ngClass]="iconeDeQuestion(question.code)"></i>
+                        <span>{{ question.libelle }}</span>
+                    </button>
+                </div>
+
+                <div *ngIf="questionsIndicateurs.length" class="flex flex-wrap gap-1.5">
+                    <button *ngFor="let question of questionsIndicateurs" type="button"
+                            class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-surface-200 dark:border-surface-700
+                                   bg-white dark:bg-surface-800/80 text-surface-700 dark:text-surface-100 hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 hover:text-indigo-600 dark:hover:text-indigo-300
+                                   transition-all cursor-pointer disabled:opacity-50"
+                            [disabled]="chargement"
+                            [title]="question.description"
+                            (click)="poser(question)">
+                        <i class="pi text-indigo-500 !text-xs" [ngClass]="iconeDeQuestion(question.code)"></i>
+                        <span>{{ question.libelle }}</span>
+                    </button>
+                </div>
+            </div>
+
+            <div *ngIf="questions.length" class="border-t border-surface-200/80 dark:border-surface-800"></div>
+
+            <!-- Exemples cliquables de méthode & vocabulaire -->
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-surface-500 dark:text-surface-400 inline-flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#0084ca]"></span>
+                        <span>Exemples — Méthode &amp; rédaction</span>
+                    </span>
+                    <span class="text-[11px] text-surface-400">Cliquez pour lancer</span>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <button *ngFor="let ex of exemplesMethode" type="button"
+                            (click)="poserExemple(ex.titre)"
+                            [disabled]="chargement"
+                            class="group w-full text-left px-3 py-2.5 rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800/70
+                                   hover:border-[#0084ca]/60 hover:bg-sky-50/40 dark:hover:bg-sky-950/20 hover:shadow-2xs
+                                   flex items-center justify-between gap-3 transition-all cursor-pointer disabled:opacity-50">
+                        <div class="min-w-0">
+                            <div class="text-xs font-medium text-surface-800 dark:text-surface-100 leading-snug">
+                                {{ ex.titre }}
+                            </div>
+                            <div class="text-[11px] text-surface-400 mt-0.5">{{ ex.categorie }}</div>
+                        </div>
+                        <span class="shrink-0 w-6 h-6 rounded-md bg-surface-100 dark:bg-surface-700/70 text-surface-400 group-hover:bg-[#0084ca] group-hover:text-white flex items-center justify-center transition-colors">
+                            <i class="pi pi-arrow-up-right !text-[10px]"></i>
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mention transparente sur le périmètre de la discussion libre -->
+            <div class="rounded-lg px-3 py-2 border border-surface-200/80 dark:border-surface-800 bg-surface-50 dark:bg-surface-800/40 flex items-start gap-2 text-[11px] text-surface-500 dark:text-surface-400">
+                <i class="pi pi-info-circle text-[#0084ca] !text-xs shrink-0 mt-0.5"></i>
+                <span>En discussion libre, l'assistant ne consulte pas vos dossiers : il aide à réfléchir et à rédiger.</span>
+            </div>
         </div>
 
-        <!-- Deux bulles, comme une messagerie : la sienne à droite, celle de l'assistant à gauche
-             sous son pictogramme. Les nuances sont numérotées (primary-500, surface-100) : le
-             projet n'emploie nulle part « bg-primary » nu, qui ne rend aucun fond ici — la bulle
-             était invisible, texte blanc sur fond blanc. -->
-        <div *ngFor="let message of messages" class="flex items-end gap-2"
+        <!-- Bulles de conversation -->
+        <div *ngFor="let message of messages; let i = index" class="flex items-start gap-2.5"
              [ngClass]="message.role === 'UTILISATEUR' ? 'justify-end' : 'justify-start'">
 
             <div *ngIf="message.role === 'ASSISTANT'"
-                 class="shrink-0 w-7 h-7 rounded-full bg-primary-50 dark:bg-surface-700 flex items-center justify-center">
-                <i class="pi pi-sparkles text-primary-600 dark:text-surface-0" style="font-size: .8rem"></i>
+                 class="qa-ai-emblem shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-white mt-0.5 shadow-2xs">
+                <i class="pi pi-sparkles !text-xs"></i>
             </div>
 
-            <div class="max-w-[80%] flex flex-col gap-2">
-                <div class="px-3 py-2 whitespace-pre-wrap break-words text-sm line-height-3 shadow-sm"
-                     [ngClass]="message.role === 'UTILISATEUR'
-                         ? 'bg-sky-500 text-white rounded-2xl rounded-br-sm'
-                         : 'bg-surface-100 dark:bg-surface-800 text-surface-900 dark:text-surface-0 rounded-2xl rounded-bl-sm'">
+            <div class="flex flex-col gap-2 min-w-0"
+                 [ngClass]="message.role === 'UTILISATEUR' ? 'max-w-[82%]' : 'max-w-[86%] flex-1'">
+
+                <div *ngIf="message.role === 'UTILISATEUR'"
+                     class="qa-user-bubble px-3.5 py-2.5 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-white rounded-2xl rounded-br-sm shadow-sm">
                     {{ message.contenu }}
                 </div>
 
-                <!-- Les chiffres du service métier, rendus sans retouche. Le modèle les commente
-                     à côté ; il ne les récrit jamais. -->
+                <div *ngIf="message.role === 'ASSISTANT'"
+                     class="px-3.5 py-2.5 rounded-2xl rounded-tl-sm border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/85 text-surface-900 dark:text-surface-0 shadow-2xs">
+                    <div class="whitespace-pre-wrap break-words text-[13px] leading-relaxed">{{ message.contenu }}</div>
+                    <div class="mt-2 pt-1.5 border-t border-surface-200/70 dark:border-surface-700/70 flex items-center justify-between gap-2">
+                        <span class="text-[10px] text-surface-400">Assistant QualiSira</span>
+                        <button type="button"
+                                (click)="copierReponse(message.contenu, i)"
+                                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-surface-500 dark:text-surface-300 hover:bg-surface-200/60 dark:hover:bg-surface-700/70 bg-transparent border-0 cursor-pointer transition-colors">
+                            <i class="pi !text-[10px]" [ngClass]="copieIndex === i ? 'pi-check text-emerald-500' : 'pi-copy'"></i>
+                            <span>{{ copieIndex === i ? 'Copié' : 'Copier' }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Les chiffres du service métier, rendus sans retouche. -->
                 <div *ngIf="message.chiffres?.length" class="grid grid-cols-2 gap-2">
                     <div *ngFor="let chiffre of message.chiffres"
-                         class="px-3 py-2 rounded-xl border border-surface-200 dark:border-surface-700">
-                        <div class="text-xs text-surface-500">{{ chiffre.libelle }}</div>
-                        <div class="text-lg font-semibold"
-                             [ngClass]="chiffre.alerte ? 'text-red-500' : 'text-surface-900 dark:text-surface-0'">
+                         class="relative overflow-hidden px-3 py-2 rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800/70">
+                        <div class="absolute inset-x-0 top-0 h-[2px]"
+                             [ngClass]="chiffre.alerte ? 'bg-rose-500' : 'bg-[#0084ca]'"></div>
+                        <div class="text-[11px] text-surface-500 dark:text-surface-400">{{ chiffre.libelle }}</div>
+                        <div class="text-lg font-bold tabular-nums mt-0.5"
+                             [ngClass]="chiffre.alerte ? 'text-rose-500' : 'text-surface-900 dark:text-surface-0'">
                             {{ chiffre.valeur }}
                         </div>
                     </div>
                 </div>
 
-                <!-- Les données du service métier, rendues sans retouche. Elles ne sont pas passées
-                     par le modèle : sa phrase les accompagne, elle ne les remplace pas. -->
+                <!-- Les données du service métier, rendues sans retouche. -->
                 <div *ngIf="message.donnees?.length"
-                     class="border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
-                    <!-- Un vrai bouton, et non une div qui écoute le clic : le dossier s'atteint
-                         alors aussi au clavier, et le lecteur d'écran annonce une action. Une ligne
-                         qui ne conduit nulle part reste inerte et ne s'en donne pas l'air. -->
+                     class="border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800/70 rounded-xl overflow-hidden">
                     <button *ngFor="let element of message.donnees" type="button"
-                            class="w-full text-left px-3 py-2 border-b border-surface-200 dark:border-surface-700 last:border-b-0"
+                            class="group w-full text-left px-3 py-2.5 border-b border-surface-200/80 dark:border-surface-700/80 last:border-b-0 bg-transparent"
                             [ngClass]="estOuvrable(element)
-                                ? 'cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors'
+                                ? 'cursor-pointer hover:bg-sky-50/60 dark:hover:bg-sky-950/25 transition-colors'
                                 : 'cursor-default'"
                             [disabled]="!estOuvrable(element)"
                             [title]="estOuvrable(element) ? 'Ouvrir le dossier' : ''"
                             (click)="ouvrir(element)">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span class="font-semibold text-sm text-surface-900 dark:text-surface-0">{{ element.reference }}</span>
-                            <span *ngIf="element.niveau" class="text-xs px-2 py-0.5 rounded-full bg-primary-50 text-primary-600">{{ element.niveau }}</span>
-                            <span *ngIf="element.etat" class="text-xs text-surface-500">{{ element.etat }}</span>
-                            <i *ngIf="estOuvrable(element)" class="pi pi-arrow-up-right text-surface-400 ml-auto" style="font-size: .7rem"></i>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="font-bold text-xs text-surface-900 dark:text-surface-0">{{ element.reference }}</span>
+                            <span *ngIf="element.niveau" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sky-500/12 text-[#0084ca] dark:text-sky-300">{{ element.niveau }}</span>
+                            <span *ngIf="element.etat" class="text-[11px] text-surface-500 dark:text-surface-400">{{ element.etat }}</span>
+                            <i *ngIf="estOuvrable(element)" class="pi pi-arrow-up-right text-surface-400 group-hover:text-[#0084ca] ml-auto transition-colors" style="font-size: .7rem"></i>
                         </div>
-                        <div *ngIf="element.libelle" class="text-xs text-surface-500 mt-1 line-height-3">{{ element.libelle }}</div>
+                        <div *ngIf="element.libelle" class="text-[11px] text-surface-500 dark:text-surface-400 mt-1 leading-snug">{{ element.libelle }}</div>
                     </button>
                     <div *ngIf="message.total && message.total > (message.donnees?.length ?? 0)"
-                         class="px-3 py-2 text-xs text-surface-500 bg-surface-50 dark:bg-surface-900">
-                        {{ message.total }} au total — les {{ message.donnees?.length }} premiers sont affichés.
+                         class="px-3 py-1.5 text-[11px] text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-900/70 flex items-center justify-between border-t border-surface-200/70 dark:border-surface-700">
+                        <span>{{ message.total }} au total</span>
+                        <span>{{ message.donnees?.length }} premiers affichés</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- L'attente prend la place et la forme de la réponse à venir : une bulle d'assistant
-             en cours d'écriture. Le voile global, lui, est écarté côté service — il couvrirait
-             l'application entière pour une attente qui ne concerne que ce fil. -->
-        <div *ngIf="chargement" class="flex items-end gap-2 justify-start">
-            <div class="shrink-0 w-7 h-7 rounded-full bg-primary-50 dark:bg-surface-700 flex items-center justify-center">
-                <i class="pi pi-sparkles text-primary-600 dark:text-surface-0" style="font-size: .8rem"></i>
+        <!-- Bulle d'attente de l'assistant -->
+        <div *ngIf="chargement" class="flex items-start gap-2.5 justify-start">
+            <div class="qa-ai-emblem shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-white mt-0.5 shadow-2xs">
+                <i class="pi pi-sparkles !text-xs"></i>
             </div>
-            <div class="px-3 py-2 rounded-2xl rounded-bl-sm bg-surface-100 dark:bg-surface-800 w-[70%] flex flex-col gap-2">
-                <p-skeleton height="0.7rem" width="92%"></p-skeleton>
-                <p-skeleton height="0.7rem" width="78%"></p-skeleton>
-                <p-skeleton height="0.7rem" width="46%"></p-skeleton>
-                <span class="text-surface-500 text-xs mt-1">L'assistant rédige…</span>
+            <div class="px-3.5 py-3 rounded-2xl rounded-tl-sm border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/85 w-[78%] flex flex-col gap-2">
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#0084ca] qa-dot"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#0084ca] qa-dot qa-dot-2"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#0084ca] qa-dot qa-dot-3"></span>
+                    </div>
+                    <span class="text-surface-500 dark:text-surface-400 text-xs font-medium">L'assistant rédige…</span>
+                </div>
+                <p-skeleton height="0.65rem" width="92%"></p-skeleton>
+                <p-skeleton height="0.65rem" width="72%"></p-skeleton>
             </div>
         </div>
     </div>
 
-    <!-- Ce qui se dit sous le fil : la limite de l'assistant, puis les incidents. -->
-    <div class="flex flex-col gap-2 mt-3">
+    <!-- Pied : alertes et composeur épuré -->
+    <div class="shrink-0 flex flex-col gap-2 px-4 pt-2 pb-3.5 border-t border-surface-200/80 dark:border-surface-800 bg-white dark:bg-surface-900">
 
         <p-message *ngIf="avertissement" severity="secondary" styleClass="w-full">
             <span class="text-xs">{{ avertissement }}</span>
@@ -139,38 +250,30 @@
             <span class="text-xs">{{ erreur }}</span>
         </p-message>
 
-        <div class="flex flex-col gap-2 chat-bar">
+        <div class="flex flex-col gap-1.5 chat-bar">
             <textarea
                 pTextarea
                 class="w-full chat-textarea"
                 rows="1"
                 [autoResize]="true"
-                placeholder="(Entrée (↵) pour envoyer, Maj+Entrée pour aller à la ligne)"
+                placeholder="Posez une question qualité ou demandez une reformulation…"
                 [(ngModel)]="saisie"
                 [disabled]="chargement"
                 (keydown)="surTouche($event)">
             </textarea>
 
-            <div class="flex justify-between items-center gap-2">
-                <div class="flex flex-row items-center">
-                    <p-button
-                        pTooltip="Nouvelle conversation"
-                        icon="pi pi-refresh"
-                        [rounded]="true"
-                        size="small"
-                        severity="secondary"
-                        [text]="true"
-                        [disabled]="chargement || messages.length === 0"
-                        (onClick)="nouveauFil()">
-                    </p-button>
-                    <label class="text-xs" for="">Nouvelle conversation</label>
+            <div class="flex justify-between items-center gap-2 pt-1 border-t border-surface-200/60 dark:border-surface-700/60">
+                <div class="flex items-center gap-1.5 text-[11px] text-surface-400">
+                    <kbd class="px-1.5 py-0.5 rounded border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 text-[10px] font-sans text-surface-500 dark:text-surface-300">Entrée</kbd>
+                    <span>envoyer</span>
+                    <span>·</span>
+                    <span>Maj+Entrée ligne</span>
                 </div>
-                
+
                 <p-button
                     icon="pi pi-arrow-right"
                     size="small"
                     [severity]="saisie.trim() ? undefined : 'secondary'"
-                    [rounded]="true"
                     [text]="!saisie.trim()"
                     [styleClass]="saisie.trim() ? 'btn-send-active transition-all duration-200' : 'transition-all duration-200'"
                     [loading]="chargement"
@@ -179,6 +282,5 @@
                 </p-button>
             </div>
         </div>
-        
     </div>
 </div>

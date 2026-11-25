@@ -9,13 +9,6 @@ import { AuditGestionService, contenu, messageErreur } from '../../services/audi
 import { AuditReferentielService } from '../../services/audit-referentiel.service';
 import { Audit, AuditeurFiche, CritereEvaluationAuditeur, EvaluationAuditeur, NiveauEvaluationAuditeur, couleurDuNiveau } from '../../models/audit.model';
 
-/**
- * L'évaluation de l'équipe d'un audit mené, en cours ou clôturé (écran D15E de la maquette) :
- * une carte par membre, un choix de niveau par critère, un commentaire, puis « Enregistrer ».
- *
- * <p>Critères et niveaux viennent du paramétrage (referentiel-service) : un critère ou un niveau
- * retiré ne se propose plus. Une note se corrige tant qu'elle n'est pas validée.</p>
- */
 @Component({
     selector: 'app-evaluation-auditeurs',
     standalone: true,
@@ -32,10 +25,11 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
     loading = true;
     enCours = new Set<string>();
     auditId: string | null = null;
+    auditeurSelectionneId: string | null = null;
 
     /** auditeurId|critereId → évaluation enregistrée. */
     private evaluations = new Map<string, EvaluationAuditeur>();
-    /** auditeurId → moyenne tous audits confondus : la liste du vivier ne la sert pas, seule la fiche la calcule. */
+    /** auditeurId → moyenne tous audits confondus. */
     private moyennesGlobales: Record<string, number | null> = {};
     /** auditeurId|critereId → niveau choisi à l'écran. */
     choix: Record<string, string | undefined> = {};
@@ -71,12 +65,13 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: r => {
                     this.audit = (r.audit as any)?.data ?? null;
-                    // Toute l'équipe, dans l'ordre de l'audit : le responsable, puis les membres.
                     const ids = [...new Set([this.audit?.responsableEquipeId, ...(this.audit?.membreEquipeIds ?? [])].filter(Boolean))] as string[];
                     this.equipe = ids.map(id => r.auditeurs.find(a => a.id === id) ?? { id, nomComplet: 'Auditeur hors du vivier' } as AuditeurFiche);
+                    if (!this.auditeurSelectionneId || !this.equipe.some(a => a.id === this.auditeurSelectionneId)) {
+                        this.auditeurSelectionneId = this.equipe[0]?.id ?? null;
+                    }
                     this.equipe.forEach(a => this.chargerMoyenneGlobale(a));
                     const evals = contenu<EvaluationAuditeur>(r.evaluations);
-                    // Un critère ou un niveau retiré reste affiché là où il a déjà servi.
                     this.criteres = r.criteres.filter(c => c.actif !== false || evals.some(e => e.critereId === c.id));
                     this.niveaux = r.niveaux.filter(n => n.actif !== false);
                     this.appliquer(evals);
@@ -101,6 +96,65 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
                 this.commentairesEnregistres[e.auditeurId!] = e.commentaire;
             }
         }
+    }
+
+    get auditeurActif(): AuditeurFiche | null {
+        return this.equipe.find(a => a.id === this.auditeurSelectionneId) ?? this.equipe[0] ?? null;
+    }
+
+    get indexActif(): number {
+        const actif = this.auditeurActif;
+        return actif ? this.equipe.findIndex(a => a.id === actif.id) : -1;
+    }
+
+    get nbMembresValides(): number {
+        return this.equipe.filter(a => this.toutValide(a)).length;
+    }
+
+    selectionnerAuditeur(a: AuditeurFiche): void {
+        this.auditeurSelectionneId = a.id ?? null;
+    }
+
+    naviguerMembre(delta: number): void {
+        const cible = this.indexActif + delta;
+        if (cible >= 0 && cible < this.equipe.length) {
+            this.auditeurSelectionneId = this.equipe[cible].id ?? null;
+        }
+    }
+
+    initiales(nom?: string): string {
+        const propre = (nom ?? '').replace(/\([^)]*\)/g, '').trim();
+        if (!propre) return '?';
+        const parts = propre.split(/\s+/).filter(Boolean);
+        return parts.length >= 2
+            ? (parts[0][0] + parts[1][0]).toUpperCase()
+            : propre.slice(0, 2).toUpperCase();
+    }
+
+    libelleCourt(libelle?: string): string {
+        if (!libelle) return '';
+        return libelle.split(/\s+[–—-]\s+/)[0].trim();
+    }
+
+    libelleDetail(libelle?: string): string {
+        if (!libelle) return '';
+        const parts = libelle.split(/\s+[–—-]\s+/);
+        return parts.length > 1 ? parts.slice(1).join(' – ').trim() : '';
+    }
+
+    nbNotesSaisies(a: AuditeurFiche): number {
+        return this.criteres.filter(c => !!this.choix[this.cle(a.id, c.id)]).length;
+    }
+
+    pourcentageSaisi(a: AuditeurFiche): number {
+        return this.criteres.length ? Math.round((this.nbNotesSaisies(a) / this.criteres.length) * 100) : 0;
+    }
+
+    bordureStatut(a: AuditeurFiche): string {
+        if (this.toutValide(a)) return 'border-l-emerald-500';
+        if (this.aDesModifications(a)) return 'border-l-amber-500';
+        if (this.criteres.some(c => !!this.evaluation(a.id, c.id))) return 'border-l-[#0084ca]';
+        return 'border-l-surface-300 dark:border-l-surface-600';
     }
 
     cle(auditeurId?: string, critereId?: string): string {
@@ -129,12 +183,10 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
         }
     }
 
-    /** « Tout Satisfaisant » : un niveau posé d'un geste sur tous les critères encore modifiables. */
     choisirPartout(a: AuditeurFiche, n: NiveauEvaluationAuditeur): void {
         this.criteres.forEach(c => this.choisir(a, c, n));
     }
 
-    /** Les critères dont la note choisie diffère de l'enregistrée (ou tous, si le commentaire a changé). */
     private aEnvoyer(a: AuditeurFiche): CritereEvaluationAuditeur[] {
         const commentaireChange = (this.commentaires[a.id!] ?? '') !== (this.commentairesEnregistres[a.id!] ?? '');
         return this.criteres.filter(c => {
@@ -148,7 +200,6 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
         return this.aEnvoyer(a).length > 0;
     }
 
-    /** Enregistre en brouillon les notes choisies d'un membre, avec son commentaire. */
     enregistrer(a: AuditeurFiche): void {
         const criteres = this.aEnvoyer(a);
         if (!criteres.length || !this.auditId) return;
@@ -175,7 +226,6 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
             });
     }
 
-    /** Valide toutes les notes en brouillon d'un auditeur : elles ne se corrigent plus. */
     validerAuditeur(auditeur: AuditeurFiche): void {
         const brouillons = this.criteres
             .map(c => this.evaluation(auditeur.id, c.id))
@@ -206,7 +256,7 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
     }
 
     toutValide(a: AuditeurFiche): boolean {
-        return this.criteres.every(c => this.estValidee(a.id, c.id));
+        return this.criteres.length > 0 && this.criteres.every(c => this.estValidee(a.id, c.id));
     }
 
     libelleStatut(a: AuditeurFiche): string {
@@ -220,7 +270,6 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
         return this.criteres.some(c => this.evaluation(a.id, c.id)) ? 'info' : 'secondary';
     }
 
-    /** La moyenne tous audits de l'auditeur, lue sur sa fiche (`/get/{id}`) ; sans elle, la carte reste lisible. */
     private chargerMoyenneGlobale(a: AuditeurFiche): void {
         if (!a.id) return;
         this.auditService.getAuditeurById(a.id).pipe(takeUntil(this.destroy$)).subscribe({
@@ -229,13 +278,11 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
         });
     }
 
-    /** Le niveau le plus proche de la moyenne tous audits, comme l'affiche le portefeuille des auditeurs (A4). */
     niveauGlobal(a: AuditeurFiche): NiveauEvaluationAuditeur | null {
         const m = this.moyennesGlobales[a.id!];
         return m == null ? null : this.plusProche(m);
     }
 
-    /** Le niveau le plus proche de la moyenne des notes enregistrées sur cet audit (sur l'ordre des niveaux). */
     niveauMoyen(a: AuditeurFiche): NiveauEvaluationAuditeur | null {
         const valeurs = this.criteres
             .map(c => this.niveaux.find(n => n.id === this.evaluation(a.id, c.id)?.niveauId)?.ordre)
@@ -244,18 +291,15 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
         return this.plusProche(valeurs.reduce((x, y) => x + y, 0) / valeurs.length);
     }
 
-    /** Le serveur fait la moyenne des ordres des niveaux attribués ; on la ramène au niveau paramétré le plus proche. */
     private plusProche(m: number): NiveauEvaluationAuditeur | null {
         if (!this.niveaux.length) return null;
         return this.niveaux.reduce((p, n) => (Math.abs((n.ordre ?? 0) - m) < Math.abs((p.ordre ?? 0) - m) ? n : p));
     }
 
-    /** La couleur paramétrée du niveau, ou celle de son rang dans l'échelle. */
     couleur(n: NiveauEvaluationAuditeur | null): string {
         return couleurDuNiveau(n, this.niveaux);
     }
 
-    /** Le niveau le plus élevé selon l'ordre paramétré (raccourci "Tout Satisfaisant"). */
     get niveauTop(): NiveauEvaluationAuditeur | null {
         if (!this.niveaux.length) return null;
         return this.niveaux.reduce((top, n) => (n.ordre ?? 0) > (top.ordre ?? 0) ? n : top);
@@ -265,7 +309,6 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
         return this.niveauTop?.libelle ?? 'Satisfaisant';
     }
 
-    /** Attribue le niveau le plus élevé à tous les critères non encore verrouillés d'un auditeur. */
     toutSatisfaisant(auditeur: AuditeurFiche): void {
         const top = this.niveauTop;
         if (!top || !this.evaluable) return;
@@ -276,7 +319,6 @@ export class EvaluationAuditeursComponent implements OnInit, OnDestroy {
         }
     }
 
-    /** Relit les évaluations de l'audit et les moyennes globales, qu'une note vient de déplacer. */
     private recharger(): void {
         if (!this.auditId) return;
         this.auditService.getEvaluationsAuditeur(this.auditId).pipe(takeUntil(this.destroy$)).subscribe({

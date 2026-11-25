@@ -11,6 +11,7 @@ interface ActionRapide {
     aide: string;
     icone: string;
     route: string;
+    ton: 'amber' | 'sky' | 'violet' | 'emerald' | 'blue' | 'slate';
     /** Une seule de ces permissions suffit. */
     permissions: string[];
     /** Module dont l'organisation doit avoir souscrit, si l'action en relève. */
@@ -19,16 +20,6 @@ interface ActionRapide {
 
 /**
  * Ce que l'utilisateur peut entreprendre depuis l'accueil.
- *
- * <p>Les gestes courants d'un système qualité — déclarer un écart, déposer une procédure, demander la
- * révision d'un document — se trouvaient à deux ou trois niveaux de menu. Ils sont ici, et
- * <b>uniquement ceux que la personne peut réellement accomplir</b> : chaque tuile porte les mêmes
- * permissions et le même module que la route qu'elle ouvre. Une tuile qui mènerait à un refus serait
- * pire que son absence — elle laisse croire à un droit qu'on n'a pas, et fait chercher une panne là
- * où il n'y a qu'une habilitation manquante.</p>
- *
- * <p>Rien n'est affiché du tout si aucune action n'est ouverte : un cadre vide intitulé « Actions
- * rapides » ne rendrait service à personne.</p>
  */
 @Component({
     selector: 'app-actions-rapides',
@@ -40,33 +31,32 @@ export class ActionsRapidesComponent implements OnInit {
 
     /**
      * Toutes les actions envisageables, dans l'ordre où elles se présentent.
-     *
-     * <p>Les permissions et le module reprennent, une à une, celles que le garde de route exige pour
-     * l'écran visé : les deux listes doivent rester identiques, sans quoi la tuile promet ce que la
-     * route refusera.</p>
      */
     private static readonly CATALOGUE: ActionRapide[] = [
         {
             libelle: 'Déclarer une non-conformité',
-            aide: 'Signaler un écart constaté : il partira dans le circuit de traitement.',
+            aide: 'Signaler un écart constaté dans le circuit de traitement.',
             icone: 'pi pi-exclamation-triangle',
             route: '/non-conformite/create',
+            ton: 'amber',
             permissions: ['nc-write', 'SUBMIT_NC'],
             module: ModuleAbonnement.NON_CONFORMITE
         },
         {
             libelle: 'Déposer un document',
-            aide: 'Soumettre une procédure ou un enregistrement à son circuit de validation.',
+            aide: 'Soumettre une procédure à son circuit de validation.',
             icone: 'pi pi-file-plus',
             route: '/gestion-documentaire/create',
+            ton: 'sky',
             permissions: ['document-write'],
             module: ModuleAbonnement.DOCUMENTAIRE
         },
         {
             libelle: 'Demander une modification',
-            aide: 'Faire réviser ou retirer un document que vous ne modifiez pas vous-même.',
+            aide: 'Faire réviser ou retirer un document en vigueur.',
             icone: 'pi pi-pencil',
             route: '/gestion-documentaire/demandes/nouvelle',
+            ton: 'violet',
             permissions: ['document-read', 'document-write', 'DOC_READ'],
             module: ModuleAbonnement.DOCUMENTAIRE
         },
@@ -75,6 +65,7 @@ export class ActionsRapidesComponent implements OnInit {
             aide: 'Rechercher une procédure en vigueur et sa version applicable.',
             icone: 'pi pi-folder-open',
             route: '/gestion-documentaire/documents',
+            ton: 'emerald',
             permissions: ['document-read', 'document-write', 'DOC_READ'],
             module: ModuleAbonnement.DOCUMENTAIRE
         },
@@ -83,6 +74,7 @@ export class ActionsRapidesComponent implements OnInit {
             aide: 'Les actions correctives dont vous avez la charge, et leur échéance.',
             icone: 'pi pi-check-square',
             route: '/non-conformite/actions',
+            ton: 'blue',
             permissions: ['plan-action-read', 'plan-action-write', 'TRAITEMENT_PLAN'],
             module: ModuleAbonnement.NON_CONFORMITE
         },
@@ -91,6 +83,7 @@ export class ActionsRapidesComponent implements OnInit {
             aide: 'Où en est chaque écart déclaré, toutes étapes confondues.',
             icone: 'pi pi-chart-line',
             route: '/non-conformite/suivi',
+            ton: 'slate',
             permissions: ['nc-read', 'NC_READ', 'CONSULTATION_NC'],
             module: ModuleAbonnement.NON_CONFORMITE
         }
@@ -103,6 +96,22 @@ export class ActionsRapidesComponent implements OnInit {
     ngOnInit(): void {
         this.actions = ActionsRapidesComponent.CATALOGUE
             .filter((action) => accesAutorise(action.permissions, action.module));
+    }
+
+    tonClasse(ton: ActionRapide['ton']): string {
+        switch (ton) {
+            case 'amber':
+                return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25';
+            case 'sky':
+            case 'blue':
+                return 'bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 border-[#0ea5e9]/30';
+            case 'violet':
+                return 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/25';
+            case 'emerald':
+                return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25';
+            default:
+                return 'bg-surface-100 dark:bg-surface-800 text-[var(--heading-color)] border-[#dddddd] dark:border-surface-700';
+        }
     }
 
     ouvrir(action: ActionRapide): void {

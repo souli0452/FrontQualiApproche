@@ -52,10 +52,22 @@ export class ReferentielRQAPBFComponent implements OnInit, OnDestroy {
     recherche = '';
     loading = true;
     saving = false;
+    nbDomaines = 0;
+    nbCriteres = 0;
 
     /** Le nœud du panneau ; null quand le panneau est fermé. */
     enEdition: NoeudReferentiel | null = null;
+    parentsPossibles: { id: string; libelle: string }[] = [];
     readonly typesNoeud = TYPES_NOEUD;
+    readonly skeletonRows = [
+        { prof: 0, code: '2.5rem', label: '38%', badge: '4.5rem' },
+        { prof: 1, code: '3.5rem', label: '48%', badge: '4rem' },
+        { prof: 2, code: '2.5rem', label: '62%', badge: '4.5rem' },
+        { prof: 3, code: '4rem', label: '54%', badge: '3.75rem' },
+        { prof: 3, code: '4rem', label: '44%', badge: '3.75rem' },
+        { prof: 1, code: '3.5rem', label: '42%', badge: '4rem' },
+        { prof: 0, code: '2.5rem', label: '34%', badge: '4.5rem' }
+    ];
 
     private destroy$ = new Subject<void>();
 
@@ -76,7 +88,11 @@ export class ReferentielRQAPBFComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: res => {
                     this.racines = contenu<NoeudReferentiel>(res);
+                    this.compterNoeuds();
                     this.aplatir();
+                    if (this.enEdition) {
+                        this.majParentsPossibles();
+                    }
                     this.loading = false;
                 },
                 error: err => {
@@ -84,6 +100,22 @@ export class ReferentielRQAPBFComponent implements OnInit, OnDestroy {
                     this.erreur(err, 'Le référentiel n\'a pas pu être chargé.');
                 }
             });
+    }
+
+    private compterNoeuds(): void {
+        this.nbDomaines = this.racines.length;
+        let criteres = 0;
+        const parcourir = (noeuds: NoeudReferentiel[]) => {
+            for (const n of noeuds) {
+                if (!n.enfants?.length) {
+                    criteres++;
+                } else {
+                    parcourir(n.enfants);
+                }
+            }
+        };
+        parcourir(this.racines);
+        this.nbCriteres = criteres;
     }
 
     /** L'arbre à plat, filtré par la recherche (un nœud qui correspond garde ses ancêtres). */
@@ -104,12 +136,31 @@ export class ReferentielRQAPBFComponent implements OnInit, OnDestroy {
     }
 
     basculer(n: NoeudReferentiel): void {
-        this.replies.has(n.id!) ? this.replies.delete(n.id!) : this.replies.add(n.id!);
+        if (!n.id) return;
+        this.replies.has(n.id) ? this.replies.delete(n.id) : this.replies.add(n.id);
+        this.aplatir();
+    }
+
+    toutReplier(): void {
+        const marquer = (noeuds: NoeudReferentiel[]) => {
+            for (const n of noeuds) {
+                if (n.id && n.enfants?.length) {
+                    this.replies.add(n.id);
+                    marquer(n.enfants);
+                }
+            }
+        };
+        marquer(this.racines);
+        this.aplatir();
+    }
+
+    toutDeplier(): void {
+        this.replies.clear();
         this.aplatir();
     }
 
     /** Les parents possibles : tout nœud sauf celui qu'on édite et ses descendants. */
-    get parentsPossibles(): { id: string; libelle: string }[] {
+    private majParentsPossibles(): void {
         const exclus = new Set<string>();
         const marquer = (n: NoeudReferentiel) => { exclus.add(n.id!); (n.enfants ?? []).forEach(marquer); };
         const trouver = (noeuds: NoeudReferentiel[]): NoeudReferentiel | undefined => {
@@ -127,16 +178,18 @@ export class ReferentielRQAPBFComponent implements OnInit, OnDestroy {
             }
         };
         lister(this.racines, '');
-        return tous;
+        this.parentsPossibles = tous;
     }
 
     ouvrirCreation(parent?: NoeudReferentiel): void {
         const type = parent ? TYPE_ENFANT[parent.typeNoeud ?? ''] ?? 'CRITERE' : 'DOMAINE';
         this.enEdition = { parentId: parent?.id, typeNoeud: type, ordre: (parent?.enfants?.length ?? this.racines.length) + 1 };
+        this.majParentsPossibles();
     }
 
     ouvrirEdition(n: NoeudReferentiel): void {
         this.enEdition = { ...n, enfants: undefined };
+        this.majParentsPossibles();
     }
 
     fermer(): void {
@@ -156,15 +209,15 @@ export class ReferentielRQAPBFComponent implements OnInit, OnDestroy {
         this.geste(req$, 'Nœud enregistré.', () => { this.saving = false; this.enEdition = null; }, () => (this.saving = false));
     }
 
-    supprimer(event: Event, n: NoeudReferentiel): void {
+    supprimer(n: NoeudReferentiel): void {
         this.confirmationService.confirm({
-            rejectButtonProps: { severity: 'secondary', outlined: true },
-            target: event.currentTarget as EventTarget,
-            message: `Supprimer « ${n.code} — ${n.libelle} » ?`,
-            icon: 'pi pi-trash',
+            key: 'referentiel-action',
+            header: 'Supprimer ce nœud',
+            message: `Voulez-vous supprimer « ${n.code} — ${n.libelle} » du référentiel RQAP-BF ?`,
+            icon: 'pi-trash',
             acceptLabel: 'Supprimer',
-            rejectLabel: 'Retour',
-            acceptButtonStyleClass: 'p-button-danger',
+            acceptIcon: 'pi pi-trash',
+            rejectLabel: 'Annuler',
             accept: () => this.geste(this.auditService.supprimerNoeud(n.id!), 'Nœud supprimé.')
         });
     }
@@ -178,6 +231,28 @@ export class ReferentielRQAPBFComponent implements OnInit, OnDestroy {
 
     libelleType(t?: string): string {
         return TYPES_NOEUD.find(x => x.value === t)?.label ?? ANCIENS_TYPES[t ?? ''] ?? t ?? '';
+    }
+
+    badgeTypeClasses(t?: string): string {
+        switch (t) {
+            case 'DOMAINE':
+                return 'bg-[#0084ca]/12 dark:bg-sky-500/20 text-[#0084ca] dark:text-sky-300 border-[#0084ca]/30';
+            case 'SECTION':
+            case 'PARAGRAPHE':
+            case 'SOUS_DOMAINE':
+                return 'bg-indigo-500/10 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-500/25';
+            case 'EXIGENCE':
+            case 'SOUS_EXIGENCE':
+                return 'bg-amber-500/10 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/25';
+            case 'CRITERE':
+                return 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/25';
+            default:
+                return 'bg-surface-100 dark:bg-surface-800 text-[var(--text-color-secondary)] border-[#dddddd] dark:border-surface-700';
+        }
+    }
+
+    trackByLigne(_i: number, l: Ligne): string {
+        return l.noeud.id ?? String(_i);
     }
 
     private erreur(err: unknown, defaut: string): void {

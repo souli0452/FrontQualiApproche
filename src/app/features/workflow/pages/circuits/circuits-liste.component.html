@@ -1,34 +1,34 @@
 <p-toast></p-toast>
 <p-confirmDialog #cd [baseZIndex]="1100999" styleClass="border-none bg-transparent shadow-none" [style]="{background: 'transparent', border: 'none', boxShadow: 'none'}">
     <ng-template pTemplate="headless" let-message>
-        <div class="p-6 bg-white dark:bg-surface-900 border border-slate-100 dark:border-surface-800 rounded-3xl shadow-2xl text-center flex flex-col items-center justify-center max-w-sm w-full mx-auto">
+        <div class="p-6 bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-2xl text-center flex flex-col items-center justify-center max-w-sm w-full mx-auto">
 
             <!-- Badge d'icône rouge circulaire -->
-            <div class="bg-red-50 dark:bg-red-950/40 text-red-500 mb-4 w-14 h-14 rounded-full flex items-center justify-center">
-                <i class="pi pi-exclamation-triangle text-2xl"></i>
+            <div class="bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 mb-4 w-14 h-14 rounded-full flex items-center justify-center ring-8 ring-rose-50/70 dark:ring-rose-950/30">
+                <i class="pi pi-exclamation-triangle !text-2xl"></i>
             </div>
 
             <!-- Titre élégant -->
-            <h3 class="text-lg font-bold text-slate-900 dark:text-surface-0 mb-2 mt-0">
+            <h3 class="text-[17px] font-bold text-[var(--heading-color)] mb-2 mt-0">
                 {{ message.header || 'Confirmation de suppression' }}
             </h3>
 
             <!-- Texte du message -->
-            <p class="text-sm text-slate-500 dark:text-surface-400 mb-5 px-2 leading-relaxed">
+            <p class="text-[13px] text-[var(--text-color-secondary)] mb-5 px-2 leading-relaxed">
                 {{ message.message }}
             </p>
 
             <!-- Ligne de séparation douce -->
-            <div class="w-full border-t border-slate-100 dark:border-surface-800 mb-4"></div>
+            <div class="w-full border-t border-[#dddddd]/70 dark:border-surface-700 mb-4"></div>
 
             <!-- Boutons d'actions modernes -->
             <div class="flex items-center gap-3 w-full">
                 <button type="button" pButton label="Annuler"
-                    class="p-button-outlined p-button-secondary p-button-sm flex-1 justify-center rounded-xl py-2 font-medium"
+                    class="p-button-outlined p-button-secondary p-button-sm flex-1 justify-center rounded-[5px] py-2 font-medium"
                     (click)="cd.onReject()">
                 </button>
-                <button type="button" pButton label="Supprimer" 
-                    class="p-button-danger p-button-sm flex-1 justify-center rounded-xl py-2 font-medium"
+                <button type="button" pButton label="Supprimer"
+                    class="p-button-danger p-button-sm flex-1 justify-center rounded-[5px] py-2 font-medium"
                     (click)="cd.onAccept()">
                 </button>
             </div>
@@ -49,25 +49,24 @@
     </p-button>
 </div> -->
 
-<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 my-4 p-2">
-    <!-- Bouton guide (À droite, aligné) -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
     <div>
-        <p-button 
-            label="Comprendre la configuration d'un circuit" 
+        <p-button
+            label="Comprendre la configuration d'un circuit"
             icon="pi pi-question-circle"
-            size="small" 
-            [text]="true" 
-            severity="info"
+            size="small"
+            [outlined]="true"
+            severity="secondary"
+            styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
             (onClick)="guideOuvert = true">
         </p-button>
     </div>
-    <!-- Filtre par type de ressource (À gauche) -->
-    <div class="flex flex-col gap-1.5 w-full sm:w-80">
-        <p-select 
-            [options]="filtres[0].list" 
+    <div class="w-full sm:w-80">
+        <p-select
+            [options]="filtres[0].list"
             [(ngModel)]="typeFiltre"
             (ngModelChange)="filtrerParType($event)"
-            [placeholder]="'Type de ressource'"
+            [placeholder]="'Filtrer par type de ressource : tous'"
             [showClear]="true"
             appendTo="body"
             styleClass="w-full text-sm">
@@ -75,15 +74,13 @@
     </div>
 </div>
 
-<app-workflow-configuration-guide 
+<app-workflow-configuration-guide
     [(visible)]="guideOuvert">
 </app-workflow-configuration-guide>
 
 @if (typesEnConflit.length) {
-    <!-- Informatif, et non plus une alerte : plusieurs circuits actifs sont normaux dès qu'un type
-         de document désigne le sien. Ce qui mérite d'être dit est lequel sert de repli. -->
-    <div class="flex items-start gap-2 mb-4 p-3 border-round bg-blue-50 text-blue-900 text-sm">
-        <i class="pi pi-info-circle mt-0.5"></i>
+    <div class="flex items-start gap-2.5 mb-4 px-4 py-3 rounded-[5px] border border-[#0ea5e9]/35 bg-[#0ea5e9]/10 dark:bg-[#0ea5e9]/15 text-[#0369a1] dark:text-sky-300 text-[13px]">
+        <i class="pi pi-info-circle text-[#0ea5e9] !text-[15px] mt-0.5 shrink-0"></i>
         <span>
             Plusieurs circuits sont actifs pour {{ typesEnConflit.join(', ') }} : les dossiers qui ne
             désignent pas de circuit — un type de document sans circuit attribué, par exemple —

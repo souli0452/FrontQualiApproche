@@ -1,259 +1,241 @@
-<div class="flex flex-col md:flex-row">
-    <div class="w-full md:w-2/3 md:pr-4">
-
-        <div class="p-4 bg-gray-50 rounded-xl  border border-2 border-gray-100">
-            <div class="flex items-center gap-3">
-                <div class="flex items-center justify-center bg-blue-50 text-blue-500 rounded-full" style="width: 3.5rem; height: 3.5rem">
-                    <i class="pi text-2xl pi-plus-circle"></i>
-                </div>
-                <div class="flex flex-col">
-                    <span class="font-bold text-2xl text-900 mb-1">Nouvelle non-conformité</span>
-                    <span class="text-500 text-sm">Veuillez renseigner les informations relatives à l'anomalie ou à l'écart constaté." <br> "Enregistrez les détails de la non-conformité pour lancer son analyse.</span>
-                </div>
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+    <!-- Colonne gauche : Formulaire principal -->
+    <div class="xl:col-span-8 bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-5">
+        <!-- En-tête de la carte -->
+        <div class="flex items-center gap-3 pb-4 mb-5 border-b border-[#dddddd]/70 dark:border-surface-700">
+            <div class="w-11 h-11 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                <i class="pi !text-xl" [ngClass]="nonConformite.id ? 'pi-pencil' : 'pi-plus-circle'"></i>
             </div>
-            <hr>
-            <div class="flex flex-col md:flex-row justify-center p-0 gap-4">
-                <!-- Colonne Gauche : Fichiers joints -->
-                
-
-                <!-- Ajoutez les pièces justificatives associées à la non‑conformité (photos, documents, rapports, etc.). -->
-
-                <!-- Colonne Droite : Formulaire -->
-                
-                    <div class="w-full">
-                    <div class="surface-section p-4 border-round shadow-1 h-full">
-                        <div class="field mb-4">
-                            <div class="flex items-center mb-2 gap-2">
-                                <label for="justification" class="font-semibold m-0">Description détaillée de la non-conformité <span class="text-red-500">*</span></label>
-                                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoDesc.toggle($event)"></i>
-                                <span class="ml-auto">
-                                    <app-ai-assist-button
-                                        siLicenceOuverte
-                                        typeAssistance="DESCRIPTION_NON_CONFORMITE"
-                                        [source]="iaSourceDescription"
-                                        [contexte]="iaContexteDescription"
-                                        ressourceType="NON_CONFORMITE"
-                                        [ressourceId]="nonConformite.id"
-                                        (accepter)="nonConformite.justification = $event">
-                                    </app-ai-assist-button>
-                                </span>
-                            </div>
-                            <p-popover #infoDesc>
-                                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                                    Décrivez ici en détail le problème constaté, les circonstances de sa découverte et les éléments permettant de bien comprendre la nature de la non-conformité. Soyez le plus précis possible pour faciliter le traitement.
-                                </div>
-                            </p-popover>
-                            <textarea class="w-full" rows="5"cols="30" pTextarea [(ngModel)]="nonConformite.justification" [autoResize]="true" placeholder="Veuillez détailler le problème, les circonstances de son apparition et toute information utile pour l'analyse de la cause."></textarea>
-                        </div>
-                        <!-- Ligne 2 : Niveau Non-Conformité -->
-                        <div class="flex flex-wrap gap-4 mt-4">
-                            <div class="flex-1 mt-2">
-                                <div class="flex items-center mb-2 gap-2">
-                                    <label for="justification" class="font-semibold m-0">Niveau de la non-conformité <span class="text-red-500">*</span></label>
-                                </div>
-                                <p-floatlabel variant="on" class="w-full">
-                                    <p-select id="niveauNonConformite" [(ngModel)]="nc.niveauNonConformite" [options]="niveauNcs"
-                                            optionLabel="libelle"
-                                            [filter]="true" [showClear]="true" appendTo="body" class="w-full" styleClass="w-full"
-                                            [class.p-invalid]="!nc.niveauNonConformite"></p-select>
-                                    <label for="niveauNonConformite">Sélectionner le niveau<span class="text-red-500">*</span></label>
-                                </p-floatlabel>
-                                <small *ngIf="!nc.niveauNonConformite&&formSubmitted" class="p-error">Ce champ est requis</small>
-                            </div>
-                        </div>
-                        <div class="flex flex-wrap gap-4 mt-4">
-                            <div class="flex-1 mt-2">
-                                <div class="flex items-center mb-2 gap-2">
-                                    <label for="justification" class="font-semibold m-0">Origine de la non-conformité <span class="text-red-500">*</span></label>
-                                </div>
-                                <p-floatlabel variant="on" class="w-full">
-                                    <p-select id="origineService" [(ngModel)]="nc.typeNonformite" [options]="typesNcs"
-                                            optionLabel="libelle"
-                                            [filter]="true" [showClear]="true" appendTo="body" class="w-full" styleClass="w-full"
-                                            [class.p-invalid]="!nc.typeNonformite"></p-select>
-                                    <label for="typeNonformite">Sélectionner l'origine<span class="text-red-500">*</span></label>
-                                </p-floatlabel>
-                                <small *ngIf="!nc.typeNonformite&&formSubmitted" class="p-error">Ce champ est requis</small>
-                            </div>
-                        </div>
-
-                        <div class="field mt-5 mb-4">
-                            <div class="flex align-items-center mb-2 gap-2">
-                                <label for="desAction" class="font-normal m-0 font-semibold">Correction(s) entreprise(s) (Si disponible)</label>
-                                <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoCorrection.toggle($event)"></i>
-                            </div>
-                            <p-popover #infoCorrection>
-                                <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                                    Si une action corrective a déjà été entreprise ou si le problème a été résolu de manière immédiate, décrivez ici les étapes suivies et les résultats obtenus. Laissez vide si aucune action n'a encore été menée.
-                                </div>
-                            </p-popover>
-                            <textarea class="w-full" rows="5"cols="30" pTextarea [(ngModel)]="nonConformite.actionDsc" [autoResize]="true" placeholder="Décrivez les actions correctives mises en œuvre pour résoudre la non-conformité et les résultats obtenus."></textarea>
-                        </div>
-                        
-                    </div>
-                </div>
-                
+            <div class="min-w-0">
+                <h3 class="text-[16px] font-bold text-[var(--heading-color)] m-0">
+                    {{ nonConformite.id ? 'Modifier la non-conformité' : 'Nouvelle non-conformité' }}
+                </h3>
+                <p class="text-xs text-[var(--text-color-secondary)] m-0 mt-0.5 leading-snug">
+                    Veuillez renseigner les informations relatives à l'anomalie ou à l'écart constaté pour lancer son analyse.
+                </p>
             </div>
         </div>
 
-        <div class="flex justify-between gap-2 mt-8">
-            <button pButton pRipple class="p-button-secondary font-bold" label="Annuler"
-                    (click)="goBack()">
-            </button>
+        <div class="flex flex-col gap-5">
+            <!-- Description détaillée -->
+            <div>
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                    <div class="flex items-center gap-1.5">
+                        <label for="justification" class="text-sm font-semibold text-[var(--heading-color)] m-0">
+                            Description détaillée de la non-conformité <span class="text-rose-500">*</span>
+                        </label>
+                        <button type="button"
+                                class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-0 cursor-pointer inline-flex items-center"
+                                (click)="infoDesc.toggle($event)"
+                                aria-label="Aide sur la description détaillée">
+                            <i class="pi pi-question-circle !text-xs"></i>
+                        </button>
+                    </div>
+                    <app-ai-assist-button
+                        siLicenceOuverte
+                        typeAssistance="DESCRIPTION_NON_CONFORMITE"
+                        [source]="iaSourceDescription"
+                        [contexte]="iaContexteDescription"
+                        ressourceType="NON_CONFORMITE"
+                        [ressourceId]="nonConformite.id"
+                        (accepter)="nonConformite.justification = $event">
+                    </app-ai-assist-button>
+                </div>
+                <p-popover #infoDesc>
+                    <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[300px]">
+                        Décrivez ici en détail le problème constaté, les circonstances de sa découverte et les éléments permettant de bien comprendre la nature de la non-conformité. Soyez le plus précis possible pour faciliter le traitement.
+                    </div>
+                </p-popover>
+                <textarea id="justification" class="w-full" rows="5" pTextarea
+                          [(ngModel)]="nonConformite.justification"
+                          [autoResize]="true"
+                          placeholder="Veuillez détailler le problème, les circonstances de son apparition et toute information utile pour l'analyse de la cause."></textarea>
+            </div>
+
+            <!-- Niveau & Origine -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="niveauNonConformite" class="block text-sm font-semibold text-[var(--heading-color)] mb-1.5">
+                        Niveau de la non-conformité <span class="text-rose-500">*</span>
+                    </label>
+                    <p-select inputId="niveauNonConformite"
+                              [(ngModel)]="nc.niveauNonConformite"
+                              [options]="niveauNcs"
+                              optionLabel="libelle"
+                              placeholder="Sélectionner le niveau"
+                              [filter]="true"
+                              [showClear]="true"
+                              appendTo="body"
+                              class="w-full"
+                              styleClass="w-full"
+                              [class.p-invalid]="formSubmitted && !nc.niveauNonConformite"></p-select>
+                    <small *ngIf="formSubmitted && !nc.niveauNonConformite" class="block mt-1 text-xs text-rose-600 dark:text-rose-400">
+                        Ce champ est requis
+                    </small>
+                </div>
+
+                <div>
+                    <label for="origineService" class="block text-sm font-semibold text-[var(--heading-color)] mb-1.5">
+                        Origine de la non-conformité <span class="text-rose-500">*</span>
+                    </label>
+                    <p-select inputId="origineService"
+                              [(ngModel)]="nc.typeNonformite"
+                              [options]="typesNcs"
+                              optionLabel="libelle"
+                              placeholder="Sélectionner l'origine"
+                              [filter]="true"
+                              [showClear]="true"
+                              appendTo="body"
+                              class="w-full"
+                              styleClass="w-full"
+                              [class.p-invalid]="formSubmitted && !nc.typeNonformite"></p-select>
+                    <small *ngIf="formSubmitted && !nc.typeNonformite" class="block mt-1 text-xs text-rose-600 dark:text-rose-400">
+                        Ce champ est requis
+                    </small>
+                </div>
+            </div>
+
+            <!-- Correction(s) entreprise(s) -->
+            <div>
+                <div class="flex items-center gap-1.5 mb-1.5">
+                    <label for="desAction" class="text-sm font-semibold text-[var(--heading-color)] m-0">
+                        Correction(s) entreprise(s) <span class="font-normal text-[var(--text-color-secondary)]">(si disponible)</span>
+                    </label>
+                    <button type="button"
+                            class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-0 cursor-pointer inline-flex items-center"
+                            (click)="infoCorrection.toggle($event)"
+                            aria-label="Aide sur les corrections entreprises">
+                        <i class="pi pi-question-circle !text-xs"></i>
+                    </button>
+                </div>
+                <p-popover #infoCorrection>
+                    <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[300px]">
+                        Si une action corrective a déjà été entreprise ou si le problème a été résolu de manière immédiate, décrivez ici les étapes suivies et les résultats obtenus. Laissez vide si aucune action n'a encore été menée.
+                    </div>
+                </p-popover>
+                <textarea id="desAction" class="w-full" rows="5" pTextarea
+                          [(ngModel)]="nonConformite.actionDsc"
+                          [autoResize]="true"
+                          placeholder="Décrivez les actions correctives mises en œuvre pour résoudre la non-conformité et les résultats obtenus."></textarea>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-wrap items-center justify-between gap-2 mt-6 pt-4 border-t border-[#dddddd]/70 dark:border-surface-700">
+            <p-button label="Annuler" severity="secondary" [outlined]="true" size="small"
+                      styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                      (onClick)="goBack()"></p-button>
 
             <!-- Deux issues à la saisie, et l'agent choisit. Enregistrer laisse la déclaration en
                  brouillon, qu'il pourra relire et compléter ; soumettre l'envoie au pilote dans la
-                 foulée, s'il estime sa description complète. Il fallait auparavant passer par les
-                 deux, en deux visites. -->
-            <div class="flex items-center gap-2">
-                <button siLicenceOuverte pButton pRipple class="p-button-outlined font-bold"
-                        label="Enregistrer le brouillon" icon="pi pi-save"
-                        *ngIf="!nonConformite.id || nonConformite.status === 'DRAFT'"
-                        [disabled]="!nc.typeNonformite||!nc.niveauNonConformite"
-                        pTooltip="La déclaration reste modifiable et n'est transmise à personne."
-                        tooltipPosition="top"
-                        (click)="onSave(false)">
-                </button>
-                <button siLicenceOuverte pButton pRipple class="p-button-info font-bold"
-                        label="Soumettre au pilote"
-                        
-                        *ngIf="!nonConformite.id || nonConformite.status === 'DRAFT'"
-                        [disabled]="!nc.typeNonformite||!nc.niveauNonConformite"
-                        pTooltip="La déclaration part immédiatement au pilote de votre processus."
-                        tooltipPosition="top"
-                        (click)="onSave(true)">
-                </button>
-                <button siLicenceOuverte pButton pRipple class="p-button-primary font-bold" label="Modifier"
-                        *ngIf="nonConformite.id && nonConformite.status !== 'DRAFT'"
-                        [disabled]="!nc.typeNonformite||!nc.niveauNonConformite"
-                        (click)="onSave(false)">
-                </button>
+                 foulée, s'il estime sa description complète. -->
+            <div class="flex flex-wrap items-center gap-2">
+                <p-button siLicenceOuverte
+                          *ngIf="!nonConformite.id || nonConformite.status === 'DRAFT'"
+                          label="Enregistrer le brouillon"
+                          icon="pi pi-save"
+                          severity="secondary"
+                          [outlined]="true"
+                          size="small"
+                          styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                          [disabled]="!nc.typeNonformite || !nc.niveauNonConformite"
+                          pTooltip="La déclaration reste modifiable et n'est transmise à personne."
+                          tooltipPosition="top"
+                          (onClick)="onSave(false)">
+                </p-button>
+                <p-button siLicenceOuverte
+                          *ngIf="!nonConformite.id || nonConformite.status === 'DRAFT'"
+                          label="Soumettre au pilote"
+                          icon="pi pi-send"
+                          severity="info"
+                          size="small"
+                          [disabled]="!nc.typeNonformite || !nc.niveauNonConformite"
+                          pTooltip="La déclaration part immédiatement au pilote de votre processus."
+                          tooltipPosition="top"
+                          (onClick)="onSave(true)">
+                </p-button>
+                <p-button siLicenceOuverte
+                          *ngIf="nonConformite.id && nonConformite.status !== 'DRAFT'"
+                          label="Modifier"
+                          icon="pi pi-check"
+                          severity="info"
+                          size="small"
+                          [disabled]="!nc.typeNonformite || !nc.niveauNonConformite"
+                          (onClick)="onSave(false)">
+                </p-button>
             </div>
         </div>
     </div>
-    <div class="w-full md:w-1/3 md:pl-4">
-        <!-- <div class="card">
-            <p-scrollpanel [style]="{ width: '100%', height: '500px' }" >
-                <p class="font-bold border-b-1 border-gray-300 mb-1">Guide de déclaration d'une Non-Conformité</p>
-                <div class="mb-6">
-                    <p>
-                        Bienvenue sur le module de saisie des non-conformités. Ce formulaire vous permet de signaler tout écart, dysfonctionnement ou anomalie constaté par rapport aux standards et procédures établis.
-                        Pourquoi cette démarche est essentielle ?
-                        Déclarer une non-conformité ne vise pas à chercher un coupable, mais à identifier une défaillance dans notre processus afin de mettre en place des actions correctives durables et d'éviter que le problème ne se reproduise.
-                        Comment bien remplir ce formulaire :
-                    </p>
-                    <ul class="font-semibold text-sm flex flex-col gap-1">
-                        <li>1 - Soyez précis et factuel : Décrivez ce que vous observez de manière objective (dates, faits, données chiffrées).</li>
-                        <li>2 - Documentez l'anomalie : Ajoutez des photos, des captures d'écran ou des rapports pour illustrer le problème.</li>
-                        <li>3 - Indiquez l'urgence : Précisez le niveau et l'origine pour que le pilote du processus puisse qualifier l'événement rapidement.</li>
-                        <li>4 - Enregistrez ou Publiez : Conservez votre saisie en brouillon si elle est incomplète, ou soumettez-la directement pour traitement.</li>
-                    </ul>
-                </div>
-                <p-divider />
-                <div class="my-6">
-                    <p class="font-bold">Champ : Fichiers</p>
-                    <p>
-                        Vous pouvez ajouter des fichiers pour justifier la non-conformité ou documenter sa solution (photos du défaut, captures d'écran d'une erreur, rapports d'analyse, etc.). Vous pouvez téléverser un maximum de 5 fichiers. Les formats acceptés sont les images, PDF et documents textuels.
-                    </p>
-                </div>
 
-                <p-divider />
-
-                <div class="my-6">
-                    <p class="font-bold">Champ : Description détaillée de la non-conformité</p>
-                    <p>
-                        Décrivez ici en détail le problème constaté, les circonstances de sa découverte (lors d'un contrôle, en cours de production, suite à un retour client) et les éléments permettant de bien comprendre la nature de la non-conformité. Soyez le plus précis et factuel possible pour faciliter et accélérer le traitement par le pilote.
-                    </p>
-                </div>
-
-                <p-divider />
-
-                <div class="my-6">
-                    <p class="font-bold">Champ : Correction(s) entreprise(s) (Si disponible)</p>
-                    <p>
-                        Si une action corrective a déjà été entreprise ou si le problème a été résolu de manière immédiate (ex: isolement d'un lot défectueux, redémarrage d'un service, correction d'urgence), décrivez ici les étapes suivies et les résultats obtenus. Laissez ce champ vide si aucune action n'a encore été menée.
-                    </p>
-                </div>
-
-                <p-divider />
-
-                <div class="my-6">
-                    <p class="font-bold">Guide de détails pour les Boutons d'Action</p>
-                    <p>Pour que l'utilisateur comprenne exactement l'impact de son clic, voici les descriptions ou sous-textes associés aux boutons du bas :</p>
-                    
-                    <p class="font-semibold">Bouton Annuler :</p>
-                    <p>"Annule la saisie en cours. Attention, toutes les modifications non enregistrées seront définitivement perdues et vous serez redirigé vers la page précédente."
-                    </p>
-                    <p class="font-semibold">Bouton Enregistrer :</p>
-                    <p>"Sauvegarde votre saisie en tant que brouillon. La non-conformité reste modifiable dans votre espace et n'est pas encore transmise aux équipes de validation. Idéal si vous attendez des informations complémentaires."
-                    </p>
-                    <p class="font-semibold">Bouton Publier :</p>
-                    <p>"Soumet officiellement la non-conformité. Le processus est enclenché : le pilote et les responsables qualité seront notifiés pour analyser l'anomalie, valider le signalement et lancer le plan d'actions associé."
-                    </p>
-                </div>
-            </p-scrollpanel>
-        </div> -->
-
-            <div class="p-4 bg-gray-50 rounded-xl  border border-2 border-gray-100">
-                <div class="flex items-center mb-2 gap-2">
-                    <h3 class="text-xl font-bold text-900 mt-0">Télécharger un fichier</h3>
-                    <i class="pi pi-question-circle text-500 cursor-pointer hover:text-primary transition-colors" (click)="infoFichiers.toggle($event)"></i>
-                </div>
-                <p-popover #infoFichiers>
-                    <div class="p-2 text-sm text-700 line-height-3" style="max-width: 300px;">
-                        Vous pouvez ajouter des fichiers pour justifier la non-conformité ou documenter sa solution, dans la limite d'un total maximum de 5 fichiers.
+    <!-- Colonne droite : Pièces jointes + Conseils rapides -->
+    <div class="xl:col-span-4 flex flex-col gap-5">
+        <!-- Pièces jointes -->
+        <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-4">
+            <div class="flex items-center justify-between gap-2 mb-3">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="w-8 h-8 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                        <i class="pi pi-paperclip !text-sm"></i>
+                    </span>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-[var(--heading-color)] m-0 leading-tight">Pièces jointes</h3>
+                        <span class="text-[11px] text-[var(--text-color-secondary)]">Photos, documents ou rapports</span>
                     </div>
-                </p-popover>
-                
-                <!-- Notre composant d'upload tout-en-un -->
-                <app-file-upload 
-                    styleClass="custom-nc-upload" 
-                    [existingFiles]="nonConformite.fichiers || []" 
-                    (removeExisting)="removeExistingFile($event)"
-                    (fileUploaded)="handleFileUpload($event)">
-                </app-file-upload>
+                </div>
+                <button type="button"
+                        class="text-[var(--text-color-secondary)] hover:text-[#0084ca] bg-transparent border-0 p-1 cursor-pointer inline-flex items-center"
+                        (click)="infoFichiers.toggle($event)"
+                        aria-label="Aide sur les pièces jointes">
+                    <i class="pi pi-question-circle !text-xs"></i>
+                </button>
+            </div>
+            <p-popover #infoFichiers>
+                <div class="p-2 text-xs text-[var(--heading-color)] leading-relaxed max-w-[300px]">
+                    Vous pouvez ajouter des fichiers pour justifier la non-conformité ou documenter sa solution, dans la limite d'un total maximum de 5 fichiers.
+                </div>
+            </p-popover>
+
+            <app-file-upload
+                [existingFiles]="nonConformite.fichiers || []"
+                (removeExisting)="removeExistingFile($event)"
+                (fileUploaded)="handleFileUpload($event)">
+            </app-file-upload>
+        </div>
+
+        <!-- Conseils rapides -->
+        <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-4">
+            <div class="flex items-center gap-2.5 mb-3 pb-2.5 border-b border-[#dddddd]/70 dark:border-surface-700">
+                <span class="w-8 h-8 rounded-[5px] bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <i class="pi pi-lightbulb !text-sm"></i>
+                </span>
+                <h3 class="text-sm font-bold text-[var(--heading-color)] m-0">Conseils rapides</h3>
             </div>
 
-            <div class="p-4 bg-gray-50 rounded-xl mt-6 border border-2 border-gray-100">
-    <h3 class="text-xl font-bold text-900 mt-0 mb-4">Conseils rapides</h3>
-    
-    <div class="flex flex-col gap-3">
-        <!-- Conseil 1 -->
-        <div class="flex align-items-start gap-3">
-            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-            <span class="text-700 line-height-3">Soyez factuel et précis dans votre description pour faciliter l'analyse.</span>
+            <div class="flex flex-col gap-2.5 text-xs text-[var(--text-color-secondary)] leading-relaxed">
+                <div class="flex items-start gap-2.5">
+                    <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                    <span>Soyez factuel et précis dans votre description pour faciliter l'analyse.</span>
+                </div>
+                <div class="flex items-start gap-2.5">
+                    <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                    <span>Identifiez correctement l'origine de l'écart pour cibler les bonnes équipes.</span>
+                </div>
+                <div class="flex items-start gap-2.5">
+                    <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                    <span>Évaluez la criticité au plus juste (ni sous-estimée, ni surestimée).</span>
+                </div>
+                <div class="flex items-start gap-2.5">
+                    <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                    <span>Joignez des preuves visuelles (photos, documents) pour appuyer vos faits.</span>
+                </div>
+                <div class="flex items-start gap-2.5">
+                    <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                    <span>Mentionnez toute action corrective immédiate déjà entreprise.</span>
+                </div>
+                <div class="flex items-start gap-2.5">
+                    <i class="pi pi-check-circle text-emerald-500 !text-sm mt-0.5 shrink-0"></i>
+                    <span>Sauvegardez en brouillon si vous êtes en attente d'informations complémentaires.</span>
+                </div>
+            </div>
         </div>
-
-        <!-- Conseil 2 -->
-        <div class="flex align-items-start gap-3">
-            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-            <span class="text-700 line-height-3">Identifiez correctement l'origine de l'écart pour cibler les bonnes équipes.</span>
-        </div>
-
-        <!-- Conseil 3 -->
-        <div class="flex align-items-start gap-3">
-            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-            <span class="text-700 line-height-3">Évaluez la criticité au plus juste (ni sous-estimée, ni surestimée).</span>
-        </div>
-
-        <!-- Conseil 4 -->
-        <div class="flex align-items-start gap-3">
-            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-            <span class="text-700 line-height-3">Joignez des preuves visuelles (photos, documents) pour appuyer vos faits.</span>
-        </div>
-
-        <!-- Conseil 5 -->
-        <div class="flex align-items-start gap-3">
-            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-            <span class="text-700 line-height-3">Mentionnez toute action corrective immédiate déjà entreprise.</span>
-        </div>
-
-        <!-- Conseil 6 -->
-        <div class="flex align-items-start gap-3">
-            <i class="pi pi-check-circle text-green-500 text-xl mt-1"></i>
-            <span class="text-700 line-height-3">Sauvegardez en brouillon si vous êtes en attente d'informations complémentaires.</span>
-        </div>
-    </div>
-</div>
     </div>
 </div>
