@@ -35,7 +35,6 @@ export class AuditSignaturesComponent implements OnInit, OnDestroy {
 
     audit: Audit | null = null;
     avancement: AvancementAudit | null = null;
-    confirmeSansConstat = false;
     signatures: SignatureAudit[] = [];
     utilisateurs: UtilisateurAnnuaire[] = [];
     loading = true;
@@ -174,7 +173,6 @@ export class AuditSignaturesComponent implements OnInit, OnDestroy {
         this.signatairesChoisis = actifs.map(s => s.signataireId!).filter(Boolean);
         this.fonctions = Object.fromEntries(actifs.map(s => [s.signataireId!, s.fonctionSignataire ?? '']));
         this.roles = Object.fromEntries(actifs.map(s => [s.signataireId!, s.role ?? null]));
-        this.confirmeSansConstat = false;
         this.circuitOuvert = true;
     }
 
@@ -208,7 +206,7 @@ export class AuditSignaturesComponent implements OnInit, OnDestroy {
     }
 
     get peutSoumettreCircuit(): boolean {
-        return this.tousRolesChoisis && this.aUnApprobateur && (!this.aucunConstatPublie || this.confirmeSansConstat);
+        return this.tousRolesChoisis && this.aUnApprobateur && !this.aucunConstatPublie;
     }
 
     poserCircuit(): void {

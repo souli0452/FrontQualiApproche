@@ -753,8 +753,14 @@ export class AppTopbar implements OnInit, OnDestroy {
                 route = '/non-conformite/vue-ensemble';
                 break;
 
+            case 'AUDIT_NON_DEMARRE':
             case 'AUDIT_EN_RETARD':
                 icon = 'pi pi-exclamation-triangle';
+                colorClass = 'bg-red-100 text-red-600';
+                route = '/gestion-audit/programme';
+                break;
+            case 'AUDIT_NON_CLOTURE':
+                icon = 'pi pi-clock';
                 colorClass = 'bg-red-100 text-red-600';
                 route = '/gestion-audit/programme';
                 break;

@@ -12,6 +12,8 @@ export interface Audit {
     id?: string;
     reference?: string;
     referenceRapport?: string;
+    /** Vrai dès qu'un premier visa est donné sur le rapport : fige les constats et la rédaction. */
+    rapportEnSignature?: boolean;
     objectifsAudit?: string;
     porteeAudit?: string;
     criteresAudit?: string;
