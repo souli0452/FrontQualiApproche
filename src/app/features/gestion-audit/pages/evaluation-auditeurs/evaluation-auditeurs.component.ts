@@ -13,7 +13,6 @@ import { Audit, AuditeurFiche, CritereEvaluationAuditeur, EvaluationAuditeur, Ni
     selector: 'app-evaluation-auditeurs',
     standalone: true,
     imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule],
-    providers: [MessageService],
     templateUrl: './evaluation-auditeurs.component.html'
 })
 export class EvaluationAuditeursComponent implements OnInit, OnDestroy {

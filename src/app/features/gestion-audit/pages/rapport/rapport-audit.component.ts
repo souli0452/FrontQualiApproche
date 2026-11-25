@@ -48,7 +48,6 @@ interface SyntheseDonutOptions {
     selector: 'app-rapport-audit',
     standalone: true,
     imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, NgApexchartsModule, MentionRqapbfComponent, LightboxComponent],
-    providers: [MessageService],
     templateUrl: './rapport-audit.component.html'
 })
 export class RapportAuditComponent implements OnInit, OnDestroy {

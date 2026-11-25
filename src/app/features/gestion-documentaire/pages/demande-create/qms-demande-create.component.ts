@@ -31,7 +31,6 @@ import { AlertService } from '@shared/alert-message/alert-message.service';
     standalone: true,
     imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, FileUploadComponent, SelectInputComponent,
         LicenceOuverteDirective, AiAssistButtonComponent],
-    providers: [MessageService],
     templateUrl: './qms-demande-create.component.html'
 })
 export class QmsDemandeCreateComponent implements OnInit, OnDestroy {

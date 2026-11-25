@@ -52,7 +52,6 @@ interface MoisCalendrier {
     selector: 'app-programme-audit',
     standalone: true,
     imports: [CommonModule, RouterModule, FormsModule, NgPrimeModule, SelectInputComponent, MultiselectInputComponent, TableauAffichageComponent],
-    providers: [MessageService],
     templateUrl: './programme-audit.component.html'
 })
 export class ProgrammeAuditComponent implements OnInit, OnDestroy {

@@ -26,7 +26,6 @@ import { LightboxComponent } from '@features/non-conformite/components/lightbox/
     selector: 'app-audit-signatures',
     standalone: true,
     imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, AuditLibelleComponent, RequestPasswordComponent, LightboxComponent],    
-    providers: [MessageService],
     templateUrl: './signatures.component.html'
 })
 export class AuditSignaturesComponent implements OnInit, OnDestroy {

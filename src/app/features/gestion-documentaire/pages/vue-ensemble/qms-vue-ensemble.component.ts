@@ -45,9 +45,6 @@ interface DimensionEntry {
         ChartDonutComponent, 
         LightboxComponent, 
         SmartAlertBannerComponent],
-    // Le dialogue de décision des lignes rend compte par messages : sans fournisseur ni conteneur,
-    // ni le succès ni le refus du serveur ne seraient dits.
-    providers: [MessageService],
     templateUrl: './qms-vue-ensemble.component.html',
     styleUrl: './qms-vue-ensemble.component.scss'
 })

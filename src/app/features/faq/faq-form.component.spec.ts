@@ -85,10 +85,11 @@ describe('FaqFormComponent', () => {
         http.expectNone((r) => r.url.includes('/fichiers'));
     });
 
-    it('dépose les pièces après la fiche, jamais avant', () => {
+    it('dépose les pièces après la fiche, y compris depuis le format enveloppé de FileUploadComponent', () => {
         component.entree.question = 'Qui vise ?';
         component.entree.reponse = 'Le pilote.';
-        component.recevoirFichiers([new File(['x'], 'procedure.pdf')]);
+        const fichier = new File(['x'], 'schema.jpg', { type: 'image/jpeg' });
+        component.recevoirFichiers([{ file: fichier }]);
 
         component.enregistrer();
 
@@ -96,6 +97,10 @@ describe('FaqFormComponent', () => {
         http.expectOne((r) => r.url.includes('/faq/create')).flush({ data: { id: 'faq-1' } });
         const depot = http.expectOne((r) => r.url.includes('/faq/faq-1/fichiers'));
         expect(depot.request.body instanceof FormData).toBeTrue();
+        const envoyes = (depot.request.body as FormData).getAll('fichiers');
+        expect(envoyes.length).toBe(1);
+        expect(envoyes[0] instanceof File).toBeTrue();
+        expect((envoyes[0] as File).name).toBe('schema.jpg');
         depot.flush([]);
     });
 

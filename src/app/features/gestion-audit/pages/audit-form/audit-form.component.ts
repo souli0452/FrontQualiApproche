@@ -56,7 +56,6 @@ function joursOuvres(debut: string, fin: string): number {
     selector: 'app-audit-form',
     standalone: true,
     imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, NgPrimeModule, SelectInputComponent, MultiselectInputComponent, AuditPageFormulaireComponent, AuditLibelleComponent],
-    providers: [MessageService],
     templateUrl: './audit-form.component.html'
 })
 export class AuditFormComponent implements OnInit, OnDestroy {

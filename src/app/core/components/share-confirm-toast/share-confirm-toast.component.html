@@ -1,6 +1,4 @@
-<p-toast key="key" [baseZIndex]="1100999"></p-toast>
-
-<!-- 👇 Notre boîte de dialogue globale modernisée en mode Headless (sans en-tête standard) -->
+<!-- 👇 Boîte de confirmation globale en mode Headless (sans en-tête standard) -->
 <p-confirmDialog #cd [baseZIndex]="1100999" styleClass="border-none bg-transparent shadow-none" [style]="{background: 'transparent', border: 'none', boxShadow: 'none'}">
     <ng-template pTemplate="headless" let-message>
         <div class="p-5 bg-white border border-gray-100 rounded-2xl shadow-xl text-center"

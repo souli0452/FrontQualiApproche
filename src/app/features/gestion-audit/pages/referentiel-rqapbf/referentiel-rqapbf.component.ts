@@ -41,7 +41,7 @@ const ANCIENS_TYPES: Record<string, string> = { SOUS_DOMAINE: 'Sous-domaine' };
     selector: 'app-referentiel-rqapbf',
     standalone: true,
     imports: [CommonModule, FormsModule, NgPrimeModule, AuditLibelleComponent],
-    providers: [MessageService, ConfirmationService],
+    providers: [ConfirmationService],
     templateUrl: './referentiel-rqapbf.component.html'
 })
 export class ReferentielRQAPBFComponent implements OnInit, OnDestroy {

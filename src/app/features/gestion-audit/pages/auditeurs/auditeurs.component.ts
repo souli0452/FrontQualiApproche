@@ -29,7 +29,7 @@ import { AuditeurFiche, NiveauEvaluationAuditeur, couleurDuNiveau } from '../../
     selector: 'app-audit-auditeurs',
     standalone: true,
     imports: [CommonModule, FormsModule, ReactiveFormsModule, NgPrimeModule, SelectInputComponent, MultiselectInputComponent, AuditLibelleComponent, TableauAffichageComponent],
-    providers: [MessageService, ConfirmationService],
+    providers: [ConfirmationService],
     templateUrl: './auditeurs.component.html'
 })
 export class AuditAuditeursComponent implements OnInit, OnDestroy {

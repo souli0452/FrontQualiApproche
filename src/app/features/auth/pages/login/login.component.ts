@@ -38,12 +38,15 @@ export class LoginComponent implements OnInit{
     userCurrentUser!: AuthData;
 
 
-    constructor(private fb: FormBuilder, private authService: AuthService,
-                private router: Router
-                ,private route: ActivatedRoute,
-                private structureService: StructureService,
-                private messageService: MessageService,
-                private motDePasseTemporaire: MotDePasseTemporaireService) {
+    constructor(
+        private fb: FormBuilder,
+        private authService: AuthService,
+        private router: Router,
+        private route: ActivatedRoute,
+        private structureService: StructureService,
+        private messageService: MessageService,
+        private motDePasseTemporaire: MotDePasseTemporaireService
+    ) {
         this.loginForm = this.fb.group({
             username: ['', Validators.required],
             password: ['', Validators.required],
@@ -94,9 +97,9 @@ export class LoginComponent implements OnInit{
                         } else {
                             this.messageService.add({
                                 severity: 'info',
-                                summary: 'AVERTISSEMENT',
+                                summary: 'Avertissement',
                                 detail: 'Votre utilisateur est mal configuré (aucune structure associée)',
-                                life: 3000
+                                life: 6000
                             });
                             this.navigateAfterLogin();
                         }
@@ -105,7 +108,7 @@ export class LoginComponent implements OnInit{
                             severity: 'error',
                             summary: 'Erreur',
                             detail: 'Impossible de récupérer les informations de session.',
-                            life: 3000
+                            life: 6000
                         });
                     }
                 },
@@ -136,7 +139,7 @@ export class LoginComponent implements OnInit{
                     }
 
                     // Affichage du Toast d'erreur
-                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: detailMessage, life: 5000 });
+                    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: detailMessage, life: 6000 });
                 }
             });
         } else {
@@ -164,7 +167,7 @@ export class LoginComponent implements OnInit{
                     severity: 'warn',
                     summary: 'Avertissement',
                     detail: 'Impossible de charger la structure. Vérifiez votre configuration.',
-                    life: 3000
+                    life: 6000
                 });
                 this.navigateAfterLogin();
             }
@@ -213,6 +216,7 @@ export class LoginComponent implements OnInit{
                         severity: 'error',
                         summary: 'Erreur',
                         detail: errorMessage,
+                        life: 6000
                     });
                 },
             });

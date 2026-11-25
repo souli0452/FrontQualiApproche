@@ -44,7 +44,7 @@ const METHODES_PAR_DEFAUT = ['Entretiens avec les agents du processus', 'Observa
     selector: 'app-plan-audit',
     standalone: true,
     imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, SelectInputComponent, MultiselectInputComponent, AuditLibelleComponent, LightboxComponent],    
-    providers: [MessageService, ConfirmationService],
+    providers: [ConfirmationService],
     templateUrl: './plan-audit.component.html'
 })
 export class PlanAuditComponent implements OnInit, OnDestroy {

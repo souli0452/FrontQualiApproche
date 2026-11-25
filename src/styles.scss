@@ -416,41 +416,64 @@ p-button .p-button-info {
 .p-menu {
     border-radius: 8px !important;
     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
-    padding: 0.5rem 0 !important;
+    padding: 0.35rem 0 !important;
     border: 1px solid var(--surface-border) !important;
 
+    .p-menu-list {
+        padding: 0.2rem 0.35rem !important;
+        gap: 0.15rem !important;
+    }
+
+    .p-menu-item-link,
     .p-menuitem-link {
-        padding: 0.75rem 1rem !important;
+        padding: 0.55rem 0.75rem !important;
+        gap: 0.55rem !important;
         transition: background-color 0.2s !important;
 
-        &:hover {
-            background-color: var(--surface-hover) !important;
+        .p-menu-item-icon,
+        .p-menuitem-icon {
+            color: var(--text-color-secondary, #64748b) !important;
+            font-size: 0.75rem !important;
         }
 
         .p-menuitem-icon {
-            color: var(--text-color) !important;
-            margin-right: 0.75rem !important;
-            font-size: 1.1rem !important;
+            margin-right: 0.55rem !important;
         }
 
+        .p-menu-item-label,
         .p-menuitem-text {
             color: var(--text-color) !important;
+            font-size: 0.875rem !important;
             font-weight: 500 !important;
         }
     }
 
+    .p-menu-item:not(.p-disabled):not(.delete-menu-item) .p-menu-item-content:hover,
+    .p-menuitem-link:hover {
+        background-color: var(--surface-hover) !important;
+    }
+
+    .p-menu-separator {
+        margin: 0.3rem 0.25rem !important;
+        border-top: 1px solid #e2e8f0 !important;
+    }
+
     .text-red-500 {
+        .p-menu-item-link,
         .p-menuitem-link {
+            .p-menu-item-icon,
+            .p-menu-item-label,
             .p-menuitem-icon,
             .p-menuitem-text {
                 color: #ef4444 !important;
             }
-
-            &:hover {
-                background-color: var(--surface-hover) !important;
-            }
         }
     }
+}
+
+.app-dark .p-menu .p-menu-separator,
+.dark .p-menu .p-menu-separator {
+    border-top-color: rgba(148, 163, 184, 0.2) !important;
 }
 
 .menu-style {
@@ -464,27 +487,75 @@ p-button .p-button-info {
 }
 
 /* Action destructive (suppression / rejet) dans le menu contextuel */
-.delete-menu-item {
-    & [class*="-content"],
-    & [class*="-link"],
-    & a {
-        color: #ef4444 !important;
-        background-color: rgba(239, 68, 68, 0.05) !important;
-        border-radius: 5px !important;
+.p-menu .p-menu-item.delete-menu-item {
+    > .p-menu-item-content {
+        background-color: #fee2e2 !important;
+        color: #dc2626 !important;
+        border-radius: 6px !important;
+        transition: background-color 0.18s ease, color 0.18s ease;
 
-        [class*="-icon"],
-        [class*="-text"],
+        .p-menu-item-link {
+            background: transparent !important;
+        }
+
+        .p-menu-item-icon,
+        .p-menu-item-label,
         .pi {
-            color: #ef4444 !important;
+            color: #dc2626 !important;
+            transition: color 0.18s ease;
         }
     }
 
-    &:hover [class*="-content"],
-    & [class*="-content"]:hover,
-    &:hover [class*="-link"],
-    & [class*="-link"]:hover,
-    &:hover a {
-        background-color: #ef4444 !important;
+    &.p-focus:not(:hover) > .p-menu-item-content {
+        background-color: #fecaca !important;
+    }
+
+    &:not(.p-disabled):hover > .p-menu-item-content,
+    &:not(.p-disabled) > .p-menu-item-content:hover {
+        background-color: #dc2626 !important;
+        color: #ffffff !important;
+
+        .p-menu-item-icon,
+        .p-menu-item-label,
+        .pi {
+            color: #ffffff !important;
+        }
+    }
+}
+
+.app-dark .p-menu .p-menu-item.delete-menu-item,
+.dark .p-menu .p-menu-item.delete-menu-item {
+    > .p-menu-item-content {
+        background-color: rgba(239, 68, 68, 0.16) !important;
+        color: #f87171 !important;
+
+        .p-menu-item-icon,
+        .p-menu-item-label,
+        .pi {
+            color: #f87171 !important;
+        }
+    }
+
+    &.p-focus:not(:hover) > .p-menu-item-content {
+        background-color: rgba(239, 68, 68, 0.28) !important;
+    }
+}
+
+/* Fallback pour anciens menus hors p-menu PrimeNG 19 */
+.delete-menu-item > a.p-menuitem-link {
+    color: #dc2626 !important;
+    background-color: #fee2e2 !important;
+    border-radius: 6px !important;
+    transition: background-color 0.18s ease, color 0.18s ease;
+
+    [class*="-icon"],
+    [class*="-text"],
+    .pi {
+        color: #dc2626 !important;
+    }
+
+    &:hover {
+        background-color: #dc2626 !important;
         color: #ffffff !important;
 
         [class*="-icon"],
@@ -758,6 +829,127 @@ app-traitement-table app-nc-filter-bar > div {
     padding-top: 0 !important;
 }
 
+/* Tiroir flottant Glassmorphism (Panneau Verre Givré & Cartes Suspendues) */
+.p-drawer.qs-glass-drawer {
+    background: linear-gradient(
+        155deg,
+        rgba(255, 255, 255, 0.78) 0%,
+        rgba(241, 248, 255, 0.72) 55%,
+        rgba(255, 255, 255, 0.82) 100%
+    ) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.78) !important;
+    box-shadow:
+        0 20px 50px rgba(15, 23, 42, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+    overflow: hidden !important;
+
+    @media (min-width: 641px) {
+        top: 0.75rem !important;
+        right: 0.75rem !important;
+        bottom: 0.75rem !important;
+        height: calc(100vh - 1.5rem) !important;
+        border-radius: 18px !important;
+    }
+
+    @media (max-width: 640px) {
+        top: 0.5rem !important;
+        right: 0.5rem !important;
+        bottom: 0.5rem !important;
+        height: calc(100vh - 1rem) !important;
+        border-radius: 16px !important;
+    }
+
+    .p-drawer-header {
+        padding: 1rem 1.15rem !important;
+        background: rgba(255, 255, 255, 0.45) !important;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.18) !important;
+    }
+
+    .p-drawer-content {
+        padding: 1rem 1.15rem !important;
+        background: transparent !important;
+    }
+
+    .p-drawer-footer {
+        padding: 0.8rem 1.15rem !important;
+        background: rgba(255, 255, 255, 0.56) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        border-top: 1px solid rgba(148, 163, 184, 0.18) !important;
+    }
+
+    .qs-glass-card {
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.86);
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+    }
+
+    .qs-glass-card--featured {
+        background: rgba(255, 255, 255, 0.86);
+        border-color: rgba(255, 255, 255, 0.94);
+    }
+
+    .qs-glass-file-row {
+        border-radius: 10px;
+        background: rgba(248, 250, 252, 0.86);
+        border: 1px solid rgba(203, 213, 225, 0.65);
+        transition: border-color 0.18s ease, background-color 0.18s ease;
+
+        &:hover {
+            border-color: rgba(0, 132, 202, 0.45);
+            background: rgba(255, 255, 255, 0.96);
+        }
+    }
+}
+
+.app-dark .p-drawer.qs-glass-drawer,
+.dark .p-drawer.qs-glass-drawer {
+    background: linear-gradient(
+        155deg,
+        rgba(15, 23, 42, 0.78) 0%,
+        rgba(17, 30, 52, 0.76) 55%,
+        rgba(15, 23, 42, 0.84) 100%
+    ) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+
+    .p-drawer-header {
+        background: rgba(15, 23, 42, 0.46) !important;
+        border-bottom-color: rgba(148, 163, 184, 0.14) !important;
+    }
+
+    .p-drawer-footer {
+        background: rgba(15, 23, 42, 0.62) !important;
+        border-top-color: rgba(148, 163, 184, 0.14) !important;
+    }
+
+    .qs-glass-card {
+        background: rgba(30, 41, 59, 0.66);
+        border-color: rgba(148, 163, 184, 0.16);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+    }
+
+    .qs-glass-card--featured {
+        background: rgba(30, 41, 59, 0.82);
+        border-color: rgba(148, 163, 184, 0.22);
+    }
+
+    .qs-glass-file-row {
+        background: rgba(15, 23, 42, 0.56);
+        border-color: rgba(148, 163, 184, 0.18);
+
+        &:hover {
+            background: rgba(30, 41, 59, 0.9);
+            border-color: rgba(14, 165, 233, 0.5);
+        }
+    }
+}
+
 .drawer-subtitle-content {
     font-size: 12px;
     font-style: italic;
@@ -792,53 +984,8 @@ app-traitement-table app-nc-filter-bar > div {
 
 /* ==========================================================================
    15. NOTIFICATIONS TOASTS
-   Personnalisation des icônes rondes et bordures fines selon la sévérité
+   Déporté dans src/assets/layout/_quali-toast.scss via <app-quali-toast>
    ========================================================================== */
-.p-toast-message-icon {
-    border: 1px solid !important;
-    border-radius: 50px !important;
-    height: 25px !important;
-    width: 25px !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.p-toast-message-success {
-    box-shadow: none !important;
-    border: 1px solid var(--p-toast-success-color) !important;
-}
-
-.p-toast-message-warn {
-    box-shadow: none !important;
-    border: 1px solid var(--p-toast-warn-color) !important;
-}
-
-.p-toast-message-error {
-    box-shadow: none !important;
-    border: 1px solid var(--p-toast-error-color) !important;
-
-    .p-toast-message-icon {
-        border: none !important;
-        padding: 5px !important;
-        border-radius: 0 !important;
-        height: 25px !important;
-        width: 25px !important;
-    }
-}
-
-.p-toast-message-info {
-    box-shadow: none !important;
-    border: 1px solid var(--p-toast-info-color) !important;
-
-    .p-toast-message-icon {
-        border: none !important;
-        padding: 5px !important;
-        border-radius: 0 !important;
-        height: 25px !important;
-        width: 25px !important;
-    }
-}
 
 
 /* ==========================================================================

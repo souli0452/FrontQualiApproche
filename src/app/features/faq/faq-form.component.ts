@@ -104,8 +104,17 @@ export class FaqFormComponent implements OnInit, OnDestroy {
             && reponse.length > 0 && reponse.length <= FaqFormComponent.REPONSE_MAX;
     }
 
-    recevoirFichiers(fichiers: File[]): void {
-        this.aDeposer = fichiers ?? [];
+    /**
+     * Récupère les {@link File} sélectionnés depuis {@code app-file-upload}.
+     *
+     * <p>{@code FileUploadComponent.fileUploaded} émet ses éléments encapsulés
+     * ({@code &#123; file: File, extension, ... &#125;}) et non des {@code File} bruts : envoyer ces
+     * enveloppes telles quelles dans un {@code FormData} les sérialisait en {@code "[object Object]"}.</p>
+     */
+    recevoirFichiers(fichiers: (File | { file?: File })[]): void {
+        this.aDeposer = (fichiers ?? [])
+            .map((element) => (element instanceof File ? element : element?.file))
+            .filter((fichier): fichier is File => fichier instanceof File);
     }
 
     /**
@@ -168,9 +177,12 @@ export class FaqFormComponent implements OnInit, OnDestroy {
                         next: () => this.terminer('Réponse enregistrée, pièces jointes comprises.'),
                         error: (erreur) => {
                             this.enregistrement = false;
+                            const precision = erreur?.error?.message;
                             this.alertService.showError(erreur?.status === 503
                                 ? "Réponse enregistrée. Les pièces jointes demandent un serveur de fichiers, que cette installation n'a pas configuré."
-                                : 'Réponse enregistrée, mais le dépôt des pièces a échoué.');
+                                : precision
+                                    ? `Réponse enregistrée, mais le dépôt des pièces a échoué : ${precision}`
+                                    : 'Réponse enregistrée, mais le dépôt des pièces a échoué.');
                             this.router.navigate(['/faq']);
                         }
                     });

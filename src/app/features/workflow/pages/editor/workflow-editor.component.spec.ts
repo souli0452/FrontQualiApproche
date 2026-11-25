@@ -165,4 +165,52 @@ describe('WorkflowEditorComponent — attribution des codes d\'étape', () => {
     expect(etapes[0].code).toBe('VERIFICATION');
     expect(etapes[1].code).toBe('VERIFICATION_2');
   });
+
+  it('verrouille un circuit existant au chargement et autorise la modification après déverrouillage', () => {
+    composant.modeEdition = true;
+    (composant as any).remplirFormulaire({
+      id: 'wf-1',
+      nom: 'Circuit documentaire',
+      resourceType: 'DOCUMENT',
+      actif: true,
+      steps: [
+        { id: 1, code: 'SOUMISSION', nomEtape: 'Soumission', stepOrder: 1, responsableRole: '@CREATEUR', transitions: [] }
+      ]
+    });
+
+    expect(composant.verrouille).toBeTrue();
+    expect(composant.formulaire.disabled).toBeTrue();
+    expect(composant.etapes.length).toBe(1);
+
+    // Tant que le circuit est verrouillé, aucune étape ne s'ajoute par mégarde.
+    composant.ajouterEtape(false);
+    expect(composant.etapes.length).toBe(1);
+
+    composant.deverrouillerEdition();
+    expect(composant.verrouille).toBeFalse();
+    expect(composant.formulaire.enabled).toBeTrue();
+
+    composant.ajouterEtape(false);
+    expect(composant.etapes.length).toBe(2);
+    expect(composant.estEtapeOuverte(1)).toBeTrue();
+  });
+
+  it('détecte les étapes isolées dans le diagnostic moteur', () => {
+    composant.ajouterEtape(false);
+    composant.ajouterEtape(false);
+    composant.etapes.at(0).patchValue({ nomEtape: 'Soumission', responsableRole: '@CREATEUR' });
+    composant.etapes.at(1).patchValue({ nomEtape: 'Clôture', responsableRole: 'PILOTE' });
+
+    // Aucune transition de l'étape 1 ne vise l'étape 2 : l'étape 2 est isolée.
+    expect(composant.avertissementsGraphe().some((m) => m.includes('Clôture'))).toBeTrue();
+
+    composant.actionsDeLEtape(0).at(0).patchValue({
+      cible: composant.etapes.at(1).get('identifiantLocal')?.value
+    });
+    expect(composant.avertissementsGraphe()).toEqual([]);
+
+    composant.ouvrirApercuGraphe();
+    expect(composant.diagrammeOuvert).toBeTrue();
+    expect(composant.apercuCircuit?.steps?.length).toBe(2);
+  });
 });

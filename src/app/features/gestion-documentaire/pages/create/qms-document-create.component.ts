@@ -25,8 +25,7 @@ import { WorkflowActionDto, WorkflowStateDto } from 'src/app/models/workflow.mod
   imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, FileUploadComponent, SelectInputComponent,
     LicenceOuverteDirective],
   templateUrl: './qms-document-create.component.html',
-  styleUrls: ['./qms-document-create.component.scss'],
-  providers: [MessageService]
+  styleUrls: ['./qms-document-create.component.scss']
 })
 export class QmsDocumentCreateComponent implements OnInit, OnDestroy {
   documentForm: FormGroup;

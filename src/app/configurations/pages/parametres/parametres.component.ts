@@ -27,7 +27,6 @@ interface Nature {
     selector: 'app-parametres',
     standalone: true,
     imports: [CommonModule, ReactiveFormsModule, NgPrimeModule, TableauAffichageComponent, LicenceOuverteDirective],
-    providers: [MessageService],
     templateUrl: './parametres.component.html'
 })
 export class ParametresComponent implements OnInit, OnDestroy {

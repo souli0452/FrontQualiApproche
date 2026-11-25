@@ -56,7 +56,6 @@ type LigneDemande = DemandeDocumentDto & {
         WorkflowDecisionDialogComponent,
         LightboxComponent
     ],
-    providers: [MessageService],
     templateUrl: './qms-demandes.component.html'
 })
 export class QmsDemandesComponent implements OnInit, AfterViewInit, OnDestroy {

@@ -131,7 +131,6 @@ function joursAvant(echeance?: string): number | null {
         SkeletonModule,
         WorkflowActionsComponent
     ],
-    providers: [MessageService],
     templateUrl: 'mes-decisions.component.html',
 })
 export class MesDecisionsComponent implements OnInit, OnDestroy {

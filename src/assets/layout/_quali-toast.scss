@@ -1,0 +1,344 @@
+/* ==========================================================================
+   QUALISIRA — TOASTS GLASSMORPHISM (Proposition 3 : Capsule Verre Pur & Aura)
+   Style unifié pour l'hôte global <app-quali-toast> en bas à droite.
+   ========================================================================== */
+
+@keyframes qsGlassToastProgress {
+    from {
+        transform: scaleX(1);
+    }
+    to {
+        transform: scaleX(0);
+    }
+}
+
+.qs-glass-toast-host.p-toast {
+    width: 390px !important;
+    max-width: calc(100vw - 2rem) !important;
+    z-index: 1100999;
+
+    &.p-toast-bottom-right {
+        right: 1.25rem !important;
+        bottom: 1.25rem !important;
+    }
+
+    /* Empilement net depuis le bas droit (le plus récent en bas, proche du pouce/regard) */
+    > div,
+    .p-toast-message-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Neutralise le fond/bordure natif de PrimeNG derrière notre capsule transparente */
+    .p-toast-message {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border-radius: 16px !important;
+        margin: 0 0 0.75rem 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+
+        &:last-child {
+            margin-bottom: 0 !important;
+        }
+    }
+}
+
+/* Capsule Verre Pur & Aura Latérale (Mode Clair par défaut) */
+.qs-glass-toast-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.56);
+    box-shadow:
+        0 12px 36px rgba(15, 23, 42, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(14px) saturate(175%);
+    -webkit-backdrop-filter: blur(14px) saturate(175%);
+    color: #0f172a;
+    font-family: 'Golos Text', sans-serif;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+    &:hover {
+        box-shadow:
+            0 16px 42px rgba(15, 23, 42, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.85);
+
+        .qs-glass-toast-progress-bar {
+            animation-play-state: paused;
+        }
+    }
+}
+
+.qs-glass-toast-card--warn {
+    background: linear-gradient(
+        110deg,
+        rgba(245, 158, 11, 0.17) 0%,
+        rgba(255, 255, 255, 0.36) 48%,
+        rgba(255, 255, 255, 0.45) 100%
+    );
+
+    .qs-glass-toast-icon {
+        background: rgba(245, 158, 11, 0.14);
+        color: #d97706;
+        box-shadow: 0 2px 10px rgba(245, 158, 11, 0.18);
+    }
+
+    .qs-glass-toast-progress-bar {
+        background: rgba(245, 158, 11, 0.78);
+    }
+}
+
+.qs-glass-toast-card--success {
+    background: linear-gradient(
+        110deg,
+        rgba(16, 185, 129, 0.16) 0%,
+        rgba(255, 255, 255, 0.36) 48%,
+        rgba(255, 255, 255, 0.45) 100%
+    );
+
+    .qs-glass-toast-icon {
+        background: rgba(16, 185, 129, 0.14);
+        color: #059669;
+        box-shadow: 0 2px 10px rgba(16, 185, 129, 0.18);
+    }
+
+    .qs-glass-toast-progress-bar {
+        background: rgba(16, 185, 129, 0.78);
+    }
+}
+
+.qs-glass-toast-card--error {
+    background: linear-gradient(
+        110deg,
+        rgba(239, 68, 68, 0.16) 0%,
+        rgba(255, 255, 255, 0.36) 48%,
+        rgba(255, 255, 255, 0.45) 100%
+    );
+
+    .qs-glass-toast-icon {
+        background: rgba(239, 68, 68, 0.14);
+        color: #dc2626;
+        box-shadow: 0 2px 10px rgba(239, 68, 68, 0.18);
+    }
+
+    .qs-glass-toast-progress-bar {
+        background: rgba(239, 68, 68, 0.78);
+    }
+}
+
+.qs-glass-toast-card--info {
+    background: linear-gradient(
+        110deg,
+        rgba(0, 132, 202, 0.17) 0%,
+        rgba(255, 255, 255, 0.36) 48%,
+        rgba(255, 255, 255, 0.45) 100%
+    );
+
+    .qs-glass-toast-icon {
+        background: rgba(0, 132, 202, 0.14);
+        color: #0084ca;
+        box-shadow: 0 2px 10px rgba(0, 132, 202, 0.18);
+    }
+
+    .qs-glass-toast-progress-bar {
+        background: rgba(0, 132, 202, 0.82);
+    }
+}
+
+.qs-glass-toast-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.875rem;
+}
+
+.qs-glass-toast-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.qs-glass-toast-content {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.qs-glass-toast-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.qs-glass-toast-summary {
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #0f172a;
+    word-break: break-word;
+}
+
+.qs-glass-toast-detail {
+    margin: 0.25rem 0 0 0;
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.42;
+    color: rgba(15, 23, 42, 0.86);
+    word-break: break-word;
+    white-space: pre-line;
+}
+
+.qs-glass-toast-close {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.5rem;
+    border: 0;
+    background: transparent;
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+    transition: background-color 0.16s ease, color 0.16s ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.55);
+        color: #0f172a;
+    }
+
+    &:focus-visible {
+        outline: 2px solid #0084ca;
+        outline-offset: 1px;
+    }
+}
+
+.qs-glass-toast-progress {
+    height: 2.5px;
+    width: 100%;
+    background: rgba(148, 163, 184, 0.16);
+    overflow: hidden;
+}
+
+.qs-glass-toast-progress-bar {
+    height: 100%;
+    width: 100%;
+    transform-origin: left center;
+    animation-name: qsGlassToastProgress;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+}
+
+/* ==========================================================================
+   MODE SOMBRE (.app-dark / .dark)
+   ========================================================================== */
+.app-dark,
+.dark {
+    .qs-glass-toast-card {
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        box-shadow:
+            0 16px 40px rgba(0, 0, 0, 0.55),
+            inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        color: #f8fafc;
+    }
+
+    .qs-glass-toast-card--warn {
+        background: linear-gradient(
+            110deg,
+            rgba(245, 158, 11, 0.2) 0%,
+            rgba(15, 23, 42, 0.56) 50%,
+            rgba(15, 23, 42, 0.64) 100%
+        );
+
+        .qs-glass-toast-icon {
+            color: #fbbf24;
+        }
+    }
+
+    .qs-glass-toast-card--success {
+        background: linear-gradient(
+            110deg,
+            rgba(16, 185, 129, 0.2) 0%,
+            rgba(15, 23, 42, 0.56) 50%,
+            rgba(15, 23, 42, 0.64) 100%
+        );
+
+        .qs-glass-toast-icon {
+            color: #34d399;
+        }
+    }
+
+    .qs-glass-toast-card--error {
+        background: linear-gradient(
+            110deg,
+            rgba(239, 68, 68, 0.2) 0%,
+            rgba(15, 23, 42, 0.56) 50%,
+            rgba(15, 23, 42, 0.64) 100%
+        );
+
+        .qs-glass-toast-icon {
+            color: #f87171;
+        }
+    }
+
+    .qs-glass-toast-card--info {
+        background: linear-gradient(
+            110deg,
+            rgba(14, 165, 233, 0.22) 0%,
+            rgba(15, 23, 42, 0.56) 50%,
+            rgba(15, 23, 42, 0.64) 100%
+        );
+
+        .qs-glass-toast-icon {
+            color: #38bdf8;
+        }
+    }
+
+    .qs-glass-toast-icon {
+        border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    .qs-glass-toast-summary {
+        color: #f8fafc;
+    }
+
+    .qs-glass-toast-detail {
+        color: rgba(226, 232, 240, 0.9);
+    }
+
+    .qs-glass-toast-close {
+        color: #94a3b8;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #f8fafc;
+        }
+    }
+}
+
+/* ==========================================================================
+   RESPONSIVE MOBILE
+   ========================================================================== */
+@media screen and (max-width: 600px) {
+    .qs-glass-toast-host.p-toast {
+        width: auto !important;
+        max-width: none !important;
+
+        &.p-toast-bottom-right {
+            right: 0.75rem !important;
+            left: 0.75rem !important;
+            bottom: 0.75rem !important;
+        }
+    }
+}

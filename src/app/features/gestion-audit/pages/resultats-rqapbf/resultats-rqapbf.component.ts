@@ -34,7 +34,6 @@ const COULEUR_NIVEAU: Record<NiveauNotationRQAPBF, string> = {
     selector: 'app-resultats-rqapbf',
     standalone: true,
     imports: [CommonModule, RouterModule, NgPrimeModule, MentionRqapbfComponent],
-    providers: [MessageService],
     templateUrl: './resultats-rqapbf.component.html'
 })
 export class ResultatsRQAPBFComponent implements OnInit, OnDestroy {

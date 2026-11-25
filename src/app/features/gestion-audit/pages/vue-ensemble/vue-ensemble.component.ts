@@ -39,7 +39,6 @@ interface Indicateur {
     selector: 'app-audit-vue-ensemble',
     standalone: true,
     imports: [CommonModule, SmartAlertBannerComponent, RouterModule, FormsModule, NgPrimeModule, SelectInputComponent, KpiCardComponent, TableauAffichageComponent],
-    providers: [MessageService],
     templateUrl: './vue-ensemble.component.html'
 })
 export class AuditVueEnsembleComponent implements OnInit, OnDestroy {

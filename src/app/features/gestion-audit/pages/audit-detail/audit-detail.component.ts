@@ -33,7 +33,7 @@ import {
     selector: 'app-audit-detail',
     standalone: true,
     imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, SelectInputComponent, SmartAlertBannerComponent],
-    providers: [MessageService, ConfirmationService],
+    providers: [ConfirmationService],
     templateUrl: './audit-detail.component.html'
 })
 export class AuditDetailComponent implements OnInit, OnDestroy {

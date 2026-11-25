@@ -56,7 +56,7 @@ import { PreuvesConstatComponent } from '../constatations/preuves-constat.compon
     selector: 'app-evaluation-rqapbf',
     standalone: true,
     imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, PreuvesConstatComponent],
-    providers: [MessageService, ConfirmationService],
+    providers: [ConfirmationService],
     templateUrl: './evaluation-rqapbf.component.html'
 })
 export class EvaluationRQAPBFComponent implements OnInit, OnDestroy, QuitterSansPerte {

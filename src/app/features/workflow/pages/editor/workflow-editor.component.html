@@ -1,588 +1,773 @@
+<!-- =========================================================================
+     ÉDITEUR DE CIRCUIT DE VALIDATION (MOTEUR APPLICATIF QUALISIRA)
+     Option 3 : Fiche structurée par accordéons pliables, options techniques
+     escamotables, diagnostic moteur temps réel et verrouillage de sécurité.
+     ========================================================================= -->
 
-<!-- ------------------------------------------------------------------ Édition (pleine page)
-     Le formulaire s'ouvrait dans un dialogue modal au-dessus de la liste : l'objet le plus profond
-     de l'application — étapes, actions, champs de saisie — y défilait dans un cadre de 62 rem, et
-     la saisie n'avait pas d'adresse. La page en a une (`circuits/edition/:id`, `nouveau` à la
-     création) : elle se recharge et se partage. -->
-<div class="flex card items-center justify-between mb-0">
-    <div class="flex items-center gap-2">
-        <p-button 
-            icon="pi pi-arrow-left" 
-            size="small" 
-            variant="outlined" 
-            severity="contrast"
-            pTooltip="Retour à la liste" 
-            (onClick)="annuler()">
-        </p-button>
-        <h2 class="text-sm font-semibold m-0">{{ modeEdition ? 'Modifier le circuit' : 'Nouveau circuit' }}</h2>
-    </div>
-    <!-- Le guide reste atteignable pendant la saisie : c'est là qu'on hésite, et il s'ouvre
-         au-dessus de la page — rien à quitter, donc rien à ressaisir. -->
-    <p-button 
-        label="Guide de configuration" 
-        icon="pi pi-question-circle"
-        size="small" 
-        [text]="true" 
-        severity="info"
-            (onClick)="guideOuvert = true">
-        </p-button>
-</div>
+<!-- Confirmation de sécurité lors de la mise à jour d'un circuit moteur -->
+<p-confirmdialog
+    #cdSave
+    key="workflow-save"
+    appendTo="body"
+    maskStyleClass="backdrop-blur-sm"
+    [closable]="false"
+    [draggable]="false"
+    [style]="{ width: '460px', maxWidth: '92vw' }"
+    styleClass="border-none bg-transparent shadow-none">
+    <ng-template pTemplate="headless" let-message>
+        <div class="p-6 bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-2xl flex flex-col items-center text-center whitespace-normal">
+            <div class="w-14 h-14 rounded-full flex items-center justify-center mb-3.5 ring-8 bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 ring-amber-50/70 dark:ring-amber-950/30">
+                <i class="pi !text-2xl" [ngClass]="message.icon || 'pi-shield'"></i>
+            </div>
+            <h3 class="text-[17px] font-bold text-[var(--heading-color)] m-0 mb-1.5">
+                {{ message.header || 'Confirmation moteur' }}
+            </h3>
+            <p class="text-[13px] text-[var(--text-color-secondary)] m-0 leading-relaxed whitespace-pre-line px-1">
+                {{ message.message }}
+            </p>
+            <div class="w-full border-t border-[#dddddd]/70 dark:border-surface-700 my-4"></div>
+            <div class="flex items-center justify-center gap-3 w-full">
+                <button type="button" pButton
+                        [label]="message.rejectLabel || 'Annuler'"
+                        class="p-button-outlined p-button-secondary p-button-sm flex-1 justify-center rounded-[5px]"
+                        (click)="cdSave.onReject()">
+                </button>
+                <button type="button" pButton
+                        [label]="message.acceptLabel || 'Confirmer'"
+                        icon="pi pi-check"
+                        class="p-button-info p-button-sm flex-1 justify-center rounded-[5px]"
+                        (click)="cdSave.onAccept()">
+                </button>
+            </div>
+        </div>
+    </ng-template>
+</p-confirmdialog>
 
+<!-- Guide de configuration et aperçu graphique Mermaid -->
 <app-workflow-configuration-guide [(visible)]="guideOuvert"></app-workflow-configuration-guide>
 
+<p-dialog
+    [(visible)]="diagrammeOuvert"
+    [modal]="true"
+    [draggable]="false"
+    [dismissableMask]="true"
+    appendTo="body"
+    header="Aperçu du graphe du circuit"
+    [style]="{ width: '70rem', maxWidth: '95vw' }">
+    @if (diagrammeOuvert && apercuCircuit) {
+        <app-workflow-diagram [workflow]="apercuCircuit"></app-workflow-diagram>
+    }
+</p-dialog>
+
+<!-- Barre supérieure de navigation et d'actions -->
+<div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card px-4 py-3 mb-4 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+        <p-button
+            icon="pi pi-arrow-left"
+            size="small"
+            [outlined]="true"
+            severity="secondary"
+            pTooltip="Retour à la liste des circuits"
+            styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+            (onClick)="annuler()">
+        </p-button>
+        <span class="w-9 h-9 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+            <i class="pi pi-sitemap !text-base"></i>
+        </span>
+        <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+                <h2 class="text-[15px] font-bold text-[var(--heading-color)] m-0 truncate">
+                    {{ modeEdition ? (formulaire.get('nom')?.value || 'Modifier le circuit') : 'Nouveau circuit de validation' }}
+                </h2>
+                <p-tag
+                    [severity]="formulaire.get('actif')?.value ? 'success' : 'secondary'"
+                    [rounded]="true"
+                    [value]="formulaire.get('actif')?.value ? 'Actif' : 'Inactif'">
+                </p-tag>
+                @if (modeEdition && verrouille) {
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-500/12 text-[#0084ca] dark:text-sky-300 border border-[#0ea5e9]/30">
+                        <i class="pi pi-lock !text-[10px]"></i>
+                        <span>Lecture sécurisée</span>
+                    </span>
+                }
+            </div>
+            <p class="text-xs text-[var(--text-color-secondary)] m-0 mt-0.5">
+                Moteur applicatif • Orchestration des étapes, habilitations, transitions et formulaires de décision
+            </p>
+        </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+        <p-button
+            label="Visualiser le graphe"
+            icon="pi pi-share-alt"
+            size="small"
+            [outlined]="true"
+            severity="secondary"
+            styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+            (onClick)="ouvrirApercuGraphe()">
+        </p-button>
+        <p-button
+            label="Guide de configuration"
+            icon="pi pi-question-circle"
+            size="small"
+            [outlined]="true"
+            severity="secondary"
+            styleClass="!bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+            (onClick)="guideOuvert = true">
+        </p-button>
+        @if (modeEdition) {
+            @if (verrouille) {
+                <p-button
+                    label="Déverrouiller l'édition"
+                    icon="pi pi-unlock"
+                    size="small"
+                    severity="warn"
+                    [outlined]="true"
+                    (onClick)="deverrouillerEdition()">
+                </p-button>
+            } @else {
+                <p-button
+                    label="Verrouiller"
+                    icon="pi pi-lock"
+                    size="small"
+                    severity="secondary"
+                    [outlined]="true"
+                    (onClick)="verrouillerEdition()">
+                </p-button>
+            }
+        }
+    </div>
+</div>
+
 @if (chargement) {
-    <div class="flex justify-center p-8">
-        <i class="pi pi-spin pi-spinner text-2xl text-surface-400"></i>
+    <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-10 flex flex-col items-center justify-center gap-3">
+        <i class="pi pi-spin pi-spinner text-2xl text-[#0084ca]"></i>
+        <span class="text-sm text-[var(--text-color-secondary)]">Chargement de la configuration du circuit…</span>
     </div>
 } @else {
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-4 p-2 lg:pr-5 items-start">
-        <div class="p-fluid w-full lg:col-span-8 bg-surface-100 dark:bg-surface-900 p-4 rounded-xl min-w-0">
+    <!-- Bandeau de protection du moteur -->
+    @if (modeEdition && verrouille) {
+        <div class="mb-4 px-4 py-3 rounded-[5px] border border-[#0ea5e9]/35 bg-[#0ea5e9]/10 dark:bg-[#0ea5e9]/15 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-start gap-2.5 min-w-0 flex-1">
+                <i class="pi pi-shield text-[#0084ca] dark:text-sky-400 !text-base mt-0.5 shrink-0"></i>
+                <div class="text-xs text-[#0369a1] dark:text-sky-200 leading-relaxed">
+                    <strong>Protection du moteur applicatif :</strong> ce circuit contrôle l'acheminement réel des dossiers dans l'organisation.
+                    Il est ouvert en lecture sécurisée pour éviter toute modification involontaire. Déverrouillez l'édition uniquement si vous souhaitez ajuster ses règles.
+                </div>
+            </div>
+            <p-button
+                label="Déverrouiller l'édition"
+                icon="pi pi-unlock"
+                size="small"
+                severity="info"
+                (onClick)="deverrouillerEdition()">
+            </p-button>
+        </div>
+    } @else if (modeEdition && !verrouille) {
+        <div class="mb-4 px-4 py-3 rounded-[5px] border border-amber-400/45 bg-amber-500/10 dark:bg-amber-500/15 flex items-center gap-2.5">
+            <i class="pi pi-exclamation-triangle text-amber-600 dark:text-amber-400 !text-base mt-0.5 shrink-0"></i>
+            <div class="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
+                <strong>Édition du moteur déverrouillée :</strong> toute modification enregistrée devient la règle active pour les prochains dossiers créés.
+                Les codes fonctionnels des étapes existantes restent immuables afin de ne pas rompre les dossiers en cours.
+            </div>
+        </div>
+    }
+
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+
+        <!-- =====================================================================
+             COLONNE GAUCHE : IDENTITÉ + ACCORDÉONS D'ÉTAPES
+             ===================================================================== -->
+        <div class="xl:col-span-8 flex flex-col gap-5 min-w-0">
             <form [formGroup]="formulaire" class="flex flex-col gap-5">
 
-                <!-- Identité du circuit -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-1">
-                        <label class="font-medium">Nom du circuit <span class="text-red-500">*</span></label>
-                        <input pInputText formControlName="nom" [class.p-invalid]="isFieldInvalid(formulaire.get('nom'))" placeholder="Validation documentaire standard" />
-                        @if (isFieldInvalid(formulaire.get('nom'))) {
-                            <small class="text-red-500 text-xs flex items-center gap-1">
-                                <i class="pi pi-exclamation-circle text-xs"></i>
-                                Le nom du circuit est obligatoire.
-                            </small>
-                        }
+                <!-- Carte 1 : Identité & Portée du circuit -->
+                <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-5">
+                    <div class="flex items-center gap-3 pb-4 mb-5 border-b border-[#dddddd]/70 dark:border-surface-700">
+                        <div class="w-10 h-10 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                            <i class="pi pi-sliders-h !text-lg"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h3 class="text-[15px] font-bold text-[var(--heading-color)] m-0">Identité &amp; Portée du circuit</h3>
+                            <p class="text-xs text-[var(--text-color-secondary)] m-0 mt-0.5">
+                                Définit le module métier concerné, sa cible éventuelle et son activation dans le moteur
+                            </p>
+                        </div>
                     </div>
-                    <div class="flex flex-col gap-1">
-                        <label class="font-medium">Type de ressource <span class="text-red-500">*</span></label>
-                        <p-select formControlName="resourceType" [options]="typesRessource" optionLabel="label"
-                                optionValue="value" placeholder="Choisir un type"
-                                [class.p-invalid]="isFieldInvalid(formulaire.get('resourceType'))"
-                                [filter]="true" appendTo="body"></p-select>
-                        @if (isFieldInvalid(formulaire.get('resourceType'))) {
-                            <small class="text-red-500 text-xs flex items-center gap-1">
-                                <i class="pi pi-exclamation-circle text-xs"></i>
-                                Le type de ressource est obligatoire.
-                            </small>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold text-[var(--heading-color)]">
+                                Nom du circuit <span class="text-rose-500">*</span>
+                            </label>
+                            <input pInputText class="w-full" formControlName="nom"
+                                   [class.p-invalid]="isFieldInvalid(formulaire.get('nom'))"
+                                   placeholder="Validation documentaire standard" />
+                            @if (isFieldInvalid(formulaire.get('nom'))) {
+                                <small class="text-rose-500 text-xs flex items-center gap-1">
+                                    <i class="pi pi-exclamation-circle text-xs"></i>
+                                    Le nom du circuit est obligatoire.
+                                </small>
+                            }
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold text-[var(--heading-color)]">
+                                Type de ressource <span class="text-rose-500">*</span>
+                            </label>
+                            <p-select formControlName="resourceType" styleClass="w-full"
+                                      [options]="typesRessource" optionLabel="label" optionValue="value"
+                                      placeholder="Choisir un type"
+                                      [class.p-invalid]="isFieldInvalid(formulaire.get('resourceType'))"
+                                      [filter]="true" appendTo="body"></p-select>
+                            @if (isFieldInvalid(formulaire.get('resourceType'))) {
+                                <small class="text-rose-500 text-xs flex items-center gap-1">
+                                    <i class="pi pi-exclamation-circle text-xs"></i>
+                                    Le type de ressource est obligatoire.
+                                </small>
+                            }
+                        </div>
+
+                        <div class="flex flex-col gap-1.5 md:col-span-2">
+                            <label class="text-xs font-semibold text-[var(--heading-color)]">Description</label>
+                            <textarea rows="2" pTextarea class="w-full" [autoResize]="true"
+                                      formControlName="description"
+                                      placeholder="À quoi sert ce circuit et dans quel cas est-il appliqué ?"></textarea>
+                        </div>
+
+                        @if (formulaire.get('resourceType')?.value === 'DOCUMENT') {
+                            <div class="flex flex-col gap-1.5 md:col-span-2">
+                                <label class="text-xs font-semibold text-[var(--heading-color)]">Réservé à un type de document</label>
+                                <app-select-input formControlName="cibleId"
+                                                optionLabel="libelle" optionValue="id"
+                                                placeholder="Aucun — circuit par défaut des documents"
+                                                [lazy]="true" [loadOptions]="qmsService.chargerOptionsTypes"
+                                                [selectedOptions]="typeRetenu()"></app-select-input>
+                                <small class="text-[var(--text-color-secondary)] text-[11px]">
+                                    Les documents de ce type suivront ce circuit. Laissé vide, il sert de circuit par défaut pour la famille (un type ne peut suivre qu'un circuit à la fois).
+                                </small>
+                            </div>
                         }
-                    </div>
-                    <div class="flex flex-col gap-1 md:col-span-2">
-                        <label class="font-medium">Description</label>
-                        <textarea rows="2" pTextarea formControlName="description" placeholder="À quoi sert ce circuit ?"></textarea>
+
+                        <div class="md:col-span-2 rounded-[5px] border border-[#dddddd]/80 dark:border-surface-700 bg-surface-50/70 dark:bg-surface-800/40 px-4 py-3 flex items-center gap-3">
+                            <p-toggleswitch formControlName="actif"></p-toggleswitch>
+                            <div class="min-w-0">
+                                <div class="text-sm font-semibold text-[var(--heading-color)]">Circuit actif</div>
+                                <p class="text-xs text-[var(--text-color-secondary)] m-0 mt-0.5 leading-snug">
+                                    Un circuit désactivé n'est plus ouvrable pour de nouveaux dossiers (même s'il reste désigné par un type de document).
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Réservation du circuit à un type de document. Deux axes distincts et non deux niveaux
-                    du même : la famille dit à quels dossiers le circuit s'applique et sert d'aiguillage de
-                    retour vers le module métier ; la réservation restreint ce circuit à une catégorie de
-                    ces dossiers. Vide, le circuit est celui par défaut de sa famille. -->
-                @if (formulaire.get('resourceType')?.value === 'DOCUMENT') {
-                    <div class="flex flex-col gap-1">
-                        <label class="text-sm font-medium">Réservé à un type de document</label>
-                        <app-select-input formControlName="cibleId"
-                                        optionLabel="libelle" optionValue="id"
-                                        placeholder="Aucun — circuit par défaut des documents"
-                                        [lazy]="true" [loadOptions]="qmsService.chargerOptionsTypes"
-                                        [selectedOptions]="typeRetenu()"></app-select-input>
-                        <small class="text-surface-400 text-[11px]">
-                            Les documents de ce type suivront ce circuit. Les autres suivent le circuit par
-                            défaut — celui qui ne réserve rien. Un type ne peut suivre qu'un circuit à la
-                            fois : le serveur refuse le second.
-                        </small>
-                    </div>
-                }
+                <!-- Carte 2 : Étapes du circuit (Accordéons structurés) -->
+                <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-5">
+                    <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-[#dddddd]/70 dark:border-surface-700">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                                <i class="pi pi-list-check !text-lg"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="text-[15px] font-bold text-[var(--heading-color)] m-0">Étapes du circuit</h3>
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#0ea5e9]/12 text-[#0084ca] dark:text-sky-300 tabular-nums">
+                                        {{ etapes.length }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-[var(--text-color-secondary)] m-0 mt-0.5">
+                                    Cliquez sur une étape pour la déplier et configurer ses transitions et champs de décision
+                                </p>
+                            </div>
+                        </div>
 
-                <div class="flex items-center gap-3 rounded-lg border border-surface-200 bg-surface-50 p-3">
-                    <p-toggleswitch formControlName="actif"></p-toggleswitch>
-                    <div class="text-sm">
-                        <div class="font-medium dark:text-black">Circuit actif</div>
-                        <p class="text-surface-500 text-xs m-0">
-                            Un circuit désactivé n'est plus ouvrable : le moteur le refuse, même si un type de
-                            document le désigne. Plusieurs circuits d'une même famille peuvent rester actifs —
-                            les dossiers qui n'en désignent aucun prennent le plus ancien.
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Étapes -->
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-semibold text-base m-0">Étapes du circuit</h3>
-                        <p-button 
-                            label="Ajouter une étape" 
-                            severity="info" 
-                            icon="pi pi-plus" 
-                            size="small" 
-                            [text]="true"
-                            (onClick)="ajouterEtape()">
-                        </p-button>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <p-button label="Tout déplier" icon="pi pi-angle-double-down" size="small" [text]="true" severity="secondary"
+                                      (onClick)="toutDeplierEtapes()"></p-button>
+                            <p-button label="Tout replier" icon="pi pi-angle-double-up" size="small" [text]="true" severity="secondary"
+                                      (onClick)="toutReplierEtapes()"></p-button>
+                            <p-button label="Ajouter une étape" icon="pi pi-plus" size="small" severity="info"
+                                      [disabled]="verrouille"
+                                      (onClick)="ajouterEtape()"></p-button>
+                        </div>
                     </div>
 
                     <div formArrayName="steps" class="flex flex-col gap-3">
                         @for (etape of etapes.controls; track etape; let i = $index; let premier = $first; let dernier = $last) {
-                            <div [id]="'etape-card-' + i" [formGroupName]="i" class="rounded-lg border overflow-hidden transition-colors"
-                                 [ngClass]="isFieldInvalid(etape) ? 'border-red-300 dark:border-red-800 ring-1 ring-red-300 dark:ring-red-800' : 'border-surface-200'">
+                            <div [id]="'etape-card-' + i" [formGroupName]="i"
+                                 class="rounded-[5px] border overflow-hidden transition-colors"
+                                 [ngClass]="isFieldInvalid(etape)
+                                     ? 'border-rose-400 dark:border-rose-700 ring-1 ring-rose-300 dark:ring-rose-800'
+                                     : estEtapeOuverte(i)
+                                         ? 'border-[#0ea5e9]/50 dark:border-sky-700'
+                                         : 'border-[#dddddd] dark:border-surface-700'">
 
-                                <!-- En-tête d'étape -->
-                                <div class="flex items-center justify-between gap-2 px-3 py-2 border-b"
-                                     [ngClass]="isFieldInvalid(etape) ? 'bg-red-50/70 dark:bg-red-950/30 border-red-200 dark:border-red-800' : 'bg-surface-50 border-surface-200'">
-                                    <div class="head-first flex items-center gap-2 flex-1 min-w-0">
-                                        <span class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0"
-                                              [ngClass]="isFieldInvalid(etape) ? 'bg-red-500 text-white' : 'bg-white text-black dark:text-black'">
+                                <!-- En-tête accordéon cliquable -->
+                                <div class="px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 cursor-pointer select-none transition-colors"
+                                     [ngClass]="isFieldInvalid(etape)
+                                         ? 'bg-rose-50/70 dark:bg-rose-950/30 border-b border-rose-200 dark:border-rose-800'
+                                         : estEtapeOuverte(i)
+                                             ? 'bg-[#0ea5e9]/8 dark:bg-sky-950/25 border-b border-[#0ea5e9]/25 dark:border-sky-800'
+                                             : 'bg-surface-50/80 dark:bg-surface-800/40 hover:bg-surface-100/80 dark:hover:bg-surface-800/70'"
+                                     (click)="basculerEtape(i)">
+
+                                    <div class="flex items-center gap-2.5 flex-wrap min-w-0 flex-1">
+                                        <span class="w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center shrink-0"
+                                              [ngClass]="isFieldInvalid(etape)
+                                                  ? 'bg-rose-500 text-white'
+                                                  : premier
+                                                      ? 'bg-[#0084ca] text-white'
+                                                      : termineLeCircuit(i)
+                                                          ? 'bg-emerald-500 text-white'
+                                                          : 'bg-surface-200 dark:bg-surface-700 text-[var(--heading-color)]'">
                                             {{ i + 1 }}
                                         </span>
-                                        <span class="font-semibold text-black dark:text-white truncate">
+
+                                        <span class="text-sm font-bold text-[var(--heading-color)] truncate">
                                             {{ etape.get('nomEtape')?.value || 'Nouvelle étape' }}
                                         </span>
-                                        @if (isFieldInvalid(etape)) {
-                                            <p-tag severity="danger" value="Incomplète" icon="pi pi-exclamation-triangle"
-                                                pTooltip="Cette étape contient des champs obligatoires non renseignés"></p-tag>
+
+                                        @if (premier) {
+                                            <p-tag severity="info" value="Départ" styleClass="!text-[10.5px] !py-0.5 !px-2"></p-tag>
+                                        }
+                                        @if (termineLeCircuit(i)) {
+                                            <p-tag severity="success" value="Fin de circuit" icon="pi pi-flag-fill" styleClass="!text-[10.5px] !py-0.5 !px-2"></p-tag>
                                         }
                                         @if (etape.get('code')?.value) {
-                                            <!-- Le code est l'identité fonctionnelle de l'étape : les transitions le
-                                                désignent et les dossiers en cours s'y rapportent. Il ne se modifie pas. -->
-                                            <p-tag severity="secondary" [value]="etape.get('code')?.value"
-                                                pTooltip="Code fonctionnel, fixé à la création et non modifiable"></p-tag>
+                                            <span class="px-1.5 py-0.5 rounded bg-surface-100 dark:bg-surface-800 border border-[#dddddd] dark:border-surface-700 font-mono text-[10.5px] text-[var(--text-color-secondary)]"
+                                                  pTooltip="Code fonctionnel immuable en base">
+                                                {{ etape.get('code')?.value }}
+                                            </span>
                                         }
+                                        @if (isFieldInvalid(etape)) {
+                                            <p-tag severity="danger" value="Incomplète" icon="pi pi-exclamation-triangle"></p-tag>
+                                        }
+
+                                        <!-- Résumé rapide visible même lorsque l'étape est repliée -->
+                                        <span class="text-xs text-[var(--text-color-secondary)] truncate">
+                                            • {{ libelleRole(etape.get('responsableRole')?.value) }}
+                                            • {{ actionsDeLEtape(i).length }} action(s)
+                                            @if (champsDeLEtape(i).length > 0) {
+                                                • {{ champsDeLEtape(i).length }} champ(s)
+                                            }
+                                        </span>
                                     </div>
-                                    <div class="head-last flex items-center gap-2 shrink-0">
-                                        <p-button 
-                                            icon="pi pi-arrow-up" 
-                                            [text]="true" [rounded]="true" 
-                                            size="small"
-                                            [disabled]="premier" 
-                                            class="bouton-blanc"
-                                            pTooltip="Monter" 
-                                            (onClick)="deplacerEtape(i, -1)">
-                                        </p-button>
-                                        <p-button 
-                                            icon="pi pi-arrow-down" 
-                                            [text]="true" [rounded]="true" 
-                                            size="small"
-                                            [disabled]="dernier" 
-                                            class="bouton-blanc"
-                                            pTooltip="Descendre" 
-                                            (onClick)="deplacerEtape(i, 1)">
-                                        </p-button>
-                                        <p-button 
-                                            icon="pi pi-trash" 
-                                            severity="danger" 
-                                            [text]="true" 
-                                            [rounded]="true" 
-                                            size="small"
-                                            class="bouton-blanc"
-                                            pTooltip="Supprimer l'étape" 
-                                            (onClick)="supprimerEtape(i)">
-                                        </p-button>
+
+                                    <div class="flex items-center gap-1 shrink-0" (click)="$event.stopPropagation()">
+                                        <p-button icon="pi pi-arrow-up" [text]="true" [rounded]="true" size="small" severity="secondary"
+                                                  [disabled]="premier || verrouille" pTooltip="Monter l'étape"
+                                                  (onClick)="deplacerEtape(i, -1)"></p-button>
+                                        <p-button icon="pi pi-arrow-down" [text]="true" [rounded]="true" size="small" severity="secondary"
+                                                  [disabled]="dernier || verrouille" pTooltip="Descendre l'étape"
+                                                  (onClick)="deplacerEtape(i, 1)"></p-button>
+                                        <p-button icon="pi pi-trash" [text]="true" [rounded]="true" size="small" severity="danger"
+                                                  [disabled]="verrouille" pTooltip="Supprimer l'étape"
+                                                  (onClick)="supprimerEtape(i)"></p-button>
+                                        <button type="button"
+                                                class="w-7 h-7 rounded-full flex items-center justify-center text-[var(--text-color-secondary)] hover:bg-surface-200/70 dark:hover:bg-surface-700 cursor-pointer border-0 bg-transparent"
+                                                (click)="basculerEtape(i)"
+                                                [attr.aria-label]="estEtapeOuverte(i) ? 'Replier l\'étape' : 'Déplier l\'étape'">
+                                            <i class="pi !text-xs" [ngClass]="estEtapeOuverte(i) ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+                                        </button>
                                     </div>
                                 </div>
 
-                                <div class="p-3 flex flex-col gap-4">
-                                    <!-- Identité de l'étape -->
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        @if (modelesEtape.length) {
-                                            <div class="flex flex-col gap-1 md:col-span-2">
-                                                <label class="text-xs font-medium text-surface-600">Pré-remplir depuis le catalogue</label>
-                                                <p-select [options]="modelesEtape" optionLabel="nomEtape" optionValue="id"
-                                                        placeholder="Choisir un modèle d'étape (facultatif)" [showClear]="true"
-                                                        (onChange)="appliquerModeleEtape(i, $event.value)"
-                                [filter]="true" appendTo="body"></p-select>
-                                            </div>
-                                        }
-                                        <div class="flex flex-col gap-1">
-                                            <label class="text-xs font-medium text-surface-600">Nom de l'étape <span class="text-red-500">*</span></label>
-                                            <input pInputText formControlName="nomEtape" placeholder="Vérification"
-                                                   [class.p-invalid]="isFieldInvalid(etape.get('nomEtape'))" />
-                                            @if (isFieldInvalid(etape.get('nomEtape'))) {
-                                                <small class="text-red-500 text-xs flex items-center gap-1">
-                                                    <i class="pi pi-exclamation-circle text-xs"></i>
-                                                    Le nom de l'étape est obligatoire.
-                                                </small>
-                                            }
-                                        </div>
-                                        <div class="flex flex-col gap-1">
-                                            <label class="text-xs font-medium text-surface-600">Rôle responsable <span class="text-red-500">*</span></label>
-                                            <p-select formControlName="responsableRole" [options]="rolesDisponibles"
-                                                    optionLabel="label" optionValue="value" [filter]="true"
-                                                    placeholder="Qui décide à cette étape ?"
-                                                    [class.p-invalid]="isFieldInvalid(etape.get('responsableRole'))"
-                                                    appendTo="body"></p-select>
-                                            @if (isFieldInvalid(etape.get('responsableRole'))) {
-                                                <small class="text-red-500 text-xs flex items-center gap-1">
-                                                    <i class="pi pi-exclamation-circle text-xs"></i>
-                                                    Le rôle responsable est obligatoire.
-                                                </small>
-                                            }
-                                        </div>
-                                        <div class="flex flex-col gap-1">
-                                            <label class="text-xs font-medium text-surface-600">État de traitement</label>
-                                            <input pInputText formControlName="etatTraitement" placeholder="VALIDATION_RS" />
-                                            <small class="text-surface-400 text-[11px]">
-                                                Transmis au service métier pour refléter l'avancement du dossier.
-                                            </small>
-                                        </div>
-                                        <div class="flex flex-col gap-1">
-                                            <label class="text-xs font-medium text-surface-600">Notification à l'arrivée</label>
-                                            <p-select formControlName="emailTemplateCode" [options]="modelesEmail"
-                                                    optionLabel="label" optionValue="value"
-                                                    placeholder="Aucune notification"
-                                [filter]="true" appendTo="body"></p-select>
-                                            <small class="text-surface-400 text-[11px]">
-                                                Envoyée aux porteurs du rôle responsable.
-                                            </small>
-                                        </div>
-                                        <div class="flex flex-col gap-1 md:col-span-2">
-                                            <label class="text-xs font-medium text-surface-600">Description</label>
-                                            <input pInputText formControlName="description" placeholder="Ce qui est attendu à cette étape" />
-                                        </div>
-                                        <!-- Nommer quelqu'un plutôt que d'inventer un rôle : la valeur saisie
-                                            dans ce champ devient le titulaire du dossier, à qui les étapes
-                                            suivantes pourront être réservées. Un rôle « agent imputé » aurait
-                                            ouvert le traitement de tout dossier à tout agent imputable. -->
-                                        <div class="flex flex-col gap-1">
-                                            <label class="text-xs font-medium text-surface-600">Champ désignant le titulaire</label>
-                                            <p-select formControlName="champTitulaire" [options]="champsDesignables(i)"
-                                                    optionLabel="label" optionValue="value" [showClear]="true"
-                                                    placeholder="Cette étape ne désigne personne"
-                                                    [filter]="true" appendTo="body"></p-select>
-                                            <small class="text-[11px] text-surface-400">
-                                                La personne saisie dans ce champ devient le titulaire du dossier ;
-                                                les étapes réservées au titulaire ne s'ouvriront qu'à elle.
-                                            </small>
-                                        </div>
-                                        <!-- Le rôle dit qui peut décider ; ceci nomme qui signe. Un pilote
-                                            qui rédige un document porte le rôle attendu à la vérification,
-                                            et se trouvait donc habilité à vérifier son propre dépôt : c'est
-                                            ce que le rôle ne savait pas exprimer. -->
-                                        <div class="flex flex-col gap-1 md:col-span-2">
-                                            <label class="text-xs font-medium text-surface-600">
-                                                Signataires de l'étape
-                                            </label>
-                                            <p-multiSelect formControlName="cosignataires"
-                                                        [options]="utilisateursDisponibles"
-                                                        optionLabel="label" optionValue="value"
-                                                        [filter]="true" [showClear]="true" display="chip"
-                                                        placeholder="Personne — l'étape se décide au rôle seul"
-                                                        appendTo="body"></p-multiSelect>
-                                            <small class="text-[11px] text-surface-400">
-                                                Celui de ces signataires qui a <strong>soumis</strong> le dossier ne
-                                                décidera pas à cette étape : on ne vérifie pas son propre document.
-                                                Les autres décident normalement. Laissé vide, rien ne change — l'étape
-                                                se décide à l'habilitation seule.
-                                            </small>
-                                        </div>
-                                    </div>
+                                <!-- Contenu déplié de l'étape -->
+                                @if (estEtapeOuverte(i)) {
+                                    <div class="p-4 flex flex-col gap-4 bg-[var(--surface-card)]">
 
-                                    <!-- Actions proposées à l'étape -->
-                                    <div class="rounded-md bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 p-3 flex flex-col gap-3" formArrayName="actions">
-                                        <div class="flex items-center justify-between">
-                                            <div class="text-xs font-semibold uppercase text-black dark:text-white">
-                                                Actions proposées à cette étape
-                                            </div>
-                                            <p-button 
-                                                label="Ajouter une action" 
-                                                icon="pi pi-plus" 
-                                                size="small"
-                                                class="bg-dark"
-                                                [text]="true"
-                                                (onClick)="ajouterAction(i)"
-                                            ></p-button>
-                                        </div>
-                                        <!-- Une étape n'offrait que deux issues, l'action se confondant avec sa
-                                            décision. Elle peut désormais en proposer autant qu'il en faut :
-                                            « Valider » et « Demander un complément » approuvent l'une comme
-                                            l'autre, mais ne mènent pas au même endroit. -->
-
-                                        @if (termineLeCircuit(i)) {
-                                            <div class="rounded-md border border-dashed border-surface-300 bg-surface-0 p-3
-                                                        flex items-start gap-2.5">
-                                                <i class="pi pi-flag-fill text-surface-400 mt-0.5"></i>
-                                                <div class="text-xs text-surface-600 leading-relaxed">
-                                                    <span class="font-semibold text-surface-700">Cette étape termine le circuit.</span>
-                                                    Sans action, le dossier qui l'atteint s'y arrête : plus personne n'a de
-                                                    décision à y prendre, et le circuit est clos. C'est ainsi que se décrit une
-                                                    clôture. Le dossier prend l'issue de la décision qui l'y a mené — approuvé,
-                                                    clôturé ou refusé.
+                                        <!-- Réglages essentiels de l'étape -->
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                                            @if (modelesEtape.length) {
+                                                <div class="flex flex-col gap-1 md:col-span-2">
+                                                    <label class="text-xs font-semibold text-[var(--heading-color)]">
+                                                        Pré-remplir depuis le catalogue
+                                                    </label>
+                                                    <p-select styleClass="w-full"
+                                                              [options]="modelesEtape" optionLabel="nomEtape" optionValue="id"
+                                                              placeholder="Choisir un modèle d'étape (facultatif)"
+                                                              [showClear]="true" [disabled]="verrouille"
+                                                              (onChange)="appliquerModeleEtape(i, $event.value)"
+                                                              [filter]="true" appendTo="body"></p-select>
                                                 </div>
-                                            </div>
-                                        }
+                                            }
 
-                                        @for (action of actionsDeLEtape(i).controls; track $index; let j = $index) {
-                                            <div class="rounded-md border border-surface-200 p-3 flex flex-col gap-3" [formGroupName]="j">
-                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                                    <div class="flex flex-col gap-1">
-                                                        <label class="text-xs font-medium text-surface-600">Nature <span class="text-red-500">*</span></label>
-                                                        <p-select 
-                                                            formControlName="decision" 
-                                                            [options]="naturesAction"
-                                                            optionLabel="label" optionValue="value"
-                                                            [class.p-invalid]="isFieldInvalid(action.get('decision'))"
-                                                            appendTo="body"
-                                                        ></p-select>
-                                                        @if (isFieldInvalid(action.get('decision'))) {
-                                                            <small class="text-red-500 text-xs flex items-center gap-1">
-                                                                <i class="pi pi-exclamation-circle text-xs"></i>
-                                                                La nature de l'action est obligatoire.
-                                                            </small>
+                                            <div class="flex flex-col gap-1">
+                                                <label class="text-xs font-semibold text-[var(--heading-color)]">
+                                                    Nom de l'étape <span class="text-rose-500">*</span>
+                                                </label>
+                                                <input pInputText class="w-full" formControlName="nomEtape" placeholder="Vérification"
+                                                       [class.p-invalid]="isFieldInvalid(etape.get('nomEtape'))" />
+                                                @if (isFieldInvalid(etape.get('nomEtape'))) {
+                                                    <small class="text-rose-500 text-xs flex items-center gap-1">
+                                                        <i class="pi pi-exclamation-circle text-xs"></i>
+                                                        Le nom de l'étape est obligatoire.
+                                                    </small>
+                                                }
+                                            </div>
+
+                                            <div class="flex flex-col gap-1">
+                                                <label class="text-xs font-semibold text-[var(--heading-color)]">
+                                                    Rôle responsable <span class="text-rose-500">*</span>
+                                                </label>
+                                                <p-select styleClass="w-full" formControlName="responsableRole"
+                                                          [options]="rolesDisponibles" optionLabel="label" optionValue="value"
+                                                          [filter]="true" placeholder="Qui décide à cette étape ?"
+                                                          [class.p-invalid]="isFieldInvalid(etape.get('responsableRole'))"
+                                                          appendTo="body"></p-select>
+                                                @if (isFieldInvalid(etape.get('responsableRole'))) {
+                                                    <small class="text-rose-500 text-xs flex items-center gap-1">
+                                                        <i class="pi pi-exclamation-circle text-xs"></i>
+                                                        Le rôle responsable est obligatoire.
+                                                    </small>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <!-- Bloc repliable : Options avancées de l'étape -->
+                                        <div class="rounded-[5px] border border-[#dddddd]/80 dark:border-surface-700 bg-surface-50/60 dark:bg-surface-800/35">
+                                            <button type="button"
+                                                    class="w-full px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 bg-transparent border-0 cursor-pointer text-left"
+                                                    (click)="basculerOptionsEtape(i)">
+                                                <div class="flex flex-wrap items-center gap-2 min-w-0">
+                                                    <i class="pi pi-cog text-[#0084ca] dark:text-sky-400 !text-xs"></i>
+                                                    <span class="text-xs font-semibold text-[var(--heading-color)]">
+                                                        Options métier &amp; gouvernance
+                                                    </span>
+                                                    @if (resumeOptionsEtape(i).length > 0) {
+                                                        @for (puce of resumeOptionsEtape(i); track $index) {
+                                                            <span class="px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-300">
+                                                                {{ puce }}
+                                                            </span>
                                                         }
-                                                        <small class="text-[11px] text-surface-400">
-                                                            Fait avancer le dossier, ou le renvoie en arrière.
+                                                    } @else {
+                                                        <span class="text-[11px] text-[var(--text-color-secondary)]">
+                                                            État métier, notification e-mail, titulaire, signataires, description
+                                                        </span>
+                                                    }
+                                                </div>
+                                                <span class="text-xs font-semibold text-[#0084ca] dark:text-sky-400 inline-flex items-center gap-1 shrink-0">
+                                                    <span>{{ optionsEtapeDepliees(i) ? 'Masquer' : 'Afficher' }}</span>
+                                                    <i class="pi !text-[10px]" [ngClass]="optionsEtapeDepliees(i) ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+                                                </span>
+                                            </button>
+
+                                            @if (optionsEtapeDepliees(i)) {
+                                                <div class="p-3.5 pt-2 border-t border-[#dddddd]/70 dark:border-surface-700 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    <div class="flex flex-col gap-1">
+                                                        <label class="text-xs font-semibold text-[var(--heading-color)]">État de traitement</label>
+                                                        <input pInputText class="w-full" formControlName="etatTraitement" placeholder="VALIDATION_RS" />
+                                                        <small class="text-[var(--text-color-secondary)] text-[11px]">
+                                                            Transmis au module métier pour refléter l'avancement du dossier.
                                                         </small>
                                                     </div>
+
                                                     <div class="flex flex-col gap-1">
-                                                        <label class="text-xs font-medium text-surface-600">Code de l'action</label>
-                                                        <input pInputText formControlName="code" placeholder="DEMANDER_COMPLEMENT" />
-                                                        <small class="text-[11px] text-surface-400">
-                                                            Identifie l'action dans l'étape. Laissé vide, la nature en tient lieu.
+                                                        <label class="text-xs font-semibold text-[var(--heading-color)]">Notification à l'arrivée</label>
+                                                        <p-select styleClass="w-full" formControlName="emailTemplateCode"
+                                                                  [options]="modelesEmail" optionLabel="label" optionValue="value"
+                                                                  placeholder="Aucune notification" [filter]="true" appendTo="body"></p-select>
+                                                        <small class="text-[var(--text-color-secondary)] text-[11px]">
+                                                            Envoyée aux porteurs du rôle responsable.
                                                         </small>
                                                     </div>
-                                                    <div class="flex flex-col gap-1">
-                                                        <label class="text-xs font-medium text-surface-600">Destination</label>
-                                                        <p-select 
-                                                            formControlName="cible" 
-                                                            [options]="ciblesPossibles(i)"
-                                                            optionLabel="label" optionValue="value"
-                                                            placeholder="Fin du circuit"
-                                                            [filter]="true" appendTo="body"
-                                                        ></p-select>
-                                                    </div>
-                                                </div>
 
-                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                                    <div class="flex flex-col gap-1">
-                                                        <label class="text-xs font-medium text-surface-600">Rôle exigé (facultatif)</label>
-                                                        <p-select 
-                                                            formControlName="requiredRole" 
-                                                            [options]="rolesDisponibles"
-                                                            optionLabel="label" 
-                                                            optionValue="value" 
-                                                            [showClear]="true"
-                                                            placeholder="Celui de l'étape"
-                                                            [filter]="true" appendTo="body">
-                                                        </p-select>
+                                                    <div class="flex flex-col gap-1 md:col-span-2">
+                                                        <label class="text-xs font-semibold text-[var(--heading-color)]">Description de l'étape</label>
+                                                        <input pInputText class="w-full" formControlName="description" placeholder="Ce qui est attendu à cette étape" />
                                                     </div>
-                                                    <div class="flex flex-col gap-1">
-                                                        <label class="text-xs font-medium text-surface-600">Libellé du bouton</label>
-                                                        <input pInputText formControlName="label" placeholder="Approuver" />
-                                                    </div>
-                                                    <div class="flex flex-col gap-1">
-                                                        <label class="text-xs font-medium text-surface-600">Icône du bouton</label>
-                                                        <p-select formControlName="icon" [options]="iconesAction"
-                                                            optionLabel="label" optionValue="value" [showClear]="true"
-                                                            [editable]="true" placeholder="pi pi-check"
-                                                            [filter]="true" appendTo="body">
-                                                            <ng-template let-choix pTemplate="item">
-                                                                <span class="inline-flex items-center gap-2">
-                                                                    <i [class]="choix.value"></i><span>{{ choix.label }}</span>
-                                                                </span>
-                                                            </ng-template>
-                                                        </p-select>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Apparence du bouton. Laissée vide, la nature fournit la sienne :
-                                                    une coche verte pour approuver, une croix rouge pour rejeter.
-                                                    Un renvoi en correction et un refus ferme sont deux rejets : la
-                                                    couleur est ce qui les distingue à l'écran. -->
-                                                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
 
                                                     <div class="flex flex-col gap-1">
-                                                        <label class="text-xs font-medium text-surface-600">Couleur du bouton</label>
-                                                        <p-select formControlName="severity" [options]="severitesAction"
-                                                                optionLabel="label" optionValue="value" [showClear]="true"
-                                                                placeholder="Celle de la nature"
-                                                                [filter]="true" appendTo="body">
-                                                            <ng-template let-choix pTemplate="item">
-                                                                <span class="inline-flex items-center gap-2">
-                                                                    <p-tag [severity]="choix.value" value=" "></p-tag>
-                                                                    <span>{{ choix.label }}</span>
-                                                                </span>
-                                                            </ng-template>
-                                                        </p-select>
-                                                    </div>
-                                                    <div class="flex flex-col gap-1">
-                                                        <label class="text-xs font-medium text-surface-600">Aperçu</label>
-                                                        <p-button
-                                                            [label]="apercuLibelle(action.get('label')?.value, action.get('decision')?.value)"
-                                                            [icon]="apercuIcone(action.get('icon')?.value, action.get('decision')?.value)"
-                                                            [severity]="apercuSeverite(action.get('severity')?.value, action.get('decision')?.value)"
-                                                            size="small" [disabled]="true"></p-button>
-                                                    </div>
-                                                </div>
-
-                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
-                                                    <div class="flex flex-col gap-1">
-                                                        <label class="text-xs font-medium text-surface-600">Condition à remplir (facultatif)</label>
-                                                        <p-select 
-                                                            formControlName="conditionRequise" 
-                                                            [options]="faitsConnus"
-                                                            optionLabel="label" 
-                                                            optionValue="value" 
-                                                            [showClear]="true"
-                                                            [editable]="true" 
-                                                            placeholder="Aucune condition"
-                                                            [filter]="true" 
-                                                            appendTo="body">
-                                                        </p-select>
-                                                        <small class="text-[11px] text-surface-400">
-                                                            Fait que le dossier doit porter pour que cette action soit possible —
-                                                            « PLANS_ACTION_SOLDES », par exemple. C'est le module métier qui le déclare.
+                                                        <label class="text-xs font-semibold text-[var(--heading-color)]">Champ désignant le titulaire</label>
+                                                        <p-select styleClass="w-full" formControlName="champTitulaire"
+                                                                  [options]="champsDesignables(i)" optionLabel="label" optionValue="value"
+                                                                  [showClear]="true" placeholder="Cette étape ne désigne personne"
+                                                                  [filter]="true" appendTo="body"></p-select>
+                                                        <small class="text-[11px] text-[var(--text-color-secondary)]">
+                                                            Les étapes réservées à <code>&#64;TITULAIRE</code> s'ouvriront uniquement à la personne saisie dans ce champ.
                                                         </small>
                                                     </div>
+
                                                     <div class="flex flex-col gap-1">
-                                                        <label class="text-xs font-medium text-surface-600">Ce que la condition veut dire</label>
-                                                        <input pInputText formControlName="conditionLibelle"
-                                                            placeholder="toutes les actions correctives ont été reconnues efficaces" />
-                                                        <small class="text-[11px] text-surface-400">
-                                                            Phrase affichée à qui attend que le dossier avance. Sans elle, l'écran ne peut
-                                                            montrer que le nom technique du fait.
+                                                        <label class="text-xs font-semibold text-[var(--heading-color)]">Signataires de l'étape</label>
+                                                        <p-multiSelect styleClass="w-full" formControlName="cosignataires"
+                                                                       [options]="utilisateursDisponibles" optionLabel="label" optionValue="value"
+                                                                       [filter]="true" [showClear]="true" display="chip"
+                                                                       placeholder="Personne — l'étape se décide au rôle seul"
+                                                                       appendTo="body"></p-multiSelect>
+                                                        <small class="text-[11px] text-[var(--text-color-secondary)]">
+                                                            Empêche celui qui a soumis le dossier de valider sa propre soumission.
                                                         </small>
                                                     </div>
                                                 </div>
+                                            }
+                                        </div>
 
-                                                <div class="flex justify-end">
-                                                    <p-button 
-                                                        label="Retirer cette action" 
-                                                        icon="pi pi-trash" 
-                                                        size="small"
-                                                        variant="outlined" 
-                                                        severity="danger"
-                                                        (onClick)="supprimerAction(i, j)">
-                                                    </p-button>
+                                        <!-- Actions proposées à cette étape -->
+                                        <div class="rounded-[5px] border border-[#dddddd]/80 dark:border-surface-700 bg-surface-50/40 dark:bg-surface-800/25 p-3.5 flex flex-col gap-3"
+                                             formArrayName="actions">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <div class="text-xs font-bold uppercase tracking-wide text-[var(--heading-color)]">
+                                                    Actions proposées à cette étape ({{ actionsDeLEtape(i).length }})
                                                 </div>
+                                                <p-button label="Ajouter une action" icon="pi pi-plus" size="small"
+                                                          severity="info" [outlined]="true" [disabled]="verrouille"
+                                                          (onClick)="ajouterAction(i)"></p-button>
                                             </div>
-                                        }
-                                    </div>
 
-                                    <!-- Champs de saisie -->
-                                    <div class="bg-white dark:bg-surface-800 p-3 border rounded-md">
-                                            <div class="flex items-center justify-between mb-2">
-                                                <div class="text-xs font-semibold uppercase text-surface-500">
-                                                    Champs à renseigner pour décider
+                                            @if (termineLeCircuit(i)) {
+                                                <div class="rounded-[5px] border border-dashed border-emerald-400/60 bg-emerald-500/8 p-3 flex items-start gap-2.5">
+                                                    <i class="pi pi-flag-fill text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0"></i>
+                                                    <div class="text-xs text-[var(--text-color-secondary)] leading-relaxed">
+                                                        <span class="font-semibold text-[var(--heading-color)]">Cette étape termine le circuit.</span>
+                                                        Sans action sortante, tout dossier qui l'atteint est clôturé et prend l'issue de la décision qui l'y a mené.
+                                                    </div>
                                                 </div>
-                                                <p-button 
-                                                    label="Ajouter un champ" 
-                                                    icon="pi pi-plus" 
-                                                    class="bg-dark"
-                                                    size="small" 
-                                                    [text]="true"
-                                                    (onClick)="ajouterChamp(i)">
-                                                </p-button>
+                                            }
+
+                                            @for (action of actionsDeLEtape(i).controls; track action; let j = $index) {
+                                                <div [formGroupName]="j"
+                                                     class="rounded-[5px] border bg-[var(--surface-card)] overflow-hidden"
+                                                     [ngClass]="isFieldInvalid(action) ? 'border-rose-400 dark:border-rose-700' : 'border-[#dddddd] dark:border-surface-700'">
+
+                                                    <!-- Ligne résumé de l'action -->
+                                                    <div class="px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+                                                        <div class="flex flex-wrap items-center gap-2.5 min-w-0 flex-1">
+                                                            <p-button
+                                                                [label]="apercuLibelle(action.get('label')?.value, action.get('decision')?.value)"
+                                                                [icon]="apercuIcone(action.get('icon')?.value, action.get('decision')?.value)"
+                                                                [severity]="apercuSeverite(action.get('severity')?.value, action.get('decision')?.value)"
+                                                                size="small" [disabled]="true"></p-button>
+
+                                                            <span class="text-xs text-[var(--heading-color)] font-medium inline-flex items-center gap-1">
+                                                                <i class="pi pi-arrow-right !text-[10px] text-[var(--text-color-secondary)]"></i>
+                                                                <span>{{ libelleDestination(i, action.get('cible')?.value) }}</span>
+                                                            </span>
+
+                                                            @if (action.get('code')?.value) {
+                                                                <span class="px-1.5 py-0.5 rounded bg-surface-100 dark:bg-surface-800 border border-[#dddddd] dark:border-surface-700 font-mono text-[10.5px] text-[var(--text-color-secondary)]">
+                                                                    {{ action.get('code')?.value }}
+                                                                </span>
+                                                            }
+                                                            @if (action.get('conditionRequise')?.value) {
+                                                                <span class="px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-amber-500/12 text-amber-700 dark:text-amber-300">
+                                                                    Condition : {{ action.get('conditionRequise')?.value }}
+                                                                </span>
+                                                            }
+                                                            @if (isFieldInvalid(action)) {
+                                                                <p-tag severity="danger" value="Incomplète"></p-tag>
+                                                            }
+                                                        </div>
+
+                                                        <div class="flex items-center gap-1 shrink-0">
+                                                            <p-button
+                                                                [label]="estActionOuverte(action) ? 'Réduire' : 'Configurer'"
+                                                                [icon]="estActionOuverte(action) ? 'pi pi-chevron-up' : 'pi pi-sliders-h'"
+                                                                size="small" [outlined]="true" severity="secondary"
+                                                                (onClick)="basculerAction(action)"></p-button>
+                                                            <p-button
+                                                                icon="pi pi-trash" size="small" [text]="true" [rounded]="true" severity="danger"
+                                                                [disabled]="verrouille" pTooltip="Retirer cette action"
+                                                                (onClick)="supprimerAction(i, j)"></p-button>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Détail de configuration de l'action (déplié à la demande) -->
+                                                    @if (estActionOuverte(action)) {
+                                                        <div class="p-3.5 border-t border-[#dddddd]/80 dark:border-surface-700 flex flex-col gap-3.5 bg-surface-50/40 dark:bg-surface-900/20">
+                                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                                <div class="flex flex-col gap-1">
+                                                                    <label class="text-xs font-semibold text-[var(--heading-color)]">
+                                                                        Nature <span class="text-rose-500">*</span>
+                                                                    </label>
+                                                                    <p-select styleClass="w-full" formControlName="decision"
+                                                                              [options]="naturesAction" optionLabel="label" optionValue="value"
+                                                                              [class.p-invalid]="isFieldInvalid(action.get('decision'))"
+                                                                              appendTo="body"></p-select>
+                                                                    @if (isFieldInvalid(action.get('decision'))) {
+                                                                        <small class="text-rose-500 text-xs">Nature obligatoire.</small>
+                                                                    }
+                                                                </div>
+
+                                                                <div class="flex flex-col gap-1">
+                                                                    <label class="text-xs font-semibold text-[var(--heading-color)]">Destination</label>
+                                                                    <p-select styleClass="w-full" formControlName="cible"
+                                                                              [options]="ciblesPossibles(i)" optionLabel="label" optionValue="value"
+                                                                              placeholder="Fin du circuit" [filter]="true" appendTo="body"></p-select>
+                                                                </div>
+
+                                                                <div class="flex flex-col gap-1">
+                                                                    <label class="text-xs font-semibold text-[var(--heading-color)]">Libellé du bouton</label>
+                                                                    <input pInputText class="w-full" formControlName="label" placeholder="Approuver" />
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                                <div class="flex flex-col gap-1">
+                                                                    <label class="text-xs font-semibold text-[var(--heading-color)]">Code de l'action</label>
+                                                                    <input pInputText class="w-full" formControlName="code" placeholder="DEMANDER_COMPLEMENT" />
+                                                                    <small class="text-[11px] text-[var(--text-color-secondary)]">Laissé vide, la nature en tient lieu.</small>
+                                                                </div>
+
+                                                                <div class="flex flex-col gap-1">
+                                                                    <label class="text-xs font-semibold text-[var(--heading-color)]">Icône du bouton</label>
+                                                                    <p-select styleClass="w-full" formControlName="icon"
+                                                                              [options]="iconesAction" optionLabel="label" optionValue="value"
+                                                                              [showClear]="true" [editable]="true" placeholder="pi pi-check"
+                                                                              [filter]="true" appendTo="body">
+                                                                        <ng-template let-choix pTemplate="item">
+                                                                            <span class="inline-flex items-center gap-2">
+                                                                                <i [class]="choix.value"></i><span>{{ choix.label }}</span>
+                                                                            </span>
+                                                                        </ng-template>
+                                                                    </p-select>
+                                                                </div>
+
+                                                                <div class="flex flex-col gap-1">
+                                                                    <label class="text-xs font-semibold text-[var(--heading-color)]">Couleur du bouton</label>
+                                                                    <p-select styleClass="w-full" formControlName="severity"
+                                                                              [options]="severitesAction" optionLabel="label" optionValue="value"
+                                                                              [showClear]="true" placeholder="Celle de la nature"
+                                                                              [filter]="true" appendTo="body">
+                                                                        <ng-template let-choix pTemplate="item">
+                                                                            <span class="inline-flex items-center gap-2">
+                                                                                <p-tag [severity]="choix.value" value=" "></p-tag>
+                                                                                <span>{{ choix.label }}</span>
+                                                                            </span>
+                                                                        </ng-template>
+                                                                    </p-select>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                                <div class="flex flex-col gap-1">
+                                                                    <label class="text-xs font-semibold text-[var(--heading-color)]">Rôle exigé (facultatif)</label>
+                                                                    <p-select styleClass="w-full" formControlName="requiredRole"
+                                                                              [options]="rolesDisponibles" optionLabel="label" optionValue="value"
+                                                                              [showClear]="true" placeholder="Celui de l'étape"
+                                                                              [filter]="true" appendTo="body"></p-select>
+                                                                </div>
+
+                                                                <div class="flex flex-col gap-1">
+                                                                    <label class="text-xs font-semibold text-[var(--heading-color)]">Condition à remplir</label>
+                                                                    <p-select styleClass="w-full" formControlName="conditionRequise"
+                                                                              [options]="faitsConnus" optionLabel="label" optionValue="value"
+                                                                              [showClear]="true" [editable]="true" placeholder="Aucune condition"
+                                                                              [filter]="true" appendTo="body"></p-select>
+                                                                </div>
+
+                                                                <div class="flex flex-col gap-1">
+                                                                    <label class="text-xs font-semibold text-[var(--heading-color)]">Libellé de condition</label>
+                                                                    <input pInputText class="w-full" formControlName="conditionLibelle"
+                                                                           placeholder="toutes les actions sont efficaces" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <!-- Champs à renseigner pour décider -->
+                                        <div class="rounded-[5px] border border-[#dddddd]/80 dark:border-surface-700 bg-surface-50/40 dark:bg-surface-800/25 p-3.5 flex flex-col gap-3"
+                                             formArrayName="fields">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <div class="text-xs font-bold uppercase tracking-wide text-[var(--heading-color)]">
+                                                    Champs à renseigner pour décider ({{ champsDeLEtape(i).length }})
+                                                </div>
+                                                <p-button label="Ajouter un champ" icon="pi pi-plus" size="small"
+                                                          severity="info" [outlined]="true" [disabled]="verrouille"
+                                                          (onClick)="ajouterChamp(i)"></p-button>
                                             </div>
 
                                             @if (champsDeLEtape(i).length === 0) {
-                                                <p class="text-xs text-surface-400 m-0">
-                                                    Aucun champ : le décideur n'aura qu'un commentaire à saisir.
+                                                <p class="text-xs text-[var(--text-color-secondary)] m-0">
+                                                    Aucun champ : le décideur n'aura qu'un commentaire facultatif à saisir.
                                                 </p>
                                             } @else {
-                                                <div formArrayName="fields" class="flex flex-col gap-2">
-                                                    @for (champ of champsDeLEtape(i).controls; track champ; let j = $index) {
-                                                        <div [formGroupName]="j" class="flex flex-col gap-2 items-end rounded-md border border-surface-200 p-2">
-                                                            <div class="champs-decideur grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                                                                <div class="flex flex-col w-full">
-                                                                    <label class="text-[11px] text-surface-500 font-medium">Libellé affiché <span class="text-red-500">*</span></label>
-                                                                    <input class="w-full" pInputText formControlName="fieldLabel" placeholder="Avis motivé"
+                                                <div class="flex flex-col gap-2.5">
+                                                    @for (champ of champsDeLEtape(i).controls; track champ; let k = $index) {
+                                                        <div [formGroupName]="k"
+                                                             class="rounded-[5px] border border-[#dddddd] dark:border-surface-700 bg-[var(--surface-card)] p-3 flex flex-col gap-3">
+                                                            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
+                                                                <div class="md:col-span-4 flex flex-col gap-1">
+                                                                    <label class="text-[11px] font-semibold text-[var(--heading-color)]">
+                                                                        Libellé affiché <span class="text-rose-500">*</span>
+                                                                    </label>
+                                                                    <input pInputText class="w-full" formControlName="fieldLabel" placeholder="Avis motivé"
                                                                            [class.p-invalid]="isFieldInvalid(champ.get('fieldLabel'))" />
                                                                     @if (isFieldInvalid(champ.get('fieldLabel'))) {
-                                                                        <small class="text-red-500 text-[10px] flex items-center gap-1 mt-1">
-                                                                            <i class="pi pi-exclamation-circle text-[10px]"></i>
-                                                                            Libellé obligatoire.
-                                                                        </small>
+                                                                        <small class="text-rose-500 text-[10.5px]">Libellé obligatoire.</small>
                                                                     }
                                                                 </div>
-                                                                <div class="flex flex-col w-full">
-                                                                    <label class="text-[11px] text-surface-500 font-medium">Nom technique <span class="text-red-500">*</span></label>
-                                                                    <input class="w-full" pInputText formControlName="fieldName" placeholder="avis"
+
+                                                                <div class="md:col-span-4 flex flex-col gap-1">
+                                                                    <label class="text-[11px] font-semibold text-[var(--heading-color)]">
+                                                                        Nom technique <span class="text-rose-500">*</span>
+                                                                    </label>
+                                                                    <input pInputText class="w-full" formControlName="fieldName" placeholder="avis"
                                                                            [class.p-invalid]="isFieldInvalid(champ.get('fieldName'))" />
                                                                     @if (isFieldInvalid(champ.get('fieldName'))) {
-                                                                        <small class="text-red-500 text-[10px] flex items-center gap-1 mt-1">
-                                                                            <i class="pi pi-exclamation-circle text-[10px]"></i>
-                                                                            Nom technique obligatoire.
-                                                                        </small>
+                                                                        <small class="text-rose-500 text-[10.5px]">Nom technique obligatoire.</small>
                                                                     }
                                                                 </div>
-                                                                <div class="flex flex-col w-full">
-                                                                    <label class="text-[11px] text-surface-500 font-medium">Type <span class="text-red-500">*</span></label>
-                                                                    <p-select 
-                                                                        formControlName="type" 
-                                                                        class="w-full"
-                                                                        [options]="typesChamp"
-                                                                        optionLabel="label" 
-                                                                        optionValue="value"
-                                                                        [filter]="true" 
-                                                                        [class.p-invalid]="isFieldInvalid(champ.get('type'))"
-                                                                        appendTo="body"
-                                                                    ></p-select>
-                                                                    @if (isFieldInvalid(champ.get('type'))) {
-                                                                        <small class="text-red-500 text-[10px] flex items-center gap-1 mt-1">
-                                                                            <i class="pi pi-exclamation-circle text-[10px]"></i>
-                                                                            Type obligatoire.
-                                                                        </small>
-                                                                    }
+
+                                                                <div class="md:col-span-3 flex flex-col gap-1">
+                                                                    <label class="text-[11px] font-semibold text-[var(--heading-color)]">
+                                                                        Type <span class="text-rose-500">*</span>
+                                                                    </label>
+                                                                    <p-select styleClass="w-full" formControlName="type"
+                                                                              [options]="typesChamp" optionLabel="label" optionValue="value"
+                                                                              [filter]="true" [class.p-invalid]="isFieldInvalid(champ.get('type'))"
+                                                                              appendTo="body"></p-select>
+                                                                </div>
+
+                                                                <div class="md:col-span-1 flex justify-end md:pt-5">
+                                                                    <p-button icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" size="small"
+                                                                              [disabled]="verrouille" pTooltip="Supprimer ce champ"
+                                                                              (onClick)="supprimerChamp(i, k)"></p-button>
                                                                 </div>
                                                             </div>
-                                                            <div class="champs-decideur">
 
                                                             @if (champ.get('type')?.value === 'SELECT') {
-                                                                <div class="md:col-span-2 flex flex-col gap-1">
-                                                                    <label class="text-[11px] text-surface-500">Valeurs proposées</label>
-                                                                    <p-select formControlName="source" [options]="sourcesDeChoix"
-                                                                            optionLabel="label" optionValue="value"
-                                                                            appendTo="body"></p-select>
+                                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                                    <div class="flex flex-col gap-1">
+                                                                        <label class="text-[11px] font-semibold text-[var(--heading-color)]">Valeurs proposées</label>
+                                                                        <p-select styleClass="w-full" formControlName="source"
+                                                                                  [options]="sourcesDeChoix" optionLabel="label" optionValue="value"
+                                                                                  appendTo="body"></p-select>
                                                                     </div>
-                                                                    <!-- Une liste écrite à la main ne vaut que pour des choix figés.
-                                                                        Adossée au référentiel, elle suit les créations et les
-                                                                        corrections de libellé sans qu'on remanie le circuit. -->
                                                                     @if (!champ.get('source')?.value) {
-                                                                        <div class="md:col-span-2 flex flex-col gap-1">
-                                                                            <label class="text-[11px] text-surface-500">Choix (séparés par des virgules)</label>
-                                                                            <input pInputText formControlName="options" placeholder="Oui,Non" />
+                                                                        <div class="flex flex-col gap-1">
+                                                                            <label class="text-[11px] font-semibold text-[var(--heading-color)]">Choix (séparés par des virgules)</label>
+                                                                            <input pInputText class="w-full" formControlName="options" placeholder="Oui,Non" />
                                                                         </div>
                                                                     }
-                                                                }
-                                                                <div class="champs-decideur flex gap-2 items-end rounded-md border border-surface-200 p-2">
-                                                                    <div class="flex flex-col w-full">
-                                                                        <label class="text-[11px] text-surface-500 mb-2">Demandé lors de</label>
-                                                                        <p-select 
-                                                                            formControlName="decision" 
-                                                                            [options]="porteesChamp"
-                                                                            optionLabel="label" 
-                                                                            optionValue="value"
-                                                                            appendTo="body">
-                                                                        </p-select>
-                                                                    </div>
-                                                                    <!-- Portée la plus étroite : le champ n'est demandé que par
-                                                                        l'action nommée. Sans elle, le motif que réclame
-                                                                        « Demander un complément » serait demandé à qui valide
-                                                                        simplement — les deux approuvent. -->
-                                                                    <div class="flex flex-col w-full">
-                                                                        <label class="text-[11px] text-surface-500  mb-2">Demandé par l'action</label>
-                                                                        <p-select 
-                                                                            formControlName="actionCode" 
-                                                                            [options]="actionsDesignables(i)"
-                                                                            optionLabel="label" 
-                                                                            optionValue="value" 
-                                                                            [showClear]="true"
-                                                                            [filter]="true" 
-                                                                            placeholder="Toutes les actions"
-                                                                            appendTo="body">
-                                                                        </p-select>
-                                                                    </div>
-                                                                    <div class="flex flex-row items-center w-full mt-6">
-                                                                        <p-checkbox formControlName="required" [binary]="true"></p-checkbox>
-                                                                        <span class="text-[11px] text-surface-500 ml-2">Requis</span>
-                                                                    </div>
                                                                 </div>
-                                                            </div>
+                                                            }
 
-                                                            <div class="md:col-span-1 flex justify-end pb-1">
-                                                                <p-button 
-                                                                    icon="pi pi-trash" 
-                                                                    severity="danger" 
-                                                                    [text]="true"
-                                                                    [rounded]="true" 
-                                                                    size="small"
-                                                                    (onClick)="supprimerChamp(i, j)">
-                                                                </p-button>
+                                                            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center pt-2 border-t border-[#dddddd]/60 dark:border-surface-700">
+                                                                <div class="md:col-span-5 flex flex-col gap-1">
+                                                                    <label class="text-[11px] font-semibold text-[var(--heading-color)]">Demandé lors de</label>
+                                                                    <p-select styleClass="w-full" formControlName="decision"
+                                                                              [options]="porteesChamp" optionLabel="label" optionValue="value"
+                                                                              appendTo="body"></p-select>
+                                                                </div>
+                                                                <div class="md:col-span-5 flex flex-col gap-1">
+                                                                    <label class="text-[11px] font-semibold text-[var(--heading-color)]">Demandé par l'action</label>
+                                                                    <p-select styleClass="w-full" formControlName="actionCode"
+                                                                              [options]="actionsDesignables(i)" optionLabel="label" optionValue="value"
+                                                                              [showClear]="true" [filter]="true" placeholder="Toutes les actions"
+                                                                              appendTo="body"></p-select>
+                                                                </div>
+                                                                <div class="md:col-span-2 flex items-center gap-2 md:pt-5">
+                                                                    <p-checkbox formControlName="required" [binary]="true" [inputId]="'req-' + i + '-' + k"></p-checkbox>
+                                                                    <label [for]="'req-' + i + '-' + k" class="text-xs font-medium text-[var(--heading-color)] cursor-pointer">
+                                                                        Requis
+                                                                    </label>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     }
@@ -590,101 +775,109 @@
                                             }
                                         </div>
                                     </div>
-                                </div>
+                                }
+                            </div>
                         }
-                    
                     </div>
                 </div>
             </form>
-
-            <div class="flex justify-end gap-2 mt-5">
-                <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="annuler()"></p-button>
-                <p-button siLicenceOuverte label="Enregistrer" severity="info" [loading]="enregistrement" (onClick)="enregistrer()"></p-button>
-            </div>
         </div>
 
-        <div class="w-full lg:col-span-4 lg:sticky lg:top-[5rem] self-start min-w-0">
-            <div class="p-5 bg-white dark:bg-surface-900 rounded-2xl border border-surface-200 dark:border-surface-800 shadow-sm">
-                    <h3 class="text-xl font-semibold text-surface-900 dark:text-surface-0 mt-0 mb-5 tracking-tight">
-                        Conseils rapides
-                    </h3>
-                    
-                    <div class="flex flex-col gap-4">
-                        
-                        <!-- Conseil 1 -->
-                        <div class="flex items-start gap-3">
-                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
-                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
-                                Définissez un <strong>nom explicite</strong> et choisissez le bon type de ressource (Documents, Non-conformités, Plans d'action, Demandes).
-                            </span>
-                        </div>
+        <!-- =====================================================================
+             COLONNE DROITE STICKY : DIAGNOSTIC MOTEUR LIVE + ACTIONS + REPÈRES
+             ===================================================================== -->
+        <div class="xl:col-span-4 flex flex-col gap-5 xl:sticky xl:top-[5rem] min-w-0">
 
-                        <!-- Conseil 2 -->
-                        <div class="flex items-start gap-3">
-                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
-                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
-                                Tout circuit doit comporter <strong>une étape initiale</strong> pour accueillir le dossier dès sa création (ex: <em>Brouillon</em> ou <em>Soumission</em>).
-                            </span>
-                        </div>
-
-                        <!-- Conseil 3 -->
-                        <div class="flex items-start gap-3">
-                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
-                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
-                                Prévoyez au moins une <strong>étape terminale</strong> (ex: <em>Validé</em>, <em>Clôturé</em>, <em>Rejeté</em>) sans action sortante pour clore le dossier.
-                            </span>
-                        </div>
-
-                        <!-- Conseil 4 -->
-                        <div class="flex items-start gap-3">
-                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
-                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
-                                Chaque transition génère un bouton pour le décideur (<em>Approuver</em>, <em>Rejeter</em>). Veillez à relier chaque étape sans créer d'impasse.
-                            </span>
-                        </div>
-
-                        <!-- Conseil 5 -->
-                        <div class="flex items-start gap-3">
-                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
-                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
-                                Assignez un <strong>rôle responsable</strong> à chaque étape pour déterminer précisément qui est habilité à statuer et valider.
-                            </span>
-                        </div>
-
-                        <!-- Conseil 6 -->
-                        <div class="flex items-start gap-3">
-                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
-                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
-                                Pour les étapes d'évaluation, ajoutez des <strong>champs de saisie</strong> (note, avis motivé) obligatoires avant que le décideur ne valide.
-                            </span>
-                        </div>
-
-                        <!-- Conseil 7 -->
-                        <div class="flex items-start gap-3">
-                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
-                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
-                                Associez des <strong>modèles d'e-mails</strong> aux transitions clés pour notifier automatiquement le prochain décideur par courriel.
-                            </span>
-                        </div>
-
-                        <!-- Conseil 8 -->
-                        <div class="flex items-start gap-3">
-                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
-                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
-                                <strong>Règle d'auto-approbation</strong> : un signataire qui a soumis un dossier ne pourra pas vérifier ou approuver son propre dépôt.
-                            </span>
-                        </div>
-
-                        <!-- Conseil 9 -->
-                        <div class="flex items-start gap-3">
-                            <i class="pi pi-check-circle text-emerald-500 text-lg mt-0.5 shrink-0"></i>
-                            <span class="text-surface-700 dark:text-surface-300 text-sm leading-relaxed">
-                                Pensez à <strong>activer le circuit</strong> pour qu'il soit immédiatement appliqué par défaut aux nouveaux dossiers créés.
-                            </span>
-                        </div>
-
+            <!-- Diagnostic d'intégrité temps réel -->
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-4">
+                <div class="flex items-center gap-2.5 mb-3 pb-2.5 border-b border-[#dddddd]/70 dark:border-surface-700">
+                    <span class="w-8 h-8 rounded-[5px] bg-[#0ea5e9]/10 text-[#0084ca] dark:text-sky-400 flex items-center justify-center shrink-0">
+                        <i class="pi pi-shield !text-sm"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-sm font-bold text-[var(--heading-color)] m-0">Diagnostic moteur</h3>
+                        <span class="text-[11px] text-[var(--text-color-secondary)]">Contrôles d'intégrité en direct</span>
                     </div>
+                </div>
 
+                <div class="flex flex-col gap-2">
+                    @for (item of diagnostics; track $index) {
+                        <div class="px-2.5 py-2 rounded-[5px] text-xs font-medium flex items-start gap-2 leading-snug"
+                             [ngClass]="item.statut === 'ok'
+                                 ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300'
+                                 : item.statut === 'danger'
+                                     ? 'bg-rose-500/10 text-rose-700 dark:text-rose-300'
+                                     : 'bg-amber-500/12 text-amber-800 dark:text-amber-300'">
+                            <i class="pi !text-xs mt-0.5 shrink-0"
+                               [ngClass]="item.statut === 'ok'
+                                   ? 'pi-check-circle text-emerald-500'
+                                   : item.statut === 'danger'
+                                       ? 'pi-times-circle text-rose-500'
+                                       : 'pi-exclamation-triangle text-amber-500'"></i>
+                            <span>{{ item.texte }}</span>
+                        </div>
+                    }
+                </div>
+
+                <div class="border-t border-[#dddddd]/70 dark:border-surface-700 mt-4 pt-3.5 flex flex-col gap-2">
+                    <p-button
+                        siLicenceOuverte
+                        label="Enregistrer le circuit"
+                        icon="pi pi-check"
+                        severity="info"
+                        size="small"
+                        styleClass="w-full justify-center"
+                        [disabled]="verrouille || enregistrement"
+                        [loading]="enregistrement"
+                        (onClick)="enregistrer()">
+                    </p-button>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <p-button
+                            label="Graphe"
+                            icon="pi pi-share-alt"
+                            severity="secondary"
+                            [outlined]="true"
+                            size="small"
+                            styleClass="w-full justify-center !bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                            (onClick)="ouvrirApercuGraphe()">
+                        </p-button>
+                        <p-button
+                            label="Annuler"
+                            icon="pi pi-times"
+                            severity="secondary"
+                            [outlined]="true"
+                            size="small"
+                            styleClass="w-full justify-center !bg-[var(--surface-card)] !border-[#dddddd] dark:!border-surface-700"
+                            (onClick)="annuler()">
+                        </p-button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Repères clés du moteur -->
+            <div class="bg-[var(--surface-card)] border border-[#dddddd] dark:border-surface-700 rounded-[5px] shadow-card p-4">
+                <div class="flex items-center gap-2.5 mb-3 pb-2.5 border-b border-[#dddddd]/70 dark:border-surface-700">
+                    <span class="w-8 h-8 rounded-[5px] bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <i class="pi pi-lightbulb !text-sm"></i>
+                    </span>
+                    <h3 class="text-sm font-bold text-[var(--heading-color)] m-0">Repères moteur</h3>
+                </div>
+
+                <div class="flex flex-col gap-2.5 text-xs text-[var(--text-color-secondary)] leading-relaxed">
+                    <div class="flex items-start gap-2">
+                        <i class="pi pi-lock text-[#0084ca] !text-xs mt-0.5 shrink-0"></i>
+                        <span><strong>Codes d'étape immuables :</strong> les transitions et dossiers ouverts s'y appuient ; seul un nouvel ajout génère un nouveau code.</span>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <i class="pi pi-flag text-emerald-500 !text-xs mt-0.5 shrink-0"></i>
+                        <span><strong>Fin de circuit explicite :</strong> laissez la destination sur <em>Fin du circuit</em> ou retirez toute action de la dernière étape (Clôture).</span>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <i class="pi pi-users text-amber-500 !text-xs mt-0.5 shrink-0"></i>
+                        <span><strong>Auto-approbation bloquée :</strong> un signataire ayant soumis un dossier ne pourra pas approuver son propre dépôt à l'étape suivante.</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

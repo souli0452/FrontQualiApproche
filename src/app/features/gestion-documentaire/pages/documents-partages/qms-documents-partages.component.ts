@@ -14,7 +14,6 @@ import { LightboxComponent } from '../../../non-conformite/components/lightbox/l
     selector: 'app-qms-documents-partages',
     standalone: true,
     imports: [CommonModule, NgPrimeModule, TableauAffichageComponent, LightboxComponent],
-    providers: [MessageService],
     templateUrl: './qms-documents-partages.component.html',
     styleUrl: './qms-documents-partages.component.scss'
 })

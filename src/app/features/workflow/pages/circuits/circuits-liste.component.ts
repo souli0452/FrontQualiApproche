@@ -38,7 +38,7 @@ type LigneCircuit = WorkflowDto & { typeLibelle: string; nbEtapes: number };
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule, NgPrimeModule, AppCrudGenericComponent,
     WorkflowConfigurationGuideComponent],
-  providers: [MessageService, ConfirmationService],
+  providers: [ConfirmationService],
   templateUrl: './circuits-liste.component.html'
 })
 export class CircuitsListeComponent extends BasePaginationComponent implements OnInit, OnDestroy {

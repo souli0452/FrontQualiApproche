@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 
 import { NgPrimeModule } from '@prime-ng';
@@ -11,6 +11,7 @@ import { SelectInputComponent } from '../../../../shared/ui/select-input/select-
 import { ChoixDeChampService } from '../../services/choix-de-champ.service';
 import { WorkflowError, WorkflowService } from '../../services/workflow.service';
 import { WorkflowConfigurationGuideComponent } from './workflow-configuration-guide.component';
+import { WorkflowDiagramComponent } from '../../components/workflow-diagram.component';
 import {
   EmailTemplateDto,
   StepDecision,
@@ -119,7 +120,8 @@ type SeveriteBouton = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'he
     ReactiveFormsModule, 
     FormsModule, 
     NgPrimeModule,
-    WorkflowConfigurationGuideComponent, 
+    WorkflowConfigurationGuideComponent,
+    WorkflowDiagramComponent,
     SelectInputComponent, 
     LicenceOuverteDirective],
   providers: [],
@@ -131,6 +133,7 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   private readonly roleService = inject(AppRoleService);
   private readonly stepTemplateService = inject(WorkflowStepTemplateService);
   private readonly alertService = inject(AlertService);
+  private readonly confirmationService = inject(ConfirmationService, { optional: true });
   /**
    * Résout les sources de valeurs du moteur — dont `@UTILISATEURS`, qui alimente le choix des
    * signataires d'une étape. Le même service sert déjà les champs de saisie à liste : les
@@ -368,6 +371,26 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
    */
   guideOuvert = false;
 
+  /**
+   * Protection du moteur applicatif : en édition d'un circuit existant, l'écran s'ouvre verrouillé
+   * pour éviter toute modification accidentelle des règles d'acheminement en production.
+   */
+  verrouille = false;
+
+  /** Identifiants locaux des étapes dépliées dans l'accordéon. */
+  etapesOuvertes = new Set<string>();
+  /** Identifiants locaux des étapes dont le bloc d'options avancées est déplié. */
+  optionsEtapeOuvertes = new Set<string>();
+  /** Contrôles d'action actuellement dépliés pour paramétrage complet. */
+  private actionsOuvertes = new WeakSet<AbstractControl>();
+
+  /** Aperçu graphique en dialogue (diagramme Mermaid calculé à la volée). */
+  diagrammeOuvert = false;
+  apercuCircuit?: WorkflowDto;
+
+  /** Diagnostic temps réel de l'intégrité du circuit moteur. */
+  diagnostics: { statut: 'ok' | 'warn' | 'danger'; texte: string }[] = [];
+
   constructor() {
     this.formulaire = this.fb.group({
       nom: [null, Validators.required],
@@ -378,6 +401,10 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
       cibleId: [null],
       steps: this.fb.array([])
     });
+
+    this.formulaire.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.actualiserDiagnostic());
   }
 
   ngOnInit(): void {
@@ -561,10 +588,19 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   }
 
   ajouterAction(indexEtape: number): void {
-    this.actionsDeLEtape(indexEtape).push(this.groupeAction({ decision: 'APPROUVE' }, null));
+    if (this.verrouille) {
+      return;
+    }
+    const action = this.groupeAction({ decision: 'APPROUVE' }, null);
+    this.actionsDeLEtape(indexEtape).push(action);
+    this.actionsOuvertes.add(action);
+    this.actualiserDiagnostic();
   }
 
   supprimerAction(indexEtape: number, indexAction: number): void {
+    if (this.verrouille) {
+      return;
+    }
     // Retirer la dernière action rendait aussitôt une action vide : une étape sans action était
     // tenue pour une impasse. C'en est une fin — voulue. Une étape « Clôturer » qui n'offre rien
     // dit la fin du circuit mieux qu'une case cochée sur un bouton, et c'est ainsi que sont
@@ -572,6 +608,236 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     // Le moteur clôt l'instance en l'atteignant, l'écran l'annonce, et le diagramme la mène à sa
     // borne finale.
     this.actionsDeLEtape(indexEtape).removeAt(indexAction);
+    this.actualiserDiagnostic();
+  }
+
+  // ---------------------------------------------------------------- verrou moteur & accordéons
+
+  deverrouillerEdition(): void {
+    this.verrouille = false;
+    this.formulaire.enable({ emitEvent: false });
+    this.actualiserDiagnostic();
+  }
+
+  verrouillerEdition(): void {
+    this.verrouille = true;
+    this.formulaire.disable({ emitEvent: false });
+    this.actualiserDiagnostic();
+  }
+
+  estEtapeOuverte(index: number): boolean {
+    const id = this.etapes.at(index)?.get('identifiantLocal')?.value as string | undefined;
+    return !!id && this.etapesOuvertes.has(id);
+  }
+
+  basculerEtape(index: number): void {
+    const id = this.etapes.at(index)?.get('identifiantLocal')?.value as string | undefined;
+    if (!id) {
+      return;
+    }
+    if (this.etapesOuvertes.has(id)) {
+      this.etapesOuvertes.delete(id);
+    } else {
+      this.etapesOuvertes.add(id);
+    }
+  }
+
+  toutDeplierEtapes(): void {
+    this.etapes.controls.forEach((etape) => {
+      const id = etape.get('identifiantLocal')?.value as string | undefined;
+      if (id) {
+        this.etapesOuvertes.add(id);
+      }
+    });
+  }
+
+  toutReplierEtapes(): void {
+    this.etapesOuvertes.clear();
+  }
+
+  optionsEtapeDepliees(index: number): boolean {
+    const id = this.etapes.at(index)?.get('identifiantLocal')?.value as string | undefined;
+    return !!id && this.optionsEtapeOuvertes.has(id);
+  }
+
+  basculerOptionsEtape(index: number): void {
+    const id = this.etapes.at(index)?.get('identifiantLocal')?.value as string | undefined;
+    if (!id) {
+      return;
+    }
+    if (this.optionsEtapeOuvertes.has(id)) {
+      this.optionsEtapeOuvertes.delete(id);
+    } else {
+      this.optionsEtapeOuvertes.add(id);
+    }
+  }
+
+  /** Résume en puces courtes les réglages avancés renseignés sur l'étape. */
+  resumeOptionsEtape(index: number): string[] {
+    const etape = this.etapes.at(index);
+    if (!etape) {
+      return [];
+    }
+    const puces: string[] = [];
+    const etat = etape.get('etatTraitement')?.value;
+    if (etat) puces.push(`État : ${etat}`);
+    if (etape.get('emailTemplateCode')?.value) puces.push('Notification e-mail');
+    if (etape.get('champTitulaire')?.value) puces.push(`Titulaire : ${etape.get('champTitulaire')?.value}`);
+    const signataires = (etape.get('cosignataires')?.value as any[]) ?? [];
+    if (signataires.length > 0) puces.push(`${signataires.length} signataire(s)`);
+    if (etape.get('description')?.value) puces.push('Description renseignée');
+    return puces;
+  }
+
+  estActionOuverte(action: AbstractControl): boolean {
+    return this.actionsOuvertes.has(action) || this.isFieldInvalid(action);
+  }
+
+  basculerAction(action: AbstractControl): void {
+    if (this.actionsOuvertes.has(action)) {
+      this.actionsOuvertes.delete(action);
+    } else {
+      this.actionsOuvertes.add(action);
+    }
+  }
+
+  libelleRole(roleValue: string | null | undefined): string {
+    if (!roleValue) {
+      return 'Rôle non défini';
+    }
+    if (roleValue === '@CREATEUR') {
+      return 'Créateur du dossier';
+    }
+    if (roleValue === '@TITULAIRE') {
+      return 'Titulaire du dossier';
+    }
+    return this.rolesDisponibles.find((r) => r.value === roleValue)?.label ?? roleValue;
+  }
+
+  libelleDestination(indexEtape: number, cibleId: string | null | undefined): string {
+    if (!cibleId) {
+      return 'Fin du circuit';
+    }
+    const idx = this.etapes.controls.findIndex((e) => e.get('identifiantLocal')?.value === cibleId);
+    if (idx < 0 || idx === indexEtape) {
+      return 'Fin du circuit';
+    }
+    const nom = this.etapes.at(idx).get('nomEtape')?.value || `Étape ${idx + 1}`;
+    return `${idx + 1}. ${nom}`;
+  }
+
+  ouvrirApercuGraphe(): void {
+    this.apercuCircuit = this.construirePayload();
+    this.diagrammeOuvert = true;
+  }
+
+  /** Signale les anomalies structurelles du graphe (hors champs requis de formulaire). */
+  avertissementsGraphe(): string[] {
+    const raw = this.formulaire.getRawValue();
+    const etapes: any[] = raw.steps ?? [];
+    const alertes: string[] = [];
+
+    if (etapes.length === 0) {
+      alertes.push('Aucune étape définie.');
+      return alertes;
+    }
+
+    const aUneSortie = etapes.some((e) =>
+      (e.actions ?? []).length === 0 || (e.actions ?? []).some((a: any) => !a.cible)
+    );
+    if (!aUneSortie) {
+      alertes.push('Aucune issue de fin de circuit (étape sans action ou destination « Fin du circuit »).');
+    }
+
+    const ciblesAtteintes = new Set<string>();
+    etapes.forEach((e, idx) => {
+      (e.actions ?? []).forEach((a: any) => {
+        if (a.cible && a.cible !== e.identifiantLocal) {
+          ciblesAtteintes.add(a.cible);
+        }
+      });
+      if (idx === 0 && e.identifiantLocal) {
+        ciblesAtteintes.add(e.identifiantLocal);
+      }
+    });
+
+    const isolees = etapes
+      .filter((e, idx) => idx > 0 && !ciblesAtteintes.has(e.identifiantLocal))
+      .map((e, idx) => e.nomEtape || `Étape ${idx + 2}`);
+    if (isolees.length > 0) {
+      alertes.push(`Étape(s) sans transition entrante : ${isolees.join(', ')}.`);
+    }
+
+    return alertes;
+  }
+
+  actualiserDiagnostic(): void {
+    const raw = this.formulaire.getRawValue();
+    const etapes: any[] = raw.steps ?? [];
+    const liste: { statut: 'ok' | 'warn' | 'danger'; texte: string }[] = [];
+
+    const nomOk = !!(raw.nom && String(raw.nom).trim());
+    const typeOk = !!raw.resourceType;
+    liste.push(nomOk && typeOk
+      ? { statut: 'ok', texte: 'Identité et famille de ressource renseignées' }
+      : { statut: 'warn', texte: 'Nom du circuit ou type de ressource manquant' });
+
+    if (etapes.length === 0) {
+      liste.push({ statut: 'danger', texte: 'Aucune étape configurée dans ce circuit' });
+      this.diagnostics = liste;
+      return;
+    }
+
+    const premiere = etapes[0];
+    if (premiere?.nomEtape && premiere?.responsableRole) {
+      liste.push({ statut: 'ok', texte: `Étape initiale : ${premiere.nomEtape}` });
+    } else {
+      liste.push({ statut: 'warn', texte: 'Étape initiale à nommer et doter d’un rôle' });
+    }
+
+    const aUneSortie = etapes.some((e) =>
+      (e.actions ?? []).length === 0 || (e.actions ?? []).some((a: any) => !a.cible)
+    );
+    liste.push(aUneSortie
+      ? { statut: 'ok', texte: 'Fin de circuit atteignable' }
+      : { statut: 'warn', texte: 'Aucune issue vers la fin du circuit' });
+
+    const ciblesAtteintes = new Set<string>();
+    etapes.forEach((e, idx) => {
+      if (idx === 0 && e.identifiantLocal) ciblesAtteintes.add(e.identifiantLocal);
+      (e.actions ?? []).forEach((a: any) => {
+        if (a.cible && a.cible !== e.identifiantLocal) ciblesAtteintes.add(a.cible);
+      });
+    });
+    const isolees = etapes
+      .map((e, idx) => ({ e, idx }))
+      .filter(({ e, idx }) => idx > 0 && !ciblesAtteintes.has(e.identifiantLocal))
+      .map(({ e, idx }) => e.nomEtape || `Étape ${idx + 1}`);
+
+    liste.push(isolees.length === 0
+      ? { statut: 'ok', texte: 'Toutes les étapes sont reliées sans impasse' }
+      : { statut: 'warn', texte: `Sans transition entrante : ${isolees.join(', ')}` });
+
+    const etapesIncompletes = etapes.filter((e) =>
+      !e.nomEtape || !e.responsableRole
+      || (e.actions ?? []).some((a: any) => !a.decision)
+      || (e.fields ?? []).some((f: any) => !f.fieldLabel || !f.fieldName || !f.type)
+    ).length;
+
+    liste.push(etapesIncompletes === 0
+      ? { statut: 'ok', texte: 'Champs obligatoires des étapes complets' }
+      : { statut: 'danger', texte: `${etapesIncompletes} étape(s) contiennent des champs obligatoires vides` });
+
+    const actif = raw.actif ?? true;
+    const nomFamille = this.typesRessource.find((t) => t.value === raw.resourceType)?.label ?? 'Famille non choisie';
+    liste.push({
+      statut: actif ? 'ok' : 'warn',
+      texte: actif
+        ? `Actif — applicable aux nouveaux dossiers (${nomFamille})`
+        : 'Inactif — refusé pour les nouveaux dossiers'
+    });
+
+    this.diagnostics = liste;
   }
 
   /**
@@ -601,12 +867,17 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
 
   private preparerCreation(): void {
     this.circuitEnCours = undefined;
+    this.verrouille = false;
+    this.formulaire.enable({ emitEvent: false });
     // La liste transmet son filtre courant : créer un circuit depuis la vue « Non-conformités »
     // pré-remplit le type, comme le faisait le dialogue.
     const type = this.route.snapshot.queryParamMap.get('type');
     this.formulaire.reset({ actif: true, resourceType: type ?? null });
     this.etapes.clear();
+    this.etapesOuvertes.clear();
+    this.optionsEtapeOuvertes.clear();
     this.ajouterEtape(false);
+    this.actualiserDiagnostic();
   }
 
   private chargerCircuit(id: string): void {
@@ -703,9 +974,21 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
       );
     });
 
-    if (this.etapes.length === 0) {
-      this.ajouterEtape();
+    this.etapesOuvertes.clear();
+    this.optionsEtapeOuvertes.clear();
+    if (identifiants.length > 0) {
+      this.etapesOuvertes.add(identifiants[0]);
     }
+
+    if (this.etapes.length === 0) {
+      this.ajouterEtape(false);
+    }
+
+    if (this.modeEdition) {
+      this.verrouille = true;
+      this.formulaire.disable({ emitEvent: false });
+    }
+    this.actualiserDiagnostic();
   }
 
   /** Destination d'une transition, ramenée à l'identifiant local de l'étape visée. */
@@ -720,11 +1003,15 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   }
 
   ajouterEtape(autoScroll = true): void {
+    if (this.verrouille) {
+      return;
+    }
     const precedente = this.etapes.length > 0 ? this.etapes.at(this.etapes.length - 1) : null;
     const nouvelIndex = this.etapes.length;
+    const identifiant = nouvelIdentifiantLocal();
     this.etapes.push(
       this.fb.group({
-        identifiantLocal: [nouvelIdentifiantLocal()],
+        identifiantLocal: [identifiant],
         id: [null],
         code: [null],
         stepTemplateId: [null],
@@ -745,6 +1032,8 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
         fields: this.fb.array([])
       })
     );
+    this.etapesOuvertes.add(identifiant);
+    this.actualiserDiagnostic();
 
     if (autoScroll) {
       setTimeout(() => {
@@ -759,7 +1048,14 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   }
 
   supprimerEtape(index: number): void {
+    if (this.verrouille) {
+      return;
+    }
     const identifiant = this.etapes.at(index).get('identifiantLocal')?.value;
+    if (identifiant) {
+      this.etapesOuvertes.delete(identifiant);
+      this.optionsEtapeOuvertes.delete(identifiant);
+    }
     this.etapes.removeAt(index);
     // Une destination pointant sur l'étape retirée deviendrait une fin de circuit silencieuse :
     // elle est remise à vide, ce qui oblige à statuer explicitement.
@@ -770,9 +1066,13 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
         }
       });
     });
+    this.actualiserDiagnostic();
   }
 
   deplacerEtape(index: number, sens: -1 | 1): void {
+    if (this.verrouille) {
+      return;
+    }
     const cible = index + sens;
     if (cible < 0 || cible >= this.etapes.length) {
       return;
@@ -780,6 +1080,7 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     const controle = this.etapes.at(index);
     this.etapes.removeAt(index);
     this.etapes.insert(cible, controle);
+    this.actualiserDiagnostic();
   }
 
   /** Destinations proposées : les autres étapes, plus la fin de circuit. */
@@ -794,6 +1095,9 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   }
 
   appliquerModeleEtape(index: number, modeleId: string | null): void {
+    if (this.verrouille) {
+      return;
+    }
     const modele = this.modelesEtape.find((m) => m.id === modeleId);
     if (!modele) {
       return;
@@ -822,6 +1126,9 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   }
 
   ajouterChamp(indexEtape: number): void {
+    if (this.verrouille) {
+      return;
+    }
     this.champsDeLEtape(indexEtape).push(
       this.fb.group({
         id: [null],
@@ -830,10 +1137,12 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
         type: ['TEXT', Validators.required],
         required: [false],
         decision: [null],
+        actionCode: [null],
         source: [null],
         options: [null]
       })
     );
+    this.actualiserDiagnostic();
   }
 
   /** La valeur d'{@code options} désigne-t-elle une source, ou est-ce une liste littérale ? */
@@ -843,7 +1152,11 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   }
 
   supprimerChamp(indexEtape: number, indexChamp: number): void {
+    if (this.verrouille) {
+      return;
+    }
     this.champsDeLEtape(indexEtape).removeAt(indexChamp);
+    this.actualiserDiagnostic();
   }
 
   // ---------------------------------------------------------------- enregistrement
@@ -910,8 +1223,13 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
   }
 
   enregistrer(): void {
+    if (this.verrouille) {
+      this.alertService.showWarning("Déverrouillez l'édition du circuit avant d'enregistrer.");
+      return;
+    }
     if (this.formulaire.invalid) {
       this.formulaire.markAllAsTouched();
+      this.ouvrirEtapesEnErreur();
       const messageErreur = this.trouverPremierMessageErreur();
       this.alertService.showWarning(messageErreur || 'Renseignez les champs obligatoires avant d’enregistrer.');
       this.scrollerVersPremierInvalide();
@@ -923,6 +1241,45 @@ export class WorkflowEditorComponent implements OnInit, OnDestroy {
     }
 
     const payload = this.construirePayload();
+    const alertes = this.avertissementsGraphe();
+    if ((this.modeEdition || alertes.length > 0) && this.confirmationService) {
+      const detailImpact = this.modeEdition
+        ? "Ce circuit est le moteur d'acheminement : toute modification s'applique immédiatement aux prochains dossiers créés."
+        : "Ce circuit présente un point d'attention structurel.";
+      const complement = alertes.length > 0 ? `\n\nPoints relevés :\n• ${alertes.join('\n• ')}` : '';
+      this.confirmationService.confirm({
+        key: 'workflow-save',
+        header: this.modeEdition ? 'Mettre à jour ce circuit moteur ?' : 'Enregistrer malgré les avertissements ?',
+        message: `${detailImpact}${complement}`,
+        icon: 'pi-shield',
+        acceptLabel: 'Confirmer et enregistrer',
+        rejectLabel: 'Relire',
+        accept: () => this.soumettreEnregistrement(payload)
+      });
+      return;
+    }
+
+    this.soumettreEnregistrement(payload);
+  }
+
+  private ouvrirEtapesEnErreur(): void {
+    this.etapes.controls.forEach((etape) => {
+      if (etape.invalid) {
+        const id = etape.get('identifiantLocal')?.value as string | undefined;
+        if (id) {
+          this.etapesOuvertes.add(id);
+        }
+        const actions = etape.get('actions') as FormArray | null;
+        actions?.controls.forEach((action) => {
+          if (action.invalid) {
+            this.actionsOuvertes.add(action);
+          }
+        });
+      }
+    });
+  }
+
+  private soumettreEnregistrement(payload: WorkflowDto): void {
     this.enregistrement = true;
 
     const requete = this.modeEdition && this.circuitEnCours?.id

@@ -18,13 +18,12 @@ import { AuthService } from '@core/auth/auth.service';
 import { currentUserState } from '@core/auth/auth.state';
 import { ModuleAbonnement } from '@core/enums/module-abonnement.enum';
 import { QualiAiChatComponent } from '@shared/ia/quali-ai-chat.component';
-import { AideFaqComponent } from '@features/faq/aide-faq.component';
 import { GlobalSearchService } from '@shared/recherche-globale/global-search.service';
 
 @Component({
     selector: 'app-topbar',
     standalone: true,
-    imports: [RouterModule, NgPrimeModule, CommonModule, FormsModule, ReactiveFormsModule, QualiAiChatComponent, AideFaqComponent],
+    imports: [RouterModule, NgPrimeModule, CommonModule, FormsModule, ReactiveFormsModule, QualiAiChatComponent],
     template: ` 
     <div class="pre-layout-topbar">
         <div class="layout-topbar" [ngClass]="{'topbar-scrolled': isScrolled}">
@@ -36,7 +35,7 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
                     {{ pageTitle }}
                 </div>
             </div>
-            <div class="layout-topbar-search md:flex items-center flex-1 justify-center max-w-[350px] ml-12">
+            <div class="layout-topbar-search md:flex items-center flex-1 justify-center max-w-[350px]">
                 <p-iconField iconPosition="left" class="w-full">
                     <p-inputIcon styleClass="pi pi-search"></p-inputIcon>
                     <input type="text" 
@@ -63,10 +62,12 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
                     </span>
                 }
 
-                <!-- L'aide : offerte à tous, sans permission ni module. C'est le socle — une
-                     organisation sans assistant IA, ou dont le forfait est épuisé, doit pouvoir
-                     lire les réponses qu'elle a elle-même écrites. -->
-                <button type="button" pTooltip="Aide — foire aux questions" tooltipPosition="bottom" (click)="aideVisible = true" class="px-3 py-2 p-button-secondary rounded-full transition-colors hover:bg-surface-100 dark:hover:bg-surface-800">
+                <!-- Accès direct à la foire aux questions -->
+                <button type="button"
+                        pTooltip="Foire aux questions"
+                        tooltipPosition="bottom"
+                        (click)="ouvrirFoireAuxQuestions()"
+                        class="px-3 py-2 p-button-secondary rounded-full transition-colors hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer">
                     <i class="pi pi-question-circle" style="font-size: 1.2rem"></i>
                 </button>
 
@@ -265,19 +266,6 @@ import { GlobalSearchService } from '@shared/recherche-globale/global-search.ser
                 </button>
             </div>
         </div>
-        <!-- Tiroir de l'aide. Monté à l'ouverture seulement : les réponses se relisent auprès
-             du serveur au ngOnInit, et les charger au démarrage de l'application le ferait pour
-             rien — la plupart des sessions ne l'ouvrent jamais. -->
-        <p-drawer [modal]="true" [(visible)]="aideVisible" position="right" [style]="{width: '480px'}" styleClass="quali-ai-drawer">
-            <ng-template pTemplate="header">
-                <div class="inline-flex items-center gap-2">
-                    <i class="pi pi-question-circle text-primary"></i>
-                    <span class="layout-topbar-title"><span>Aide</span></span>
-                </div>
-            </ng-template>
-            <app-aide-faq *ngIf="aideVisible" class="block h-full"></app-aide-faq>
-        </p-drawer>
-
         <!-- Drawer de l'assistant qualité IA -->
         <p-drawer [modal]="true" [(visible)]="assistantIaVisible" position="right" [style]="{ width: '490px', maxWidth: '100vw' }" styleClass="quali-ai-drawer quali-ai-assistant-drawer">
             <ng-template pTemplate="header">
@@ -579,14 +567,6 @@ export class AppTopbar implements OnInit, OnDestroy {
         }
         setTimeout(() => (this.rafraichissementNotifs = false), 500);
     }
-
-    /**
-     * Le tiroir de l'aide est-il ouvert ?
-     *
-     * <p>Remplace un `helpVisible` déclaré de longue date et branché nulle part : quelqu'un avait
-     * prévu un point d'aide sans jamais le relier.</p>
-     */
-    aideVisible: boolean = false;
 
     /** Le tiroir de l'assistant est-il ouvert ? */
     assistantIaVisible: boolean = false;
@@ -945,6 +925,12 @@ export class AppTopbar implements OnInit, OnDestroy {
 
     goToSettings() {
         this.router.navigate(['/configurations']);
+    }
+
+    ouvrirFoireAuxQuestions() {
+        this.notificationVisible = false;
+        this.assistantIaVisible = false;
+        this.router.navigate(['/faq']);
     }
 
     onSearchInput() {

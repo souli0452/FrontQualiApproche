@@ -50,7 +50,7 @@ export type OngletDetail = 'detail' | 'historique' | 'partages' | 'audit' | 'dem
     QmsReclassementDialogComponent, QmsDocumentAccessDialogComponent, LightboxComponent],
   templateUrl: './qms-document.component.html',
   styleUrls: ['./qms-document.component.scss'],
-  providers: [MessageService, DatePipe]
+  providers: [DatePipe]
 })
 export class QmsDocumentComponent implements OnInit, OnDestroy {
   @ViewChild('lightbox') lightbox?: LightboxComponent;

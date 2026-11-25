@@ -25,9 +25,7 @@ import { hasAnyPermission } from '@core/auth/auth-utils';
     selector: 'app-email-template',
     standalone: true,
     imports: [CommonModule, AppCrudGenericComponent, NgPrimeModule],
-    providers: [MessageService],
     template: `
-        <p-toast></p-toast>
         <div class="page-layout">
             <app-crud-generic
                 [addButtonLabel]="'Nouveau modèle'"

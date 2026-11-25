@@ -26,7 +26,7 @@ type ConfirmationTone = 'info' | 'success' | 'warn' | 'danger';
     selector: 'app-audit-checklists',
     standalone: true,
     imports: [CommonModule, FormsModule, NgPrimeModule, SelectInputComponent, AuditLibelleComponent],
-    providers: [MessageService, ConfirmationService],
+    providers: [ConfirmationService],
     templateUrl: './checklists.component.html'
 })
 export class AuditChecklistsComponent implements OnInit, OnDestroy {

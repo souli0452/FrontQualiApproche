@@ -25,9 +25,7 @@ import { hasAnyPermission } from '@core/auth/auth-utils';
   selector: 'app-circuit-detail-page',
   standalone: true,
   imports: [CommonModule, NgPrimeModule, WorkflowDetailComponent],
-  providers: [MessageService],
   template: `
-    <p-toast></p-toast>
 
     <div class="flex items-center justify-between mb-3">
         <p-button label="Retour à la liste" icon="pi pi-arrow-left" size="small" [text]="true"

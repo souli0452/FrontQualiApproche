@@ -29,7 +29,6 @@ const LONGUEUR_MINIMALE = 8;
     selector: 'app-profil',
     standalone: true,
     imports: [CommonModule, NgPrimeModule, HeaderPage],
-    providers: [MessageService],
     templateUrl: './profil.component.html',
     styleUrl: './profil.component.scss'
 })

@@ -81,7 +81,7 @@ export class FaqService extends BaseCrudService<EntreeFaq, string> {
      */
     joindre(faqId: string, fichiers: File[]): Observable<FichierFaq[]> {
         const corps = new FormData();
-        fichiers.forEach((fichier) => corps.append('fichiers', fichier));
+        fichiers.forEach((fichier) => corps.append('fichiers', fichier, fichier.name));
         return this.http.post<FichierFaq[]>(`${QualiUrlConfig.FAQ_ROOT_URL}/${faqId}/fichiers`, corps);
     }
 

@@ -43,7 +43,7 @@ interface Retouche {
     standalone: true,
     imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, SelectInputComponent, AuditLibelleComponent,
         NatureChoixComponent, PreuvesConstatComponent],
-    providers: [MessageService, ConfirmationService],
+    providers: [ConfirmationService],
     templateUrl: './constatations.component.html'
 })
 export class AuditConstatationsComponent implements OnInit, OnDestroy {

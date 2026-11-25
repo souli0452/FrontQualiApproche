@@ -57,7 +57,6 @@ interface IndicateurSuivi {
     selector: 'app-suivi-programme',
     standalone: true,
     imports: [CommonModule, FormsModule, RouterModule, NgPrimeModule, SelectInputComponent, KpiCardComponent, AuditLibelleComponent, TableauAffichageComponent],
-    providers: [MessageService],
     templateUrl: './suivi-programme.component.html'
 })
 export class SuiviProgrammeComponent implements OnInit, OnDestroy {

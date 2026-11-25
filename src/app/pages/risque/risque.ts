@@ -16,7 +16,6 @@ import { AppCrudGenericComponent } from '@shared/app-crud-generic/app-crud-gener
     standalone: true,
     imports: [CommonModule, NgPrimeModule, HeaderPage, AppCrudGenericComponent],
     template: `
-        <p-toast></p-toast>
         <div class="card-first overflow-x-clip border-none premium-hub transition-colors duration-300">
             <app-header-page
                 [title]="pageLabel"

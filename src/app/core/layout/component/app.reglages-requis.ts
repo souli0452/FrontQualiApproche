@@ -33,9 +33,7 @@ interface ReglageRequis {
     selector: 'app-reglages-requis',
     standalone: true,
     imports: [CommonModule, ReactiveFormsModule, NgPrimeModule],
-    providers: [MessageService],
     template: `
-        <p-toast></p-toast>
         <p-dialog [(visible)]="ouvert" [modal]="true" [closable]="false" [draggable]="false"
                   [resizable]="false" [closeOnEscape]="false" [style]="{ width: '34rem' }"
                   maskStyleClass="qs-mask-flou"

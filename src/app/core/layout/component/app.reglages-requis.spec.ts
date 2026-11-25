@@ -5,6 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { QualiUrlConfig } from '@core/services/url-config';
 import { LicenceService } from '@core/licence/services/licence.service';
 import { currentUserState } from '@core/auth/auth.state';
+import { MessageService } from 'primeng/api';
 import { AppReglagesRequis } from './app.reglages-requis';
 
 /**
@@ -47,7 +48,7 @@ describe('AppReglagesRequis', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [AppReglagesRequis],
-            providers: [provideHttpClient(), provideHttpClientTesting()]
+            providers: [provideHttpClient(), provideHttpClientTesting(), MessageService]
         }).compileComponents();
 
         fixture = TestBed.createComponent(AppReglagesRequis);

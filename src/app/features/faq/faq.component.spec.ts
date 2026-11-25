@@ -1,25 +1,26 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
+import { currentUserState } from '@core/auth/auth.state';
 import { FaqComponent } from './faq.component';
 
 /**
- * La liste des questions, et ses deux onglets.
- *
- * <p>Le partage entre publiées et non publiées est servi par le serveur, et ces cas gardent
- * cette décision : une page de dix lignes filtrée dans le navigateur en laisserait trois, et la
- * pagination mentirait sur ce qui reste à lire.</p>
+ * La liste des questions : mode administration (onglets, publication) et mode consultation
+ * lecture seule pour les utilisateurs sans droit d'administration, avec aperçu des pièces jointes.
  */
 describe('FaqComponent', () => {
 
+    let fixture: ComponentFixture<FaqComponent>;
     let component: FaqComponent;
     let http: HttpTestingController;
 
     beforeEach(async () => {
+        currentUserState.next({ permissions: ['faq-read'] } as any);
+
         await TestBed.configureTestingModule({
             imports: [FaqComponent, NoopAnimationsModule],
             providers: [
@@ -28,12 +29,15 @@ describe('FaqComponent', () => {
             ]
         }).compileComponents();
 
-        const fixture = TestBed.createComponent(FaqComponent);
+        fixture = TestBed.createComponent(FaqComponent);
         component = fixture.componentInstance;
         http = TestBed.inject(HttpTestingController);
     });
 
-    afterEach(() => http.verify());
+    afterEach(() => {
+        http.verify();
+        currentUserState.next(null as any);
+    });
 
     /** Répond à la page et aux comptes demandés au chargement. */
     const demarrer = (publiees = 0, nonPubliees = 0) => {
@@ -47,6 +51,7 @@ describe('FaqComponent', () => {
     it("s'ouvre sur les publiées : c'est ce qu'on vient voir", () => {
         demarrer();
 
+        expect(component.peutAdministrer).toBeTrue();
         expect(component.onglet).toBe('publiees');
     });
 
@@ -163,5 +168,61 @@ describe('FaqComponent', () => {
         // travailler.
         expect(component.comptePubliees).toBe(0);
         expect(component.onglet).toBe('publiees');
+    });
+
+    it('bascule en consultation lecture seule (/faq/publiees) sans droit d’administration', () => {
+        currentUserState.next({ permissions: ['nc-read'] } as any);
+
+        component.ngOnInit();
+
+        expect(component.peutAdministrer).toBeFalse();
+        const requete = http.expectOne((r) => r.url.endsWith('/faq/publiees'));
+        requete.flush({
+            data: [
+                { id: '1', question: 'Qui vise une procédure ?', reponse: 'Le pilote puis le RQ.' },
+                { id: '2', question: 'Où trouver le logigramme ?', reponse: 'Voir image jointe.', fichiers: [{ id: 'f1', nom: 'schema.png' }] }
+            ]
+        });
+
+        expect(component.questionsConsultables.length).toBe(2);
+
+        component.rechercheConsultation = 'logigramme';
+        component.filtrerConsultation();
+        expect(component.questionsConsultables.map((q) => q.id)).toEqual(['2']);
+    });
+
+    it('ouvre une image/pièce jointe dans la visionneuse et adapte les icônes', () => {
+        fixture.detectChanges();
+        http.expectOne((r) => r.url.endsWith('/faq') && r.params.get('publiee') === 'true')
+            .flush({ content: [], totalElements: 0 });
+        http.expectOne((r) => r.url.includes('/faq/comptes'))
+            .flush({ data: { publiees: 0, nonPubliees: 0 } });
+
+        const openBlobSpy = spyOn(component.lightbox!, 'openBlob');
+
+        expect(component.iconeFichier({ nom: 'capture.png' })).toBe('pi-image');
+        expect(component.iconeFichier({ nom: 'guide.pdf' })).toBe('pi-file-pdf');
+
+        component.ouvrirPiece({ id: 'f1', nom: 'capture.png' }, 'Qui vise ?');
+
+        const req = http.expectOne((r) => r.url.endsWith('/faq/fichiers/f1'));
+        expect(req.request.responseType).toBe('blob');
+        const blob = new Blob(['img'], { type: 'image/png' });
+        req.flush(blob);
+
+        expect(openBlobSpy).toHaveBeenCalledOnceWith(blob, 'capture.png', 'Qui vise ?');
+        expect(component.fichierEnCoursId).toBeUndefined();
+    });
+
+    it('isole l’action Supprimer par un séparateur et le style destructif', () => {
+        demarrer();
+        component.peutEcrire = true;
+
+        const items = component.actionsDeLaLigne({ id: '1', question: 'Test', publiee: true });
+        const idxSupprimer = items.findIndex((i) => i.label === 'Supprimer');
+
+        expect(idxSupprimer).toBeGreaterThan(0);
+        expect(items[idxSupprimer - 1].separator).toBeTrue();
+        expect(items[idxSupprimer].styleClass).toBe('delete-menu-item');
     });
 });

@@ -29,9 +29,7 @@ import { AppRoleService } from '@features/gestion-utilisateurs/services/role.ser
     selector: 'app-workflow-step-template',
     standalone: true,
     imports: [CommonModule, AppCrudGenericComponent, NgPrimeModule],
-    providers: [],
     template: `
-        <p-toast></p-toast>
         <div class="page-layout">
             <app-crud-generic
                 [addButtonLabel]="'Nouvelle étape'"

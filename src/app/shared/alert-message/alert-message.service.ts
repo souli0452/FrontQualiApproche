@@ -21,20 +21,20 @@ export class AlertService {
 
     constructor(private messageService: MessageService) { }
 
-    showSuccess(message: string, summary: string = 'Succès') {
-        this.messageService.add({ severity: 'success', summary, detail: message });
+    showSuccess(message: string, summary: string = 'Succès', life: number = 4500) {
+        this.messageService.add({ severity: 'success', summary, detail: message, life });
     }
 
-    showError(message: string, summary: string = 'Erreur') {
-        this.messageService.add({ severity: 'error', summary, detail: message, life:10000 });
+    showError(message: string, summary: string = 'Erreur', life: number = 8000) {
+        this.messageService.add({ severity: 'error', summary, detail: message, life });
     }
 
-    showWarning(message: string, summary: string = 'Attention') {
-        this.messageService.add({ severity: 'warn', summary, detail: message, life:10000 });
+    showWarning(message: string, summary: string = 'Avertissement', life: number = 6000) {
+        this.messageService.add({ severity: 'warn', summary, detail: message, life });
     }
 
-    showInfo(message: string, summary: string = 'Information') {
-        this.messageService.add({ severity: 'info', summary, detail: message, life:10000 });
+    showInfo(message: string, summary: string = 'Information', life: number = 5000) {
+        this.messageService.add({ severity: 'info', summary, detail: message, life });
     }
 
     /**
@@ -46,7 +46,7 @@ export class AlertService {
     }
 
     clear() {
-        this.messageService.clear('alertMessage');
+        this.messageService.clear();
     }
 }
 
@@ -60,10 +60,19 @@ export function showToast(
     messageService: MessageService,
     error?: HttpErrorResponse
 ) {
+    const resolvedSeverity = severity === StatusEnum.warning ? 'warn' : severity;
+    const summary = resolvedSeverity === 'success'
+        ? 'Succès'
+        : resolvedSeverity === 'error'
+            ? 'Erreur'
+            : 'Avertissement';
     const detail = message || error?.error?.message || (status >= 200 && status < 300 ? 'Opération réussie' : 'Erreur de connexion');
+    const life = resolvedSeverity === 'error' ? 8000 : resolvedSeverity === 'warn' ? 6000 : 4500;
+
     messageService.add({
-        severity: severity === StatusEnum.warning ? 'warn' : severity,
-        summary: severity === StatusEnum.success ? 'Succès' : severity === StatusEnum.error ? 'Erreur' : 'Information',
-        detail
+        severity: resolvedSeverity,
+        summary,
+        detail,
+        life
     });
 }
